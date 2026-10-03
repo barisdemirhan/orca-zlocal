@@ -262,6 +262,7 @@ export function buildDefaultSettings(args: {
     experimentalActivity: false,
     experimentalActivityDefaultedOffForAllUsers: true,
     experimentalTerminalAttention: false,
+    experimentalAgentHub: false,
     experimentalAgentHibernation: false,
     agentHibernationIdleMs: 30 * 60 * 1000,
     experimentalNewWorktreeCardStyle: false,

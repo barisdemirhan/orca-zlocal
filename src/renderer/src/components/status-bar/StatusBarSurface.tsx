@@ -50,6 +50,11 @@ const ResourceUsageStatusSegment = lazyWithRetry(() =>
 const PortsStatusSegment = lazyWithRetry(() =>
   import('./PortsStatusSegment').then((module) => ({ default: module.PortsStatusSegment }))
 )
+const AgentHubStatusSegment = lazyWithRetry(() =>
+  import('../agent-hub/AgentHubStatusSegment').then((module) => ({
+    default: module.AgentHubStatusSegment
+  }))
+)
 const SshStatusSegment = lazyWithRetry(() =>
   import('./SshStatusSegment').then((module) => ({ default: module.SshStatusSegment }))
 )
@@ -68,6 +73,7 @@ export function StatusBarSurface({
     return null
   }
   const {
+    agentHubEnabled,
     anyFetching,
     anyVisible,
     barRef,
@@ -302,6 +308,9 @@ export function StatusBarSurface({
           <NativeChatResumeStatusSegment iconOnly={segmentsIconOnly} />
           <UpdateStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
           <React.Suspense fallback={null}>
+            {agentHubEnabled && !isPairedWebClientWindow() ? (
+              <AgentHubStatusSegment iconOnly={segmentsIconOnly} />
+            ) : null}
             {petEnabled ? <PetStatusSegment /> : null}
             {showResourceUsage ? (
               <ResourceUsageStatusSegment compact={compact} iconOnly={segmentsIconOnly} />

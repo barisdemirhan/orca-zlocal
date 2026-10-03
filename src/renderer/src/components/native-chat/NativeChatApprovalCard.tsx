@@ -29,6 +29,8 @@ export type NativeChatApprovalCardProps = {
   /** A plan body renders as markdown; these make its file paths clickable. */
   onLinkClick?: CommentMarkdownLinkClickHandler
   allowFileUriLinks?: boolean
+  /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
+  layout?: 'composer' | 'embedded'
 }
 
 /** PTY options are literal replies; structured options are journal ids. Style the first option as primary. */
@@ -40,7 +42,8 @@ export function NativeChatApprovalCard({
   isSubmitting = false,
   shouldFocus = false,
   onLinkClick,
-  allowFileUriLinks = false
+  allowFileUriLinks = false,
+  layout = 'composer'
 }: NativeChatApprovalCardProps): React.JSX.Element {
   const cardRef = useRef<HTMLDivElement>(null)
   const neededPath = approvalBlockedPathToShow(approval)
@@ -58,8 +61,14 @@ export function NativeChatApprovalCard({
 
   return (
     <SecuritySurface>
-      <div className="min-h-0 shrink overflow-hidden bg-chat-canvas">
-        <div className="mx-auto flex h-full min-h-0 max-h-full w-full max-w-(--chat-content-max-width) px-3 pt-2 pb-1 sm:px-4">
+      <div
+        className="min-h-0 shrink overflow-hidden bg-chat-canvas data-[layout=embedded]:bg-transparent"
+        data-layout={layout}
+      >
+        <div
+          className="mx-auto flex h-full min-h-0 max-h-full w-full max-w-(--chat-content-max-width) px-3 pt-2 pb-1 sm:px-4 data-[layout=embedded]:max-w-none data-[layout=embedded]:p-0 data-[layout=embedded]:sm:p-0"
+          data-layout={layout}
+        >
           <div
             ref={cardRef}
             data-native-chat-prompt-card-focus={shouldFocus || undefined}

@@ -459,6 +459,8 @@ export type GlobalSettings = GlobalSettingsBase & {
   experimentalActivityDefaultedOffForAllUsers?: boolean
   /** Experimental: persistent terminal-pane attention ring for bell + agent-completion events. Opt-in while tuning signal/noise. */
   experimentalTerminalAttention: boolean
+  /** Experimental: status-bar Agent Hub — every agent and terminal in one popover, with inline answers. */
+  experimentalAgentHub?: boolean
   /** Experimental: automatically sleep completed, resumable background agent terminals. */
   experimentalAgentHibernation?: boolean
   /** Milliseconds a completed agent must stay idle before hibernation can be considered. */

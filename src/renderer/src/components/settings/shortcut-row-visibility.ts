@@ -16,6 +16,11 @@ import {
   type ShortcutRowsByGroup
 } from './ShortcutFilterRail'
 
+const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
+  'agentHub.toggle',
+  'agentHub.nextWaiting'
+])
+
 export function buildShortcutRowVisibility(options: {
   groups: ShortcutGroup[]
   keybindings: KeybindingOverrides
@@ -25,6 +30,7 @@ export function buildShortcutRowVisibility(options: {
   managedBrowserCreationEnabled: boolean
   mobileEmulatorCreationEnabled: boolean
   agentDashboardEnabled: boolean
+  agentHubEnabled: boolean
   settingsSearchQuery: string
   shortcutQuery: string
   shortcutFilter: ShortcutFilter
@@ -42,8 +48,9 @@ export function buildShortcutRowVisibility(options: {
           (options.managedBrowserCreationEnabled ||
             (item.id !== 'tab.newBrowser' && item.id !== 'tab.newBrowserSplitRight')) &&
           (options.mobileEmulatorCreationEnabled || item.id !== 'tab.newSimulator') &&
-          // Binding an experimental action while disabled would silently do nothing.
-          (options.agentDashboardEnabled || item.id !== 'dashboard.toggle')
+          // Why: the toggle is inert while the experiment is off, so binding it here would silently do nothing.
+          (options.agentDashboardEnabled || item.id !== 'dashboard.toggle') &&
+          (options.agentHubEnabled || !AGENT_HUB_ACTION_IDS.has(item.id))
       )
       .map((item) => {
         const effective = getEffectiveKeybindingsForDefinition(

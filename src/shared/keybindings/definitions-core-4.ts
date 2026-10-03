@@ -43,6 +43,25 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     defaultBindings: platformBindings([])
   },
   {
+    id: 'agentHub.toggle',
+    title: 'Toggle Agent Hub',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'agents', 'hub', 'inbox', 'status bar', 'toggle'],
+    // Why: Mod+Alt+A is the floating terminal; J keeps both hub chords on one key.
+    defaultBindings: platformBindings(['Mod+Alt+J']),
+    allowInTerminal: true
+  },
+  {
+    id: 'agentHub.nextWaiting',
+    title: 'Jump to Next Agent Waiting for You',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'agents', 'hub', 'waiting', 'next', 'jump', 'question'],
+    defaultBindings: platformBindings(['Mod+Alt+Shift+J']),
+    allowInTerminal: true
+  },
+  {
     id: 'terminal.clearPaneTitle',
     title: 'Clear Pane Title',
     group: 'Terminal Panes',

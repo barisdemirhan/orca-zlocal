@@ -1,0 +1,107 @@
+import type { AppState } from '@/store/types'
+import type { DashboardCardTerminalInput } from '../../../../shared/dashboard-snapshot'
+import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import type { AgentType } from '../../../../shared/agent-status-types'
+import type { Repo } from '../../../../shared/repo-types'
+import type { TerminalTab } from '../../../../shared/terminal-tab-types'
+import type { Worktree } from '../../../../shared/worktree/types'
+import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
+import { readDashboardClientHost } from '../dashboard/dashboard-client-host'
+import { resolveDashboardCardTerminalInput } from '../dashboard/dashboard-card-terminal-input'
+import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'
+
+/** A pane the hub can mirror or reveal: an agent pane, or a shell tab's active pane. */
+export type AgentHubPaneTarget = {
+  worktree: Worktree
+  repo: Repo | null
+  tab: TerminalTab
+  /** Null targets the tab's active pane. */
+  paneKey: string | null
+  title: string
+  agentType: AgentType | null
+}
+
+export function paneTargetFromThread(thread: AgentPaneThread, title: string): AgentHubPaneTarget {
+  return {
+    worktree: thread.worktree,
+    repo: thread.repo,
+    tab: thread.tab,
+    paneKey: thread.paneKey,
+    title,
+    agentType: thread.agentType
+  }
+}
+
+export function paneTargetFromTerminalRow(row: AgentHubTerminalRow): AgentHubPaneTarget {
+  return {
+    worktree: row.worktree,
+    repo: row.repo,
+    tab: row.tab,
+    paneKey: row.paneKey,
+    title: row.title,
+    agentType: row.thread?.agentType ?? null
+  }
+}
+
+export function agentHubPaneTargetKey(target: AgentHubPaneTarget): string {
+  return target.paneKey ?? target.tab.id
+}
+
+/** The pane's live PTY, or null once it exited or was never spawned this session. */
+export function resolveAgentHubPtyId(
+  state: Pick<AppState, 'terminalLayoutsByTabId' | 'ptyIdsByTabId'>,
+  tabId: string,
+  paneKey: string | null
+): string | null {
+  const layout = state.terminalLayoutsByTabId[tabId]
+  const parsedLeafId = paneKey ? parsePaneKey(paneKey)?.leafId : undefined
+  const leafId = paneKey ? parsedLeafId : layout?.activeLeafId
+  const livePtyIds = state.ptyIdsByTabId[tabId] ?? []
+  const layoutPtyId = leafId ? layout?.ptyIdsByLeafId?.[leafId] : undefined
+  // Why: layouts survive restarts while their PTYs do not; ptyIdsByTabId is the liveness truth.
+  if (layoutPtyId && livePtyIds.includes(layoutPtyId)) {
+    return layoutPtyId
+  }
+  // A single-pane shell tab may not have published a layout yet.
+  return !paneKey && livePtyIds.length === 1 ? (livePtyIds[0] ?? null) : null
+}
+
+/** Key encodings for the mirror follow the PTY's execution host, like the dashboard preview. */
+export function resolveAgentHubTerminalInput(
+  state: AppState,
+  target: AgentHubPaneTarget,
+  ptyId: string
+): DashboardCardTerminalInput {
+  const clientHost = readDashboardClientHost()
+  const layout = state.terminalLayoutsByTabId[target.tab.id]
+  const leafId = target.paneKey
+    ? parsePaneKey(target.paneKey)?.leafId
+    : (layout?.activeLeafId ?? undefined)
+  return resolveDashboardCardTerminalInput(state, {
+    ptyId,
+    worktreeId: target.worktree.id,
+    paneKey: target.paneKey ?? (leafId ? `${target.tab.id}:${leafId}` : target.tab.id),
+    cwd: target.tab.startupCwd ?? target.worktree.path,
+    shellOverride: target.tab.shellOverride,
+    launchAgent: target.tab.launchAgent,
+    clientPlatform: clientHost.platform,
+    userAgent: clientHost.userAgent,
+    osRelease: clientHost.osRelease
+  })
+}
+
+/** "Group › project · workspace", or just the workspace for folder and floating panes. */
+export function agentHubLocationLabel(
+  target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>,
+  groupNameById: ReadonlyMap<string, string>
+): string {
+  const workspace = getActivityThreadWorkspaceTitle(target.worktree)
+  if (!target.repo) {
+    return workspace
+  }
+  const project = target.repo.displayName
+  const group = target.repo.projectGroupId ? groupNameById.get(target.repo.projectGroupId) : null
+  const head = group ? `${group} › ${project}` : project
+  return workspace === project ? head : `${head} · ${workspace}`
+}

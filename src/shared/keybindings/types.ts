@@ -42,6 +42,8 @@ export type KeybindingActionId =
   | 'view.tasks'
   | 'view.plugins'
   | 'dashboard.toggle'
+  | 'agentHub.toggle'
+  | 'agentHub.nextWaiting'
   | 'sidebar.left.toggle'
   | 'sidebar.right.toggle'
   | 'sidebar.explorer.toggle'

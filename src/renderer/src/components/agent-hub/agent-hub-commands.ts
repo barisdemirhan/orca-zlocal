@@ -1,0 +1,21 @@
+export type AgentHubCommands = {
+  toggle: () => void
+  jumpToNextWaiting: () => void
+}
+
+// Why a registry: the hub lives in the status bar, so its chords must fall through
+// (not be swallowed) whenever the experiment is off or the status bar is hidden.
+let registeredCommands: AgentHubCommands | null = null
+
+export function registerAgentHubCommands(commands: AgentHubCommands): () => void {
+  registeredCommands = commands
+  return () => {
+    if (registeredCommands === commands) {
+      registeredCommands = null
+    }
+  }
+}
+
+export function getAgentHubCommands(): AgentHubCommands | null {
+  return registeredCommands
+}

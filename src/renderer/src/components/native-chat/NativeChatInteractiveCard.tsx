@@ -1,12 +1,33 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type Ref
+} from 'react'
 import type { InteractivePromptCard } from '../../../../shared/native-chat-interactive-prompt'
-import { NativeChatQuestionCard } from './NativeChatQuestionCard'
+import {
+  NativeChatQuestionCard,
+  type NativeChatQuestionCardControl
+} from './NativeChatQuestionCard'
 import { NativeChatApprovalCard } from './NativeChatApprovalCard'
 import type { NativeChatInteractiveSend } from './use-native-chat-interactive-send'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 
-/** Dismiss only after acknowledged delivery; unmount cancels scheduled writes and ignores late results, but cannot recall issued writes. */
+export type NativeChatInteractiveCardControl = NativeChatQuestionCardControl
+
+/**
+ * Render one prompt occurrence the view chose (see useNativeChatPromptCardPresentation): a
+ * question wizard or a tool approval, in the composer's place. Sends through the composer's
+ * verified runtime path (R8/R6): answers via agent-specific paste or selector keystrokes;
+ * cancel/deny as ESC. Unmount cancels scheduled writes and ignores late results; writes already
+ * issued to the transport cannot be recalled.
+ *
+ * The card hides (`onDismiss`) only once its answer was delivered: a refused or unconfirmed
+ * answer keeps the choices up, so the user can answer again here or in the terminal.
+ */
 export function NativeChatInteractiveCard({
   card,
   send,
@@ -15,7 +36,10 @@ export function NativeChatInteractiveCard({
   requiresTerminal = false,
   onAnswerInTerminal,
   shouldFocus = false,
-  answerInputRef
+  answerInputRef,
+  layout,
+  highlightRecommended,
+  controlRef
 }: {
   card: NonNullable<InteractivePromptCard>
   send: NativeChatInteractiveSend
@@ -27,11 +51,18 @@ export function NativeChatInteractiveCard({
   onAnswerInTerminal?: () => void
   /** Take focus when the card takes the input region from the composer. */
   shouldFocus?: boolean
-  /** Paste target while the prompt card replaces the composer. */
+  /** Forwarded to the question card's free-text row so pane-level Paste keeps
+   *  a target while the composer is unmounted. */
   answerInputRef?: React.RefObject<HTMLInputElement | null>
+  layout?: 'composer' | 'embedded'
+  highlightRecommended?: boolean
+  /** Number-key answers: option N of a question, or approval choice N. */
+  controlRef?: Ref<NativeChatInteractiveCardControl>
 }): React.JSX.Element {
   const { sendAnswer, sendRawVerified, cancelPending, cancelAsk } = send
-  // Keep paced multi-step answers visible until delivery settles; block duplicate submissions meanwhile.
+  // A question answer is a paced multi-step write (body→Enter per question); keep
+  // the card up until it settles instead of dismissing on the click, so it doesn't
+  // vanish mid-send. `submitting` also gates a second submit racing the first.
   const submittingRef = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const activeRef = useRef(true)
@@ -53,6 +84,40 @@ export function NativeChatInteractiveCard({
       cancelPending()
     }
   }, [cancelPending])
+
+  const choose = (raw: string): void => {
+    if (submittingRef.current) {
+      return
+    }
+    submittingRef.current = true
+    const attempt = ++attemptRef.current
+    setSubmitting(true)
+    void sendRawVerified(raw)
+      .catch(() => false)
+      .then((delivered) => {
+        if (!activeRef.current || attempt !== attemptRef.current) {
+          return
+        }
+        settle()
+        if (delivered) {
+          onDismiss()
+        }
+      })
+  }
+  const questionControlRef = useRef<NativeChatQuestionCardControl>(null)
+  useImperativeHandle(controlRef, () => ({
+    chooseOption: (index: number): boolean => {
+      if (card.kind === 'question') {
+        return questionControlRef.current?.chooseOption(index) ?? false
+      }
+      const option = card.approval.options[index]
+      if (!option || submittingRef.current) {
+        return false
+      }
+      choose(option.send)
+      return true
+    }
+  }))
 
   if (card.kind === 'question') {
     if (requiresTerminal) {
@@ -85,6 +150,12 @@ export function NativeChatInteractiveCard({
         isSubmitting={submitting}
         isCancelling={cancelling}
         answerInputRef={answerInputRef}
+        layout={layout}
+        highlightRecommended={highlightRecommended}
+        controlRef={questionControlRef}
+        layout={layout}
+        highlightRecommended={highlightRecommended}
+        controlRef={questionControlRef}
         onAnswer={(selections) => {
           if (submittingRef.current) {
             return
@@ -139,28 +210,10 @@ export function NativeChatInteractiveCard({
       />
     )
   }
-  const choose = (raw: string): void => {
-    if (submittingRef.current) {
-      return
-    }
-    submittingRef.current = true
-    const attempt = ++attemptRef.current
-    setSubmitting(true)
-    void sendRawVerified(raw)
-      .catch(() => false)
-      .then((delivered) => {
-        if (!activeRef.current || attempt !== attemptRef.current) {
-          return
-        }
-        settle()
-        if (delivered) {
-          onDismiss()
-        }
-      })
-  }
   return (
     <NativeChatApprovalCard
       approval={card.approval}
+      layout={layout}
       shouldFocus={shouldFocus}
       isSubmitting={submitting}
       onChoose={choose}

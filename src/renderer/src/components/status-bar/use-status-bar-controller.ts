@@ -50,6 +50,7 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
   const ensureDetectedAgents = useAppStore((s) => s.ensureDetectedAgents)
   // Why: pet segment is driven purely by experimentalPet, not statusBarItems, to avoid double-toggling the surface (see design doc).
   const petEnabled = useAppStore((s) => s.settings?.experimentalPet === true)
+  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   const toggleStatusBarItem = useAppStore((s) => s.toggleStatusBarItem)
   const usageEmptyStateDismissed = useAppStore((s) => s.usageEmptyStateDismissed)
   const mountedRef = useRef(true)
@@ -270,6 +271,7 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
   }
 
   return {
+    agentHubEnabled,
     anyFetching,
     anyVisible,
     barRef,

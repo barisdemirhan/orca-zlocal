@@ -16,6 +16,7 @@ import {
   resolveHoveredWorkspaceDeleteTarget
 } from '../components/sidebar/hovered-workspace-delete'
 import { useAppStore } from '../store'
+import { getAgentHubCommands } from '@/components/agent-hub/agent-hub-commands'
 import type { usePluginCommands } from '@/store/plugin-panels'
 import { isGitRepoKind } from '../../../shared/repo-kind'
 import { openPluginsSettings } from '@/lib/open-plugins-settings'
@@ -178,6 +179,20 @@ export function createAppCommandHandlers(
             store.setSidebarOpen(true)
           }
         })
+      }
+    ],
+    [
+      'agentHub.toggle',
+      () => {
+        const hub = getAgentHubCommands()
+        return hub ? claim('agentHub.toggle', hub.toggle) : false
+      }
+    ],
+    [
+      'agentHub.nextWaiting',
+      () => {
+        const hub = getAgentHubCommands()
+        return hub ? claim('agentHub.nextWaiting', hub.jumpToNextWaiting) : false
       }
     ],
     [

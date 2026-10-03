@@ -7983,6 +7983,12 @@
             "modeInWindow": "In-window",
             "modePopout": "Pop-out"
           },
+          "agentHub": {
+            "title": "Agent Hub",
+            "description": "Status bar popover with every agent and terminal: answer questions, approve commands, and jump to any pane.",
+            "copy": "Adds an Agents item to the status bar. It lists agents that need you, are working, or just finished, plus every open terminal, and lets you answer or open a live mirror without leaving your current workspace.",
+            "toggleLabel": "Toggle Agent Hub"
+          },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
             "toggleLabel": "Toggle browser extensions"
@@ -10204,6 +10210,15 @@
               "board": "board",
               "inWindow": "in-window",
               "worktrees": "worktrees"
+            },
+            "agentHub": {
+              "title": "Agent Hub",
+              "description": "Status bar popover with every agent and terminal: answer questions, approve commands, and jump to any pane.",
+              "agents": "agents",
+              "inbox": "inbox",
+              "statusBar": "status bar",
+              "terminals": "terminals",
+              "questions": "questions"
             },
             "browserExtensions": {
               "title": "Browser extensions",
@@ -19669,6 +19684,7 @@
         "next": "Next",
         "skip": "Skip",
         "sending": "Sending…",
+        "recommended": "Recommended",
         "terminalRequired": "Answer this OMP question in the terminal.",
         "openTerminal": "Answer in terminal"
       },
@@ -21649,6 +21665,62 @@
     "unavailable": "Unable to play this media file. The file may be unavailable or use an unsupported codec.",
     "openFailed": "Could not open this file in the default app.",
     "openDefault": "Open in Default App"
+  },
+  "agentHub": {
+    "attention": {
+      "answerInTerminal": "Answer this one in its terminal: pop it out or open it in Orca."
+    },
+    "row": {
+      "jump": "Open in Orca",
+      "popOut": "Pop out",
+      "markRead": "Mark read"
+    },
+    "mirror": {
+      "openInOrca": "Open in Orca",
+      "close": "Close mirror",
+      "noTerminal": "This pane has no live terminal right now."
+    },
+    "title": "Agents",
+    "tab": {
+      "inbox": "Inbox",
+      "running": "Running",
+      "all": "All terminals"
+    },
+    "inbox": {
+      "previous": "Previous",
+      "next": "Next",
+      "needsYou": "Needs you",
+      "emptyTitle": "Nobody is waiting on you",
+      "emptyWorking": "{{value0}} agents working",
+      "markAllRead": "Mark all read",
+      "finished": "Finished"
+    },
+    "running": {
+      "empty": "No agent is working right now"
+    },
+    "footer": {
+      "move": "Move",
+      "open": "Open",
+      "popOut": "Pop out",
+      "answer": "Answer",
+      "tabs": "Tabs"
+    },
+    "toast": {
+      "nobodyWaiting": "Nobody is waiting on you"
+    },
+    "trigger": {
+      "needsYouOne": "1 needs you",
+      "needsYouOther": "{{value0}} need you"
+    },
+    "terminals": {
+      "searchPlaceholder": "Filter by terminal, project, group, or agent",
+      "searchLabel": "Filter terminals",
+      "noMatch": "No terminal matches “{{value0}}”",
+      "empty": "No open terminals",
+      "groupCount": "{{value0}} terminals",
+      "shell": "Shell",
+      "ungrouped": "Ungrouped"
+    }
   },
   "workspace": {
     "branchChoice": {

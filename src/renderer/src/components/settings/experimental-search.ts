@@ -7,6 +7,7 @@ import { getNativeChatExperimentalSearchEntry } from './native-chat-experimental
 import { getEphemeralVmsSearchEntry } from './ephemeral-vms-search'
 import { getBrowserExtensionsExperimentalSearchEntry } from './browser-extensions-experimental-search'
 import { getWslHostsExperimentalSearchEntry } from './wsl-hosts-experimental-search'
+import { getAgentHubSearchEntry } from '../agent-hub/agent-hub-search-entry'
 
 export const getExperimentalPaneSearchEntries = createLocalizedCatalog(
   (): SettingsSearchEntry[] => [
@@ -187,7 +188,8 @@ export const getExperimentalPaneSearchEntries = createLocalizedCatalog(
     // Index WSL toggles only on Windows desktops that expose them.
     ...(typeof window !== 'undefined' && window.api?.runtimeEnvironments?.wslHosts
       ? [getWslHostsExperimentalSearchEntry()]
-      : [])
+      : []),
+    getAgentHubSearchEntry()
   ]
 )
 
@@ -235,6 +237,9 @@ export function getExperimentalSearchEntry() {
         'auto.components.settings.experimental.search.browserExtensions.title',
         'Browser extensions'
       )
+    ),
+    agentHub: findEntry(
+      translate('auto.components.settings.experimental.search.agentHub.title', 'Agent Hub')
     )
   } as const
 }

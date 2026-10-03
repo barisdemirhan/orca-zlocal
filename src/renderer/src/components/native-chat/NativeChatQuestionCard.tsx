@@ -1,9 +1,10 @@
 import { ImeInput } from '@/lib/ime-text-field'
 import { Textarea } from '@/components/ui/textarea'
-import { useRef, useState, type RefObject } from 'react'
+import { useImperativeHandle, useRef, useState, type Ref, type RefObject } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
+import { Badge } from '@/components/ui/badge'
 import type { AskAnswerSelection } from '../../../../shared/native-chat-ask-answer'
 import type { AskPrompt } from '../../../../shared/native-chat/input/native-chat-ask-types'
 import { NativeChatPromptCollapseToggle } from './NativeChatPromptCollapse'
@@ -19,6 +20,12 @@ import {
   askTypedText,
   toggleAskOption
 } from '../../../../shared/native-chat-ask-card-rules'
+import { splitRecommendedOptionLabel } from './native-chat-option-label'
+
+export type NativeChatQuestionCardControl = {
+  /** Number-key answer: picks an option; a single-select pick also advances or submits. */
+  chooseOption: (optionIndex: number) => boolean
+}
 
 export type NativeChatQuestionCardProps = {
   prompt: AskPrompt
@@ -35,11 +42,18 @@ export type NativeChatQuestionCardProps = {
   onCollapse?: () => void
   /** Take focus when the card takes the input region; number keys pick while it holds. */
   shouldFocus?: boolean
-  /** Paste target while the card replaces the composer. */
+  /** Exposes the free-text row so pane-level Paste can target it while the
+   *  card replaces the composer. */
   answerInputRef?: RefObject<HTMLInputElement | null>
+  /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
+  layout?: 'composer' | 'embedded'
+  /** Show a trailing "(Recommended)" in an option label as a badge instead. */
+  highlightRecommended?: boolean
+  controlRef?: Ref<NativeChatQuestionCardControl>
 }
 
-// Reserve a non-option index so single-select holds either an option or typed text.
+// Selection entry for the typed answer (never a real option index), so a single-select
+// question holds exactly one choice: an option or the typed answer.
 const TYPED_ANSWER = -1
 
 const CONFIRM_LABEL = {
@@ -59,7 +73,10 @@ export function NativeChatQuestionCard({
   onCancel,
   onCollapse,
   shouldFocus = false,
-  answerInputRef
+  answerInputRef,
+  layout = 'composer',
+  highlightRecommended = false,
+  controlRef
 }: NativeChatQuestionCardProps): React.JSX.Element {
   const cardRef = useRef<HTMLDivElement>(null)
   const autoAdvance = useNativeChatQuestionAutoAdvance()
@@ -165,6 +182,24 @@ export function NativeChatQuestionCard({
   }
   useNativeChatQuestionKeys(cardRef, shouldFocus && !isSubmitting, q.options.length, pickOption)
 
+  useImperativeHandle(controlRef, () => ({
+    chooseOption: (optionIndex: number): boolean => {
+      if (isSubmitting || !q.options[optionIndex]) {
+        return false
+      }
+      if (q.multiSelect) {
+        pickOption(optionIndex)
+        return true
+      }
+      // A hub number key answers at once, without the click's beat to take it back.
+      autoAdvance.cancel()
+      const next = selections.map((choices, qi) => (qi === index ? [optionIndex] : choices))
+      setSelections(next)
+      advanceOrSubmit(next, otherText)
+      return true
+    }
+  }))
+
   const confirm = (fromKeyboard = false): void => {
     autoAdvance.cancel()
     const anyAnswered = prompt.questions.some((_, i) => answerFor(i).length > 0 || acceptsEmpty(i))
@@ -199,7 +234,8 @@ export function NativeChatQuestionCard({
       role="group"
       aria-label={q.question}
       tabIndex={-1}
-      className="shrink-0 bg-chat-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="shrink-0 bg-chat-canvas data-[layout=embedded]:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      data-layout={layout}
       aria-busy={isSubmitting}
       onKeyDown={(event) => {
         // Why not from a text field: Escape there is editing, and collapsing would hide the draft.
@@ -216,7 +252,10 @@ export function NativeChatQuestionCard({
         }
       }}
     >
-      <div className="mx-auto w-full max-w-(--chat-content-max-width) px-3 pt-2 pb-4 sm:px-4">
+      <div
+        className="mx-auto w-full max-w-(--chat-content-max-width) px-3 pt-2 pb-4 sm:px-4 data-[layout=embedded]:max-w-none data-[layout=embedded]:p-0 data-[layout=embedded]:sm:p-0"
+        data-layout={layout}
+      >
         {total > 1 ? (
           <div className="mb-2 flex gap-1 overflow-x-auto pb-1 scrollbar-sleek">
             {prompt.questions.map((qq, i) => (
@@ -279,6 +318,7 @@ export function NativeChatQuestionCard({
                 badge={String(i + 1)}
                 initialFocus={i === 0}
                 label={opt.label}
+                highlightRecommended={highlightRecommended}
                 description={opt.description}
                 selected={(selections[index] ?? []).includes(i)}
                 disabled={isSubmitting}
@@ -378,7 +418,8 @@ export function NativeChatQuestionCard({
 function OptionRow({
   badge,
   initialFocus,
-  label,
+  label: rawLabel,
+  highlightRecommended,
   description,
   selected,
   disabled,
@@ -387,11 +428,15 @@ function OptionRow({
   badge: string
   initialFocus: boolean
   label: string
+  highlightRecommended: boolean
   description?: string
   selected: boolean
   disabled: boolean
   onSelect: () => void
 }): React.JSX.Element {
+  const { label, recommended } = highlightRecommended
+    ? splitRecommendedOptionLabel(rawLabel)
+    : { label: rawLabel, recommended: false }
   return (
     <button
       type="button"
@@ -415,7 +460,14 @@ function OptionRow({
         {selected ? <Check className="size-3.5" strokeWidth={3} /> : badge}
       </span>
       <span className="min-w-0">
-        <span className="block break-words text-sm">{label}</span>
+        <span className="block break-words text-sm">
+          {label}
+          {recommended ? (
+            <Badge variant="secondary" className="ml-2 align-middle">
+              {translate('components.native-chat.question.recommended', 'Recommended')}
+            </Badge>
+          ) : null}
+        </span>
         {description ? (
           <span
             className={cn(
