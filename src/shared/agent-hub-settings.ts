@@ -20,6 +20,8 @@ export type AgentHubSettings = {
   agentHubDockPosition?: AgentHubDockPosition
   /** Agent Hub dock: how large it is drawn. */
   agentHubDockSize?: AgentHubDockSize
+  /** Dim everything behind floating windows (mirrors, the floating workspace) to spotlight them. */
+  agentHubFloatingDim?: boolean
   /** Agent Hub dock: stay out of sight while no agent is working, waiting, or unread. */
   agentHubDockAutoHide?: boolean
   /** Agent Hub alert (bubble, plus sound when enabled) when an agent asks or needs approval. */

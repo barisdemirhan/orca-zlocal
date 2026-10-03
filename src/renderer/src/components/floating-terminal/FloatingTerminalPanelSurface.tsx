@@ -182,6 +182,7 @@ export function renderFloatingTerminalPanelSurface({
                 />
               </div>
               <FloatingTerminalWindowControls
+                open={open}
                 maximized={maximized}
                 onToggleMaximized={toggleMaximized}
                 onMinimize={() => onOpenChange(false)}

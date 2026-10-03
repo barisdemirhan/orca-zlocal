@@ -9,6 +9,7 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
 import type { AgentHubLocation } from './agent-hub-pane-target'
+import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { useViewportSize } from './use-viewport-size'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
@@ -65,6 +66,7 @@ export function AgentHubMirrorChip({
   // Why re-clamped on every render: a window resize must not strand the chip off screen.
   const position = clampChip(dragPosition ?? chip, viewport)
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
+  const title = useAgentHubTargetTitle(chip.target)
 
   return (
     <>
@@ -137,7 +139,7 @@ export function AgentHubMirrorChip({
             <HubStateIndicator kind={kind} />
             <HubAvatar agentType={chip.target.agentType} kind={thread ? kind : null} />
             <span className="min-w-0 flex-1 text-[12.5px]">
-              <span className="block truncate font-semibold">{chip.target.title}</span>
+              <span className="block truncate font-semibold">{title}</span>
               <span className="block truncate [&>span]:text-[11px]">
                 <HubCrumb location={location} />
               </span>

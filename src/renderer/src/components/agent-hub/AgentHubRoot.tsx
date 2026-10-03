@@ -20,6 +20,7 @@ import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubAlertStack } from './AgentHubAlertStack'
 import { AgentHubDock } from './AgentHubDock'
+import { AgentHubDimBackdrop } from './AgentHubDimToggle'
 import { AgentHubMirrors } from './AgentHubMirrors'
 import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
 import { AgentHubStatusTrigger } from './AgentHubStatusTrigger'
@@ -347,8 +348,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
           onDismiss={dismissAgentHubAlert}
         />
       ) : null}
+      <AgentHubDimBackdrop />
       <AgentHubMirrors
         threads={threads}
+        lineage={lineage}
         alerts={alerts}
         locationOf={(target) => agentHubLocation(target, groupNameById)}
         onReveal={(target, thread) => jump({ target, thread })}

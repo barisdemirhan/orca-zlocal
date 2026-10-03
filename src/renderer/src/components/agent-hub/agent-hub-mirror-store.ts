@@ -86,6 +86,28 @@ export function openAgentHubMirror(target: AgentHubPaneTarget): void {
   emit(showWindow(state.windows, state.chips, target))
 }
 
+/** Shows another pane in the same window (a worker of the same agent, or its dispatcher). */
+export function retargetAgentHubMirror(fromKey: string, target: AgentHubPaneTarget): void {
+  const toKey = keyOf(target)
+  const index = state.windows.findIndex((open) => keyOf(open) === fromKey)
+  if (index === -1 || toKey === fromKey) {
+    return
+  }
+  if (state.windows.some((open) => keyOf(open) === toKey)) {
+    // Already open in its own window: bring that one forward instead of doubling it.
+    emit(showWindow(state.windows, state.chips, target))
+    return
+  }
+  const origin = windowOrigins.get(fromKey)
+  if (origin) {
+    windowOrigins.set(toKey, origin)
+  }
+  emit({
+    windows: state.windows.map((open, position) => (position === index ? target : open)),
+    chips: state.chips.filter((chip) => keyOf(chip.target) !== toKey)
+  })
+}
+
 export function focusAgentHubMirror(key: string): void {
   const target = state.windows.find((open) => keyOf(open) === key)
   if (target && state.windows.at(-1) !== target) {

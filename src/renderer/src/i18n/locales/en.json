@@ -21720,7 +21720,9 @@
       "chipTooltip": "Click to restore · drag to move",
       "minimize": "Minimize",
       "inWorkspace": "This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.",
-      "inWorkspaceTitle": "You're in this workspace"
+      "inWorkspaceTitle": "You're in this workspace",
+      "renameHint": "Double-click to rename",
+      "rename": "Rename terminal"
     },
     "title": "Agents",
     "tab": {
@@ -21823,7 +21825,11 @@
       "subagentOne": "1 subagent",
       "subagentMany": "{{value0}} subagents"
     },
-    "statusBarMenuItem": "Agent Hub"
+    "statusBarMenuItem": "Agent Hub",
+    "dim": {
+      "off": "Stop dimming behind floating windows",
+      "on": "Dim everything behind floating windows"
+    }
   },
   "workspace": {
     "branchChoice": {

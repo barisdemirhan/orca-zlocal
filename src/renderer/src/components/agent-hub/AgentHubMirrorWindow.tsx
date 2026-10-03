@@ -14,6 +14,9 @@ import {
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
+import { AgentHubDimToggle } from './AgentHubDimToggle'
+import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
+import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import { nudgeMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
 import type { AgentHubAlert } from './agent-hub-alerts'
@@ -37,6 +40,8 @@ export function AgentHubMirrorWindow({
   surface,
   nudge,
   onNudged,
+  family,
+  onRetarget,
   onSlot,
   onFocus,
   onClose,
@@ -59,6 +64,9 @@ export function AgentHubMirrorWindow({
   /** An alert for this pane, shown by the window itself rather than by the hub. */
   nudge: AgentHubAlert | null
   onNudged: (id: string) => void
+  /** The dispatcher and its workers when this pane belongs to one; null otherwise. */
+  family: readonly AgentPaneThread[] | null
+  onRetarget: (thread: AgentPaneThread) => void
   /** Registers the box the real pane is moved into. */
   onSlot: (key: string, element: HTMLDivElement | null) => void
   onFocus: () => void
@@ -164,11 +172,12 @@ export function AgentHubMirrorWindow({
         <HubStateIndicator kind={kind} />
         <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
         <div className="min-w-0 flex-1 text-[12.5px]">
-          <div className="truncate font-semibold">{target.title}</div>
+          <AgentHubMirrorTitle target={target} />
           <div className="[&>span]:text-[11px]">
             <HubCrumb location={location} />
           </div>
         </div>
+        <AgentHubDimToggle appearance="mirror" />
         <button
           type="button"
           onClick={onReveal}
@@ -195,6 +204,9 @@ export function AgentHubMirrorWindow({
           <X className="size-3.5" />
         </button>
       </header>
+      {family ? (
+        <AgentHubMirrorFamilyTabs members={family} activeKey={mirrorKey} onSelect={onRetarget} />
+      ) : null}
       {surface === 'in-workspace' ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-popover/60 px-8 text-center">
           <PanelsTopLeft className="size-6 text-muted-foreground" />

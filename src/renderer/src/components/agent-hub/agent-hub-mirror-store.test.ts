@@ -9,7 +9,8 @@ import {
   readAgentHubMirrors,
   rememberAgentHubMirrorOrigin,
   resetAgentHubMirrorsForTest,
-  restoreAgentHubMirror
+  restoreAgentHubMirror,
+  retargetAgentHubMirror
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
@@ -79,5 +80,21 @@ describe('agent hub mirror store', () => {
     expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-a:leaf'])
     closeAgentHubMirror('tab-b:leaf')
     expect(windowKeys()).toEqual(['tab-a:leaf'])
+  })
+
+  it('switches a window to another pane in place, keeping its spot', () => {
+    rememberAgentHubMirrorOrigin('tab-a:leaf', { x: 50, y: 60 })
+    openAgentHubMirror(target('tab-a'))
+    openAgentHubMirror(target('tab-b'))
+    retargetAgentHubMirror('tab-a:leaf', target('tab-c'))
+
+    expect(windowKeys()).toEqual(['tab-c:leaf', 'tab-b:leaf'])
+    minimizeAgentHubMirror('tab-c:leaf')
+    expect(readAgentHubMirrors().chips).toMatchObject([{ x: 50, y: 60 }])
+
+    // A pane already in its own window is brought forward rather than opened twice.
+    openAgentHubMirror(target('tab-c'))
+    retargetAgentHubMirror('tab-b:leaf', target('tab-c'))
+    expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-c:leaf'])
   })
 })

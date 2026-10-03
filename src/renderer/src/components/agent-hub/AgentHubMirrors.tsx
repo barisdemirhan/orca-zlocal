@@ -8,11 +8,13 @@ import {
   setAgentHubTerminalPortals,
   type ActivityTerminalPortalTarget
 } from '../activity/activity-terminal-portal'
+import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubMirrorChip } from './AgentHubMirrorChip'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
 import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubLineage } from './agent-hub-lineage'
 import {
   closeAgentHubMirror,
   closeAgentHubMirrorChip,
@@ -20,11 +22,13 @@ import {
   minimizeAgentHubMirror,
   moveAgentHubMirrorChip,
   restoreAgentHubMirror,
+  retargetAgentHubMirror,
   useAgentHubMirrors
 } from './agent-hub-mirror-store'
 import {
   agentHubPaneTargetKey,
   agentHubTargetShowsThread,
+  paneTargetFromThread,
   type AgentHubLocation,
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
@@ -38,12 +42,14 @@ type MirrorSurface = 'portal' | 'in-workspace' | 'preview'
  */
 export function AgentHubMirrors({
   threads,
+  lineage,
   alerts,
   locationOf,
   onReveal,
   onOpenCard
 }: {
   threads: readonly AgentPaneThread[]
+  lineage: AgentHubLineage
   alerts: readonly AgentHubAlert[]
   locationOf: (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>) => AgentHubLocation
   onReveal: (target: AgentHubPaneTarget, thread: AgentPaneThread | null) => void
@@ -128,6 +134,16 @@ export function AgentHubMirrors({
   }
   const threadFor = (target: AgentHubPaneTarget): AgentPaneThread | null =>
     threads.find((thread) => agentHubTargetShowsThread(target, thread)) ?? null
+  // A worker's window lists its dispatcher's family too, so either way leads to the other.
+  const familyFor = (target: AgentHubPaneTarget): AgentPaneThread[] | null => {
+    if (!target.paneKey) {
+      return null
+    }
+    const rootKey = lineage.parentOf.get(target.paneKey) ?? target.paneKey
+    const workers = lineage.childrenOf(rootKey).workers
+    const root = threads.find((thread) => thread.paneKey === rootKey)
+    return root && workers.length > 0 ? [root, ...workers] : null
+  }
   // Why a fixed DOM order: bringing a window forward only changes its z-index; moving its node
   // mid-click would drop the terminal's focus and the pointer.
   const stackIndexOf = new Map(
@@ -158,6 +174,13 @@ export function AgentHubMirrors({
               null
             }
             onNudged={dismissAgentHubAlert}
+            family={familyFor(target)}
+            onRetarget={(member) =>
+              retargetAgentHubMirror(
+                key,
+                paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
+              )
+            }
             onSlot={onSlot}
             onFocus={() => focusAgentHubMirror(key)}
             onClose={() => closeAgentHubMirror(key)}

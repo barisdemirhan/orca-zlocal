@@ -7,12 +7,15 @@ import {
 import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-store'
 
 const CASCADE_STEP_PX = 28
+const MOVE_THRESHOLD_PX = 3
 
 // Why module scope: a new mirror opens where the user last left one this session.
 let lastGeometry: AgentHubMirrorGeometry | null = null
 
 type DragState = {
   mode: 'move' | 'resize'
+  /** A move captures the pointer only once it travels, so a double-click still reaches the title. */
+  captured: boolean
   pointerX: number
   pointerY: number
   start: AgentHubMirrorGeometry
@@ -80,10 +83,13 @@ export function useMirrorWindowGeometry(
         if (event.button !== 0 || (mode === 'move' && onButton)) {
           return
         }
-        event.preventDefault()
-        event.currentTarget.setPointerCapture(event.pointerId)
+        if (mode === 'resize') {
+          event.preventDefault()
+          event.currentTarget.setPointerCapture(event.pointerId)
+        }
         dragRef.current = {
           mode,
+          captured: mode === 'resize',
           pointerX: event.clientX,
           pointerY: event.clientY,
           start: geometry,
@@ -100,6 +106,13 @@ export function useMirrorWindowGeometry(
     }
     const dx = event.clientX - drag.pointerX
     const dy = event.clientY - drag.pointerY
+    if (!drag.captured) {
+      if (Math.hypot(dx, dy) < MOVE_THRESHOLD_PX) {
+        return
+      }
+      drag.captured = true
+      event.currentTarget.setPointerCapture(event.pointerId)
+    }
     if (drag.mode === 'move') {
       drag.next = clampAgentHubMirrorGeometry(
         { ...drag.start, x: drag.start.x + dx, y: drag.start.y + dy },
@@ -131,8 +144,10 @@ export function useMirrorWindowGeometry(
       return
     }
     dragRef.current = null
-    event.currentTarget.releasePointerCapture(event.pointerId)
-    setGeometry(drag.next)
+    if (drag.captured) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+      setGeometry(drag.next)
+    }
   }, [])
 
   return { geometry, sectionRef, beginDrag, onPointerMove, endDrag }
