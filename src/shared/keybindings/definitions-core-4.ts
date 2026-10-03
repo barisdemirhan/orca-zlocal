@@ -48,8 +48,9 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Global',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'agents', 'hub', 'inbox', 'status bar', 'toggle'],
-    // Why: Mod+Alt+A is the floating terminal; J keeps both hub chords on one key.
-    defaultBindings: platformBindings(['Mod+Alt+J']),
+    // Why: unbound like dashboard.toggle, so an experiment never claims a chord users already
+    // assigned; the hub's settings offer Mod+Alt+J / Mod+Alt+Shift+J in one click.
+    defaultBindings: platformBindings([]),
     allowInTerminal: true
   },
   {
@@ -58,7 +59,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Global',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'agents', 'hub', 'waiting', 'next', 'jump', 'question'],
-    defaultBindings: platformBindings(['Mod+Alt+Shift+J']),
+    defaultBindings: platformBindings([]),
     allowInTerminal: true
   },
   {

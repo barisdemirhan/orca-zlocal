@@ -4,7 +4,13 @@ import { agentHubIsApproval, agentHubStateSince, type AgentHubLists } from './ag
 
 export type AgentHubAlertKind = 'ask' | 'approval' | 'done'
 
-export type AgentHubAlert = { id: string; kind: AgentHubAlertKind; thread: AgentPaneThread }
+export type AgentHubAlert = {
+  id: string
+  kind: AgentHubAlertKind
+  thread: AgentPaneThread
+  /** A worker's result: shown only by that worker's minimized mirror, never by the hub. */
+  mirrorOnly?: true
+}
 
 /** One stamp per alertable state entry, so an agent that asks again alerts again. */
 function alertStamps(lists: AgentHubLists): AgentHubAlert[] {
@@ -18,6 +24,14 @@ function alertStamps(lists: AgentHubLists): AgentHubAlert[] {
       id: `${thread.paneKey}:done:${agentHubStateSince(thread)}`,
       kind: 'done',
       thread
+    })
+  }
+  for (const thread of lists.finishedWorkers) {
+    alerts.push({
+      id: `${thread.paneKey}:done:${agentHubStateSince(thread)}`,
+      kind: 'done',
+      thread,
+      mirrorOnly: true
     })
   }
   return alerts
@@ -49,12 +63,18 @@ export function diffAgentHubAlerts(
  */
 export function orcaNotificationWillSound(args: {
   notifications: Partial<NotificationSettings> | undefined
+  /** The OS refused the last banner (permission off, unsupported), so it played no sound. */
+  nativeBannerRefused: boolean
   windowFocused: boolean
   activeWorktreeId: string | null
   worktreeId: string
 }): boolean {
   const { notifications } = args
-  if (notifications?.enabled === false || notifications?.agentTaskComplete === false) {
+  if (
+    args.nativeBannerRefused ||
+    notifications?.enabled === false ||
+    notifications?.agentTaskComplete === false
+  ) {
     return false
   }
   const suppressed =

@@ -8010,7 +8010,13 @@
             "defaultTabCopy": "When nobody is waiting; a waiting agent always opens the Inbox.",
             "showShells": "List plain shells in All terminals",
             "clearFinished": "Clear finished agents from the Inbox after",
-            "clearFinishedCopy": "They stay unread in the Agents view; Never keeps them in the hub until you read them."
+            "clearFinishedCopy": "They stay unread in the Agents view; Never keeps them in the hub until you read them.",
+            "shortcutTaken": "{{value0}} is already used by {{value1}}. Pick other keys in Keyboard Shortcuts.",
+            "shortcuts": "Shortcuts",
+            "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting).",
+            "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}}",
+            "useSuggested": "Use these",
+            "editShortcuts": "Edit"
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -21708,11 +21714,7 @@
       "openInOrca": "Open in Orca",
       "close": "Close mirror",
       "noTerminal": "This pane has no live terminal right now.",
-      "answerPlaceholder": "Type 1–9 or an answer…",
-      "sendTo": "Send to @{{value0}}…",
-      "sendToShell": "Send to shell…",
       "connecting": "Connecting to the terminal…",
-      "liveMirror": "live mirror",
       "restore": "Restore {{value0}}",
       "chipTooltip": "Click to restore · drag to move",
       "minimize": "Minimize"
@@ -21777,7 +21779,8 @@
       "asking": "asking",
       "replyTo": "Reply to @{{value0}}…",
       "instead": "Tell it what to do instead…",
-      "jump": "Jump to terminal"
+      "jump": "Jump to terminal",
+      "insteadOrDeny": "Tell it what to do instead, or press Enter to just deny…"
     },
     "close": "Close (esc)",
     "state": {
@@ -21802,7 +21805,8 @@
       "mute": "Mute alerts for 2 hours",
       "position": "Position",
       "useStatusBar": "Show in the status bar instead",
-      "settings": "Agent Hub settings…"
+      "settings": "Agent Hub settings…",
+      "edgeTop": "Below the title bar"
     },
     "children": {
       "agentOne": "1 agent",

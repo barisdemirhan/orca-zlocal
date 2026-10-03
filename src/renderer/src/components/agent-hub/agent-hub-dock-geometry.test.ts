@@ -6,26 +6,53 @@ import {
 } from './agent-hub-dock-geometry'
 
 const viewport = { width: 1600, height: 1000 }
+const chrome = { statusBarHeight: 24, titleBarHeight: 36 }
 
 describe('agent hub dock geometry', () => {
   it('sits the bottom dock on the status bar, centred on its offset', () => {
-    expect(agentHubDockPlacement({ edge: 'bottom', offset: 0.5 }, viewport, 24)).toEqual({
+    expect(agentHubDockPlacement({ edge: 'bottom', offset: 0.5 }, viewport, chrome)).toEqual({
       left: 800,
-      bottom: 24,
+      bottom: 23,
       transform: 'translateX(-50%)'
     })
   })
 
   it('keeps side docks clear of the title bar and status bar', () => {
-    expect(agentHubDockPlacement({ edge: 'right', offset: 0 }, viewport, 24)).toEqual({
+    expect(agentHubDockPlacement({ edge: 'right', offset: 0 }, viewport, chrome)).toEqual({
       right: 0,
       top: 120,
       transform: 'translateY(-50%)'
     })
-    expect(agentHubDockPlacement({ edge: 'left', offset: 1 }, viewport, 24)).toMatchObject({
+    expect(agentHubDockPlacement({ edge: 'left', offset: 1 }, viewport, chrome)).toMatchObject({
       left: 0,
       top: 880
     })
+  })
+
+  it('hangs the top dock from the title bar, centred', () => {
+    expect(agentHubDockPlacement({ edge: 'top', offset: 0.5 }, viewport, chrome)).toEqual({
+      left: 800,
+      top: 35,
+      transform: 'translateX(-50%)'
+    })
+    expect(agentHubDockDropPosition({ x: 800, y: 12 }, viewport)).toEqual({
+      edge: 'top',
+      offset: 0.5
+    })
+    expect(agentHubDockPopoverSide('top')).toBe('bottom')
+  })
+
+  it('pulls an expanded dock near an edge fully on screen', () => {
+    const narrow = { width: 1000, height: 800 }
+    expect(agentHubDockPlacement({ edge: 'bottom', offset: 0.06 }, narrow, chrome, 300).left).toBe(
+      158
+    )
+    expect(agentHubDockPlacement({ edge: 'bottom', offset: 0.94 }, narrow, chrome, 300).left).toBe(
+      842
+    )
+    expect(agentHubDockPlacement({ edge: 'right', offset: 0.12 }, narrow, chrome, 260).top).toBe(
+      138
+    )
   })
 
   it('drops onto the nearest edge and remembers where along it', () => {

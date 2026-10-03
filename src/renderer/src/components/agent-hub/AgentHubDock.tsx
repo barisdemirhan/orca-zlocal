@@ -1,128 +1,38 @@
-import { useRef, useState, useSyncExternalStore } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { BellOff, CornerDownRight, Inbox, SquareTerminal } from 'lucide-react'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubDockPosition } from '../../../../shared/agent-hub-settings'
-import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import {
+  STATUS_BAR_RESERVE_HEIGHT,
+  WORKSPACE_TOP_CHROME_HEIGHT
+} from '../sidebar/workspace-chrome-metrics'
 import { AgentHubDockMenu } from './AgentHubDockMenu'
+import {
+  DOCK_BUTTON,
+  DOCK_COUNT_BUTTON,
+  DockButton,
+  DockDots,
+  NotchCorners
+} from './AgentHubDockParts'
 import {
   agentHubDockDropPosition,
   agentHubDockPlacement,
-  agentHubDockPopoverSide
+  agentHubDockPopoverSide,
+  isHorizontalAgentHubDock
 } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
 import type { AgentHubCounts } from './agent-hub-lists'
+import { useDockBarMotion } from './use-dock-bar-motion'
+import { useViewportSize } from './use-viewport-size'
 
 // Leaving the dock for a moment (to reach the popover) must not snap it shut.
 const COLLAPSE_DELAY_MS = 220
 const DRAG_THRESHOLD_PX = 5
-
-const DOCK_BUTTON =
-  'relative grid size-8 shrink-0 place-items-center rounded-full text-background/80 hover:bg-background/15 hover:text-background disabled:pointer-events-none disabled:opacity-40 dark:text-foreground/80 dark:hover:bg-foreground/15 dark:hover:text-foreground'
-const DOCK_COUNT_BUTTON =
-  'flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 font-mono text-[11px] text-background/80 hover:bg-background/15 hover:text-background dark:text-foreground/80 dark:hover:bg-foreground/15 dark:hover:text-foreground'
-
-function subscribeViewport(listener: () => void): () => void {
-  window.addEventListener('resize', listener)
-  return () => window.removeEventListener('resize', listener)
-}
-const viewportKey = (): string => `${window.innerWidth}x${window.innerHeight}`
-
-function useViewportSize(): { width: number; height: number } {
-  const key = useSyncExternalStore(subscribeViewport, viewportKey)
-  const [width, height] = key.split('x').map(Number)
-  return { width: width ?? 0, height: height ?? 0 }
-}
-
-function DockDots({ counts }: { counts: AgentHubCounts }): React.JSX.Element {
-  const idle = counts.working === 0 && counts.needsYou === 0 && counts.finished === 0
-  return (
-    <>
-      {counts.working > 0 ? <AgentWorkingSpinner className="size-3 shrink-0" /> : null}
-      {Array.from({ length: Math.min(counts.needsYou, 3) }, (_, index) => (
-        <span
-          key={index}
-          className="size-2.5 shrink-0 animate-pulse rounded-full bg-agent-question"
-        />
-      ))}
-      {counts.finished > 0 ? (
-        <span className="size-2.5 shrink-0 rounded-full bg-status-success" />
-      ) : null}
-      {idle ? (
-        <span className="size-2.5 shrink-0 rounded-full bg-background/35 dark:bg-foreground/30" />
-      ) : null}
-    </>
-  )
-}
-
-function DockButton({
-  label,
-  side,
-  className,
-  disabled,
-  onClick,
-  children
-}: {
-  label: string
-  side: 'top' | 'left' | 'right'
-  className: string
-  disabled?: boolean
-  onClick: () => void
-  children: React.ReactNode
-}): React.JSX.Element {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          disabled={disabled}
-          onClick={onClick}
-          className={className}
-        >
-          {children}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side={side} sideOffset={8}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
-
-/** Concave fillets where the notch meets the status bar or the window edge. */
-function NotchCorners({ edge }: { edge: AgentHubDockPosition['edge'] }): React.JSX.Element {
-  const fill = (at: string): React.CSSProperties => ({
-    background: `radial-gradient(circle at ${at}, transparent 9.5px, var(--hub-notch) 10px)`
-  })
-  if (edge === 'bottom') {
-    return (
-      <>
-        <span aria-hidden className="absolute bottom-0 -left-2.5 size-2.5" style={fill('0 0')} />
-        <span
-          aria-hidden
-          className="absolute -right-2.5 bottom-0 size-2.5"
-          style={fill('100% 0')}
-        />
-      </>
-    )
-  }
-  return edge === 'right' ? (
-    <>
-      <span aria-hidden className="absolute -top-2.5 right-0 size-2.5" style={fill('0 0')} />
-      <span aria-hidden className="absolute right-0 -bottom-2.5 size-2.5" style={fill('0 100%')} />
-    </>
-  ) : (
-    <>
-      <span aria-hidden className="absolute -top-2.5 left-0 size-2.5" style={fill('100% 0')} />
-      <span
-        aria-hidden
-        className="absolute -bottom-2.5 left-0 size-2.5"
-        style={fill('100% 100%')}
-      />
-    </>
-  )
+const DOCK_CHROME = {
+  statusBarHeight: STATUS_BAR_RESERVE_HEIGHT,
+  titleBarHeight: WORKSPACE_TOP_CHROME_HEIGHT
 }
 
 /**
@@ -151,11 +61,23 @@ export function AgentHubDock({
   const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(null)
   const pointerRef = useRef<{ x: number; y: number; dragging: boolean } | null>(null)
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const barRef = useRef<HTMLDivElement>(null)
   const expanded = (hovered || menuOpen) && dragPoint === null
   const side = agentHubDockPopoverSide(position.edge)
+  // Why measured: the hover bar is far longer than the notch, and must not run off an edge.
+  const extent = useDockBarMotion(barRef, isHorizontalAgentHubDock(position.edge), expanded)
   const placement = dragPoint
     ? { left: dragPoint.x, top: dragPoint.y, transform: 'translate(-50%, -50%)' }
-    : agentHubDockPlacement(position, viewport, STATUS_BAR_RESERVE_HEIGHT)
+    : agentHubDockPlacement(position, viewport, DOCK_CHROME, extent)
+
+  useLayoutEffect(
+    () => () => {
+      if (collapseTimerRef.current) {
+        clearTimeout(collapseTimerRef.current)
+      }
+    },
+    []
+  )
 
   const onTarget = (target: EventTarget): boolean =>
     target instanceof Element && target.closest('button, [role="menu"]') !== null
@@ -163,12 +85,15 @@ export function AgentHubDock({
   return (
     <div
       {...anchorProps}
+      // Why: the dock portals out but React bubbles its right-click to the status bar's menu.
+      {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       data-agent-hub-dock
       data-edge={position.edge}
       data-expanded={expanded}
       data-dragging={dragPoint !== null}
       style={placement}
-      className="group/dock fixed z-[44] touch-none select-none [--hub-notch:var(--foreground)] dark:[--hub-notch:var(--background)]"
+      // Why the bar colour: the notch reads as part of the status bar or title bar it grows from.
+      className="group/dock fixed z-[44] touch-none select-none [-webkit-app-region:no-drag] [--hub-notch:var(--bg-titlebar,var(--card))]"
       onPointerEnter={() => {
         if (collapseTimerRef.current) {
           clearTimeout(collapseTimerRef.current)
@@ -211,13 +136,14 @@ export function AgentHubDock({
         }
       }}
     >
+      {dragPoint === null ? <NotchCorners edge={position.edge} /> : null}
       <div
+        ref={barRef}
         data-edge={position.edge}
         data-expanded={expanded}
         data-dragging={dragPoint !== null}
-        className="relative flex cursor-pointer items-center justify-center gap-2 bg-[var(--hub-notch)] text-background shadow-floating group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[edge=bottom]:h-[26px] data-[edge=bottom]:flex-row data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:px-3.5 data-[edge=left]:w-[26px] data-[edge=left]:flex-col data-[edge=left]:rounded-r-[14px] data-[edge=left]:py-3.5 data-[edge=right]:w-[26px] data-[edge=right]:flex-col data-[edge=right]:rounded-l-[14px] data-[edge=right]:py-3.5 dark:text-foreground data-[edge=bottom]:data-[expanded=true]:h-11 data-[edge=bottom]:data-[expanded=true]:gap-1 data-[edge=bottom]:data-[expanded=true]:px-2 data-[edge=left]:data-[expanded=true]:w-11 data-[edge=left]:data-[expanded=true]:gap-1 data-[edge=left]:data-[expanded=true]:py-2 data-[edge=right]:data-[expanded=true]:w-11 data-[edge=right]:data-[expanded=true]:gap-1 data-[edge=right]:data-[expanded=true]:py-2"
+        className="relative flex cursor-pointer items-center justify-center gap-2 overflow-hidden border border-border bg-[var(--hub-notch)] text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-[26px] data-[edge=bottom]:flex-row data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:border-b-0 data-[edge=bottom]:px-3.5 data-[edge=left]:w-[26px] data-[edge=left]:flex-col data-[edge=left]:rounded-r-[14px] data-[edge=left]:border-l-0 data-[edge=left]:py-3.5 data-[edge=right]:w-[26px] data-[edge=right]:flex-col data-[edge=right]:rounded-l-[14px] data-[edge=right]:border-r-0 data-[edge=right]:py-3.5 data-[edge=top]:h-[26px] data-[edge=top]:flex-row data-[edge=top]:rounded-b-[14px] data-[edge=top]:border-t-0 data-[edge=top]:px-3.5 data-[edge=bottom]:data-[expanded=true]:h-11 data-[edge=bottom]:data-[expanded=true]:gap-1 data-[edge=bottom]:data-[expanded=true]:px-2 data-[edge=left]:data-[expanded=true]:w-11 data-[edge=left]:data-[expanded=true]:gap-1 data-[edge=left]:data-[expanded=true]:py-2 data-[edge=right]:data-[expanded=true]:w-11 data-[edge=right]:data-[expanded=true]:gap-1 data-[edge=right]:data-[expanded=true]:py-2 data-[edge=top]:data-[expanded=true]:h-11 data-[edge=top]:data-[expanded=true]:gap-1 data-[edge=top]:data-[expanded=true]:px-2"
       >
-        {dragPoint === null ? <NotchCorners edge={position.edge} /> : null}
         {expanded ? (
           <>
             <DockButton
@@ -242,7 +168,11 @@ export function AgentHubDock({
               className={DOCK_COUNT_BUTTON}
               onClick={() => onOpenTab('running')}
             >
-              <AgentWorkingSpinner className="size-3" />
+              {counts.working > 0 ? (
+                <AgentWorkingSpinner className="size-3" />
+              ) : (
+                <span className="size-2 rounded-full bg-muted-foreground/40" />
+              )}
               {counts.working}
             </DockButton>
             <DockButton

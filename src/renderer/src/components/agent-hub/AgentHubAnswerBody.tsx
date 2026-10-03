@@ -75,17 +75,22 @@ export function questionOptions(
 export function HubReplyField({
   placeholder,
   disabled,
+  allowEmpty = false,
+  inputRef,
   onSend
 }: {
   placeholder: string
   disabled: boolean
+  /** Enter on an empty field still sends (the deny step's plain "No"). */
+  allowEmpty?: boolean
+  inputRef?: React.Ref<HTMLInputElement>
   onSend: (text: string) => void
 }): React.JSX.Element {
   const [value, setValue] = useState('')
   const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
   const submit = (): void => {
     const text = value.trim()
-    if (text && !disabled) {
+    if ((text || allowEmpty) && !disabled) {
       onSend(text)
       setValue('')
     }
@@ -99,6 +104,7 @@ export function HubReplyField({
       }}
     >
       <input
+        ref={inputRef}
         value={value}
         disabled={disabled}
         onChange={(event) => setValue(event.target.value)}
@@ -124,7 +130,8 @@ export function HubReplyField({
       <button
         type="submit"
         tabIndex={-1}
-        disabled={disabled || !value.trim()}
+        // Why enabled when empty is allowed: a disabled default button blocks Enter submission.
+        disabled={disabled || (!allowEmpty && !value.trim())}
         aria-label={translate('agentHub.card.send', 'Send')}
         className="grid size-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground disabled:opacity-50"
       >

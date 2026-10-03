@@ -1,7 +1,7 @@
-import { ChevronDown, ChevronRight, Folder, GitBranch, Search } from 'lucide-react'
+import { Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
-import { HubChip, HubCounts, HubKeys } from './AgentHubAtoms'
+import { HubChip, HubCollapse, HubCounts, HubFoldChevron, HubKeys } from './AgentHubAtoms'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
 import { agentHubStateWord } from './agent-hub-copy'
@@ -189,36 +189,32 @@ export function AgentHubTerminalTree({
               tabIndex={-1}
               aria-expanded={!collapsed}
               onClick={() => onToggleGroup(group, !collapsed)}
-              className="flex w-full items-center gap-[7px] rounded-lg px-2 pt-[7px] pb-[5px] text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.025]"
+              className="flex w-full items-center gap-[7px] rounded-[10px] bg-foreground/[0.03] px-2 py-[7px] text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.05]"
             >
-              {collapsed ? (
-                <ChevronRight className="size-[13px] text-muted-foreground/70" />
-              ) : (
-                <ChevronDown className="size-[13px] text-muted-foreground/70" />
-              )}
+              <HubFoldChevron open={!collapsed} className="size-[13px] text-muted-foreground/70" />
               <span className="min-w-0 truncate">{group.label}</span>
               <GroupSummary group={group} />
             </button>
-            {collapsed
-              ? null
-              : group.workspaces.map((workspace) => (
-                  <div key={workspace.key}>
-                    <div className="flex items-center gap-[5px] pt-[5px] pr-2 pb-[3px] pl-7 text-[11.5px] text-muted-foreground/70">
-                      <Folder className="size-3 shrink-0" />
-                      <span className="truncate">{workspace.projectLabel}</span>
-                      {workspace.workspaceLabel ? (
-                        <>
-                          <span>·</span>
-                          <GitBranch className="size-[11px] shrink-0" />
-                          <span className="truncate">{workspace.workspaceLabel}</span>
-                        </>
-                      ) : null}
-                    </div>
-                    {workspace.rows.map((row) => (
-                      <TreeRow key={row.key} row={row} nested={false} context={rowContext} />
-                    ))}
+            <HubCollapse open={!collapsed}>
+              {group.workspaces.map((workspace) => (
+                <div key={workspace.key}>
+                  <div className="flex items-center gap-[5px] pt-[5px] pr-2 pb-[3px] pl-7 text-[11.5px] text-muted-foreground/70">
+                    <Folder className="size-3 shrink-0" />
+                    <span className="truncate">{workspace.projectLabel}</span>
+                    {workspace.workspaceLabel ? (
+                      <>
+                        <span>·</span>
+                        <GitBranch className="size-[11px] shrink-0" />
+                        <span className="truncate">{workspace.workspaceLabel}</span>
+                      </>
+                    ) : null}
                   </div>
-                ))}
+                  {workspace.rows.map((row) => (
+                    <TreeRow key={row.key} row={row} nested={false} context={rowContext} />
+                  ))}
+                </div>
+              ))}
+            </HubCollapse>
           </section>
         )
       })}

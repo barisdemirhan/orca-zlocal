@@ -7,6 +7,7 @@ import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-p
 import { HubAvatar, HubCrumb } from './AgentHubAtoms'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubLocation } from './agent-hub-pane-target'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const ALERT_VISIBLE_MS = 7000
 const GAP = 10
@@ -119,6 +120,7 @@ export function AgentHubAlertBubble({
       ref={bubbleRef}
       role="status"
       data-agent-hub-alert={alert.kind}
+      {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       className="fixed z-[47] w-[320px] animate-in rounded-[14px] border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating fade-in-0 zoom-in-95"
       onMouseEnter={stopTimer}
       onMouseLeave={startTimer}

@@ -32,6 +32,14 @@ describe('agent hub mirror geometry', () => {
         { x: 0, y: 0, width: 5000, height: 5000 },
         { width: 1000, height: 700 }
       )
-    ).toMatchObject({ width: 968, height: 668 })
+    ).toMatchObject({ width: 968, height: 644 })
+  })
+
+  it('stops a dragged window above the status bar', () => {
+    const geometry = clampAgentHubMirrorGeometry(
+      { x: 0, y: 800, width: 640, height: 300 },
+      { width: 1440, height: 900 }
+    )
+    expect(geometry.y + geometry.height).toBe(900 - 24)
   })
 })

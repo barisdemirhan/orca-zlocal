@@ -16,13 +16,16 @@ import {
   type AgentHubDockEdge
 } from '../../../../shared/agent-hub-settings'
 import { clearAgentHubAlerts } from './agent-hub-alert-queue'
+import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
 
-const EDGES: readonly AgentHubDockEdge[] = ['bottom', 'left', 'right']
+const EDGES: readonly AgentHubDockEdge[] = ['bottom', 'top', 'left', 'right']
 
 function edgeLabel(edge: AgentHubDockEdge): string {
   switch (edge) {
     case 'bottom':
       return translate('agentHub.dock.edgeBottom', 'Above the status bar')
+    case 'top':
+      return translate('agentHub.dock.edgeTop', 'Below the title bar')
     case 'left':
       return translate('agentHub.dock.edgeLeft', 'Left edge')
     case 'right':
@@ -45,7 +48,7 @@ export function AgentHubDockMenu({
   const updateSettings = useAppStore((s) => s.updateSettings)
   const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
   const openSettingsPage = useAppStore((s) => s.openSettingsPage)
-  const side = edge === 'bottom' ? 'top' : edge === 'right' ? 'left' : 'right'
+  const side = agentHubDockPopoverSide(edge)
   return (
     <DropdownMenu modal={false} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>

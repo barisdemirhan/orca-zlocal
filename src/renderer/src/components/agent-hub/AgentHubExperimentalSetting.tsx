@@ -17,6 +17,7 @@ import {
   SettingsSwitchRow
 } from '../settings/SettingsFormControls'
 import { getExperimentalSearchEntry } from '../settings/experimental-search'
+import { AgentHubShortcutSetting } from './AgentHubShortcutSetting'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 
 function clearAfterLabel(minutes: number): string {
@@ -77,6 +78,7 @@ function AgentHubOptions({
           />
         }
       />
+      <AgentHubShortcutSetting />
       {preferences.placement === 'dock' ? (
         <SettingsSwitchRow
           label={translate(

@@ -8,6 +8,8 @@ export type AgentHubSection = 'needsYou' | 'working' | 'finished'
 export type AgentHubLists = Record<AgentHubSection, AgentPaneThread[]> & {
   /** Working workers listed under their working dispatcher instead of as rows. */
   nestedWorking: number
+  /** Unread results of workers: kept out of the Inbox, but a minimized mirror still announces them. */
+  finishedWorkers: AgentPaneThread[]
 }
 
 export type AgentHubCounts = Record<AgentHubSection, number>
@@ -60,7 +62,13 @@ export function buildAgentHubLists(
     parentOf?: ReadonlyMap<string, string>
   } = {}
 ): AgentHubLists {
-  const lists: AgentHubLists = { needsYou: [], working: [], finished: [], nestedWorking: 0 }
+  const lists: AgentHubLists = {
+    needsYou: [],
+    working: [],
+    finished: [],
+    nestedWorking: 0,
+    finishedWorkers: []
+  }
   const { now = 0, finishedMaxAgeMs = 0, parentOf } = options
   const sections = new Map(threads.map((thread) => [thread.paneKey, agentHubSection(thread)]))
   for (const thread of threads) {
@@ -72,6 +80,7 @@ export function buildAgentHubLists(
     }
     // A worker reports to its dispatcher; its result stays under that agent in All terminals.
     if (section === 'finished' && parentPaneKey) {
+      lists.finishedWorkers.push(thread)
       continue
     }
     // "Clear finished after": an old result leaves the hub but stays unread elsewhere.

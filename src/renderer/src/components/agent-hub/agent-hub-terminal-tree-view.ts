@@ -15,6 +15,9 @@ function rowSearchText(
     group.label,
     workspace.projectLabel,
     workspace.workspaceLabel ?? '',
+    // A worker nested under a dispatcher elsewhere still matches its own project and branch.
+    row.repo?.displayName ?? '',
+    row.worktree.displayName || row.worktree.branch || '',
     row.thread ? row.thread.agentType : 'shell'
   ]
     .join(' ')

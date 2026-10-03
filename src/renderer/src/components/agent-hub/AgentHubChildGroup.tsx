@@ -1,9 +1,8 @@
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import type { AgentChildRowModel } from '../../../../shared/agent-child-row-model'
 import { agentChildRowText } from '../agent-child-row-text'
-import { HubChip, HubCounts, HubStateIndicator } from './AgentHubAtoms'
+import { HubChip, HubCollapse, HubCounts, HubFoldChevron, HubStateIndicator } from './AgentHubAtoms'
 import { toggleAgentHubChildren } from './agent-hub-child-expansion'
 import {
   agentHubChildCounts,
@@ -103,20 +102,16 @@ export function AgentHubChildGroup({
         <span className="flex items-center gap-[9px] font-mono text-[11px] text-muted-foreground/70">
           <HubCounts counts={agentHubChildCounts(childAgents)} />
         </span>
-        {expanded ? (
-          <ChevronDown className="size-3.5 shrink-0" />
-        ) : (
-          <ChevronRight className="size-3.5 shrink-0" />
-        )}
+        <HubFoldChevron open={expanded} className="size-3.5" />
       </button>
-      {expanded ? (
+      <HubCollapse open={expanded}>
         <div className="mt-0.5 ml-1.5 border-l border-foreground/[0.08] pl-1">
           {children}
           {subagents.map((row) => (
             <SubagentRow key={row.id} row={row} now={now} onOpen={onOpenParent} />
           ))}
         </div>
-      ) : null}
+      </HubCollapse>
     </div>
   )
 }

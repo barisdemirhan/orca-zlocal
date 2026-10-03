@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { useNow } from '@/hooks/use-now'
-import { useShortcutLabel } from '@/hooks/useShortcutLabel'
+import { formatOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import {
   Popover,
   PopoverAnchor,
@@ -123,7 +123,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const groupNameById = useGroupNameById()
-  const shortcut = useShortcutLabel('agentHub.toggle')
+  const keybindings = useAppStore((s) => s.keybindings)
+  const shortcut = formatOptionalShortcutLabel('agentHub.toggle', keybindings)
   const [open, setOpen] = useState(false)
   const [request, setRequest] = useState<OpenRequest>({ tab: 'inbox', paneKey: null, seq: 0 })
   const panelRootRef = useRef<HTMLDivElement>(null)
@@ -327,7 +328,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
               </PopoverTrigger>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={6}>
-              {translate('agentHub.title', 'Agents')} ({shortcut})
+              {translate('agentHub.title', 'Agents')}
+              {shortcut ? ` (${shortcut})` : null}
             </TooltipContent>
           </Tooltip>
         )}

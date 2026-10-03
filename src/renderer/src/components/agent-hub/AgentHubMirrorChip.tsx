@@ -11,23 +11,25 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
 import type { AgentHubLocation } from './agent-hub-pane-target'
+import { useViewportSize } from './use-viewport-size'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const DRAG_THRESHOLD_PX = 4
 // Keeps a chip reachable after a window resize; the status bar owns the bottom strip.
 const EDGE_GAP = 8
 const BOTTOM_RESERVE = 32
-const ESTIMATED_CHIP_WIDTH = 200
+// The chip's max width, so even a long title keeps its close button on screen.
+const CHIP_MAX_WIDTH = 240
 const CHIP_HEIGHT = 32
 // Near the top, the alert hangs below the chip instead of off screen.
 const BUBBLE_FLIP_Y = 160
 
-function clampChip(position: { x: number; y: number }): { x: number; y: number } {
+type Point = { x: number; y: number }
+
+function clampChip(position: Point, viewport: { width: number; height: number }): Point {
   return {
-    x: Math.min(
-      Math.max(EDGE_GAP, position.x),
-      window.innerWidth - ESTIMATED_CHIP_WIDTH - EDGE_GAP
-    ),
-    y: Math.min(Math.max(EDGE_GAP, position.y), window.innerHeight - CHIP_HEIGHT - BOTTOM_RESERVE)
+    x: Math.min(Math.max(EDGE_GAP, position.x), viewport.width - CHIP_MAX_WIDTH - EDGE_GAP),
+    y: Math.min(Math.max(EDGE_GAP, position.y), viewport.height - CHIP_HEIGHT - BOTTOM_RESERVE)
   }
 }
 
@@ -54,9 +56,11 @@ export function AgentHubMirrorChip({
   onDismissAlert: (id: string) => void
 }): React.JSX.Element {
   const chipRef = useRef<HTMLDivElement>(null)
-  const pointerRef = useRef<{ x: number; y: number; dragging: boolean } | null>(null)
-  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null)
-  const position = clampChip(dragPosition ?? chip)
+  const pointerRef = useRef<{ x: number; y: number; dragging: boolean; origin: Point } | null>(null)
+  const [dragPosition, setDragPosition] = useState<Point | null>(null)
+  const viewport = useViewportSize()
+  // Why re-clamped on every render: a window resize must not strand the chip off screen.
+  const position = clampChip(dragPosition ?? chip, viewport)
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
   const agent = agentTypeToIconAgent(chip.target.agentType)
 
@@ -72,10 +76,11 @@ export function AgentHubMirrorChip({
               value0: chip.target.title
             })}
             data-agent-hub-mirror-chip
+            {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
             data-kind={kind}
             style={{ left: position.x, top: position.y }}
             // Why z-[46]: the mirror window's own layer, over the floating workspace panel.
-            className="group/chip fixed z-[46] flex h-8 max-w-[240px] cursor-pointer touch-none items-center gap-2 rounded-full border border-foreground/25 bg-popover pr-1 pl-2.5 text-popover-foreground shadow-floating select-none data-[kind=ask]:border-agent-question/60"
+            className="group/chip fixed z-[46] flex h-8 max-w-[240px] animate-in cursor-pointer touch-none items-center gap-2 rounded-full border border-foreground/25 bg-popover pr-1 pl-2.5 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-90 data-[kind=ask]:border-agent-question/60 motion-reduce:animate-none"
             onPointerDown={(event) => {
               if (
                 event.button !== 0 ||
@@ -84,7 +89,13 @@ export function AgentHubMirrorChip({
                 return
               }
               event.currentTarget.setPointerCapture(event.pointerId)
-              pointerRef.current = { x: event.clientX, y: event.clientY, dragging: false }
+              pointerRef.current = {
+                x: event.clientX,
+                y: event.clientY,
+                dragging: false,
+                // Why the shown spot: a resize may have re-clamped it away from the stored one.
+                origin: position
+              }
             }}
             onPointerMove={(event) => {
               const pointer = pointerRef.current
@@ -95,7 +106,7 @@ export function AgentHubMirrorChip({
               const dy = event.clientY - pointer.y
               if (pointer.dragging || Math.hypot(dx, dy) > DRAG_THRESHOLD_PX) {
                 pointer.dragging = true
-                setDragPosition({ x: chip.x + dx, y: chip.y + dy })
+                setDragPosition({ x: pointer.origin.x + dx, y: pointer.origin.y + dy })
               }
             }}
             onPointerUp={(event) => {
@@ -107,10 +118,13 @@ export function AgentHubMirrorChip({
               event.currentTarget.releasePointerCapture(event.pointerId)
               if (pointer.dragging) {
                 onMove(
-                  clampChip({
-                    x: chip.x + event.clientX - pointer.x,
-                    y: chip.y + event.clientY - pointer.y
-                  })
+                  clampChip(
+                    {
+                      x: pointer.origin.x + event.clientX - pointer.x,
+                      y: pointer.origin.y + event.clientY - pointer.y
+                    },
+                    viewport
+                  )
                 )
                 setDragPosition(null)
               } else {

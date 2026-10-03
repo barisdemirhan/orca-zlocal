@@ -1,7 +1,7 @@
 /** Where the Agent Hub lives: a draggable dock on a window edge, or a status-bar item. */
 export type AgentHubPlacement = 'dock' | 'status-bar'
 
-export type AgentHubDockEdge = 'bottom' | 'left' | 'right'
+export type AgentHubDockEdge = 'bottom' | 'top' | 'left' | 'right'
 
 /** The dock's edge and its spot along that edge, 0 (start) to 1 (end). */
 export type AgentHubDockPosition = { edge: AgentHubDockEdge; offset: number }
@@ -52,7 +52,7 @@ export function normalizeAgentHubDockPosition(value: unknown): AgentHubDockPosit
   }
   const edge = 'edge' in value ? value.edge : undefined
   const offset = 'offset' in value ? value.offset : undefined
-  if (edge !== 'bottom' && edge !== 'left' && edge !== 'right') {
+  if (edge !== 'bottom' && edge !== 'top' && edge !== 'left' && edge !== 'right') {
     return DEFAULT_AGENT_HUB_DOCK_POSITION
   }
   return {

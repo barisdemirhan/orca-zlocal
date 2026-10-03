@@ -1,3 +1,5 @@
+import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
+
 export type AgentHubMirrorGeometry = { x: number; y: number; width: number; height: number }
 
 const MIN_WIDTH = 420
@@ -31,13 +33,15 @@ export function clampAgentHubMirrorGeometry(
   geometry: AgentHubMirrorGeometry,
   viewport: Viewport
 ): AgentHubMirrorGeometry {
+  // Why the reserve: a mirror dragged down must not cover the status bar's controls.
+  const usableHeight = viewport.height - STATUS_BAR_RESERVE_HEIGHT
   const maxWidth = Math.max(MIN_WIDTH, viewport.width - EDGE_GAP * 2)
-  const maxHeight = Math.max(MIN_HEIGHT, viewport.height - EDGE_GAP * 2)
+  const maxHeight = Math.max(MIN_HEIGHT, usableHeight - EDGE_GAP * 2)
   const width = Math.min(maxWidth, Math.max(MIN_WIDTH, geometry.width))
   const height = Math.min(maxHeight, Math.max(MIN_HEIGHT, geometry.height))
   return {
     x: Math.min(Math.max(0, geometry.x), Math.max(0, viewport.width - width)),
-    y: Math.min(Math.max(0, geometry.y), Math.max(0, viewport.height - height)),
+    y: Math.min(Math.max(0, geometry.y), Math.max(0, usableHeight - height)),
     width,
     height
   }

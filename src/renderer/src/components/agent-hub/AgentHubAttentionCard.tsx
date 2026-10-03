@@ -12,6 +12,7 @@ import {
   type NativeChatInteractiveCardControl
 } from '../native-chat/NativeChatInteractiveCard'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
+import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
 import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
 import { HubAvatar, HubChip, HubCrumb, HubKeys } from './AgentHubAtoms'
 import {
@@ -23,7 +24,7 @@ import {
 } from './AgentHubAnswerBody'
 import { agentHubAlwaysAllowKey, readApprovalTool } from './agent-hub-approval'
 import { agentHubStateSince } from './agent-hub-lists'
-import type { AgentHubLocation } from './agent-hub-pane-target'
+import { resolveAgentHubPtyId, type AgentHubLocation } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 
 // Why a pause: the agent needs a beat to leave its approval prompt before the instruction lands.
@@ -95,9 +96,14 @@ export function AgentHubAttentionCard({
   const send = useNativeChatInteractiveSend(tabId, paneKey, ptyId, thread.agentType)
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
   const [chosen, setChosen] = useState<number | null>(null)
+  // The deny option first asks for an instruction; Enter on an empty field denies plainly.
+  const [instructing, setInstructing] = useState(false)
+  const replyRef = useRef<HTMLInputElement>(null)
   const copy = activityThreadRowCopy(thread)
   const agentLabel = formatAgentTypeLabel(thread.agentType)
-  const canAnswer = card !== null && ptyId !== null
+  // Why canSend: a mobile-owned PTY refuses desktop input, as in the chat composer.
+  const canSend = useNativeChatCanSend(ptyId)
+  const canAnswer = card !== null && ptyId !== null && canSend
 
   const question =
     card?.kind === 'question' && card.prompt.questions.length === 1
@@ -141,6 +147,27 @@ export function AgentHubAttentionCard({
       ]
     : []
 
+  const denyIndex = approvalOptions.length - 1
+
+  const submitAnswer = (
+    selections: Parameters<typeof send.sendAnswer>[1],
+    marker: number
+  ): void => {
+    if (card?.kind !== 'question') {
+      return
+    }
+    setChosen(marker)
+    // A refused or lost delivery hands the card back for another try.
+    const result = send.sendAnswer(card.prompt, selections, (delivered) => {
+      if (!delivered) {
+        setChosen(null)
+      }
+    })
+    if (result.settleAfterMs <= 0) {
+      setChosen(null)
+    }
+  }
+
   const choose = (index: number): boolean => {
     if (!canAnswer || chosen !== null) {
       return false
@@ -149,14 +176,18 @@ export function AgentHubAttentionCard({
       if (!simpleQuestion.options[index]) {
         return false
       }
-      setChosen(index)
-      send.sendAnswer(card.prompt, [{ indices: [index] }])
+      submitAnswer([{ indices: [index] }], index)
       return true
     }
     const option = approvalOptions[index]
     if (approval) {
       if (!option) {
         return false
+      }
+      if (option.deny && !instructing) {
+        setInstructing(true)
+        requestAnimationFrame(() => replyRef.current?.focus())
+        return true
       }
       setChosen(index)
       if (option.deny) {
@@ -175,15 +206,24 @@ export function AgentHubAttentionCard({
       return
     }
     if (simpleQuestion && card?.kind === 'question') {
-      setChosen(-1)
-      send.sendAnswer(card.prompt, [{ indices: [], other: text }])
+      submitAnswer([{ indices: [], other: text }], -1)
       return
     }
     if (approval) {
-      setChosen(approvalOptions.length - 1)
+      setChosen(denyIndex)
       send.cancel()
+      if (!text) {
+        return
+      }
       setTimeout(() => {
-        void submitPromptToAgentPty({ tabId, ptyId, content: text })
+        // Why re-check: the pane may have closed, or the hub been turned off, during the delay.
+        const state = useAppStore.getState()
+        if (
+          state.settings?.experimentalAgentHub === true &&
+          resolveAgentHubPtyId(state, tabId, paneKey) === ptyId
+        ) {
+          void submitPromptToAgentPty({ tabId, ptyId, content: text })
+        }
       }, DENY_THEN_INSTRUCT_DELAY_MS)
     }
   }
@@ -202,7 +242,7 @@ export function AgentHubAttentionCard({
     <section
       aria-label={copy.taskTitle}
       data-agent-hub-attention-card={paneKey}
-      className="relative rounded-[14px] border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5"
+      className="relative animate-in rounded-[14px] border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1 motion-reduce:animate-none"
     >
       <div className="mb-2.5 truncate pr-5 text-[15px] font-semibold tracking-[-0.01em]">
         {copy.taskTitle}
@@ -252,13 +292,22 @@ export function AgentHubAttentionCard({
           <HubApprovalSummary tool={readApprovalTool(interactivePrompt)} command={command} />
           <HubOptionList
             options={approvalOptions}
-            chosen={chosen}
+            chosen={chosen ?? (instructing ? denyIndex : null)}
             disabled={chosen !== null}
             onChoose={choose}
           />
           <HubReplyField
-            placeholder={translate('agentHub.card.instead', 'Tell it what to do instead…')}
+            inputRef={replyRef}
+            placeholder={
+              instructing
+                ? translate(
+                    'agentHub.card.insteadOrDeny',
+                    'Tell it what to do instead, or press Enter to just deny…'
+                  )
+                : translate('agentHub.card.instead', 'Tell it what to do instead…')
+            }
             disabled={chosen !== null}
+            allowEmpty={instructing}
             onSend={reply}
           />
         </>

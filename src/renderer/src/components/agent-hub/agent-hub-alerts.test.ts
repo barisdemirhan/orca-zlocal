@@ -61,8 +61,27 @@ describe('diffAgentHubAlerts', () => {
   })
 })
 
+describe('worker results', () => {
+  it("raise a mirror-only alert instead of joining the Inbox's finished list", () => {
+    const threads = agentHubThreadsFor([
+      { paneKey: PANE_KEY, state: 'working', at: 1_000 },
+      { paneKey: PANE_KEY_2, state: 'done', at: 2_000, parentPaneKey: PANE_KEY }
+    ])
+    const lists = buildAgentHubLists(threads, { parentOf: new Map([[PANE_KEY_2, PANE_KEY]]) })
+    const { fresh } = diffAgentHubAlerts(new Set(), lists, both)
+
+    expect(lists.finished).toEqual([])
+    expect(fresh).toMatchObject([{ kind: 'done', mirrorOnly: true }])
+  })
+})
+
 describe('orcaNotificationWillSound', () => {
-  const base = { windowFocused: true, activeWorktreeId: 'wt-1', worktreeId: 'wt-1' }
+  const base = {
+    windowFocused: true,
+    activeWorktreeId: 'wt-1',
+    worktreeId: 'wt-1',
+    nativeBannerRefused: false
+  }
 
   it("defers to Orca's banner unless Orca suppresses it for the focused, active worktree", () => {
     expect(orcaNotificationWillSound({ ...base, notifications: {} })).toBe(false)
@@ -81,6 +100,17 @@ describe('orcaNotificationWillSound', () => {
         ...base,
         worktreeId: 'wt-2',
         notifications: { agentTaskComplete: false }
+      })
+    ).toBe(false)
+  })
+
+  it('treats a banner the OS refused as silent', () => {
+    expect(
+      orcaNotificationWillSound({
+        ...base,
+        worktreeId: 'wt-2',
+        notifications: {},
+        nativeBannerRefused: true
       })
     ).toBe(false)
   })

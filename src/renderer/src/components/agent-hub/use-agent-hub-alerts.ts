@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from '@/store'
-import { readAgentAttentionNotificationSound } from '@/attention/agent-attention-notification-delivery'
+import {
+  isNativeAgentBannerRefused,
+  readAgentAttentionNotificationSound
+} from '@/attention/agent-attention-notification-delivery'
 import {
   isOrcaWindowForegroundFocused,
   isVisibleForegroundPaneKey
@@ -12,6 +15,8 @@ import {
   orcaNotificationWillSound
 } from './agent-hub-alerts'
 import { playAgentHubAlertSound } from './agent-hub-chime'
+import { readAgentHubMirrors } from './agent-hub-mirror-store'
+import { agentHubTargetShowsThread } from './agent-hub-pane-target'
 import type { AgentHubLists } from './agent-hub-lists'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
 
@@ -39,8 +44,12 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
     }
     const state = useAppStore.getState()
     // The pane the user is looking at needs no alert: they are watching it happen.
+    const { chips } = readAgentHubMirrors()
     const unseen = fresh.filter(
-      (alert) => !isVisibleForegroundPaneKey(state, alert.thread.worktree.id, alert.thread.paneKey)
+      (alert) =>
+        !isVisibleForegroundPaneKey(state, alert.thread.worktree.id, alert.thread.paneKey) &&
+        (!alert.mirrorOnly ||
+          chips.some((chip) => agentHubTargetShowsThread(chip.target, alert.thread)))
     )
     if (unseen.length === 0) {
       return
@@ -51,6 +60,7 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
       (alert) =>
         !orcaNotificationWillSound({
           notifications: state.settings?.notifications,
+          nativeBannerRefused: isNativeAgentBannerRefused(),
           windowFocused,
           activeWorktreeId: state.activeWorktreeId,
           worktreeId: alert.thread.worktree.id
