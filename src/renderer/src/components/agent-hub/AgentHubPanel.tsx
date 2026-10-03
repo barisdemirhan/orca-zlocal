@@ -255,7 +255,7 @@ export function AgentHubPanel({
         // Why keyed: each tab fades in fresh instead of swapping content in place.
         key={tab}
         role="listbox"
-        className="min-h-0 flex-1 animate-in overflow-y-auto px-2.5 pb-2.5 duration-150 scrollbar-sleek fade-in-0 motion-reduce:animate-none"
+        className="min-h-0 flex-1 animate-in overflow-y-auto px-2.5 pb-2.5 duration-150 scrollbar-sleek fade-in-0"
       >
         {tab === 'inbox' ? (
           <AgentHubInboxBody

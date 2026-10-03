@@ -84,7 +84,7 @@ export function AgentHubMirrorChip({
             data-kind={kind}
             style={{ left: position.x, top: position.y, zIndex: stackIndex }}
             // Why a mini header: the chip should say whose terminal it is, where, and let it go.
-            className="group/chip pointer-events-auto fixed flex h-[46px] w-[320px] animate-in cursor-pointer touch-none items-center gap-2.5 rounded-xl border border-foreground/25 bg-popover pr-1.5 pl-2.5 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-90 data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-agent-question/10 data-[kind=done]:border-status-success/50 motion-reduce:animate-none"
+            className="group/chip pointer-events-auto fixed flex h-[46px] w-[320px] animate-in cursor-pointer touch-none items-center gap-2.5 rounded-xl border border-foreground/25 bg-popover pr-1.5 pl-2.5 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-90 data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-agent-question/10 data-[kind=done]:border-status-success/50"
             onPointerDown={(event) => {
               if (
                 event.button !== 0 ||

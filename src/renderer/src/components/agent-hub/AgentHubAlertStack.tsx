@@ -107,7 +107,7 @@ function AlertCard({
     <div
       role="status"
       data-agent-hub-alert={alert.kind}
-      className="relative w-[320px] shrink-0 animate-in rounded-[14px] border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95 motion-reduce:animate-none"
+      className="relative w-[320px] shrink-0 animate-in rounded-[14px] border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95"
       onMouseEnter={stopTimer}
       onMouseLeave={startTimer}
     >

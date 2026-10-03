@@ -25,9 +25,6 @@ export function nudgeMirrorWindow(element: HTMLElement, kind: AgentHubAlertKind)
     ],
     { duration: GLOW_MS, easing: 'ease-out' }
   )
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    return
-  }
   element.animate(
     [0, -6, 6, -4, 4, -2, 0].map((x) => ({ transform: `translateX(${x}px)` })),
     { duration: SHAKE_MS, easing: 'ease-in-out' }

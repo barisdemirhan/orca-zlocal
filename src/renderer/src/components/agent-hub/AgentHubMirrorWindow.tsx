@@ -96,10 +96,6 @@ export function AgentHubMirrorWindow({
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Fades the window out before it closes or shrinks into its chip.
   const leave = (then: () => void): void => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      then()
-      return
-    }
     setLeaving(true)
     leaveTimerRef.current = setTimeout(then, LEAVE_MS)
   }
@@ -147,7 +143,7 @@ export function AgentHubMirrorWindow({
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] motion-reduce:animate-none"
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards]"
       style={{
         left: geometry.x,
         top: geometry.y,

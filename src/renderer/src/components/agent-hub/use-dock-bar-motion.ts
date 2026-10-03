@@ -76,10 +76,7 @@ export function useDockBarMotion(
       return
     }
     const to = naturalSize(bar)
-    if (
-      (from.width === to.width && from.height === to.height) ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
+    if (from.width === to.width && from.height === to.height) {
       show(motion, notchRef.current, to)
       return
     }

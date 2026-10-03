@@ -18,7 +18,9 @@ function CounterIndicator({
   active: boolean
 }): React.JSX.Element {
   if (kind === 'work' && active) {
-    return <AgentWorkingSpinner className="size-2.5 shrink-0" />
+    return (
+      <AgentWorkingSpinner className="size-2.5 shrink-0 ![animation:agent-spinner-rotate_86400s_steps(1036800,end)_infinite]" />
+    )
   }
   return (
     <span
@@ -77,7 +79,7 @@ export function DockLayer({
       inert={!shown}
       data-shown={shown}
       data-spacing={spacing}
-      className="flex shrink-0 items-center transition-[opacity,scale] delay-75 duration-200 ease-out group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col data-[spacing=loose]:gap-2 data-[spacing=tight]:gap-0.5 data-[shown=false]:pointer-events-none data-[shown=false]:absolute data-[shown=false]:top-1/2 data-[shown=false]:left-1/2 data-[shown=false]:w-max data-[shown=false]:-translate-x-1/2 data-[shown=false]:-translate-y-1/2 data-[shown=false]:scale-90 data-[shown=false]:opacity-0 data-[shown=false]:delay-0 data-[shown=false]:duration-100 motion-reduce:transition-none"
+      className="flex shrink-0 items-center transition-[opacity,scale] delay-75 duration-200 ease-out group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col data-[spacing=loose]:gap-2 data-[spacing=tight]:gap-0.5 data-[shown=false]:pointer-events-none data-[shown=false]:absolute data-[shown=false]:top-1/2 data-[shown=false]:left-1/2 data-[shown=false]:w-max data-[shown=false]:-translate-x-1/2 data-[shown=false]:-translate-y-1/2 data-[shown=false]:scale-90 data-[shown=false]:opacity-0 data-[shown=false]:delay-0 data-[shown=false]:duration-100"
     >
       {children}
     </div>

@@ -112,7 +112,7 @@ export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.
       data-visible={dimmed && anyFloating && spotlit && !hidden}
       style={{ bottom: statusBarHeight }}
       // Why z-[43]: below the dock (44), the floating workspace (45) and mirrors (46).
-      className="pointer-events-none fixed inset-x-0 top-0 z-[43] bg-black/45 opacity-0 transition-opacity duration-200 data-[visible=true]:opacity-100 motion-reduce:transition-none"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[43] bg-black/45 opacity-0 transition-opacity duration-200 data-[visible=true]:opacity-100"
     />,
     document.body
   )

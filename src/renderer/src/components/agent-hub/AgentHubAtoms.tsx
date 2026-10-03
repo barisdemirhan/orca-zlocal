@@ -11,7 +11,10 @@ export type { AgentHubIndicatorKind }
 
 export function HubStateIndicator({ kind }: { kind: AgentHubIndicatorKind }): React.JSX.Element {
   if (kind === 'work') {
-    return <AgentWorkingSpinner className="size-[11px]" />
+    // Why important: the hub's ring keeps turning with Reduce Motion on, which main.css stops.
+    return (
+      <AgentWorkingSpinner className="size-[11px] ![animation:agent-spinner-rotate_86400s_steps(1036800,end)_infinite]" />
+    )
   }
   return (
     <span
@@ -60,7 +63,7 @@ export function HubCounts({ counts }: { counts: AgentHubCounts }): React.JSX.Ele
       ) : null}
       {counts.working > 0 ? (
         <span className="flex items-center gap-1">
-          <AgentWorkingSpinner className="size-[9px] border-[1.5px]" />
+          <AgentWorkingSpinner className="size-[9px] border-[1.5px] ![animation:agent-spinner-rotate_86400s_steps(1036800,end)_infinite]" />
           {counts.working}
         </span>
       ) : null}
@@ -165,7 +168,7 @@ export function HubCollapse({
     <div
       data-open={open}
       inert={!open}
-      className="grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-150 ease-out data-[open=true]:grid-rows-[1fr] data-[open=true]:opacity-100 motion-reduce:transition-none"
+      className="grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-150 ease-out data-[open=true]:grid-rows-[1fr] data-[open=true]:opacity-100"
     >
       <div className="min-h-0 overflow-hidden">{children}</div>
     </div>
@@ -183,7 +186,7 @@ export function HubFoldChevron({
   return (
     <span
       data-open={open}
-      className="grid shrink-0 place-items-center transition-transform duration-150 ease-out data-[open=true]:rotate-90 motion-reduce:transition-none"
+      className="grid shrink-0 place-items-center transition-transform duration-150 ease-out data-[open=true]:rotate-90"
     >
       <ChevronRight className={className} />
     </span>

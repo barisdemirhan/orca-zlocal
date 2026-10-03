@@ -242,7 +242,7 @@ export function AgentHubAttentionCard({
     <section
       aria-label={copy.taskTitle}
       data-agent-hub-attention-card={paneKey}
-      className="relative animate-in rounded-[14px] border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1 motion-reduce:animate-none"
+      className="relative animate-in rounded-[14px] border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1"
     >
       <div className="mb-2.5 truncate pr-5 text-[15px] font-semibold tracking-[-0.01em]">
         {copy.taskTitle}
