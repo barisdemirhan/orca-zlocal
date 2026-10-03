@@ -5,7 +5,13 @@ import { buildShortcutRowVisibility } from './shortcut-row-visibility'
 
 function globalGroup(): ShortcutGroup {
   const items = (
-    ['workspace.openBoard', 'dashboard.toggle', 'agentHub.toggle', 'agentHub.nextWaiting'] as const
+    [
+      'workspace.openBoard',
+      'dashboard.toggle',
+      'agentHub.toggle',
+      'agentHub.nextWaiting',
+      'agentHub.dockMirrors'
+    ] as const
   ).map((actionId) => {
     const definition = getKeybindingDefinition(actionId)
     if (!definition) {
@@ -58,7 +64,8 @@ describe('buildShortcutRowVisibility', () => {
     expect(shown.shortcutRows.map((row) => row.item.id)).toEqual([
       'workspace.openBoard',
       'agentHub.toggle',
-      'agentHub.nextWaiting'
+      'agentHub.nextWaiting',
+      'agentHub.dockMirrors'
     ])
   })
 })

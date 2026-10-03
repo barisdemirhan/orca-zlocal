@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { BellOff, Bot, CornerDownRight, Inbox, SquareTerminal } from 'lucide-react'
+import { BellOff, CornerDownRight, Inbox, PictureInPicture2, SquareTerminal } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import {
   AGENT_HUB_DOCK_ZOOM,
@@ -14,10 +14,8 @@ import {
 import { AgentHubDockMenu } from './AgentHubDockMenu'
 import {
   DOCK_BUTTON,
-  DOCK_COUNT_BUTTON,
   DockButton,
-  DockCounter,
-  DockCounters,
+  DockCounterGroup,
   DockLayer,
   NotchShape
 } from './AgentHubDockParts'
@@ -49,8 +47,11 @@ export function AgentHubDock({
   size,
   counts,
   muted,
+  pinned,
+  mirrors,
   onOpenTab,
   onNextWaiting,
+  onToggleMirrors,
   onMove,
   ...anchorProps
 }: React.ComponentProps<'div'> & {
@@ -58,8 +59,13 @@ export function AgentHubDock({
   size: AgentHubDockSize
   counts: AgentHubCounts
   muted: boolean
+  /** Keep it unfolded (the hub's panel is open from it). */
+  pinned: boolean
+  /** Open mirror windows and the ones parked beside the hub. */
+  mirrors: { windows: number; chips: number }
   onOpenTab: (tab: AgentHubTab) => void
   onNextWaiting: () => void
+  onToggleMirrors: () => void
   onMove: (position: AgentHubDockPosition) => void
 }): React.JSX.Element {
   const viewport = useViewportSize()
@@ -70,16 +76,28 @@ export function AgentHubDock({
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
   const notchRef = useRef<SVGSVGElement>(null)
-  const expanded = (hovered || menuOpen) && dragPoint === null
+  // Held open with the hub's panel, so the panel anchored to it does not shift.
+  const expanded = (hovered || menuOpen || pinned) && dragPoint === null
   const side = agentHubDockPopoverSide(position.edge)
   // Why measured: the hover bar is far longer than the notch, and must not run off an edge.
-  const barSize = useDockBarMotion(barRef, notchRef, position.edge, expanded)
+  const { size: barSize, rest: restSize } = useDockBarMotion(
+    barRef,
+    notchRef,
+    position.edge,
+    expanded
+  )
   const zoom = AGENT_HUB_DOCK_ZOOM[size]
   // The bar measures in its own (unzoomed) pixels; placement works in the window's.
-  const extent = (isHorizontalAgentHubDock(position.edge) ? barSize?.width : barSize?.height) ?? 0
+  const lengthOf = (bar: { width: number; height: number }): number =>
+    (isHorizontalAgentHubDock(position.edge) ? bar.width : bar.height) * zoom
   const placement = dragPoint
     ? { left: dragPoint.x, top: dragPoint.y, transform: 'translate(-50%, -50%)' }
-    : agentHubDockPlacement(position, viewport, DOCK_CHROME, extent * zoom)
+    : agentHubDockPlacement(
+        position,
+        viewport,
+        DOCK_CHROME,
+        barSize && restSize ? { rest: lengthOf(restSize), current: lengthOf(barSize) } : null
+      )
 
   useLayoutEffect(
     () => () => {
@@ -155,9 +173,11 @@ export function AgentHubDock({
           data-edge={position.edge}
           data-expanded={expanded}
           data-dragging={dragPoint !== null}
-          className="relative flex cursor-pointer items-center justify-center overflow-hidden text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-7 data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:px-3.5 data-[edge=left]:w-7 data-[edge=left]:rounded-r-[14px] data-[edge=left]:py-3.5 data-[edge=right]:w-7 data-[edge=right]:rounded-l-[14px] data-[edge=right]:py-3.5 data-[edge=top]:h-7 data-[edge=top]:rounded-b-[14px] data-[edge=top]:px-3.5 data-[edge=bottom]:data-[expanded=true]:px-1.5 data-[edge=left]:data-[expanded=true]:py-1.5 data-[edge=right]:data-[expanded=true]:py-1.5 data-[edge=top]:data-[expanded=true]:px-1.5"
+          className="relative flex cursor-pointer items-center justify-start overflow-hidden data-[edge=left]:flex-col data-[edge=right]:flex-col text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-7 data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:px-2.5 data-[edge=left]:w-7 data-[edge=left]:rounded-r-[14px] data-[edge=left]:py-2.5 data-[edge=right]:w-7 data-[edge=right]:rounded-l-[14px] data-[edge=right]:py-2.5 data-[edge=top]:h-7 data-[edge=top]:rounded-b-[14px] data-[edge=top]:px-2.5"
         >
-          <DockLayer shown={expanded} spacing="tight">
+          {/* Both faces open with the inbox and the counts at the same spot; unfolding only
+              adds buttons after them, so whatever is under the pointer stays put. */}
+          <DockLayer shown={expanded}>
             <DockButton
               label={translate('agentHub.tab.inbox', 'Inbox')}
               side={side}
@@ -166,33 +186,7 @@ export function AgentHubDock({
             >
               <Inbox className="size-3.5" />
             </DockButton>
-            {/* The three counts read as one group, with no gaps between them. */}
-            <span className="flex items-center group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
-              <DockButton
-                label={translate('agentHub.tab.running', 'Running')}
-                side={side}
-                className={DOCK_COUNT_BUTTON}
-                onClick={() => onOpenTab('running')}
-              >
-                <DockCounter kind="work" value={counts.working} />
-              </DockButton>
-              <DockButton
-                label={translate('agentHub.dock.waiting', 'Waiting on you')}
-                side={side}
-                className={DOCK_COUNT_BUTTON}
-                onClick={() => onOpenTab('inbox')}
-              >
-                <DockCounter kind="ask" value={counts.needsYou} />
-              </DockButton>
-              <DockButton
-                label={translate('agentHub.dock.finished', 'Finished')}
-                side={side}
-                className={DOCK_COUNT_BUTTON}
-                onClick={() => onOpenTab('inbox')}
-              >
-                <DockCounter kind="done" value={counts.finished} />
-              </DockButton>
-            </span>
+            <DockCounterGroup counts={counts} side={side} onOpenTab={onOpenTab} />
             <DockButton
               label={translate('agentHub.tab.all', 'All terminals')}
               side={side}
@@ -200,6 +194,19 @@ export function AgentHubDock({
               onClick={() => onOpenTab('all')}
             >
               <SquareTerminal className="size-3.5" />
+            </DockButton>
+            <DockButton
+              label={
+                mirrors.windows > 0
+                  ? translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
+                  : translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
+              }
+              side={side}
+              className={DOCK_BUTTON}
+              disabled={mirrors.windows + mirrors.chips === 0}
+              onClick={onToggleMirrors}
+            >
+              <PictureInPicture2 className="size-3.5" />
             </DockButton>
             <DockButton
               label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
@@ -218,10 +225,17 @@ export function AgentHubDock({
               buttonClassName={DOCK_BUTTON}
             />
           </DockLayer>
-          <DockLayer shown={!expanded} spacing="loose">
-            <Bot aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
-            <DockCounters counts={counts} />
-            {muted ? <BellOff className="size-3 shrink-0 opacity-70" /> : null}
+          <DockLayer shown={!expanded}>
+            {/* Same size as the button it becomes, so the counts line up with the unfolded face. */}
+            <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
+              <Inbox aria-hidden className="size-3.5" />
+            </span>
+            <DockCounterGroup counts={counts} side={side} />
+            {muted ? (
+              <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
+                <BellOff aria-hidden className="size-3" />
+              </span>
+            ) : null}
           </DockLayer>
         </div>
       </div>

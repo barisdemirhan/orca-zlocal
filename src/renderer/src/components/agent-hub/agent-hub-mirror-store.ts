@@ -3,8 +3,8 @@ import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane
 
 type Point = { x: number; y: number }
 
-/** A minimized mirror: a small chip that stays on screen until the user restores or closes it. */
-export type AgentHubMirrorChip = { target: AgentHubPaneTarget } & Point
+/** A minimized mirror, parked in the tray beside the hub until restored or closed. */
+export type AgentHubMirrorChip = { target: AgentHubPaneTarget; minimizedAt: number }
 
 export type AgentHubMirrorState = {
   /** Open mirror windows, back to front. */
@@ -14,15 +14,15 @@ export type AgentHubMirrorState = {
 
 // Each open window is a live terminal; past this the back-most one shrinks into its chip.
 export const MAX_AGENT_HUB_MIRROR_WINDOWS = 4
-const MAX_CHIPS = 8
-const CHIP_STEP_Y = 40
-const CHIP_OVERLAP_X = 160
-const FALLBACK_ORIGIN: Point = { x: 16, y: 16 }
+const MAX_CHIPS = 12
 
 let state: AgentHubMirrorState = { windows: [], chips: [] }
-// Where each window sits, so it minimizes in place. Not rendered state.
+// Where each window sat, so it comes back there from the tray. Not rendered state.
 const windowOrigins = new Map<string, Point>()
 const listeners = new Set<() => void>()
+// Bumped to ask every open window to fly into the tray; each minimizes itself on landing.
+let dockRequest = 0
+const dockListeners = new Set<() => void>()
 
 function emit(next: AgentHubMirrorState): void {
   state = next
@@ -35,22 +35,9 @@ export function rememberAgentHubMirrorOrigin(key: string, origin: Point): void {
   windowOrigins.set(key, origin)
 }
 
-/** Where a window last stood, for a window reopening at its chip's spot. */
+/** Where a window last stood, so it reopens there from the tray. */
 export function readAgentHubMirrorOrigin(key: string): Point | null {
   return windowOrigins.get(key) ?? null
-}
-
-/** Chips start where their window was; one already there pushes the newcomer down a step. */
-function placeChip(chips: readonly AgentHubMirrorChip[], origin: Point): Point {
-  let { y } = origin
-  while (
-    chips.some(
-      (chip) => Math.abs(chip.y - y) < CHIP_STEP_Y && Math.abs(chip.x - origin.x) < CHIP_OVERLAP_X
-    )
-  ) {
-    y += CHIP_STEP_Y
-  }
-  return { x: origin.x, y }
 }
 
 function withChip(
@@ -59,8 +46,7 @@ function withChip(
 ): AgentHubMirrorChip[] {
   const key = keyOf(target)
   const others = chips.filter((chip) => keyOf(chip.target) !== key)
-  const origin = windowOrigins.get(key) ?? FALLBACK_ORIGIN
-  return [...others, { target, ...placeChip(others, origin) }].slice(-MAX_CHIPS)
+  return [...others, { target, minimizedAt: Date.now() }].slice(-MAX_CHIPS)
 }
 
 /** Brings `target` to the front, shrinking the back-most window into a chip past the cap. */
@@ -125,13 +111,47 @@ export function minimizeAgentHubMirror(key: string): void {
   }
 }
 
+/** Every open window into the tray at once, without the flight (see requestAgentHubMirrorsDock). */
+export function minimizeAllAgentHubMirrors(): void {
+  if (state.windows.length > 0) {
+    emit({ windows: [], chips: state.windows.reduce(withChip, state.chips) })
+  }
+}
+
 export function restoreAgentHubMirror(key: string): void {
   const chip = state.chips.find((candidate) => keyOf(candidate.target) === key)
   if (chip) {
-    // The window comes back where its chip was dragged to.
-    windowOrigins.set(key, { x: chip.x, y: chip.y })
     emit(showWindow(state.windows, state.chips, chip.target))
   }
+}
+
+/** Brings these chips back as windows, the first one in front; past the cap the rest stay. */
+export function restoreAgentHubMirrors(keys: readonly string[]): void {
+  let next = state
+  for (const key of keys.slice(0, MAX_AGENT_HUB_MIRROR_WINDOWS).toReversed()) {
+    const chip = next.chips.find((candidate) => keyOf(candidate.target) === key)
+    if (chip) {
+      next = showWindow(next.windows, next.chips, chip.target)
+    }
+  }
+  if (next !== state) {
+    emit(next)
+  }
+}
+
+/** Asks every open window to fly into the tray. */
+export function requestAgentHubMirrorsDock(): void {
+  dockRequest += 1
+  dockListeners.forEach((listener) => listener())
+}
+
+function subscribeDock(listener: () => void): () => void {
+  dockListeners.add(listener)
+  return () => dockListeners.delete(listener)
+}
+
+export function useAgentHubMirrorsDockRequest(): number {
+  return useSyncExternalStore(subscribeDock, () => dockRequest)
 }
 
 export function closeAgentHubMirror(key: string): void {
@@ -142,13 +162,6 @@ export function closeAgentHubMirror(key: string): void {
 
 export function closeAgentHubMirrorChip(key: string): void {
   emit({ ...state, chips: state.chips.filter((chip) => keyOf(chip.target) !== key) })
-}
-
-export function moveAgentHubMirrorChip(key: string, position: Point): void {
-  emit({
-    ...state,
-    chips: state.chips.map((chip) => (keyOf(chip.target) === key ? { ...chip, ...position } : chip))
-  })
 }
 
 /** Test seam: start every case from an empty stage. */

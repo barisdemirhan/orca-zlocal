@@ -30,11 +30,12 @@ import {
   useAgentHubAlertQueue
 } from './agent-hub-alert-queue'
 import { registerAgentHubCommands } from './agent-hub-commands'
-import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
+import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
 import { buildAgentHubLineage, type AgentHubLineage } from './agent-hub-lineage'
 import { agentHubCounts, type AgentHubLists } from './agent-hub-lists'
 import { openAgentHubMirror, useAgentHubMirrors } from './agent-hub-mirror-store'
+import { agentHubTargetKind, toggleAgentHubMirrors } from './agent-hub-mirror-tray'
 import {
   agentHubLocation,
   agentHubTargetShowsThread,
@@ -129,6 +130,15 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const [request, setRequest] = useState<OpenRequest>({ tab: 'inbox', paneKey: null, seq: 0 })
   const panelRootRef = useRef<HTMLDivElement>(null)
   const anchorRef = useRef<HTMLElement>(null)
+  const trayRef = useRef<HTMLDivElement>(null)
+  const threadsRef = useRef(threads)
+  useEffect(() => {
+    threadsRef.current = threads
+  }, [threads])
+  const toggleMirrors = useCallback(
+    () => toggleAgentHubMirrors((target) => agentHubTargetKind(threadsRef.current, target)),
+    []
+  )
   // Why: Radix hands focus back to the trigger on close; a terminal user expects their pane back.
   const restoreFocusRef = useRef<HTMLElement | null>(null)
   const openRef = useRef(open)
@@ -206,9 +216,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     () =>
       registerAgentHubCommands({
         toggle: () => (openRef.current ? setOpen(false) : openHub()),
-        jumpToNextWaiting
+        jumpToNextWaiting,
+        toggleMirrors
       }),
-    [jumpToNextWaiting, openHub]
+    [jumpToNextWaiting, openHub, toggleMirrors]
   )
 
   const label =
@@ -235,6 +246,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     (preferences.dockAutoHide &&
       !open &&
       hubAlerts.length === 0 &&
+      chips.length === 0 &&
       counts.needsYou + counts.working + counts.finished === 0)
 
   const content = (
@@ -310,6 +322,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   muted={muted}
                   onOpenTab={(tab) => openHub(tab)}
                   onNextWaiting={jumpToNextWaiting}
+                  pinned={open}
+                  mirrors={{ windows: windows.length, chips: chips.length }}
+                  onToggleMirrors={toggleMirrors}
                   onMove={(position) => void updateSettings({ agentHubDockPosition: position })}
                 />
               </PopoverAnchor>,
@@ -342,7 +357,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       {hubAlerts.length > 0 && !open && !inSettings ? (
         <AgentHubAlertStack
           alerts={hubAlerts}
-          anchorRef={anchorRef}
+          // With mirrors parked beside the hub, its alerts stack beyond them.
+          anchorRef={chips.length > 0 ? trayRef : anchorRef}
           side={side}
           locationOf={(shown) => agentHubLocation(shown.thread, groupNameById)}
           onOpen={(opened) =>
@@ -353,6 +369,11 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       ) : null}
       <AgentHubDimBackdrop hidden={inSettings} />
       <AgentHubMirrors
+        hubRef={anchorRef}
+        trayRef={trayRef}
+        traySide={side}
+        trayAlertSide={agentHubTrayAlertSide(docked ? preferences.dockPosition : null)}
+        trayHidden={open}
         hidden={inSettings}
         threads={threads}
         lineage={lineage}

@@ -5,11 +5,14 @@ import {
   focusAgentHubMirror,
   MAX_AGENT_HUB_MIRROR_WINDOWS,
   minimizeAgentHubMirror,
+  minimizeAllAgentHubMirrors,
   openAgentHubMirror,
+  readAgentHubMirrorOrigin,
   readAgentHubMirrors,
   rememberAgentHubMirrorOrigin,
   resetAgentHubMirrorsForTest,
   restoreAgentHubMirror,
+  restoreAgentHubMirrors,
   retargetAgentHubMirror
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -55,19 +58,18 @@ describe('agent hub mirror store', () => {
     expect(chipKeys()).toEqual(['tab-0:leaf'])
   })
 
-  it('minimizes a window into a chip where it stood, stacking chips at the same spot', () => {
-    rememberAgentHubMirrorOrigin('tab-a:leaf', { x: 100, y: 200 })
-    rememberAgentHubMirrorOrigin('tab-b:leaf', { x: 100, y: 200 })
-    openAgentHubMirror(target('tab-a'))
-    openAgentHubMirror(target('tab-b'))
-    minimizeAgentHubMirror('tab-a:leaf')
-    minimizeAgentHubMirror('tab-b:leaf')
+  it('parks every open window in the tray at once and brings the chosen ones back', () => {
+    for (const tabId of ['tab-a', 'tab-b', 'tab-c']) {
+      openAgentHubMirror(target(tabId))
+    }
+    minimizeAllAgentHubMirrors()
 
     expect(windowKeys()).toEqual([])
-    expect(readAgentHubMirrors().chips.map((chip) => [chip.x, chip.y])).toEqual([
-      [100, 200],
-      [100, 240]
-    ])
+    expect(chipKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf', 'tab-c:leaf'])
+    // The first key asked for ends up in front.
+    restoreAgentHubMirrors(['tab-c:leaf', 'tab-a:leaf'])
+    expect(windowKeys()).toEqual(['tab-a:leaf', 'tab-c:leaf'])
+    expect(chipKeys()).toEqual(['tab-b:leaf'])
   })
 
   it('restores a chip as the front window and closes only the one asked', () => {
@@ -89,8 +91,7 @@ describe('agent hub mirror store', () => {
     retargetAgentHubMirror('tab-a:leaf', target('tab-c'))
 
     expect(windowKeys()).toEqual(['tab-c:leaf', 'tab-b:leaf'])
-    minimizeAgentHubMirror('tab-c:leaf')
-    expect(readAgentHubMirrors().chips).toMatchObject([{ x: 50, y: 60 }])
+    expect(readAgentHubMirrorOrigin('tab-c:leaf')).toEqual({ x: 50, y: 60 })
 
     // A pane already in its own window is brought forward rather than opened twice.
     openAgentHubMirror(target('tab-c'))

@@ -14,6 +14,7 @@ type Motion = {
   shown: Size | null
   frame: number | null
   edge: AgentHubDockEdge
+  expanded: boolean
 }
 
 function show(motion: Motion, notch: SVGSVGElement | null, next: Size): void {
@@ -33,16 +34,17 @@ function naturalSize(bar: HTMLElement): Size {
  * Glides the dock bar between the notch and the hover bar, redrawing its outline in the same
  * frame. Why JS: both sizes come from content, which CSS cannot transition, and the outline is
  * an SVG path that has to move with the bar rather than a frame behind it.
- * Returns the settled size, for keeping the dock on screen.
+ * Returns the size the bar is at (or gliding to) and its folded size, for placing the dock.
  */
 export function useDockBarMotion(
   barRef: React.RefObject<HTMLElement | null>,
   notchRef: React.RefObject<SVGSVGElement | null>,
   edge: AgentHubDockEdge,
   expanded: boolean
-): Size | null {
+): { size: Size | null; rest: Size | null } {
   const [size, setSize] = useState<Size | null>(null)
-  const motionRef = useRef<Motion>({ shown: null, frame: null, edge })
+  const [rest, setRest] = useState<Size | null>(null)
+  const motionRef = useRef<Motion>({ shown: null, frame: null, edge, expanded })
 
   useLayoutEffect(() => {
     const motion = motionRef.current
@@ -58,9 +60,12 @@ export function useDockBarMotion(
       }
       const next = { width: bar.offsetWidth, height: bar.offsetHeight }
       show(motion, notchRef.current, next)
-      setSize((current) =>
+      const keep = (current: Size | null): Size =>
         current?.width === next.width && current.height === next.height ? current : next
-      )
+      setSize(keep)
+      if (!motion.expanded) {
+        setRest(keep)
+      }
     }
     settle()
     const observer = new ResizeObserver(settle)
@@ -70,6 +75,7 @@ export function useDockBarMotion(
 
   useLayoutEffect(() => {
     const motion = motionRef.current
+    motion.expanded = expanded
     const bar = barRef.current
     const from = motion.shown
     if (!bar || !from) {
@@ -80,6 +86,8 @@ export function useDockBarMotion(
       show(motion, notchRef.current, to)
       return
     }
+    // Placement needs the size it is heading for now, to keep the unfolded dock on screen.
+    setSize(to)
     // A toggle mid-glide starts from wherever the bar is now.
     const started = performance.now()
     const duration = expanded ? GROW_MS : SHRINK_MS
@@ -94,7 +102,9 @@ export function useDockBarMotion(
         motion.frame = null
         naturalSize(bar)
         show(motion, notchRef.current, to)
-        setSize(to)
+        if (!expanded) {
+          setRest(to)
+        }
         return
       }
       const k = easeOutCubic(t)
@@ -114,5 +124,5 @@ export function useDockBarMotion(
     }
   }, [barRef, notchRef, expanded])
 
-  return size
+  return { size, rest }
 }

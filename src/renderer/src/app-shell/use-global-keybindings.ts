@@ -222,7 +222,11 @@ export function useGlobalKeybindings(args: {
       if (matchShortcut('view.plugins') && handlers.get('view.plugins')?.()) {
         return
       }
-      for (const actionId of ['agentHub.toggle', 'agentHub.nextWaiting'] as const) {
+      for (const actionId of [
+        'agentHub.toggle',
+        'agentHub.nextWaiting',
+        'agentHub.dockMirrors'
+      ] as const) {
         if (matchShortcut(actionId) && handlers.get(actionId)?.()) {
           return
         }

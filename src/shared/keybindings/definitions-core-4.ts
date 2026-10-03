@@ -63,6 +63,15 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     allowInTerminal: true
   },
   {
+    id: 'agentHub.dockMirrors',
+    title: 'Send Agent Hub Mirrors to the Hub or Bring Them Back',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'minimize', 'restore', 'floating'],
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
+  },
+  {
     id: 'terminal.clearPaneTitle',
     title: 'Clear Pane Title',
     group: 'Terminal Panes',

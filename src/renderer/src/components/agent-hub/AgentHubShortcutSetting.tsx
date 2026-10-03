@@ -16,7 +16,8 @@ import { SettingsRow } from '../settings/SettingsFormControls'
 // (see dashboard.toggle); one click here binds them once the user opts in.
 const SUGGESTED_BINDINGS: readonly (readonly [KeybindingActionId, string])[] = [
   ['agentHub.toggle', 'Mod+Alt+J'],
-  ['agentHub.nextWaiting', 'Mod+Alt+Shift+J']
+  ['agentHub.nextWaiting', 'Mod+Alt+Shift+J'],
+  ['agentHub.dockMirrors', 'Mod+Alt+K']
 ]
 
 const platform = getShortcutPlatform()
@@ -29,30 +30,35 @@ function bindingsFor(
   return definition ? getEffectiveKeybindingsForDefinition(definition, platform, overrides) : []
 }
 
-/** Shows the hub's two shortcuts and binds the suggested chords when both are unset. */
+/** Shows the hub's shortcuts and binds the suggested chords for any still unset. */
 export function AgentHubShortcutSetting(): React.JSX.Element {
   const keybindings = useAppStore((s) => s.keybindings)
   const setKeybindingOverride = useAppStore((s) => s.setKeybindingOverride)
   const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
   const [error, setError] = useState<string | null>(null)
   const current = SUGGESTED_BINDINGS.map(([actionId]) => bindingsFor(actionId, keybindings))
-  const unbound = current.every((bindings) => bindings.length === 0)
+  // Why per action: someone who bound the first two before the third existed still gets offered it.
+  const missing = SUGGESTED_BINDINGS.filter((_, index) => (current[index] ?? []).length === 0)
+  const unbound = missing.length > 0
+  const shown = (index: number): string =>
+    formatKeybindingList(current[index] ?? [], platform) ||
+    translate('auto.components.settings.ExperimentalPane.agentHub.shortcutNotSet', 'not set')
   const suggestedLabel = formatKeybindingList(
-    SUGGESTED_BINDINGS.map(([, binding]) => binding),
+    missing.map(([, binding]) => binding),
     platform
   )
 
   const applySuggested = async (): Promise<void> => {
     const next = { ...keybindings }
-    for (const [actionId, binding] of SUGGESTED_BINDINGS) {
+    for (const [actionId, binding] of missing) {
       next[actionId] = [binding]
     }
     const conflict = findKeybindingConflicts(platform, next).find((candidate) =>
-      SUGGESTED_BINDINGS.some(([actionId]) => candidate.actionIds.includes(actionId))
+      missing.some(([actionId]) => candidate.actionIds.includes(actionId))
     )
     if (conflict) {
       const owners = conflict.actionIds
-        .filter((actionId) => !SUGGESTED_BINDINGS.some(([own]) => own === actionId))
+        .filter((actionId) => !missing.some(([own]) => own === actionId))
         .map((actionId) => getKeybindingDefinition(actionId)?.title ?? actionId)
         .join(', ')
       setError(
@@ -66,7 +72,7 @@ export function AgentHubShortcutSetting(): React.JSX.Element {
     }
     setError(null)
     try {
-      for (const [actionId, binding] of SUGGESTED_BINDINGS) {
+      for (const [actionId, binding] of missing) {
         await setKeybindingOverride(actionId, [binding])
       }
     } catch (failure) {
@@ -79,18 +85,19 @@ export function AgentHubShortcutSetting(): React.JSX.Element {
       label={translate('auto.components.settings.ExperimentalPane.agentHub.shortcuts', 'Shortcuts')}
       description={
         error ??
-        (unbound
+        (missing.length === SUGGESTED_BINDINGS.length
           ? translate(
               'auto.components.settings.ExperimentalPane.agentHub.shortcutsUnset',
-              'Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting).',
+              'Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub).',
               { value0: suggestedLabel }
             )
           : translate(
               'auto.components.settings.ExperimentalPane.agentHub.shortcutsSet',
-              'Open the hub: {{value0}} · Next agent waiting: {{value1}}',
+              'Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}}',
               {
-                value0: formatKeybindingList(current[0] ?? [], platform),
-                value1: formatKeybindingList(current[1] ?? [], platform)
+                value0: shown(0),
+                value1: shown(1),
+                value2: shown(2)
               }
             ))
       }

@@ -8013,11 +8013,12 @@
             "clearFinishedCopy": "They stay unread in the Agents view; Never keeps them in the hub until you read them.",
             "shortcutTaken": "{{value0}} is already used by {{value1}}. Pick other keys in Keyboard Shortcuts.",
             "shortcuts": "Shortcuts",
-            "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting).",
-            "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}}",
+            "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub).",
+            "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}}",
             "useSuggested": "Use these",
             "editShortcuts": "Edit",
-            "dockSize": "Dock size"
+            "dockSize": "Dock size",
+            "shortcutNotSet": "not set"
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -21712,12 +21713,10 @@
       "markRead": "Mark read"
     },
     "mirror": {
-      "openInOrca": "Open in Orca",
       "close": "Close mirror",
       "noTerminal": "This pane has no live terminal right now.",
       "connecting": "Connecting to the terminal…",
       "restore": "Restore {{value0}}",
-      "chipTooltip": "Click to restore · drag to move",
       "minimize": "Minimize",
       "inWorkspace": "This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.",
       "inWorkspaceTitle": "You're in this workspace",
@@ -21725,7 +21724,12 @@
       "rename": "Rename terminal",
       "workerCount": "{{value0}} workers",
       "family": "Dispatcher and workers",
-      "workers": "Workers"
+      "workers": "Workers",
+      "trayLess": "Show fewer",
+      "trayMore": "+{{value0}}",
+      "dockAll": "Send all mirrors to the hub",
+      "jumpHint": "Jump to this terminal in its workspace",
+      "jump": "Jump"
     },
     "title": "Agents",
     "tab": {
@@ -21820,7 +21824,9 @@
       "sizeSmall": "Small",
       "sizeMedium": "Medium",
       "sizeLarge": "Large",
-      "size": "Size"
+      "size": "Size",
+      "dockMirrors": "Send the mirrors to the hub",
+      "restoreMirrors": "Bring the mirrors back"
     },
     "children": {
       "agentOne": "1 agent",

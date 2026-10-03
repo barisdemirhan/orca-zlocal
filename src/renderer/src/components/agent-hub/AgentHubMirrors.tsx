@@ -10,18 +10,20 @@ import {
 } from '../activity/activity-terminal-portal'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { AgentHubMirrorChip } from './AgentHubMirrorChip'
+import type { AgentHubAlertSide } from './AgentHubAlertStack'
+import { AgentHubMirrorTray, type AgentHubTrayItem } from './AgentHubMirrorTray'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubLineage } from './agent-hub-lineage'
+import { agentHubIndicatorKind } from './agent-hub-lists'
+import { orderAgentHubTray } from './agent-hub-mirror-tray'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
 import {
   closeAgentHubMirror,
   closeAgentHubMirrorChip,
   focusAgentHubMirror,
   minimizeAgentHubMirror,
-  moveAgentHubMirrorChip,
   restoreAgentHubMirror,
   retargetAgentHubMirror,
   useAgentHubMirrors
@@ -43,6 +45,11 @@ type MirrorSurface = 'portal' | 'in-workspace' | 'preview'
  */
 export function AgentHubMirrors({
   hidden,
+  hubRef,
+  trayRef,
+  traySide,
+  trayAlertSide,
+  trayHidden,
   threads,
   lineage,
   alerts,
@@ -52,6 +59,13 @@ export function AgentHubMirrors({
 }: {
   /** Out of sight but mounted (Settings), so mirrored panes are not moved back and forth. */
   hidden: boolean
+  /** The hub (dock or status-bar trigger): windows fly into it and the tray sits beside it. */
+  hubRef: React.RefObject<HTMLElement | null>
+  trayRef: React.RefObject<HTMLDivElement | null>
+  traySide: AgentHubAlertSide
+  trayAlertSide: AgentHubAlertSide
+  /** The hub's own panel is open over the tray's spot. */
+  trayHidden: boolean
   threads: readonly AgentPaneThread[]
   lineage: AgentHubLineage
   alerts: readonly AgentHubAlert[]
@@ -138,6 +152,23 @@ export function AgentHubMirrors({
   }
   const threadFor = (target: AgentHubPaneTarget): AgentPaneThread | null =>
     threads.find((thread) => agentHubTargetShowsThread(target, thread)) ?? null
+  const trayItems = orderAgentHubTray(
+    chips.map((chip): AgentHubTrayItem => {
+      const thread = threadFor(chip.target)
+      return {
+        key: agentHubPaneTargetKey(chip.target),
+        chip,
+        thread,
+        kind: thread ? agentHubIndicatorKind(thread) : 'idle',
+        location: locationOf(chip.target),
+        alert: hidden
+          ? null
+          : (alerts.findLast((candidate) =>
+              agentHubTargetShowsThread(chip.target, candidate.thread)
+            ) ?? null)
+      }
+    })
+  )
   // Why a fixed DOM order: bringing a window forward only changes its z-index; moving its node
   // mid-click would drop the terminal's focus and the pointer.
   const stackIndexOf = new Map(
@@ -177,6 +208,7 @@ export function AgentHubMirrors({
             }
             onNudged={dismissAgentHubAlert}
             family={target.paneKey ? agentHubMirrorFamily(target.paneKey, threads, lineage) : null}
+            hubRef={hubRef}
             onRetarget={(member) =>
               retargetAgentHubMirror(
                 key,
@@ -194,42 +226,30 @@ export function AgentHubMirrors({
           />
         )
       })}
-      {chips.map((chip) => {
-        const key = agentHubPaneTargetKey(chip.target)
-        const alert = hidden
-          ? null
-          : (alerts.findLast((candidate) =>
-              agentHubTargetShowsThread(chip.target, candidate.thread)
-            ) ?? null)
-        return (
-          <AgentHubMirrorChip
-            key={key}
-            chip={chip}
-            thread={threadFor(chip.target)}
-            location={locationOf(chip.target)}
-            alert={alert}
-            // Chips stay above every window so a minimized mirror is always reachable.
-            stackIndex={windows.length + 1}
-            onRestore={() => restoreAgentHubMirror(key)}
-            onReveal={() => {
-              closeAgentHubMirrorChip(key)
-              onReveal(chip.target, threadFor(chip.target))
-            }}
-            onClose={() => closeAgentHubMirrorChip(key)}
-            onMove={(position) => moveAgentHubMirrorChip(key, position)}
-            onOpenAlert={(opened) => {
-              dismissAgentHubAlert(opened.id)
-              // A question is answered on its card; a result is read in the terminal.
-              if (opened.kind === 'done') {
-                restoreAgentHubMirror(key)
-              } else {
-                onOpenCard(opened.thread.paneKey)
-              }
-            }}
-            onDismissAlert={dismissAgentHubAlert}
-          />
-        )
-      })}
+      <AgentHubMirrorTray
+        items={trayItems}
+        trayRef={trayRef}
+        anchorRef={hubRef}
+        side={traySide}
+        alertSide={trayAlertSide}
+        hidden={trayHidden}
+        onRestore={restoreAgentHubMirror}
+        onReveal={(item) => {
+          closeAgentHubMirrorChip(item.key)
+          onReveal(item.chip.target, item.thread)
+        }}
+        onClose={closeAgentHubMirrorChip}
+        onOpenAlert={(key, opened) => {
+          dismissAgentHubAlert(opened.id)
+          // A question is answered on its card; a result is read in the terminal.
+          if (opened.kind === 'done') {
+            restoreAgentHubMirror(key)
+          } else {
+            onOpenCard(opened.thread.paneKey)
+          }
+        }}
+        onDismissAlert={dismissAgentHubAlert}
+      />
     </div>,
     document.body
   )

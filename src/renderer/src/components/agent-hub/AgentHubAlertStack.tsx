@@ -43,8 +43,12 @@ function alertText(alert: AgentHubAlert): string {
   return message ? agentHubMessageSummary(message) : activityThreadRowCopy(alert.thread).statusLine
 }
 
-/** Place the bubble beside its anchor (the hub trigger or a mirror chip) on the given side. */
-function placeBubble(bubble: HTMLElement, anchor: HTMLElement, side: AgentHubAlertSide): void {
+/** Places a floating element beside its anchor (the hub, the tray or a chip), kept on screen. */
+function placeBesideAnchor(
+  bubble: HTMLElement,
+  anchor: HTMLElement,
+  side: AgentHubAlertSide
+): void {
   const rect = anchor.getBoundingClientRect()
   const { innerWidth, innerHeight } = window
   const width = bubble.offsetWidth
@@ -171,7 +175,7 @@ export function AgentHubAlertStack({
 
   useLayoutEffect(() => {
     if (stackRef.current && anchorRef.current) {
-      placeBubble(stackRef.current, anchorRef.current, side)
+      placeBesideAnchor(stackRef.current, anchorRef.current, side)
     }
   })
 

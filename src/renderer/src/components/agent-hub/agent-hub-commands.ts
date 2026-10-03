@@ -1,6 +1,8 @@
 export type AgentHubCommands = {
   toggle: () => void
   jumpToNextWaiting: () => void
+  /** Sends the open mirrors to the hub, or brings the parked ones back when none are open. */
+  toggleMirrors: () => void
 }
 
 // Why a registry: the hub lives in the status bar, so its chords must fall through

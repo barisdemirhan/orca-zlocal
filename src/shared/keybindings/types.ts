@@ -44,6 +44,7 @@ export type KeybindingActionId =
   | 'dashboard.toggle'
   | 'agentHub.toggle'
   | 'agentHub.nextWaiting'
+  | 'agentHub.dockMirrors'
   | 'sidebar.left.toggle'
   | 'sidebar.right.toggle'
   | 'sidebar.explorer.toggle'

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Loader2, Minus, PanelsTopLeft, X } from 'lucide-react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
+import { Loader2, Minus, PanelsTopLeft, PictureInPicture2, X } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
+import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { AgentTerminalPreview } from '../dashboard-popout/AgentTerminalPreview'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
@@ -17,6 +18,8 @@ import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
+import { requestAgentHubMirrorsDock, useAgentHubMirrorsDockRequest } from './agent-hub-mirror-store'
+import { flyMirrorWindowToHub } from './mirror-window-flight'
 import { nudgeMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
 import type { AgentHubAlert } from './agent-hub-alerts'
@@ -43,6 +46,7 @@ export function AgentHubMirrorWindow({
   onNudged,
   family,
   onRetarget,
+  hubRef,
   onSlot,
   onFocus,
   onClose,
@@ -68,11 +72,13 @@ export function AgentHubMirrorWindow({
   /** Where this pane sits among dispatchers and workers; null outside orchestration. */
   family: AgentHubMirrorFamily | null
   onRetarget: (thread: AgentPaneThread) => void
+  /** The hub the window flies into when minimized. */
+  hubRef: React.RefObject<HTMLElement | null>
   /** Registers the box the real pane is moved into. */
   onSlot: (key: string, element: HTMLDivElement | null) => void
   onFocus: () => void
   onClose: () => void
-  /** Shrinks the window into a chip where it stands; the mirror keeps running. */
+  /** Parks the window as a chip beside the hub; the mirror keeps running. */
   onMinimize: () => void
   onReveal: () => void
 }): React.JSX.Element {
@@ -107,6 +113,24 @@ export function AgentHubMirrorWindow({
     },
     []
   )
+  const minimizing = useRef(false)
+  const minimize = (delayMs = 0): void => {
+    if (minimizing.current || !sectionRef.current) {
+      return
+    }
+    minimizing.current = true
+    flyMirrorWindowToHub(sectionRef.current, hubRef.current, onMinimize, delayMs)
+  }
+  // "Send all to the hub" reaches every open window; the front one leaves first.
+  const dockRequest = useAgentHubMirrorsDockRequest()
+  const seenDockRequest = useRef(dockRequest)
+  const dockWhenAsked = useEffectEvent(() => minimize(Math.max(0, 4 - stackIndex) * 45))
+  useEffect(() => {
+    if (dockRequest !== seenDockRequest.current) {
+      seenDockRequest.current = dockRequest
+      dockWhenAsked()
+    }
+  }, [dockRequest])
   // Why subscribed: an agent starting or exiting in this pane changes its key encodings.
   const terminalInput = useAppStore(
     useShallow((state) =>
@@ -114,6 +138,7 @@ export function AgentHubMirrorWindow({
     )
   )
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
+  const dockAllShortcut = useOptionalShortcutLabel('agentHub.dockMirrors')
 
   const nudgeId = nudge?.id
   const nudgeKind = nudge?.kind
@@ -179,32 +204,49 @@ export function AgentHubMirrorWindow({
             <HubCrumb location={location} />
           </div>
         </div>
-        <AgentHubDimToggle appearance="mirror" />
-        <button
-          type="button"
-          onClick={onReveal}
-          className="flex items-center gap-1.5 rounded-[7px] px-[7px] py-[5px] text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
-        >
-          {translate('agentHub.mirror.openInOrca', 'Open in Orca')}
-          <HubKeys keys={['↵']} />
-        </button>
-        <button
-          type="button"
-          aria-label={translate('agentHub.mirror.minimize', 'Minimize')}
-          title={translate('agentHub.mirror.minimize', 'Minimize')}
-          onClick={() => leave(onMinimize)}
-          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-        >
-          <Minus className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          aria-label={translate('agentHub.mirror.close', 'Close mirror')}
-          onClick={() => leave(onClose)}
-          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-        >
-          <X className="size-3.5" />
-        </button>
+        {/* The window's controls sit close together, apart from the title. */}
+        <div className="flex shrink-0 items-center gap-0.5">
+          <AgentHubDimToggle appearance="mirror" />
+          <button
+            type="button"
+            title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
+            onClick={onReveal}
+            className="flex h-6 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            {translate('agentHub.mirror.jump', 'Jump')}
+            <HubKeys keys={['↵']} />
+          </button>
+          <button
+            type="button"
+            aria-label={translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')}
+            title={
+              dockAllShortcut
+                ? `${translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')} (${dockAllShortcut})`
+                : translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
+            }
+            onClick={requestAgentHubMirrorsDock}
+            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            <PictureInPicture2 className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            aria-label={translate('agentHub.mirror.minimize', 'Minimize')}
+            title={translate('agentHub.mirror.minimize', 'Minimize')}
+            onClick={() => minimize()}
+            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            <Minus className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            aria-label={translate('agentHub.mirror.close', 'Close mirror')}
+            onClick={() => leave(onClose)}
+            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
       </header>
       {family ? (
         <AgentHubMirrorFamilyTabs family={family} activeKey={mirrorKey} onSelect={onRetarget} />
@@ -223,7 +265,7 @@ export function AgentHubMirrorWindow({
           </p>
           <button
             type="button"
-            onClick={() => leave(onMinimize)}
+            onClick={() => minimize()}
             className="mt-1 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
           >
             {translate('agentHub.mirror.minimize', 'Minimize')}

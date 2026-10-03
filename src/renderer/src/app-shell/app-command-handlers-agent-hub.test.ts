@@ -35,7 +35,7 @@ function shortcutState(): AppShortcutState {
   }
 }
 
-function run(actionId: 'agentHub.toggle' | 'agentHub.nextWaiting'): {
+function run(actionId: 'agentHub.toggle' | 'agentHub.nextWaiting' | 'agentHub.dockMirrors'): {
   claimed: boolean | undefined
   input: ShortcutDispatchInput
 } {
@@ -61,18 +61,20 @@ describe('agent hub shortcuts', () => {
     expect(input.preventDefault).not.toHaveBeenCalled()
   })
 
-  it('routes both chords to the mounted hub', () => {
-    const commands = { toggle: vi.fn(), jumpToNextWaiting: vi.fn() }
+  it('routes every hub chord to the mounted hub', () => {
+    const commands = { toggle: vi.fn(), jumpToNextWaiting: vi.fn(), toggleMirrors: vi.fn() }
     unregister = registerAgentHubCommands(commands)
 
     expect(run('agentHub.toggle').claimed).toBe(true)
     expect(run('agentHub.nextWaiting').claimed).toBe(true)
+    expect(run('agentHub.dockMirrors').claimed).toBe(true)
     expect(commands.toggle).toHaveBeenCalledTimes(1)
     expect(commands.jumpToNextWaiting).toHaveBeenCalledTimes(1)
+    expect(commands.toggleMirrors).toHaveBeenCalledTimes(1)
   })
 
   it('stops claiming the chord once the hub unmounts', () => {
-    const commands = { toggle: vi.fn(), jumpToNextWaiting: vi.fn() }
+    const commands = { toggle: vi.fn(), jumpToNextWaiting: vi.fn(), toggleMirrors: vi.fn() }
     registerAgentHubCommands(commands)()
 
     expect(run('agentHub.toggle').claimed).toBe(false)

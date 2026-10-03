@@ -13,35 +13,45 @@ function clamp(value: number, [min, max]: readonly [number, number]): number {
   return Math.min(max, Math.max(min, value))
 }
 
-/** Pulls a centered dock of this extent fully on screen; the saved offset stays as it was. */
-function keepInside(center: number, extent: number, length: number): number {
-  const half = extent / 2 + EDGE_MARGIN
-  return half * 2 >= length ? length / 2 : Math.min(length - half, Math.max(half, center))
-}
+/** The dock's length along its edge: folded (`rest`) and as drawn now (`current`). */
+export type AgentHubDockExtent = { rest: number; current: number }
 
 /**
  * Fixed-position placement for the dock. The bottom and top docks overlap the status bar's and
- * the title bar's 1px divider, so the notch reads as part of that bar.
+ * the title bar's 1px divider, so the notch reads as part of that bar. Once measured, the dock
+ * is pinned by its start (left, or top on a side edge) where the folded notch is centred, so it
+ * unfolds one way and nothing already shown moves; near the far edge it is pulled back on screen.
  */
 export function agentHubDockPlacement(
   position: AgentHubDockPosition,
   viewport: Viewport,
   chrome: { statusBarHeight: number; titleBarHeight: number },
-  /** The dock's current length along its edge (it grows when expanded). */
-  extent = 0
+  extent: AgentHubDockExtent | null = null
 ): { left?: number; right?: number; top?: number; bottom?: number; transform: string } {
-  if (position.edge === 'bottom' || position.edge === 'top') {
-    const center = clamp(position.offset, BOTTOM_OFFSET_RANGE) * viewport.width
-    const left = Math.round(keepInside(center, extent, viewport.width))
-    return position.edge === 'bottom'
-      ? { left, bottom: chrome.statusBarHeight - 1, transform: 'translateX(-50%)' }
-      : { left, top: chrome.titleBarHeight - 1, transform: 'translateX(-50%)' }
+  const horizontal = position.edge === 'bottom' || position.edge === 'top'
+  const length = horizontal ? viewport.width : viewport.height
+  const center =
+    clamp(position.offset, horizontal ? BOTTOM_OFFSET_RANGE : SIDE_OFFSET_RANGE) * length
+  const start = extent
+    ? Math.round(
+        Math.max(
+          EDGE_MARGIN,
+          Math.min(length - extent.current - EDGE_MARGIN, center - extent.rest / 2)
+        )
+      )
+    : Math.round(center)
+  // Before the first measure, centre on the offset.
+  const along = extent ? 'none' : horizontal ? 'translateX(-50%)' : 'translateY(-50%)'
+  switch (position.edge) {
+    case 'bottom':
+      return { left: start, bottom: chrome.statusBarHeight - 1, transform: along }
+    case 'top':
+      return { left: start, top: chrome.titleBarHeight - 1, transform: along }
+    case 'right':
+      return { right: 0, top: start, transform: along }
+    case 'left':
+      return { left: 0, top: start, transform: along }
   }
-  const center = clamp(position.offset, SIDE_OFFSET_RANGE) * viewport.height
-  const top = Math.round(keepInside(center, extent, viewport.height))
-  return position.edge === 'right'
-    ? { right: 0, top, transform: 'translateY(-50%)' }
-    : { left: 0, top, transform: 'translateY(-50%)' }
 }
 
 /** Where a dropped dock lands: the nearest window edge. */
@@ -72,6 +82,18 @@ export function agentHubDockPopoverSide(
     case 'left':
       return 'right'
   }
+}
+
+/** Where a parked mirror's alert opens: away from a side dock, else toward the roomier half. */
+export function agentHubTrayAlertSide(dock: AgentHubDockPosition | null): 'left' | 'right' {
+  if (!dock) {
+    // The status-bar trigger sits at the bar's right end.
+    return 'left'
+  }
+  if (dock.edge === 'left' || dock.edge === 'right') {
+    return dock.edge === 'left' ? 'right' : 'left'
+  }
+  return dock.offset > 0.5 ? 'left' : 'right'
 }
 
 /** True for the docks that run along a horizontal bar. */

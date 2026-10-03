@@ -1,5 +1,6 @@
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { translate } from '@/i18n/i18n'
 import type { AgentHubDockEdge } from '../../../../shared/agent-hub-settings'
 import { agentHubNotchShape } from './agent-hub-dock-geometry'
 import type { AgentHubCounts } from './agent-hub-lists'
@@ -51,6 +52,7 @@ export function DockCounter({
   )
 }
 
+/** The three counts as bare glyphs, for the status-bar trigger. */
 export function DockCounters({ counts }: { counts: AgentHubCounts }): React.JSX.Element {
   return (
     <>
@@ -62,24 +64,80 @@ export function DockCounters({ counts }: { counts: AgentHubCounts }): React.JSX.
 }
 
 /**
+ * The three counts, built the same in both faces of the dock so they sit at the same spot when
+ * it unfolds: the pointer stays on the count it was over.
+ */
+export function DockCounterGroup({
+  counts,
+  side,
+  onOpenTab
+}: {
+  counts: AgentHubCounts
+  side: 'top' | 'bottom' | 'left' | 'right'
+  /** Present on the unfolded face, where each count opens its tab. */
+  onOpenTab?: (tab: 'running' | 'inbox') => void
+}): React.JSX.Element {
+  const items = [
+    {
+      kind: 'work',
+      value: counts.working,
+      tab: 'running',
+      label: translate('agentHub.tab.running', 'Running')
+    },
+    {
+      kind: 'ask',
+      value: counts.needsYou,
+      tab: 'inbox',
+      label: translate('agentHub.dock.waiting', 'Waiting on you')
+    },
+    {
+      kind: 'done',
+      value: counts.finished,
+      tab: 'inbox',
+      label: translate('agentHub.dock.finished', 'Finished')
+    }
+  ] as const
+  return (
+    <span className="flex shrink-0 items-center group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
+      {items.map((item) =>
+        onOpenTab ? (
+          <DockButton
+            key={item.kind}
+            label={item.label}
+            side={side}
+            className={DOCK_COUNT_BUTTON}
+            onClick={() => onOpenTab(item.tab)}
+          >
+            <DockCounter kind={item.kind} value={item.value} />
+          </DockButton>
+        ) : (
+          <span key={item.kind} className={DOCK_COUNT_BUTTON}>
+            <DockCounter kind={item.kind} value={item.value} />
+          </span>
+        )
+      )}
+    </span>
+  )
+}
+
+/**
  * One face of the dock. Both stay mounted so a hover crossfades them; the face not shown leaves
  * the layout (the bar sizes to the shown one) and goes inert.
  */
 export function DockLayer({
   shown,
-  spacing,
   children
 }: {
   shown: boolean
-  spacing: 'tight' | 'loose'
   children: React.ReactNode
 }): React.JSX.Element {
   return (
     <div
       inert={!shown}
       data-shown={shown}
-      data-spacing={spacing}
-      className="flex shrink-0 items-center transition-[opacity,scale] delay-75 duration-200 ease-out group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col data-[spacing=loose]:gap-2 data-[spacing=tight]:gap-0.5 data-[shown=false]:pointer-events-none data-[shown=false]:absolute data-[shown=false]:top-1/2 data-[shown=false]:left-1/2 data-[shown=false]:w-max data-[shown=false]:-translate-x-1/2 data-[shown=false]:-translate-y-1/2 data-[shown=false]:scale-90 data-[shown=false]:opacity-0 data-[shown=false]:delay-0 data-[shown=false]:duration-100"
+      // Why opacity only: a scale would nudge the counts, which must hold still under the pointer.
+      // The face not shown overlays the bar from the same start (same padding as the bar).
+      className="flex shrink-0 items-center gap-0.5 transition-opacity delay-75 duration-200 ease-out group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col data-[shown=false]:pointer-events-none data-[shown=false]:absolute data-[shown=false]:inset-0 data-[shown=false]:opacity-0 data-[shown=false]:delay-0 data-[shown=false]:duration-100 group-data-[edge=bottom]/dock:data-[shown=false]:px-2.5 group-data-[edge=left]/dock:data-[shown=false]:py-2.5 group-data-[edge=right]/dock:data-[shown=false]:py-2.5 group-data-[edge=top]/dock:data-[shown=false]:px-2.5"
     >
       {children}
     </div>

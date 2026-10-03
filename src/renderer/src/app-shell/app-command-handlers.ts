@@ -196,6 +196,13 @@ export function createAppCommandHandlers(
       }
     ],
     [
+      'agentHub.dockMirrors',
+      () => {
+        const hub = getAgentHubCommands()
+        return hub ? claim('agentHub.dockMirrors', hub.toggleMirrors) : false
+      }
+    ],
+    [
       'floatingWorkspace.maximize',
       () => {
         if (floatingTerminalOpen || !floatingTerminalEnabled) {

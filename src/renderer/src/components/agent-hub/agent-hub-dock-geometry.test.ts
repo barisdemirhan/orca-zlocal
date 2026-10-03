@@ -43,16 +43,32 @@ describe('agent hub dock geometry', () => {
     expect(agentHubDockPopoverSide('top')).toBe('bottom')
   })
 
-  it('pulls an expanded dock near an edge fully on screen', () => {
+  it('pins a measured dock by its start, so unfolding only grows it one way', () => {
+    const bottom = { edge: 'bottom', offset: 0.5 } as const
+    const folded = agentHubDockPlacement(bottom, viewport, chrome, { rest: 200, current: 200 })
+    const unfolded = agentHubDockPlacement(bottom, viewport, chrome, { rest: 200, current: 420 })
+    expect(folded).toEqual({ left: 700, bottom: 23, transform: 'none' })
+    expect(unfolded.left).toBe(700)
+
+    const right = { edge: 'right', offset: 0.5 } as const
+    expect(agentHubDockPlacement(right, viewport, chrome, { rest: 120, current: 300 })).toEqual({
+      right: 0,
+      top: 440,
+      transform: 'none'
+    })
+  })
+
+  it('pulls an unfolded dock near the far edge back on screen', () => {
     const narrow = { width: 1000, height: 800 }
-    expect(agentHubDockPlacement({ edge: 'bottom', offset: 0.06 }, narrow, chrome, 300).left).toBe(
-      158
-    )
-    expect(agentHubDockPlacement({ edge: 'bottom', offset: 0.94 }, narrow, chrome, 300).left).toBe(
-      842
-    )
-    expect(agentHubDockPlacement({ edge: 'right', offset: 0.12 }, narrow, chrome, 260).top).toBe(
-      138
+    const extent = { rest: 120, current: 300 }
+    expect(
+      agentHubDockPlacement({ edge: 'bottom', offset: 0.06 }, narrow, chrome, extent).left
+    ).toBe(8)
+    expect(
+      agentHubDockPlacement({ edge: 'bottom', offset: 0.94 }, narrow, chrome, extent).left
+    ).toBe(692)
+    expect(agentHubDockPlacement({ edge: 'right', offset: 0.88 }, narrow, chrome, extent).top).toBe(
+      492
     )
   })
 
