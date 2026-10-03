@@ -1,15 +1,11 @@
-import { useMemo, type Ref } from 'react'
-import { PictureInPicture2, SquareArrowOutUpRight } from 'lucide-react'
+import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
+import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { AgentIcon } from '@/lib/agent-catalog'
-import { agentTypeToIconAgent, formatAgentTypeLabel } from '@/lib/agent-status'
+import { formatAgentTypeLabel } from '@/lib/agent-status'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
-import { Button } from '@/components/ui/button'
+import { submitPromptToAgentPty } from '@/lib/agent-paste-draft'
 import { translate } from '@/i18n/i18n'
-import {
-  activityThreadRowCopy,
-  threadAgentStateLabel
-} from '../activity/activity-thread-presentation'
+import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import {
   NativeChatInteractiveCard,
@@ -17,29 +13,73 @@ import {
 } from '../native-chat/NativeChatInteractiveCard'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
+import { HubAvatar, HubChip, HubCrumb, HubKeys } from './AgentHubAtoms'
+import {
+  HubApprovalSummary,
+  HubOptionList,
+  HubReplyField,
+  questionOptions,
+  type AgentHubAnswerOption
+} from './AgentHubAnswerBody'
+import { agentHubAlwaysAllowKey, readApprovalTool } from './agent-hub-approval'
 import { agentHubStateSince } from './agent-hub-lists'
-import { resolveAgentHubPtyId } from './agent-hub-pane-target'
+import type { AgentHubLocation } from './agent-hub-pane-target'
+import { useAgentHubLivePty } from './use-agent-hub-live-pty'
+
+// Why a pause: the agent needs a beat to leave its approval prompt before the instruction lands.
+const DENY_THEN_INSTRUCT_DELAY_MS = 400
+
+export type AgentHubCardControl = NativeChatInteractiveCardControl
+
+function CardAction({
+  icon,
+  label,
+  keys,
+  onClick
+}: {
+  icon: React.ReactNode
+  label: string
+  keys: string[]
+  onClick: () => void
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      onClick={onClick}
+      className="flex items-center gap-1.5 rounded-[7px] px-[7px] py-[5px] text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+    >
+      {icon}
+      {label}
+      <HubKeys keys={keys} />
+    </button>
+  )
+}
 
 /**
- * An agent waiting on the user: its question or approval as the native chat card, sent to
- * the agent's terminal with the same keystrokes the chat surface uses (SSH included).
+ * The waiting agent's card: its question or approval, answered with the same keystrokes the
+ * chat surface sends (SSH included). Multi-question and multi-select prompts keep the full
+ * native wizard.
  */
 export function AgentHubAttentionCard({
   thread,
   location,
   now,
+  popoutKeys,
   controlRef,
   onJump,
   onPopout
 }: {
   thread: AgentPaneThread
-  location: string
+  location: AgentHubLocation
   now: number
-  controlRef: Ref<NativeChatInteractiveCardControl>
+  popoutKeys: string[]
+  controlRef: Ref<AgentHubCardControl>
   onJump: () => void
   onPopout: () => void
 }): React.JSX.Element {
   const { paneKey } = thread
+  const tabId = thread.tab.id
   const interactivePrompt = useAppStore(
     (s) => s.agentStatusByPaneKey[paneKey]?.interactivePrompt ?? null
   )
@@ -51,49 +91,192 @@ export function AgentHubAttentionCard({
     () => parseInteractivePrompt(interactivePrompt, toolName ?? undefined),
     [interactivePrompt, toolName]
   )
-  const ptyId = useAppStore((s) => resolveAgentHubPtyId(s, thread.tab.id, paneKey))
-  const send = useNativeChatInteractiveSend(thread.tab.id, paneKey, ptyId, thread.agentType)
+  const ptyId = useAgentHubLivePty(thread.worktree.id, tabId, paneKey)
+  const send = useNativeChatInteractiveSend(tabId, paneKey, ptyId, thread.agentType)
+  const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
+  const [chosen, setChosen] = useState<number | null>(null)
   const copy = activityThreadRowCopy(thread)
-  const agent = agentTypeToIconAgent(thread.agentType)
+  const agentLabel = formatAgentTypeLabel(thread.agentType)
   const canAnswer = card !== null && ptyId !== null
+
+  const question =
+    card?.kind === 'question' && card.prompt.questions.length === 1
+      ? (card.prompt.questions[0] ?? null)
+      : null
+  const simpleQuestion = question && !question.multiSelect ? question : null
+  const approval = card?.kind === 'approval' ? card.approval : null
+  const command = approval?.detail
+  const alwaysAllowKey = approval ? agentHubAlwaysAllowKey(thread.agentType) : null
+  const approvalOptions: (AgentHubAnswerOption & { send: string })[] = approval
+    ? [
+        {
+          id: 'allow-once',
+          label: translate('agentHub.card.allowOnce', 'Yes, run it once'),
+          send: '1'
+        },
+        ...(alwaysAllowKey && command
+          ? [
+              {
+                id: 'always-allow',
+                label: (
+                  <>
+                    {translate('agentHub.card.alwaysAllow', 'Always allow')}{' '}
+                    <code className="font-mono text-xs text-foreground">
+                      {command.split(' ').slice(0, 2).join(' ')}
+                    </code>
+                  </>
+                ),
+                send: alwaysAllowKey
+              }
+            ]
+          : []),
+        {
+          id: 'deny',
+          label: translate('agentHub.card.denyInstead', 'No, tell {{value0}} what to do instead', {
+            value0: agentLabel
+          }),
+          send: '',
+          deny: true
+        }
+      ]
+    : []
+
+  const choose = (index: number): boolean => {
+    if (!canAnswer || chosen !== null) {
+      return false
+    }
+    if (simpleQuestion && card?.kind === 'question') {
+      if (!simpleQuestion.options[index]) {
+        return false
+      }
+      setChosen(index)
+      send.sendAnswer(card.prompt, [{ indices: [index] }])
+      return true
+    }
+    const option = approvalOptions[index]
+    if (approval) {
+      if (!option) {
+        return false
+      }
+      setChosen(index)
+      if (option.deny) {
+        send.cancel()
+      } else {
+        send.sendRaw(option.send)
+      }
+      return true
+    }
+    return nativeControlRef.current?.chooseOption(index) ?? false
+  }
+  useImperativeHandle(controlRef, () => ({ chooseOption: choose }))
+
+  const reply = (text: string): void => {
+    if (!ptyId || chosen !== null) {
+      return
+    }
+    if (simpleQuestion && card?.kind === 'question') {
+      setChosen(-1)
+      send.sendAnswer(card.prompt, [{ indices: [], other: text }])
+      return
+    }
+    if (approval) {
+      setChosen(approvalOptions.length - 1)
+      send.cancel()
+      setTimeout(() => {
+        void submitPromptToAgentPty({ tabId, ptyId, content: text })
+      }, DENY_THEN_INSTRUCT_DELAY_MS)
+    }
+  }
+
+  const lastMessage = thread.currentAgentEntry?.lastAssistantMessageIsToolOutput
+    ? undefined
+    : thread.currentAgentEntry?.lastAssistantMessage?.trim()
   const waitingText =
     card?.kind === 'question'
       ? (card.prompt.questions[0]?.question ?? copy.statusLine)
-      : card?.kind === 'approval'
-        ? [card.approval.title, card.approval.detail].filter(Boolean).join(' ')
+      : approval
+        ? [approval.title, approval.detail].filter(Boolean).join(' ')
         : copy.statusLine
 
   return (
     <section
-      className="space-y-2.5"
       aria-label={copy.taskTitle}
       data-agent-hub-attention-card={paneKey}
+      className="relative rounded-[14px] border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5"
     >
-      <div className="flex items-start gap-2">
-        <span className="mt-0.5 inline-flex shrink-0">
-          <AgentIcon agent={agent} size={16} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">{copy.taskTitle}</div>
-          <div className="truncate text-xs text-muted-foreground">
-            {formatAgentTypeLabel(thread.agentType)} · {threadAgentStateLabel(thread)} ·{' '}
-            {formatShortTimeAgo(agentHubStateSince(thread), now)} · {location}
+      <div className="mb-2.5 truncate pr-5 text-[15px] font-semibold tracking-[-0.01em]">
+        {copy.taskTitle}
+      </div>
+      <div className="flex items-center gap-2.5">
+        <HubAvatar agentType={thread.agentType} kind="ask" />
+        <div className="min-w-0 text-[12.5px]">
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold">@{thread.agentType}</span>
+            <HubChip tone="ask">
+              {approval
+                ? translate('agentHub.card.needsApproval', 'needs approval')
+                : translate('agentHub.card.asking', 'asking')}
+            </HubChip>
+            <span className="font-mono text-[11px] text-muted-foreground/70">
+              {formatShortTimeAgo(agentHubStateSince(thread), now)}
+            </span>
           </div>
+          <HubCrumb location={location} />
         </div>
       </div>
-      {canAnswer ? (
-        <NativeChatInteractiveCard
-          card={card}
-          send={send}
-          canSend
-          layout="embedded"
-          highlightRecommended
-          controlRef={controlRef}
-        />
+
+      {canAnswer && simpleQuestion ? (
+        <>
+          <div className="mt-3.5 mb-2 text-sm leading-snug font-semibold">
+            {simpleQuestion.question}
+          </div>
+          <HubOptionList
+            options={questionOptions(simpleQuestion)}
+            chosen={chosen}
+            disabled={chosen !== null}
+            onChoose={choose}
+          />
+          <HubReplyField
+            placeholder={translate('agentHub.card.replyTo', 'Reply to @{{value0}}…', {
+              value0: thread.agentType
+            })}
+            disabled={chosen !== null}
+            onSend={reply}
+          />
+        </>
+      ) : canAnswer && approval ? (
+        <>
+          <div className="mt-3.5 mb-2 text-sm leading-snug font-semibold">
+            {lastMessage || approval.title}
+          </div>
+          <HubApprovalSummary tool={readApprovalTool(interactivePrompt)} command={command} />
+          <HubOptionList
+            options={approvalOptions}
+            chosen={chosen}
+            disabled={chosen !== null}
+            onChoose={choose}
+          />
+          <HubReplyField
+            placeholder={translate('agentHub.card.instead', 'Tell it what to do instead…')}
+            disabled={chosen !== null}
+            onSend={reply}
+          />
+        </>
+      ) : canAnswer ? (
+        <div className="mt-3">
+          <NativeChatInteractiveCard
+            card={card}
+            send={send}
+            canSend
+            layout="embedded"
+            highlightRecommended
+            controlRef={nativeControlRef}
+          />
+        </div>
       ) : (
-        // Why: the structured prompt can be absent (older hook, relay trimmed it, no live PTY);
-        // the agent is still waiting, so say what it said and point at its terminal.
-        <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-sm">
+        // Why: the structured prompt can be absent (older hook, relay trimmed it) or the
+        // pane is still attaching; the agent is waiting all the same, so show what it said.
+        <div className="mt-3.5 text-sm">
           {waitingText ? <p className="line-clamp-4 break-words">{waitingText}</p> : null}
           <p className="mt-1 text-xs text-muted-foreground">
             {translate(
@@ -103,15 +286,20 @@ export function AgentHubAttentionCard({
           </p>
         </div>
       )}
-      <div className="flex items-center gap-1">
-        <Button type="button" variant="ghost" size="xs" tabIndex={-1} onClick={onJump}>
-          <SquareArrowOutUpRight className="size-3" />
-          {translate('agentHub.row.jump', 'Open in Orca')}
-        </Button>
-        <Button type="button" variant="ghost" size="xs" tabIndex={-1} onClick={onPopout}>
-          <PictureInPicture2 className="size-3" />
-          {translate('agentHub.row.popOut', 'Pop out')}
-        </Button>
+
+      <div className="mt-2 -ml-1.5 flex gap-1">
+        <CardAction
+          icon={<ArrowUpRight className="size-[13px]" />}
+          label={translate('agentHub.card.jump', 'Jump to terminal')}
+          keys={['↵']}
+          onClick={onJump}
+        />
+        <CardAction
+          icon={<PictureInPicture2 className="size-[13px]" />}
+          label={translate('agentHub.row.popOut', 'Pop out')}
+          keys={popoutKeys}
+          onClick={onPopout}
+        />
       </div>
     </section>
   )

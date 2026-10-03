@@ -83,7 +83,7 @@ function fixture() {
 
 function renderPanel() {
   const { lists, tree } = fixture()
-  const handlers = { onJump: vi.fn(), onPopout: vi.fn(), onMarkRead: vi.fn() }
+  const handlers = { onJump: vi.fn(), onPopout: vi.fn(), onMarkRead: vi.fn(), onClose: vi.fn() }
   const rootRef = createRef<HTMLDivElement>()
   act(() => {
     root.render(
@@ -92,7 +92,7 @@ function renderPanel() {
           lists={lists}
           tree={tree}
           terminalCount={3}
-          locationOf={() => 'Repo · feature'}
+          locationOf={() => ({ group: null, project: 'Repo', workspace: 'feature' })}
           rootRef={rootRef}
           {...handlers}
         />
@@ -129,7 +129,7 @@ describe('AgentHubPanel keyboard', () => {
     const { handlers, panel } = renderPanel()
 
     press(panel.current, 'Tab')
-    expect(container.querySelector('[role="tab"][data-state="active"]')?.textContent).toContain(
+    expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
       'Running'
     )
     press(panel.current, 'ArrowDown')

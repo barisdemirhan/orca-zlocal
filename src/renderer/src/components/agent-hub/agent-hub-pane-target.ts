@@ -91,17 +91,27 @@ export function resolveAgentHubTerminalInput(
   })
 }
 
-/** "Group › project · workspace", or just the workspace for folder and floating panes. */
+export type AgentHubLocation = { group: string | null; project: string; workspace: string | null }
+
+/** Group › project · workspace; folder and floating panes have only the workspace name. */
+export function agentHubLocation(
+  target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>,
+  groupNameById: ReadonlyMap<string, string>
+): AgentHubLocation {
+  const workspace = getActivityThreadWorkspaceTitle(target.worktree)
+  if (!target.repo) {
+    return { group: null, project: workspace, workspace: null }
+  }
+  const project = target.repo.displayName
+  const group = target.repo.projectGroupId ? groupNameById.get(target.repo.projectGroupId) : null
+  return { group: group ?? null, project, workspace: workspace === project ? null : workspace }
+}
+
 export function agentHubLocationLabel(
   target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>,
   groupNameById: ReadonlyMap<string, string>
 ): string {
-  const workspace = getActivityThreadWorkspaceTitle(target.worktree)
-  if (!target.repo) {
-    return workspace
-  }
-  const project = target.repo.displayName
-  const group = target.repo.projectGroupId ? groupNameById.get(target.repo.projectGroupId) : null
+  const { group, project, workspace } = agentHubLocation(target, groupNameById)
   const head = group ? `${group} › ${project}` : project
-  return workspace === project ? head : `${head} · ${workspace}`
+  return workspace ? `${head} · ${workspace}` : head
 }

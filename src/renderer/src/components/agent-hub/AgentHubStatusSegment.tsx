@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Bot } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { useShortcutLabel } from '@/hooks/useShortcutLabel'
-import { AgentQuestionIcon } from '@/components/AgentQuestionIcon'
-import { AgentStateDot } from '@/components/AgentStateDot'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
@@ -14,12 +11,13 @@ import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/activity-thread-actions'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { HubStateIndicator } from './AgentHubAtoms'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
 import { registerAgentHubCommands } from './agent-hub-commands'
 import { agentHubCounts, buildAgentHubLists, type AgentHubLists } from './agent-hub-lists'
 import {
-  agentHubLocationLabel,
+  agentHubLocation,
   agentHubPaneTargetKey,
   paneTargetFromThread,
   type AgentHubPaneTarget
@@ -40,13 +38,15 @@ function AgentHubPopoverBody({
   threads,
   rootRef,
   onJump,
-  onPopout
+  onPopout,
+  onClose
 }: {
   lists: AgentHubLists
   threads: readonly AgentPaneThread[]
   rootRef: React.RefObject<HTMLDivElement | null>
   onJump: (request: AgentHubOpenRequest) => void
   onPopout: (request: AgentHubOpenRequest) => void
+  onClose: () => void
 }): React.JSX.Element {
   const tree = useAgentHubTerminalTree(threads)
   const groupNameById = useGroupNameById()
@@ -57,11 +57,12 @@ function AgentHubPopoverBody({
       lists={lists}
       tree={tree}
       terminalCount={terminalCount}
-      locationOf={(target) => agentHubLocationLabel(target, groupNameById)}
+      locationOf={(target) => agentHubLocation(target, groupNameById)}
       rootRef={rootRef}
       onJump={onJump}
       onPopout={onPopout}
       onMarkRead={acknowledgeAgents}
+      onClose={onClose}
     />
   )
 }
@@ -175,30 +176,38 @@ export function AgentHubStatusSegment({ iconOnly }: { iconOnly: boolean }): Reac
               <button
                 type="button"
                 {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
-                data-attention={counts.needsYou > 0}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[11px] text-muted-foreground tabular-nums hover:bg-accent/70 data-[attention=true]:text-foreground"
+                data-open={open}
+                className="flex h-[22px] cursor-pointer items-center gap-1.5 rounded-[5px] pr-2 pl-1 whitespace-nowrap text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground data-[open=true]:bg-foreground/[0.07] data-[open=true]:text-foreground"
                 aria-label={label}
               >
-                <Bot className="size-3.5" />
-                {counts.working > 0 ? (
-                  <span className="inline-flex items-center gap-1">
-                    <AgentWorkingSpinner className="size-1.5" />
-                    {counts.working}
+                <span className="flex h-[18px] items-center gap-1 rounded-full border border-foreground/10 bg-background px-[7px] font-mono text-[10.5px] text-muted-foreground">
+                  {counts.working > 0 ? (
+                    <AgentWorkingSpinner className="size-[9px] border-[1.5px]" />
+                  ) : (
+                    <span className="size-2.5 rounded-full border-[1.5px] border-foreground/20" />
+                  )}
+                  <span className="mr-[3px]">{counts.working}</span>
+                  {counts.needsYou > 0 ? (
+                    <>
+                      <HubStateIndicator kind="ask" />
+                      <span className="mr-[3px] text-agent-question-text">{counts.needsYou}</span>
+                    </>
+                  ) : null}
+                  {counts.finished > 0 ? (
+                    <>
+                      <HubStateIndicator kind="done" />
+                      <span>{counts.finished}</span>
+                    </>
+                  ) : null}
+                </span>
+                {iconOnly ? null : (
+                  <span
+                    data-attention={counts.needsYou > 0}
+                    className="data-[attention=true]:text-agent-question-text"
+                  >
+                    {label}
                   </span>
-                ) : null}
-                {counts.needsYou > 0 ? (
-                  <span className="inline-flex items-center gap-1">
-                    <AgentQuestionIcon className="size-2.5" />
-                    {counts.needsYou}
-                  </span>
-                ) : null}
-                {counts.finished > 0 ? (
-                  <span className="inline-flex items-center gap-1">
-                    <AgentStateDot state="done" title={null} />
-                    {counts.finished}
-                  </span>
-                ) : null}
-                {iconOnly ? null : <span className="font-medium">{label}</span>}
+                )}
               </button>
             </PopoverTrigger>
           </TooltipTrigger>
@@ -212,7 +221,8 @@ export function AgentHubStatusSegment({ iconOnly }: { iconOnly: boolean }): Reac
           sideOffset={8}
           {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
           collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
-          className="w-[460px] max-w-[calc(100vw-2rem)]"
+          surface="panel"
+          className="w-[456px] max-w-[calc(100vw-2rem)]"
           data-agent-hub-panel
           onOpenAutoFocus={(event) => {
             // Why: the panel root owns the arrow/number keys, so it takes focus, not the first button.
@@ -245,7 +255,9 @@ export function AgentHubStatusSegment({ iconOnly }: { iconOnly: boolean }): Reac
             rootRef={panelRootRef}
             onJump={jump}
             onPopout={popout}
+            onClose={() => setPopoverOpen(false)}
           />
+          <PopoverArrow width={14} height={7} />
         </PopoverContent>
       </Popover>
       {mirror ? (
@@ -253,7 +265,7 @@ export function AgentHubStatusSegment({ iconOnly }: { iconOnly: boolean }): Reac
           key={agentHubPaneTargetKey(mirror)}
           target={mirror}
           thread={mirrorThread}
-          subtitle={agentHubLocationLabel(mirror, groupNameById)}
+          location={agentHubLocation(mirror, groupNameById)}
           onClose={() => setMirror(null)}
           onReveal={() => {
             setMirror(null)

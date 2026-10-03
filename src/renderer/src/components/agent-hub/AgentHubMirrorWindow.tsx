@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { SquareArrowOutUpRight, SquareTerminal, XIcon } from 'lucide-react'
+import { Loader2, SendHorizontal, X } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { AgentIcon } from '@/lib/agent-catalog'
-import { agentTypeToIconAgent } from '@/lib/agent-status'
-import { AgentStateDot } from '@/components/AgentStateDot'
-import { Button } from '@/components/ui/button'
+import { submitPromptToAgentPty } from '@/lib/agent-paste-draft'
 import { translate } from '@/i18n/i18n'
 import { AgentTerminalPreview } from '../dashboard-popout/AgentTerminalPreview'
-import { threadAgentState } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
+import { HubAvatar, HubCrumb, HubKeys, HubStateIndicator } from './AgentHubAtoms'
+import { agentHubIndicatorKind } from './agent-hub-lists'
 import {
-  resolveAgentHubPtyId,
   resolveAgentHubTerminalInput,
+  type AgentHubLocation,
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import {
@@ -20,6 +19,10 @@ import {
   defaultAgentHubMirrorGeometry,
   type AgentHubMirrorGeometry
 } from './agent-hub-mirror-geometry'
+import { useAgentHubLivePty } from './use-agent-hub-live-pty'
+
+// A tab that has not attached by then is not coming back on its own.
+const ATTACH_GIVE_UP_MS = 10_000
 
 // Why module scope: reopening the mirror lands where the user last left it this session.
 let lastGeometry: AgentHubMirrorGeometry | null = null
@@ -35,22 +38,84 @@ type DragState = {
   start: AgentHubMirrorGeometry
 }
 
+/** The mock's prompt row: agents get a bracketed paste + Enter, shells a typed line. */
+function MirrorSendBar({
+  target,
+  ptyId,
+  asking
+}: {
+  target: AgentHubPaneTarget
+  ptyId: string | null
+  asking: boolean
+}): React.JSX.Element {
+  const [value, setValue] = useState('')
+  const send = useNativeChatInteractiveSend(
+    target.tab.id,
+    target.paneKey ?? target.tab.id,
+    ptyId,
+    target.agentType ?? 'unknown'
+  )
+  const placeholder = asking
+    ? translate('agentHub.mirror.answerPlaceholder', 'Type 1–9 or an answer…')
+    : target.agentType
+      ? translate('agentHub.mirror.sendTo', 'Send to @{{value0}}…', { value0: target.agentType })
+      : translate('agentHub.mirror.sendToShell', 'Send to shell…')
+  return (
+    <form
+      className="flex shrink-0 items-center gap-1.5 border-t border-border bg-background/60 py-[5px] pr-[5px] pl-3"
+      onSubmit={(event) => {
+        event.preventDefault()
+        const text = value.trim()
+        if (!text || !ptyId) {
+          return
+        }
+        setValue('')
+        if (asking && /^[1-9]$/.test(text)) {
+          send.sendRaw(text)
+        } else if (target.agentType) {
+          void submitPromptToAgentPty({ tabId: target.tab.id, ptyId, content: text })
+        } else {
+          send.sendRaw(`${text}\r`)
+        }
+      }}
+    >
+      <span className="font-mono text-muted-foreground">›</span>
+      <input
+        value={value}
+        disabled={!ptyId}
+        onChange={(event) => setValue(event.target.value)}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        className="min-w-0 flex-1 bg-transparent font-mono text-[12.5px] outline-none placeholder:text-muted-foreground/70"
+      />
+      <button
+        type="submit"
+        disabled={!ptyId || !value.trim()}
+        aria-label={translate('agentHub.card.send', 'Send')}
+        className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground disabled:opacity-50"
+      >
+        <SendHorizontal className="size-3.5" />
+      </button>
+    </form>
+  )
+}
+
 /**
- * Non-modal, draggable live mirror of one terminal pane. The preview claims the PTY grid
- * while open (see createPreviewGridClaim), so the real pane follows the mirror's size
- * until it closes.
+ * Non-modal, draggable live mirror of one terminal pane, typed into like the pane itself.
+ * The preview claims the PTY grid while open (see createPreviewGridClaim), so the real pane
+ * follows the mirror's size until it closes.
  */
 export function AgentHubMirrorWindow({
   target,
   thread,
-  subtitle,
+  location,
   onClose,
   onReveal
 }: {
   target: AgentHubPaneTarget
   /** Live thread for an agent pane, for its state glyph; null for a shell. */
   thread: AgentPaneThread | null
-  subtitle: string
+  location: AgentHubLocation
   onClose: () => void
   onReveal: () => void
 }): React.JSX.Element {
@@ -61,15 +126,25 @@ export function AgentHubMirrorWindow({
     )
   )
   const dragRef = useRef<DragState | null>(null)
-  const ptyId = useAppStore((s) => resolveAgentHubPtyId(s, target.tab.id, target.paneKey))
+  const ptyId = useAgentHubLivePty(target.worktree.id, target.tab.id, target.paneKey)
+  const [gaveUp, setGaveUp] = useState(false)
   const terminalInput = useMemo(
     () => (ptyId ? resolveAgentHubTerminalInput(useAppStore.getState(), target, ptyId) : null),
     [ptyId, target]
   )
+  const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
 
   useEffect(() => {
     lastGeometry = geometry
   }, [geometry])
+
+  useEffect(() => {
+    if (ptyId) {
+      return
+    }
+    const timer = setTimeout(() => setGaveUp(true), ATTACH_GIVE_UP_MS)
+    return () => clearTimeout(timer)
+  }, [ptyId])
 
   useEffect(() => {
     const onResize = (): void =>
@@ -118,7 +193,7 @@ export function AgentHubMirrorWindow({
     }
   }, [])
 
-  const agent = agentTypeToIconAgent(target.agentType)
+  const handle = thread?.currentAgentEntry?.terminalHandle
 
   return createPortal(
     <section
@@ -126,7 +201,7 @@ export function AgentHubMirrorWindow({
       aria-label={target.title}
       data-agent-hub-mirror
       // Why z-[46]: above the floating workspace panel (z-45), below modal layers (z-50).
-      className="fixed z-[46] flex flex-col overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-floating"
+      className="fixed z-[46] flex flex-col overflow-hidden rounded-xl border border-foreground/[0.14] bg-background shadow-floating"
       style={{ left: geometry.x, top: geometry.y, width: geometry.width, height: geometry.height }}
       onKeyDown={(event) => {
         // Why: Esc inside the terminal belongs to the agent (interrupt), not to the window.
@@ -140,33 +215,36 @@ export function AgentHubMirrorWindow({
       }}
     >
       <header
-        className="flex shrink-0 cursor-grab items-center gap-2 border-b border-border px-2.5 py-1.5 select-none active:cursor-grabbing"
+        className="flex h-[42px] shrink-0 cursor-grab items-center gap-[9px] border-b border-border bg-popover pr-1.5 pl-3 select-none active:cursor-grabbing"
         onPointerDown={beginDrag('move')}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        {thread ? <AgentStateDot state={threadAgentState(thread)} /> : null}
-        <span className="inline-flex shrink-0 text-muted-foreground">
-          {agent ? <AgentIcon agent={agent} size={14} /> : <SquareTerminal className="size-3.5" />}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-xs font-semibold">{target.title}</div>
-          <div className="truncate text-[11px] text-muted-foreground">{subtitle}</div>
+        <HubStateIndicator kind={kind} />
+        <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
+        <div className="min-w-0 flex-1 text-[12.5px]">
+          <div className="truncate font-semibold">{target.title}</div>
+          <div className="[&>span]:text-[11px]">
+            <HubCrumb location={location} />
+          </div>
         </div>
-        <Button type="button" variant="ghost" size="xs" onClick={onReveal}>
-          <SquareArrowOutUpRight className="size-3" />
-          {translate('agentHub.mirror.openInOrca', 'Open in Orca')}
-        </Button>
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          size="icon-xs"
+          onClick={onReveal}
+          className="flex items-center gap-1.5 rounded-[7px] px-[7px] py-[5px] text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+        >
+          {translate('agentHub.mirror.openInOrca', 'Open in Orca')}
+          <HubKeys keys={['↵']} />
+        </button>
+        <button
+          type="button"
           aria-label={translate('agentHub.mirror.close', 'Close mirror')}
           onClick={onClose}
+          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
         >
-          <XIcon className="size-3.5" />
-        </Button>
+          <X className="size-3.5" />
+        </button>
       </header>
       {ptyId ? (
         <AgentTerminalPreview
@@ -174,12 +252,27 @@ export function AgentHubMirrorWindow({
           ptyId={ptyId}
           terminalInput={terminalInput}
           className="h-auto min-h-0 flex-1"
+          // Why no claim: resizing the PTY to this small window reflowed the agent and left
+          // its real pane narrow after "Open in Orca"; a scaled view keeps the pane intact.
+          claimGrid={false}
         />
       ) : (
-        <div className="min-h-0 flex-1 px-3 py-2 text-xs text-muted-foreground">
-          {translate('agentHub.mirror.noTerminal', 'This pane has no live terminal right now.')}
+        <div className="flex min-h-0 flex-1 items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
+          {gaveUp ? (
+            translate('agentHub.mirror.noTerminal', 'This pane has no live terminal right now.')
+          ) : (
+            <>
+              <Loader2 className="size-3.5 animate-spin" />
+              {translate('agentHub.mirror.connecting', 'Connecting to the terminal…')}
+            </>
+          )}
         </div>
       )}
+      <MirrorSendBar target={target} ptyId={ptyId} asking={kind === 'ask'} />
+      <div className="flex shrink-0 justify-between gap-2.5 overflow-hidden border-t border-border bg-background px-3 py-[5px] font-mono text-[10.5px] whitespace-nowrap text-muted-foreground/70">
+        <span>{translate('agentHub.mirror.liveMirror', 'live mirror')}</span>
+        {handle ? <span className="truncate">{handle}</span> : null}
+      </div>
       <div
         aria-hidden
         className="absolute right-0 bottom-0 size-3 cursor-nwse-resize"

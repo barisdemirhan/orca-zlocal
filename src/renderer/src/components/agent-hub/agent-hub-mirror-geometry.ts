@@ -2,20 +2,27 @@ export type AgentHubMirrorGeometry = { x: number; y: number; width: number; heig
 
 const MIN_WIDTH = 420
 const MIN_HEIGHT = 240
-const DEFAULT_WIDTH = 640
-const DEFAULT_HEIGHT = 400
+const DEFAULT_MIN_WIDTH = 560
+const DEFAULT_MAX_WIDTH = 960
+const DEFAULT_ASPECT = 0.62
 const EDGE_GAP = 16
 // Keeps the default spot clear of the status bar.
 const BOTTOM_RESERVE = 40
 
 type Viewport = { width: number; height: number }
 
+/** Bottom-right, half the window wide: the mirror scales the pane down, so width buys legibility. */
 export function defaultAgentHubMirrorGeometry(viewport: Viewport): AgentHubMirrorGeometry {
+  const width = Math.min(
+    DEFAULT_MAX_WIDTH,
+    Math.max(DEFAULT_MIN_WIDTH, Math.round(viewport.width / 2))
+  )
+  const height = Math.round(width * DEFAULT_ASPECT)
   return {
-    x: viewport.width - DEFAULT_WIDTH - EDGE_GAP,
-    y: viewport.height - DEFAULT_HEIGHT - BOTTOM_RESERVE,
-    width: DEFAULT_WIDTH,
-    height: DEFAULT_HEIGHT
+    x: viewport.width - width - EDGE_GAP,
+    y: viewport.height - height - BOTTOM_RESERVE,
+    width,
+    height
   }
 }
 

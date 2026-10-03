@@ -1,6 +1,7 @@
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
 import { threadAgentState } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { readApprovalTool } from './agent-hub-approval'
 
 export type AgentHubSection = 'needsYou' | 'working' | 'finished'
 
@@ -68,4 +69,31 @@ export function agentHubCounts(lists: AgentHubLists): AgentHubCounts {
     working: lists.working.length,
     finished: lists.finished.length
   }
+}
+
+/** The hub's row/card state vocabulary: asking, working, unread done, read done, idle. */
+export type AgentHubIndicatorKind = 'ask' | 'work' | 'done' | 'read' | 'idle'
+
+export function agentHubIndicatorKind(thread: AgentPaneThread): AgentHubIndicatorKind {
+  switch (threadAgentState(thread)) {
+    case 'waiting':
+    case 'blocked':
+    case 'permission':
+      return 'ask'
+    case 'working':
+    case 'monitoring':
+      return 'work'
+    case 'done':
+    case 'failed':
+    case 'interrupted':
+      return thread.unread ? 'done' : 'read'
+    case 'idle':
+    case 'unverifiable':
+      return 'idle'
+  }
+}
+
+/** True when the waiting prompt is a tool approval rather than a question. */
+export function agentHubIsApproval(thread: AgentPaneThread): boolean {
+  return readApprovalTool(thread.currentAgentEntry?.interactivePrompt ?? null) !== null
 }

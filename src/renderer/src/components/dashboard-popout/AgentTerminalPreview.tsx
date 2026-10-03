@@ -1,8 +1,5 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { ITheme, Terminal } from '@xterm/xterm'
-import { useShallow } from 'zustand/react/shallow'
-import { composeActiveTerminalTheme } from '@/components/terminal-pane/terminal-appearance'
-import { useSystemPrefersDark } from '@/components/terminal-pane/use-system-prefers-dark'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { Terminal } from '@xterm/xterm'
 import { TerminalKittyKeyboardModeTracker } from '../../../../shared/terminal-kitty-keyboard-mode-tracker'
 import { replayPreviewConnectionSnapshot } from './preview-terminal-snapshot-replay'
 import { useEffectiveMacOptionAsAlt } from '@/lib/keyboard-layout/use-effective-mac-option-as-alt'
@@ -14,10 +11,10 @@ import {
 import { syncPreviewTerminalLigatures } from './preview-terminal-ligatures'
 import type { DashboardCardTerminalInput } from '../../../../shared/dashboard-snapshot'
 import { terminalPreviewUnavailableMessage } from './terminal-preview-unavailable-message'
-import { getBuiltinTheme, resolveEffectiveTerminalAppearance } from '@/lib/terminal-theme'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { createPreviewGridClaim } from './preview-grid-claim'
+import { usePreviewTerminalTheme } from './preview-terminal-theme'
 import { createPreviewBoxFit } from './preview-terminal-box-fit'
 import {
   openStandaloneTerminal,
@@ -42,38 +39,28 @@ export function AgentTerminalPreview({
   ptyId,
   terminalInput = null,
   className,
-  onRequestClose
+  onRequestClose,
+  claimGrid = true
 }: {
   ptyId: string
   /** Host-input facts relayed with the card; null routes bytes by client OS. */
   terminalInput?: DashboardCardTerminalInput | null
   className?: string
   onRequestClose?: () => void
+  /** False leaves the PTY at its pane's size and scales the frame into the box instead,
+   *  for previews too small to host the agent without squeezing its real pane. */
+  claimGrid?: boolean
 }): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const settings = useAppStore((state) => state.settings)
-  const systemPrefersDark = useSystemPrefersDark()
   const macOptionAsAlt = useEffectiveMacOptionAsAlt(settings?.terminalMacOptionAsAlt)
   // Read live settings without terminal remount, PTY reconnect or snapshot repaint.
   const settingsRef = useRef(settings)
   const macOptionAsAltRef = useRef(macOptionAsAlt)
   const terminalInputRef = useRef(terminalInput)
   const onRequestCloseRef = useRef(onRequestClose)
-  const { terminalTheme: composedTheme, terminalMode } = useMemo(() => {
-    if (!settings) {
-      return { terminalTheme: null, terminalMode: 'dark' as const }
-    }
-    const appearance = resolveEffectiveTerminalAppearance(settings, systemPrefersDark)
-    const theme = composeActiveTerminalTheme(
-      appearance.theme ?? getBuiltinTheme(appearance.themeName),
-      settings
-    )
-    return { terminalTheme: theme, terminalMode: appearance.mode }
-  }, [settings, systemPrefersDark])
-  // Settings arrive as cloned snapshots; compare theme values before reconnecting.
-  const retainTheme = useShallow((theme: ITheme | null) => theme)
-  const terminalTheme = retainTheme(composedTheme)
+  const { terminalTheme, terminalMode } = usePreviewTerminalTheme(settings)
   const terminalMinimumContrastRatio = settings?.terminalMinimumContrastRatio
   // A null snapshot means the serializer cannot find the PTY; show unavailable instead of a blank terminal.
   const [ptyGone, setPtyGone] = useState(false)
@@ -111,18 +98,20 @@ export function AgentTerminalPreview({
 
     const boxFit = createPreviewBoxFit({ container, getTerminal: () => terminal })
 
-    const gridClaim = createPreviewGridClaim({
-      ptyId,
-      container,
-      getTerminal: () => terminal
-    })
+    const gridClaim = claimGrid
+      ? createPreviewGridClaim({
+          ptyId,
+          container,
+          getTerminal: () => terminal
+        })
+      : null
     // Box growth/shrink (window resize) changes the reachable grid.
     const boxResizeObserver =
       typeof ResizeObserver === 'undefined'
         ? null
         : new ResizeObserver(() => {
             boxFit.schedule()
-            gridClaim.schedule()
+            gridClaim?.schedule()
           })
     if (container.parentElement) {
       boxResizeObserver?.observe(container.parentElement)
@@ -223,7 +212,7 @@ export function AgentTerminalPreview({
         writeReplayed('', requestRefresh)
       }
       boxFit.schedule()
-      gridClaim.schedule()
+      gridClaim?.schedule()
       terminal.focus()
     }
 
@@ -283,12 +272,13 @@ export function AgentTerminalPreview({
       if (retryTimer) {
         clearTimeout(retryTimer)
       }
-      gridClaim.dispose()
+      gridClaim?.dispose()
       boxResizeObserver?.disconnect()
       releaseTerminal()
     }
   }, [
     ptyId,
+    claimGrid,
     terminalTheme,
     terminalMode,
     terminalMinimumContrastRatio,

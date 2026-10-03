@@ -1,19 +1,64 @@
 import { ChevronDown, ChevronRight, Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
-import { AgentQuestionIcon } from '@/components/AgentQuestionIcon'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import { translate } from '@/i18n/i18n'
-import { threadAgentStateLabel } from '../activity/activity-thread-presentation'
+import { HubChip, HubKeys, HubStateIndicator } from './AgentHubAtoms'
 import { AgentHubRow } from './AgentHubRow'
-import { agentHubStateSince } from './agent-hub-lists'
+import { agentHubStateWord } from './agent-hub-copy'
+import {
+  agentHubIndicatorKind,
+  agentHubStateSince,
+  agentHubToolName,
+  type AgentHubIndicatorKind
+} from './agent-hub-lists'
 import {
   isAgentHubGroupCollapsed,
   type AgentHubGroupNode,
   type AgentHubTerminalRow
 } from './agent-hub-terminal-tree'
 
+function rowKind(row: AgentHubTerminalRow): AgentHubIndicatorKind {
+  return row.thread ? agentHubIndicatorKind(row.thread) : 'idle'
+}
+
+function rowSubtitle(row: AgentHubTerminalRow): string {
+  const who = row.thread
+    ? `@${row.thread.agentType}`
+    : translate('agentHub.terminals.shell', 'shell')
+  return `${who} · ${agentHubStateWord(row.thread)}`
+}
+
+function GroupSummary({ group }: { group: AgentHubGroupNode }): React.JSX.Element {
+  return (
+    <span className="ml-auto flex items-center gap-[9px] font-mono text-[11px] font-normal text-muted-foreground/70">
+      {group.counts.needsYou > 0 ? (
+        <span className="flex items-center gap-1 text-agent-question-text">
+          <HubStateIndicator kind="ask" />
+          {group.counts.needsYou}
+        </span>
+      ) : null}
+      {group.counts.working > 0 ? (
+        <span className="flex items-center gap-1">
+          <AgentWorkingSpinner className="size-[9px] border-[1.5px]" />
+          {group.counts.working}
+        </span>
+      ) : null}
+      {group.counts.finished > 0 ? (
+        <span className="flex items-center gap-1">
+          <HubStateIndicator kind="done" />
+          {group.counts.finished}
+        </span>
+      ) : null}
+      <span>
+        {translate('agentHub.terminals.termCount', '{{value0}} term', { value0: group.rowCount })}
+      </span>
+    </span>
+  )
+}
+
 export function AgentHubTerminalTree({
   groups,
+  totalCount,
   query,
   onQueryChange,
   searchRef,
@@ -25,6 +70,7 @@ export function AgentHubTerminalTree({
   onJump
 }: {
   groups: readonly AgentHubGroupNode[]
+  totalCount: number
   query: string
   onQueryChange: (query: string) => void
   searchRef: React.RefObject<HTMLInputElement | null>
@@ -35,9 +81,11 @@ export function AgentHubTerminalTree({
   onPopout: (row: AgentHubTerminalRow) => void
   onJump: (row: AgentHubTerminalRow) => void
 }): React.JSX.Element {
+  const trimmedQuery = query.trim()
   return (
     <div>
-      <label className="sticky top-0 z-10 mb-1 flex h-8 items-center gap-2 rounded-md border border-input bg-popover px-2 text-muted-foreground focus-within:border-ring">
+      {/* Why the popover-colored shadow: the sticky field must hide rows scrolling under it. */}
+      <label className="sticky top-0 z-[2] mt-0.5 mb-1 flex h-[34px] items-center gap-2 rounded-[10px] border border-foreground/[0.08] bg-background pr-1.5 pl-2.5 text-muted-foreground/70 shadow-[0_-8px_0_var(--popover)] focus-within:border-foreground/20">
         <Search className="size-3.5 shrink-0" />
         <input
           ref={searchRef}
@@ -52,20 +100,31 @@ export function AgentHubTerminalTree({
           }}
           placeholder={translate(
             'agentHub.terminals.searchPlaceholder',
-            'Filter by terminal, project, group, or agent'
+            'Filter by terminal, project, group, agent…'
           )}
           aria-label={translate('agentHub.terminals.searchLabel', 'Filter terminals')}
           className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
         />
+        <HubKeys keys={[String(totalCount)]} />
       </label>
       {groups.length === 0 ? (
-        <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-          {query.trim()
-            ? translate('agentHub.terminals.noMatch', 'No terminal matches “{{value0}}”', {
-                value0: query.trim()
-              })
-            : translate('agentHub.terminals.empty', 'No open terminals')}
-        </p>
+        <div className="flex flex-col items-center gap-1 px-2.5 pt-[22px] pb-[18px] text-center text-xs text-muted-foreground">
+          <b className="text-[13px] font-medium text-foreground/85">
+            {trimmedQuery
+              ? translate('agentHub.terminals.noMatch', 'No terminal matches “{{value0}}”', {
+                  value0: trimmedQuery
+                })
+              : translate('agentHub.terminals.empty', 'No open terminals')}
+          </b>
+          {trimmedQuery ? (
+            <span>
+              {translate(
+                'agentHub.terminals.noMatchHint',
+                'Try a project, group, branch or agent name'
+              )}
+            </span>
+          ) : null}
+        </div>
       ) : null}
       {groups.map((group) => {
         const collapsed = isAgentHubGroupCollapsed(group, collapseOverrides, query)
@@ -76,72 +135,61 @@ export function AgentHubTerminalTree({
               tabIndex={-1}
               aria-expanded={!collapsed}
               onClick={() => onToggleGroup(group, !collapsed)}
-              className="flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs font-semibold text-foreground/85 hover:bg-accent"
+              className="flex w-full items-center gap-[7px] rounded-lg px-2 pt-[7px] pb-[5px] text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.025]"
             >
               {collapsed ? (
-                <ChevronRight className="size-3.5 text-muted-foreground" />
+                <ChevronRight className="size-[13px] text-muted-foreground/70" />
               ) : (
-                <ChevronDown className="size-3.5 text-muted-foreground" />
+                <ChevronDown className="size-[13px] text-muted-foreground/70" />
               )}
-              <span className="min-w-0 flex-1 truncate">{group.label}</span>
-              <span className="flex shrink-0 items-center gap-2 text-[11px] font-normal text-muted-foreground tabular-nums">
-                {group.counts.needsYou > 0 ? (
-                  <span className="inline-flex items-center gap-1">
-                    <AgentQuestionIcon className="size-2.5" />
-                    {group.counts.needsYou}
-                  </span>
-                ) : null}
-                {group.counts.working > 0 ? (
-                  <span className="inline-flex items-center gap-1">
-                    <AgentWorkingSpinner className="size-1.5" />
-                    {group.counts.working}
-                  </span>
-                ) : null}
-                <span>
-                  {group.rowCount === 1
-                    ? translate('agentHub.terminals.groupCountOne', '1 terminal')
-                    : translate('agentHub.terminals.groupCount', '{{value0}} terminals', {
-                        value0: group.rowCount
-                      })}
-                </span>
-              </span>
+              <span className="min-w-0 truncate">{group.label}</span>
+              <GroupSummary group={group} />
             </button>
             {collapsed
               ? null
               : group.workspaces.map((workspace) => (
                   <div key={workspace.key}>
-                    <div className="flex items-center gap-1.5 py-1 pr-2 pl-6 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-[5px] pt-[5px] pr-2 pb-[3px] pl-7 text-[11.5px] text-muted-foreground/70">
                       <Folder className="size-3 shrink-0" />
                       <span className="truncate">{workspace.projectLabel}</span>
                       {workspace.workspaceLabel ? (
                         <>
-                          <GitBranch className="size-3 shrink-0" />
+                          <span>·</span>
+                          <GitBranch className="size-[11px] shrink-0" />
                           <span className="truncate">{workspace.workspaceLabel}</span>
                         </>
                       ) : null}
                     </div>
-                    {workspace.rows.map((row) => (
-                      <AgentHubRow
-                        key={row.key}
-                        thread={row.thread}
-                        agentType={row.thread?.agentType ?? null}
-                        title={row.title}
-                        subtitle={
-                          row.thread
-                            ? threadAgentStateLabel(row.thread)
-                            : translate('agentHub.terminals.shell', 'Shell')
-                        }
-                        trailing={
-                          row.thread
-                            ? formatShortTimeAgo(agentHubStateSince(row.thread), now)
-                            : null
-                        }
-                        selected={row.key === selectedKey}
-                        indent
-                        onPopout={() => onPopout(row)}
-                        onJump={() => onJump(row)}
-                      />
-                    ))}
+                    {workspace.rows.map((row) => {
+                      const kind = rowKind(row)
+                      const tool =
+                        row.thread && kind === 'work' ? agentHubToolName(row.thread) : null
+                      return (
+                        <AgentHubRow
+                          key={row.key}
+                          kind={kind}
+                          agentType={row.thread?.agentType ?? null}
+                          title={row.title}
+                          subtitle={rowSubtitle(row)}
+                          chips={
+                            kind === 'ask' && row.thread ? (
+                              <HubChip tone="ask">{agentHubStateWord(row.thread)}</HubChip>
+                            ) : tool ? (
+                              <HubChip>{tool}</HubChip>
+                            ) : null
+                          }
+                          time={
+                            row.thread
+                              ? formatShortTimeAgo(agentHubStateSince(row.thread), now)
+                              : undefined
+                          }
+                          selected={row.key === selectedKey}
+                          indent
+                          onPopout={() => onPopout(row)}
+                          onJump={() => onJump(row)}
+                        />
+                      )
+                    })}
                   </div>
                 ))}
           </section>

@@ -1,0 +1,229 @@
+import type { Ref } from 'react'
+import { CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react'
+import { formatShortTimeAgo } from '@/lib/short-time-ago'
+import { translate } from '@/i18n/i18n'
+import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { HubChip, HubCrumb, HubSection } from './AgentHubAtoms'
+import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
+import { AgentHubRow } from './AgentHubRow'
+import {
+  agentHubStateSince,
+  agentHubToolName,
+  agentHubTurnSince,
+  type AgentHubLists
+} from './agent-hub-lists'
+import type { AgentHubLocation } from './agent-hub-pane-target'
+
+export type AgentHubThreadActions = {
+  locationOf: (thread: AgentPaneThread) => AgentHubLocation
+  isSelected: (thread: AgentPaneThread) => boolean
+  onJump: (thread: AgentPaneThread) => void
+  onPopout: (thread: AgentPaneThread) => void
+}
+
+function PagerButton({
+  label,
+  onClick,
+  children
+}: {
+  label: string
+  onClick: () => void
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label={label}
+      onClick={onClick}
+      className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+    >
+      {children}
+    </button>
+  )
+}
+
+function lastMessage(thread: AgentPaneThread): string | undefined {
+  const entry = thread.paneEntry ?? thread.latestEvent?.entry
+  return entry?.lastAssistantMessageIsToolOutput ? undefined : entry?.lastAssistantMessage?.trim()
+}
+
+export function AgentHubInboxBody({
+  lists,
+  cardIndex,
+  onPage,
+  now,
+  popoutKeys,
+  cardControlRef,
+  actions,
+  onMarkRead
+}: {
+  lists: AgentHubLists
+  cardIndex: number
+  onPage: (delta: 1 | -1) => void
+  now: number
+  popoutKeys: string[]
+  cardControlRef: Ref<AgentHubCardControl>
+  actions: AgentHubThreadActions
+  onMarkRead: (paneKeys: string[]) => void
+}): React.JSX.Element {
+  const { needsYou, finished, working } = lists
+  const cardThread = needsYou[cardIndex] ?? null
+  return (
+    <>
+      {cardThread ? (
+        <>
+          <HubSection
+            label={translate('agentHub.inbox.needsYou', 'Needs you')}
+            count={needsYou.length}
+            tone="ask"
+            action={
+              needsYou.length > 1 ? (
+                <>
+                  <PagerButton
+                    label={translate('agentHub.inbox.previous', 'Previous')}
+                    onClick={() => onPage(-1)}
+                  >
+                    <ChevronLeft className="size-3.5" />
+                  </PagerButton>
+                  <span className="flex items-center gap-1 px-0.5">
+                    {needsYou.map((thread, index) => (
+                      <i
+                        key={thread.paneKey}
+                        data-active={index === cardIndex}
+                        className="h-1.5 w-1.5 rounded-[3px] bg-foreground/20 transition-[width,background-color] data-[active=true]:w-4 data-[active=true]:bg-foreground/80"
+                      />
+                    ))}
+                  </span>
+                  <PagerButton
+                    label={translate('agentHub.inbox.next', 'Next')}
+                    onClick={() => onPage(1)}
+                  >
+                    <ChevronRight className="size-3.5" />
+                  </PagerButton>
+                </>
+              ) : null
+            }
+          />
+          <AgentHubAttentionCard
+            // Why the state stamp: a new prompt on the same pane must start unanswered.
+            key={`${cardThread.paneKey}:${agentHubStateSince(cardThread)}`}
+            thread={cardThread}
+            location={actions.locationOf(cardThread)}
+            now={now}
+            popoutKeys={popoutKeys}
+            controlRef={cardControlRef}
+            onJump={() => actions.onJump(cardThread)}
+            onPopout={() => actions.onPopout(cardThread)}
+          />
+        </>
+      ) : (
+        <div className="flex flex-col items-center gap-1 px-2.5 pt-[22px] pb-[18px] text-center text-xs text-muted-foreground">
+          <CheckCheck className="mb-1 size-5 text-status-success" />
+          <b className="text-[13px] font-medium text-foreground/85">
+            {translate('agentHub.inbox.emptyTitle', 'Nobody is waiting on you')}
+          </b>
+          <span>
+            {translate(
+              'agentHub.inbox.emptyHint',
+              "{{value0}} working · you'll get a ping when one asks",
+              {
+                value0:
+                  working.length === 1
+                    ? translate('agentHub.inbox.oneAgent', '1 agent')
+                    : translate('agentHub.inbox.agents', '{{value0}} agents', {
+                        value0: working.length
+                      })
+              }
+            )}
+          </span>
+        </div>
+      )}
+      {finished.length > 0 ? (
+        <>
+          <HubSection
+            label={translate('agentHub.inbox.finished', 'Finished')}
+            count={finished.length}
+            tone="done"
+            action={
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => onMarkRead(finished.map((thread) => thread.paneKey))}
+                className="text-[11.5px] font-medium text-muted-foreground hover:text-foreground"
+              >
+                {translate('agentHub.inbox.markAllRead', 'Mark all read')}
+              </button>
+            }
+          />
+          {finished.map((thread) => (
+            <AgentHubRow
+              key={thread.paneKey}
+              kind="done"
+              agentType={thread.agentType}
+              title={activityThreadRowCopy(thread).taskTitle}
+              subtitle={<HubCrumb location={actions.locationOf(thread)} />}
+              snippet={lastMessage(thread)}
+              time={formatShortTimeAgo(agentHubStateSince(thread), now)}
+              selected={actions.isSelected(thread)}
+              onPopout={() => actions.onPopout(thread)}
+              onJump={() => actions.onJump(thread)}
+              onMarkRead={() => onMarkRead([thread.paneKey])}
+            />
+          ))}
+        </>
+      ) : null}
+    </>
+  )
+}
+
+export function AgentHubRunningBody({
+  working,
+  now,
+  actions
+}: {
+  working: AgentPaneThread[]
+  now: number
+  actions: AgentHubThreadActions
+}): React.JSX.Element {
+  if (working.length === 0) {
+    return (
+      <div className="flex flex-col items-center px-2.5 pt-[22px] pb-[18px] text-center">
+        <b className="text-[13px] font-medium text-foreground/85">
+          {translate('agentHub.running.empty', 'No agent is working right now')}
+        </b>
+      </div>
+    )
+  }
+  return (
+    <>
+      <HubSection
+        label={translate('agentHub.running.working', 'Working')}
+        count={working.length}
+        action={
+          <span className="text-[11px] font-medium text-muted-foreground/70">
+            {translate('agentHub.running.longestFirst', 'longest first')}
+          </span>
+        }
+      />
+      {working.map((thread) => {
+        const tool = agentHubToolName(thread)
+        return (
+          <AgentHubRow
+            key={thread.paneKey}
+            kind="work"
+            agentType={thread.agentType}
+            title={activityThreadRowCopy(thread).taskTitle}
+            subtitle={<HubCrumb location={actions.locationOf(thread)} />}
+            chips={tool ? <HubChip>{tool}</HubChip> : null}
+            time={formatShortTimeAgo(agentHubTurnSince(thread), now)}
+            selected={actions.isSelected(thread)}
+            onPopout={() => actions.onPopout(thread)}
+            onJump={() => actions.onJump(thread)}
+          />
+        )
+      })}
+    </>
+  )
+}

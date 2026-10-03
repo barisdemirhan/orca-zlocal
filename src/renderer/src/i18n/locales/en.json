@@ -21678,7 +21678,12 @@
     "mirror": {
       "openInOrca": "Open in Orca",
       "close": "Close mirror",
-      "noTerminal": "This pane has no live terminal right now."
+      "noTerminal": "This pane has no live terminal right now.",
+      "answerPlaceholder": "Type 1–9 or an answer…",
+      "sendTo": "Send to @{{value0}}…",
+      "sendToShell": "Send to shell…",
+      "connecting": "Connecting to the terminal…",
+      "liveMirror": "live mirror"
     },
     "title": "Agents",
     "tab": {
@@ -21694,17 +21699,24 @@
       "emptyWorking": "{{value0}} agents working",
       "markAllRead": "Mark all read",
       "finished": "Finished",
-      "emptyWorkingOne": "1 agent working"
+      "emptyWorkingOne": "1 agent working",
+      "emptyHint": "{{value0}} working · you'll get a ping when one asks",
+      "oneAgent": "1 agent",
+      "agents": "{{value0}} agents"
     },
     "running": {
-      "empty": "No agent is working right now"
+      "empty": "No agent is working right now",
+      "working": "Working",
+      "longestFirst": "longest first"
     },
     "footer": {
       "move": "Move",
       "open": "Open",
       "popOut": "Pop out",
       "answer": "Answer",
-      "tabs": "Tabs"
+      "tabs": "Tabs",
+      "jump": "jump",
+      "close": "close"
     },
     "toast": {
       "nobodyWaiting": "Nobody is waiting on you"
@@ -21722,7 +21734,29 @@
       "shell": "Shell",
       "ungrouped": "Ungrouped",
       "groupCountOne": "1 terminal",
-      "unknownProject": "Unknown"
+      "unknownProject": "Unknown",
+      "termCount": "{{value0}} term",
+      "noMatchHint": "Try a project, group, branch or agent name"
+    },
+    "card": {
+      "recommended": "Recommended",
+      "dictate": "Dictate",
+      "send": "Send",
+      "wantsToRun": "wants to run",
+      "allowOnce": "Yes, run it once",
+      "alwaysAllow": "Always allow",
+      "denyInstead": "No, tell {{value0}} what to do instead",
+      "needsApproval": "needs approval",
+      "asking": "asking",
+      "replyTo": "Reply to @{{value0}}…",
+      "instead": "Tell it what to do instead…",
+      "jump": "Jump to terminal"
+    },
+    "close": "Close (esc)",
+    "state": {
+      "idle": "idle",
+      "working": "working",
+      "done": "done"
     }
   },
   "workspace": {
