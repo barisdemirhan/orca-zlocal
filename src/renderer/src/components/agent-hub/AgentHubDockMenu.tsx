@@ -72,7 +72,7 @@ export function AgentHubDockMenu({
           aria-label={translate('agentHub.dock.more', 'More')}
           className={buttonClassName}
         >
-          <Ellipsis className="size-4" />
+          <Ellipsis className="size-3.5" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side={side} align="center" sideOffset={10} className="min-w-56">

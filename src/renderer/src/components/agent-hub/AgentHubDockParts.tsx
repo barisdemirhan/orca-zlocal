@@ -5,9 +5,10 @@ import { agentHubNotchShape } from './agent-hub-dock-geometry'
 import type { AgentHubCounts } from './agent-hub-lists'
 
 export const DOCK_BUTTON =
-  'relative grid size-8 shrink-0 animate-in place-items-center rounded-full text-muted-foreground duration-300 fade-in-0 hover:bg-foreground/[0.07] hover:text-foreground disabled:pointer-events-none disabled:opacity-40 motion-reduce:animate-none'
+  'relative grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground disabled:pointer-events-none disabled:opacity-40'
+// Why wider than tall: a count's hover reads as a pill, never a tall capsule.
 export const DOCK_COUNT_BUTTON =
-  'flex h-8 shrink-0 animate-in items-center gap-1 rounded-full px-1 font-mono text-[11px] text-muted-foreground duration-300 fade-in-0 hover:bg-foreground/[0.07] hover:text-foreground motion-reduce:animate-none'
+  'flex h-6 shrink-0 items-center justify-center rounded-full px-1.5 text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground group-data-[edge=left]/dock:h-auto group-data-[edge=left]/dock:w-6 group-data-[edge=left]/dock:px-0 group-data-[edge=left]/dock:py-1.5 group-data-[edge=right]/dock:h-auto group-data-[edge=right]/dock:w-6 group-data-[edge=right]/dock:px-0 group-data-[edge=right]/dock:py-1.5'
 
 function CounterIndicator({
   kind,
@@ -58,6 +59,31 @@ export function DockCounters({ counts }: { counts: AgentHubCounts }): React.JSX.
   )
 }
 
+/**
+ * One face of the dock. Both stay mounted so a hover crossfades them; the face not shown leaves
+ * the layout (the bar sizes to the shown one) and goes inert.
+ */
+export function DockLayer({
+  shown,
+  spacing,
+  children
+}: {
+  shown: boolean
+  spacing: 'tight' | 'loose'
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <div
+      inert={!shown}
+      data-shown={shown}
+      data-spacing={spacing}
+      className="flex shrink-0 items-center transition-[opacity,scale] delay-75 duration-200 ease-out group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col data-[spacing=loose]:gap-2 data-[spacing=tight]:gap-0.5 data-[shown=false]:pointer-events-none data-[shown=false]:absolute data-[shown=false]:top-1/2 data-[shown=false]:left-1/2 data-[shown=false]:w-max data-[shown=false]:-translate-x-1/2 data-[shown=false]:-translate-y-1/2 data-[shown=false]:scale-90 data-[shown=false]:opacity-0 data-[shown=false]:delay-0 data-[shown=false]:duration-100 motion-reduce:transition-none"
+    >
+      {children}
+    </div>
+  )
+}
+
 export function DockButton({
   label,
   side,
@@ -93,29 +119,43 @@ export function DockButton({
   )
 }
 
-/** The notch and its fillets as one shape, so its hairline runs unbroken into the bar it grows from. */
+/**
+ * The notch and its fillets as one shape, so its hairline runs unbroken into the bar it grows
+ * from. Drawn by `paintAgentHubNotch`, not React, so it can follow the bar frame by frame.
+ */
 export function NotchShape({
-  edge,
-  bar
+  notchRef
 }: {
-  edge: AgentHubDockEdge
-  bar: { width: number; height: number }
+  notchRef: React.Ref<SVGSVGElement>
 }): React.JSX.Element {
-  const shape = agentHubNotchShape(edge, bar)
   return (
     <svg
+      ref={notchRef}
       aria-hidden
-      className="pointer-events-none absolute overflow-visible"
-      style={{ left: shape.left, top: shape.top, width: shape.width, height: shape.height }}
-      viewBox={`0 0 ${shape.width} ${shape.height}`}
+      className="pointer-events-none absolute overflow-visible group-data-[dragging=true]/dock:hidden"
     >
-      <path d={shape.fill} className="fill-[var(--hub-notch)]" />
+      <path data-notch="fill" className="fill-[var(--hub-notch)]" />
       <path
-        d={shape.stroke}
+        data-notch="stroke"
         fill="none"
         className="stroke-border"
         vectorEffect="non-scaling-stroke"
       />
     </svg>
   )
+}
+
+export function paintAgentHubNotch(
+  svg: SVGSVGElement,
+  edge: AgentHubDockEdge,
+  bar: { width: number; height: number }
+): void {
+  const shape = agentHubNotchShape(edge, bar)
+  svg.style.left = `${shape.left}px`
+  svg.style.top = `${shape.top}px`
+  svg.style.width = `${shape.width}px`
+  svg.style.height = `${shape.height}px`
+  svg.setAttribute('viewBox', `0 0 ${shape.width} ${shape.height}`)
+  svg.querySelector('[data-notch="fill"]')?.setAttribute('d', shape.fill)
+  svg.querySelector('[data-notch="stroke"]')?.setAttribute('d', shape.stroke)
 }
