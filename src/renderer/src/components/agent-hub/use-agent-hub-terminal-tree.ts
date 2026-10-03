@@ -26,7 +26,8 @@ export function useAgentHubTerminalTree(threads: readonly AgentPaneThread[]): Ag
           const worktree = standaloneActivityWorktree(FLOATING_TERMINAL_WORKTREE_ID)
           return { worktree, label: worktree.displayName }
         })(),
-        ungroupedLabel: translate('agentHub.terminals.ungrouped', 'Ungrouped')
+        ungroupedLabel: translate('agentHub.terminals.ungrouped', 'Ungrouped'),
+        unknownProjectLabel: translate('agentHub.terminals.unknownProject', 'Unknown')
       }),
     [projectGroups, repos, worktreesByRepo, folderWorkspaces, tabsByWorktree, threads]
   )

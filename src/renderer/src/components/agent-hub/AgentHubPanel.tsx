@@ -276,11 +276,15 @@ export function AgentHubPanel({
                 <span className="text-sm text-foreground">
                   {translate('agentHub.inbox.emptyTitle', 'Nobody is waiting on you')}
                 </span>
-                <span>
-                  {translate('agentHub.inbox.emptyWorking', '{{value0}} agents working', {
-                    value0: lists.working.length
-                  })}
-                </span>
+                {lists.working.length > 0 ? (
+                  <span>
+                    {lists.working.length === 1
+                      ? translate('agentHub.inbox.emptyWorkingOne', '1 agent working')
+                      : translate('agentHub.inbox.emptyWorking', '{{value0}} agents working', {
+                          value0: lists.working.length
+                        })}
+                  </span>
+                ) : null}
               </div>
             )}
             {lists.finished.length > 0 ? (

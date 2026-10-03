@@ -212,7 +212,7 @@ export function AgentHubStatusSegment({ iconOnly }: { iconOnly: boolean }): Reac
           sideOffset={8}
           {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
           collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
-          className="w-[440px] max-w-[calc(100vw-2rem)]"
+          className="w-[460px] max-w-[calc(100vw-2rem)]"
           data-agent-hub-panel
           onOpenAutoFocus={(event) => {
             // Why: the panel root owns the arrow/number keys, so it takes focus, not the first button.

@@ -21693,7 +21693,8 @@
       "emptyTitle": "Nobody is waiting on you",
       "emptyWorking": "{{value0}} agents working",
       "markAllRead": "Mark all read",
-      "finished": "Finished"
+      "finished": "Finished",
+      "emptyWorkingOne": "1 agent working"
     },
     "running": {
       "empty": "No agent is working right now"
@@ -21719,7 +21720,9 @@
       "empty": "No open terminals",
       "groupCount": "{{value0}} terminals",
       "shell": "Shell",
-      "ungrouped": "Ungrouped"
+      "ungrouped": "Ungrouped",
+      "groupCountOne": "1 terminal",
+      "unknownProject": "Unknown"
     }
   },
   "workspace": {

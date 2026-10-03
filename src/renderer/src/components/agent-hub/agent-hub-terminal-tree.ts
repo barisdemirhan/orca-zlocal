@@ -46,6 +46,8 @@ export type AgentHubTerminalTreeInput = {
   threads: readonly AgentPaneThread[]
   floating: { worktree: Worktree; label: string } | null
   ungroupedLabel: string
+  /** Project name for worktrees whose repo is not in the catalog (the sidebar's "Unknown"). */
+  unknownProjectLabel: string
 }
 
 export const AGENT_HUB_FLOATING_GROUP_KEY = 'floating'
@@ -142,17 +144,27 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
   const groupKeyFor = (projectGroupId: string | null | undefined): string =>
     projectGroupId && groupIds.has(projectGroupId) ? projectGroupId : UNGROUPED_GROUP_KEY
 
-  for (const repo of input.repos) {
-    for (const worktree of input.worktreesByRepo[repo.id] ?? []) {
+  const knownRepoIds = new Set(input.repos.map((repo) => repo.id))
+  const addWorktrees = (repoId: string, repo: Repo | null): void => {
+    for (const worktree of input.worktreesByRepo[repoId] ?? []) {
       if (worktree.isArchived) {
         continue
       }
-      addWorkspace(groupKeyFor(repo.projectGroupId), {
+      addWorkspace(groupKeyFor(repo?.projectGroupId), {
         key: worktree.id,
-        projectLabel: repo.displayName,
+        projectLabel: repo?.displayName ?? input.unknownProjectLabel,
         workspaceLabel: worktree.displayName || worktree.branch || null,
         rows: buildRows(worktree, repo, input.tabsByWorktree[worktree.id] ?? [], threadsByTabId)
       })
+    }
+  }
+  for (const repo of input.repos) {
+    addWorktrees(repo.id, repo)
+  }
+  // Like the sidebar, keep worktrees whose repo dropped out of the catalog visible.
+  for (const repoId of Object.keys(input.worktreesByRepo)) {
+    if (!knownRepoIds.has(repoId)) {
+      addWorktrees(repoId, null)
     }
   }
   for (const folderWorkspace of input.folderWorkspaces) {

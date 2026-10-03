@@ -75,7 +75,8 @@ function fixture() {
     tabsByWorktree: { [worktree.id]: tabs },
     threads,
     floating: null,
-    ungroupedLabel: 'Ungrouped'
+    ungroupedLabel: 'Ungrouped',
+    unknownProjectLabel: 'Unknown'
   })
   return { lists: buildAgentHubLists(threads), tree }
 }

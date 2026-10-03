@@ -98,9 +98,11 @@ export function AgentHubTerminalTree({
                   </span>
                 ) : null}
                 <span>
-                  {translate('agentHub.terminals.groupCount', '{{value0}} terminals', {
-                    value0: group.rowCount
-                  })}
+                  {group.rowCount === 1
+                    ? translate('agentHub.terminals.groupCountOne', '1 terminal')
+                    : translate('agentHub.terminals.groupCount', '{{value0}} terminals', {
+                        value0: group.rowCount
+                      })}
                 </span>
               </span>
             </button>

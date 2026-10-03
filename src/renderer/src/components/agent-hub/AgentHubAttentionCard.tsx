@@ -56,6 +56,12 @@ export function AgentHubAttentionCard({
   const copy = activityThreadRowCopy(thread)
   const agent = agentTypeToIconAgent(thread.agentType)
   const canAnswer = card !== null && ptyId !== null
+  const waitingText =
+    card?.kind === 'question'
+      ? (card.prompt.questions[0]?.question ?? copy.statusLine)
+      : card?.kind === 'approval'
+        ? [card.approval.title, card.approval.detail].filter(Boolean).join(' ')
+        : copy.statusLine
 
   return (
     <section
@@ -88,7 +94,7 @@ export function AgentHubAttentionCard({
         // Why: the structured prompt can be absent (older hook, relay trimmed it, no live PTY);
         // the agent is still waiting, so say what it said and point at its terminal.
         <div className="rounded-lg border border-border bg-card px-3 py-2.5 text-sm">
-          {copy.statusLine ? <p className="line-clamp-4 break-words">{copy.statusLine}</p> : null}
+          {waitingText ? <p className="line-clamp-4 break-words">{waitingText}</p> : null}
           <p className="mt-1 text-xs text-muted-foreground">
             {translate(
               'agentHub.attention.answerInTerminal',

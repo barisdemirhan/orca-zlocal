@@ -92,7 +92,8 @@ function treeInput(): AgentHubTerminalTreeInput {
     tabsByWorktree,
     threads,
     floating: { worktree: floating, label: 'Floating terminal' },
-    ungroupedLabel: 'Ungrouped'
+    ungroupedLabel: 'Ungrouped',
+    unknownProjectLabel: 'Unknown'
   }
 }
 
@@ -116,6 +117,25 @@ describe('buildAgentHubTerminalTree', () => {
 
     expect(tabIds).not.toContain('tab-old')
     expect(groups.map((node) => node.key)).not.toContain('group-other')
+  })
+
+  it('keeps a worktree whose repo left the catalog, under Unknown', () => {
+    const input = treeInput()
+    const orphan = makeWorktreeWithId('wt-orphan', 'repo-gone', 'main')
+    const groups = buildAgentHubTerminalTree({
+      ...input,
+      worktreesByRepo: { ...input.worktreesByRepo, 'repo-gone': [orphan] },
+      tabsByWorktree: {
+        ...input.tabsByWorktree,
+        [orphan.id]: [makeTabWithIds('tab-orphan', orphan.id)]
+      }
+    })
+
+    const ungrouped = groups.find((node) => node.label === 'Ungrouped')
+    expect(ungrouped?.workspaces.map((workspace) => workspace.projectLabel)).toEqual([
+      'scratch',
+      'Unknown'
+    ])
   })
 
   it('gives agent panes their thread and counts them per group', () => {
