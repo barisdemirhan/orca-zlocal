@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
+import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
 import {
   setFloatingWindowsSpotlit,
   useAnyFloatingWindowOpen,
@@ -81,13 +82,18 @@ export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.
   const dimmed = useAppStore((s) => s.settings?.agentHubFloatingDim === true)
   const anyFloating = useAnyFloatingWindowOpen()
   const spotlit = useFloatingWindowsSpotlit()
+  // The status bar stays lit and usable: the dock grows out of it, and it is app chrome.
+  const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
   useEffect(() => {
     if (!dimmed) {
       return
     }
     setFloatingWindowsSpotlit(true)
     const onPointerDown = (event: PointerEvent): void => {
-      if (!(event.target instanceof Element)) {
+      if (
+        !(event.target instanceof Element) ||
+        event.clientY >= window.innerHeight - statusBarHeight
+      ) {
         return
       }
       if (event.target.closest(FLOATING_WINDOW)) {
@@ -99,13 +105,14 @@ export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.
     // Why capture: terminals and editors stop propagation of their own pointer events.
     window.addEventListener('pointerdown', onPointerDown, true)
     return () => window.removeEventListener('pointerdown', onPointerDown, true)
-  }, [dimmed])
+  }, [dimmed, statusBarHeight])
   return createPortal(
     <div
       aria-hidden
       data-visible={dimmed && anyFloating && spotlit && !hidden}
+      style={{ bottom: statusBarHeight }}
       // Why z-[43]: below the dock (44), the floating workspace (45) and mirrors (46).
-      className="pointer-events-none fixed inset-0 z-[43] bg-black/45 opacity-0 transition-opacity duration-200 data-[visible=true]:opacity-100 motion-reduce:transition-none"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[43] bg-black/45 opacity-0 transition-opacity duration-200 data-[visible=true]:opacity-100 motion-reduce:transition-none"
     />,
     document.body
   )

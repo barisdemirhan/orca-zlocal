@@ -92,7 +92,7 @@ export function AgentHubAttentionCard({
     () => parseInteractivePrompt(interactivePrompt, toolName ?? undefined),
     [interactivePrompt, toolName]
   )
-  const ptyId = useAgentHubLivePty(thread.worktree.id, tabId, paneKey)
+  const ptyId = useAgentHubLivePty(thread.worktree.id, tabId, paneKey, false)
   const send = useNativeChatInteractiveSend(tabId, paneKey, ptyId, thread.agentType)
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
   const [chosen, setChosen] = useState<number | null>(null)

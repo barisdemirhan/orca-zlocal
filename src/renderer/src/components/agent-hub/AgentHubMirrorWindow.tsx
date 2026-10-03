@@ -85,7 +85,12 @@ export function AgentHubMirrorWindow({
     (element: HTMLDivElement | null) => onSlot(mirrorKey, element),
     [onSlot, mirrorKey]
   )
-  const ptyId = useAgentHubLivePty(target.worktree.id, target.tab.id, target.paneKey)
+  const ptyId = useAgentHubLivePty(
+    target.worktree.id,
+    target.tab.id,
+    target.paneKey,
+    surface === 'portal'
+  )
   const [gaveUp, setGaveUp] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)

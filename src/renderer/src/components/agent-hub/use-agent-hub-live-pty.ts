@@ -12,13 +12,17 @@ import { resolveAgentHubPtyId } from './agent-hub-pane-target'
 export function useAgentHubLivePty(
   worktreeId: string,
   tabId: string,
-  paneKey: string | null
+  paneKey: string | null,
+  /** The window borrows the rendered pane itself, so its tab must be mounted even with a live PTY. */
+  needsMountedPane: boolean
 ): string | null {
   const ptyId = useAppStore((s) => resolveAgentHubPtyId(s, tabId, paneKey))
+  const detached = ptyId === null && !hasRegisteredRuntimeTerminalTab(tabId, worktreeId)
   useEffect(() => {
-    if (ptyId === null && !hasRegisteredRuntimeTerminalTab(tabId, worktreeId)) {
+    // Why always safe: a mount request never narrows a worktree that is already mounted.
+    if (needsMountedPane || detached) {
       requestBackgroundTerminalWorktreeMount({ worktreeId, tabIds: [tabId] })
     }
-  }, [ptyId, tabId, worktreeId])
+  }, [detached, needsMountedPane, tabId, worktreeId])
   return ptyId
 }
