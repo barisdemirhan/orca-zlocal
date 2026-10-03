@@ -1,10 +1,21 @@
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Lightbulb, LightbulbOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { useAnyFloatingWindowOpen, useFloatingWindowPresence } from './agent-hub-floating-dim'
+import {
+  setFloatingWindowsSpotlit,
+  useAnyFloatingWindowOpen,
+  useFloatingWindowPresence,
+  useFloatingWindowsSpotlit
+} from './agent-hub-floating-dim'
+
+const FLOATING_WINDOW = '[data-agent-hub-mirror], [data-floating-terminal-panel]'
+// The dock, chips, alerts, and menus or popovers opened from any of them neither lift nor restore it.
+const NEUTRAL_SURFACE =
+  '[data-agent-hub-dock], [data-agent-hub-mirror-chip], [data-agent-hub-alert-stack], [data-radix-popper-content-wrapper], [role="menu"], [role="dialog"]'
 
 /**
  * The spotlight switch every floating window carries (HazeOver-style): it dims everything
@@ -66,13 +77,33 @@ export function AgentHubDimToggle({
 }
 
 /** The dim itself: under every floating window, over the rest; clicks still reach the app. */
-export function AgentHubDimBackdrop(): React.JSX.Element {
+export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.Element {
   const dimmed = useAppStore((s) => s.settings?.agentHubFloatingDim === true)
   const anyFloating = useAnyFloatingWindowOpen()
+  const spotlit = useFloatingWindowsSpotlit()
+  useEffect(() => {
+    if (!dimmed) {
+      return
+    }
+    setFloatingWindowsSpotlit(true)
+    const onPointerDown = (event: PointerEvent): void => {
+      if (!(event.target instanceof Element)) {
+        return
+      }
+      if (event.target.closest(FLOATING_WINDOW)) {
+        setFloatingWindowsSpotlit(true)
+      } else if (!event.target.closest(NEUTRAL_SURFACE)) {
+        setFloatingWindowsSpotlit(false)
+      }
+    }
+    // Why capture: terminals and editors stop propagation of their own pointer events.
+    window.addEventListener('pointerdown', onPointerDown, true)
+    return () => window.removeEventListener('pointerdown', onPointerDown, true)
+  }, [dimmed])
   return createPortal(
     <div
       aria-hidden
-      data-visible={dimmed && anyFloating}
+      data-visible={dimmed && anyFloating && spotlit && !hidden}
       // Why z-[43]: below the dock (44), the floating workspace (45) and mirrors (46).
       className="pointer-events-none fixed inset-0 z-[43] bg-black/45 opacity-0 transition-opacity duration-200 data-[visible=true]:opacity-100 motion-reduce:transition-none"
     />,

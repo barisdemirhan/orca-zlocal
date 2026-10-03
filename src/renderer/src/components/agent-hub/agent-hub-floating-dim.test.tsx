@@ -2,7 +2,12 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
-import { useAnyFloatingWindowOpen, useFloatingWindowPresence } from './agent-hub-floating-dim'
+import {
+  setFloatingWindowsSpotlit,
+  useAnyFloatingWindowOpen,
+  useFloatingWindowPresence,
+  useFloatingWindowsSpotlit
+} from './agent-hub-floating-dim'
 
 Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true)
 
@@ -45,5 +50,19 @@ describe('floating window presence', () => {
 
     act(() => mirror.unmount())
     expect(anyOpen).toBe(false)
+  })
+
+  it('brings the dim back when a window opens after a click behind the windows lifted it', () => {
+    let spotlit = true
+    function Backdrop(): null {
+      spotlit = useFloatingWindowsSpotlit()
+      return null
+    }
+    mount(<Backdrop />)
+    act(() => setFloatingWindowsSpotlit(false))
+    expect(spotlit).toBe(false)
+
+    mount(<FloatingWindow showing />)
+    expect(spotlit).toBe(true)
   })
 })

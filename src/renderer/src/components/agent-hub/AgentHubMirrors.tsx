@@ -15,6 +15,7 @@ import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubLineage } from './agent-hub-lineage'
+import { agentHubMirrorFamily } from './agent-hub-mirror-family'
 import {
   closeAgentHubMirror,
   closeAgentHubMirrorChip,
@@ -41,6 +42,7 @@ type MirrorSurface = 'portal' | 'in-workspace' | 'preview'
  * Windows borrow the real terminal pane through the portal Activity uses.
  */
 export function AgentHubMirrors({
+  hidden,
   threads,
   lineage,
   alerts,
@@ -48,6 +50,8 @@ export function AgentHubMirrors({
   onReveal,
   onOpenCard
 }: {
+  /** Out of sight but mounted (Settings), so mirrored panes are not moved back and forth. */
+  hidden: boolean
   threads: readonly AgentPaneThread[]
   lineage: AgentHubLineage
   alerts: readonly AgentHubAlert[]
@@ -134,16 +138,6 @@ export function AgentHubMirrors({
   }
   const threadFor = (target: AgentHubPaneTarget): AgentPaneThread | null =>
     threads.find((thread) => agentHubTargetShowsThread(target, thread)) ?? null
-  // A worker's window lists its dispatcher's family too, so either way leads to the other.
-  const familyFor = (target: AgentHubPaneTarget): AgentPaneThread[] | null => {
-    if (!target.paneKey) {
-      return null
-    }
-    const rootKey = lineage.parentOf.get(target.paneKey) ?? target.paneKey
-    const workers = lineage.childrenOf(rootKey).workers
-    const root = threads.find((thread) => thread.paneKey === rootKey)
-    return root && workers.length > 0 ? [root, ...workers] : null
-  }
   // Why a fixed DOM order: bringing a window forward only changes its z-index; moving its node
   // mid-click would drop the terminal's focus and the pointer.
   const stackIndexOf = new Map(
@@ -154,7 +148,11 @@ export function AgentHubMirrors({
   )
 
   return createPortal(
-    <div data-agent-hub-mirrors className="pointer-events-none fixed inset-0 z-[46]">
+    <div
+      data-agent-hub-mirrors
+      data-hidden={hidden}
+      className="pointer-events-none fixed inset-0 z-[46] data-[hidden=true]:invisible"
+    >
       {stableWindows.map((target) => {
         const key = agentHubPaneTargetKey(target)
         const index = stackIndexOf.get(key) ?? 0
@@ -169,12 +167,16 @@ export function AgentHubMirrors({
             cascade={index}
             surface={surfaces[index]?.surface ?? 'portal'}
             // The window raises its own pane's alerts; the hub's bubble skips them.
+            // A hidden window leaves its alert queued until it is back in sight.
             nudge={
-              alerts.findLast((candidate) => agentHubTargetShowsThread(target, candidate.thread)) ??
-              null
+              hidden
+                ? null
+                : (alerts.findLast((candidate) =>
+                    agentHubTargetShowsThread(target, candidate.thread)
+                  ) ?? null)
             }
             onNudged={dismissAgentHubAlert}
-            family={familyFor(target)}
+            family={target.paneKey ? agentHubMirrorFamily(target.paneKey, threads, lineage) : null}
             onRetarget={(member) =>
               retargetAgentHubMirror(
                 key,
@@ -194,10 +196,11 @@ export function AgentHubMirrors({
       })}
       {chips.map((chip) => {
         const key = agentHubPaneTargetKey(chip.target)
-        const alert =
-          alerts.findLast((candidate) =>
-            agentHubTargetShowsThread(chip.target, candidate.thread)
-          ) ?? null
+        const alert = hidden
+          ? null
+          : (alerts.findLast((candidate) =>
+              agentHubTargetShowsThread(chip.target, candidate.thread)
+            ) ?? null)
         return (
           <AgentHubMirrorChip
             key={key}

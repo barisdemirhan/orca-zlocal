@@ -20,6 +20,7 @@ import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import { nudgeMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
 import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const LEAVE_MS = 140
@@ -64,8 +65,8 @@ export function AgentHubMirrorWindow({
   /** An alert for this pane, shown by the window itself rather than by the hub. */
   nudge: AgentHubAlert | null
   onNudged: (id: string) => void
-  /** The dispatcher and its workers when this pane belongs to one; null otherwise. */
-  family: readonly AgentPaneThread[] | null
+  /** Where this pane sits among dispatchers and workers; null outside orchestration. */
+  family: AgentHubMirrorFamily | null
   onRetarget: (thread: AgentPaneThread) => void
   /** Registers the box the real pane is moved into. */
   onSlot: (key: string, element: HTMLDivElement | null) => void
@@ -205,7 +206,7 @@ export function AgentHubMirrorWindow({
         </button>
       </header>
       {family ? (
-        <AgentHubMirrorFamilyTabs members={family} activeKey={mirrorKey} onSelect={onRetarget} />
+        <AgentHubMirrorFamilyTabs family={family} activeKey={mirrorKey} onSelect={onRetarget} />
       ) : null}
       {surface === 'in-workspace' ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-popover/60 px-8 text-center">

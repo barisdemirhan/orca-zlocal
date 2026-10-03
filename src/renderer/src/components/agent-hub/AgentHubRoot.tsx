@@ -121,6 +121,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const alerts = useAgentHubAlertQueue()
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const inSettings = useAppStore((s) => s.activeView === 'settings')
   const groupNameById = useGroupNameById()
   const keybindings = useAppStore((s) => s.keybindings)
   const shortcut = formatOptionalShortcutLabel('agentHub.toggle', keybindings)
@@ -228,11 +229,13 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       !chips.some((chip) => agentHubTargetShowsThread(chip.target, candidate.thread)) &&
       !windows.some((open) => agentHubTargetShowsThread(open, candidate.thread))
   )
+  // Settings is its own page; the hub and its floating windows stay out of it.
   const dockHidden =
-    preferences.dockAutoHide &&
-    !open &&
-    hubAlerts.length === 0 &&
-    counts.needsYou + counts.working + counts.finished === 0
+    inSettings ||
+    (preferences.dockAutoHide &&
+      !open &&
+      hubAlerts.length === 0 &&
+      counts.needsYou + counts.working + counts.finished === 0)
 
   const content = (
     <PopoverContent
@@ -292,7 +295,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
 
   return (
     <>
-      <Popover open={open} onOpenChange={setPopoverOpen}>
+      <Popover open={open && !inSettings} onOpenChange={setPopoverOpen}>
         {docked ? (
           dockHidden ? null : (
             createPortal(
@@ -313,7 +316,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
               document.body
             )
           )
-        ) : (
+        ) : inSettings ? null : (
           <Tooltip delayDuration={150}>
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
@@ -336,7 +339,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         )}
         {content}
       </Popover>
-      {hubAlerts.length > 0 && !open ? (
+      {hubAlerts.length > 0 && !open && !inSettings ? (
         <AgentHubAlertStack
           alerts={hubAlerts}
           anchorRef={anchorRef}
@@ -348,8 +351,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
           onDismiss={dismissAgentHubAlert}
         />
       ) : null}
-      <AgentHubDimBackdrop />
+      <AgentHubDimBackdrop hidden={inSettings} />
       <AgentHubMirrors
+        hidden={inSettings}
         threads={threads}
         lineage={lineage}
         alerts={alerts}

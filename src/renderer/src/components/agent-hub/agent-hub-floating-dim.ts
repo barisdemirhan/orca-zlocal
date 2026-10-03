@@ -2,6 +2,9 @@ import { useEffect, useSyncExternalStore } from 'react'
 
 // How many floating windows carry the dim switch right now; the backdrop shows only over them.
 let floatingCount = 0
+// HazeOver-style: the dim follows attention. A click behind the floating windows lifts it, and a
+// click on one (or a window opening) brings it back. The lamp setting itself stays on.
+let spotlit = true
 const listeners = new Set<() => void>()
 
 function emit(): void {
@@ -20,6 +23,7 @@ export function useFloatingWindowPresence(showing: boolean): void {
       return
     }
     floatingCount += 1
+    spotlit = true
     emit()
     return () => {
       floatingCount -= 1
@@ -30,4 +34,15 @@ export function useFloatingWindowPresence(showing: boolean): void {
 
 export function useAnyFloatingWindowOpen(): boolean {
   return useSyncExternalStore(subscribe, () => floatingCount > 0)
+}
+
+export function useFloatingWindowsSpotlit(): boolean {
+  return useSyncExternalStore(subscribe, () => spotlit)
+}
+
+export function setFloatingWindowsSpotlit(next: boolean): void {
+  if (spotlit !== next) {
+    spotlit = next
+    emit()
+  }
 }
