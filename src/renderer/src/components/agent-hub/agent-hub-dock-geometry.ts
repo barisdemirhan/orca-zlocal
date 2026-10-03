@@ -78,3 +78,68 @@ export function agentHubDockPopoverSide(
 export function isHorizontalAgentHubDock(edge: AgentHubDockEdge): boolean {
   return edge === 'bottom' || edge === 'top'
 }
+
+const FILLET_RADIUS = 10
+const CORNER_RADIUS = 14
+
+export type AgentHubNotchShape = {
+  /** Closed outline for the fill: the notch plus its two fillets, open along the attached edge. */
+  fill: string
+  /** The same outline without the attached edge, for the hairline. */
+  stroke: string
+  width: number
+  height: number
+  /** Offset from the bar's box: the fillets reach past both ends of the bar. */
+  left: number
+  top: number
+}
+
+/**
+ * The dock's outline as SVG paths, so the hairline runs unbroken from the status bar (or the
+ * title bar, or the window edge) around the notch and back. Built along the edge in (u, v) —
+ * u along the edge, v away from it — then mapped onto the edge the dock sits on.
+ */
+export function agentHubNotchShape(
+  edge: AgentHubDockEdge,
+  bar: { width: number; height: number }
+): AgentHubNotchShape {
+  const horizontal = isHorizontalAgentHubDock(edge)
+  const thickness = horizontal ? bar.height : bar.width
+  const length = (horizontal ? bar.width : bar.height) + FILLET_RADIUS * 2
+  const r = FILLET_RADIUS
+  const radius = Math.min(CORNER_RADIUS, thickness - r)
+  // A reflection flips which way each arc turns.
+  const mirrored = edge === 'bottom' || edge === 'left'
+  const point = (u: number, v: number): string => {
+    switch (edge) {
+      case 'top':
+        return `${u} ${v}`
+      case 'bottom':
+        return `${u} ${thickness - v}`
+      case 'left':
+        return `${v} ${u}`
+      case 'right':
+        return `${thickness - v} ${u}`
+    }
+  }
+  const arc = (size: number, sweep: 0 | 1, u: number, v: number): string =>
+    `A ${size} ${size} 0 0 ${mirrored ? 1 - sweep : sweep} ${point(u, v)}`
+  const stroke = [
+    `M ${point(0, 0)}`,
+    arc(r, 1, r, r),
+    `L ${point(r, thickness - radius)}`,
+    arc(radius, 0, r + radius, thickness),
+    `L ${point(length - r - radius, thickness)}`,
+    arc(radius, 0, length - r, thickness - radius),
+    `L ${point(length - r, r)}`,
+    arc(r, 1, length, 0)
+  ].join(' ')
+  return {
+    fill: `${stroke} Z`,
+    stroke,
+    width: horizontal ? length : thickness,
+    height: horizontal ? thickness : length,
+    left: horizontal ? -r : 0,
+    top: horizontal ? 0 : -r
+  }
+}

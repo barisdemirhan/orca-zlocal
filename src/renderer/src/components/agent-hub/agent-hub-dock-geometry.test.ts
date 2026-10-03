@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  agentHubNotchShape,
   agentHubDockDropPosition,
   agentHubDockPlacement,
   agentHubDockPopoverSide
@@ -74,5 +75,17 @@ describe('agent hub dock geometry', () => {
     expect(agentHubDockPopoverSide('bottom')).toBe('top')
     expect(agentHubDockPopoverSide('right')).toBe('left')
     expect(agentHubDockPopoverSide('left')).toBe('right')
+  })
+
+  it('draws the notch from the bar edge, around the bar, and back with both fillets', () => {
+    const bottom = agentHubNotchShape('bottom', { width: 100, height: 26 })
+    expect(bottom).toMatchObject({ width: 120, height: 26, left: -10, top: 0 })
+    expect(bottom.stroke.startsWith('M 0 26 A 10 10 0 0 0 10 16')).toBe(true)
+    expect(bottom.stroke.endsWith('A 10 10 0 0 0 120 26')).toBe(true)
+    expect(bottom.fill.endsWith('Z')).toBe(true)
+
+    const right = agentHubNotchShape('right', { width: 26, height: 100 })
+    expect(right).toMatchObject({ width: 26, height: 120, left: 0, top: -10 })
+    expect(right.stroke.startsWith('M 26 0 A 10 10 0 0 1 16 10')).toBe(true)
   })
 })

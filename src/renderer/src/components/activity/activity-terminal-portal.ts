@@ -62,6 +62,41 @@ export function setActivityTerminalPortals(targets: ActivityTerminalPortalTarget
   }
 }
 
+// The Agent Hub's mirror windows: honored in every view, not only while Activity is open.
+let agentHubTargets: ActivityTerminalPortalTarget[] = []
+let combinedTargets: {
+  activity: ActivityTerminalPortalTarget[]
+  agentHub: ActivityTerminalPortalTarget[]
+  targets: ActivityTerminalPortalTarget[]
+} | null = null
+
+export function setAgentHubTerminalPortals(targets: ActivityTerminalPortalTarget[]): void {
+  if (agentHubTargets === targets || haveSameActivityTerminalPortals(agentHubTargets, targets)) {
+    return
+  }
+  agentHubTargets = targets
+  for (const subscriber of subscribers) {
+    subscriber()
+  }
+}
+
+// Why cached: useSyncExternalStore needs the same array until either list changes.
+function withAgentHubTargets(
+  activity: ActivityTerminalPortalTarget[]
+): ActivityTerminalPortalTarget[] {
+  if (agentHubTargets.length === 0) {
+    return activity
+  }
+  if (combinedTargets?.activity !== activity || combinedTargets.agentHub !== agentHubTargets) {
+    combinedTargets = {
+      activity,
+      agentHub: agentHubTargets,
+      targets: [...activity, ...agentHubTargets]
+    }
+  }
+  return combinedTargets.targets
+}
+
 function subscribeActivityTerminalPortals(onStoreChange: () => void): () => void {
   subscribers.add(onStoreChange)
   return () => {
@@ -72,12 +107,14 @@ function subscribeActivityTerminalPortals(onStoreChange: () => void): () => void
 export function useActivityTerminalPortals(enabled: boolean): ActivityTerminalPortalTarget[] {
   // Subscribe directly to module state so Terminal can consume targets without app-store routing.
   const subscribe = useCallback(
-    (onStoreChange: () => void): (() => void) =>
-      enabled ? subscribeActivityTerminalPortals(onStoreChange) : () => {},
-    [enabled]
+    (onStoreChange: () => void): (() => void) => subscribeActivityTerminalPortals(onStoreChange),
+    []
   )
 
-  const getSnapshot = useCallback(() => (enabled ? currentTargets : emptyTargets), [enabled])
+  const getSnapshot = useCallback(
+    () => withAgentHubTargets(enabled ? currentTargets : emptyTargets),
+    [enabled]
+  )
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }

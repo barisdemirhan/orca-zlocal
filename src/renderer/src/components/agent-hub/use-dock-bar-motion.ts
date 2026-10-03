@@ -7,15 +7,14 @@ const SHRINK_MS = 160
 type Size = { width: number; height: number }
 
 /**
- * Measures the dock bar (its length along the edge keeps it on screen) and glides it between
+ * Measures the dock bar (its outline and on-screen clamp follow its size) and glides it between
  * the notch and the hover bar. Why JS: both sizes come from content, which CSS cannot transition.
  */
 export function useDockBarMotion(
   barRef: React.RefObject<HTMLElement | null>,
-  horizontal: boolean,
   expanded: boolean
-): number {
-  const [extent, setExtent] = useState(0)
+): Size | null {
+  const [size, setSize] = useState<Size | null>(null)
   const sizeRef = useRef<Size | null>(null)
 
   useLayoutEffect(() => {
@@ -24,14 +23,17 @@ export function useDockBarMotion(
       return
     }
     const measure = (): void => {
-      sizeRef.current = { width: bar.offsetWidth, height: bar.offsetHeight }
-      setExtent(horizontal ? bar.offsetWidth : bar.offsetHeight)
+      const next = { width: bar.offsetWidth, height: bar.offsetHeight }
+      sizeRef.current = next
+      setSize((current) =>
+        current?.width === next.width && current.height === next.height ? current : next
+      )
     }
     measure()
     const observer = new ResizeObserver(measure)
     observer.observe(bar)
     return () => observer.disconnect()
-  }, [barRef, horizontal])
+  }, [barRef])
 
   useLayoutEffect(() => {
     const bar = barRef.current
@@ -57,5 +59,5 @@ export function useDockBarMotion(
     )
   }, [barRef, expanded])
 
-  return extent
+  return size
 }

@@ -2,6 +2,7 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import {
   AGENT_HUB_FINISHED_CLEAR_MINUTES,
   type AgentHubDefaultTab,
+  type AgentHubDockSize,
   type AgentHubPlacement
 } from '../../../../shared/agent-hub-settings'
 import { useNow } from '@/hooks/use-now'
@@ -17,6 +18,7 @@ import {
   SettingsSwitchRow
 } from '../settings/SettingsFormControls'
 import { getExperimentalSearchEntry } from '../settings/experimental-search'
+import { AGENT_HUB_DOCK_SIZES, agentHubDockSizeLabel } from './AgentHubDockMenu'
 import { AgentHubShortcutSetting } from './AgentHubShortcutSetting'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 
@@ -79,6 +81,29 @@ function AgentHubOptions({
         }
       />
       <AgentHubShortcutSetting />
+      {preferences.placement === 'dock' ? (
+        <SettingsRow
+          label={translate(
+            'auto.components.settings.ExperimentalPane.agentHub.dockSize',
+            'Dock size'
+          )}
+          control={
+            <SettingsSegmentedControl<AgentHubDockSize>
+              value={preferences.dockSize}
+              size="sm"
+              onChange={(value) => updateSettings({ agentHubDockSize: value })}
+              ariaLabel={translate(
+                'auto.components.settings.ExperimentalPane.agentHub.dockSize',
+                'Dock size'
+              )}
+              options={AGENT_HUB_DOCK_SIZES.map((value) => ({
+                value,
+                label: agentHubDockSizeLabel(value)
+              }))}
+            />
+          }
+        />
+      ) : null}
       {preferences.placement === 'dock' ? (
         <SettingsSwitchRow
           label={translate(

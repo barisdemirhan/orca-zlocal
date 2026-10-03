@@ -266,6 +266,7 @@ export function buildDefaultSettings(args: {
     experimentalAgentHub: false,
     agentHubPlacement: 'dock',
     agentHubDockPosition: DEFAULT_AGENT_HUB_DOCK_POSITION,
+    agentHubDockSize: 'medium',
     agentHubDockAutoHide: false,
     agentHubAlertOnNeedsInput: true,
     agentHubAlertOnFinished: true,

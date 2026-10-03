@@ -4,16 +4,19 @@ import { useAppStore } from '@/store'
 import {
   normalizeAgentHubDefaultTab,
   normalizeAgentHubDockPosition,
+  normalizeAgentHubDockSize,
   normalizeAgentHubFinishedClearMinutes,
   normalizeAgentHubPlacement,
   type AgentHubDefaultTab,
   type AgentHubDockPosition,
+  type AgentHubDockSize,
   type AgentHubPlacement
 } from '../../../../shared/agent-hub-settings'
 
 export type AgentHubPreferences = {
   placement: AgentHubPlacement
   dockPosition: AgentHubDockPosition
+  dockSize: AgentHubDockSize
   dockAutoHide: boolean
   alertOnNeedsInput: boolean
   alertOnFinished: boolean
@@ -30,6 +33,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
     useShallow((s) => ({
       placement: s.settings?.agentHubPlacement,
       dockPosition: s.settings?.agentHubDockPosition,
+      dockSize: s.settings?.agentHubDockSize,
       dockAutoHide: s.settings?.agentHubDockAutoHide,
       alertOnNeedsInput: s.settings?.agentHubAlertOnNeedsInput,
       alertOnFinished: s.settings?.agentHubAlertOnFinished,
@@ -44,6 +48,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
     () => ({
       placement: normalizeAgentHubPlacement(raw.placement),
       dockPosition: normalizeAgentHubDockPosition(raw.dockPosition),
+      dockSize: normalizeAgentHubDockSize(raw.dockSize),
       dockAutoHide: raw.dockAutoHide === true,
       alertOnNeedsInput: raw.alertOnNeedsInput !== false,
       alertOnFinished: raw.alertOnFinished !== false,

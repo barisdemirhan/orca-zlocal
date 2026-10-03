@@ -8016,7 +8016,8 @@
             "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting).",
             "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}}",
             "useSuggested": "Use these",
-            "editShortcuts": "Edit"
+            "editShortcuts": "Edit",
+            "dockSize": "Dock size"
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -21717,7 +21718,8 @@
       "connecting": "Connecting to the terminal…",
       "restore": "Restore {{value0}}",
       "chipTooltip": "Click to restore · drag to move",
-      "minimize": "Minimize"
+      "minimize": "Minimize",
+      "inWorkspace": "This terminal is on screen in the workspace; it comes back here when you leave it."
     },
     "title": "Agents",
     "tab": {
@@ -21808,7 +21810,11 @@
       "settings": "Agent Hub settings…",
       "edgeTop": "Below the title bar",
       "waiting": "Waiting on you",
-      "finished": "Finished"
+      "finished": "Finished",
+      "sizeSmall": "Small",
+      "sizeMedium": "Medium",
+      "sizeLarge": "Large",
+      "size": "Size"
     },
     "children": {
       "agentOne": "1 agent",

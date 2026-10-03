@@ -1,12 +1,13 @@
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { AgentHubDockEdge } from '../../../../shared/agent-hub-settings'
+import { agentHubNotchShape } from './agent-hub-dock-geometry'
 import type { AgentHubCounts } from './agent-hub-lists'
 
 export const DOCK_BUTTON =
   'relative grid size-8 shrink-0 animate-in place-items-center rounded-full text-muted-foreground duration-300 fade-in-0 hover:bg-foreground/[0.07] hover:text-foreground disabled:pointer-events-none disabled:opacity-40 motion-reduce:animate-none'
 export const DOCK_COUNT_BUTTON =
-  'flex h-8 shrink-0 animate-in items-center gap-1.5 rounded-full px-2.5 font-mono text-[11px] text-muted-foreground duration-300 fade-in-0 hover:bg-foreground/[0.07] hover:text-foreground motion-reduce:animate-none'
+  'flex h-8 shrink-0 animate-in items-center gap-1 rounded-full px-1 font-mono text-[11px] text-muted-foreground duration-300 fade-in-0 hover:bg-foreground/[0.07] hover:text-foreground motion-reduce:animate-none'
 
 function CounterIndicator({
   kind,
@@ -92,71 +93,29 @@ export function DockButton({
   )
 }
 
-/** A concave fillet, with the hairline continuing along its curve into the bar it grows from. */
-function fillet(at: string): React.CSSProperties {
-  return {
-    background: `radial-gradient(circle at ${at}, transparent 9.5px, var(--border) 10px, var(--border) 10.5px, transparent 11px), radial-gradient(circle at ${at}, transparent 9.5px, var(--hub-notch) 10px)`
-  }
-}
-
-/** The two fillets where the notch meets the status bar, the title bar or a window edge. */
-export function NotchCorners({ edge }: { edge: AgentHubDockEdge }): React.JSX.Element {
-  switch (edge) {
-    case 'bottom':
-      return (
-        <>
-          <span
-            aria-hidden
-            className="absolute bottom-0 -left-2.5 size-2.5"
-            style={fillet('0 0')}
-          />
-          <span
-            aria-hidden
-            className="absolute -right-2.5 bottom-0 size-2.5"
-            style={fillet('100% 0')}
-          />
-        </>
-      )
-    case 'top':
-      return (
-        <>
-          <span
-            aria-hidden
-            className="absolute top-0 -left-2.5 size-2.5"
-            style={fillet('0 100%')}
-          />
-          <span
-            aria-hidden
-            className="absolute top-0 -right-2.5 size-2.5"
-            style={fillet('100% 100%')}
-          />
-        </>
-      )
-    case 'right':
-      return (
-        <>
-          <span aria-hidden className="absolute -top-2.5 right-0 size-2.5" style={fillet('0 0')} />
-          <span
-            aria-hidden
-            className="absolute right-0 -bottom-2.5 size-2.5"
-            style={fillet('0 100%')}
-          />
-        </>
-      )
-    case 'left':
-      return (
-        <>
-          <span
-            aria-hidden
-            className="absolute -top-2.5 left-0 size-2.5"
-            style={fillet('100% 0')}
-          />
-          <span
-            aria-hidden
-            className="absolute -bottom-2.5 left-0 size-2.5"
-            style={fillet('100% 100%')}
-          />
-        </>
-      )
-  }
+/** The notch and its fillets as one shape, so its hairline runs unbroken into the bar it grows from. */
+export function NotchShape({
+  edge,
+  bar
+}: {
+  edge: AgentHubDockEdge
+  bar: { width: number; height: number }
+}): React.JSX.Element {
+  const shape = agentHubNotchShape(edge, bar)
+  return (
+    <svg
+      aria-hidden
+      className="pointer-events-none absolute overflow-visible"
+      style={{ left: shape.left, top: shape.top, width: shape.width, height: shape.height }}
+      viewBox={`0 0 ${shape.width} ${shape.height}`}
+    >
+      <path d={shape.fill} className="fill-[var(--hub-notch)]" />
+      <path
+        d={shape.stroke}
+        fill="none"
+        className="stroke-border"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
 }

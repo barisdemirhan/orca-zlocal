@@ -13,12 +13,25 @@ import {
 import { translate } from '@/i18n/i18n'
 import {
   AGENT_HUB_MUTE_DURATION_MS,
-  type AgentHubDockEdge
+  type AgentHubDockEdge,
+  type AgentHubDockSize
 } from '../../../../shared/agent-hub-settings'
 import { clearAgentHubAlerts } from './agent-hub-alert-queue'
 import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
 
 const EDGES: readonly AgentHubDockEdge[] = ['bottom', 'top', 'left', 'right']
+export const AGENT_HUB_DOCK_SIZES: readonly AgentHubDockSize[] = ['small', 'medium', 'large']
+
+export function agentHubDockSizeLabel(size: AgentHubDockSize): string {
+  switch (size) {
+    case 'small':
+      return translate('agentHub.dock.sizeSmall', 'Small')
+    case 'medium':
+      return translate('agentHub.dock.sizeMedium', 'Medium')
+    case 'large':
+      return translate('agentHub.dock.sizeLarge', 'Large')
+  }
+}
 
 function edgeLabel(edge: AgentHubDockEdge): string {
   switch (edge) {
@@ -36,11 +49,13 @@ function edgeLabel(edge: AgentHubDockEdge): string {
 /** The dock's "···": mute, move, switch to the status bar, settings. */
 export function AgentHubDockMenu({
   edge,
+  size,
   muted,
   onOpenChange,
   buttonClassName
 }: {
   edge: AgentHubDockEdge
+  size: AgentHubDockSize
   muted: boolean
   onOpenChange: (open: boolean) => void
   buttonClassName: string
@@ -93,6 +108,24 @@ export function AgentHubDockMenu({
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>{translate('agentHub.dock.size', 'Size')}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={size}
+          onValueChange={(value) => {
+            const next = AGENT_HUB_DOCK_SIZES.find((candidate) => candidate === value)
+            if (next) {
+              void updateSettings({ agentHubDockSize: next })
+            }
+          }}
+        >
+          {AGENT_HUB_DOCK_SIZES.map((candidate) => (
+            <DropdownMenuRadioItem key={candidate} value={candidate}>
+              {agentHubDockSizeLabel(candidate)}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void updateSettings({ agentHubPlacement: 'status-bar' })}>
           <PanelBottom />
           {translate('agentHub.dock.useStatusBar', 'Show in the status bar instead')}

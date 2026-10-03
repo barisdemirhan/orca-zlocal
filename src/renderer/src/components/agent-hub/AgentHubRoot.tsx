@@ -299,6 +299,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                     anchorRef.current = node
                   }}
                   position={preferences.dockPosition}
+                  size={preferences.dockSize}
                   counts={counts}
                   muted={muted}
                   onOpenTab={(tab) => openHub(tab)}

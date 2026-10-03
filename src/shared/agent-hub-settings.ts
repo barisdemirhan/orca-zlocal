@@ -8,6 +8,8 @@ export type AgentHubDockPosition = { edge: AgentHubDockEdge; offset: number }
 
 export type AgentHubDefaultTab = 'inbox' | 'running' | 'all'
 
+export type AgentHubDockSize = 'small' | 'medium' | 'large'
+
 /** Agent Hub's settings, kept out of global-settings-types.ts (at its line budget). */
 export type AgentHubSettings = {
   /** Experimental: Agent Hub — every agent and terminal in one popover, with inline answers. */
@@ -16,6 +18,8 @@ export type AgentHubSettings = {
   agentHubPlacement?: AgentHubPlacement
   /** Agent Hub dock: the window edge it sits on and its spot along that edge. */
   agentHubDockPosition?: AgentHubDockPosition
+  /** Agent Hub dock: how large it is drawn. */
+  agentHubDockSize?: AgentHubDockSize
   /** Agent Hub dock: stay out of sight while no agent is working, waiting, or unread. */
   agentHubDockAutoHide?: boolean
   /** Agent Hub alert (bubble, plus sound when enabled) when an agent asks or needs approval. */
@@ -60,6 +64,17 @@ export function normalizeAgentHubDockPosition(value: unknown): AgentHubDockPosit
     offset:
       typeof offset === 'number' && Number.isFinite(offset) ? Math.min(1, Math.max(0, offset)) : 0.5
   }
+}
+
+/** The dock's scale for each size; medium is the default. */
+export const AGENT_HUB_DOCK_ZOOM: Record<AgentHubDockSize, number> = {
+  small: 1,
+  medium: 1.25,
+  large: 1.5
+}
+
+export function normalizeAgentHubDockSize(value: unknown): AgentHubDockSize {
+  return value === 'small' || value === 'large' ? value : 'medium'
 }
 
 export function normalizeAgentHubDefaultTab(value: unknown): AgentHubDefaultTab {

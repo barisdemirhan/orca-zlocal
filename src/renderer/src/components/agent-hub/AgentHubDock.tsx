@@ -1,7 +1,11 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { BellOff, Bot, CornerDownRight, Inbox, SquareTerminal } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
-import type { AgentHubDockPosition } from '../../../../shared/agent-hub-settings'
+import {
+  AGENT_HUB_DOCK_ZOOM,
+  type AgentHubDockPosition,
+  type AgentHubDockSize
+} from '../../../../shared/agent-hub-settings'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import {
   STATUS_BAR_RESERVE_HEIGHT,
@@ -14,7 +18,7 @@ import {
   DockButton,
   DockCounter,
   DockCounters,
-  NotchCorners
+  NotchShape
 } from './AgentHubDockParts'
 import {
   agentHubDockDropPosition,
@@ -41,6 +45,7 @@ const DOCK_CHROME = {
  */
 export function AgentHubDock({
   position,
+  size,
   counts,
   muted,
   onOpenTab,
@@ -49,6 +54,7 @@ export function AgentHubDock({
   ...anchorProps
 }: React.ComponentProps<'div'> & {
   position: AgentHubDockPosition
+  size: AgentHubDockSize
   counts: AgentHubCounts
   muted: boolean
   onOpenTab: (tab: AgentHubTab) => void
@@ -65,10 +71,13 @@ export function AgentHubDock({
   const expanded = (hovered || menuOpen) && dragPoint === null
   const side = agentHubDockPopoverSide(position.edge)
   // Why measured: the hover bar is far longer than the notch, and must not run off an edge.
-  const extent = useDockBarMotion(barRef, isHorizontalAgentHubDock(position.edge), expanded)
+  const barSize = useDockBarMotion(barRef, expanded)
+  const zoom = AGENT_HUB_DOCK_ZOOM[size]
+  // The bar measures in its own (unzoomed) pixels; placement works in the window's.
+  const extent = (isHorizontalAgentHubDock(position.edge) ? barSize?.width : barSize?.height) ?? 0
   const placement = dragPoint
     ? { left: dragPoint.x, top: dragPoint.y, transform: 'translate(-50%, -50%)' }
-    : agentHubDockPlacement(position, viewport, DOCK_CHROME, extent)
+    : agentHubDockPlacement(position, viewport, DOCK_CHROME, extent * zoom)
 
   useLayoutEffect(
     () => () => {
@@ -136,79 +145,86 @@ export function AgentHubDock({
         }
       }}
     >
-      {dragPoint === null ? <NotchCorners edge={position.edge} /> : null}
-      <div
-        ref={barRef}
-        data-edge={position.edge}
-        data-expanded={expanded}
-        data-dragging={dragPoint !== null}
-        className="relative flex cursor-pointer items-center justify-center gap-2 overflow-hidden border border-border bg-[var(--hub-notch)] text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-[26px] data-[edge=bottom]:flex-row data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:border-b-0 data-[edge=bottom]:px-3.5 data-[edge=left]:w-[26px] data-[edge=left]:flex-col data-[edge=left]:rounded-r-[14px] data-[edge=left]:border-l-0 data-[edge=left]:py-3.5 data-[edge=right]:w-[26px] data-[edge=right]:flex-col data-[edge=right]:rounded-l-[14px] data-[edge=right]:border-r-0 data-[edge=right]:py-3.5 data-[edge=top]:h-[26px] data-[edge=top]:flex-row data-[edge=top]:rounded-b-[14px] data-[edge=top]:border-t-0 data-[edge=top]:px-3.5 data-[edge=bottom]:data-[expanded=true]:h-11 data-[edge=bottom]:data-[expanded=true]:gap-1 data-[edge=bottom]:data-[expanded=true]:px-2 data-[edge=left]:data-[expanded=true]:w-11 data-[edge=left]:data-[expanded=true]:gap-1 data-[edge=left]:data-[expanded=true]:py-2 data-[edge=right]:data-[expanded=true]:w-11 data-[edge=right]:data-[expanded=true]:gap-1 data-[edge=right]:data-[expanded=true]:py-2 data-[edge=top]:data-[expanded=true]:h-11 data-[edge=top]:data-[expanded=true]:gap-1 data-[edge=top]:data-[expanded=true]:px-2"
-      >
-        {expanded ? (
-          <>
-            <DockButton
-              label={translate('agentHub.tab.inbox', 'Inbox')}
-              side={side}
-              className={DOCK_BUTTON}
-              onClick={() => onOpenTab('inbox')}
-            >
-              <Inbox className="size-4" />
-            </DockButton>
-            <DockButton
-              label={translate('agentHub.tab.running', 'Running')}
-              side={side}
-              className={DOCK_COUNT_BUTTON}
-              onClick={() => onOpenTab('running')}
-            >
-              <DockCounter kind="work" value={counts.working} />
-            </DockButton>
-            <DockButton
-              label={translate('agentHub.dock.waiting', 'Waiting on you')}
-              side={side}
-              className={DOCK_COUNT_BUTTON}
-              onClick={() => onOpenTab('inbox')}
-            >
-              <DockCounter kind="ask" value={counts.needsYou} />
-            </DockButton>
-            <DockButton
-              label={translate('agentHub.dock.finished', 'Finished')}
-              side={side}
-              className={DOCK_COUNT_BUTTON}
-              onClick={() => onOpenTab('inbox')}
-            >
-              <DockCounter kind="done" value={counts.finished} />
-            </DockButton>
-            <DockButton
-              label={translate('agentHub.tab.all', 'All terminals')}
-              side={side}
-              className={DOCK_BUTTON}
-              onClick={() => onOpenTab('all')}
-            >
-              <SquareTerminal className="size-4" />
-            </DockButton>
-            <DockButton
-              label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
-              side={side}
-              className={DOCK_BUTTON}
-              disabled={counts.needsYou === 0}
-              onClick={onNextWaiting}
-            >
-              <CornerDownRight className="size-4" />
-            </DockButton>
-            <AgentHubDockMenu
-              edge={position.edge}
-              muted={muted}
-              onOpenChange={setMenuOpen}
-              buttonClassName={DOCK_BUTTON}
-            />
-          </>
-        ) : (
-          <>
-            <Bot aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
-            <DockCounters counts={counts} />
-            {muted ? <BellOff className="size-3 shrink-0 opacity-70" /> : null}
-          </>
-        )}
+      {/* Why zoom: one switch scales the notch, its icons and its outline together. */}
+      <div className="relative" style={{ zoom }}>
+        {dragPoint === null && barSize ? <NotchShape edge={position.edge} bar={barSize} /> : null}
+        <div
+          ref={barRef}
+          data-edge={position.edge}
+          data-expanded={expanded}
+          data-dragging={dragPoint !== null}
+          className="relative flex cursor-pointer items-center justify-center gap-2 overflow-hidden text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-[26px] data-[edge=bottom]:flex-row data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:px-3.5 data-[edge=left]:w-[26px] data-[edge=left]:flex-col data-[edge=left]:rounded-r-[14px] data-[edge=left]:py-3.5 data-[edge=right]:w-[26px] data-[edge=right]:flex-col data-[edge=right]:rounded-l-[14px] data-[edge=right]:py-3.5 data-[edge=top]:h-[26px] data-[edge=top]:flex-row data-[edge=top]:rounded-b-[14px] data-[edge=top]:px-3.5 data-[edge=bottom]:data-[expanded=true]:h-11 data-[edge=bottom]:data-[expanded=true]:gap-1 data-[edge=bottom]:data-[expanded=true]:px-2 data-[edge=left]:data-[expanded=true]:w-11 data-[edge=left]:data-[expanded=true]:gap-1 data-[edge=left]:data-[expanded=true]:py-2 data-[edge=right]:data-[expanded=true]:w-11 data-[edge=right]:data-[expanded=true]:gap-1 data-[edge=right]:data-[expanded=true]:py-2 data-[edge=top]:data-[expanded=true]:h-11 data-[edge=top]:data-[expanded=true]:gap-1 data-[edge=top]:data-[expanded=true]:px-2"
+        >
+          {expanded ? (
+            <>
+              <DockButton
+                label={translate('agentHub.tab.inbox', 'Inbox')}
+                side={side}
+                className={DOCK_BUTTON}
+                onClick={() => onOpenTab('inbox')}
+              >
+                <Inbox className="size-4" />
+              </DockButton>
+              {/* The three counts read as one group, with no gaps between them. */}
+              <span className="flex items-center group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
+                <DockButton
+                  label={translate('agentHub.tab.running', 'Running')}
+                  side={side}
+                  className={DOCK_COUNT_BUTTON}
+                  onClick={() => onOpenTab('running')}
+                >
+                  <DockCounter kind="work" value={counts.working} />
+                </DockButton>
+                <DockButton
+                  label={translate('agentHub.dock.waiting', 'Waiting on you')}
+                  side={side}
+                  className={DOCK_COUNT_BUTTON}
+                  onClick={() => onOpenTab('inbox')}
+                >
+                  <DockCounter kind="ask" value={counts.needsYou} />
+                </DockButton>
+                <DockButton
+                  label={translate('agentHub.dock.finished', 'Finished')}
+                  side={side}
+                  className={DOCK_COUNT_BUTTON}
+                  onClick={() => onOpenTab('inbox')}
+                >
+                  <DockCounter kind="done" value={counts.finished} />
+                </DockButton>
+              </span>
+              <DockButton
+                label={translate('agentHub.tab.all', 'All terminals')}
+                side={side}
+                className={DOCK_BUTTON}
+                onClick={() => onOpenTab('all')}
+              >
+                <SquareTerminal className="size-4" />
+              </DockButton>
+              <DockButton
+                label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
+                side={side}
+                className={DOCK_BUTTON}
+                disabled={counts.needsYou === 0}
+                onClick={onNextWaiting}
+              >
+                <CornerDownRight className="size-4" />
+              </DockButton>
+              <AgentHubDockMenu
+                edge={position.edge}
+                size={size}
+                muted={muted}
+                onOpenChange={setMenuOpen}
+                buttonClassName={DOCK_BUTTON}
+              />
+            </>
+          ) : (
+            <>
+              <Bot aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+              <DockCounters counts={counts} />
+              {muted ? <BellOff className="size-3 shrink-0 opacity-70" /> : null}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

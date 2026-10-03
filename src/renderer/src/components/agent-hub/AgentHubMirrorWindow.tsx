@@ -25,7 +25,6 @@ import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-c
 const LEAVE_MS = 140
 const CASCADE_STEP_PX = 28
 // Main serializes at most this many history rows into a preview.
-const MIRROR_SCROLLBACK_ROWS = 1000
 // A tab that has not attached by then is not coming back on its own.
 const ATTACH_GIVE_UP_MS = 10_000
 
@@ -44,9 +43,9 @@ type DragState = {
 }
 
 /**
- * Non-modal, draggable live mirror of one terminal pane, typed into like the pane itself.
- * Like the dashboard's preview it claims the PTY grid while open (see createPreviewGridClaim),
- * so the agent redraws at the mirror's size and the real pane takes its size back on close.
+ * Non-modal, draggable window around one terminal pane. The real pane is moved in through the
+ * terminal portal Activity uses, so it is the terminal itself: same renderer, input, scrollback
+ * and mouse. It fits the window while here and returns to its place on close.
  */
 export function AgentHubMirrorWindow({
   target,
@@ -54,6 +53,8 @@ export function AgentHubMirrorWindow({
   location,
   stackIndex,
   cascade,
+  surface,
+  onSlot,
   onFocus,
   onClose,
   onMinimize,
@@ -67,6 +68,13 @@ export function AgentHubMirrorWindow({
   stackIndex: number
   /** How many mirrors were open before it: a new one steps off the last so neither hides the other. */
   cascade: number
+  /**
+   * How the terminal is shown: the real pane moved in (`portal`), a note while the pane is on
+   * screen in the workspace (`in-workspace`), or the dashboard's preview for floating terminals.
+   */
+  surface: 'portal' | 'in-workspace' | 'preview'
+  /** Registers the box the real pane is moved into. */
+  onSlot: (key: string, element: HTMLDivElement | null) => void
   onFocus: () => void
   onClose: () => void
   /** Shrinks the window into a chip where it stands; the mirror keeps running. */
@@ -84,6 +92,11 @@ export function AgentHubMirrorWindow({
     )
   })
   const dragRef = useRef<DragState | null>(null)
+  const mirrorKey = agentHubPaneTargetKey(target)
+  const slotRef = useCallback(
+    (element: HTMLDivElement | null) => onSlot(mirrorKey, element),
+    [onSlot, mirrorKey]
+  )
   const ptyId = useAgentHubLivePty(target.worktree.id, target.tab.id, target.paneKey)
   const [gaveUp, setGaveUp] = useState(false)
   const [leaving, setLeaving] = useState(false)
@@ -107,11 +120,12 @@ export function AgentHubMirrorWindow({
   )
   // Why subscribed: an agent starting or exiting in this pane changes its key encodings.
   const terminalInput = useAppStore(
-    useShallow((state) => (ptyId ? resolveAgentHubTerminalInput(state, target, ptyId) : null))
+    useShallow((state) =>
+      surface === 'preview' && ptyId ? resolveAgentHubTerminalInput(state, target, ptyId) : null
+    )
   )
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
 
-  const mirrorKey = agentHubPaneTargetKey(target)
   useEffect(() => {
     lastGeometry = geometry
     rememberAgentHubMirrorOrigin(mirrorKey, { x: geometry.x, y: geometry.y })
@@ -241,26 +255,34 @@ export function AgentHubMirrorWindow({
           <X className="size-3.5" />
         </button>
       </header>
-      {ptyId ? (
+      {surface === 'in-workspace' ? (
+        <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center text-xs text-muted-foreground">
+          {translate(
+            'agentHub.mirror.inWorkspace',
+            'This terminal is on screen in the workspace; it comes back here when you leave it.'
+          )}
+        </div>
+      ) : surface === 'preview' && ptyId ? (
         <AgentTerminalPreview
           key={ptyId}
           ptyId={ptyId}
           terminalInput={terminalInput}
           className="h-auto min-h-0 flex-1"
-          // Why the full history: the mirror is read like the pane itself, scrolled back through.
-          scrollbackRows={MIRROR_SCROLLBACK_ROWS}
-          // Why GPU: a window-sized agent TUI repaints constantly, which the DOM renderer can't keep up with.
-          webgl
         />
       ) : (
-        <div className="flex min-h-0 flex-1 items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
-          {gaveUp ? (
-            translate('agentHub.mirror.noTerminal', 'This pane has no live terminal right now.')
-          ) : (
-            <>
-              <Loader2 className="size-3.5 animate-spin" />
-              {translate('agentHub.mirror.connecting', 'Connecting to the terminal…')}
-            </>
+        // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
+        <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">
+          {ptyId ? null : (
+            <div className="absolute inset-0 flex items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
+              {gaveUp ? (
+                translate('agentHub.mirror.noTerminal', 'This pane has no live terminal right now.')
+              ) : (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  {translate('agentHub.mirror.connecting', 'Connecting to the terminal…')}
+                </>
+              )}
+            </div>
           )}
         </div>
       )}
