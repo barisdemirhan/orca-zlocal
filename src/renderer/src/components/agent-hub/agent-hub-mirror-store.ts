@@ -1,44 +1,47 @@
 import { useSyncExternalStore } from 'react'
 import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
 
+type Point = { x: number; y: number }
+
 /** A minimized mirror: a small chip that stays on screen until the user restores or closes it. */
-export type AgentHubMirrorChip = { target: AgentHubPaneTarget; x: number; y: number }
+export type AgentHubMirrorChip = { target: AgentHubPaneTarget } & Point
 
 export type AgentHubMirrorState = {
-  /** The one expanded mirror window. */
-  open: AgentHubPaneTarget | null
-  /** True once the open mirror was minimized before: replacing it minimizes it again, never drops it. */
-  openKept: boolean
+  /** Open mirror windows, back to front. */
+  windows: readonly AgentHubPaneTarget[]
   chips: readonly AgentHubMirrorChip[]
 }
 
+// Each open window is a live terminal; past this the back-most one shrinks into its chip.
+export const MAX_AGENT_HUB_MIRROR_WINDOWS = 4
 const MAX_CHIPS = 8
 const CHIP_STEP_Y = 40
 const CHIP_OVERLAP_X = 160
+const FALLBACK_ORIGIN: Point = { x: 16, y: 16 }
 
-let state: AgentHubMirrorState = { open: null, openKept: false, chips: [] }
-// Where the open window sits; a kept window pushed aside becomes a chip there. Not rendered state.
-let windowOrigin = { x: 16, y: 16 }
+let state: AgentHubMirrorState = { windows: [], chips: [] }
+// Where each window sits, so it minimizes in place. Not rendered state.
+const windowOrigins = new Map<string, Point>()
 const listeners = new Set<() => void>()
-
-export function rememberAgentHubMirrorOrigin(origin: { x: number; y: number }): void {
-  windowOrigin = origin
-}
 
 function emit(next: AgentHubMirrorState): void {
   state = next
   listeners.forEach((listener) => listener())
 }
 
-function keyOf(target: AgentHubPaneTarget): string {
-  return agentHubPaneTargetKey(target)
+const keyOf = agentHubPaneTargetKey
+
+export function rememberAgentHubMirrorOrigin(key: string, origin: Point): void {
+  windowOrigins.set(key, origin)
+}
+
+/** Where a window last stood, for a window reopening at its chip's spot. */
+export function readAgentHubMirrorOrigin(key: string): Point | null {
+  return windowOrigins.get(key) ?? null
 }
 
 /** Chips start where their window was; one already there pushes the newcomer down a step. */
-function placeChip(
-  chips: readonly AgentHubMirrorChip[],
-  origin: { x: number; y: number }
-): { x: number; y: number } {
+function placeChip(chips: readonly AgentHubMirrorChip[], origin: Point): Point {
   let { y } = origin
   while (
     chips.some(
@@ -52,47 +55,66 @@ function placeChip(
 
 function withChip(
   chips: readonly AgentHubMirrorChip[],
-  target: AgentHubPaneTarget,
-  origin: { x: number; y: number }
+  target: AgentHubPaneTarget
 ): AgentHubMirrorChip[] {
-  const others = chips.filter((chip) => keyOf(chip.target) !== keyOf(target))
+  const key = keyOf(target)
+  const others = chips.filter((chip) => keyOf(chip.target) !== key)
+  const origin = windowOrigins.get(key) ?? FALLBACK_ORIGIN
   return [...others, { target, ...placeChip(others, origin) }].slice(-MAX_CHIPS)
 }
 
-/** Opens a pane's mirror from the hub; a minimized chip for the same pane is restored instead. */
-export function openAgentHubMirror(target: AgentHubPaneTarget): void {
+/** Brings `target` to the front, shrinking the back-most window into a chip past the cap. */
+function showWindow(
+  windows: readonly AgentHubPaneTarget[],
+  chips: readonly AgentHubMirrorChip[],
+  target: AgentHubPaneTarget
+): AgentHubMirrorState {
   const key = keyOf(target)
-  const chip = state.chips.find((candidate) => keyOf(candidate.target) === key)
-  let chips = state.chips.filter((candidate) => keyOf(candidate.target) !== key)
-  if (state.open && state.openKept && keyOf(state.open) !== key) {
-    chips = withChip(chips, state.open, windowOrigin)
+  const nextWindows = [...windows.filter((open) => keyOf(open) !== key), target]
+  let nextChips = chips.filter((chip) => keyOf(chip.target) !== key)
+  while (nextWindows.length > MAX_AGENT_HUB_MIRROR_WINDOWS) {
+    const evicted = nextWindows.shift()
+    if (evicted) {
+      nextChips = withChip(nextChips, evicted)
+    }
   }
-  const reopened = state.open !== null && keyOf(state.open) === key && state.openKept
-  emit({ open: target, openKept: chip !== undefined || reopened, chips })
+  return { windows: nextWindows, chips: nextChips }
 }
 
-export function minimizeAgentHubMirror(): void {
-  if (state.open) {
-    emit({ open: null, openKept: false, chips: withChip(state.chips, state.open, windowOrigin) })
+/** Opens a pane's mirror, or brings its open window (or its chip) back to the front. */
+export function openAgentHubMirror(target: AgentHubPaneTarget): void {
+  emit(showWindow(state.windows, state.chips, target))
+}
+
+export function focusAgentHubMirror(key: string): void {
+  const target = state.windows.find((open) => keyOf(open) === key)
+  if (target && state.windows.at(-1) !== target) {
+    emit(showWindow(state.windows, state.chips, target))
   }
 }
 
-/** The restored chip's window takes the stage; a kept window in its way swaps into the chip's spot. */
+export function minimizeAgentHubMirror(key: string): void {
+  const target = state.windows.find((open) => keyOf(open) === key)
+  if (target) {
+    emit({
+      windows: state.windows.filter((open) => open !== target),
+      chips: withChip(state.chips, target)
+    })
+  }
+}
+
 export function restoreAgentHubMirror(key: string): void {
   const chip = state.chips.find((candidate) => keyOf(candidate.target) === key)
-  if (!chip) {
-    return
+  if (chip) {
+    // The window comes back where its chip was dragged to.
+    windowOrigins.set(key, { x: chip.x, y: chip.y })
+    emit(showWindow(state.windows, state.chips, chip.target))
   }
-  let chips = state.chips.filter((candidate) => candidate !== chip)
-  if (state.open && state.openKept) {
-    chips = withChip(chips, state.open, { x: chip.x, y: chip.y })
-  }
-  emit({ open: chip.target, openKept: true, chips })
 }
 
-export function closeAgentHubMirror(): void {
-  if (state.open) {
-    emit({ ...state, open: null, openKept: false })
+export function closeAgentHubMirror(key: string): void {
+  if (state.windows.some((open) => keyOf(open) === key)) {
+    emit({ ...state, windows: state.windows.filter((open) => keyOf(open) !== key) })
   }
 }
 
@@ -100,7 +122,7 @@ export function closeAgentHubMirrorChip(key: string): void {
   emit({ ...state, chips: state.chips.filter((chip) => keyOf(chip.target) !== key) })
 }
 
-export function moveAgentHubMirrorChip(key: string, position: { x: number; y: number }): void {
+export function moveAgentHubMirrorChip(key: string, position: Point): void {
   emit({
     ...state,
     chips: state.chips.map((chip) => (keyOf(chip.target) === key ? { ...chip, ...position } : chip))
@@ -109,7 +131,8 @@ export function moveAgentHubMirrorChip(key: string, position: { x: number; y: nu
 
 /** Test seam: start every case from an empty stage. */
 export function resetAgentHubMirrorsForTest(): void {
-  emit({ open: null, openKept: false, chips: [] })
+  windowOrigins.clear()
+  emit({ windows: [], chips: [] })
 }
 
 export function readAgentHubMirrors(): AgentHubMirrorState {

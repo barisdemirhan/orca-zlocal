@@ -18,7 +18,7 @@ import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/activity-thread-actions'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { AgentHubAlertBubble } from './AgentHubAlertBubble'
+import { AgentHubAlertStack } from './AgentHubAlertStack'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubMirrors } from './AgentHubMirrors'
 import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
@@ -32,7 +32,7 @@ import { registerAgentHubCommands } from './agent-hub-commands'
 import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
 import { buildAgentHubLineage, type AgentHubLineage } from './agent-hub-lineage'
-import { agentHubCounts, buildAgentHubLists, type AgentHubLists } from './agent-hub-lists'
+import { agentHubCounts, type AgentHubLists } from './agent-hub-lists'
 import { openAgentHubMirror, useAgentHubMirrors } from './agent-hub-mirror-store'
 import {
   agentHubLocation,
@@ -40,6 +40,7 @@ import {
   paneTargetFromThread
 } from './agent-hub-pane-target'
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
+import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
 
@@ -113,10 +114,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   })
   const lineage = useMemo(() => buildAgentHubLineage(threads, now), [threads, now])
   const finishedMaxAgeMs = preferences.finishedClearMinutes * 60_000
-  const lists = useMemo(
-    () => buildAgentHubLists(threads, { now, finishedMaxAgeMs, parentOf: lineage.parentOf }),
-    [threads, now, finishedMaxAgeMs, lineage]
-  )
+  const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
   const counts = agentHubCounts(lists)
   useAgentHubAlerts(lists, preferences)
   const alerts = useAgentHubAlertQueue()
@@ -227,11 +225,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const hubAlerts = alerts.filter(
     (candidate) => !chips.some((chip) => agentHubTargetShowsThread(chip.target, candidate.thread))
   )
-  const alert = hubAlerts.at(-1) ?? null
   const dockHidden =
     preferences.dockAutoHide &&
     !open &&
-    alert === null &&
+    hubAlerts.length === 0 &&
     counts.needsYou + counts.working + counts.finished === 0
 
   const content = (
@@ -335,14 +332,12 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         )}
         {content}
       </Popover>
-      {alert && !open ? (
-        <AgentHubAlertBubble
-          key={alert.id}
-          alert={alert}
-          pending={hubAlerts.length}
+      {hubAlerts.length > 0 && !open ? (
+        <AgentHubAlertStack
+          alerts={hubAlerts}
           anchorRef={anchorRef}
           side={side}
-          location={agentHubLocation(alert.thread, groupNameById)}
+          locationOf={(shown) => agentHubLocation(shown.thread, groupNameById)}
           onOpen={(opened) =>
             openHub('inbox', opened.kind === 'done' ? null : opened.thread.paneKey)
           }

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Loader2, Minus, X } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
@@ -9,6 +8,7 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubAvatar, HubCrumb, HubKeys, HubStateIndicator } from './AgentHubAtoms'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import {
+  agentHubPaneTargetKey,
   resolveAgentHubTerminalInput,
   type AgentHubLocation,
   type AgentHubPaneTarget
@@ -18,11 +18,14 @@ import {
   defaultAgentHubMirrorGeometry,
   type AgentHubMirrorGeometry
 } from './agent-hub-mirror-geometry'
-import { rememberAgentHubMirrorOrigin } from './agent-hub-mirror-store'
+import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-store'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const LEAVE_MS = 140
+const CASCADE_STEP_PX = 28
+// Main serializes at most this many history rows into a preview.
+const MIRROR_SCROLLBACK_ROWS = 1000
 // A tab that has not attached by then is not coming back on its own.
 const ATTACH_GIVE_UP_MS = 10_000
 
@@ -49,6 +52,9 @@ export function AgentHubMirrorWindow({
   target,
   thread,
   location,
+  stackIndex,
+  cascade,
+  onFocus,
   onClose,
   onMinimize,
   onReveal
@@ -57,17 +63,26 @@ export function AgentHubMirrorWindow({
   /** Live thread for an agent pane, for its state glyph; null for a shell. */
   thread: AgentPaneThread | null
   location: AgentHubLocation
+  /** Its place in the stack of open mirrors (higher is in front). */
+  stackIndex: number
+  /** How many mirrors were open before it: a new one steps off the last so neither hides the other. */
+  cascade: number
+  onFocus: () => void
   onClose: () => void
   /** Shrinks the window into a chip where it stands; the mirror keeps running. */
   onMinimize: () => void
   onReveal: () => void
 }): React.JSX.Element {
-  const [geometry, setGeometry] = useState<AgentHubMirrorGeometry>(() =>
-    clampAgentHubMirrorGeometry(
-      lastGeometry ?? defaultAgentHubMirrorGeometry(viewportSize()),
+  const [geometry, setGeometry] = useState<AgentHubMirrorGeometry>(() => {
+    const base = lastGeometry ?? defaultAgentHubMirrorGeometry(viewportSize())
+    // A restored chip reopens where it was dragged to.
+    const origin = readAgentHubMirrorOrigin(agentHubPaneTargetKey(target))
+    const step = CASCADE_STEP_PX * cascade
+    return clampAgentHubMirrorGeometry(
+      origin ? { ...base, ...origin } : { ...base, x: base.x - step, y: base.y - step },
       viewportSize()
     )
-  )
+  })
   const dragRef = useRef<DragState | null>(null)
   const ptyId = useAgentHubLivePty(target.worktree.id, target.tab.id, target.paneKey)
   const [gaveUp, setGaveUp] = useState(false)
@@ -96,10 +111,11 @@ export function AgentHubMirrorWindow({
   )
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
 
+  const mirrorKey = agentHubPaneTargetKey(target)
   useEffect(() => {
     lastGeometry = geometry
-    rememberAgentHubMirrorOrigin({ x: geometry.x, y: geometry.y })
-  }, [geometry])
+    rememberAgentHubMirrorOrigin(mirrorKey, { x: geometry.x, y: geometry.y })
+  }, [geometry, mirrorKey])
 
   useEffect(() => {
     if (ptyId) {
@@ -156,17 +172,23 @@ export function AgentHubMirrorWindow({
     }
   }, [])
 
-  return createPortal(
+  return (
     <section
       role="dialog"
       aria-label={target.title}
       data-agent-hub-mirror
       data-leaving={leaving}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
-      // Why z-[46]: above the floating workspace panel (z-45), below modal layers (z-50).
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="fixed z-[46] flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] motion-reduce:animate-none"
-      style={{ left: geometry.x, top: geometry.y, width: geometry.width, height: geometry.height }}
+      className="pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] motion-reduce:animate-none"
+      style={{
+        left: geometry.x,
+        top: geometry.y,
+        width: geometry.width,
+        height: geometry.height,
+        zIndex: stackIndex
+      }}
+      onPointerDownCapture={onFocus}
       onKeyDown={(event) => {
         // Why: Esc inside the terminal belongs to the agent (interrupt), not to the window.
         if (
@@ -225,6 +247,10 @@ export function AgentHubMirrorWindow({
           ptyId={ptyId}
           terminalInput={terminalInput}
           className="h-auto min-h-0 flex-1"
+          // Why the full history: the mirror is read like the pane itself, scrolled back through.
+          scrollbackRows={MIRROR_SCROLLBACK_ROWS}
+          // Why GPU: a window-sized agent TUI repaints constantly, which the DOM renderer can't keep up with.
+          webgl
         />
       ) : (
         <div className="flex min-h-0 flex-1 items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
@@ -246,7 +272,6 @@ export function AgentHubMirrorWindow({
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       />
-    </section>,
-    document.body
+    </section>
   )
 }

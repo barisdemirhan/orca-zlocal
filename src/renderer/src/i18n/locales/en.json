@@ -21806,7 +21806,9 @@
       "position": "Position",
       "useStatusBar": "Show in the status bar instead",
       "settings": "Agent Hub settings…",
-      "edgeTop": "Below the title bar"
+      "edgeTop": "Below the title bar",
+      "waiting": "Waiting on you",
+      "finished": "Finished"
     },
     "children": {
       "agentOne": "1 agent",

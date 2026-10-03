@@ -10,7 +10,15 @@ export type AgentHubLists = Record<AgentHubSection, AgentPaneThread[]> & {
   nestedWorking: number
   /** Unread results of workers: kept out of the Inbox, but a minimized mirror still announces them. */
   finishedWorkers: AgentPaneThread[]
+  /** When the youngest approval still in its grace period starts needing the user. */
+  approvalGraceEndsAt: number | null
 }
+
+/**
+ * How long an approval prompt must stay open before it needs the user. Why: agents in auto mode
+ * raise a prompt and approve it themselves a moment later; only one that lingers is real.
+ */
+export const AGENT_HUB_APPROVAL_GRACE_MS = 8_000
 
 export type AgentHubCounts = Record<AgentHubSection, number>
 
@@ -60,6 +68,7 @@ export function buildAgentHubLists(
     finishedMaxAgeMs?: number
     /** Worker pane → its dispatcher (see agent-hub-lineage). */
     parentOf?: ReadonlyMap<string, string>
+    approvalGraceMs?: number
   } = {}
 ): AgentHubLists {
   const lists: AgentHubLists = {
@@ -67,10 +76,26 @@ export function buildAgentHubLists(
     working: [],
     finished: [],
     nestedWorking: 0,
-    finishedWorkers: []
+    finishedWorkers: [],
+    approvalGraceEndsAt: null
   }
-  const { now = 0, finishedMaxAgeMs = 0, parentOf } = options
-  const sections = new Map(threads.map((thread) => [thread.paneKey, agentHubSection(thread)]))
+  const { now = 0, finishedMaxAgeMs = 0, parentOf, approvalGraceMs = 0 } = options
+  const sectionOf = (thread: AgentPaneThread): AgentHubSection | null => {
+    const section = agentHubSection(thread)
+    const graceEndsAt = agentHubStateSince(thread) + approvalGraceMs
+    if (
+      section === 'needsYou' &&
+      approvalGraceMs > 0 &&
+      now < graceEndsAt &&
+      agentHubIsApproval(thread)
+    ) {
+      // Still deciding by itself, as far as anyone can tell: it reads as working until the grace ends.
+      lists.approvalGraceEndsAt = Math.min(lists.approvalGraceEndsAt ?? graceEndsAt, graceEndsAt)
+      return 'working'
+    }
+    return section
+  }
+  const sections = new Map(threads.map((thread) => [thread.paneKey, sectionOf(thread)]))
   for (const thread of threads) {
     const section = sections.get(thread.paneKey) ?? null
     const parentPaneKey = parentOf?.get(thread.paneKey)

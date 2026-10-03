@@ -15,6 +15,7 @@ import {
   type AgentHubLists
 } from './agent-hub-lists'
 import { activeAgentHubChildren, type AgentHubLineage } from './agent-hub-lineage'
+import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 
 export type AgentHubThreadActions = {
@@ -48,7 +49,10 @@ function PagerButton({
 
 function lastMessage(thread: AgentPaneThread): string | undefined {
   const entry = thread.paneEntry ?? thread.latestEvent?.entry
-  return entry?.lastAssistantMessageIsToolOutput ? undefined : entry?.lastAssistantMessage?.trim()
+  const message = entry?.lastAssistantMessageIsToolOutput
+    ? undefined
+    : entry?.lastAssistantMessage?.trim()
+  return message ? agentHubMessageSummary(message) : undefined
 }
 
 export function AgentHubInboxBody({

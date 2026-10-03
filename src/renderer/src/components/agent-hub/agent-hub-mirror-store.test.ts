@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
   closeAgentHubMirror,
+  focusAgentHubMirror,
+  MAX_AGENT_HUB_MIRROR_WINDOWS,
   minimizeAgentHubMirror,
   openAgentHubMirror,
   readAgentHubMirrors,
@@ -23,66 +25,59 @@ function target(tabId: string): AgentHubPaneTarget {
   }
 }
 
+const windowKeys = (): string[] => readAgentHubMirrors().windows.map((open) => open.paneKey ?? '')
 const chipKeys = (): string[] =>
   readAgentHubMirrors().chips.map((chip) => chip.target.paneKey ?? '')
 
 describe('agent hub mirror store', () => {
   beforeEach(() => {
     resetAgentHubMirrorsForTest()
-    rememberAgentHubMirrorOrigin({ x: 100, y: 200 })
   })
 
-  it('minimizes the open window into a chip where it stood', () => {
-    openAgentHubMirror(target('tab-a'))
-    minimizeAgentHubMirror()
-
-    expect(readAgentHubMirrors().open).toBeNull()
-    expect(readAgentHubMirrors().chips).toMatchObject([{ x: 100, y: 200 }])
-  })
-
-  it('stacks a second chip below one already at that spot', () => {
-    openAgentHubMirror(target('tab-a'))
-    minimizeAgentHubMirror()
-    openAgentHubMirror(target('tab-b'))
-    minimizeAgentHubMirror()
-
-    expect(readAgentHubMirrors().chips.map((chip) => chip.y)).toEqual([200, 240])
-  })
-
-  it('replaces a peeked window but keeps a restored one as a chip', () => {
+  it('keeps several mirrors open and brings a reopened one to the front', () => {
     openAgentHubMirror(target('tab-a'))
     openAgentHubMirror(target('tab-b'))
-    expect(chipKeys()).toEqual([])
+    openAgentHubMirror(target('tab-a'))
 
-    minimizeAgentHubMirror()
-    restoreAgentHubMirror('tab-b:leaf')
-    openAgentHubMirror(target('tab-c'))
-    expect(readAgentHubMirrors().open?.paneKey).toBe('tab-c:leaf')
-    expect(chipKeys()).toEqual(['tab-b:leaf'])
+    expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-a:leaf'])
+    focusAgentHubMirror('tab-b:leaf')
+    expect(windowKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
   })
 
-  it('swaps a kept window into the spot of the chip being restored', () => {
-    openAgentHubMirror(target('tab-a'))
-    minimizeAgentHubMirror()
-    openAgentHubMirror(target('tab-b'))
-    minimizeAgentHubMirror()
-    restoreAgentHubMirror('tab-a:leaf')
-    restoreAgentHubMirror('tab-b:leaf')
+  it('shrinks the back-most window into a chip past the cap', () => {
+    const tabs = Array.from({ length: MAX_AGENT_HUB_MIRROR_WINDOWS + 1 }, (_, i) => `tab-${i}`)
+    for (const tabId of tabs) {
+      openAgentHubMirror(target(tabId))
+    }
 
-    expect(readAgentHubMirrors().open?.paneKey).toBe('tab-b:leaf')
-    expect(readAgentHubMirrors().chips).toMatchObject([
-      { target: { paneKey: 'tab-a:leaf' }, x: 100, y: 240 }
+    expect(readAgentHubMirrors().windows).toHaveLength(MAX_AGENT_HUB_MIRROR_WINDOWS)
+    expect(chipKeys()).toEqual(['tab-0:leaf'])
+  })
+
+  it('minimizes a window into a chip where it stood, stacking chips at the same spot', () => {
+    rememberAgentHubMirrorOrigin('tab-a:leaf', { x: 100, y: 200 })
+    rememberAgentHubMirrorOrigin('tab-b:leaf', { x: 100, y: 200 })
+    openAgentHubMirror(target('tab-a'))
+    openAgentHubMirror(target('tab-b'))
+    minimizeAgentHubMirror('tab-a:leaf')
+    minimizeAgentHubMirror('tab-b:leaf')
+
+    expect(windowKeys()).toEqual([])
+    expect(readAgentHubMirrors().chips.map((chip) => [chip.x, chip.y])).toEqual([
+      [100, 200],
+      [100, 240]
     ])
   })
 
-  it('opening a minimized pane from the hub restores its chip instead of duplicating it', () => {
+  it('restores a chip as the front window and closes only the one asked', () => {
     openAgentHubMirror(target('tab-a'))
-    minimizeAgentHubMirror()
-    openAgentHubMirror(target('tab-a'))
+    openAgentHubMirror(target('tab-b'))
+    minimizeAgentHubMirror('tab-a:leaf')
+    restoreAgentHubMirror('tab-a:leaf')
 
     expect(chipKeys()).toEqual([])
-    expect(readAgentHubMirrors().openKept).toBe(true)
-    closeAgentHubMirror()
-    expect(readAgentHubMirrors().open).toBeNull()
+    expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-a:leaf'])
+    closeAgentHubMirror('tab-b:leaf')
+    expect(windowKeys()).toEqual(['tab-a:leaf'])
   })
 })

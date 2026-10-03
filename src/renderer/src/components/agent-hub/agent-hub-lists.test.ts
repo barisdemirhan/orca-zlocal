@@ -62,4 +62,21 @@ describe('buildAgentHubLists', () => {
 
     expect(lists.finished.map((thread) => thread.paneKey)).toEqual([PANE_KEY_2])
   })
+
+  it('holds an approval as working through its grace period, then asks the user', () => {
+    const approval = JSON.stringify({ approval: { tool: 'Bash', summary: 'git status' } })
+    const threads = threadsFor([
+      { paneKey: PANE_KEY, state: 'waiting', at: 1_000, interactivePrompt: approval },
+      { paneKey: PANE_KEY_2, state: 'waiting', at: 1_000 }
+    ])
+
+    const early = buildAgentHubLists(threads, { now: 5_000, approvalGraceMs: 8_000 })
+    expect(early.needsYou.map((thread) => thread.paneKey)).toEqual([PANE_KEY_2])
+    expect(early.working.map((thread) => thread.paneKey)).toEqual([PANE_KEY])
+    expect(early.approvalGraceEndsAt).toBe(9_000)
+
+    const late = buildAgentHubLists(threads, { now: 9_500, approvalGraceMs: 8_000 })
+    expect(late.needsYou.map((thread) => thread.paneKey).sort()).toEqual([PANE_KEY, PANE_KEY_2])
+    expect(late.approvalGraceEndsAt).toBeNull()
+  })
 })

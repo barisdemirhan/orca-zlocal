@@ -6,7 +6,7 @@ import { agentTypeToIconAgent } from '@/lib/agent-status'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubStateIndicator } from './AgentHubAtoms'
-import { AgentHubAlertBubble } from './AgentHubAlertBubble'
+import { AgentHubAlertStack } from './AgentHubAlertStack'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
@@ -39,6 +39,7 @@ export function AgentHubMirrorChip({
   thread,
   location,
   alert,
+  stackIndex,
   onRestore,
   onClose,
   onMove,
@@ -49,6 +50,7 @@ export function AgentHubMirrorChip({
   thread: AgentPaneThread | null
   location: AgentHubLocation
   alert: AgentHubAlert | null
+  stackIndex: number
   onRestore: () => void
   onClose: () => void
   onMove: (position: { x: number; y: number }) => void
@@ -78,9 +80,8 @@ export function AgentHubMirrorChip({
             data-agent-hub-mirror-chip
             {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
             data-kind={kind}
-            style={{ left: position.x, top: position.y }}
-            // Why z-[46]: the mirror window's own layer, over the floating workspace panel.
-            className="group/chip fixed z-[46] flex h-8 max-w-[240px] animate-in cursor-pointer touch-none items-center gap-2 rounded-full border border-foreground/25 bg-popover pr-1 pl-2.5 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-90 data-[kind=ask]:border-agent-question/60 motion-reduce:animate-none"
+            style={{ left: position.x, top: position.y, zIndex: stackIndex }}
+            className="group/chip pointer-events-auto fixed flex h-8 max-w-[240px] animate-in cursor-pointer touch-none items-center gap-2 rounded-full border border-foreground/25 bg-popover pr-1 pl-2.5 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-90 data-[kind=ask]:border-agent-question/60 motion-reduce:animate-none"
             onPointerDown={(event) => {
               if (
                 event.button !== 0 ||
@@ -150,14 +151,12 @@ export function AgentHubMirrorChip({
         </TooltipContent>
       </Tooltip>
       {alert ? (
-        <AgentHubAlertBubble
-          key={alert.id}
-          alert={alert}
-          // The queue keeps one alert per pane, so a chip never has more waiting.
-          pending={1}
+        <AgentHubAlertStack
+          // The queue keeps one alert per pane, so a chip shows at most one.
+          alerts={[alert]}
           anchorRef={chipRef}
           side={position.y < BUBBLE_FLIP_Y ? 'bottom' : 'top'}
-          location={location}
+          locationOf={() => location}
           onOpen={onOpenAlert}
           onDismiss={onDismissAlert}
         />

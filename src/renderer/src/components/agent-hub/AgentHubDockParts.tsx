@@ -8,23 +8,51 @@ export const DOCK_BUTTON =
 export const DOCK_COUNT_BUTTON =
   'flex h-8 shrink-0 animate-in items-center gap-1.5 rounded-full px-2.5 font-mono text-[11px] text-muted-foreground duration-300 fade-in-0 hover:bg-foreground/[0.07] hover:text-foreground motion-reduce:animate-none'
 
-export function DockDots({ counts }: { counts: AgentHubCounts }): React.JSX.Element {
-  const idle = counts.working === 0 && counts.needsYou === 0 && counts.finished === 0
+function CounterIndicator({
+  kind,
+  active
+}: {
+  kind: 'ask' | 'work' | 'done'
+  active: boolean
+}): React.JSX.Element {
+  if (kind === 'work' && active) {
+    return <AgentWorkingSpinner className="size-2.5 shrink-0" />
+  }
+  return (
+    <span
+      aria-hidden
+      data-kind={kind}
+      data-active={active}
+      className="size-2 shrink-0 rounded-full data-[active=true]:data-[kind=ask]:animate-pulse data-[kind=ask]:bg-agent-question data-[kind=done]:bg-status-success data-[kind=work]:border-[1.5px] data-[kind=work]:border-status-warning"
+    />
+  )
+}
+
+/** "● 2" — always shown, dimmed at zero, so the dock reads the same whether busy or idle. */
+export function DockCounter({
+  kind,
+  value
+}: {
+  kind: 'ask' | 'work' | 'done'
+  value: number
+}): React.JSX.Element {
+  return (
+    <span
+      data-zero={value === 0}
+      className="flex shrink-0 items-center gap-1 font-mono text-[10.5px] text-muted-foreground tabular-nums data-[zero=true]:opacity-45 group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col"
+    >
+      <CounterIndicator kind={kind} active={value > 0} />
+      {value}
+    </span>
+  )
+}
+
+export function DockCounters({ counts }: { counts: AgentHubCounts }): React.JSX.Element {
   return (
     <>
-      {counts.working > 0 ? <AgentWorkingSpinner className="size-3 shrink-0" /> : null}
-      {Array.from({ length: Math.min(counts.needsYou, 3) }, (_, index) => (
-        <span
-          key={index}
-          className="size-2.5 shrink-0 animate-pulse rounded-full bg-agent-question"
-        />
-      ))}
-      {counts.finished > 0 ? (
-        <span className="size-2.5 shrink-0 animate-in rounded-full bg-status-success duration-200 fade-in-0 zoom-in-50 motion-reduce:animate-none" />
-      ) : null}
-      {idle ? (
-        <span className="size-2.5 shrink-0 animate-in rounded-full bg-muted-foreground/40 duration-200 fade-in-0 zoom-in-50 motion-reduce:animate-none" />
-      ) : null}
+      <DockCounter kind="work" value={counts.working} />
+      <DockCounter kind="ask" value={counts.needsYou} />
+      <DockCounter kind="done" value={counts.finished} />
     </>
   )
 }

@@ -6,6 +6,7 @@ import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { HubAvatar, HubCrumb } from './AgentHubAtoms'
 import type { AgentHubAlert } from './agent-hub-alerts'
+import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
@@ -36,9 +37,10 @@ function alertText(alert: AgentHubAlert): string {
       return card.approval.detail ?? card.approval.title
     }
   }
-  return entry?.lastAssistantMessageIsToolOutput
-    ? activityThreadRowCopy(alert.thread).statusLine
-    : entry?.lastAssistantMessage?.trim() || activityThreadRowCopy(alert.thread).statusLine
+  const message = entry?.lastAssistantMessageIsToolOutput
+    ? null
+    : entry?.lastAssistantMessage?.trim()
+  return message ? agentHubMessageSummary(message) : activityThreadRowCopy(alert.thread).statusLine
 }
 
 /** Place the bubble beside its anchor (the hub trigger or a mirror chip) on the given side. */
@@ -68,33 +70,19 @@ function placeBubble(bubble: HTMLElement, anchor: HTMLElement, side: AgentHubAle
     side === 'left' ? `${Math.max(8, rect.left - width - GAP)}px` : `${rect.right + GAP}px`
 }
 
-/** Toast-like alert beside the hub; click opens the agent's card, it fades after a few seconds. */
-export function AgentHubAlertBubble({
+/** One alert: who, what, where. Click opens it; it leaves on its own after a few seconds. */
+function AlertCard({
   alert,
-  pending,
-  anchorRef,
-  side,
   location,
   onOpen,
   onDismiss
 }: {
   alert: AgentHubAlert
-  pending: number
-  anchorRef: React.RefObject<HTMLElement | null>
-  side: AgentHubAlertSide
   location: AgentHubLocation
   onOpen: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
 }): React.JSX.Element {
-  const bubbleRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useLayoutEffect(() => {
-    if (bubbleRef.current && anchorRef.current) {
-      placeBubble(bubbleRef.current, anchorRef.current, side)
-    }
-  })
-
   const startTimer = (): void => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
@@ -115,13 +103,11 @@ export function AgentHubAlertBubble({
   }, [alert.id])
 
   const text = alertText(alert)
-  return createPortal(
+  return (
     <div
-      ref={bubbleRef}
       role="status"
       data-agent-hub-alert={alert.kind}
-      {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
-      className="fixed z-[47] w-[320px] animate-in rounded-[14px] border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating fade-in-0 zoom-in-95"
+      className="relative w-[320px] shrink-0 animate-in rounded-[14px] border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95 motion-reduce:animate-none"
       onMouseEnter={stopTimer}
       onMouseLeave={startTimer}
     >
@@ -145,15 +131,8 @@ export function AgentHubAlertBubble({
           </span>
         </span>
         {text ? (
-          <span className="mt-1.5 line-clamp-2 block text-[12.5px] break-words text-foreground/85">
+          <span className="mt-1.5 line-clamp-3 text-[12.5px] break-words text-foreground/85">
             {text}
-          </span>
-        ) : null}
-        {pending > 1 ? (
-          <span className="mt-1 block text-[11px] text-muted-foreground">
-            {translate('agentHub.alert.more', '+{{value0}} more in the hub', {
-              value0: pending - 1
-            })}
           </span>
         ) : null}
       </button>
@@ -165,6 +144,55 @@ export function AgentHubAlertBubble({
       >
         <X className="size-3.5" />
       </button>
+    </div>
+  )
+}
+
+/**
+ * The alerts beside their anchor (the hub or a mirror chip), newest nearest to it. The queue
+ * keeps one per pane and a handful in all; past what fits, the stack scrolls.
+ */
+export function AgentHubAlertStack({
+  alerts,
+  anchorRef,
+  side,
+  locationOf,
+  onOpen,
+  onDismiss
+}: {
+  alerts: readonly AgentHubAlert[]
+  anchorRef: React.RefObject<HTMLElement | null>
+  side: AgentHubAlertSide
+  locationOf: (alert: AgentHubAlert) => AgentHubLocation
+  onOpen: (alert: AgentHubAlert) => void
+  onDismiss: (id: string) => void
+}): React.JSX.Element {
+  const stackRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    if (stackRef.current && anchorRef.current) {
+      placeBubble(stackRef.current, anchorRef.current, side)
+    }
+  })
+
+  // Newest nearest the anchor: last when the stack grows upward, first when it hangs below.
+  const ordered = side === 'bottom' ? alerts.toReversed() : alerts
+  return createPortal(
+    <div
+      ref={stackRef}
+      data-agent-hub-alert-stack
+      {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
+      className="fixed z-[47] flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto p-0.5 scrollbar-sleek"
+    >
+      {ordered.map((alert) => (
+        <AlertCard
+          key={alert.id}
+          alert={alert}
+          location={locationOf(alert)}
+          onOpen={onOpen}
+          onDismiss={onDismiss}
+        />
+      ))}
     </div>,
     document.body
   )

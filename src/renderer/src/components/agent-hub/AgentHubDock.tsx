@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { BellOff, CornerDownRight, Inbox, SquareTerminal } from 'lucide-react'
-import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
+import { BellOff, Bot, CornerDownRight, Inbox, SquareTerminal } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubDockPosition } from '../../../../shared/agent-hub-settings'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
@@ -13,7 +12,8 @@ import {
   DOCK_BUTTON,
   DOCK_COUNT_BUTTON,
   DockButton,
-  DockDots,
+  DockCounter,
+  DockCounters,
   NotchCorners
 } from './AgentHubDockParts'
 import {
@@ -153,27 +153,30 @@ export function AgentHubDock({
               onClick={() => onOpenTab('inbox')}
             >
               <Inbox className="size-4" />
-              {counts.needsYou > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-agent-question px-1 text-[10px] leading-none font-semibold text-background">
-                  {counts.needsYou}
-                </span>
-              ) : null}
             </DockButton>
-            <span className="flex items-center gap-1.5 px-1 group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
-              <DockDots counts={counts} />
-            </span>
             <DockButton
               label={translate('agentHub.tab.running', 'Running')}
               side={side}
               className={DOCK_COUNT_BUTTON}
               onClick={() => onOpenTab('running')}
             >
-              {counts.working > 0 ? (
-                <AgentWorkingSpinner className="size-3" />
-              ) : (
-                <span className="size-2 rounded-full bg-muted-foreground/40" />
-              )}
-              {counts.working}
+              <DockCounter kind="work" value={counts.working} />
+            </DockButton>
+            <DockButton
+              label={translate('agentHub.dock.waiting', 'Waiting on you')}
+              side={side}
+              className={DOCK_COUNT_BUTTON}
+              onClick={() => onOpenTab('inbox')}
+            >
+              <DockCounter kind="ask" value={counts.needsYou} />
+            </DockButton>
+            <DockButton
+              label={translate('agentHub.dock.finished', 'Finished')}
+              side={side}
+              className={DOCK_COUNT_BUTTON}
+              onClick={() => onOpenTab('inbox')}
+            >
+              <DockCounter kind="done" value={counts.finished} />
             </DockButton>
             <DockButton
               label={translate('agentHub.tab.all', 'All terminals')}
@@ -201,7 +204,8 @@ export function AgentHubDock({
           </>
         ) : (
           <>
-            <DockDots counts={counts} />
+            <Bot aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
+            <DockCounters counts={counts} />
             {muted ? <BellOff className="size-3 shrink-0 opacity-70" /> : null}
           </>
         )}
