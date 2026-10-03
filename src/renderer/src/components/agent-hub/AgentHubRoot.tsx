@@ -220,10 +220,12 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const docked = preferences.placement === 'dock'
   const side = docked ? agentHubDockPopoverSide(preferences.dockPosition.edge) : 'top'
   const muted = (preferences.alertsMutedUntil ?? 0) > now
-  // A minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
-  const { chips } = useAgentHubMirrors()
+  // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
+  const { windows, chips } = useAgentHubMirrors()
   const hubAlerts = alerts.filter(
-    (candidate) => !chips.some((chip) => agentHubTargetShowsThread(chip.target, candidate.thread))
+    (candidate) =>
+      !chips.some((chip) => agentHubTargetShowsThread(chip.target, candidate.thread)) &&
+      !windows.some((open) => agentHubTargetShowsThread(open, candidate.thread))
   )
   const dockHidden =
     preferences.dockAutoHide &&

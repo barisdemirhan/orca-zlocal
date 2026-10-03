@@ -1,11 +1,9 @@
 import { useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { ArrowUpRight, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { AgentIcon } from '@/lib/agent-catalog'
-import { agentTypeToIconAgent } from '@/lib/agent-status'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubStateIndicator } from './AgentHubAtoms'
+import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
 import { AgentHubAlertStack } from './AgentHubAlertStack'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubIndicatorKind } from './agent-hub-lists'
@@ -19,8 +17,8 @@ const DRAG_THRESHOLD_PX = 4
 const EDGE_GAP = 8
 const BOTTOM_RESERVE = 32
 // The chip's max width, so even a long title keeps its close button on screen.
-const CHIP_MAX_WIDTH = 240
-const CHIP_HEIGHT = 32
+const CHIP_MAX_WIDTH = 320
+const CHIP_HEIGHT = 46
 // Near the top, the alert hangs below the chip instead of off screen.
 const BUBBLE_FLIP_Y = 160
 
@@ -41,6 +39,7 @@ export function AgentHubMirrorChip({
   alert,
   stackIndex,
   onRestore,
+  onReveal,
   onClose,
   onMove,
   onOpenAlert,
@@ -52,6 +51,8 @@ export function AgentHubMirrorChip({
   alert: AgentHubAlert | null
   stackIndex: number
   onRestore: () => void
+  /** Closes the chip and opens the pane in its workspace. */
+  onReveal: () => void
   onClose: () => void
   onMove: (position: { x: number; y: number }) => void
   onOpenAlert: (alert: AgentHubAlert) => void
@@ -64,7 +65,6 @@ export function AgentHubMirrorChip({
   // Why re-clamped on every render: a window resize must not strand the chip off screen.
   const position = clampChip(dragPosition ?? chip, viewport)
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
-  const agent = agentTypeToIconAgent(chip.target.agentType)
 
   return (
     <>
@@ -81,7 +81,8 @@ export function AgentHubMirrorChip({
             {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
             data-kind={kind}
             style={{ left: position.x, top: position.y, zIndex: stackIndex }}
-            className="group/chip pointer-events-auto fixed flex h-8 max-w-[240px] animate-in cursor-pointer touch-none items-center gap-2 rounded-full border border-foreground/25 bg-popover pr-1 pl-2.5 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-90 data-[kind=ask]:border-agent-question/60 motion-reduce:animate-none"
+            // Why a mini header: the chip should say whose terminal it is, where, and let it go.
+            className="group/chip pointer-events-auto fixed flex h-[46px] w-[320px] animate-in cursor-pointer touch-none items-center gap-2.5 rounded-xl border border-foreground/25 bg-popover pr-1.5 pl-2.5 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-90 data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-agent-question/10 data-[kind=done]:border-status-success/50 motion-reduce:animate-none"
             onPointerDown={(event) => {
               if (
                 event.button !== 0 ||
@@ -134,15 +135,30 @@ export function AgentHubMirrorChip({
             }}
           >
             <HubStateIndicator kind={kind} />
-            {agent ? <AgentIcon agent={agent} size={13} /> : null}
-            <span className="min-w-0 truncate text-[12px] font-medium">{chip.target.title}</span>
+            <HubAvatar agentType={chip.target.agentType} kind={thread ? kind : null} />
+            <span className="min-w-0 flex-1 text-[12.5px]">
+              <span className="block truncate font-semibold">{chip.target.title}</span>
+              <span className="block truncate [&>span]:text-[11px]">
+                <HubCrumb location={location} />
+              </span>
+            </span>
+            <button
+              type="button"
+              aria-label={translate('agentHub.mirror.openInOrca', 'Open in Orca')}
+              title={translate('agentHub.mirror.openInOrca', 'Open in Orca')}
+              onClick={onReveal}
+              className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+            >
+              <ArrowUpRight className="size-3.5" />
+            </button>
             <button
               type="button"
               aria-label={translate('agentHub.mirror.close', 'Close mirror')}
+              title={translate('agentHub.mirror.close', 'Close mirror')}
               onClick={onClose}
-              className="grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground opacity-0 group-hover/chip:opacity-100 hover:bg-foreground/[0.07] hover:text-foreground"
+              className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
             >
-              <X className="size-3" />
+              <X className="size-3.5" />
             </button>
           </div>
         </TooltipTrigger>

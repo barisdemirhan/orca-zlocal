@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Loader2, Minus, X } from 'lucide-react'
+import { Loader2, Minus, PanelsTopLeft, X } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
@@ -13,34 +13,15 @@ import {
   type AgentHubLocation,
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
-import {
-  clampAgentHubMirrorGeometry,
-  defaultAgentHubMirrorGeometry,
-  type AgentHubMirrorGeometry
-} from './agent-hub-mirror-geometry'
-import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-store'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
+import { nudgeMirrorWindow } from './mirror-window-nudge'
+import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
+import type { AgentHubAlert } from './agent-hub-alerts'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const LEAVE_MS = 140
-const CASCADE_STEP_PX = 28
-// Main serializes at most this many history rows into a preview.
 // A tab that has not attached by then is not coming back on its own.
 const ATTACH_GIVE_UP_MS = 10_000
-
-// Why module scope: reopening the mirror lands where the user last left it this session.
-let lastGeometry: AgentHubMirrorGeometry | null = null
-
-function viewportSize(): { width: number; height: number } {
-  return { width: window.innerWidth, height: window.innerHeight }
-}
-
-type DragState = {
-  mode: 'move' | 'resize'
-  pointerX: number
-  pointerY: number
-  start: AgentHubMirrorGeometry
-}
 
 /**
  * Non-modal, draggable window around one terminal pane. The real pane is moved in through the
@@ -54,6 +35,8 @@ export function AgentHubMirrorWindow({
   stackIndex,
   cascade,
   surface,
+  nudge,
+  onNudged,
   onSlot,
   onFocus,
   onClose,
@@ -73,6 +56,9 @@ export function AgentHubMirrorWindow({
    * screen in the workspace (`in-workspace`), or the dashboard's preview for floating terminals.
    */
   surface: 'portal' | 'in-workspace' | 'preview'
+  /** An alert for this pane, shown by the window itself rather than by the hub. */
+  nudge: AgentHubAlert | null
+  onNudged: (id: string) => void
   /** Registers the box the real pane is moved into. */
   onSlot: (key: string, element: HTMLDivElement | null) => void
   onFocus: () => void
@@ -81,18 +67,11 @@ export function AgentHubMirrorWindow({
   onMinimize: () => void
   onReveal: () => void
 }): React.JSX.Element {
-  const [geometry, setGeometry] = useState<AgentHubMirrorGeometry>(() => {
-    const base = lastGeometry ?? defaultAgentHubMirrorGeometry(viewportSize())
-    // A restored chip reopens where it was dragged to.
-    const origin = readAgentHubMirrorOrigin(agentHubPaneTargetKey(target))
-    const step = CASCADE_STEP_PX * cascade
-    return clampAgentHubMirrorGeometry(
-      origin ? { ...base, ...origin } : { ...base, x: base.x - step, y: base.y - step },
-      viewportSize()
-    )
-  })
-  const dragRef = useRef<DragState | null>(null)
   const mirrorKey = agentHubPaneTargetKey(target)
+  const { geometry, sectionRef, beginDrag, onPointerMove, endDrag } = useMirrorWindowGeometry(
+    mirrorKey,
+    cascade
+  )
   const slotRef = useCallback(
     (element: HTMLDivElement | null) => onSlot(mirrorKey, element),
     [onSlot, mirrorKey]
@@ -126,10 +105,15 @@ export function AgentHubMirrorWindow({
   )
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
 
+  const nudgeId = nudge?.id
+  const nudgeKind = nudge?.kind
   useEffect(() => {
-    lastGeometry = geometry
-    rememberAgentHubMirrorOrigin(mirrorKey, { x: geometry.x, y: geometry.y })
-  }, [geometry, mirrorKey])
+    if (!nudgeId || !nudgeKind || !sectionRef.current) {
+      return
+    }
+    nudgeMirrorWindow(sectionRef.current, nudgeKind)
+    onNudged(nudgeId)
+  }, [nudgeId, nudgeKind, onNudged, sectionRef])
 
   useEffect(() => {
     if (ptyId) {
@@ -139,62 +123,17 @@ export function AgentHubMirrorWindow({
     return () => clearTimeout(timer)
   }, [ptyId])
 
-  useEffect(() => {
-    const onResize = (): void =>
-      setGeometry((current) => clampAgentHubMirrorGeometry(current, viewportSize()))
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-
-  const beginDrag = useCallback(
-    (mode: DragState['mode']) =>
-      (event: React.PointerEvent<HTMLElement>): void => {
-        const onButton = event.target instanceof Element && event.target.closest('button') !== null
-        if (event.button !== 0 || (mode === 'move' && onButton)) {
-          return
-        }
-        event.preventDefault()
-        event.currentTarget.setPointerCapture(event.pointerId)
-        dragRef.current = {
-          mode,
-          pointerX: event.clientX,
-          pointerY: event.clientY,
-          start: geometry
-        }
-      },
-    [geometry]
-  )
-
-  const onPointerMove = useCallback((event: React.PointerEvent<HTMLElement>): void => {
-    const drag = dragRef.current
-    if (!drag) {
-      return
-    }
-    const dx = event.clientX - drag.pointerX
-    const dy = event.clientY - drag.pointerY
-    const next =
-      drag.mode === 'move'
-        ? { ...drag.start, x: drag.start.x + dx, y: drag.start.y + dy }
-        : { ...drag.start, width: drag.start.width + dx, height: drag.start.height + dy }
-    setGeometry(clampAgentHubMirrorGeometry(next, viewportSize()))
-  }, [])
-
-  const endDrag = useCallback((event: React.PointerEvent<HTMLElement>): void => {
-    if (dragRef.current) {
-      dragRef.current = null
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-  }, [])
-
   return (
     <section
+      ref={sectionRef}
       role="dialog"
       aria-label={target.title}
       data-agent-hub-mirror
       data-leaving={leaving}
+      data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] motion-reduce:animate-none"
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] motion-reduce:animate-none"
       style={{
         left: geometry.x,
         top: geometry.y,
@@ -215,7 +154,8 @@ export function AgentHubMirrorWindow({
       }}
     >
       <header
-        className="flex h-[42px] shrink-0 cursor-grab items-center gap-[9px] border-b border-border bg-popover pr-1.5 pl-3 select-none active:cursor-grabbing"
+        // Why tinted: a mirror whose agent asks or just finished should read so at a glance.
+        className="flex h-[42px] shrink-0 cursor-grab items-center gap-[9px] border-b border-border bg-popover pr-1.5 pl-3 transition-colors select-none active:cursor-grabbing group-data-[kind=ask]/mirror:border-agent-question/40 group-data-[kind=ask]/mirror:bg-agent-question/15 group-data-[kind=done]/mirror:border-status-success/35 group-data-[kind=done]/mirror:bg-status-success/12"
         onPointerDown={beginDrag('move')}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -256,11 +196,24 @@ export function AgentHubMirrorWindow({
         </button>
       </header>
       {surface === 'in-workspace' ? (
-        <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center text-xs text-muted-foreground">
-          {translate(
-            'agentHub.mirror.inWorkspace',
-            'This terminal is on screen in the workspace; it comes back here when you leave it.'
-          )}
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-popover/60 px-8 text-center">
+          <PanelsTopLeft className="size-6 text-muted-foreground" />
+          <div className="text-sm font-semibold">
+            {translate('agentHub.mirror.inWorkspaceTitle', "You're in this workspace")}
+          </div>
+          <p className="max-w-[340px] text-xs text-muted-foreground">
+            {translate(
+              'agentHub.mirror.inWorkspace',
+              'This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.'
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => leave(onMinimize)}
+            className="mt-1 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            {translate('agentHub.mirror.minimize', 'Minimize')}
+          </button>
         </div>
       ) : surface === 'preview' && ptyId ? (
         <AgentTerminalPreview

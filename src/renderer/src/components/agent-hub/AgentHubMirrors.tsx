@@ -152,6 +152,12 @@ export function AgentHubMirrors({
             stackIndex={index + 1}
             cascade={index}
             surface={surfaces[index]?.surface ?? 'portal'}
+            // The window raises its own pane's alerts; the hub's bubble skips them.
+            nudge={
+              alerts.findLast((candidate) => agentHubTargetShowsThread(target, candidate.thread)) ??
+              null
+            }
+            onNudged={dismissAgentHubAlert}
             onSlot={onSlot}
             onFocus={() => focusAgentHubMirror(key)}
             onClose={() => closeAgentHubMirror(key)}
@@ -179,6 +185,10 @@ export function AgentHubMirrors({
             // Chips stay above every window so a minimized mirror is always reachable.
             stackIndex={windows.length + 1}
             onRestore={() => restoreAgentHubMirror(key)}
+            onReveal={() => {
+              closeAgentHubMirrorChip(key)
+              onReveal(chip.target, threadFor(chip.target))
+            }}
             onClose={() => closeAgentHubMirrorChip(key)}
             onMove={(position) => moveAgentHubMirrorChip(key, position)}
             onOpenAlert={(opened) => {

@@ -21719,7 +21719,8 @@
       "restore": "Restore {{value0}}",
       "chipTooltip": "Click to restore · drag to move",
       "minimize": "Minimize",
-      "inWorkspace": "This terminal is on screen in the workspace; it comes back here when you leave it."
+      "inWorkspace": "This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.",
+      "inWorkspaceTitle": "You're in this workspace"
     },
     "title": "Agents",
     "tab": {
