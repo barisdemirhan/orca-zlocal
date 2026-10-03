@@ -7,7 +7,7 @@ export function getAgentHubSearchEntry(): SettingsSearchEntry {
     title: translate('auto.components.settings.experimental.search.agentHub.title', 'Agent Hub'),
     description: translate(
       'auto.components.settings.experimental.search.agentHub.description',
-      'Status bar popover with every agent and terminal: answer questions, approve commands, and jump to any pane.'
+      'One place for every agent and terminal: answer questions, approve commands, and jump to any pane.'
     ),
     keywords: [
       ...translateSearchKeyword(
@@ -29,6 +29,30 @@ export function getAgentHubSearchEntry(): SettingsSearchEntry {
       ...translateSearchKeyword(
         'auto.components.settings.experimental.search.agentHub.terminals',
         'terminals'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.experimental.search.agentHub.alerts',
+        'alerts'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.experimental.search.agentHub.sound',
+        'sound'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.experimental.search.agentHub.notifications',
+        'notifications'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.experimental.search.agentHub.dock',
+        'dock'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.experimental.search.agentHub.notch',
+        'notch'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.experimental.search.agentHub.mute',
+        'mute'
       ),
       ...translateSearchKeyword(
         'auto.components.settings.experimental.search.agentHub.questions',

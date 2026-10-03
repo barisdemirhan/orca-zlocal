@@ -6,6 +6,7 @@ import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubChip, HubCrumb, HubSection } from './AgentHubAtoms'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
+import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
 import {
   agentHubStateSince,
@@ -13,6 +14,7 @@ import {
   agentHubTurnSince,
   type AgentHubLists
 } from './agent-hub-lists'
+import { activeAgentHubChildren, type AgentHubLineage } from './agent-hub-lineage'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 
 export type AgentHubThreadActions = {
@@ -178,13 +180,71 @@ export function AgentHubInboxBody({
   )
 }
 
+/** A working agent, then the workers and subagents it still has at work. */
+function RunningRow({
+  thread,
+  now,
+  lineage,
+  expandedKeys,
+  actions
+}: {
+  thread: AgentPaneThread
+  now: number
+  lineage: AgentHubLineage
+  expandedKeys: ReadonlySet<string>
+  actions: AgentHubThreadActions
+}): React.JSX.Element {
+  const tool = agentHubToolName(thread)
+  const childAgents = activeAgentHubChildren(lineage.childrenOf(thread.paneKey))
+  return (
+    <>
+      <AgentHubRow
+        kind="work"
+        agentType={thread.agentType}
+        title={activityThreadRowCopy(thread).taskTitle}
+        subtitle={<HubCrumb location={actions.locationOf(thread)} />}
+        chips={tool ? <HubChip>{tool}</HubChip> : null}
+        time={formatShortTimeAgo(agentHubTurnSince(thread), now)}
+        selected={actions.isSelected(thread)}
+        onPopout={() => actions.onPopout(thread)}
+        onJump={() => actions.onJump(thread)}
+      />
+      <AgentHubChildGroup
+        parentKey={thread.paneKey}
+        childAgents={childAgents}
+        expanded={expandedKeys.has(thread.paneKey)}
+        now={now}
+        onOpenParent={() => actions.onPopout(thread)}
+      >
+        {childAgents.workers.map((worker) => (
+          <RunningRow
+            key={worker.paneKey}
+            thread={worker}
+            now={now}
+            lineage={lineage}
+            expandedKeys={expandedKeys}
+            actions={actions}
+          />
+        ))}
+      </AgentHubChildGroup>
+    </>
+  )
+}
+
 export function AgentHubRunningBody({
   working,
+  totalWorking,
   now,
+  lineage,
+  expandedKeys,
   actions
 }: {
   working: AgentPaneThread[]
+  /** Rows plus the workers folded under them. */
+  totalWorking: number
   now: number
+  lineage: AgentHubLineage
+  expandedKeys: ReadonlySet<string>
   actions: AgentHubThreadActions
 }): React.JSX.Element {
   if (working.length === 0) {
@@ -200,30 +260,23 @@ export function AgentHubRunningBody({
     <>
       <HubSection
         label={translate('agentHub.running.working', 'Working')}
-        count={working.length}
+        count={totalWorking}
         action={
           <span className="text-[11px] font-medium text-muted-foreground/70">
             {translate('agentHub.running.longestFirst', 'longest first')}
           </span>
         }
       />
-      {working.map((thread) => {
-        const tool = agentHubToolName(thread)
-        return (
-          <AgentHubRow
-            key={thread.paneKey}
-            kind="work"
-            agentType={thread.agentType}
-            title={activityThreadRowCopy(thread).taskTitle}
-            subtitle={<HubCrumb location={actions.locationOf(thread)} />}
-            chips={tool ? <HubChip>{tool}</HubChip> : null}
-            time={formatShortTimeAgo(agentHubTurnSince(thread), now)}
-            selected={actions.isSelected(thread)}
-            onPopout={() => actions.onPopout(thread)}
-            onJump={() => actions.onJump(thread)}
-          />
-        )
-      })}
+      {working.map((thread) => (
+        <RunningRow
+          key={thread.paneKey}
+          thread={thread}
+          now={now}
+          lineage={lineage}
+          expandedKeys={expandedKeys}
+          actions={actions}
+        />
+      ))}
     </>
   )
 }

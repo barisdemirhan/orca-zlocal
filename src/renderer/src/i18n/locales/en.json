@@ -7985,9 +7985,32 @@
           },
           "agentHub": {
             "title": "Agent Hub",
-            "description": "Status bar popover with every agent and terminal: answer questions, approve commands, and jump to any pane.",
-            "copy": "Adds an Agents item to the status bar. It lists agents that need you, are working, or just finished, plus every open terminal, and lets you answer or open a live mirror without leaving your current workspace.",
-            "toggleLabel": "Toggle Agent Hub"
+            "description": "One place for every agent and terminal: answer questions, approve commands, and jump to any pane.",
+            "copy": "Adds a dock (or a status-bar item) listing agents that need you, are working, or just finished, plus every open terminal. Answer, approve, or open a live mirror without leaving your current workspace.",
+            "toggleLabel": "Toggle Agent Hub",
+            "clearNever": "Never",
+            "clearHour": "1 h",
+            "clearMinutes": "{{value0}} min",
+            "placement": "Show the hub as",
+            "placementCopy": "A dock you can drag onto the status bar or a window edge, or an item in the status bar.",
+            "dock": "Dock",
+            "statusBar": "Status bar",
+            "autoHide": "Hide the dock while no agent is active",
+            "autoHideCopy": "It comes back as soon as an agent starts working, asks something, or finishes.",
+            "alerts": "Alerts",
+            "alertsCopy": "A bubble next to the hub that opens the agent's card. Skipped for the pane you are looking at.",
+            "alertNeedsInput": "When an agent asks or needs approval",
+            "alertFinished": "When an agent finishes",
+            "sound": "Play a sound",
+            "soundCopy": "Uses the sound and volume from Notifications (a short chime for System), and stays quiet when Orca's own notification already plays one.",
+            "mutedUntil": "Alerts are muted until {{value0}}",
+            "unmute": "Turn back on",
+            "popover": "Popover",
+            "defaultTab": "Open on",
+            "defaultTabCopy": "When nobody is waiting; a waiting agent always opens the Inbox.",
+            "showShells": "List plain shells in All terminals",
+            "clearFinished": "Clear finished agents from the Inbox after",
+            "clearFinishedCopy": "They stay unread in the Agents view; Never keeps them in the hub until you read them."
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -10213,12 +10236,18 @@
             },
             "agentHub": {
               "title": "Agent Hub",
-              "description": "Status bar popover with every agent and terminal: answer questions, approve commands, and jump to any pane.",
+              "description": "One place for every agent and terminal: answer questions, approve commands, and jump to any pane.",
               "agents": "agents",
               "inbox": "inbox",
               "statusBar": "status bar",
               "terminals": "terminals",
-              "questions": "questions"
+              "questions": "questions",
+              "alerts": "alerts",
+              "sound": "sound",
+              "notifications": "notifications",
+              "dock": "dock",
+              "notch": "notch",
+              "mute": "mute"
             },
             "browserExtensions": {
               "title": "Browser extensions",
@@ -21683,7 +21712,10 @@
       "sendTo": "Send to @{{value0}}…",
       "sendToShell": "Send to shell…",
       "connecting": "Connecting to the terminal…",
-      "liveMirror": "live mirror"
+      "liveMirror": "live mirror",
+      "restore": "Restore {{value0}}",
+      "chipTooltip": "Click to restore · drag to move",
+      "minimize": "Minimize"
     },
     "title": "Agents",
     "tab": {
@@ -21696,10 +21728,8 @@
       "next": "Next",
       "needsYou": "Needs you",
       "emptyTitle": "Nobody is waiting on you",
-      "emptyWorking": "{{value0}} agents working",
       "markAllRead": "Mark all read",
       "finished": "Finished",
-      "emptyWorkingOne": "1 agent working",
       "emptyHint": "{{value0}} working · you'll get a ping when one asks",
       "oneAgent": "1 agent",
       "agents": "{{value0}} agents"
@@ -21711,7 +21741,6 @@
     },
     "footer": {
       "move": "Move",
-      "open": "Open",
       "popOut": "Pop out",
       "answer": "Answer",
       "tabs": "Tabs",
@@ -21730,10 +21759,8 @@
       "searchLabel": "Filter terminals",
       "noMatch": "No terminal matches “{{value0}}”",
       "empty": "No open terminals",
-      "groupCount": "{{value0}} terminals",
       "shell": "Shell",
       "ungrouped": "Ungrouped",
-      "groupCountOne": "1 terminal",
       "unknownProject": "Unknown",
       "termCount": "{{value0}} term",
       "noMatchHint": "Try a project, group, branch or agent name"
@@ -21757,7 +21784,33 @@
       "idle": "idle",
       "working": "working",
       "done": "done"
-    }
+    },
+    "alert": {
+      "asking": "is asking",
+      "needsApproval": "needs approval",
+      "finished": "finished",
+      "more": "+{{value0}} more in the hub",
+      "dismiss": "Dismiss"
+    },
+    "dock": {
+      "nextWaiting": "Jump to the next agent waiting",
+      "edgeBottom": "Above the status bar",
+      "edgeLeft": "Left edge",
+      "edgeRight": "Right edge",
+      "more": "More",
+      "unmute": "Turn alerts back on",
+      "mute": "Mute alerts for 2 hours",
+      "position": "Position",
+      "useStatusBar": "Show in the status bar instead",
+      "settings": "Agent Hub settings…"
+    },
+    "children": {
+      "agentOne": "1 agent",
+      "agentMany": "{{value0}} agents",
+      "subagentOne": "1 subagent",
+      "subagentMany": "{{value0}} subagents"
+    },
+    "statusBarMenuItem": "Agent Hub"
   },
   "workspace": {
     "branchChoice": {

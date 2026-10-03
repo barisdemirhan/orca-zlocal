@@ -7,6 +7,8 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { AgentIcon } from '@/lib/agent-catalog'
+import { isPairedWebClientWindow } from '@/lib/desktop-window-chrome'
+import { AgentHubStatusBarMenuItem } from '../agent-hub/AgentHubStatusBarMenuItem'
 import { ClaudeIcon, GeminiIcon, MiniMaxIcon, OpenAIIcon, OpenCodeGoIcon } from './icons'
 import { translate } from '@/i18n/i18n'
 import { isStatusBarItemAvailable } from './status-bar-agent-gating'
@@ -18,6 +20,7 @@ export function StatusBarVisibilityMenu({
   controller: StatusBarController
 }): React.JSX.Element {
   const {
+    agentHubEnabled,
     detectedAgentIds,
     menuOpen,
     menuPoint,
@@ -185,6 +188,7 @@ export function StatusBarVisibilityMenu({
           <Plug className="size-3.5" />
           {translate('auto.components.status.bar.StatusBar.9659e38343', 'Ports')}
         </DropdownMenuCheckboxItem>
+        {agentHubEnabled && !isPairedWebClientWindow() ? <AgentHubStatusBarMenuItem /> : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )

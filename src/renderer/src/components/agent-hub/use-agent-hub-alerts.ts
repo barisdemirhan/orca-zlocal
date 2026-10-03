@@ -1,0 +1,63 @@
+import { useEffect, useRef } from 'react'
+import { useAppStore } from '@/store'
+import { readAgentAttentionNotificationSound } from '@/attention/agent-attention-notification-delivery'
+import {
+  isOrcaWindowForegroundFocused,
+  isVisibleForegroundPaneKey
+} from '../terminal-pane/terminal-notification-pane-visibility'
+import { pushAgentHubAlerts } from './agent-hub-alert-queue'
+import {
+  agentHubAlertBaseline,
+  diffAgentHubAlerts,
+  orcaNotificationWillSound
+} from './agent-hub-alerts'
+import { playAgentHubAlertSound } from './agent-hub-chime'
+import type { AgentHubLists } from './agent-hub-lists'
+import type { AgentHubPreferences } from './use-agent-hub-settings'
+
+/**
+ * Queues an alert when an agent starts asking, needs approval, or finishes. A reader of the
+ * agent-status store like every other surface: it diffs the hub's lists, never produces status.
+ */
+export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPreferences): void {
+  const baselineRef = useRef<Set<string> | null>(null)
+  const { alertOnNeedsInput, alertOnFinished, alertSound, alertsMutedUntil } = preferences
+
+  useEffect(() => {
+    // Why a baseline first: whatever is already waiting at mount was seen elsewhere.
+    if (baselineRef.current === null) {
+      baselineRef.current = agentHubAlertBaseline(lists)
+      return
+    }
+    const { baseline, fresh } = diffAgentHubAlerts(baselineRef.current, lists, {
+      onNeedsInput: alertOnNeedsInput,
+      onFinished: alertOnFinished
+    })
+    baselineRef.current = baseline
+    if (fresh.length === 0 || (alertsMutedUntil ?? 0) > Date.now()) {
+      return
+    }
+    const state = useAppStore.getState()
+    // The pane the user is looking at needs no alert: they are watching it happen.
+    const unseen = fresh.filter(
+      (alert) => !isVisibleForegroundPaneKey(state, alert.thread.worktree.id, alert.thread.paneKey)
+    )
+    if (unseen.length === 0) {
+      return
+    }
+    pushAgentHubAlerts(unseen)
+    const windowFocused = isOrcaWindowForegroundFocused()
+    const quietElsewhere = unseen.some(
+      (alert) =>
+        !orcaNotificationWillSound({
+          notifications: state.settings?.notifications,
+          windowFocused,
+          activeWorktreeId: state.activeWorktreeId,
+          worktreeId: alert.thread.worktree.id
+        })
+    )
+    if (alertSound && quietElsewhere) {
+      playAgentHubAlertSound(readAgentAttentionNotificationSound(state.settings ?? {}))
+    }
+  }, [lists, alertOnNeedsInput, alertOnFinished, alertSound, alertsMutedUntil])
+}

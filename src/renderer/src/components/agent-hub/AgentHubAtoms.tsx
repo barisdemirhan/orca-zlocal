@@ -5,7 +5,7 @@ import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import type { AgentType } from '../../../../shared/agent-status-types'
 import type { AgentHubLocation } from './agent-hub-pane-target'
-import type { AgentHubIndicatorKind } from './agent-hub-lists'
+import type { AgentHubCounts, AgentHubIndicatorKind } from './agent-hub-lists'
 
 export type { AgentHubIndicatorKind }
 
@@ -45,6 +45,32 @@ export function HubAvatar({
         />
       ) : null}
     </span>
+  )
+}
+
+/** "? 2  ◌ 3  • 1": a compact state tally for a group or a parent's children. */
+export function HubCounts({ counts }: { counts: AgentHubCounts }): React.JSX.Element {
+  return (
+    <>
+      {counts.needsYou > 0 ? (
+        <span className="flex items-center gap-1 text-agent-question-text">
+          <HubStateIndicator kind="ask" />
+          {counts.needsYou}
+        </span>
+      ) : null}
+      {counts.working > 0 ? (
+        <span className="flex items-center gap-1">
+          <AgentWorkingSpinner className="size-[9px] border-[1.5px]" />
+          {counts.working}
+        </span>
+      ) : null}
+      {counts.finished > 0 ? (
+        <span className="flex items-center gap-1">
+          <HubStateIndicator kind="done" />
+          {counts.finished}
+        </span>
+      ) : null}
+    </>
   )
 }
 

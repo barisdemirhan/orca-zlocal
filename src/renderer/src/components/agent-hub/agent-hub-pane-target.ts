@@ -48,6 +48,14 @@ export function agentHubPaneTargetKey(target: AgentHubPaneTarget): string {
   return target.paneKey ?? target.tab.id
 }
 
+/** Whether a target mirrors this agent; a shell target (no pane key) owns its tab's agent. */
+export function agentHubTargetShowsThread(
+  target: AgentHubPaneTarget,
+  thread: Pick<AgentPaneThread, 'paneKey' | 'tab'>
+): boolean {
+  return target.paneKey ? target.paneKey === thread.paneKey : target.tab.id === thread.tab.id
+}
+
 /** The pane's live PTY, or null once it exited or was never spawned this session. */
 export function resolveAgentHubPtyId(
   state: Pick<AppState, 'terminalLayoutsByTabId' | 'ptyIdsByTabId'>,

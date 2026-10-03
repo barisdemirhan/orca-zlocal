@@ -1,4 +1,5 @@
 import type { GlobalSettings } from './global-settings-types'
+import { DEFAULT_AGENT_HUB_DOCK_POSITION } from './agent-hub-settings'
 import type { NotificationSettings } from './notification-settings-types'
 import type { VoiceSettings } from './speech-types'
 import { DEFAULT_TERMINAL_FONT_WEIGHT, DEFAULT_TERMINAL_FONT_WEIGHT_BOLD } from './terminal-fonts'
@@ -263,6 +264,16 @@ export function buildDefaultSettings(args: {
     experimentalActivityDefaultedOffForAllUsers: true,
     experimentalTerminalAttention: false,
     experimentalAgentHub: false,
+    agentHubPlacement: 'dock',
+    agentHubDockPosition: DEFAULT_AGENT_HUB_DOCK_POSITION,
+    agentHubDockAutoHide: false,
+    agentHubAlertOnNeedsInput: true,
+    agentHubAlertOnFinished: true,
+    agentHubAlertSound: true,
+    agentHubAlertsMutedUntil: null,
+    agentHubShowShells: true,
+    agentHubFinishedAutoClearMinutes: 0,
+    agentHubDefaultTab: 'inbox',
     experimentalAgentHibernation: false,
     agentHibernationIdleMs: 30 * 60 * 1000,
     experimentalNewWorktreeCardStyle: false,

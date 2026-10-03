@@ -18,6 +18,8 @@ export type AgentHubTerminalRow = {
   paneKey: string | null
   title: string
   thread: AgentPaneThread | null
+  /** Worker panes this agent dispatched, listed under it instead of in their own workspace. */
+  children: AgentHubTerminalRow[]
 }
 
 export type AgentHubWorkspaceNode = {
@@ -45,9 +47,13 @@ export type AgentHubTerminalTreeInput = {
   tabsByWorktree: Readonly<Record<string, readonly TerminalTab[]>>
   threads: readonly AgentPaneThread[]
   floating: { worktree: Worktree; label: string } | null
+  /** False lists agent panes only. */
+  includeShells: boolean
   ungroupedLabel: string
   /** Project name for worktrees whose repo is not in the catalog (the sidebar's "Unknown"). */
   unknownProjectLabel: string
+  /** Worker pane → its dispatcher (see agent-hub-lineage). */
+  parentOf?: ReadonlyMap<string, string>
 }
 
 export const AGENT_HUB_FLOATING_GROUP_KEY = 'floating'
@@ -61,7 +67,8 @@ function buildRows(
   worktree: Worktree,
   repo: Repo | null,
   tabs: readonly TerminalTab[],
-  threadsByTabId: ReadonlyMap<string, AgentPaneThread[]>
+  threadsByTabId: ReadonlyMap<string, AgentPaneThread[]>,
+  includeShells: boolean
 ): AgentHubTerminalRow[] {
   const rows: AgentHubTerminalRow[] = []
   for (const tab of tabs) {
@@ -75,9 +82,13 @@ function buildRows(
           tab,
           paneKey: thread.paneKey,
           title: activityThreadRowCopy(thread).taskTitle || shellTabTitle(tab),
-          thread
+          thread,
+          children: []
         })
       }
+      continue
+    }
+    if (!includeShells) {
       continue
     }
     rows.push({
@@ -87,29 +98,62 @@ function buildRows(
       tab,
       paneKey: null,
       title: shellTabTitle(tab),
-      thread: null
+      thread: null,
+      children: []
     })
   }
   return rows
 }
 
-function countRows(
+export function countRows(
   workspaces: readonly AgentHubWorkspaceNode[]
 ): Pick<AgentHubGroupNode, 'counts' | 'rowCount' | 'agentRowCount'> {
   const counts: AgentHubCounts = { needsYou: 0, working: 0, finished: 0 }
   let rowCount = 0
   let agentRowCount = 0
+  const visit = (row: AgentHubTerminalRow): void => {
+    rowCount += 1
+    agentRowCount += row.thread ? 1 : 0
+    const section = row.thread ? agentHubSection(row.thread) : null
+    if (section) {
+      counts[section] += 1
+    }
+    row.children.forEach(visit)
+  }
+  for (const workspace of workspaces) {
+    workspace.rows.forEach(visit)
+  }
+  return { counts, rowCount, agentRowCount }
+}
+
+/** Moves each worker row under its dispatcher's row, wherever that row lives. */
+function nestWorkerRows(
+  workspaces: readonly AgentHubWorkspaceNode[],
+  parentOf: ReadonlyMap<string, string> | undefined
+): void {
+  if (!parentOf || parentOf.size === 0) {
+    return
+  }
+  const rowByPaneKey = new Map<string, AgentHubTerminalRow>()
   for (const workspace of workspaces) {
     for (const row of workspace.rows) {
-      rowCount += 1
-      agentRowCount += row.thread ? 1 : 0
-      const section = row.thread ? agentHubSection(row.thread) : null
-      if (section) {
-        counts[section] += 1
+      if (row.paneKey) {
+        rowByPaneKey.set(row.paneKey, row)
       }
     }
   }
-  return { counts, rowCount, agentRowCount }
+  const nested = new Set<AgentHubTerminalRow>()
+  for (const [childPaneKey, parentPaneKey] of parentOf) {
+    const child = rowByPaneKey.get(childPaneKey)
+    const parent = rowByPaneKey.get(parentPaneKey)
+    if (child && parent) {
+      parent.children.push(child)
+      nested.add(child)
+    }
+  }
+  for (const workspace of workspaces) {
+    workspace.rows = workspace.rows.filter((row) => !nested.has(row))
+  }
 }
 
 /**
@@ -127,16 +171,10 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
     }
   }
 
-  const workspacesByGroupKey = new Map<string, AgentHubWorkspaceNode[]>()
+  const placed: { groupKey: string; node: AgentHubWorkspaceNode }[] = []
   const addWorkspace = (groupKey: string, node: AgentHubWorkspaceNode): void => {
-    if (node.rows.length === 0) {
-      return
-    }
-    const list = workspacesByGroupKey.get(groupKey)
-    if (list) {
-      list.push(node)
-    } else {
-      workspacesByGroupKey.set(groupKey, [node])
+    if (node.rows.length > 0) {
+      placed.push({ groupKey, node })
     }
   }
 
@@ -154,7 +192,13 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
         key: worktree.id,
         projectLabel: repo?.displayName ?? input.unknownProjectLabel,
         workspaceLabel: worktree.displayName || worktree.branch || null,
-        rows: buildRows(worktree, repo, input.tabsByWorktree[worktree.id] ?? [], threadsByTabId)
+        rows: buildRows(
+          worktree,
+          repo,
+          input.tabsByWorktree[worktree.id] ?? [],
+          threadsByTabId,
+          input.includeShells
+        )
       })
     }
   }
@@ -176,7 +220,13 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
       key: worktree.id,
       projectLabel: folderWorkspace.name,
       workspaceLabel: null,
-      rows: buildRows(worktree, null, input.tabsByWorktree[worktree.id] ?? [], threadsByTabId)
+      rows: buildRows(
+        worktree,
+        null,
+        input.tabsByWorktree[worktree.id] ?? [],
+        threadsByTabId,
+        input.includeShells
+      )
     })
   }
   if (input.floating) {
@@ -185,8 +235,26 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
       key: worktree.id,
       projectLabel: label,
       workspaceLabel: null,
-      rows: buildRows(worktree, null, input.tabsByWorktree[worktree.id] ?? [], threadsByTabId)
+      rows: buildRows(
+        worktree,
+        null,
+        input.tabsByWorktree[worktree.id] ?? [],
+        threadsByTabId,
+        input.includeShells
+      )
     })
+  }
+
+  nestWorkerRows(
+    placed.map(({ node }) => node),
+    input.parentOf
+  )
+  const workspacesByGroupKey = new Map<string, AgentHubWorkspaceNode[]>()
+  for (const { groupKey, node } of placed) {
+    // A workspace whose rows all moved under a dispatcher elsewhere drops out.
+    if (node.rows.length > 0) {
+      workspacesByGroupKey.set(groupKey, [...(workspacesByGroupKey.get(groupKey) ?? []), node])
+    }
   }
 
   const orderedGroups: { key: string; label: string }[] = [
@@ -204,73 +272,4 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
     }
   }
   return groups
-}
-
-function rowSearchText(
-  group: AgentHubGroupNode,
-  workspace: AgentHubWorkspaceNode,
-  row: AgentHubTerminalRow
-): string {
-  return [
-    row.title,
-    group.label,
-    workspace.projectLabel,
-    workspace.workspaceLabel ?? '',
-    row.thread ? row.thread.agentType : 'shell'
-  ]
-    .join(' ')
-    .toLowerCase()
-}
-
-/** Keep rows whose text holds every query word; empty groups and workspaces drop out. */
-export function filterAgentHubTerminalTree(
-  groups: readonly AgentHubGroupNode[],
-  query: string
-): AgentHubGroupNode[] {
-  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
-  if (words.length === 0) {
-    return [...groups]
-  }
-  const filtered: AgentHubGroupNode[] = []
-  for (const group of groups) {
-    const workspaces: AgentHubWorkspaceNode[] = []
-    for (const workspace of group.workspaces) {
-      const rows = workspace.rows.filter((row) => {
-        const text = rowSearchText(group, workspace, row)
-        return words.every((word) => text.includes(word))
-      })
-      if (rows.length > 0) {
-        workspaces.push({ ...workspace, rows })
-      }
-    }
-    if (workspaces.length > 0) {
-      filtered.push({ ...group, workspaces, ...countRows(workspaces) })
-    }
-  }
-  return filtered
-}
-
-/** A group starts collapsed when it holds only shells; the user's toggle wins after that. */
-export function isAgentHubGroupCollapsed(
-  group: AgentHubGroupNode,
-  overrides: ReadonlyMap<string, boolean>,
-  query: string
-): boolean {
-  if (query.trim()) {
-    return false
-  }
-  return overrides.get(group.key) ?? group.agentRowCount === 0
-}
-
-/** Rows in display order, skipping collapsed groups: the arrow-key selection space. */
-export function visibleAgentHubTreeRows(
-  groups: readonly AgentHubGroupNode[],
-  overrides: ReadonlyMap<string, boolean>,
-  query: string
-): AgentHubTerminalRow[] {
-  return groups.flatMap((group) =>
-    isAgentHubGroupCollapsed(group, overrides, query)
-      ? []
-      : group.workspaces.flatMap((workspace) => workspace.rows)
-  )
 }

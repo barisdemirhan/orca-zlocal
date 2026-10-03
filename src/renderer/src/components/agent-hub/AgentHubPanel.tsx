@@ -20,6 +20,8 @@ import {
   AGENT_HUB_TABS,
   type AgentHubTab
 } from './agent-hub-keys'
+import { useAgentHubExpandedChildren } from './agent-hub-child-expansion'
+import { visibleAgentHubRunningThreads, type AgentHubLineage } from './agent-hub-lineage'
 import type { AgentHubLists } from './agent-hub-lists'
 import {
   paneTargetFromTerminalRow,
@@ -27,11 +29,8 @@ import {
   type AgentHubLocation,
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
-import {
-  filterAgentHubTerminalTree,
-  visibleAgentHubTreeRows,
-  type AgentHubGroupNode
-} from './agent-hub-terminal-tree'
+import type { AgentHubGroupNode } from './agent-hub-terminal-tree'
+import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
 
 export type AgentHubOpenRequest = {
   target: AgentHubPaneTarget
@@ -61,6 +60,7 @@ function tabLabel(tab: AgentHubTab): string {
 
 export function AgentHubPanel({
   lists,
+  lineage,
   tree,
   terminalCount,
   locationOf,
@@ -68,9 +68,12 @@ export function AgentHubPanel({
   onJump,
   onPopout,
   onMarkRead,
-  onClose
+  onClose,
+  initialTab = 'inbox',
+  initialPaneKey = null
 }: {
   lists: AgentHubLists
+  lineage: AgentHubLineage
   tree: readonly AgentHubGroupNode[]
   terminalCount: number
   locationOf: (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>) => AgentHubLocation
@@ -79,9 +82,17 @@ export function AgentHubPanel({
   onPopout: (request: AgentHubOpenRequest) => void
   onMarkRead: (paneKeys: string[]) => void
   onClose: () => void
+  initialTab?: AgentHubTab
+  /** Opens the Inbox on this waiting agent's card (an alert was clicked). */
+  initialPaneKey?: string | null
 }): React.JSX.Element {
-  const [tab, setTab] = useState<AgentHubTab>('inbox')
-  const [cardIndex, setCardIndex] = useState(0)
+  const [tab, setTab] = useState<AgentHubTab>(initialTab)
+  const [cardIndex, setCardIndex] = useState(() =>
+    Math.max(
+      0,
+      lists.needsYou.findIndex((thread) => thread.paneKey === initialPaneKey)
+    )
+  )
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [query, setQuery] = useState('')
   const [collapseOverrides, setCollapseOverrides] = useState<ReadonlyMap<string, boolean>>(
@@ -89,6 +100,7 @@ export function AgentHubPanel({
   )
   const searchRef = useRef<HTMLInputElement>(null)
   const cardControlRef = useRef<AgentHubCardControl>(null)
+  const expandedKeys = useAgentHubExpandedChildren()
   const now = useNow(30_000)
   const popoutKeys = agentHubPopoutKeys()
 
@@ -101,14 +113,16 @@ export function AgentHubPanel({
       return lists.finished.map(threadItem)
     }
     if (tab === 'running') {
-      return lists.working.map(threadItem)
+      return visibleAgentHubRunningThreads(lists.working, lineage, expandedKeys).map(threadItem)
     }
-    return visibleAgentHubTreeRows(filteredTree, collapseOverrides, query).map((row) => ({
-      key: row.key,
-      thread: row.thread,
-      target: paneTargetFromTerminalRow(row)
-    }))
-  }, [tab, lists, filteredTree, collapseOverrides, query])
+    return visibleAgentHubTreeRows(filteredTree, collapseOverrides, query, expandedKeys).map(
+      (row) => ({
+        key: row.key,
+        thread: row.thread,
+        target: paneTargetFromTerminalRow(row)
+      })
+    )
+  }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, query])
   const activeIndex = Math.min(selectedIndex, items.length - 1)
   const selectedKey = items[activeIndex]?.key ?? null
 
@@ -187,7 +201,7 @@ export function AgentHubPanel({
 
   const counts: Record<AgentHubTab, number> = {
     inbox: needsYou.length + lists.finished.length,
-    running: lists.working.length,
+    running: lists.working.length + lists.nestedWorking,
     all: terminalCount
   }
 
@@ -251,7 +265,14 @@ export function AgentHubPanel({
           />
         ) : null}
         {tab === 'running' ? (
-          <AgentHubRunningBody working={lists.working} now={now} actions={threadActions} />
+          <AgentHubRunningBody
+            working={lists.working}
+            totalWorking={counts.running}
+            now={now}
+            lineage={lineage}
+            expandedKeys={expandedKeys}
+            actions={threadActions}
+          />
         ) : null}
         {tab === 'all' ? (
           <AgentHubTerminalTree
@@ -269,6 +290,8 @@ export function AgentHubPanel({
             }
             selectedKey={selectedKey}
             now={now}
+            lineage={lineage}
+            expandedKeys={expandedKeys}
             onPopout={(row) =>
               openItem(
                 { key: row.key, thread: row.thread, target: paneTargetFromTerminalRow(row) },

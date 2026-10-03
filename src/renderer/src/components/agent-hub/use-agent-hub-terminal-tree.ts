@@ -7,7 +7,11 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { buildAgentHubTerminalTree, type AgentHubGroupNode } from './agent-hub-terminal-tree'
 
 /** The All terminals tree. Mounted only while the popover is open, so tab churn costs nothing otherwise. */
-export function useAgentHubTerminalTree(threads: readonly AgentPaneThread[]): AgentHubGroupNode[] {
+export function useAgentHubTerminalTree(
+  threads: readonly AgentPaneThread[],
+  includeShells: boolean,
+  parentOf: ReadonlyMap<string, string>
+): AgentHubGroupNode[] {
   const projectGroups = useAppStore((s) => s.projectGroups)
   const repos = useAppStore((s) => s.repos)
   const worktreesByRepo = useAppStore((s) => s.worktreesByRepo)
@@ -26,9 +30,20 @@ export function useAgentHubTerminalTree(threads: readonly AgentPaneThread[]): Ag
           const worktree = standaloneActivityWorktree(FLOATING_TERMINAL_WORKTREE_ID)
           return { worktree, label: worktree.displayName }
         })(),
+        includeShells,
         ungroupedLabel: translate('agentHub.terminals.ungrouped', 'Ungrouped'),
-        unknownProjectLabel: translate('agentHub.terminals.unknownProject', 'Unknown')
+        unknownProjectLabel: translate('agentHub.terminals.unknownProject', 'Unknown'),
+        parentOf
       }),
-    [projectGroups, repos, worktreesByRepo, folderWorkspaces, tabsByWorktree, threads]
+    [
+      projectGroups,
+      repos,
+      worktreesByRepo,
+      folderWorkspaces,
+      tabsByWorktree,
+      threads,
+      includeShells,
+      parentOf
+    ]
   )
 }

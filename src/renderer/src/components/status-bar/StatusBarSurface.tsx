@@ -50,9 +50,9 @@ const ResourceUsageStatusSegment = lazyWithRetry(() =>
 const PortsStatusSegment = lazyWithRetry(() =>
   import('./PortsStatusSegment').then((module) => ({ default: module.PortsStatusSegment }))
 )
-const AgentHubStatusSegment = lazyWithRetry(() =>
-  import('../agent-hub/AgentHubStatusSegment').then((module) => ({
-    default: module.AgentHubStatusSegment
+const AgentHubRoot = lazyWithRetry(() =>
+  import('../agent-hub/AgentHubRoot').then((module) => ({
+    default: module.AgentHubRoot
   }))
 )
 const SshStatusSegment = lazyWithRetry(() =>
@@ -309,7 +309,7 @@ export function StatusBarSurface({
           <UpdateStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
           <React.Suspense fallback={null}>
             {agentHubEnabled && !isPairedWebClientWindow() ? (
-              <AgentHubStatusSegment iconOnly={segmentsIconOnly} />
+              <AgentHubRoot iconOnly={segmentsIconOnly} />
             ) : null}
             {petEnabled ? <PetStatusSegment /> : null}
             {showResourceUsage ? (

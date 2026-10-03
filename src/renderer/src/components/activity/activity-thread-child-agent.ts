@@ -2,7 +2,8 @@ import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
 import {
   buildAgentRowLineageTree,
   resolveAgentRowParentPaneKey,
-  type AgentLineageSourceRow
+  type AgentLineageSourceRow,
+  type AgentRowLineageTree
 } from '../dashboard/agent-row-lineage-model'
 
 type ChildAgentLineageEntry = Pick<AgentStatusEntry, 'terminalHandle' | 'orchestration'>
@@ -43,6 +44,13 @@ function firstReportedTerminalHandle(thread: ChildAgentClassifiableThread): stri
 export function collectChildAgentPaneKeys(
   threads: readonly ChildAgentClassifiableThread[]
 ): Set<string> {
+  return buildChildAgentLineageTree(threads).childPaneKeys
+}
+
+/** The lineage tree behind `collectChildAgentPaneKeys`, for surfaces that nest children under their parent. */
+export function buildChildAgentLineageTree(
+  threads: readonly ChildAgentClassifiableThread[]
+): AgentRowLineageTree<AgentLineageSourceRow> {
   const baseRows: AgentLineageSourceRow[] = threads.map((thread) => ({
     paneKey: thread.paneKey,
     entry: { terminalHandle: firstReportedTerminalHandle(thread) }
@@ -77,5 +85,5 @@ export function collectChildAgentPaneKeys(
     return base
   })
 
-  return buildAgentRowLineageTree(rows).childPaneKeys
+  return buildAgentRowLineageTree(rows)
 }

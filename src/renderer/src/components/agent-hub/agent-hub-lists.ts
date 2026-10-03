@@ -5,7 +5,10 @@ import { readApprovalTool } from './agent-hub-approval'
 
 export type AgentHubSection = 'needsYou' | 'working' | 'finished'
 
-export type AgentHubLists = Record<AgentHubSection, AgentPaneThread[]>
+export type AgentHubLists = Record<AgentHubSection, AgentPaneThread[]> & {
+  /** Working workers listed under their working dispatcher instead of as rows. */
+  nestedWorking: number
+}
 
 export type AgentHubCounts = Record<AgentHubSection, number>
 
@@ -48,10 +51,37 @@ export function agentHubToolName(thread: AgentPaneThread): string | null {
   return thread.currentAgentEntry?.toolName?.trim() || null
 }
 
-export function buildAgentHubLists(threads: readonly AgentPaneThread[]): AgentHubLists {
-  const lists: AgentHubLists = { needsYou: [], working: [], finished: [] }
+export function buildAgentHubLists(
+  threads: readonly AgentPaneThread[],
+  options: {
+    now?: number
+    finishedMaxAgeMs?: number
+    /** Worker pane → its dispatcher (see agent-hub-lineage). */
+    parentOf?: ReadonlyMap<string, string>
+  } = {}
+): AgentHubLists {
+  const lists: AgentHubLists = { needsYou: [], working: [], finished: [], nestedWorking: 0 }
+  const { now = 0, finishedMaxAgeMs = 0, parentOf } = options
+  const sections = new Map(threads.map((thread) => [thread.paneKey, agentHubSection(thread)]))
   for (const thread of threads) {
-    const section = agentHubSection(thread)
+    const section = sections.get(thread.paneKey) ?? null
+    const parentPaneKey = parentOf?.get(thread.paneKey)
+    if (section === 'working' && parentPaneKey && sections.get(parentPaneKey) === 'working') {
+      lists.nestedWorking += 1
+      continue
+    }
+    // A worker reports to its dispatcher; its result stays under that agent in All terminals.
+    if (section === 'finished' && parentPaneKey) {
+      continue
+    }
+    // "Clear finished after": an old result leaves the hub but stays unread elsewhere.
+    if (
+      section === 'finished' &&
+      finishedMaxAgeMs > 0 &&
+      now - agentHubStateSince(thread) > finishedMaxAgeMs
+    ) {
+      continue
+    }
     if (section) {
       lists[section].push(thread)
     }
@@ -66,7 +96,7 @@ export function buildAgentHubLists(threads: readonly AgentPaneThread[]): AgentHu
 export function agentHubCounts(lists: AgentHubLists): AgentHubCounts {
   return {
     needsYou: lists.needsYou.length,
-    working: lists.working.length,
+    working: lists.working.length + lists.nestedWorking,
     finished: lists.finished.length
   }
 }

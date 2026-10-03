@@ -16,6 +16,7 @@ import {
   PANE_KEY_3
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { AgentHubPanel } from './AgentHubPanel'
+import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { buildAgentHubLists } from './agent-hub-lists'
 import { buildAgentHubTerminalTree } from './agent-hub-terminal-tree'
 
@@ -75,6 +76,7 @@ function fixture() {
     tabsByWorktree: { [worktree.id]: tabs },
     threads,
     floating: null,
+    includeShells: true,
     ungroupedLabel: 'Ungrouped',
     unknownProjectLabel: 'Unknown'
   })
@@ -90,6 +92,7 @@ function renderPanel() {
       <TooltipProvider>
         <AgentHubPanel
           lists={lists}
+          lineage={EMPTY_AGENT_HUB_LINEAGE}
           tree={tree}
           terminalCount={3}
           locationOf={() => ({ group: null, project: 'Repo', workspace: 'feature' })}

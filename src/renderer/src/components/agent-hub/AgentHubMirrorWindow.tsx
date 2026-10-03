@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, SendHorizontal, X } from 'lucide-react'
+import { Loader2, Minus, SendHorizontal, X } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { submitPromptToAgentPty } from '@/lib/agent-paste-draft'
 import { translate } from '@/i18n/i18n'
@@ -19,6 +19,7 @@ import {
   defaultAgentHubMirrorGeometry,
   type AgentHubMirrorGeometry
 } from './agent-hub-mirror-geometry'
+import { rememberAgentHubMirrorOrigin } from './agent-hub-mirror-store'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 
 // A tab that has not attached by then is not coming back on its own.
@@ -110,6 +111,7 @@ export function AgentHubMirrorWindow({
   thread,
   location,
   onClose,
+  onMinimize,
   onReveal
 }: {
   target: AgentHubPaneTarget
@@ -117,6 +119,8 @@ export function AgentHubMirrorWindow({
   thread: AgentPaneThread | null
   location: AgentHubLocation
   onClose: () => void
+  /** Shrinks the window into a chip where it stands; the mirror keeps running. */
+  onMinimize: () => void
   onReveal: () => void
 }): React.JSX.Element {
   const [geometry, setGeometry] = useState<AgentHubMirrorGeometry>(() =>
@@ -136,6 +140,7 @@ export function AgentHubMirrorWindow({
 
   useEffect(() => {
     lastGeometry = geometry
+    rememberAgentHubMirrorOrigin({ x: geometry.x, y: geometry.y })
   }, [geometry])
 
   useEffect(() => {
@@ -201,7 +206,8 @@ export function AgentHubMirrorWindow({
       aria-label={target.title}
       data-agent-hub-mirror
       // Why z-[46]: above the floating workspace panel (z-45), below modal layers (z-50).
-      className="fixed z-[46] flex flex-col overflow-hidden rounded-xl border border-foreground/[0.14] bg-background shadow-floating"
+      // Why the strong edge: the mirror floats over terminals that share its background.
+      className="fixed z-[46] flex flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating"
       style={{ left: geometry.x, top: geometry.y, width: geometry.width, height: geometry.height }}
       onKeyDown={(event) => {
         // Why: Esc inside the terminal belongs to the agent (interrupt), not to the window.
@@ -236,6 +242,15 @@ export function AgentHubMirrorWindow({
         >
           {translate('agentHub.mirror.openInOrca', 'Open in Orca')}
           <HubKeys keys={['↵']} />
+        </button>
+        <button
+          type="button"
+          aria-label={translate('agentHub.mirror.minimize', 'Minimize')}
+          title={translate('agentHub.mirror.minimize', 'Minimize')}
+          onClick={onMinimize}
+          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+        >
+          <Minus className="size-3.5" />
         </button>
         <button
           type="button"

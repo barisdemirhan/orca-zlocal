@@ -1,8 +1,8 @@
 import { ChevronDown, ChevronRight, Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
-import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import { translate } from '@/i18n/i18n'
-import { HubChip, HubKeys, HubStateIndicator } from './AgentHubAtoms'
+import { HubChip, HubCounts, HubKeys } from './AgentHubAtoms'
+import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
 import { agentHubStateWord } from './agent-hub-copy'
 import {
@@ -11,11 +11,9 @@ import {
   agentHubToolName,
   type AgentHubIndicatorKind
 } from './agent-hub-lists'
-import {
-  isAgentHubGroupCollapsed,
-  type AgentHubGroupNode,
-  type AgentHubTerminalRow
-} from './agent-hub-terminal-tree'
+import type { AgentHubLineage } from './agent-hub-lineage'
+import type { AgentHubGroupNode, AgentHubTerminalRow } from './agent-hub-terminal-tree'
+import { isAgentHubGroupCollapsed, isAgentHubRowExpanded } from './agent-hub-terminal-tree-view'
 
 function rowKind(row: AgentHubTerminalRow): AgentHubIndicatorKind {
   return row.thread ? agentHubIndicatorKind(row.thread) : 'idle'
@@ -31,28 +29,71 @@ function rowSubtitle(row: AgentHubTerminalRow): string {
 function GroupSummary({ group }: { group: AgentHubGroupNode }): React.JSX.Element {
   return (
     <span className="ml-auto flex items-center gap-[9px] font-mono text-[11px] font-normal text-muted-foreground/70">
-      {group.counts.needsYou > 0 ? (
-        <span className="flex items-center gap-1 text-agent-question-text">
-          <HubStateIndicator kind="ask" />
-          {group.counts.needsYou}
-        </span>
-      ) : null}
-      {group.counts.working > 0 ? (
-        <span className="flex items-center gap-1">
-          <AgentWorkingSpinner className="size-[9px] border-[1.5px]" />
-          {group.counts.working}
-        </span>
-      ) : null}
-      {group.counts.finished > 0 ? (
-        <span className="flex items-center gap-1">
-          <HubStateIndicator kind="done" />
-          {group.counts.finished}
-        </span>
-      ) : null}
+      <HubCounts counts={group.counts} />
       <span>
         {translate('agentHub.terminals.termCount', '{{value0}} term', { value0: group.rowCount })}
       </span>
     </span>
+  )
+}
+
+type TreeRowContext = {
+  lineage: AgentHubLineage
+  expandedKeys: ReadonlySet<string>
+  query: string
+  selectedKey: string | null
+  now: number
+  onPopout: (row: AgentHubTerminalRow) => void
+  onJump: (row: AgentHubTerminalRow) => void
+}
+
+/** A terminal row, then (when it dispatched workers or runs subagents) their fold. */
+function TreeRow({
+  row,
+  nested,
+  context
+}: {
+  row: AgentHubTerminalRow
+  nested: boolean
+  context: TreeRowContext
+}): React.JSX.Element {
+  const { now } = context
+  const kind = rowKind(row)
+  const tool = row.thread && kind === 'work' ? agentHubToolName(row.thread) : null
+  const subagents = row.paneKey ? context.lineage.childrenOf(row.paneKey).subagents : []
+  return (
+    <>
+      <AgentHubRow
+        kind={kind}
+        agentType={row.thread?.agentType ?? null}
+        title={row.title}
+        subtitle={rowSubtitle(row)}
+        chips={
+          kind === 'ask' && row.thread ? (
+            <HubChip tone="ask">{agentHubStateWord(row.thread)}</HubChip>
+          ) : tool ? (
+            <HubChip>{tool}</HubChip>
+          ) : null
+        }
+        time={row.thread ? formatShortTimeAgo(agentHubStateSince(row.thread), now) : undefined}
+        selected={row.key === context.selectedKey}
+        indent={!nested}
+        onPopout={() => context.onPopout(row)}
+        onJump={() => context.onJump(row)}
+      />
+      <AgentHubChildGroup
+        parentKey={row.key}
+        childAgents={{ workers: row.children.flatMap((child) => child.thread ?? []), subagents }}
+        expanded={isAgentHubRowExpanded(row.key, context.expandedKeys, context.query)}
+        indent={!nested}
+        now={now}
+        onOpenParent={() => context.onPopout(row)}
+      >
+        {row.children.map((child) => (
+          <TreeRow key={child.key} row={child} nested context={context} />
+        ))}
+      </AgentHubChildGroup>
+    </>
   )
 }
 
@@ -66,6 +107,8 @@ export function AgentHubTerminalTree({
   onToggleGroup,
   selectedKey,
   now,
+  lineage,
+  expandedKeys,
   onPopout,
   onJump
 }: {
@@ -78,10 +121,21 @@ export function AgentHubTerminalTree({
   onToggleGroup: (group: AgentHubGroupNode, collapsed: boolean) => void
   selectedKey: string | null
   now: number
+  lineage: AgentHubLineage
+  expandedKeys: ReadonlySet<string>
   onPopout: (row: AgentHubTerminalRow) => void
   onJump: (row: AgentHubTerminalRow) => void
 }): React.JSX.Element {
   const trimmedQuery = query.trim()
+  const rowContext: TreeRowContext = {
+    lineage,
+    expandedKeys,
+    query,
+    selectedKey,
+    now,
+    onPopout,
+    onJump
+  }
   return (
     <div>
       {/* Why the popover-colored shadow: the sticky field must hide rows scrolling under it. */}
@@ -93,7 +147,7 @@ export function AgentHubTerminalTree({
           data-agent-hub-search
           onChange={(event) => onQueryChange(event.target.value)}
           onKeyDown={(event) => {
-            // The popover keeps itself open for this Esc (see AgentHubStatusSegment).
+            // The popover keeps itself open for this Esc (see AgentHubRoot).
             if (event.key === 'Escape' && query) {
               onQueryChange('')
             }
@@ -160,36 +214,9 @@ export function AgentHubTerminalTree({
                         </>
                       ) : null}
                     </div>
-                    {workspace.rows.map((row) => {
-                      const kind = rowKind(row)
-                      const tool =
-                        row.thread && kind === 'work' ? agentHubToolName(row.thread) : null
-                      return (
-                        <AgentHubRow
-                          key={row.key}
-                          kind={kind}
-                          agentType={row.thread?.agentType ?? null}
-                          title={row.title}
-                          subtitle={rowSubtitle(row)}
-                          chips={
-                            kind === 'ask' && row.thread ? (
-                              <HubChip tone="ask">{agentHubStateWord(row.thread)}</HubChip>
-                            ) : tool ? (
-                              <HubChip>{tool}</HubChip>
-                            ) : null
-                          }
-                          time={
-                            row.thread
-                              ? formatShortTimeAgo(agentHubStateSince(row.thread), now)
-                              : undefined
-                          }
-                          selected={row.key === selectedKey}
-                          indent
-                          onPopout={() => onPopout(row)}
-                          onJump={() => onJump(row)}
-                        />
-                      )
-                    })}
+                    {workspace.rows.map((row) => (
+                      <TreeRow key={row.key} row={row} nested={false} context={rowContext} />
+                    ))}
                   </div>
                 ))}
           </section>

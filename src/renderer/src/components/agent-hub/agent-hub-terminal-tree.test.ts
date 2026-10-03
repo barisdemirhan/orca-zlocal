@@ -12,11 +12,13 @@ import {
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
   buildAgentHubTerminalTree,
-  filterAgentHubTerminalTree,
-  isAgentHubGroupCollapsed,
-  visibleAgentHubTreeRows,
   type AgentHubTerminalTreeInput
 } from './agent-hub-terminal-tree'
+import {
+  filterAgentHubTerminalTree,
+  isAgentHubGroupCollapsed,
+  visibleAgentHubTreeRows
+} from './agent-hub-terminal-tree-view'
 
 function group(id: string, name: string, tabOrder: number): ProjectGroup {
   return {
@@ -92,6 +94,7 @@ function treeInput(): AgentHubTerminalTreeInput {
     tabsByWorktree,
     threads,
     floating: { worktree: floating, label: 'Floating terminal' },
+    includeShells: true,
     ungroupedLabel: 'Ungrouped',
     unknownProjectLabel: 'Unknown'
   }
@@ -177,5 +180,14 @@ describe('agent hub tree filtering and collapse', () => {
       'tab-metro',
       'tab-serve'
     ])
+  })
+
+  it('lists agent panes only when shells are turned off', () => {
+    const groups = buildAgentHubTerminalTree({ ...treeInput(), includeShells: false })
+    const tabIds = groups.flatMap((node) =>
+      node.workspaces.flatMap((workspace) => workspace.rows.map((row) => row.tab.id))
+    )
+
+    expect(tabIds).toEqual(['tab-1'])
   })
 })
