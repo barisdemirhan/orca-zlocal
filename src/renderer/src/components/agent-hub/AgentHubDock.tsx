@@ -11,6 +11,7 @@ import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
 } from '../sidebar/workspace-chrome-metrics'
+import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDockMenu } from './AgentHubDockMenu'
 import {
   DOCK_BUTTON,
@@ -195,19 +196,22 @@ export function AgentHubDock({
             >
               <SquareTerminal className="size-3.5" />
             </DockButton>
-            <DockButton
-              label={
-                mirrors.windows > 0
-                  ? translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
-                  : translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
-              }
-              side={side}
-              className={DOCK_BUTTON}
-              disabled={mirrors.windows + mirrors.chips === 0}
-              onClick={onToggleMirrors}
-            >
-              <PictureInPicture2 className="size-3.5" />
-            </DockButton>
+            {/* Right-click lays the floating windows out between the sidebars. */}
+            <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
+              <DockButton
+                label={
+                  mirrors.windows > 0
+                    ? translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
+                    : translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
+                }
+                side={side}
+                className={DOCK_BUTTON}
+                disabled={mirrors.windows + mirrors.chips === 0}
+                onClick={onToggleMirrors}
+              >
+                <PictureInPicture2 className="size-3.5" />
+              </DockButton>
+            </AgentHubArrangeMenu>
             <DockButton
               label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
               side={side}

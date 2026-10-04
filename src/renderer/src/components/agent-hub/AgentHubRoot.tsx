@@ -64,6 +64,7 @@ function AgentHubPopoverBody({
   includeShells,
   request,
   rootRef,
+  onTabChange,
   onJump,
   onPopout,
   onClose
@@ -74,6 +75,7 @@ function AgentHubPopoverBody({
   includeShells: boolean
   request: OpenRequest
   rootRef: React.RefObject<HTMLDivElement | null>
+  onTabChange: (tab: AgentHubTab) => void
   onJump: (request: AgentHubOpenRequest) => void
   onPopout: (request: AgentHubOpenRequest) => void
   onClose: () => void
@@ -97,6 +99,7 @@ function AgentHubPopoverBody({
       onMarkRead={acknowledgeAgents}
       onClose={onClose}
       initialTab={request.tab}
+      onTabChange={onTabChange}
       initialPaneKey={request.paneKey}
     />
   )
@@ -147,6 +150,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   }, [open])
 
   const defaultTabRef = useRef<AgentHubTab>('inbox')
+  const shownTabRef = useRef<AgentHubTab>('inbox')
   const needsYouRef = useRef(lists.needsYou)
   useEffect(() => {
     needsYouRef.current = lists.needsYou
@@ -159,9 +163,21 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         document.activeElement instanceof HTMLElement ? document.activeElement : null
     }
     clearAgentHubAlerts()
+    shownTabRef.current = tab ?? defaultTabRef.current
     setRequest((current) => ({ tab: tab ?? defaultTabRef.current, paneKey, seq: current.seq + 1 }))
     setOpen(true)
   }, [])
+  // A dock button for the tab already on show closes the hub, like a toggle.
+  const openHubTab = useCallback(
+    (tab: AgentHubTab) => {
+      if (openRef.current && shownTabRef.current === tab) {
+        setOpen(false)
+        return
+      }
+      openHub(tab)
+    },
+    [openHub]
+  )
   const setPopoverOpen = useCallback(
     (next: boolean) => (next ? openHub() : setOpen(false)),
     [openHub]
@@ -297,6 +313,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         includeShells={preferences.showShells}
         request={request}
         rootRef={panelRootRef}
+        onTabChange={(tab) => {
+          shownTabRef.current = tab
+        }}
         onJump={jump}
         onPopout={popout}
         onClose={() => setPopoverOpen(false)}
@@ -320,7 +339,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   size={preferences.dockSize}
                   counts={counts}
                   muted={muted}
-                  onOpenTab={(tab) => openHub(tab)}
+                  onOpenTab={openHubTab}
                   onNextWaiting={jumpToNextWaiting}
                   pinned={open}
                   mirrors={{ windows: windows.length, chips: chips.length }}

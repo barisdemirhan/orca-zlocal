@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { Loader2, Minus, PanelsTopLeft, PictureInPicture2, X } from 'lucide-react'
+import {
+  Loader2,
+  Minus,
+  PanelTopClose,
+  PanelTopOpen,
+  PanelsTopLeft,
+  PictureInPicture2,
+  X
+} from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
@@ -15,6 +23,7 @@ import {
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
+import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
@@ -24,6 +33,8 @@ import { nudgeMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
+import { toggleAgentHubFamilyBar, useAgentHubFamilyBarShown } from './agent-hub-family-bar'
+import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const LEAVE_MS = 140
@@ -46,6 +57,7 @@ export function AgentHubMirrorWindow({
   onNudged,
   family,
   locationOf,
+  familyActionsFor,
   onRetarget,
   hubRef,
   onSlot,
@@ -74,6 +86,7 @@ export function AgentHubMirrorWindow({
   family: AgentHubMirrorFamily | null
   /** Where a family member runs, for its hover card. */
   locationOf: (thread: AgentPaneThread) => AgentHubLocation
+  familyActionsFor: (thread: AgentPaneThread) => AgentHubThreadCardActions
   onRetarget: (thread: AgentPaneThread) => void
   /** The hub the window flies into when minimized. */
   hubRef: React.RefObject<HTMLElement | null>
@@ -86,10 +99,8 @@ export function AgentHubMirrorWindow({
   onReveal: () => void
 }): React.JSX.Element {
   const mirrorKey = agentHubPaneTargetKey(target)
-  const { geometry, sectionRef, beginDrag, onPointerMove, endDrag } = useMirrorWindowGeometry(
-    mirrorKey,
-    cascade
-  )
+  const { geometry, settling, sectionRef, beginDrag, onPointerMove, endDrag } =
+    useMirrorWindowGeometry(mirrorKey, cascade)
   const slotRef = useCallback(
     (element: HTMLDivElement | null) => onSlot(mirrorKey, element),
     [onSlot, mirrorKey]
@@ -142,6 +153,8 @@ export function AgentHubMirrorWindow({
   )
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
   const dockAllShortcut = useOptionalShortcutLabel('agentHub.dockMirrors')
+  const familyRoot = family?.path[0]?.paneKey ?? null
+  const familyBarShown = useAgentHubFamilyBarShown(familyRoot)
 
   const nudgeId = nudge?.id
   const nudgeKind = nudge?.kind
@@ -167,11 +180,13 @@ export function AgentHubMirrorWindow({
       role="dialog"
       aria-label={target.title}
       data-agent-hub-mirror
+      data-agent-hub-mirror-key={mirrorKey}
+      data-settling={settling}
       data-leaving={leaving}
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards]"
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[settling=true]:transition-[left,top,width,height] data-[settling=true]:duration-300 data-[settling=true]:ease-out"
       style={{
         left: geometry.x,
         top: geometry.y,
@@ -209,6 +224,30 @@ export function AgentHubMirrorWindow({
         </div>
         {/* The window's controls sit close together, apart from the title. */}
         <div className="flex shrink-0 items-center gap-0.5">
+          {familyRoot ? (
+            <button
+              type="button"
+              aria-label={
+                familyBarShown
+                  ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
+                  : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
+              }
+              title={
+                familyBarShown
+                  ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
+                  : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
+              }
+              aria-pressed={familyBarShown}
+              onClick={() => toggleAgentHubFamilyBar(familyRoot)}
+              className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+            >
+              {familyBarShown ? (
+                <PanelTopClose className="size-3.5" />
+              ) : (
+                <PanelTopOpen className="size-3.5" />
+              )}
+            </button>
+          ) : null}
           <AgentHubDimToggle appearance="mirror" />
           <button
             type="button"
@@ -219,19 +258,21 @@ export function AgentHubMirrorWindow({
             {translate('agentHub.mirror.jump', 'Jump')}
             <HubKeys keys={['↵']} />
           </button>
-          <button
-            type="button"
-            aria-label={translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')}
-            title={
-              dockAllShortcut
-                ? `${translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')} (${dockAllShortcut})`
-                : translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
-            }
-            onClick={requestAgentHubMirrorsDock}
-            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-          >
-            <PictureInPicture2 className="size-3.5" />
-          </button>
+          <AgentHubArrangeMenu>
+            <button
+              type="button"
+              aria-label={translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')}
+              title={
+                dockAllShortcut
+                  ? `${translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')} (${dockAllShortcut})`
+                  : translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
+              }
+              onClick={requestAgentHubMirrorsDock}
+              className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+            >
+              <PictureInPicture2 className="size-3.5" />
+            </button>
+          </AgentHubArrangeMenu>
           <button
             type="button"
             aria-label={translate('agentHub.mirror.minimize', 'Minimize')}
@@ -251,11 +292,12 @@ export function AgentHubMirrorWindow({
           </button>
         </div>
       </header>
-      {family ? (
+      {family && familyBarShown ? (
         <AgentHubMirrorFamilyTabs
           family={family}
           activeKey={mirrorKey}
           locationOf={locationOf}
+          actionsFor={familyActionsFor}
           onSelect={onRetarget}
         />
       ) : null}

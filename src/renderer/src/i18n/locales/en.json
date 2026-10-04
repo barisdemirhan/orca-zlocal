@@ -21730,7 +21730,9 @@
       "trayMore": "+{{value0}}",
       "dockAll": "Send all mirrors to the hub",
       "jumpHint": "Jump to this terminal in its workspace",
-      "jump": "Jump"
+      "jump": "Jump",
+      "hideWorkers": "Hide the workers bar",
+      "showWorkers": "Show the workers bar"
     },
     "title": "Agents",
     "tab": {
@@ -21847,7 +21849,14 @@
     },
     "hover": {
       "state": "State",
-      "where": "Where"
+      "where": "Where",
+      "popout": "Own window"
+    },
+    "arrange": {
+      "title": "Arrange floating windows",
+      "grid": "In a grid",
+      "columns": "Side by side",
+      "rows": "Stacked"
     }
   },
   "workspace": {

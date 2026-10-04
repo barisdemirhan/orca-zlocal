@@ -74,27 +74,30 @@ export function AgentHubMirrorChip({
             <HubCrumb location={location} />
           </span>
         </span>
-        <button
-          type="button"
-          aria-label={translate(
-            'agentHub.mirror.jumpHint',
-            'Jump to this terminal in its workspace'
-          )}
-          title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
-          onClick={onReveal}
-          className="grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-        >
-          <ArrowUpRight className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          aria-label={translate('agentHub.mirror.close', 'Close mirror')}
-          title={translate('agentHub.mirror.close', 'Close mirror')}
-          onClick={onClose}
-          className="grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-        >
-          <X className="size-3.5" />
-        </button>
+        {/* The chip's controls sit close together, like the mirror header's. */}
+        <span className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="button"
+            aria-label={translate(
+              'agentHub.mirror.jumpHint',
+              'Jump to this terminal in its workspace'
+            )}
+            title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
+            onClick={onReveal}
+            className="grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            <ArrowUpRight className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            aria-label={translate('agentHub.mirror.close', 'Close mirror')}
+            title={translate('agentHub.mirror.close', 'Close mirror')}
+            onClick={onClose}
+            className="grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        </span>
       </div>
       {alert ? (
         <AgentHubAlertStack

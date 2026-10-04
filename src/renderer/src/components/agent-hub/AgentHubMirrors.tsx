@@ -11,6 +11,7 @@ import {
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubAlertSide } from './AgentHubAlertStack'
+import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import { AgentHubMirrorTray, type AgentHubTrayItem } from './AgentHubMirrorTray'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
@@ -25,6 +26,7 @@ import {
   closeAgentHubMirrorChip,
   focusAgentHubMirror,
   minimizeAgentHubMirror,
+  openAgentHubMirror,
   restoreAgentHubMirror,
   retargetAgentHubMirror,
   useAgentHubMirrors
@@ -78,6 +80,12 @@ export function AgentHubMirrors({
   const { windows, chips } = useAgentHubMirrors()
   const [slots, setSlots] = useState<ReadonlyMap<string, HTMLElement>>(() => new Map())
   const panelInFront = useFloatingPanelInFront(windows.length)
+  // The tab on screen in the workspace, so a family member already there offers no jump.
+  const onScreenTab = useAppStore((state) =>
+    state.activeView === 'terminal' && state.activeWorktreeId && state.activeTabId
+      ? `${state.activeWorktreeId}\u0000${state.activeTabId}`
+      : null
+  )
   const onSlot = useCallback((key: string, element: HTMLElement | null): void => {
     setSlots((current) => {
       if (current.get(key) === element || (!element && !current.has(key))) {
@@ -154,6 +162,19 @@ export function AgentHubMirrors({
   }
   const threadFor = (target: AgentHubPaneTarget): AgentPaneThread | null =>
     threads.find((thread) => agentHubTargetShowsThread(target, thread)) ?? null
+  const openKeys = new Set(
+    [...windows, ...chips.map((chip) => chip.target)].map(agentHubPaneTargetKey)
+  )
+  const familyActionsFor = (member: AgentPaneThread): AgentHubThreadCardActions => {
+    const target = paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
+    const inWindow = openKeys.has(member.paneKey)
+    const onScreen = onScreenTab === `${member.worktree.id}\u0000${member.tab.id}`
+    return {
+      ...(inWindow || onScreen ? {} : { onJump: () => onReveal(target, member) }),
+      // Already in a window (or parked in the tray): no second one.
+      ...(inWindow ? {} : { onPopout: () => openAgentHubMirror(target) })
+    }
+  }
   const trayItems = orderAgentHubTray(
     chips.map((chip): AgentHubTrayItem => {
       const thread = threadFor(chip.target)
@@ -214,6 +235,7 @@ export function AgentHubMirrors({
             family={target.paneKey ? agentHubMirrorFamily(target.paneKey, threads, lineage) : null}
             hubRef={hubRef}
             locationOf={locationOf}
+            familyActionsFor={familyActionsFor}
             onRetarget={(member) =>
               retargetAgentHubMirror(
                 key,

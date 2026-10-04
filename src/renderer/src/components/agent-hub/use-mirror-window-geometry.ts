@@ -4,9 +4,14 @@ import {
   defaultAgentHubMirrorGeometry,
   type AgentHubMirrorGeometry
 } from './agent-hub-mirror-geometry'
+import {
+  readAgentHubMirrorPlacement,
+  useAgentHubArrangeVersion
+} from './agent-hub-floating-arrangement'
 import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-store'
 
 const CASCADE_STEP_PX = 28
+const SETTLE_MS = 340
 const MOVE_THRESHOLD_PX = 3
 
 // Why module scope: a new mirror opens where the user last left one this session.
@@ -36,6 +41,8 @@ export function useMirrorWindowGeometry(
   cascade: number
 ): {
   geometry: AgentHubMirrorGeometry
+  /** True briefly after the windows are arranged, so the move can glide. */
+  settling: boolean
   sectionRef: React.RefObject<HTMLElement | null>
   beginDrag: (mode: DragState['mode']) => (event: React.PointerEvent<HTMLElement>) => void
   onPointerMove: (event: React.PointerEvent<HTMLElement>) => void
@@ -54,6 +61,25 @@ export function useMirrorWindowGeometry(
   const sectionRef = useRef<HTMLElement | null>(null)
   const dragRef = useRef<DragState | null>(null)
   const frameRef = useRef<number | null>(null)
+  // "Arrange floating windows" hands each mirror a new place.
+  const arrangeVersion = useAgentHubArrangeVersion()
+  const [seenArrangeVersion, setSeenArrangeVersion] = useState(arrangeVersion)
+  const [settling, setSettling] = useState(false)
+  if (arrangeVersion !== seenArrangeVersion) {
+    setSeenArrangeVersion(arrangeVersion)
+    const placement = readAgentHubMirrorPlacement(key)
+    if (placement) {
+      setGeometry(clampAgentHubMirrorGeometry(placement, viewportSize()))
+      setSettling(true)
+    }
+  }
+  useEffect(() => {
+    if (!settling) {
+      return
+    }
+    const timer = setTimeout(() => setSettling(false), SETTLE_MS)
+    return () => clearTimeout(timer)
+  }, [settling])
 
   // The committed spot replaces the slide in the same frame, so nothing jumps.
   useLayoutEffect(() => {
@@ -150,5 +176,5 @@ export function useMirrorWindowGeometry(
     }
   }, [])
 
-  return { geometry, sectionRef, beginDrag, onPointerMove, endDrag }
+  return { geometry, settling, sectionRef, beginDrag, onPointerMove, endDrag }
 }

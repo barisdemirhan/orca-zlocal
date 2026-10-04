@@ -71,6 +71,7 @@ export function AgentHubPanel({
   onMarkRead,
   onClose,
   initialTab = 'inbox',
+  onTabChange,
   initialPaneKey = null
 }: {
   lists: AgentHubLists
@@ -84,6 +85,8 @@ export function AgentHubPanel({
   onMarkRead: (paneKeys: string[]) => void
   onClose: () => void
   initialTab?: AgentHubTab
+  /** Reports the tab on show, so the dock can close the hub when it is clicked again. */
+  onTabChange?: (tab: AgentHubTab) => void
   /** Opens the Inbox on this waiting agent's card (an alert was clicked). */
   initialPaneKey?: string | null
 }): React.JSX.Element {
@@ -135,6 +138,7 @@ export function AgentHubPanel({
 
   const switchTab = (next: AgentHubTab): void => {
     setTab(next)
+    onTabChange?.(next)
     setSelectedIndex(-1)
     if (next === 'all') {
       requestAnimationFrame(() => searchRef.current?.focus())
