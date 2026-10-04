@@ -1,17 +1,22 @@
 import { Fragment, useLayoutEffect, useRef } from 'react'
 import { ChevronRight, Workflow } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
+import { AgentIcon } from '@/lib/agent-catalog'
+import { agentTypeToIconAgent } from '@/lib/agent-status'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubStateIndicator } from './AgentHubAtoms'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
+import type { AgentHubLocation } from './agent-hub-pane-target'
+import { AgentHubThreadHoverCard } from './AgentHubThreadHoverCard'
 
 function FamilyButton({
   thread,
   level,
   active,
   childCount = 0,
+  location,
   onSelect,
   buttonRef,
   children
@@ -20,41 +25,46 @@ function FamilyButton({
   level: 'dispatcher' | 'worker'
   active: boolean
   childCount?: number
+  location: AgentHubLocation
   onSelect: (thread: AgentPaneThread) => void
   buttonRef?: React.Ref<HTMLButtonElement>
   children?: React.ReactNode
 }): React.JSX.Element {
   const title = activityThreadRowCopy(thread).taskTitle
+  const agent = agentTypeToIconAgent(thread.agentType)
   return (
-    <button
-      ref={buttonRef}
-      type="button"
-      role={level === 'worker' ? 'tab' : undefined}
-      aria-selected={level === 'worker' ? active : undefined}
-      aria-current={level === 'dispatcher' && active ? 'page' : undefined}
-      data-level={level}
-      data-active={active}
-      title={title}
-      onClick={() => onSelect(thread)}
-      className="flex h-6 max-w-[220px] shrink-0 items-center gap-1.5 rounded-md px-1.5 text-[11.5px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground data-[active=true]:bg-foreground/[0.1] data-[active=true]:text-foreground data-[level=dispatcher]:font-semibold data-[level=dispatcher]:text-foreground"
-    >
-      {children}
-      <span data-family-dot className="grid shrink-0 place-items-center">
-        <HubStateIndicator kind={agentHubIndicatorKind(thread)} />
-      </span>
-      <span className="truncate">{title}</span>
-      {childCount > 0 ? (
-        <span
-          aria-label={translate('agentHub.mirror.workerCount', '{{value0}} workers', {
-            value0: childCount
-          })}
-          className="flex shrink-0 items-center rounded-[4px] bg-foreground/[0.08] pl-1 font-mono text-[10px] tabular-nums"
-        >
-          {childCount}
-          <ChevronRight aria-hidden className="size-3" />
+    <AgentHubThreadHoverCard thread={thread} location={location}>
+      <button
+        ref={buttonRef}
+        type="button"
+        role={level === 'worker' ? 'tab' : undefined}
+        aria-selected={level === 'worker' ? active : undefined}
+        aria-current={level === 'dispatcher' && active ? 'page' : undefined}
+        data-level={level}
+        data-active={active}
+        onClick={() => onSelect(thread)}
+        className="flex h-6 max-w-[220px] shrink-0 items-center gap-1.5 rounded-md px-1.5 text-[11.5px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground data-[active=true]:bg-foreground/[0.1] data-[active=true]:text-foreground data-[level=dispatcher]:font-semibold data-[level=dispatcher]:text-foreground"
+      >
+        {children}
+        <span data-family-dot className="grid shrink-0 place-items-center">
+          <HubStateIndicator kind={agentHubIndicatorKind(thread)} />
         </span>
-      ) : null}
-    </button>
+        {/* Which agent it is, like the window header's avatar. */}
+        {agent ? <AgentIcon agent={agent} size={12} /> : null}
+        <span className="truncate">{title}</span>
+        {childCount > 0 ? (
+          <span
+            aria-label={translate('agentHub.mirror.workerCount', '{{value0}} workers', {
+              value0: childCount
+            })}
+            className="flex shrink-0 items-center rounded-[4px] bg-foreground/[0.08] pl-1 font-mono text-[10px] tabular-nums"
+          >
+            {childCount}
+            <ChevronRight aria-hidden className="size-3" />
+          </span>
+        ) : null}
+      </button>
+    </AgentHubThreadHoverCard>
   )
 }
 
@@ -66,10 +76,12 @@ function FamilyButton({
 export function AgentHubMirrorFamilyTabs({
   family,
   activeKey,
+  locationOf,
   onSelect
 }: {
   family: AgentHubMirrorFamily
   activeKey: string
+  locationOf: (thread: AgentPaneThread) => AgentHubLocation
   onSelect: (thread: AgentPaneThread) => void
 }): React.JSX.Element {
   const parentRef = useRef<HTMLButtonElement>(null)
@@ -99,6 +111,7 @@ export function AgentHubMirrorFamilyTabs({
               thread={thread}
               level="dispatcher"
               active={thread.paneKey === activeKey}
+              location={locationOf(thread)}
               onSelect={onSelect}
               buttonRef={index === lastIndex ? parentRef : undefined}
             >
@@ -127,6 +140,7 @@ export function AgentHubMirrorFamilyTabs({
               level="worker"
               active={member.thread.paneKey === activeKey}
               childCount={member.childCount}
+              location={locationOf(member.thread)}
               onSelect={onSelect}
             />
           ))}

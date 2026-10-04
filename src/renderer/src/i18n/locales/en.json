@@ -21844,6 +21844,10 @@
     },
     "count": {
       "nested": "{{value0}} more under them"
+    },
+    "hover": {
+      "state": "State",
+      "where": "Where"
     }
   },
   "workspace": {

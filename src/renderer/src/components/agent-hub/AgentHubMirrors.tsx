@@ -213,6 +213,7 @@ export function AgentHubMirrors({
             onNudged={dismissAgentHubAlert}
             family={target.paneKey ? agentHubMirrorFamily(target.paneKey, threads, lineage) : null}
             hubRef={hubRef}
+            locationOf={locationOf}
             onRetarget={(member) =>
               retargetAgentHubMirror(
                 key,

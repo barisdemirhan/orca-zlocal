@@ -45,6 +45,7 @@ export function AgentHubMirrorWindow({
   nudge,
   onNudged,
   family,
+  locationOf,
   onRetarget,
   hubRef,
   onSlot,
@@ -71,6 +72,8 @@ export function AgentHubMirrorWindow({
   onNudged: (id: string) => void
   /** Where this pane sits among dispatchers and workers; null outside orchestration. */
   family: AgentHubMirrorFamily | null
+  /** Where a family member runs, for its hover card. */
+  locationOf: (thread: AgentPaneThread) => AgentHubLocation
   onRetarget: (thread: AgentPaneThread) => void
   /** The hub the window flies into when minimized. */
   hubRef: React.RefObject<HTMLElement | null>
@@ -249,7 +252,12 @@ export function AgentHubMirrorWindow({
         </div>
       </header>
       {family ? (
-        <AgentHubMirrorFamilyTabs family={family} activeKey={mirrorKey} onSelect={onRetarget} />
+        <AgentHubMirrorFamilyTabs
+          family={family}
+          activeKey={mirrorKey}
+          locationOf={locationOf}
+          onSelect={onRetarget}
+        />
       ) : null}
       {surface === 'in-workspace' ? (
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-popover/60 px-8 text-center">
