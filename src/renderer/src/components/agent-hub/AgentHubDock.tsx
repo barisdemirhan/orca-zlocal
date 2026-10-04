@@ -176,8 +176,9 @@ export function AgentHubDock({
           data-dragging={dragPoint !== null}
           className="relative flex cursor-pointer items-center justify-start overflow-hidden data-[edge=left]:flex-col data-[edge=right]:flex-col text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-7 data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:px-2.5 data-[edge=left]:w-7 data-[edge=left]:rounded-r-[14px] data-[edge=left]:py-2.5 data-[edge=right]:w-7 data-[edge=right]:rounded-l-[14px] data-[edge=right]:py-2.5 data-[edge=top]:h-7 data-[edge=top]:rounded-b-[14px] data-[edge=top]:px-2.5"
         >
-          {/* Both faces open with the inbox and the counts at the same spot; unfolding only
-              adds buttons after them, so whatever is under the pointer stays put. */}
+          {/* Both faces open with the inbox, the counts and (with mirrors parked) the mirrors
+              button at the same spot; unfolding only adds buttons after them, so whatever is
+              under the pointer stays put. */}
           <DockLayer shown={expanded}>
             <DockButton
               label={translate('agentHub.tab.inbox', 'Inbox')}
@@ -188,14 +189,6 @@ export function AgentHubDock({
               <Inbox className="size-3.5" />
             </DockButton>
             <DockCounterGroup counts={counts} side={side} onOpenTab={onOpenTab} />
-            <DockButton
-              label={translate('agentHub.tab.all', 'All terminals')}
-              side={side}
-              className={DOCK_BUTTON}
-              onClick={() => onOpenTab('all')}
-            >
-              <SquareTerminal className="size-3.5" />
-            </DockButton>
             {/* Right-click lays the floating windows out between the sidebars. */}
             <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
               <DockButton
@@ -212,6 +205,14 @@ export function AgentHubDock({
                 <PictureInPicture2 className="size-3.5" />
               </DockButton>
             </AgentHubArrangeMenu>
+            <DockButton
+              label={translate('agentHub.tab.all', 'All terminals')}
+              side={side}
+              className={DOCK_BUTTON}
+              onClick={() => onOpenTab('all')}
+            >
+              <SquareTerminal className="size-3.5" />
+            </DockButton>
             <DockButton
               label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
               side={side}
@@ -235,6 +236,12 @@ export function AgentHubDock({
               <Inbox aria-hidden className="size-3.5" />
             </span>
             <DockCounterGroup counts={counts} side={side} />
+            {/* Parked mirrors show here too, in the slot their button takes once unfolded. */}
+            {mirrors.chips > 0 ? (
+              <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
+                <PictureInPicture2 aria-hidden className="size-3.5" />
+              </span>
+            ) : null}
             {muted ? (
               <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
                 <BellOff aria-hidden className="size-3" />

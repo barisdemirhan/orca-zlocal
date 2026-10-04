@@ -20,6 +20,9 @@ let state: AgentHubMirrorState = { windows: [], chips: [] }
 // Where each window sat, so it comes back there from the tray. Not rendered state.
 const windowOrigins = new Map<string, Point>()
 const listeners = new Set<() => void>()
+// The window last picked again from the hub while already open, so it can glow.
+let highlight: { key: string; seq: number } = { key: '', seq: 0 }
+const highlightListeners = new Set<() => void>()
 // Bumped to ask every open window to fly into the tray; each minimizes itself on landing.
 let dockRequest = 0
 const dockListeners = new Set<() => void>()
@@ -69,7 +72,23 @@ function showWindow(
 
 /** Opens a pane's mirror, or brings its open window (or its chip) back to the front. */
 export function openAgentHubMirror(target: AgentHubPaneTarget): void {
+  const key = keyOf(target)
+  const alreadyOpen = state.windows.some((open) => keyOf(open) === key)
   emit(showWindow(state.windows, state.chips, target))
+  if (alreadyOpen) {
+    highlight = { key, seq: highlight.seq + 1 }
+    highlightListeners.forEach((listener) => listener())
+  }
+}
+
+function subscribeHighlight(listener: () => void): () => void {
+  highlightListeners.add(listener)
+  return () => highlightListeners.delete(listener)
+}
+
+/** Which already-open mirror the hub last asked for, and how many times it has asked. */
+export function useAgentHubMirrorHighlight(): { key: string; seq: number } {
+  return useSyncExternalStore(subscribeHighlight, () => highlight)
 }
 
 /** Shows another pane in the same window (a worker of the same agent, or its dispatcher). */

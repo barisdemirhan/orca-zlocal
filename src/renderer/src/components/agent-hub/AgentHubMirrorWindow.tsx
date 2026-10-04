@@ -1,13 +1,5 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
-import {
-  Loader2,
-  Minus,
-  PanelTopClose,
-  PanelTopOpen,
-  PanelsTopLeft,
-  PictureInPicture2,
-  X
-} from 'lucide-react'
+import { ChevronRight, Loader2, Minus, PanelsTopLeft, PictureInPicture2, X } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
@@ -27,9 +19,13 @@ import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
-import { requestAgentHubMirrorsDock, useAgentHubMirrorsDockRequest } from './agent-hub-mirror-store'
+import {
+  requestAgentHubMirrorsDock,
+  useAgentHubMirrorHighlight,
+  useAgentHubMirrorsDockRequest
+} from './agent-hub-mirror-store'
 import { flyMirrorWindowToHub } from './mirror-window-flight'
-import { nudgeMirrorWindow } from './mirror-window-nudge'
+import { nudgeMirrorWindow, pulseMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
@@ -135,6 +131,18 @@ export function AgentHubMirrorWindow({
     minimizing.current = true
     flyMirrorWindowToHub(sectionRef.current, hubRef.current, onMinimize, delayMs)
   }
+  // Picked again from the hub while open: glow so the eye finds it.
+  const highlight = useAgentHubMirrorHighlight()
+  const seenHighlight = useRef(highlight.seq)
+  useEffect(() => {
+    if (highlight.seq === seenHighlight.current) {
+      return
+    }
+    seenHighlight.current = highlight.seq
+    if (highlight.key === mirrorKey && sectionRef.current) {
+      pulseMirrorWindow(sectionRef.current)
+    }
+  }, [highlight, mirrorKey, sectionRef])
   // "Send all to the hub" reaches every open window; the front one leaves first.
   const dockRequest = useAgentHubMirrorsDockRequest()
   const seenDockRequest = useRef(dockRequest)
@@ -214,6 +222,30 @@ export function AgentHubMirrorWindow({
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
+        {familyRoot ? (
+          // A disclosure arrow by the title folds the workers bar away, like a tree row.
+          <button
+            type="button"
+            aria-label={
+              familyBarShown
+                ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
+                : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
+            }
+            title={
+              familyBarShown
+                ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
+                : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
+            }
+            aria-expanded={familyBarShown}
+            onClick={() => toggleAgentHubFamilyBar(familyRoot)}
+            className="-mr-1 -ml-1.5 grid size-4 shrink-0 place-items-center rounded text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          >
+            <ChevronRight
+              data-open={familyBarShown}
+              className="size-3 transition-transform duration-150 data-[open=true]:rotate-90"
+            />
+          </button>
+        ) : null}
         <HubStateIndicator kind={kind} />
         <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
         <div className="min-w-0 flex-1 text-[12.5px]">
@@ -224,30 +256,6 @@ export function AgentHubMirrorWindow({
         </div>
         {/* The window's controls sit close together, apart from the title. */}
         <div className="flex shrink-0 items-center gap-0.5">
-          {familyRoot ? (
-            <button
-              type="button"
-              aria-label={
-                familyBarShown
-                  ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
-                  : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
-              }
-              title={
-                familyBarShown
-                  ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
-                  : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
-              }
-              aria-pressed={familyBarShown}
-              onClick={() => toggleAgentHubFamilyBar(familyRoot)}
-              className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-            >
-              {familyBarShown ? (
-                <PanelTopClose className="size-3.5" />
-              ) : (
-                <PanelTopOpen className="size-3.5" />
-              )}
-            </button>
-          ) : null}
           <AgentHubDimToggle appearance="mirror" />
           <button
             type="button"
