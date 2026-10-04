@@ -21708,9 +21708,10 @@
       "answerInTerminal": "Answer this one in its terminal: pop it out or open it in Orca."
     },
     "row": {
-      "jump": "Open in Orca",
+      "jump": "Jump to this terminal",
       "popOut": "Pop out",
-      "markRead": "Mark read"
+      "markRead": "Mark read",
+      "currentWorkspace": "In the workspace you have open"
     },
     "mirror": {
       "close": "Close mirror",

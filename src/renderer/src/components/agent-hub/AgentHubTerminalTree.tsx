@@ -68,6 +68,7 @@ function TreeRow({
         agentType={row.thread?.agentType ?? null}
         title={row.title}
         subtitle={rowSubtitle(row)}
+        worktreeId={row.worktree.id}
         chips={
           kind === 'ask' && row.thread ? (
             <HubChip tone="ask">{agentHubStateWord(row.thread)}</HubChip>

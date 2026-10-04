@@ -1,6 +1,7 @@
 import { ArrowUpRight, CheckCheck, PictureInPicture2 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
 import type { AgentType } from '../../../../shared/agent-status-types'
 import { HubAvatar, HubStateIndicator, type AgentHubIndicatorKind } from './AgentHubAtoms'
 
@@ -48,6 +49,7 @@ export function AgentHubRow({
   time,
   selected,
   indent = false,
+  worktreeId,
   onPopout,
   onJump,
   onMarkRead
@@ -61,18 +63,30 @@ export function AgentHubRow({
   time?: string
   selected: boolean
   indent?: boolean
+  /** The row's workspace; a row in the one already on screen reads as quieter. */
+  worktreeId?: string
   onPopout: () => void
   onJump: () => void
   onMarkRead?: () => void
 }): React.JSX.Element {
+  const current = useAppStore(
+    (s) =>
+      worktreeId !== undefined && s.activeView === 'terminal' && s.activeWorktreeId === worktreeId
+  )
   return (
     <div
       role="option"
       aria-selected={selected}
       data-selected={selected}
       data-indent={indent}
+      data-current={current}
       data-agent-hub-row
-      className="jump-palette-item group/row flex cursor-pointer items-center gap-2.5 rounded-[10px] border border-transparent px-2 py-[7px] hover:bg-foreground/[0.03] data-[indent=true]:ml-3.5"
+      title={
+        current
+          ? translate('agentHub.row.currentWorkspace', 'In the workspace you have open')
+          : undefined
+      }
+      className="jump-palette-item group/row flex cursor-pointer items-center gap-2.5 rounded-[10px] border border-transparent px-2 py-[7px] transition-opacity hover:bg-foreground/[0.03] data-[current=true]:opacity-55 data-[indent=true]:ml-3.5 data-[current=true]:hover:opacity-100 data-[current=true]:data-[selected=true]:opacity-100"
       onClick={onPopout}
     >
       <span className="grid w-3 shrink-0 place-items-center">
@@ -104,7 +118,10 @@ export function AgentHubRow({
           <RowAction label={translate('agentHub.row.popOut', 'Pop out')} onClick={onPopout}>
             <PictureInPicture2 className="size-[13px]" />
           </RowAction>
-          <RowAction label={translate('agentHub.row.jump', 'Open in Orca')} onClick={onJump}>
+          <RowAction
+            label={translate('agentHub.row.jump', 'Jump to this terminal')}
+            onClick={onJump}
+          >
             <ArrowUpRight className="size-[13px]" />
           </RowAction>
         </span>

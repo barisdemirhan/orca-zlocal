@@ -173,6 +173,7 @@ export function AgentHubInboxBody({
               snippet={lastMessage(thread)}
               time={formatShortTimeAgo(agentHubStateSince(thread), now)}
               selected={actions.isSelected(thread)}
+              worktreeId={thread.worktree.id}
               onPopout={() => actions.onPopout(thread)}
               onJump={() => actions.onJump(thread)}
               onMarkRead={() => onMarkRead([thread.paneKey])}
@@ -210,6 +211,7 @@ function RunningRow({
         chips={tool ? <HubChip>{tool}</HubChip> : null}
         time={formatShortTimeAgo(agentHubTurnSince(thread), now)}
         selected={actions.isSelected(thread)}
+        worktreeId={thread.worktree.id}
         onPopout={() => actions.onPopout(thread)}
         onJump={() => actions.onJump(thread)}
       />
