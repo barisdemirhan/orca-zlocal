@@ -33,7 +33,12 @@ describe('agent hub lineage', () => {
     expect(paneKeys(lineage.childrenOf(PANE_KEY).workers).sort()).toEqual([PANE_KEY_2, PANE_KEY_3])
     expect(paneKeys(lists.working)).toEqual([PANE_KEY])
     expect(paneKeys(lists.needsYou)).toEqual([PANE_KEY_3])
-    expect(agentHubCounts(lists)).toEqual({ needsYou: 1, working: 2, finished: 0 })
+    expect(agentHubCounts(lists)).toEqual({
+      needsYou: 1,
+      working: 1,
+      finished: 0,
+      nestedWorking: 1
+    })
     expect(paneKeys(visibleAgentHubRunningThreads(lists.working, lineage, new Set()))).toEqual([
       PANE_KEY
     ])

@@ -2,6 +2,7 @@ import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubDockEdge } from '../../../../shared/agent-hub-settings'
+import { HubNestedCount } from './AgentHubAtoms'
 import { agentHubNotchShape } from './agent-hub-dock-geometry'
 import type { AgentHubCounts } from './agent-hub-lists'
 
@@ -36,10 +37,13 @@ function CounterIndicator({
 /** "● 2" — always shown, dimmed at zero, so the dock reads the same whether busy or idle. */
 export function DockCounter({
   kind,
-  value
+  value,
+  nested
 }: {
   kind: 'ask' | 'work' | 'done'
   value: number
+  /** Workers running under the counted agents, as "+N". */
+  nested?: number
 }): React.JSX.Element {
   return (
     <span
@@ -47,7 +51,10 @@ export function DockCounter({
       className="flex shrink-0 items-center gap-1 font-mono text-[10.5px] text-muted-foreground tabular-nums data-[zero=true]:opacity-45 group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col"
     >
       <CounterIndicator kind={kind} active={value > 0} />
-      {value}
+      <span>
+        {value}
+        <HubNestedCount value={nested} />
+      </span>
     </span>
   )
 }
@@ -56,7 +63,7 @@ export function DockCounter({
 export function DockCounters({ counts }: { counts: AgentHubCounts }): React.JSX.Element {
   return (
     <>
-      <DockCounter kind="work" value={counts.working} />
+      <DockCounter kind="work" value={counts.working} nested={counts.nestedWorking} />
       <DockCounter kind="ask" value={counts.needsYou} />
       <DockCounter kind="done" value={counts.finished} />
     </>
@@ -81,18 +88,21 @@ export function DockCounterGroup({
     {
       kind: 'work',
       value: counts.working,
+      nested: counts.nestedWorking,
       tab: 'running',
       label: translate('agentHub.tab.running', 'Running')
     },
     {
       kind: 'ask',
       value: counts.needsYou,
+      nested: 0,
       tab: 'inbox',
       label: translate('agentHub.dock.waiting', 'Waiting on you')
     },
     {
       kind: 'done',
       value: counts.finished,
+      nested: 0,
       tab: 'inbox',
       label: translate('agentHub.dock.finished', 'Finished')
     }
@@ -108,11 +118,11 @@ export function DockCounterGroup({
             className={DOCK_COUNT_BUTTON}
             onClick={() => onOpenTab(item.tab)}
           >
-            <DockCounter kind={item.kind} value={item.value} />
+            <DockCounter kind={item.kind} value={item.value} nested={item.nested} />
           </DockButton>
         ) : (
           <span key={item.kind} className={DOCK_COUNT_BUTTON}>
-            <DockCounter kind={item.kind} value={item.value} />
+            <DockCounter kind={item.kind} value={item.value} nested={item.nested} />
           </span>
         )
       )}

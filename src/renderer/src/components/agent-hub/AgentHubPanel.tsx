@@ -5,6 +5,7 @@ import { isEditableTarget } from '@/lib/editable-target'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { HubNestedCount } from './AgentHubAtoms'
 import type { AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubPanelFooter, agentHubPopoutKeys } from './AgentHubPanelFooter'
 import {
@@ -201,7 +202,7 @@ export function AgentHubPanel({
 
   const counts: Record<AgentHubTab, number> = {
     inbox: needsYou.length + lists.finished.length,
-    running: lists.working.length + lists.nestedWorking,
+    running: lists.working.length,
     all: terminalCount
   }
 
@@ -237,6 +238,7 @@ export function AgentHubPanel({
                 className="font-mono text-[10.5px] text-muted-foreground/70 group-data-[active=true]/tab:text-muted-foreground data-[ask=true]:text-agent-question group-data-[active=true]/tab:data-[ask=true]:text-agent-question"
               >
                 {counts[value]}
+                {value === 'running' ? <HubNestedCount value={lists.nestedWorking} /> : null}
               </span>
             </button>
           ))}
@@ -272,7 +274,7 @@ export function AgentHubPanel({
         {tab === 'running' ? (
           <AgentHubRunningBody
             working={lists.working}
-            totalWorking={counts.running}
+            nestedWorking={lists.nestedWorking}
             now={now}
             lineage={lineage}
             expandedKeys={expandedKeys}

@@ -237,15 +237,15 @@ function RunningRow({
 
 export function AgentHubRunningBody({
   working,
-  totalWorking,
+  nestedWorking,
   now,
   lineage,
   expandedKeys,
   actions
 }: {
   working: AgentPaneThread[]
-  /** Rows plus the workers folded under them. */
-  totalWorking: number
+  /** Workers folded under the rows. */
+  nestedWorking: number
   now: number
   lineage: AgentHubLineage
   expandedKeys: ReadonlySet<string>
@@ -264,7 +264,8 @@ export function AgentHubRunningBody({
     <>
       <HubSection
         label={translate('agentHub.running.working', 'Working')}
-        count={totalWorking}
+        count={working.length}
+        nested={nestedWorking}
         action={
           <span className="text-[11px] font-medium text-muted-foreground/70">
             {translate('agentHub.running.longestFirst', 'longest first')}

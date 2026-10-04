@@ -21836,8 +21836,13 @@
     },
     "statusBarMenuItem": "Agent Hub",
     "dim": {
-      "off": "Stop dimming behind floating windows",
-      "on": "Dim everything behind floating windows"
+      "modeOff": "Don't dim",
+      "modeOn": "Dim behind floating windows",
+      "modeUntilClick": "Dim until I click behind them",
+      "title": "Dim behind floating windows"
+    },
+    "count": {
+      "nested": "{{value0}} more under them"
     }
   },
   "workspace": {

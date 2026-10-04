@@ -10,6 +10,12 @@ export type AgentHubDefaultTab = 'inbox' | 'running' | 'all'
 
 export type AgentHubDockSize = 'small' | 'medium' | 'large'
 
+/**
+ * Dimming behind floating windows: none, always while one is open, or until a click behind
+ * them lifts it (a click on a floating window brings it back).
+ */
+export type AgentHubFloatingDimMode = 'off' | 'on' | 'untilClick'
+
 /** Agent Hub's settings, kept out of global-settings-types.ts (at its line budget). */
 export type AgentHubSettings = {
   /** Experimental: Agent Hub — every agent and terminal in one popover, with inline answers. */
@@ -21,6 +27,8 @@ export type AgentHubSettings = {
   /** Agent Hub dock: how large it is drawn. */
   agentHubDockSize?: AgentHubDockSize
   /** Dim everything behind floating windows (mirrors, the floating workspace) to spotlight them. */
+  agentHubFloatingDimMode?: AgentHubFloatingDimMode
+  /** Earlier on/off form of the dim; read when no mode is set (on meant until a click behind). */
   agentHubFloatingDim?: boolean
   /** Agent Hub dock: stay out of sight while no agent is working, waiting, or unread. */
   agentHubDockAutoHide?: boolean
@@ -47,6 +55,19 @@ export const AGENT_HUB_FINISHED_CLEAR_MINUTES = [0, 15, 30, 60] as const
 
 /** Muting from the dock lasts this long. */
 export const AGENT_HUB_MUTE_DURATION_MS = 2 * 60 * 60 * 1000
+
+export function agentHubFloatingDimMode(
+  settings:
+    | Pick<AgentHubSettings, 'agentHubFloatingDimMode' | 'agentHubFloatingDim'>
+    | null
+    | undefined
+): AgentHubFloatingDimMode {
+  const mode = settings?.agentHubFloatingDimMode
+  if (mode === 'off' || mode === 'on' || mode === 'untilClick') {
+    return mode
+  }
+  return settings?.agentHubFloatingDim === true ? 'untilClick' : 'off'
+}
 
 export function normalizeAgentHubPlacement(value: unknown): AgentHubPlacement {
   return value === 'status-bar' ? 'status-bar' : 'dock'

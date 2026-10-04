@@ -16,7 +16,12 @@ describe('buildAgentHubLists', () => {
     expect(lists.needsYou.map((thread) => thread.paneKey)).toEqual([PANE_KEY])
     expect(lists.working.map((thread) => thread.paneKey)).toEqual([PANE_KEY_2])
     expect(lists.finished.map((thread) => thread.paneKey)).toEqual([PANE_KEY_3])
-    expect(agentHubCounts(lists)).toEqual({ needsYou: 1, working: 1, finished: 1 })
+    expect(agentHubCounts(lists)).toEqual({
+      needsYou: 1,
+      working: 1,
+      finished: 1,
+      nestedWorking: 0
+    })
   })
 
   it('treats a blocked agent as needing the user', () => {
@@ -32,7 +37,12 @@ describe('buildAgentHubLists', () => {
       threadsFor([{ paneKey: PANE_KEY, state: 'done', at: 1_000, acknowledgedAt: 2_000 }])
     )
 
-    expect(agentHubCounts(lists)).toEqual({ needsYou: 0, working: 0, finished: 0 })
+    expect(agentHubCounts(lists)).toEqual({
+      needsYou: 0,
+      working: 0,
+      finished: 0,
+      nestedWorking: 0
+    })
   })
 
   it('puts the longest-waiting question first and the newest result first', () => {

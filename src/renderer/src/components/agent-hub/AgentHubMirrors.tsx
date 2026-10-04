@@ -18,6 +18,7 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { orderAgentHubTray } from './agent-hub-mirror-tray'
+import { useFloatingPanelInFront } from './use-floating-panel-in-front'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
 import {
   closeAgentHubMirror,
@@ -76,6 +77,7 @@ export function AgentHubMirrors({
 }): React.JSX.Element | null {
   const { windows, chips } = useAgentHubMirrors()
   const [slots, setSlots] = useState<ReadonlyMap<string, HTMLElement>>(() => new Map())
+  const panelInFront = useFloatingPanelInFront(windows.length)
   const onSlot = useCallback((key: string, element: HTMLElement | null): void => {
     setSlots((current) => {
       if (current.get(key) === element || (!element && !current.has(key))) {
@@ -181,8 +183,10 @@ export function AgentHubMirrors({
   return createPortal(
     <div
       data-agent-hub-mirrors
+      data-behind={panelInFront}
       data-hidden={hidden}
-      className="pointer-events-none fixed inset-0 z-[46] data-[hidden=true]:invisible"
+      // Why z-[44] behind: under the floating workspace (45), still over the dim (43).
+      className="pointer-events-none fixed inset-0 z-[46] data-[behind=true]:z-[44] data-[hidden=true]:invisible"
     >
       {stableWindows.map((target) => {
         const key = agentHubPaneTargetKey(target)

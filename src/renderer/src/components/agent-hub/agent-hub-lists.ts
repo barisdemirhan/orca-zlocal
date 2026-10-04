@@ -20,7 +20,10 @@ export type AgentHubLists = Record<AgentHubSection, AgentPaneThread[]> & {
  */
 export const AGENT_HUB_APPROVAL_GRACE_MS = 8_000
 
-export type AgentHubCounts = Record<AgentHubSection, number>
+export type AgentHubCounts = Record<AgentHubSection, number> & {
+  /** Workers running under a working dispatcher; `working` counts the dispatchers. */
+  nestedWorking?: number
+}
 
 /** Classify with the Agents sidebar's own state reading so both surfaces agree. */
 export function agentHubSection(thread: AgentPaneThread): AgentHubSection | null {
@@ -130,8 +133,9 @@ export function buildAgentHubLists(
 export function agentHubCounts(lists: AgentHubLists): AgentHubCounts {
   return {
     needsYou: lists.needsYou.length,
-    working: lists.working.length + lists.nestedWorking,
-    finished: lists.finished.length
+    working: lists.working.length,
+    finished: lists.finished.length,
+    nestedWorking: lists.nestedWorking
   }
 }
 
