@@ -124,18 +124,22 @@ export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.
       return
     }
     setFloatingWindowsSpotlit(true)
-    const onFloating = (event: Event): void => {
-      if (event.target instanceof Element && event.target.closest(FLOATING_WINDOW)) {
+    const noteFloating = (target: EventTarget | null): void => {
+      if (target instanceof Element && target.closest(FLOATING_WINDOW)) {
         setFloatingWindowsSpotlit(true)
       }
     }
-    // Why focus too: a click inside an embedded browser never reaches this document as a pointer
-    // event, but the browser element still takes focus.
+    const onFloating = (event: Event): void => noteFloating(event.target)
+    // Why blur: a click inside a loaded page in an embedded browser reaches this document only as
+    // the window losing focus to that browser element.
+    const onBlur = (): void => noteFloating(document.activeElement)
     window.addEventListener('pointerdown', onFloating, true)
     window.addEventListener('focusin', onFloating, true)
+    window.addEventListener('blur', onBlur)
     return () => {
       window.removeEventListener('pointerdown', onFloating, true)
       window.removeEventListener('focusin', onFloating, true)
+      window.removeEventListener('blur', onBlur)
     }
   }, [mode])
   const visible = mode !== 'off' && anyFloating && (mode === 'on' || spotlit) && !hidden

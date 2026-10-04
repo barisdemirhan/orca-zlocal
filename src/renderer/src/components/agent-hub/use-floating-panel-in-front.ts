@@ -10,21 +10,27 @@ const MIRROR_SURFACE = '[data-agent-hub-mirror], [data-agent-hub-mirror-tray]'
 export function useFloatingPanelInFront(openMirrorCount: number): boolean {
   const [panelInFront, setPanelInFront] = useState(false)
   useEffect(() => {
-    const onUse = (event: Event): void => {
-      if (!(event.target instanceof Element)) {
+    const noteUse = (target: EventTarget | null): void => {
+      if (!(target instanceof Element)) {
         return
       }
-      if (event.target.closest(FLOATING_PANEL)) {
+      if (target.closest(FLOATING_PANEL)) {
         setPanelInFront(true)
-      } else if (event.target.closest(MIRROR_SURFACE)) {
+      } else if (target.closest(MIRROR_SURFACE)) {
         setPanelInFront(false)
       }
     }
+    const onUse = (event: Event): void => noteUse(event.target)
+    // Why blur: a click inside a loaded page in an embedded browser reaches this document only as
+    // the window losing focus to that browser element.
+    const onBlur = (): void => noteUse(document.activeElement)
     window.addEventListener('pointerdown', onUse, true)
     window.addEventListener('focusin', onUse, true)
+    window.addEventListener('blur', onBlur)
     return () => {
       window.removeEventListener('pointerdown', onUse, true)
       window.removeEventListener('focusin', onUse, true)
+      window.removeEventListener('blur', onBlur)
     }
   }, [])
   // A mirror opened from the hub lands in front.
