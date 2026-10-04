@@ -1,5 +1,5 @@
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
-import { threadAgentState } from '../activity/activity-thread-presentation'
+import { activityThreadStatusId } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { readApprovalTool } from './agent-hub-approval'
 
@@ -27,7 +27,7 @@ export type AgentHubCounts = Record<AgentHubSection, number> & {
 
 /** Classify with the Agents sidebar's own state reading so both surfaces agree. */
 export function agentHubSection(thread: AgentPaneThread): AgentHubSection | null {
-  switch (threadAgentState(thread)) {
+  switch (activityThreadStatusId(thread)) {
     case 'waiting':
     case 'blocked':
     case 'permission':
@@ -38,6 +38,7 @@ export function agentHubSection(thread: AgentPaneThread): AgentHubSection | null
     case 'done':
     case 'failed':
     case 'interrupted':
+    case 'unconfirmed':
       return thread.unread ? 'finished' : null
     case 'idle':
     case 'unverifiable':
@@ -143,7 +144,7 @@ export function agentHubCounts(lists: AgentHubLists): AgentHubCounts {
 export type AgentHubIndicatorKind = 'ask' | 'work' | 'done' | 'read' | 'idle'
 
 export function agentHubIndicatorKind(thread: AgentPaneThread): AgentHubIndicatorKind {
-  switch (threadAgentState(thread)) {
+  switch (activityThreadStatusId(thread)) {
     case 'waiting':
     case 'blocked':
     case 'permission':
@@ -154,6 +155,7 @@ export function agentHubIndicatorKind(thread: AgentPaneThread): AgentHubIndicato
     case 'done':
     case 'failed':
     case 'interrupted':
+    case 'unconfirmed':
       return thread.unread ? 'done' : 'read'
     case 'idle':
     case 'unverifiable':
