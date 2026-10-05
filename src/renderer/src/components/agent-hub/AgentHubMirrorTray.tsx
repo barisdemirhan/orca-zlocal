@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronsDownUp } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
@@ -22,6 +22,26 @@ export type AgentHubTrayItem = {
 
 const GAP = 10
 const MARGIN = 8
+// Leaving the tray for a moment (to reach a chip's alert) must not snap it back into a pile.
+const PILE_DELAY_MS = 260
+// A chip is 40px tall and 6px from the next; piled, each one behind peeks out by this much.
+const PILE_PEEK = 6
+const PILE_STEP = 46 - PILE_PEEK
+const PILE_DEPTH = 2
+
+/** Where a chip sits in the pile: tucked behind the one before it, smaller the deeper it is. */
+function pileStyle(index: number, piled: boolean, side: AgentHubAlertSide): React.CSSProperties {
+  const depth = Math.min(index, PILE_DEPTH)
+  const buried = index > PILE_DEPTH
+  const pull = piled && index > 0 ? -(buried ? 46 : PILE_STEP) : 0
+  return {
+    zIndex: 20 - index,
+    // The tray above a bottom dock stacks upward, so the pull is toward the chip below.
+    ...(side === 'top' ? { marginBottom: pull } : { marginTop: pull }),
+    transform: piled ? `scale(${1 - depth * 0.05})` : 'none',
+    opacity: piled && buried ? 0 : 1
+  }
+}
 
 /**
  * Puts the tray beside the hub, lined up with the hub's start (left, or top on a side edge):
@@ -77,6 +97,10 @@ function TrayPlacement({
     }
     const resizes = new ResizeObserver(place)
     resizes.observe(anchor)
+    // The tray itself grows and shrinks as it fans out of its pile.
+    if (trayRef.current) {
+      resizes.observe(trayRef.current)
+    }
     const moves = new MutationObserver(place)
     moves.observe(anchor, { attributes: true, attributeFilter: ['style', 'data-edge'] })
     window.addEventListener('resize', place)
@@ -90,8 +114,8 @@ function TrayPlacement({
 }
 
 /**
- * Minimized mirrors, parked beside the hub: the most urgent nearest it, four at most until the
- * "+N" opens the rest.
+ * Minimized mirrors, parked beside the hub as a pile with the most urgent on top. Pointing at
+ * the pile fans it out: four at most until the "+N" opens the rest.
  */
 export function AgentHubMirrorTray({
   items,
@@ -124,9 +148,31 @@ export function AgentHubMirrorTray({
   onDismissAlert: (id: string) => void
 }): React.JSX.Element | null {
   const [expanded, setExpanded] = useState(false)
+  const [fanned, setFanned] = useState(false)
+  const pileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (pileTimerRef.current) {
+        clearTimeout(pileTimerRef.current)
+      }
+    },
+    []
+  )
+  // With nothing left behind "+N", the next overflow starts folded again.
+  if (expanded && items.length <= AGENT_HUB_TRAY_VISIBLE) {
+    setExpanded(false)
+  }
   const { shown, folded } = foldAgentHubTray(items, expanded)
   if (items.length === 0) {
     return null
+  }
+  const piled = !fanned && shown.length > 1
+  const fan = (): void => {
+    if (pileTimerRef.current) {
+      clearTimeout(pileTimerRef.current)
+      pileTimerRef.current = null
+    }
+    setFanned(true)
   }
   return (
     <div
@@ -134,30 +180,41 @@ export function AgentHubMirrorTray({
       data-agent-hub-mirror-tray
       data-side={side}
       data-hidden={hidden}
-      data-expanded={expanded}
+      data-piled={piled}
+      data-expanded={expanded && !piled}
       inert={hidden}
+      onPointerEnter={fan}
+      onPointerLeave={() => {
+        pileTimerRef.current = setTimeout(() => setFanned(false), PILE_DELAY_MS)
+      }}
+      onFocus={fan}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Nearest the hub first: a tray above the bottom dock stacks upward.
       className="pointer-events-auto fixed flex max-h-[calc(100vh-96px)] flex-col items-start gap-1.5 p-0.5 transition-opacity duration-150 scrollbar-sleek data-[hidden=true]:pointer-events-none data-[hidden=true]:opacity-0 data-[expanded=true]:overflow-y-auto data-[side=top]:flex-col-reverse"
     >
       <TrayPlacement trayRef={trayRef} anchorRef={anchorRef} side={side} />
-      {shown.map((item) => (
-        <AgentHubMirrorChip
+      {shown.map((item, index) => (
+        <div
           key={item.key}
-          chip={item.chip}
-          thread={item.thread}
-          kind={item.kind}
-          location={item.location}
-          alert={item.alert}
-          alertSide={alertSide}
-          onRestore={() => onRestore(item.key)}
-          onReveal={() => onReveal(item)}
-          onClose={() => onClose(item.key)}
-          onOpenAlert={(alert) => onOpenAlert(item.key, alert)}
-          onDismissAlert={onDismissAlert}
-        />
+          style={pileStyle(index, piled, side)}
+          className="relative shrink-0 transition-[margin,transform,opacity] duration-300 ease-out"
+        >
+          <AgentHubMirrorChip
+            chip={item.chip}
+            thread={item.thread}
+            kind={item.kind}
+            location={item.location}
+            alert={item.alert}
+            alertSide={alertSide}
+            onRestore={() => onRestore(item.key)}
+            onReveal={() => onReveal(item)}
+            onClose={() => onClose(item.key)}
+            onOpenAlert={(alert) => onOpenAlert(item.key, alert)}
+            onDismissAlert={onDismissAlert}
+          />
+        </div>
       ))}
-      {folded > 0 || (expanded && items.length > AGENT_HUB_TRAY_VISIBLE) ? (
+      {!piled && (folded > 0 || expanded) ? (
         <button
           type="button"
           aria-expanded={expanded}

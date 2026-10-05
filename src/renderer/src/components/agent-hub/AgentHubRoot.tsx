@@ -44,6 +44,7 @@ import {
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
+import { AgentHubTerminalCount } from './AgentHubTerminalCount'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
 
 type OpenRequest = { tab: AgentHubTab; paneKey: string | null; seq: number }
@@ -103,6 +104,10 @@ function AgentHubPopoverBody({
       initialPaneKey={request.paneKey}
     />
   )
+}
+
+function threadOpenRequest(thread: AgentPaneThread): AgentHubOpenRequest {
+  return { target: paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle), thread }
 }
 
 /** The Agent Hub: counts, popover, live mirror, alerts and shortcuts, on a dock or the status bar. */
@@ -222,10 +227,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       toast(translate('agentHub.toast.nobodyWaiting', 'Nobody is waiting on you'))
       return
     }
-    jump({
-      target: paneTargetFromThread(next, activityThreadRowCopy(next).taskTitle),
-      thread: next
-    })
+    jump(threadOpenRequest(next))
   }, [jump])
 
   useEffect(
@@ -343,6 +345,13 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   onNextWaiting={jumpToNextWaiting}
                   pinned={open}
                   mirrors={{ windows: windows.length, chips: chips.length }}
+                  terminalCount={
+                    <AgentHubTerminalCount
+                      threads={threads}
+                      includeShells={preferences.showShells}
+                      parentOf={lineage.parentOf}
+                    />
+                  }
                   onToggleMirrors={toggleMirrors}
                   onMove={(position) => void updateSettings({ agentHubDockPosition: position })}
                 />
@@ -380,9 +389,19 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
           anchorRef={chips.length > 0 ? trayRef : anchorRef}
           side={side}
           locationOf={(shown) => agentHubLocation(shown.thread, groupNameById)}
-          onOpen={(opened) =>
-            openHub('inbox', opened.kind === 'done' ? null : opened.thread.paneKey)
-          }
+          // A result is read in its terminal, so it opens the mirror; a question opens its card.
+          onOpen={(opened) => {
+            if (opened.kind !== 'done') {
+              openHub('inbox', opened.thread.paneKey)
+              return
+            }
+            dismissAgentHubAlert(opened.id)
+            popout(threadOpenRequest(opened.thread))
+          }}
+          onJump={(shown) => {
+            dismissAgentHubAlert(shown.id)
+            jump(threadOpenRequest(shown.thread))
+          }}
           onDismiss={dismissAgentHubAlert}
         />
       ) : null}

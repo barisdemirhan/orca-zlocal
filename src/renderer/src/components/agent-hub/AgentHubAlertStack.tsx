@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { ArrowUpRight, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
@@ -79,11 +79,13 @@ function AlertCard({
   alert,
   location,
   onOpen,
+  onJump,
   onDismiss
 }: {
   alert: AgentHubAlert
   location: AgentHubLocation
   onOpen: (alert: AgentHubAlert) => void
+  onJump: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
 }): React.JSX.Element {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -116,7 +118,7 @@ function AlertCard({
       onMouseLeave={startTimer}
     >
       <button type="button" className="block w-full text-left" onClick={() => onOpen(alert)}>
-        <span className="flex items-center gap-2.5 pr-6">
+        <span className="flex items-center gap-2.5 pr-12">
           <HubAvatar
             agentType={alert.thread.agentType}
             kind={alert.kind === 'done' ? 'done' : 'ask'}
@@ -142,6 +144,15 @@ function AlertCard({
       </button>
       <button
         type="button"
+        aria-label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
+        title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
+        onClick={() => onJump(alert)}
+        className="absolute top-2 right-8 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+      >
+        <ArrowUpRight className="size-3.5" />
+      </button>
+      <button
+        type="button"
         aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
         onClick={() => onDismiss(alert.id)}
         className="absolute top-2 right-2 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
@@ -162,6 +173,7 @@ export function AgentHubAlertStack({
   side,
   locationOf,
   onOpen,
+  onJump,
   onDismiss
 }: {
   alerts: readonly AgentHubAlert[]
@@ -169,6 +181,8 @@ export function AgentHubAlertStack({
   side: AgentHubAlertSide
   locationOf: (alert: AgentHubAlert) => AgentHubLocation
   onOpen: (alert: AgentHubAlert) => void
+  /** Straight to the terminal in its workspace, past the mirror or card a click opens. */
+  onJump: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
 }): React.JSX.Element {
   const stackRef = useRef<HTMLDivElement>(null)
@@ -178,6 +192,21 @@ export function AgentHubAlertStack({
       placeBesideAnchor(stackRef.current, anchorRef.current, side)
     }
   })
+
+  // The anchor can grow under the stack (the tray fanning out of its pile).
+  useEffect(() => {
+    const anchor = anchorRef.current
+    if (!anchor) {
+      return
+    }
+    const observer = new ResizeObserver(() => {
+      if (stackRef.current) {
+        placeBesideAnchor(stackRef.current, anchor, side)
+      }
+    })
+    observer.observe(anchor)
+    return () => observer.disconnect()
+  }, [anchorRef, side])
 
   // Newest nearest the anchor: last when the stack grows upward, first when it hangs below.
   const ordered = side === 'bottom' ? alerts.toReversed() : alerts
@@ -194,6 +223,7 @@ export function AgentHubAlertStack({
           alert={alert}
           location={locationOf(alert)}
           onOpen={onOpen}
+          onJump={onJump}
           onDismiss={onDismiss}
         />
       ))}

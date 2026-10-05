@@ -15,6 +15,7 @@ import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDockMenu } from './AgentHubDockMenu'
 import {
   DOCK_BUTTON,
+  DOCK_COUNT_BUTTON,
   DockButton,
   DockCounterGroup,
   DockLayer,
@@ -50,6 +51,7 @@ export function AgentHubDock({
   muted,
   pinned,
   mirrors,
+  terminalCount,
   onOpenTab,
   onNextWaiting,
   onToggleMirrors,
@@ -64,6 +66,8 @@ export function AgentHubDock({
   pinned: boolean
   /** Open mirror windows and the ones parked beside the hub. */
   mirrors: { windows: number; chips: number }
+  /** The All terminals count; rendered only while unfolded. */
+  terminalCount: React.ReactNode
   onOpenTab: (tab: AgentHubTab) => void
   onNextWaiting: () => void
   onToggleMirrors: () => void
@@ -208,10 +212,13 @@ export function AgentHubDock({
             <DockButton
               label={translate('agentHub.tab.all', 'All terminals')}
               side={side}
-              className={DOCK_BUTTON}
+              className={DOCK_COUNT_BUTTON}
               onClick={() => onOpenTab('all')}
             >
-              <SquareTerminal className="size-3.5" />
+              <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
+                <SquareTerminal className="size-3.5" />
+                <span className="min-w-[2ch] text-center">{expanded ? terminalCount : null}</span>
+              </span>
             </DockButton>
             <DockButton
               label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}

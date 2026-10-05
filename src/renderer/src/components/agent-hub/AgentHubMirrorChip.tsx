@@ -107,6 +107,10 @@ export function AgentHubMirrorChip({
           side={alertSide}
           locationOf={() => location}
           onOpen={onOpenAlert}
+          onJump={(shown) => {
+            onDismissAlert(shown.id)
+            onReveal()
+          }}
           onDismiss={onDismissAlert}
         />
       ) : null}
