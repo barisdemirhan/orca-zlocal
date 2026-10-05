@@ -47,6 +47,7 @@ import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubCanvas } from './use-agent-hub-canvas'
 import { useAgentHubCanvasWelcome } from './use-agent-hub-canvas-welcome'
 import { useAgentHubLists } from './use-agent-hub-lists'
+import { useAgentHubSessionRestore } from './use-agent-hub-session-restore'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { useAgentHubTabAutoPopoutOnLeave } from './use-agent-hub-tab-auto-popout'
 
@@ -76,6 +77,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const counts = agentHubCounts(lists)
   useAgentHubAlerts(lists, preferences)
   useAgentHubTabAutoPopoutOnLeave(preferences.tabAutoPopout, threads, lineage.parentOf)
+  useAgentHubSessionRestore(preferences.restoreOnLaunch, preferences.canvas)
   const alerts = useAgentHubAlertQueue()
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const updateSettings = useAppStore((s) => s.updateSettings)

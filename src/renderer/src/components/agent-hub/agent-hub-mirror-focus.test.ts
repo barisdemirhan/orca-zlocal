@@ -1,15 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
+import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import {
   closeAgentHubMirror,
   focusAgentHubMirror,
   minimizeAgentHubMirror,
   minimizeAllAgentHubMirrors,
   openAgentHubMirror,
-  readAgentHubMirrorOrigin,
   readAgentHubMirrors,
-  rememberAgentHubMirrorOrigin,
   resetAgentHubMirrorsForTest,
   retargetAgentHubMirror,
   toggleAgentHubMirrorFocus

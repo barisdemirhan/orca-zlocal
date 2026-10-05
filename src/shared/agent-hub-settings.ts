@@ -67,6 +67,8 @@ export type AgentHubSettings = {
   agentHubTabAutoPopout?: boolean
   /** Agent Hub: mirrors live on a page of their own (the canvas) instead of floating over the workspace. */
   agentHubCanvas?: boolean
+  /** Agent Hub: mirrors, the tray and the canvas come back as they were when Orca restarts. */
+  agentHubRestoreOnLaunch?: boolean
 }
 
 export const DEFAULT_AGENT_HUB_DOCK_POSITION: AgentHubDockPosition = { edge: 'bottom', offset: 0.5 }

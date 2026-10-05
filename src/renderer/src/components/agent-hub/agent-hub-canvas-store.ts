@@ -27,7 +27,7 @@ function emit(): void {
   listeners.forEach((listener) => listener())
 }
 
-function subscribe(listener: () => void): () => void {
+export function subscribeAgentHubCanvas(listener: () => void): () => void {
   listeners.add(listener)
   return () => listeners.delete(listener)
 }
@@ -37,7 +37,7 @@ export function isAgentHubCanvasOpen(): boolean {
 }
 
 export function useAgentHubCanvasOpen(): boolean {
-  return useSyncExternalStore(subscribe, isAgentHubCanvasOpen)
+  return useSyncExternalStore(subscribeAgentHubCanvas, isAgentHubCanvasOpen)
 }
 
 /**
@@ -53,6 +53,18 @@ function guardShell(): () => void {
       state.setRightSidebarOpen(false)
     }
   })
+}
+
+/** The mirrors the last leave parked, front first; they come back when the canvas does. */
+export function readAgentHubCanvasParked(): readonly string[] {
+  return parked
+}
+
+/** The last session left the canvas with these mirrors parked: the next visit brings them back. */
+export function rememberAgentHubCanvasParked(keys: readonly string[]): void {
+  if (!open) {
+    parked = keys
+  }
 }
 
 /** The mirrors parked by the last leave return to their places, behind any opened just now. */

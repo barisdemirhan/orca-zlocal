@@ -13,7 +13,7 @@ import {
 } from './agent-hub-floating-arrange'
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { endAgentHubMirrorFocus, readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
-import { keepAgentHubMirrorPlace, readAgentHubMirrorOrigin } from './agent-hub-mirror-store'
+import { keepAgentHubMirrorPlace, readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 
 // Rows of windows this close (px) read as one row when keeping their order.
 const ROW_BAND = 120

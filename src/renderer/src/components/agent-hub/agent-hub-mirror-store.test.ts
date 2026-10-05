@@ -1,11 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
+  keepAgentHubMirrorPlace,
+  readAgentHubMirrorOrigin,
+  rememberAgentHubMirrorOrigin
+} from './agent-hub-mirror-places'
+import {
   closeAgentHubMirror,
   closeAgentHubMirrorChip,
   closeAgentHubMirrorChipsOfTab,
   focusAgentHubMirror,
-  keepAgentHubMirrorPlace,
+  isAgentHubMirrorStageQuiet,
+  reopenAgentHubMirrors,
   agentHubMirrorWindowCap,
   setAgentHubMirrorWindowCap,
   minimizeAgentHubMirror,
@@ -13,9 +19,7 @@ import {
   openAgentHubMirror,
   openAgentHubMirrors,
   parkAgentHubMirror,
-  readAgentHubMirrorOrigin,
   readAgentHubMirrors,
-  rememberAgentHubMirrorOrigin,
   resetAgentHubMirrorsForTest,
   restoreAgentHubMirror,
   restoreAgentHubMirrors,
@@ -164,5 +168,58 @@ describe('agent hub mirror store', () => {
       openAgentHubMirror(target(id))
     }
     expect(readAgentHubMirrors().windows).toHaveLength(6)
+  })
+
+  describe('putting back the mirrors of the last session', () => {
+    const reopened = (tabId: string, minimized = false) => ({
+      target: target(tabId),
+      minimized,
+      minimizedAt: 1,
+      place: { geometry: { x: 10, y: 20, width: 640, height: 400 }, kept: true }
+    })
+
+    it('opens windows back to front and parks the chips, each at its place', () => {
+      reopenAgentHubMirrors([reopened('tab-p', true), reopened('tab-a'), reopened('tab-b')])
+
+      expect(windowKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
+      expect(chipKeys()).toEqual(['tab-p:leaf'])
+      expect(readAgentHubMirrorOrigin('tab-b:leaf')).toEqual({
+        x: 10,
+        y: 20,
+        width: 640,
+        height: 400
+      })
+      // Its place was the user's: it outlives closing the mirror.
+      closeAgentHubMirror('tab-b:leaf')
+      expect(readAgentHubMirrorOrigin('tab-b:leaf')).not.toBeNull()
+    })
+
+    it('parks the back-most windows past a lowered cap', () => {
+      setAgentHubMirrorWindowCap(2)
+      reopenAgentHubMirrors(['tab-a', 'tab-b', 'tab-c', 'tab-d'].map((tabId) => reopened(tabId)))
+
+      expect(windowKeys()).toEqual(['tab-c:leaf', 'tab-d:leaf'])
+      expect(chipKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
+    })
+
+    it('stays quiet until the user picks a mirror', () => {
+      reopenAgentHubMirrors([reopened('tab-a'), reopened('tab-b')])
+      expect(isAgentHubMirrorStageQuiet()).toBe(true)
+
+      // Parking or closing one is not picking one.
+      minimizeAgentHubMirror('tab-a:leaf')
+      expect(isAgentHubMirrorStageQuiet()).toBe(true)
+
+      focusAgentHubMirror('tab-b:leaf')
+      expect(isAgentHubMirrorStageQuiet()).toBe(false)
+    })
+
+    it('goes behind mirrors opened since launch, which keep the keyboard', () => {
+      openAgentHubMirror(target('tab-new'))
+      reopenAgentHubMirrors([reopened('tab-a'), reopened('tab-new')])
+
+      expect(windowKeys()).toEqual(['tab-a:leaf', 'tab-new:leaf'])
+      expect(isAgentHubMirrorStageQuiet()).toBe(false)
+    })
   })
 })

@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
@@ -6,7 +6,10 @@ import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
 import { AgentHubAlertStack, type AgentHubAlertSide } from './AgentHubAlertStack'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
-import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
+import {
+  isAgentHubMirrorStageQuiet,
+  type AgentHubMirrorChip as ChipState
+} from './agent-hub-mirror-store'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 
@@ -39,6 +42,8 @@ export function AgentHubMirrorChip({
   onDismissAlert: (id: string) => void
 }): React.JSX.Element {
   const chipRef = useRef<HTMLDivElement>(null)
+  // Put back at launch: it is simply there, without the arriving animation.
+  const [restored] = useState(isAgentHubMirrorStageQuiet)
   const title = useAgentHubTargetTitle(chip.target)
 
   return (
@@ -51,6 +56,7 @@ export function AgentHubMirrorChip({
           value0: title
         })}
         data-agent-hub-mirror-chip
+        data-restored={restored}
         data-kind={kind}
         onClick={(event) => {
           if (!(event.target instanceof Element && event.target.closest('button'))) {
@@ -65,7 +71,7 @@ export function AgentHubMirrorChip({
         }}
         // Why a mini header: the chip should say whose terminal it is, where, and let it go.
         // The ask tint is a layer over the opaque card, so piled chips never show through.
-        className="group/chip flex h-10 w-[280px] shrink-0 animate-in cursor-pointer items-center gap-2 rounded-xl border border-foreground/20 bg-popover pr-1 pl-2 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-95 hover:border-foreground/35 data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-linear-to-r data-[kind=ask]:from-agent-question/10 data-[kind=ask]:to-agent-question/10 data-[kind=done]:border-status-success/50"
+        className="group/chip flex h-10 w-[280px] shrink-0 animate-in cursor-pointer items-center gap-2 rounded-xl border border-foreground/20 bg-popover pr-1 pl-2 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-95 hover:border-foreground/35 data-[restored=true]:animate-none data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-linear-to-r data-[kind=ask]:from-agent-question/10 data-[kind=ask]:to-agent-question/10 data-[kind=done]:border-status-success/50"
       >
         <HubStateIndicator kind={kind} />
         <HubAvatar agentType={chip.target.agentType} kind={thread ? kind : null} />

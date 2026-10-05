@@ -27,10 +27,9 @@ import {
   agentHubMirrorFocusGeometry,
   type AgentHubMirrorGeometry
 } from './agent-hub-mirror-geometry'
+import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import {
   openAgentHubMirror,
-  readAgentHubMirrorOrigin,
-  rememberAgentHubMirrorOrigin,
   resetAgentHubMirrorsForTest,
   toggleAgentHubMirrorFocus
 } from './agent-hub-mirror-store'

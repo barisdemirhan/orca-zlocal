@@ -331,6 +331,18 @@ function AgentHubOptions({
         checked={preferences.canvas}
         onChange={() => updateSettings({ agentHubCanvas: !preferences.canvas })}
       />
+      <SettingsSwitchRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.restoreOnLaunch',
+          'Restore mirrors and the canvas on launch'
+        )}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.restoreOnLaunchCopy',
+          'Mirrors, the tray and the canvas come back as you left them when Orca restarts. A mirror whose terminal was closed is left out.'
+        )}
+        checked={preferences.restoreOnLaunch}
+        onChange={() => updateSettings({ agentHubRestoreOnLaunch: !preferences.restoreOnLaunch })}
+      />
     </div>
   )
 }

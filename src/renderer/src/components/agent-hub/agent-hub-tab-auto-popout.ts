@@ -1,14 +1,23 @@
 import { useSyncExternalStore } from 'react'
 import type { AgentHubGroupNode, AgentHubTerminalRow } from './agent-hub-terminal-tree'
 
-// Terminal tabs whose toggle is on. Kept for the session only: tab ids do not outlive a restart
-// of their terminals in a way worth persisting, and the toggle is one click to set again.
+// Terminal tabs whose toggle is on; they come back after a restart (see agent-hub-session-restore).
 let autoTabs: ReadonlySet<string> = new Set()
 const listeners = new Set<() => void>()
 
-function subscribe(listener: () => void): () => void {
+export function subscribeAgentHubTabAutoPopouts(listener: () => void): () => void {
   listeners.add(listener)
   return () => listeners.delete(listener)
+}
+
+export function readAgentHubTabAutoPopouts(): ReadonlySet<string> {
+  return autoTabs
+}
+
+/** Sets every toggle at once, as the last session left them. */
+export function setAgentHubTabAutoPopouts(tabIds: readonly string[]): void {
+  autoTabs = new Set(tabIds)
+  listeners.forEach((listener) => listener())
 }
 
 export function isAgentHubTabAutoPopout(tabId: string): boolean {
@@ -28,7 +37,7 @@ export function toggleAgentHubTabAutoPopout(tabId: string): void {
 export function useIsAgentHubTabAutoPopout(tabId: string): boolean {
   const isOn = (): boolean => autoTabs.has(tabId)
   // Why the server snapshot: tab-strip tests render tabs to static markup.
-  return useSyncExternalStore(subscribe, isOn, isOn)
+  return useSyncExternalStore(subscribeAgentHubTabAutoPopouts, isOn, isOn)
 }
 
 /** Test seam: start every case with no tab toggled. */

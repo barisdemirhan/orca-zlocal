@@ -31,6 +31,7 @@ export type AgentHubPreferences = {
   defaultTab: AgentHubDefaultTab
   tabAutoPopout: boolean
   canvas: boolean
+  restoreOnLaunch: boolean
 }
 
 /** The hub's settings with defaults applied, so profiles saved before a key existed read sanely. */
@@ -51,7 +52,8 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       mirrorWindowCap: s.settings?.agentHubMirrorWindowCap,
       defaultTab: s.settings?.agentHubDefaultTab,
       tabAutoPopout: s.settings?.agentHubTabAutoPopout,
-      canvas: s.settings?.agentHubCanvas
+      canvas: s.settings?.agentHubCanvas,
+      restoreOnLaunch: s.settings?.agentHubRestoreOnLaunch
     }))
   )
   return useMemo(
@@ -70,7 +72,8 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       mirrorWindowCap: normalizeAgentHubMirrorWindowCap(raw.mirrorWindowCap),
       defaultTab: normalizeAgentHubDefaultTab(raw.defaultTab),
       tabAutoPopout: raw.tabAutoPopout === true,
-      canvas: raw.canvas !== false
+      canvas: raw.canvas !== false,
+      restoreOnLaunch: raw.restoreOnLaunch !== false
     }),
     [raw]
   )

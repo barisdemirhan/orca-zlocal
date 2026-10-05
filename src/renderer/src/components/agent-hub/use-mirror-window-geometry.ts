@@ -14,9 +14,9 @@ import {
 import {
   keepAgentHubMirrorPlace,
   readAgentHubMirrorOrigin,
-  readAgentHubMirrors,
   rememberAgentHubMirrorOrigin
-} from './agent-hub-mirror-store'
+} from './agent-hub-mirror-places'
+import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
 import { agentHubPaneTargetKey } from './agent-hub-pane-target'
 import { useMirrorWindowFocus } from './use-mirror-window-focus'

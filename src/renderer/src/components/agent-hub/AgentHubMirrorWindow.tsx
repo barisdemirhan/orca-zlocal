@@ -24,6 +24,7 @@ import { AgentHubMirrorFocusShade } from './AgentHubMirrorFocusShade'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import {
+  isAgentHubMirrorStageQuiet,
   requestAgentHubMirrorsDock,
   useAgentHubMirrorHighlight,
   useAgentHubMirrorsDockRequest
@@ -112,6 +113,8 @@ export function AgentHubMirrorWindow({
     surface === 'portal'
   )
   const [gaveUp, setGaveUp] = useState(false)
+  // Put back at launch: it is simply there, without the opening animation.
+  const [restored] = useState(isAgentHubMirrorStageQuiet)
   const [leaving, setLeaving] = useState(false)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Fades the window out before it closes or shrinks into its chip.
@@ -202,10 +205,11 @@ export function AgentHubMirrorWindow({
       data-settling={settling}
       data-focus={focus ?? undefined}
       data-leaving={leaving}
+      data-restored={restored}
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[settling=true]:transition-[left,top,width,height] data-[settling=true]:duration-300 data-[settling=true]:ease-out"
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none data-[settling=true]:transition-[left,top,width,height] data-[settling=true]:duration-300 data-[settling=true]:ease-out"
       style={{
         left: geometry.x,
         top: geometry.y,

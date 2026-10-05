@@ -32,7 +32,8 @@ import {
   restoreAgentHubMirror,
   retargetAgentHubMirror,
   setAgentHubMirrorWindowCap,
-  useAgentHubMirrors
+  useAgentHubMirrors,
+  useAgentHubMirrorStageQuiet
 } from './agent-hub-mirror-store'
 import {
   agentHubPaneTargetKey,
@@ -89,6 +90,8 @@ export function AgentHubMirrors({
   onOpenCard: (paneKey: string) => void
 }): React.JSX.Element | null {
   const { windows, chips } = useAgentHubMirrors()
+  // Mirrors put back at launch take the keyboard from nobody until the user picks one.
+  const quiet = useAgentHubMirrorStageQuiet()
   const windowCap = useAppStore((s) =>
     normalizeAgentHubMirrorWindowCap(s.settings?.agentHubMirrorWindowCap)
   )
@@ -161,11 +164,11 @@ export function AgentHubMirrors({
             tabId: target.tab.id,
             paneKey,
             // Only the front window's pane takes keyboard focus on arrival.
-            active: index === windows.length - 1 && !hubOpen
+            active: index === windows.length - 1 && !hubOpen && !quiet
           }
         ]
       }),
-    [windows, slots, surfaces, hubOpen]
+    [windows, slots, surfaces, hubOpen, quiet]
   )
   // Why layout: publish before paint so the pane moves in the same frame the window opens.
   useLayoutEffect(() => {
