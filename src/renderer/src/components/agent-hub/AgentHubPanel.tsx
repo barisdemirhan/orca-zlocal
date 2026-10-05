@@ -79,6 +79,7 @@ export function AgentHubPanel({
   onJump,
   onOpen,
   onPopout,
+  onPopoutAll,
   onMarkRead,
   onClose,
   initialTab = 'inbox',
@@ -96,6 +97,8 @@ export function AgentHubPanel({
   onOpen: (request: AgentHubOpenRequest) => void
   /** The pop-out button and Alt+Enter: opens the mirror and keeps the hub open. */
   onPopout: (request: AgentHubOpenRequest) => void
+  /** "Pop out all" on the Running tab: every listed agent's mirror at once. */
+  onPopoutAll: (requests: AgentHubOpenRequest[]) => void
   onMarkRead: (paneKeys: string[]) => void
   onClose: () => void
   initialTab?: AgentHubTab
@@ -300,6 +303,7 @@ export function AgentHubPanel({
             lineage={lineage}
             expandedKeys={expandedKeys}
             actions={threadActions}
+            onPopoutAll={() => onPopoutAll(items.map(({ target, thread }) => ({ target, thread })))}
           />
         ) : null}
         {listsTerminals ? (

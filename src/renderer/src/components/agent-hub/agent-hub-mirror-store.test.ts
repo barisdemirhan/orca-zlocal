@@ -9,6 +9,7 @@ import {
   minimizeAgentHubMirror,
   minimizeAllAgentHubMirrors,
   openAgentHubMirror,
+  openAgentHubMirrors,
   readAgentHubMirrorOrigin,
   readAgentHubMirrors,
   rememberAgentHubMirrorOrigin,
@@ -123,5 +124,13 @@ describe('agent hub mirror store', () => {
     minimizeAgentHubMirror('tab-b:leaf')
     closeAgentHubMirrorChip('tab-b:leaf')
     expect(readAgentHubMirrorOrigin('tab-b:leaf')).toEqual(place)
+  })
+
+  it('opens many panes at once: windows up to the cap, the first in front, the rest parked', () => {
+    openAgentHubMirror(target('tab-old'))
+    openAgentHubMirrors(['a', 'b', 'c', 'd', 'e', 'f'].map((id) => target(`tab-${id}`)))
+
+    expect(windowKeys()).toEqual(['tab-d:leaf', 'tab-c:leaf', 'tab-b:leaf', 'tab-a:leaf'])
+    expect(chipKeys().toSorted()).toEqual(['tab-e:leaf', 'tab-f:leaf', 'tab-old:leaf'])
   })
 })

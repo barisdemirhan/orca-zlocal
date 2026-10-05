@@ -93,6 +93,26 @@ export function openAgentHubMirror(target: AgentHubPaneTarget): void {
   }
 }
 
+/**
+ * Opens every pane at once, the first in front: as many windows as the cap allows, the rest
+ * parked in the tray. Windows already open that are not among the first give way.
+ */
+export function openAgentHubMirrors(targets: readonly AgentHubPaneTarget[]): void {
+  let next = state
+  for (const target of targets.slice(MAX_AGENT_HUB_MIRROR_WINDOWS)) {
+    const key = keyOf(target)
+    if (!next.windows.some((open) => keyOf(open) === key)) {
+      next = { ...next, chips: withChip(next.chips, target) }
+    }
+  }
+  for (const target of targets.slice(0, MAX_AGENT_HUB_MIRROR_WINDOWS).toReversed()) {
+    next = showWindow(next.windows, next.chips, target)
+  }
+  if (next !== state) {
+    emit(next)
+  }
+}
+
 function subscribeHighlight(listener: () => void): () => void {
   highlightListeners.add(listener)
   return () => highlightListeners.delete(listener)

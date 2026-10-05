@@ -23,6 +23,7 @@ type AgentHubPopoverBodyProps = {
   onJump: (request: AgentHubOpenRequest) => void
   onOpen: (request: AgentHubOpenRequest) => void
   onPopout: (request: AgentHubOpenRequest) => void
+  onPopoutAll: (requests: AgentHubOpenRequest[]) => void
   onClose: () => void
 }
 
@@ -39,6 +40,7 @@ function AgentHubPopoverBody({
   onJump,
   onOpen,
   onPopout,
+  onPopoutAll,
   onClose
 }: AgentHubPopoverBodyProps): React.JSX.Element {
   const tree = useAgentHubTerminalTree(threads, includeShells, lineage.parentOf)
@@ -57,6 +59,7 @@ function AgentHubPopoverBody({
       onJump={onJump}
       onOpen={onOpen}
       onPopout={onPopout}
+      onPopoutAll={onPopoutAll}
       onMarkRead={acknowledgeAgents}
       onClose={onClose}
       initialTab={request.tab}

@@ -27,7 +27,12 @@ import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock
 import type { AgentHubTab } from './agent-hub-keys'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { agentHubCounts } from './agent-hub-lists'
-import { openAgentHubMirror, useAgentHubMirrors } from './agent-hub-mirror-store'
+import { arrangeAgentHubFloatingWindowsOnScreen } from './agent-hub-floating-arrangement'
+import {
+  openAgentHubMirror,
+  openAgentHubMirrors,
+  useAgentHubMirrors
+} from './agent-hub-mirror-store'
 import { agentHubTargetKind, toggleAgentHubMirrors } from './agent-hub-mirror-tray'
 import {
   agentHubLocation,
@@ -173,6 +178,16 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     },
     [closeForNavigation, popout]
   )
+  // All at once, laid out in a grid; the hub closes, since the grid fills the work area.
+  const popoutAll = useCallback(
+    (requests: AgentHubOpenRequest[]) => {
+      closeForNavigation()
+      openAgentHubMirrors(requests.map((request) => request.target))
+      // Why next frame: the arrangement reads the windows' boxes, which mount first.
+      requestAnimationFrame(() => arrangeAgentHubFloatingWindowsOnScreen('grid'))
+    },
+    [closeForNavigation]
+  )
   const leaveAlertFor = (shown: AgentHubAlert, open: typeof jump): void => {
     dismissAgentHubAlert(shown.id)
     open(threadOpenRequest(shown.thread))
@@ -242,6 +257,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       onJump={jump}
       onOpen={openMirror}
       onPopout={popout}
+      onPopoutAll={popoutAll}
       onClose={() => setPopoverOpen(false)}
     />
   )

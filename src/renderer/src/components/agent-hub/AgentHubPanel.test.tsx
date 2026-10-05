@@ -96,6 +96,7 @@ function renderPanel() {
     onJump: vi.fn(),
     onOpen: vi.fn(),
     onPopout: vi.fn(),
+    onPopoutAll: vi.fn(),
     onMarkRead: vi.fn(),
     onClose: vi.fn()
   }
@@ -151,6 +152,21 @@ describe('AgentHubPanel keyboard', () => {
     press(panel.current, 'ArrowDown')
     press(panel.current, 'Enter')
     expect(handlers.onJump.mock.calls[0]?.[0].thread.paneKey).toBe(PANE_KEY)
+  })
+
+  it('pops out every running agent at once from the Running tab', () => {
+    const { handlers, panel } = renderPanel()
+
+    press(panel.current, 'Tab')
+    const button = [...container.querySelectorAll('button')].find(
+      (candidate) => candidate.textContent === 'Pop out all'
+    )
+    act(() => button?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    const [requests] = handlers.onPopoutAll.mock.calls[0] ?? []
+    expect(
+      requests.map((request: { target: { paneKey: string } }) => request.target.paneKey)
+    ).toEqual([PANE_KEY])
   })
 
   it('marks every finished agent read at once', () => {

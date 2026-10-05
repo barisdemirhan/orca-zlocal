@@ -1,5 +1,5 @@
 import type { Ref } from 'react'
-import { CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CheckCheck, ChevronLeft, ChevronRight, PictureInPicture2 } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
@@ -250,7 +250,8 @@ export function AgentHubRunningBody({
   now,
   lineage,
   expandedKeys,
-  actions
+  actions,
+  onPopoutAll
 }: {
   working: AgentPaneThread[]
   /** Workers folded under the rows. */
@@ -259,6 +260,8 @@ export function AgentHubRunningBody({
   lineage: AgentHubLineage
   expandedKeys: ReadonlySet<string>
   actions: AgentHubThreadActions
+  /** Opens every listed agent's mirror at once. */
+  onPopoutAll: () => void
 }): React.JSX.Element {
   if (working.length === 0) {
     return (
@@ -276,9 +279,20 @@ export function AgentHubRunningBody({
         count={working.length}
         nested={nestedWorking}
         action={
-          <span className="text-[11px] font-medium text-muted-foreground/70">
-            {translate('agentHub.running.longestFirst', 'longest first')}
-          </span>
+          <>
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={onPopoutAll}
+              className="mr-2 flex items-center gap-1 text-[11.5px] font-medium text-muted-foreground hover:text-foreground"
+            >
+              <PictureInPicture2 aria-hidden className="size-3" />
+              {translate('agentHub.running.popOutAll', 'Pop out all')}
+            </button>
+            <span className="text-[11px] font-medium text-muted-foreground/70">
+              {translate('agentHub.running.longestFirst', 'longest first')}
+            </span>
+          </>
         }
       />
       {working.map((thread) => (

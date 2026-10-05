@@ -21761,7 +21761,8 @@
     "running": {
       "empty": "No agent is working right now",
       "working": "Working",
-      "longestFirst": "longest first"
+      "longestFirst": "longest first",
+      "popOutAll": "Pop out all"
     },
     "footer": {
       "move": "Move",
