@@ -52,7 +52,7 @@ export function AgentHubCanvas({
             size="icon-sm"
             aria-label={translate('agentHub.canvas.leave', 'Leave the canvas')}
             onClick={onLeave}
-            className="absolute top-2 right-2 text-muted-foreground"
+            className="absolute top-2 right-2"
           >
             <X />
           </Button>
