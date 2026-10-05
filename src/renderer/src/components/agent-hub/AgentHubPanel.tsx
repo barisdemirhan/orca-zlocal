@@ -30,7 +30,11 @@ import {
   type AgentHubLocation,
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
-import { agentOnlyAgentHubTree, type AgentHubGroupNode } from './agent-hub-terminal-tree'
+import {
+  agentOnlyAgentHubTree,
+  type AgentHubGroupNode,
+  type AgentHubTerminalRow
+} from './agent-hub-terminal-tree'
 import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
 
 export type AgentHubOpenRequest = {
@@ -46,6 +50,10 @@ function threadItem(thread: AgentPaneThread): HubItem {
     thread,
     target: paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle)
   }
+}
+
+function rowItem(row: AgentHubTerminalRow): HubItem {
+  return { key: row.key, thread: row.thread, target: paneTargetFromTerminalRow(row) }
 }
 
 function tabLabel(tab: AgentHubTab): string {
@@ -69,6 +77,7 @@ export function AgentHubPanel({
   locationOf,
   rootRef,
   onJump,
+  onOpen,
   onPopout,
   onMarkRead,
   onClose,
@@ -83,6 +92,9 @@ export function AgentHubPanel({
   locationOf: (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>) => AgentHubLocation
   rootRef: React.RefObject<HTMLDivElement | null>
   onJump: (request: AgentHubOpenRequest) => void
+  /** A click on a row: opens the pane's mirror and closes the hub. */
+  onOpen: (request: AgentHubOpenRequest) => void
+  /** The pop-out button and Alt+Enter: opens the mirror and keeps the hub open. */
   onPopout: (request: AgentHubOpenRequest) => void
   onMarkRead: (paneKeys: string[]) => void
   onClose: () => void
@@ -128,11 +140,7 @@ export function AgentHubPanel({
       return visibleAgentHubRunningThreads(lists.working, lineage, expandedKeys).map(threadItem)
     }
     return visibleAgentHubTreeRows(filteredTree, collapseOverrides, query, expandedKeys).map(
-      (row) => ({
-        key: row.key,
-        thread: row.thread,
-        target: paneTargetFromTerminalRow(row)
-      })
+      rowItem
     )
   }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, query])
   const activeIndex = Math.min(selectedIndex, items.length - 1)
@@ -161,17 +169,17 @@ export function AgentHubPanel({
     }
   }
 
-  const openItem = (item: HubItem | null, popout: boolean): void => {
+  const openItem = (item: HubItem | null, open: (request: AgentHubOpenRequest) => void): void => {
     if (item) {
-      ;(popout ? onPopout : onJump)({ target: item.target, thread: item.thread })
+      open({ target: item.target, thread: item.thread })
     }
   }
-
   const threadActions: AgentHubThreadActions = {
     locationOf,
     isSelected: (thread) => thread.paneKey === selectedKey,
-    onJump: (thread) => openItem(threadItem(thread), false),
-    onPopout: (thread) => openItem(threadItem(thread), true)
+    onJump: (thread) => openItem(threadItem(thread), onJump),
+    onOpen: (thread) => openItem(threadItem(thread), onOpen),
+    onPopout: (thread) => openItem(threadItem(thread), onPopout)
   }
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
@@ -200,7 +208,7 @@ export function AgentHubPanel({
       case 'open':
         openItem(
           items[activeIndex] ?? (tab === 'inbox' && cardThread ? threadItem(cardThread) : null),
-          action.popout
+          action.popout ? onPopout : onJump
         )
         break
       case 'answer':
@@ -312,18 +320,9 @@ export function AgentHubPanel({
             now={now}
             lineage={lineage}
             expandedKeys={expandedKeys}
-            onPopout={(row) =>
-              openItem(
-                { key: row.key, thread: row.thread, target: paneTargetFromTerminalRow(row) },
-                true
-              )
-            }
-            onJump={(row) =>
-              openItem(
-                { key: row.key, thread: row.thread, target: paneTargetFromTerminalRow(row) },
-                false
-              )
-            }
+            onOpen={(row) => openItem(rowItem(row), onOpen)}
+            onPopout={(row) => openItem(rowItem(row), onPopout)}
+            onJump={(row) => openItem(rowItem(row), onJump)}
           />
         ) : null}
       </div>

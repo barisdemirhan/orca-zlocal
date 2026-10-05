@@ -1,42 +1,9 @@
-import { ArrowUpRight, CheckCheck, PictureInPicture2 } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ArrowUpRight, CheckCheck } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import type { AgentType } from '../../../../shared/agent-status-types'
 import { HubAvatar, HubStateIndicator, type AgentHubIndicatorKind } from './AgentHubAtoms'
-
-function RowAction({
-  label,
-  onClick,
-  children
-}: {
-  label: string
-  onClick: () => void
-  children: React.ReactNode
-}): React.JSX.Element {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          // Why tabIndex -1: the list is driven by arrow keys; Tab switches hub tabs.
-          tabIndex={-1}
-          onClick={(event) => {
-            event.stopPropagation()
-            onClick()
-          }}
-          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-        >
-          {children}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" sideOffset={4}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
+import { HubRowAction, HubRowMirrorActions } from './AgentHubRowActions'
 
 /** One agent or shell row: click opens the live mirror, ↵ jumps to the pane. */
 export function AgentHubRow({
@@ -50,6 +17,8 @@ export function AgentHubRow({
   selected,
   indent = false,
   worktreeId,
+  mirrorKey,
+  onOpen,
   onPopout,
   onJump,
   onMarkRead
@@ -65,6 +34,11 @@ export function AgentHubRow({
   indent?: boolean
   /** The row's workspace; a row in the one already on screen reads as quieter. */
   worktreeId?: string
+  /** The pane's key among the mirrors (see agentHubPaneTargetKey). */
+  mirrorKey: string
+  /** A click on the row: opens the mirror and leaves the hub. */
+  onOpen: () => void
+  /** The pop-out button: opens the mirror and keeps the hub open for the next one. */
   onPopout: () => void
   onJump: () => void
   onMarkRead?: () => void
@@ -87,7 +61,7 @@ export function AgentHubRow({
           : undefined
       }
       className="jump-palette-item group/row flex cursor-pointer items-center gap-2.5 rounded-[10px] border border-transparent px-2 py-[7px] transition-opacity hover:bg-foreground/[0.03] data-[current=true]:opacity-55 data-[indent=true]:ml-3.5 data-[current=true]:hover:opacity-100 data-[current=true]:data-[selected=true]:opacity-100"
-      onClick={onPopout}
+      onClick={onOpen}
     >
       <span className="grid w-3 shrink-0 place-items-center">
         <HubStateIndicator kind={kind} />
@@ -111,19 +85,20 @@ export function AgentHubRow({
         ) : null}
         <span className="hidden gap-0.5 group-hover/row:flex group-data-[selected=true]/row:flex">
           {onMarkRead ? (
-            <RowAction label={translate('agentHub.row.markRead', 'Mark read')} onClick={onMarkRead}>
+            <HubRowAction
+              label={translate('agentHub.row.markRead', 'Mark read')}
+              onClick={onMarkRead}
+            >
               <CheckCheck className="size-[13px]" />
-            </RowAction>
+            </HubRowAction>
           ) : null}
-          <RowAction label={translate('agentHub.row.popOut', 'Pop out')} onClick={onPopout}>
-            <PictureInPicture2 className="size-[13px]" />
-          </RowAction>
-          <RowAction
+          <HubRowMirrorActions mirrorKey={mirrorKey} onPopout={onPopout} />
+          <HubRowAction
             label={translate('agentHub.row.jump', 'Jump to this terminal')}
             onClick={onJump}
           >
             <ArrowUpRight className="size-[13px]" />
-          </RowAction>
+          </HubRowAction>
         </span>
       </span>
     </div>

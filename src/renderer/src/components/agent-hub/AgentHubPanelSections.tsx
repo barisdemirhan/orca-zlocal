@@ -22,6 +22,9 @@ export type AgentHubThreadActions = {
   locationOf: (thread: AgentPaneThread) => AgentHubLocation
   isSelected: (thread: AgentPaneThread) => boolean
   onJump: (thread: AgentPaneThread) => void
+  /** Opens the mirror and leaves the hub (a click on the row). */
+  onOpen: (thread: AgentPaneThread) => void
+  /** Opens the mirror and keeps the hub open. */
   onPopout: (thread: AgentPaneThread) => void
 }
 
@@ -174,6 +177,8 @@ export function AgentHubInboxBody({
               time={formatShortTimeAgo(agentHubStateSince(thread), now)}
               selected={actions.isSelected(thread)}
               worktreeId={thread.worktree.id}
+              mirrorKey={thread.paneKey}
+              onOpen={() => actions.onOpen(thread)}
               onPopout={() => actions.onPopout(thread)}
               onJump={() => actions.onJump(thread)}
               onMarkRead={() => onMarkRead([thread.paneKey])}
@@ -212,6 +217,8 @@ function RunningRow({
         time={formatShortTimeAgo(agentHubTurnSince(thread), now)}
         selected={actions.isSelected(thread)}
         worktreeId={thread.worktree.id}
+        mirrorKey={thread.paneKey}
+        onOpen={() => actions.onOpen(thread)}
         onPopout={() => actions.onPopout(thread)}
         onJump={() => actions.onJump(thread)}
       />
@@ -220,7 +227,7 @@ function RunningRow({
         childAgents={childAgents}
         expanded={expandedKeys.has(thread.paneKey)}
         now={now}
-        onOpenParent={() => actions.onPopout(thread)}
+        onOpenParent={() => actions.onOpen(thread)}
       >
         {childAgents.workers.map((worker) => (
           <RunningRow

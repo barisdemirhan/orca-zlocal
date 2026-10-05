@@ -143,13 +143,19 @@ export function AgentHubMirrorWindow({
       pulseMirrorWindow(sectionRef.current)
     }
   }, [highlight, mirrorKey, sectionRef])
-  // "Send all to the hub" reaches every open window; the front one leaves first.
+  // "Send all to the hub" reaches every open window, the front one first; a hub row asks one.
   const dockRequest = useAgentHubMirrorsDockRequest()
-  const seenDockRequest = useRef(dockRequest)
-  const dockWhenAsked = useEffectEvent(() => minimize(Math.max(0, 4 - stackIndex) * 45))
+  const seenDockRequest = useRef(dockRequest.seq)
+  const dockWhenAsked = useEffectEvent(() => {
+    if (dockRequest.key === null) {
+      minimize(Math.max(0, 4 - stackIndex) * 45)
+    } else if (dockRequest.key === mirrorKey) {
+      minimize()
+    }
+  })
   useEffect(() => {
-    if (dockRequest !== seenDockRequest.current) {
-      seenDockRequest.current = dockRequest
+    if (dockRequest.seq !== seenDockRequest.current) {
+      seenDockRequest.current = dockRequest.seq
       dockWhenAsked()
     }
   }, [dockRequest])
@@ -275,7 +281,7 @@ export function AgentHubMirrorWindow({
                   ? `${translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')} (${dockAllShortcut})`
                   : translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
               }
-              onClick={requestAgentHubMirrorsDock}
+              onClick={() => requestAgentHubMirrorsDock()}
               className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
             >
               <PictureInPicture2 className="size-3.5" />

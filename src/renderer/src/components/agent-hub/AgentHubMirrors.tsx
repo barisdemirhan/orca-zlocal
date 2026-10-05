@@ -53,6 +53,7 @@ export function AgentHubMirrors({
   traySide,
   trayAlertSide,
   trayHidden,
+  hubOpen,
   trayPeekMs,
   threads,
   lineage,
@@ -70,6 +71,8 @@ export function AgentHubMirrors({
   trayAlertSide: AgentHubAlertSide
   /** The hub's own panel is open over the tray's spot. */
   trayHidden: boolean
+  /** The hub's panel has the keyboard: a mirror popped out from it must not take focus. */
+  hubOpen: boolean
   trayPeekMs: number
   threads: readonly AgentPaneThread[]
   lineage: AgentHubLineage
@@ -147,11 +150,11 @@ export function AgentHubMirrors({
             tabId: target.tab.id,
             paneKey,
             // Only the front window's pane takes keyboard focus on arrival.
-            active: index === windows.length - 1
+            active: index === windows.length - 1 && !hubOpen
           }
         ]
       }),
-    [windows, slots, surfaces]
+    [windows, slots, surfaces, hubOpen]
   )
   // Why layout: publish before paint so the pane moves in the same frame the window opens.
   useLayoutEffect(() => {

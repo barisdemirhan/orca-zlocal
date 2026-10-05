@@ -21715,7 +21715,9 @@
       "jump": "Jump to this terminal",
       "popOut": "Pop out",
       "markRead": "Mark read",
-      "currentWorkspace": "In the workspace you have open"
+      "currentWorkspace": "In the workspace you have open",
+      "sendToHub": "Send to the hub",
+      "bringBack": "Bring back"
     },
     "mirror": {
       "close": "Close mirror",

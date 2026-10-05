@@ -23,8 +23,8 @@ const listeners = new Set<() => void>()
 // The window last picked again from the hub while already open, so it can glow.
 let highlight: { key: string; seq: number } = { key: '', seq: 0 }
 const highlightListeners = new Set<() => void>()
-// Bumped to ask every open window to fly into the tray; each minimizes itself on landing.
-let dockRequest = 0
+// Asks every open window (or the one named) to fly into the tray; each minimizes itself on landing.
+let dockRequest: { seq: number; key: string | null } = { seq: 0, key: null }
 const dockListeners = new Set<() => void>()
 
 function emit(next: AgentHubMirrorState): void {
@@ -158,9 +158,9 @@ export function restoreAgentHubMirrors(keys: readonly string[]): void {
   }
 }
 
-/** Asks every open window to fly into the tray. */
-export function requestAgentHubMirrorsDock(): void {
-  dockRequest += 1
+/** Asks every open window, or only the one with `key`, to fly into the tray. */
+export function requestAgentHubMirrorsDock(key: string | null = null): void {
+  dockRequest = { seq: dockRequest.seq + 1, key }
   dockListeners.forEach((listener) => listener())
 }
 
@@ -169,7 +169,7 @@ function subscribeDock(listener: () => void): () => void {
   return () => dockListeners.delete(listener)
 }
 
-export function useAgentHubMirrorsDockRequest(): number {
+export function useAgentHubMirrorsDockRequest(): { seq: number; key: string | null } {
   return useSyncExternalStore(subscribeDock, () => dockRequest)
 }
 
@@ -200,4 +200,17 @@ function subscribe(listener: () => void): () => void {
 
 export function useAgentHubMirrors(): AgentHubMirrorState {
   return useSyncExternalStore(subscribe, readAgentHubMirrors)
+}
+
+export type AgentHubMirrorPresence = 'window' | 'chip' | null
+
+/** Whether the pane with this mirror key is open in a window, parked in the tray, or neither. */
+export function useAgentHubMirrorPresence(key: string): AgentHubMirrorPresence {
+  return useSyncExternalStore(subscribe, () =>
+    state.windows.some((open) => keyOf(open) === key)
+      ? 'window'
+      : state.chips.some((chip) => keyOf(chip.target) === key)
+        ? 'chip'
+        : null
+  )
 }

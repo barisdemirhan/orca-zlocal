@@ -4,24 +4,17 @@ import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { useNow } from '@/hooks/use-now'
 import { formatOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverArrow,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
+import { Popover, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/activity-thread-actions'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubAlertStack } from './AgentHubAlertStack'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubDimBackdrop } from './AgentHubDimToggle'
 import { AgentHubMirrors } from './AgentHubMirrors'
-import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
+import type { AgentHubOpenRequest } from './AgentHubPanel'
+import { AgentHubPopoverContent, type AgentHubPopoverRequest } from './AgentHubPopover'
 import { AgentHubStatusTrigger } from './AgentHubStatusTrigger'
 import {
   clearAgentHubAlerts,
@@ -32,76 +25,26 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import { registerAgentHubCommands } from './agent-hub-commands'
 import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
-import { buildAgentHubLineage, type AgentHubLineage } from './agent-hub-lineage'
-import { agentHubCounts, type AgentHubLists } from './agent-hub-lists'
+import { buildAgentHubLineage } from './agent-hub-lineage'
+import { agentHubCounts } from './agent-hub-lists'
 import { openAgentHubMirror, useAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubTargetKind, toggleAgentHubMirrors } from './agent-hub-mirror-tray'
 import {
   agentHubLocation,
   agentHubTargetShowsThread,
-  threadOpenRequest
+  threadOpenRequest,
+  type AgentHubLocation,
+  type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
-import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
-
-type OpenRequest = { tab: AgentHubTab; paneKey: string | null; seq: number }
 
 function useGroupNameById(): ReadonlyMap<string, string> {
   const projectGroups = useAppStore((s) => s.projectGroups)
   return useMemo(
     () => new Map(projectGroups.map((group) => [group.id, group.name])),
     [projectGroups]
-  )
-}
-
-/** Mounted only while the popover is open: the tree subscribes to every tab write. */
-function AgentHubPopoverBody({
-  lists,
-  lineage,
-  threads,
-  includeShells,
-  request,
-  rootRef,
-  onTabChange,
-  onJump,
-  onPopout,
-  onClose
-}: {
-  lists: AgentHubLists
-  lineage: AgentHubLineage
-  threads: readonly AgentPaneThread[]
-  includeShells: boolean
-  request: OpenRequest
-  rootRef: React.RefObject<HTMLDivElement | null>
-  onTabChange: (tab: AgentHubTab) => void
-  onJump: (request: AgentHubOpenRequest) => void
-  onPopout: (request: AgentHubOpenRequest) => void
-  onClose: () => void
-}): React.JSX.Element {
-  const tree = useAgentHubTerminalTree(threads, includeShells, lineage.parentOf)
-  const groupNameById = useGroupNameById()
-  const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
-  const terminalCount = tree.reduce((total, group) => total + group.rowCount, 0)
-  return (
-    <AgentHubPanel
-      // Why the seq key: a dock button or alert reopens on its own tab and card.
-      key={request.seq}
-      lists={lists}
-      lineage={lineage}
-      tree={tree}
-      terminalCount={terminalCount}
-      locationOf={(target) => agentHubLocation(target, groupNameById)}
-      rootRef={rootRef}
-      onJump={onJump}
-      onPopout={onPopout}
-      onMarkRead={acknowledgeAgents}
-      onClose={onClose}
-      initialTab={request.tab}
-      onTabChange={onTabChange}
-      initialPaneKey={request.paneKey}
-    />
   )
 }
 
@@ -127,10 +70,16 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const updateSettings = useAppStore((s) => s.updateSettings)
   const inSettings = useAppStore((s) => s.activeView === 'settings')
   const groupNameById = useGroupNameById()
+  const locationOf = (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>): AgentHubLocation =>
+    agentHubLocation(target, groupNameById)
   const keybindings = useAppStore((s) => s.keybindings)
   const shortcut = formatOptionalShortcutLabel('agentHub.toggle', keybindings)
   const [open, setOpen] = useState(false)
-  const [request, setRequest] = useState<OpenRequest>({ tab: 'inbox', paneKey: null, seq: 0 })
+  const [request, setRequest] = useState<AgentHubPopoverRequest>({
+    tab: 'inbox',
+    paneKey: null,
+    seq: 0
+  })
   const panelRootRef = useRef<HTMLDivElement>(null)
   const anchorRef = useRef<HTMLElement>(null)
   const trayRef = useRef<HTMLDivElement>(null)
@@ -182,7 +131,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     (next: boolean) => (next ? openHub() : setOpen(false)),
     [openHub]
   )
-  // A jump or pop-out focuses its own target, so nothing is restored.
+  // A jump or an opened mirror focuses its own target, so nothing is restored.
   const closeForNavigation = useCallback(() => {
     restoreFocusRef.current = null
     setOpen(false)
@@ -206,15 +155,23 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     },
     [acknowledgeAgents, closeForNavigation]
   )
+  // Keeps the hub open, so several mirrors can be popped out in a row.
   const popout = useCallback(
     ({ target, thread }: AgentHubOpenRequest) => {
-      closeForNavigation()
+      restoreFocusRef.current = null
       openAgentHubMirror(target)
       if (thread) {
         acknowledgeAgents([thread.paneKey])
       }
     },
-    [acknowledgeAgents, closeForNavigation]
+    [acknowledgeAgents]
+  )
+  const openMirror = useCallback(
+    (request: AgentHubOpenRequest) => {
+      closeForNavigation()
+      popout(request)
+    },
+    [closeForNavigation, popout]
   )
   const leaveAlertFor = (shown: AgentHubAlert, open: typeof jump): void => {
     dismissAgentHubAlert(shown.id)
@@ -267,62 +224,26 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       counts.needsYou + counts.working + counts.finished === 0)
 
   const content = (
-    <PopoverContent
+    <AgentHubPopoverContent
       side={side}
-      align={docked ? 'center' : 'end'}
-      sideOffset={docked ? 12 : 8}
-      {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
-      collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
-      surface="panel"
-      className="w-[456px] max-w-[calc(100vw-2rem)]"
-      data-agent-hub-panel
-      onOpenAutoFocus={(event) => {
-        // Why: the panel root owns the arrow/number keys, so it takes focus, not the first button.
-        event.preventDefault()
-        panelRootRef.current?.focus()
+      docked={docked}
+      anchorRef={anchorRef}
+      restoreFocusRef={restoreFocusRef}
+      lists={lists}
+      lineage={lineage}
+      threads={threads}
+      includeShells={preferences.showShells}
+      request={request}
+      rootRef={panelRootRef}
+      locationOf={locationOf}
+      onTabChange={(tab) => {
+        shownTabRef.current = tab
       }}
-      onCloseAutoFocus={(event) => {
-        event.preventDefault()
-        const previous = restoreFocusRef.current
-        restoreFocusRef.current = null
-        if (previous?.isConnected) {
-          previous.focus()
-        }
-      }}
-      onInteractOutside={(event) => {
-        // Why: the dock's own buttons switch tabs; treating them as "outside" would close first.
-        if (event.target instanceof Node && anchorRef.current?.contains(event.target)) {
-          event.preventDefault()
-        }
-      }}
-      onEscapeKeyDown={(event) => {
-        // Why: Esc in a non-empty filter clears it (see AgentHubTerminalTree) instead of closing.
-        const active = document.activeElement
-        if (
-          active instanceof HTMLInputElement &&
-          active.dataset.agentHubSearch !== undefined &&
-          active.value
-        ) {
-          event.preventDefault()
-        }
-      }}
-    >
-      <AgentHubPopoverBody
-        lists={lists}
-        lineage={lineage}
-        threads={threads}
-        includeShells={preferences.showShells}
-        request={request}
-        rootRef={panelRootRef}
-        onTabChange={(tab) => {
-          shownTabRef.current = tab
-        }}
-        onJump={jump}
-        onPopout={popout}
-        onClose={() => setPopoverOpen(false)}
-      />
-      <PopoverArrow width={14} height={7} />
-    </PopoverContent>
+      onJump={jump}
+      onOpen={openMirror}
+      onPopout={popout}
+      onClose={() => setPopoverOpen(false)}
+    />
   )
 
   return (
@@ -385,16 +306,16 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
           // With mirrors parked beside the hub, its alerts stack beyond them.
           anchorRef={chips.length > 0 ? trayRef : anchorRef}
           side={side}
-          locationOf={(shown) => agentHubLocation(shown.thread, groupNameById)}
+          locationOf={(shown) => locationOf(shown.thread)}
           // A result is read in its terminal, so it opens the mirror; a question opens its card.
           onOpen={(opened) => {
             if (opened.kind !== 'done') {
               openHub('inbox', opened.thread.paneKey)
               return
             }
-            leaveAlertFor(opened, popout)
+            leaveAlertFor(opened, openMirror)
           }}
-          onPopout={(shown) => leaveAlertFor(shown, popout)}
+          onPopout={(shown) => leaveAlertFor(shown, openMirror)}
           onJump={(shown) => leaveAlertFor(shown, jump)}
           onDismiss={dismissAgentHubAlert}
         />
@@ -406,12 +327,13 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         traySide={side}
         trayAlertSide={agentHubTrayAlertSide(docked ? preferences.dockPosition : null)}
         trayHidden={open}
+        hubOpen={open}
         trayPeekMs={preferences.trayPeekSeconds * 1000}
         hidden={inSettings}
         threads={threads}
         lineage={lineage}
         alerts={alerts}
-        locationOf={(target) => agentHubLocation(target, groupNameById)}
+        locationOf={locationOf}
         onReveal={(target, thread) => jump({ target, thread })}
         onOpenCard={(paneKey) => openHub('inbox', paneKey)}
       />

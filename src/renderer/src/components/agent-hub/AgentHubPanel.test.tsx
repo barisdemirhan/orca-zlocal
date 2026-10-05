@@ -18,6 +18,12 @@ import {
 import { AgentHubPanel } from './AgentHubPanel'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { buildAgentHubLists } from './agent-hub-lists'
+import {
+  minimizeAgentHubMirror,
+  openAgentHubMirror,
+  readAgentHubMirrors,
+  resetAgentHubMirrorsForTest
+} from './agent-hub-mirror-store'
 import { buildAgentHubTerminalTree } from './agent-hub-terminal-tree'
 
 let container: HTMLDivElement
@@ -32,6 +38,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount())
   container.remove()
+  resetAgentHubMirrorsForTest()
 })
 
 // Two unread finished agents (newest first: tab-3, tab-2) and one working agent (tab-1).
@@ -85,7 +92,13 @@ function fixture() {
 
 function renderPanel() {
   const { lists, tree } = fixture()
-  const handlers = { onJump: vi.fn(), onPopout: vi.fn(), onMarkRead: vi.fn(), onClose: vi.fn() }
+  const handlers = {
+    onJump: vi.fn(),
+    onOpen: vi.fn(),
+    onPopout: vi.fn(),
+    onMarkRead: vi.fn(),
+    onClose: vi.fn()
+  }
   const rootRef = createRef<HTMLDivElement>()
   act(() => {
     root.render(
@@ -156,5 +169,49 @@ describe('AgentHubPanel keyboard', () => {
     press(panel.current, 'Tab', { shiftKey: true })
     const rows = [...container.querySelectorAll('[data-agent-hub-row]')]
     expect(rows).toHaveLength(3)
+  })
+})
+
+describe('AgentHubPanel row mirror button', () => {
+  const rowButton = (label: string): HTMLButtonElement | null =>
+    container.querySelector(`[data-agent-hub-row] button[aria-label="${label}"]`)
+  const click = (element: Element | null): void => {
+    if (!element) {
+      throw new Error('nothing to click')
+    }
+    act(() => element.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+  }
+
+  it('keeps a row click and the pop-out button apart', () => {
+    const { handlers } = renderPanel()
+
+    click(rowButton('Pop out'))
+    expect(handlers.onPopout).toHaveBeenCalledTimes(1)
+    expect(handlers.onOpen).not.toHaveBeenCalled()
+
+    click(container.querySelector('[data-agent-hub-row]'))
+    expect(handlers.onOpen).toHaveBeenCalledTimes(1)
+    expect(handlers.onPopout).toHaveBeenCalledTimes(1)
+  })
+
+  it('turns pop out into send to the hub, then bring back, with a close beside it', () => {
+    const { handlers } = renderPanel()
+    const popOut = rowButton('Pop out')
+    click(popOut)
+    const [{ target }] = handlers.onPopout.mock.calls[0] ?? []
+
+    act(() => openAgentHubMirror(target))
+    // The same button, so the pointer already rests on the next step.
+    expect(rowButton('Send to the hub')).toBe(popOut)
+    expect(rowButton('Close mirror')).not.toBeNull()
+
+    act(() => minimizeAgentHubMirror(target.paneKey))
+    expect(rowButton('Bring back')).toBe(popOut)
+    click(popOut)
+    expect(readAgentHubMirrors().windows).toEqual([target])
+
+    click(rowButton('Close mirror'))
+    expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
+    expect(rowButton('Pop out')).toBe(popOut)
   })
 })

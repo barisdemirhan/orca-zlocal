@@ -42,6 +42,7 @@ type TreeRowContext = {
   query: string
   selectedKey: string | null
   now: number
+  onOpen: (row: AgentHubTerminalRow) => void
   onPopout: (row: AgentHubTerminalRow) => void
   onJump: (row: AgentHubTerminalRow) => void
 }
@@ -78,6 +79,9 @@ function TreeRow({
         time={row.thread ? formatShortTimeAgo(agentHubStateSince(row.thread), now) : undefined}
         selected={row.key === context.selectedKey}
         indent={!nested}
+        // Same key the mirror store gives this row's target (see agentHubPaneTargetKey).
+        mirrorKey={row.paneKey ?? row.tab.id}
+        onOpen={() => context.onOpen(row)}
         onPopout={() => context.onPopout(row)}
         onJump={() => context.onJump(row)}
       />
@@ -87,7 +91,7 @@ function TreeRow({
         expanded={isAgentHubRowExpanded(row.key, context.expandedKeys, context.query)}
         indent={!nested}
         now={now}
-        onOpenParent={() => context.onPopout(row)}
+        onOpenParent={() => context.onOpen(row)}
       >
         {row.children.map((child) => (
           <TreeRow key={child.key} row={child} nested context={context} />
@@ -109,6 +113,7 @@ export function AgentHubTerminalTree({
   now,
   lineage,
   expandedKeys,
+  onOpen,
   onPopout,
   onJump
 }: {
@@ -123,6 +128,7 @@ export function AgentHubTerminalTree({
   now: number
   lineage: AgentHubLineage
   expandedKeys: ReadonlySet<string>
+  onOpen: (row: AgentHubTerminalRow) => void
   onPopout: (row: AgentHubTerminalRow) => void
   onJump: (row: AgentHubTerminalRow) => void
 }): React.JSX.Element {
@@ -133,6 +139,7 @@ export function AgentHubTerminalTree({
     query,
     selectedKey,
     now,
+    onOpen,
     onPopout,
     onJump
   }
