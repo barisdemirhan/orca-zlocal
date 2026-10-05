@@ -16,7 +16,6 @@ import { translate } from '@/i18n/i18n'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/activity-thread-actions'
-import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubAlertStack } from './AgentHubAlertStack'
 import { AgentHubDock } from './AgentHubDock'
@@ -39,7 +38,7 @@ import { agentHubTargetKind, toggleAgentHubMirrors } from './agent-hub-mirror-tr
 import {
   agentHubLocation,
   agentHubTargetShowsThread,
-  paneTargetFromThread
+  threadOpenRequest
 } from './agent-hub-pane-target'
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubLists } from './use-agent-hub-lists'
@@ -104,10 +103,6 @@ function AgentHubPopoverBody({
       initialPaneKey={request.paneKey}
     />
   )
-}
-
-function threadOpenRequest(thread: AgentPaneThread): AgentHubOpenRequest {
-  return { target: paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle), thread }
 }
 
 /** The Agent Hub: counts, popover, live mirror, alerts and shortcuts, on a dock or the status bar. */
@@ -398,6 +393,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
             dismissAgentHubAlert(opened.id)
             popout(threadOpenRequest(opened.thread))
           }}
+          onPopout={(shown) => {
+            dismissAgentHubAlert(shown.id)
+            popout(threadOpenRequest(shown.thread))
+          }}
           onJump={(shown) => {
             dismissAgentHubAlert(shown.id)
             jump(threadOpenRequest(shown.thread))
@@ -412,6 +411,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         traySide={side}
         trayAlertSide={agentHubTrayAlertSide(docked ? preferences.dockPosition : null)}
         trayHidden={open}
+        trayPeekMs={preferences.trayPeekSeconds * 1000}
         hidden={inSettings}
         threads={threads}
         lineage={lineage}

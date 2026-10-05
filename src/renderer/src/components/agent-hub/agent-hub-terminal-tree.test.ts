@@ -11,6 +11,7 @@ import {
   PANE_KEY
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
+  agentOnlyAgentHubTree,
   buildAgentHubTerminalTree,
   type AgentHubTerminalTreeInput
 } from './agent-hub-terminal-tree'
@@ -189,5 +190,25 @@ describe('agent hub tree filtering and collapse', () => {
     )
 
     expect(tabIds).toEqual(['tab-1'])
+  })
+
+  it('keeps an idle agent tab among the agents, apart from plain shells', () => {
+    const input: AgentHubTerminalTreeInput = {
+      ...treeInput(),
+      idleAgentOf: (tab) => (tab.id === 'tab-serve' ? 'codex' : null)
+    }
+    const all = buildAgentHubTerminalTree(input)
+    const serve = all
+      .flatMap((g) => g.workspaces.flatMap((w) => w.rows))
+      .find((row) => row.tab.id === 'tab-serve')
+    expect(serve).toMatchObject({ thread: null, idleAgent: 'codex' })
+    const agents = agentOnlyAgentHubTree(all)
+    expect(
+      agents.flatMap((g) => g.workspaces.flatMap((w) => w.rows.map((row) => row.tab.id)))
+    ).toEqual(['tab-1', 'tab-serve'])
+    expect(agents[0]?.rowCount).toBe(2)
+    // With shells off, the idle agent still lists.
+    const agentsOnly = buildAgentHubTerminalTree({ ...input, includeShells: false })
+    expect(agentsOnly[0]?.agentRowCount).toBe(2)
   })
 })

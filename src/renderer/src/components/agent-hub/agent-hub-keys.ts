@@ -1,6 +1,7 @@
-export type AgentHubTab = 'inbox' | 'running' | 'all'
+/** `agents` is every agent terminal, busy or idle; `all` adds plain shells. */
+export type AgentHubTab = 'inbox' | 'running' | 'agents' | 'all'
 
-export const AGENT_HUB_TABS: readonly AgentHubTab[] = ['inbox', 'running', 'all']
+export const AGENT_HUB_TABS: readonly AgentHubTab[] = ['inbox', 'running', 'agents', 'all']
 
 export type AgentHubKeyInput = {
   key: string

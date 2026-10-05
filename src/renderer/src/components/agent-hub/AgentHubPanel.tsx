@@ -30,7 +30,7 @@ import {
   type AgentHubLocation,
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
-import type { AgentHubGroupNode } from './agent-hub-terminal-tree'
+import { agentOnlyAgentHubTree, type AgentHubGroupNode } from './agent-hub-terminal-tree'
 import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
 
 export type AgentHubOpenRequest = {
@@ -54,6 +54,8 @@ function tabLabel(tab: AgentHubTab): string {
       return translate('agentHub.tab.inbox', 'Inbox')
     case 'running':
       return translate('agentHub.tab.running', 'Running')
+    case 'agents':
+      return translate('agentHub.tab.agents', 'Agents')
     case 'all':
       return translate('agentHub.tab.all', 'All terminals')
   }
@@ -111,7 +113,13 @@ export function AgentHubPanel({
   const needsYou = lists.needsYou
   const activeCardIndex = Math.min(cardIndex, Math.max(0, needsYou.length - 1))
   const cardThread = needsYou[activeCardIndex] ?? null
-  const filteredTree = useMemo(() => filterAgentHubTerminalTree(tree, query), [tree, query])
+  const agentTree = useMemo(() => agentOnlyAgentHubTree(tree), [tree])
+  const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
+  const listsTerminals = tab === 'agents' || tab === 'all'
+  const filteredTree = useMemo(
+    () => filterAgentHubTerminalTree(tab === 'agents' ? agentTree : tree, query),
+    [tab, agentTree, tree, query]
+  )
   const items = useMemo<HubItem[]>(() => {
     if (tab === 'inbox') {
       return lists.finished.map(threadItem)
@@ -140,7 +148,7 @@ export function AgentHubPanel({
     setTab(next)
     onTabChange?.(next)
     setSelectedIndex(-1)
-    if (next === 'all') {
+    if (next === 'agents' || next === 'all') {
       requestAnimationFrame(() => searchRef.current?.focus())
     } else if (searchRef.current === document.activeElement) {
       rootRef.current?.focus()
@@ -207,6 +215,7 @@ export function AgentHubPanel({
   const counts: Record<AgentHubTab, number> = {
     inbox: needsYou.length + lists.finished.length,
     running: lists.working.length,
+    agents: agentCount,
     all: terminalCount
   }
 
@@ -234,7 +243,7 @@ export function AgentHubPanel({
               aria-selected={tab === value}
               data-active={tab === value}
               onClick={() => switchTab(value)}
-              className="group/tab flex items-center gap-1.5 rounded-lg px-[9px] py-1 text-xs text-muted-foreground hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
+              className="group/tab flex items-center gap-1.5 rounded-lg px-[9px] py-1 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
             >
               {tabLabel(value)}
               <span
@@ -285,10 +294,10 @@ export function AgentHubPanel({
             actions={threadActions}
           />
         ) : null}
-        {tab === 'all' ? (
+        {listsTerminals ? (
           <AgentHubTerminalTree
             groups={filteredTree}
-            totalCount={terminalCount}
+            totalCount={tab === 'agents' ? agentCount : terminalCount}
             query={query}
             onQueryChange={(value) => {
               setQuery(value)

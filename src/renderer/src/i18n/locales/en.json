@@ -8018,7 +8018,11 @@
             "useSuggested": "Use these",
             "editShortcuts": "Edit",
             "dockSize": "Dock size",
-            "shortcutNotSet": "not set"
+            "shortcutNotSet": "not set",
+            "trayPeek": "Fan out parked mirrors on news for",
+            "trayPeekCopy": "When a parked mirror asks or finishes, the pile beside the hub opens this long, then folds again.",
+            "never": "Never",
+            "seconds": "{{value0}} s"
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -21738,7 +21742,8 @@
     "tab": {
       "inbox": "Inbox",
       "running": "Running",
-      "all": "All terminals"
+      "all": "All terminals",
+      "agents": "Agents"
     },
     "inbox": {
       "previous": "Previous",

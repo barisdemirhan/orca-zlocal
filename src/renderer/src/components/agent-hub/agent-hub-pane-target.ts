@@ -1,3 +1,4 @@
+import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AppState } from '@/store/types'
 import type { DashboardCardTerminalInput } from '../../../../shared/dashboard-snapshot'
 import { parsePaneKey } from '../../../../shared/stable-pane-id'
@@ -33,6 +34,14 @@ export function paneTargetFromThread(thread: AgentPaneThread, title: string): Ag
   }
 }
 
+/** What a jump or pop-out needs to open a thread's own pane. */
+export function threadOpenRequest(thread: AgentPaneThread): {
+  target: AgentHubPaneTarget
+  thread: AgentPaneThread
+} {
+  return { target: paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle), thread }
+}
+
 export function paneTargetFromTerminalRow(row: AgentHubTerminalRow): AgentHubPaneTarget {
   return {
     worktree: row.worktree,
@@ -40,7 +49,7 @@ export function paneTargetFromTerminalRow(row: AgentHubTerminalRow): AgentHubPan
     tab: row.tab,
     paneKey: row.paneKey,
     title: row.title,
-    agentType: row.thread?.agentType ?? null
+    agentType: row.thread?.agentType ?? row.idleAgent
   }
 }
 

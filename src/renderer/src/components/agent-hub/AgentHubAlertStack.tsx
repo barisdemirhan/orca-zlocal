@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowUpRight, X } from 'lucide-react'
+import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
@@ -80,12 +80,14 @@ function AlertCard({
   location,
   onOpen,
   onJump,
+  onPopout,
   onDismiss
 }: {
   alert: AgentHubAlert
   location: AgentHubLocation
   onOpen: (alert: AgentHubAlert) => void
   onJump: (alert: AgentHubAlert) => void
+  onPopout: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
 }): React.JSX.Element {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -118,7 +120,7 @@ function AlertCard({
       onMouseLeave={startTimer}
     >
       <button type="button" className="block w-full text-left" onClick={() => onOpen(alert)}>
-        <span className="flex items-center gap-2.5 pr-12">
+        <span className="flex items-center gap-2.5 pr-20">
           <HubAvatar
             agentType={alert.thread.agentType}
             kind={alert.kind === 'done' ? 'done' : 'ask'}
@@ -141,6 +143,15 @@ function AlertCard({
             {text}
           </span>
         ) : null}
+      </button>
+      <button
+        type="button"
+        aria-label={translate('agentHub.hover.popout', 'Own window')}
+        title={translate('agentHub.hover.popout', 'Own window')}
+        onClick={() => onPopout(alert)}
+        className="absolute top-2 right-14 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+      >
+        <PictureInPicture2 className="size-3.5" />
       </button>
       <button
         type="button"
@@ -174,6 +185,7 @@ export function AgentHubAlertStack({
   locationOf,
   onOpen,
   onJump,
+  onPopout,
   onDismiss
 }: {
   alerts: readonly AgentHubAlert[]
@@ -183,6 +195,8 @@ export function AgentHubAlertStack({
   onOpen: (alert: AgentHubAlert) => void
   /** Straight to the terminal in its workspace, past the mirror or card a click opens. */
   onJump: (alert: AgentHubAlert) => void
+  /** The terminal in a floating mirror, whatever a click on the alert opens. */
+  onPopout: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
 }): React.JSX.Element {
   const stackRef = useRef<HTMLDivElement>(null)
@@ -224,6 +238,7 @@ export function AgentHubAlertStack({
           location={locationOf(alert)}
           onOpen={onOpen}
           onJump={onJump}
+          onPopout={onPopout}
           onDismiss={onDismiss}
         />
       ))}

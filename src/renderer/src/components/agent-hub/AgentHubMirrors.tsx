@@ -53,6 +53,7 @@ export function AgentHubMirrors({
   traySide,
   trayAlertSide,
   trayHidden,
+  trayPeekMs,
   threads,
   lineage,
   alerts,
@@ -69,6 +70,7 @@ export function AgentHubMirrors({
   trayAlertSide: AgentHubAlertSide
   /** The hub's own panel is open over the tray's spot. */
   trayHidden: boolean
+  trayPeekMs: number
   threads: readonly AgentPaneThread[]
   lineage: AgentHubLineage
   alerts: readonly AgentHubAlert[]
@@ -260,6 +262,7 @@ export function AgentHubMirrors({
         side={traySide}
         alertSide={trayAlertSide}
         hidden={trayHidden}
+        peekMs={trayPeekMs}
         onRestore={restoreAgentHubMirror}
         onReveal={(item) => {
           closeAgentHubMirrorChip(item.key)

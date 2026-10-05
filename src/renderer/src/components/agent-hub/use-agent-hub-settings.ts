@@ -7,6 +7,7 @@ import {
   normalizeAgentHubDockSize,
   normalizeAgentHubFinishedClearMinutes,
   normalizeAgentHubPlacement,
+  normalizeAgentHubTrayPeekSeconds,
   type AgentHubDefaultTab,
   type AgentHubDockPosition,
   type AgentHubDockSize,
@@ -24,6 +25,7 @@ export type AgentHubPreferences = {
   alertsMutedUntil: number | null
   showShells: boolean
   finishedClearMinutes: number
+  trayPeekSeconds: number
   defaultTab: AgentHubDefaultTab
 }
 
@@ -41,6 +43,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       alertsMutedUntil: s.settings?.agentHubAlertsMutedUntil,
       showShells: s.settings?.agentHubShowShells,
       finishedClearMinutes: s.settings?.agentHubFinishedAutoClearMinutes,
+      trayPeekSeconds: s.settings?.agentHubTrayPeekSeconds,
       defaultTab: s.settings?.agentHubDefaultTab
     }))
   )
@@ -56,6 +59,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       alertsMutedUntil: typeof raw.alertsMutedUntil === 'number' ? raw.alertsMutedUntil : null,
       showShells: raw.showShells !== false,
       finishedClearMinutes: normalizeAgentHubFinishedClearMinutes(raw.finishedClearMinutes),
+      trayPeekSeconds: normalizeAgentHubTrayPeekSeconds(raw.trayPeekSeconds),
       defaultTab: normalizeAgentHubDefaultTab(raw.defaultTab)
     }),
     [raw]

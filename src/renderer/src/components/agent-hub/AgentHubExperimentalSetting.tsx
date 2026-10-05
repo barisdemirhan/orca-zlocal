@@ -1,6 +1,7 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import {
   AGENT_HUB_FINISHED_CLEAR_MINUTES,
+  AGENT_HUB_TRAY_PEEK_SECONDS,
   type AgentHubDefaultTab,
   type AgentHubDockSize,
   type AgentHubPlacement
@@ -244,6 +245,38 @@ function AgentHubOptions({
             options={AGENT_HUB_FINISHED_CLEAR_MINUTES.map((minutes) => ({
               value: minutes,
               label: clearAfterLabel(minutes)
+            }))}
+          />
+        }
+      />
+      <SettingsRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.trayPeek',
+          'Fan out parked mirrors on news for'
+        )}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.trayPeekCopy',
+          'When a parked mirror asks or finishes, the pile beside the hub opens this long, then folds again.'
+        )}
+        control={
+          <SettingsSegmentedControl<number>
+            value={preferences.trayPeekSeconds}
+            size="sm"
+            onChange={(value) => updateSettings({ agentHubTrayPeekSeconds: value })}
+            ariaLabel={translate(
+              'auto.components.settings.ExperimentalPane.agentHub.trayPeek',
+              'Fan out parked mirrors on news for'
+            )}
+            options={AGENT_HUB_TRAY_PEEK_SECONDS.map((seconds) => ({
+              value: seconds,
+              label:
+                seconds === 0
+                  ? translate('auto.components.settings.ExperimentalPane.agentHub.never', 'Never')
+                  : translate(
+                      'auto.components.settings.ExperimentalPane.agentHub.seconds',
+                      '{{value0}} s',
+                      { value0: seconds }
+                    )
             }))}
           />
         }

@@ -20,9 +20,8 @@ function rowKind(row: AgentHubTerminalRow): AgentHubIndicatorKind {
 }
 
 function rowSubtitle(row: AgentHubTerminalRow): string {
-  const who = row.thread
-    ? `@${row.thread.agentType}`
-    : translate('agentHub.terminals.shell', 'shell')
+  const agent = row.thread?.agentType ?? row.idleAgent
+  const who = agent ? `@${agent}` : translate('agentHub.terminals.shell', 'shell')
   return `${who} · ${agentHubStateWord(row.thread)}`
 }
 
@@ -65,7 +64,7 @@ function TreeRow({
     <>
       <AgentHubRow
         kind={kind}
-        agentType={row.thread?.agentType ?? null}
+        agentType={row.thread?.agentType ?? row.idleAgent}
         title={row.title}
         subtitle={rowSubtitle(row)}
         worktreeId={row.worktree.id}

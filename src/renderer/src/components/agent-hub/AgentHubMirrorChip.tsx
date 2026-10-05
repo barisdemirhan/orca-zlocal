@@ -64,7 +64,8 @@ export function AgentHubMirrorChip({
           }
         }}
         // Why a mini header: the chip should say whose terminal it is, where, and let it go.
-        className="group/chip flex h-10 w-[280px] shrink-0 animate-in cursor-pointer items-center gap-2 rounded-xl border border-foreground/20 bg-popover pr-1 pl-2 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-95 hover:border-foreground/35 data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-agent-question/10 data-[kind=done]:border-status-success/50"
+        // The ask tint is a layer over the opaque card, so piled chips never show through.
+        className="group/chip flex h-10 w-[280px] shrink-0 animate-in cursor-pointer items-center gap-2 rounded-xl border border-foreground/20 bg-popover pr-1 pl-2 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-95 hover:border-foreground/35 data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-linear-to-r data-[kind=ask]:from-agent-question/10 data-[kind=ask]:to-agent-question/10 data-[kind=done]:border-status-success/50"
       >
         <HubStateIndicator kind={kind} />
         <HubAvatar agentType={chip.target.agentType} kind={thread ? kind : null} />
@@ -107,6 +108,10 @@ export function AgentHubMirrorChip({
           side={alertSide}
           locationOf={() => location}
           onOpen={onOpenAlert}
+          onPopout={(shown) => {
+            onDismissAlert(shown.id)
+            onRestore()
+          }}
           onJump={(shown) => {
             onDismissAlert(shown.id)
             onReveal()

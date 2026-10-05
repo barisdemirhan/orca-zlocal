@@ -45,6 +45,8 @@ export type AgentHubSettings = {
   agentHubShowShells?: boolean
   /** Agent Hub drops finished agents from the Inbox after this many minutes; 0 keeps them until read. */
   agentHubFinishedAutoClearMinutes?: number
+  /** Agent Hub tray: seconds its pile stays fanned out when a parked mirror speaks up; 0 never. */
+  agentHubTrayPeekSeconds?: number
   /** Agent Hub tab shown on open when nobody is waiting. */
   agentHubDefaultTab?: AgentHubDefaultTab
 }
@@ -53,6 +55,9 @@ export const DEFAULT_AGENT_HUB_DOCK_POSITION: AgentHubDockPosition = { edge: 'bo
 
 /** Choices for "clear finished agents after"; 0 keeps them until they are read. */
 export const AGENT_HUB_FINISHED_CLEAR_MINUTES = [0, 15, 30, 60] as const
+
+/** Choices for how long the tray fans out on news; 0 leaves it piled. */
+export const AGENT_HUB_TRAY_PEEK_SECONDS = [0, 3, 5, 10] as const
 
 /** Muting from the dock lasts this long. */
 export const AGENT_HUB_MUTE_DURATION_MS = 2 * 60 * 60 * 1000
@@ -107,4 +112,8 @@ export function normalizeAgentHubDefaultTab(value: unknown): AgentHubDefaultTab 
 
 export function normalizeAgentHubFinishedClearMinutes(value: unknown): number {
   return AGENT_HUB_FINISHED_CLEAR_MINUTES.find((minutes) => minutes === value) ?? 0
+}
+
+export function normalizeAgentHubTrayPeekSeconds(value: unknown): number {
+  return AGENT_HUB_TRAY_PEEK_SECONDS.find((seconds) => seconds === value) ?? 5
 }

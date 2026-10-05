@@ -124,6 +124,7 @@ export function AgentHubMirrorTray({
   side,
   alertSide,
   hidden,
+  peekMs,
   onRestore,
   onReveal,
   onClose,
@@ -141,6 +142,8 @@ export function AgentHubMirrorTray({
   alertSide: AgentHubAlertSide
   /** Out of sight while the hub's own panel is open over the same spot. */
   hidden: boolean
+  /** How long the pile fans out when a parked mirror asks or finishes; 0 never. */
+  peekMs: number
   onRestore: (key: string) => void
   onReveal: (item: AgentHubTrayItem) => void
   onClose: (key: string) => void
@@ -148,16 +151,65 @@ export function AgentHubMirrorTray({
   onDismissAlert: (id: string) => void
 }): React.JSX.Element | null {
   const [expanded, setExpanded] = useState(false)
-  const [fanned, setFanned] = useState(false)
+  const [pointed, setPointed] = useState(false)
+  const [peeking, setPeeking] = useState(false)
   const pileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  useEffect(
-    () => () => {
+  const point = (): void => {
+    if (pileTimerRef.current) {
+      clearTimeout(pileTimerRef.current)
+      pileTimerRef.current = null
+    }
+    setPointed(true)
+  }
+  const unpoint = (): void => {
+    pileTimerRef.current = setTimeout(() => setPointed(false), PILE_DELAY_MS)
+  }
+  // Pointing at the hub itself fans the pile too: the two read as one spot.
+  useEffect(() => {
+    const anchor = anchorRef.current
+    if (!anchor) {
+      return
+    }
+    anchor.addEventListener('pointerenter', point)
+    anchor.addEventListener('pointerleave', unpoint)
+    return () => {
+      anchor.removeEventListener('pointerenter', point)
+      anchor.removeEventListener('pointerleave', unpoint)
       if (pileTimerRef.current) {
         clearTimeout(pileTimerRef.current)
+      }
+    }
+  }, [anchorRef])
+  // News from a parked mirror (it asks or finishes) shows the whole pile for a moment.
+  const news = items
+    .filter((item) => item.kind === 'ask' || item.kind === 'done')
+    .map((item) => `${item.key}:${item.kind}`)
+    .join('|')
+  const seenNewsRef = useRef(new Set<string>())
+  const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    const current = news ? news.split('|') : []
+    const fresh = current.some((entry) => !seenNewsRef.current.has(entry))
+    seenNewsRef.current = new Set(current)
+    if (!fresh || peekMs <= 0) {
+      return
+    }
+    // Why no cleanup here: news that merely leaves must not cut a running peek short.
+    if (peekTimerRef.current) {
+      clearTimeout(peekTimerRef.current)
+    }
+    setPeeking(true)
+    peekTimerRef.current = setTimeout(() => setPeeking(false), peekMs)
+  }, [news, peekMs])
+  useEffect(
+    () => () => {
+      if (peekTimerRef.current) {
+        clearTimeout(peekTimerRef.current)
       }
     },
     []
   )
+  const fanned = pointed || peeking
   // With nothing left behind "+N", the next overflow starts folded again.
   if (expanded && items.length <= AGENT_HUB_TRAY_VISIBLE) {
     setExpanded(false)
@@ -167,13 +219,6 @@ export function AgentHubMirrorTray({
     return null
   }
   const piled = !fanned && shown.length > 1
-  const fan = (): void => {
-    if (pileTimerRef.current) {
-      clearTimeout(pileTimerRef.current)
-      pileTimerRef.current = null
-    }
-    setFanned(true)
-  }
   return (
     <div
       ref={trayRef}
@@ -183,14 +228,15 @@ export function AgentHubMirrorTray({
       data-piled={piled}
       data-expanded={expanded && !piled}
       inert={hidden}
-      onPointerEnter={fan}
-      onPointerLeave={() => {
-        pileTimerRef.current = setTimeout(() => setFanned(false), PILE_DELAY_MS)
-      }}
-      onFocus={fan}
+      data-resting={!fanned}
+      onPointerEnter={point}
+      onPointerLeave={unpoint}
+      onFocus={point}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Nearest the hub first: a tray above the bottom dock stacks upward.
-      className="pointer-events-auto fixed flex max-h-[calc(100vh-96px)] flex-col items-start gap-1.5 p-0.5 transition-opacity duration-150 scrollbar-sleek data-[hidden=true]:pointer-events-none data-[hidden=true]:opacity-0 data-[expanded=true]:overflow-y-auto data-[side=top]:flex-col-reverse"
+      // Why faded as one layer: what is behind stays readable until the tray is pointed at, and
+      // piled chips do not show through each other the way see-through cards would.
+      className="pointer-events-auto fixed flex max-h-[calc(100vh-96px)] flex-col items-start gap-1.5 p-0.5 transition-opacity duration-200 scrollbar-sleek data-[resting=true]:opacity-80 data-[hidden=true]:pointer-events-none data-[hidden=true]:opacity-0 data-[expanded=true]:overflow-y-auto data-[side=top]:flex-col-reverse"
     >
       <TrayPlacement trayRef={trayRef} anchorRef={anchorRef} side={side} />
       {shown.map((item, index) => (

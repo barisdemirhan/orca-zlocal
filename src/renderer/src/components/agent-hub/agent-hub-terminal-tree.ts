@@ -3,6 +3,7 @@ import { folderWorkspaceToWorktree } from '../../../../shared/folder-workspace-w
 import type { ProjectGroup } from '../../../../shared/project-group-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
+import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
@@ -18,6 +19,8 @@ export type AgentHubTerminalRow = {
   paneKey: string | null
   title: string
   thread: AgentPaneThread | null
+  /** A thread-less tab's agent, sitting idle (see agent-hub-idle-agent); null for a real shell. */
+  idleAgent: TuiAgent | null
   /** Worker panes this agent dispatched, listed under it instead of in their own workspace. */
   children: AgentHubTerminalRow[]
 }
@@ -49,6 +52,8 @@ export type AgentHubTerminalTreeInput = {
   floating: { worktree: Worktree; label: string } | null
   /** False lists agent panes only. */
   includeShells: boolean
+  /** Names the agent idling in a tab that has no thread. */
+  idleAgentOf?: (tab: TerminalTab) => TuiAgent | null
   ungroupedLabel: string
   /** Project name for worktrees whose repo is not in the catalog (the sidebar's "Unknown"). */
   unknownProjectLabel: string
@@ -68,7 +73,7 @@ function buildRows(
   repo: Repo | null,
   tabs: readonly TerminalTab[],
   threadsByTabId: ReadonlyMap<string, AgentPaneThread[]>,
-  includeShells: boolean
+  input: Pick<AgentHubTerminalTreeInput, 'includeShells' | 'idleAgentOf'>
 ): AgentHubTerminalRow[] {
   const rows: AgentHubTerminalRow[] = []
   for (const tab of tabs) {
@@ -83,12 +88,14 @@ function buildRows(
           paneKey: thread.paneKey,
           title: activityThreadRowCopy(thread).taskTitle || shellTabTitle(tab),
           thread,
+          idleAgent: null,
           children: []
         })
       }
       continue
     }
-    if (!includeShells) {
+    const idleAgent = input.idleAgentOf?.(tab) ?? null
+    if (!input.includeShells && !idleAgent) {
       continue
     }
     rows.push({
@@ -99,6 +106,7 @@ function buildRows(
       paneKey: null,
       title: shellTabTitle(tab),
       thread: null,
+      idleAgent,
       children: []
     })
   }
@@ -113,7 +121,7 @@ export function countRows(
   let agentRowCount = 0
   const visit = (row: AgentHubTerminalRow): void => {
     rowCount += 1
-    agentRowCount += row.thread ? 1 : 0
+    agentRowCount += row.thread || row.idleAgent ? 1 : 0
     const section = row.thread ? agentHubSection(row.thread) : null
     if (section) {
       counts[section] += 1
@@ -124,6 +132,17 @@ export function countRows(
     workspace.rows.forEach(visit)
   }
   return { counts, rowCount, agentRowCount }
+}
+
+/** The tree without plain shells: every agent terminal, busy or idle. */
+export function agentOnlyAgentHubTree(groups: readonly AgentHubGroupNode[]): AgentHubGroupNode[] {
+  return groups.flatMap((group) => {
+    const workspaces = group.workspaces.flatMap((workspace) => {
+      const rows = workspace.rows.filter((row) => row.thread || row.idleAgent)
+      return rows.length > 0 ? [{ ...workspace, rows }] : []
+    })
+    return workspaces.length > 0 ? [{ ...group, workspaces, ...countRows(workspaces) }] : []
+  })
 }
 
 /** Moves each worker row under its dispatcher's row, wherever that row lives. */
@@ -197,7 +216,7 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
           repo,
           input.tabsByWorktree[worktree.id] ?? [],
           threadsByTabId,
-          input.includeShells
+          input
         )
       })
     }
@@ -225,7 +244,7 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
         null,
         input.tabsByWorktree[worktree.id] ?? [],
         threadsByTabId,
-        input.includeShells
+        input
       )
     })
   }
@@ -240,7 +259,7 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
         null,
         input.tabsByWorktree[worktree.id] ?? [],
         threadsByTabId,
-        input.includeShells
+        input
       )
     })
   }
