@@ -45,7 +45,8 @@ export function useAgentHubCanvasWelcome({
   hubOpen,
   anchorRef,
   side,
-  openAgents
+  openAgents,
+  closeHub
 }: {
   canvasOpen: boolean
   /** No mirror window is open. */
@@ -54,12 +55,19 @@ export function useAgentHubCanvasWelcome({
   anchorRef: React.RefObject<HTMLElement | null>
   side: 'top' | 'bottom' | 'left' | 'right'
   openAgents: () => void
+  closeHub: () => void
 }): AgentHubPopoverOffsets | null {
   const [offsets, setOffsets] = useState<AgentHubPopoverOffsets | null>(null)
   const wasOpen = useRef(false)
   useEffect(() => {
     const entered = canvasOpen && !wasOpen.current
+    const left = !canvasOpen && wasOpen.current
     wasOpen.current = canvasOpen
+    // The greeting belongs to the canvas: leaving it takes the panel along.
+    if (left && offsets) {
+      closeHub()
+      return
+    }
     if (!entered || !empty || !anchorRef.current) {
       return
     }

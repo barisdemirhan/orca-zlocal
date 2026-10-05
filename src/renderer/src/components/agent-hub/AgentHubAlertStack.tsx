@@ -226,7 +226,7 @@ export function AgentHubAlertStack({
       ref={stackRef}
       data-agent-hub-alert-stack
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
-      className="fixed z-[47] flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto p-0.5 scrollbar-sleek"
+      className="fixed z-[48] flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto p-0.5 scrollbar-sleek"
     >
       {ordered.map((alert) => (
         <AlertCard

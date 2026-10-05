@@ -274,7 +274,7 @@ export function AgentHubMirrors({
         anchorRef={hubRef}
         side={traySide}
         alertSide={trayAlertSide}
-        hidden={trayHidden}
+        hidden={trayHidden || hidden}
         peekMs={trayPeekMs}
         onRestore={restoreAgentHubMirror}
         onReveal={(item) => {

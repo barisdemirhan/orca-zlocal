@@ -243,7 +243,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     hubOpen: open,
     anchorRef,
     side,
-    openAgents: () => openHub('agents')
+    openAgents: () => openHub('agents'),
+    closeHub: () => setOpen(false)
   })
   const hubAlerts = alerts.filter(
     (candidate) =>

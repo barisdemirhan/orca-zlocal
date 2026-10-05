@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronsDownUp } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
@@ -217,7 +218,9 @@ export function AgentHubMirrorTray({
     return null
   }
   const piled = !fanned && shown.length > 1
-  return (
+  // Why a portal: the tray is one of the hub's controls, so it stays above every floating
+  // window (the mirrors' own layer drops behind the floating workspace when that is in front).
+  return createPortal(
     <div
       ref={trayRef}
       data-agent-hub-mirror-tray
@@ -234,7 +237,7 @@ export function AgentHubMirrorTray({
       // Nearest the hub first: a tray above the bottom dock stacks upward.
       // Why faded as one layer: what is behind stays readable until the tray is pointed at, and
       // piled chips do not show through each other the way see-through cards would.
-      className="pointer-events-auto fixed flex max-h-[calc(100vh-96px)] flex-col items-start gap-1.5 p-0.5 transition-opacity duration-200 scrollbar-sleek data-[resting=true]:opacity-80 data-[hidden=true]:pointer-events-none data-[hidden=true]:opacity-0 data-[expanded=true]:overflow-y-auto data-[side=top]:flex-col-reverse"
+      className="pointer-events-auto fixed z-[47] flex max-h-[calc(100vh-96px)] flex-col items-start gap-1.5 p-0.5 transition-opacity duration-200 scrollbar-sleek data-[resting=true]:opacity-80 data-[hidden=true]:pointer-events-none data-[hidden=true]:invisible data-[expanded=true]:overflow-y-auto data-[side=top]:flex-col-reverse"
     >
       <TrayPlacement trayRef={trayRef} anchorRef={anchorRef} side={side} />
       {shown.map((item, index) => (
@@ -275,6 +278,7 @@ export function AgentHubMirrorTray({
           )}
         </button>
       ) : null}
-    </div>
+    </div>,
+    document.body
   )
 }

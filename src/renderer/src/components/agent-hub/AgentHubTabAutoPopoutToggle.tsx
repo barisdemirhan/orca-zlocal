@@ -55,6 +55,13 @@ export function AgentHubTabAutoPopoutToggle({
           className="relative z-10 mr-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm text-transparent group-hover:text-muted-foreground hover:bg-muted hover:!text-foreground focus-visible:bg-muted focus-visible:!text-foreground data-[active=true]:text-muted-foreground data-[on=true]:bg-foreground/10 data-[on=true]:text-foreground"
         >
           <PictureInPicture2 className="size-3" />
+          {/* On reads at a glance, on any tab: a green dot on the icon's corner. */}
+          {on ? (
+            <span
+              aria-hidden
+              className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-status-success ring-1 ring-background"
+            />
+          ) : null}
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>

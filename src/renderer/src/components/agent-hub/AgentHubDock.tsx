@@ -163,8 +163,9 @@ export function AgentHubDock({
       data-expanded={expanded}
       data-dragging={dragPoint !== null}
       style={placement}
+      // Why z-[47]: the hub's controls stay reachable above every floating window (46).
       // Why the bar colour: the notch reads as part of the status bar or title bar it grows from.
-      className="group/dock fixed z-[44] touch-none select-none [-webkit-app-region:no-drag] [--hub-notch:var(--bg-titlebar,var(--card))]"
+      className="group/dock fixed z-[47] touch-none select-none [-webkit-app-region:no-drag] [--hub-notch:var(--bg-titlebar,var(--card))]"
       onPointerEnter={() => {
         if (collapseTimerRef.current) {
           clearTimeout(collapseTimerRef.current)
