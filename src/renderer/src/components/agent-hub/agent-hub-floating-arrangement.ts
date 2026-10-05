@@ -11,6 +11,7 @@ import {
   type AgentHubRect
 } from './agent-hub-floating-arrange'
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
+import { keepAgentHubMirrorPlace } from './agent-hub-mirror-store'
 
 // Rows of windows this close (px) read as one row when keeping their order.
 const ROW_BAND = 120
@@ -34,7 +35,7 @@ export function readAgentHubMirrorPlacement(key: string): AgentHubMirrorGeometry
 }
 
 /** The room between the sidebars, under the title bar and above the status bar. */
-function workArea(): AgentHubRect {
+export function agentHubWorkArea(): AgentHubRect {
   const state = useAppStore.getState()
   const left = state.sidebarOpen ? state.sidebarWidth : 0
   const right = state.rightSidebarOpen ? state.rightSidebarWidth : 0
@@ -68,7 +69,7 @@ export function arrangeAgentHubFloatingWindowsOnScreen(layout: AgentHubFloatingL
       Math.round(a.rect.top / ROW_BAND) - Math.round(b.rect.top / ROW_BAND) ||
       a.rect.left - b.rect.left
   )
-  const places = arrangeAgentHubFloatingWindows(windows.length, workArea(), layout)
+  const places = arrangeAgentHubFloatingWindows(windows.length, agentHubWorkArea(), layout)
   const next = new Map<string, AgentHubMirrorGeometry>()
   windows.forEach((floating, index) => {
     const place = places[index]
@@ -78,6 +79,7 @@ export function arrangeAgentHubFloatingWindowsOnScreen(layout: AgentHubFloatingL
     if (floating.key === null) {
       requestFloatingWorkspaceBounds(place)
     } else {
+      keepAgentHubMirrorPlace(floating.key)
       next.set(floating.key, {
         x: place.left,
         y: place.top,

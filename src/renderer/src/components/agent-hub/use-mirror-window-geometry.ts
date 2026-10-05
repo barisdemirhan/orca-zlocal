@@ -1,21 +1,29 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
+  agentHubMirrorOpenGeometry,
+  agentHubMirrorOpenRegion,
   clampAgentHubMirrorGeometry,
-  defaultAgentHubMirrorGeometry,
+  defaultAgentHubMirrorSize,
   type AgentHubMirrorGeometry
 } from './agent-hub-mirror-geometry'
 import {
+  agentHubWorkArea,
   readAgentHubMirrorPlacement,
   useAgentHubArrangeVersion
 } from './agent-hub-floating-arrangement'
-import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-store'
+import {
+  keepAgentHubMirrorPlace,
+  readAgentHubMirrorOrigin,
+  readAgentHubMirrors,
+  rememberAgentHubMirrorOrigin
+} from './agent-hub-mirror-store'
+import { agentHubPaneTargetKey } from './agent-hub-pane-target'
 
-const CASCADE_STEP_PX = 28
 const SETTLE_MS = 340
 const MOVE_THRESHOLD_PX = 3
 
-// Why module scope: a new mirror opens where the user last left one this session.
-let lastGeometry: AgentHubMirrorGeometry | null = null
+// Why module scope: a new mirror opens at the size the user last gave one this session.
+let lastResizedTo: { width: number; height: number } | null = null
 
 type DragState = {
   mode: 'move' | 'resize'
@@ -32,13 +40,43 @@ function viewportSize(): { width: number; height: number } {
 }
 
 /**
+ * A window's first place: where it stood before (see readAgentHubMirrorOrigin), else centred in the work area (beside the hub's
+ * panel while that is open), stepping off the mirrors already open. The place is remembered at
+ * once, so windows opening in the same commit step off each other too; asking again returns it.
+ */
+function claimMirrorPlace(key: string, besideHubPanel: boolean): AgentHubMirrorGeometry {
+  const viewport = viewportSize()
+  const remembered = readAgentHubMirrorOrigin(key)
+  if (remembered) {
+    return clampAgentHubMirrorGeometry(remembered, viewport)
+  }
+  const panel = besideHubPanel
+    ? document.querySelector('[data-agent-hub-panel]')?.getBoundingClientRect()
+    : null
+  const taken = readAgentHubMirrors().windows.flatMap(
+    (open) => readAgentHubMirrorOrigin(agentHubPaneTargetKey(open)) ?? []
+  )
+  const place = clampAgentHubMirrorGeometry(
+    agentHubMirrorOpenGeometry(
+      lastResizedTo ?? defaultAgentHubMirrorSize(viewport),
+      agentHubMirrorOpenRegion(agentHubWorkArea(), panel ?? null),
+      taken
+    ),
+    viewport
+  )
+  rememberAgentHubMirrorOrigin(key, place)
+  return place
+}
+
+/**
  * A mirror window's place and size. Why a transform while moving: re-laying out a window that
  * holds a live terminal on every pointer move stutters; the GPU slides it and the new spot is
  * committed on release. Resizing must re-lay out, so it is applied once per frame.
  */
 export function useMirrorWindowGeometry(
   key: string,
-  cascade: number
+  /** The hub's panel is open: a new mirror opens beside it, not under it. */
+  besideHubPanel: boolean
 ): {
   geometry: AgentHubMirrorGeometry
   /** True briefly after the windows are arranged, so the move can glide. */
@@ -48,16 +86,9 @@ export function useMirrorWindowGeometry(
   onPointerMove: (event: React.PointerEvent<HTMLElement>) => void
   endDrag: (event: React.PointerEvent<HTMLElement>) => void
 } {
-  const [geometry, setGeometry] = useState<AgentHubMirrorGeometry>(() => {
-    const base = lastGeometry ?? defaultAgentHubMirrorGeometry(viewportSize())
-    // A restored chip reopens where it was dragged to.
-    const origin = readAgentHubMirrorOrigin(key)
-    const step = CASCADE_STEP_PX * cascade
-    return clampAgentHubMirrorGeometry(
-      origin ? { ...base, ...origin } : { ...base, x: base.x - step, y: base.y - step },
-      viewportSize()
-    )
-  })
+  const [geometry, setGeometry] = useState<AgentHubMirrorGeometry>(() =>
+    claimMirrorPlace(key, besideHubPanel)
+  )
   const sectionRef = useRef<HTMLElement | null>(null)
   const dragRef = useRef<DragState | null>(null)
   const frameRef = useRef<number | null>(null)
@@ -86,8 +117,7 @@ export function useMirrorWindowGeometry(
     if (sectionRef.current) {
       sectionRef.current.style.translate = ''
     }
-    lastGeometry = geometry
-    rememberAgentHubMirrorOrigin(key, { x: geometry.x, y: geometry.y })
+    rememberAgentHubMirrorOrigin(key, geometry)
   }, [geometry, key])
 
   useEffect(() => {
@@ -132,6 +162,11 @@ export function useMirrorWindowGeometry(
     }
     const dx = event.clientX - drag.pointerX
     const dy = event.clientY - drag.pointerY
+    if (!drag.captured && event.buttons === 0) {
+      // The button came up outside the title bar before the pointer was captured.
+      dragRef.current = null
+      return
+    }
     if (!drag.captured) {
       if (Math.hypot(dx, dy) < MOVE_THRESHOLD_PX) {
         return
@@ -164,17 +199,24 @@ export function useMirrorWindowGeometry(
     }
   }, [])
 
-  const endDrag = useCallback((event: React.PointerEvent<HTMLElement>): void => {
-    const drag = dragRef.current
-    if (!drag) {
-      return
-    }
-    dragRef.current = null
-    if (drag.captured) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-      setGeometry(drag.next)
-    }
-  }, [])
+  const endDrag = useCallback(
+    (event: React.PointerEvent<HTMLElement>): void => {
+      const drag = dragRef.current
+      if (!drag) {
+        return
+      }
+      dragRef.current = null
+      if (drag.captured) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+        setGeometry(drag.next)
+        keepAgentHubMirrorPlace(key)
+        if (drag.mode === 'resize') {
+          lastResizedTo = { width: drag.next.width, height: drag.next.height }
+        }
+      }
+    },
+    [key]
+  )
 
   return { geometry, settling, sectionRef, beginDrag, onPointerMove, endDrag }
 }

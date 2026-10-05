@@ -47,7 +47,7 @@ export function AgentHubMirrorWindow({
   thread,
   location,
   stackIndex,
-  cascade,
+  besideHubPanel,
   surface,
   nudge,
   onNudged,
@@ -68,8 +68,8 @@ export function AgentHubMirrorWindow({
   location: AgentHubLocation
   /** Its place in the stack of open mirrors (higher is in front). */
   stackIndex: number
-  /** How many mirrors were open before it: a new one steps off the last so neither hides the other. */
-  cascade: number
+  /** The hub's panel is open: a window opening now takes a place beside it. */
+  besideHubPanel: boolean
   /**
    * How the terminal is shown: the real pane moved in (`portal`), a note while the pane is on
    * screen in the workspace (`in-workspace`), or the dashboard's preview for floating terminals.
@@ -96,7 +96,7 @@ export function AgentHubMirrorWindow({
 }): React.JSX.Element {
   const mirrorKey = agentHubPaneTargetKey(target)
   const { geometry, settling, sectionRef, beginDrag, onPointerMove, endDrag } =
-    useMirrorWindowGeometry(mirrorKey, cascade)
+    useMirrorWindowGeometry(mirrorKey, besideHubPanel)
   const slotRef = useCallback(
     (element: HTMLDivElement | null) => onSlot(mirrorKey, element),
     [onSlot, mirrorKey]

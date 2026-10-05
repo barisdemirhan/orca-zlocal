@@ -1,7 +1,6 @@
 import { useSyncExternalStore } from 'react'
+import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
-
-type Point = { x: number; y: number }
 
 /** A minimized mirror, parked in the tray beside the hub until restored or closed. */
 export type AgentHubMirrorChip = { target: AgentHubPaneTarget; minimizedAt: number }
@@ -17,8 +16,10 @@ export const MAX_AGENT_HUB_MIRROR_WINDOWS = 4
 const MAX_CHIPS = 12
 
 let state: AgentHubMirrorState = { windows: [], chips: [] }
-// Where each window sat, so it comes back there from the tray. Not rendered state.
-const windowOrigins = new Map<string, Point>()
+// Where each window sat (and how large), so it comes back there. Not rendered state.
+const windowOrigins = new Map<string, AgentHubMirrorGeometry>()
+// Windows the user moved, resized or arranged: their place outlives closing them.
+const keptPlaces = new Set<string>()
 const listeners = new Set<() => void>()
 // The window last picked again from the hub while already open, so it can glow.
 let highlight: { key: string; seq: number } = { key: '', seq: 0 }
@@ -34,12 +35,23 @@ function emit(next: AgentHubMirrorState): void {
 
 const keyOf = agentHubPaneTargetKey
 
-export function rememberAgentHubMirrorOrigin(key: string, origin: Point): void {
+export function rememberAgentHubMirrorOrigin(key: string, origin: AgentHubMirrorGeometry): void {
   windowOrigins.set(key, origin)
 }
 
-/** Where a window last stood, so it reopens there from the tray. */
-export function readAgentHubMirrorOrigin(key: string): Point | null {
+/** The user chose this window's place, so it reopens there even after it is closed. */
+export function keepAgentHubMirrorPlace(key: string): void {
+  keptPlaces.add(key)
+}
+
+function forgetUnkeptPlace(key: string): void {
+  if (!keptPlaces.has(key)) {
+    windowOrigins.delete(key)
+  }
+}
+
+/** Where a window last stood: it returns there from the tray, or reopens there if the user chose it. */
+export function readAgentHubMirrorOrigin(key: string): AgentHubMirrorGeometry | null {
   return windowOrigins.get(key) ?? null
 }
 
@@ -106,6 +118,9 @@ export function retargetAgentHubMirror(fromKey: string, target: AgentHubPaneTarg
   const origin = windowOrigins.get(fromKey)
   if (origin) {
     windowOrigins.set(toKey, origin)
+    if (keptPlaces.has(fromKey)) {
+      keptPlaces.add(toKey)
+    }
   }
   emit({
     windows: state.windows.map((open, position) => (position === index ? target : open)),
@@ -175,17 +190,20 @@ export function useAgentHubMirrorsDockRequest(): { seq: number; key: string | nu
 
 export function closeAgentHubMirror(key: string): void {
   if (state.windows.some((open) => keyOf(open) === key)) {
+    forgetUnkeptPlace(key)
     emit({ ...state, windows: state.windows.filter((open) => keyOf(open) !== key) })
   }
 }
 
 export function closeAgentHubMirrorChip(key: string): void {
+  forgetUnkeptPlace(key)
   emit({ ...state, chips: state.chips.filter((chip) => keyOf(chip.target) !== key) })
 }
 
 /** Test seam: start every case from an empty stage. */
 export function resetAgentHubMirrorsForTest(): void {
   windowOrigins.clear()
+  keptPlaces.clear()
   emit({ windows: [], chips: [] })
 }
 

@@ -225,7 +225,7 @@ export function AgentHubMirrors({
             thread={thread}
             location={locationOf(target)}
             stackIndex={index + 1}
-            cascade={index}
+            besideHubPanel={hubOpen}
             surface={surfaces[index]?.surface ?? 'portal'}
             // The window raises its own pane's alerts; the hub's bubble skips them.
             // A hidden window leaves its alert queued until it is back in sight.
