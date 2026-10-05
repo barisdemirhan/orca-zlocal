@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
+import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
 import { useAppStore } from '@/store'
 import {
   agentHubFloatingDimMode,
@@ -23,9 +24,10 @@ import {
   useFloatingWindowPresence,
   useFloatingWindowsSpotlit
 } from './agent-hub-floating-dim'
+import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 
 const FLOATING_WINDOW = '[data-agent-hub-mirror], [data-floating-terminal-panel]'
-const DIM_MODES: readonly AgentHubFloatingDimMode[] = ['off', 'on', 'untilClick']
+const DIM_MODES: readonly AgentHubFloatingDimMode[] = ['off', 'on', 'untilClick', 'minimizeOnClick']
 
 function dimModeLabel(mode: AgentHubFloatingDimMode): string {
   switch (mode) {
@@ -35,6 +37,11 @@ function dimModeLabel(mode: AgentHubFloatingDimMode): string {
       return translate('agentHub.dim.modeOn', 'Dim behind floating windows')
     case 'untilClick':
       return translate('agentHub.dim.modeUntilClick', 'Dim until I click behind them')
+    case 'minimizeOnClick':
+      return translate(
+        'agentHub.dim.modeMinimizeOnClick',
+        'Dim, and a click behind tucks them away'
+      )
   }
 }
 
@@ -84,7 +91,7 @@ export function AgentHubDimToggle({
           </button>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel>
           {translate('agentHub.dim.title', 'Dim behind floating windows')}
         </DropdownMenuLabel>
@@ -111,7 +118,8 @@ export function AgentHubDimToggle({
 /**
  * The dim itself: under every floating window, over the rest. While shown it takes the clicks
  * meant for what it covers (an embedded browser included), so nothing behind is hit by accident;
- * in "until I click" mode such a click lifts it, and a click on a floating window brings it back.
+ * in "until I click" mode such a click lifts it, and a click on a floating window brings it back;
+ * in "minimize" mode it sends the mirrors to the hub and hides the floating workspace.
  */
 export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.Element {
   const mode = useDimMode()
@@ -154,6 +162,12 @@ export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.
         event.preventDefault()
         if (mode === 'untilClick') {
           setFloatingWindowsSpotlit(false)
+        } else if (mode === 'minimizeOnClick') {
+          requestAgentHubMirrorsDock()
+          // The floating workspace has no tray; it hides the way its status bar button hides it.
+          if (document.querySelector('[data-floating-terminal-panel][aria-hidden="false"]')) {
+            window.dispatchEvent(new CustomEvent(TOGGLE_FLOATING_TERMINAL_EVENT))
+          }
         }
       }}
       // Why z-[43]: below the dock (44), the floating workspace (45) and mirrors (46).

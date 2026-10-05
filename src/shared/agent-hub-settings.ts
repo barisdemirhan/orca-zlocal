@@ -11,10 +11,11 @@ export type AgentHubDefaultTab = 'inbox' | 'running' | 'all'
 export type AgentHubDockSize = 'small' | 'medium' | 'large'
 
 /**
- * Dimming behind floating windows: none, always while one is open, or until a click behind
- * them lifts it (a click on a floating window brings it back).
+ * Dimming behind floating windows: none, always while one is open, until a click behind them
+ * lifts it (a click on a floating window brings it back), or always with a click behind sending
+ * the mirrors to the hub.
  */
-export type AgentHubFloatingDimMode = 'off' | 'on' | 'untilClick'
+export type AgentHubFloatingDimMode = 'off' | 'on' | 'untilClick' | 'minimizeOnClick'
 
 /** Agent Hub's settings, kept out of global-settings-types.ts (at its line budget). */
 export type AgentHubSettings = {
@@ -63,7 +64,7 @@ export function agentHubFloatingDimMode(
     | undefined
 ): AgentHubFloatingDimMode {
   const mode = settings?.agentHubFloatingDimMode
-  if (mode === 'off' || mode === 'on' || mode === 'untilClick') {
+  if (mode === 'off' || mode === 'on' || mode === 'untilClick' || mode === 'minimizeOnClick') {
     return mode
   }
   return settings?.agentHubFloatingDim === true ? 'untilClick' : 'off'
