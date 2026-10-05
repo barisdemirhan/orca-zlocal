@@ -1,7 +1,25 @@
 import { useSyncExternalStore } from 'react'
+import { useAppStore } from '@/store'
+import {
+  agentHubMirrorWindowCap,
+  focusAgentHubMirror,
+  readAgentHubMirrors,
+  requestAgentHubMirrorsDock,
+  restoreAgentHubMirrors
+} from './agent-hub-mirror-store'
+import { agentHubPaneTargetKey } from './agent-hub-pane-target'
+
+// Focus inside these stays put when the canvas opens; anywhere else it is behind the canvas.
+const OVER_THE_CANVAS =
+  '[data-agent-hub-panel], [data-agent-hub-dock], [data-floating-terminal-panel]'
 
 // Whether the canvas (the page mirrors live on while its setting is on) is showing.
 let open = false
+// The mirrors on the canvas when it was last left, front first; they come back with it.
+let parked: readonly string[] = []
+// The right sidebar as it was before the canvas closed it.
+let rightSidebarWasOpen = false
+let stopGuarding: (() => void) | null = null
 const listeners = new Set<() => void>()
 
 function emit(): void {
@@ -21,16 +39,86 @@ export function useAgentHubCanvasOpen(): boolean {
   return useSyncExternalStore(subscribe, isAgentHubCanvasOpen)
 }
 
-export function openAgentHubCanvas(): void {
-  if (!open) {
-    open = true
-    emit()
+/**
+ * While the canvas is up: going to another page or workspace leaves it, and the right sidebar
+ * stays closed whoever asks for it (its toggle, a shortcut, a flow that reveals a panel).
+ */
+function guardShell(): () => void {
+  const { activeView, activeWorktreeId } = useAppStore.getState()
+  return useAppStore.subscribe((state) => {
+    if (state.activeView !== activeView || state.activeWorktreeId !== activeWorktreeId) {
+      closeAgentHubCanvas()
+    } else if (state.rightSidebarOpen) {
+      state.setRightSidebarOpen(false)
+    }
+  })
+}
+
+/** The mirrors parked by the last leave return to their places, behind any opened just now. */
+function bringParkedMirrorsBack(): void {
+  const { windows, chips } = readAgentHubMirrors()
+  const room = agentHubMirrorWindowCap() - windows.length
+  const back = parked
+    .filter((key) => chips.some((chip) => agentHubPaneTargetKey(chip.target) === key))
+    .slice(0, Math.max(0, room))
+  parked = []
+  if (back.length === 0) {
+    return
+  }
+  const front = windows.at(-1)
+  restoreAgentHubMirrors(back)
+  if (front) {
+    focusAgentHubMirror(agentHubPaneTargetKey(front))
   }
 }
 
-export function closeAgentHubCanvas(): void {
+export function openAgentHubCanvas(): void {
   if (open) {
-    open = false
-    emit()
+    return
   }
+  open = true
+  const app = useAppStore.getState()
+  rightSidebarWasOpen = app.rightSidebarOpen
+  if (rightSidebarWasOpen) {
+    app.setRightSidebarOpen(false)
+  }
+  stopGuarding = guardShell()
+  bringParkedMirrorsBack()
+  // Why: keys must not reach a terminal or editor the canvas now hides.
+  const focused = document.activeElement
+  if (focused instanceof HTMLElement && !focused.closest(OVER_THE_CANVAS)) {
+    focused.blur()
+  }
+  emit()
+}
+
+/** Leaves the canvas: its mirrors fly to the tray and the right sidebar returns as it was. */
+export function closeAgentHubCanvas(): void {
+  if (!open) {
+    return
+  }
+  open = false
+  stopGuarding?.()
+  stopGuarding = null
+  parked = readAgentHubMirrors().windows.map(agentHubPaneTargetKey).toReversed()
+  requestAgentHubMirrorsDock()
+  if (rightSidebarWasOpen) {
+    useAppStore.getState().setRightSidebarOpen(true)
+  }
+  emit()
+}
+
+export function toggleAgentHubCanvas(): void {
+  if (open) {
+    closeAgentHubCanvas()
+  } else {
+    openAgentHubCanvas()
+  }
+}
+
+/** Test seam: closed, with nothing remembered. */
+export function resetAgentHubCanvasForTest(): void {
+  closeAgentHubCanvas()
+  parked = []
+  rightSidebarWasOpen = false
 }

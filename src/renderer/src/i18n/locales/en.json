@@ -21843,7 +21843,8 @@
       "sizeLarge": "Large",
       "size": "Size",
       "dockMirrors": "Send the mirrors to the hub",
-      "restoreMirrors": "Bring the mirrors back"
+      "restoreMirrors": "Bring the mirrors back",
+      "openCanvas": "Open the canvas"
     },
     "children": {
       "agentOne": "1 agent",
@@ -21879,7 +21880,8 @@
     },
     "canvas": {
       "emptyTitle": "No mirrors on the canvas",
-      "emptyHint": "Pop out a terminal from the hub, or bring a parked mirror back, and it opens here."
+      "emptyHint": "Pop out a terminal from the hub, or bring a parked mirror back, and it opens here.",
+      "leave": "Leave the canvas"
     }
   },
   "workspace": {

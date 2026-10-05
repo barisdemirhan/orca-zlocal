@@ -7,7 +7,7 @@ import { agentHubNotchShape } from './agent-hub-dock-geometry'
 import type { AgentHubCounts } from './agent-hub-lists'
 
 export const DOCK_BUTTON =
-  'relative grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground disabled:pointer-events-none disabled:opacity-40'
+  'relative grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground disabled:pointer-events-none disabled:opacity-40 aria-pressed:bg-foreground/[0.07] aria-pressed:text-foreground'
 // Why wider than tall: a count's hover reads as a pill, never a tall capsule.
 export const DOCK_COUNT_BUTTON =
   'flex h-6 shrink-0 items-center justify-center rounded-full px-1.5 text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground group-data-[edge=left]/dock:h-auto group-data-[edge=left]/dock:w-6 group-data-[edge=left]/dock:px-0 group-data-[edge=left]/dock:py-1.5 group-data-[edge=right]/dock:h-auto group-data-[edge=right]/dock:w-6 group-data-[edge=right]/dock:px-0 group-data-[edge=right]/dock:py-1.5'
@@ -147,6 +147,7 @@ export function DockButton({
   side,
   className,
   disabled,
+  pressed,
   onClick,
   children
 }: {
@@ -154,6 +155,8 @@ export function DockButton({
   side: 'top' | 'bottom' | 'left' | 'right'
   className: string
   disabled?: boolean
+  /** For a button that switches something on and off. */
+  pressed?: boolean
   onClick: () => void
   children: React.ReactNode
 }): React.JSX.Element {
@@ -164,6 +167,7 @@ export function DockButton({
           type="button"
           aria-label={label}
           disabled={disabled}
+          aria-pressed={pressed}
           onClick={onClick}
           className={className}
         >

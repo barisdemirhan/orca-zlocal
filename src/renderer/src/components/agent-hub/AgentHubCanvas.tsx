@@ -1,5 +1,7 @@
 import { createPortal } from 'react-dom'
-import { PictureInPicture2 } from 'lucide-react'
+import { PictureInPicture2, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import {
@@ -13,7 +15,14 @@ import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-c
  * area, from the left sidebar to the window's right edge, under the title bar and above the
  * status bar. It hides the workspace behind it, so nothing there is hit by accident.
  */
-export function AgentHubCanvas({ empty }: { empty: boolean }): React.JSX.Element {
+export function AgentHubCanvas({
+  empty,
+  onLeave
+}: {
+  empty: boolean
+  /** Back to the page behind; the mirrors park beside the hub. */
+  onLeave: () => void
+}): React.JSX.Element {
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const sidebarWidth = useAppStore((s) => s.sidebarWidth)
   const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
@@ -33,6 +42,23 @@ export function AgentHubCanvas({ empty }: { empty: boolean }): React.JSX.Element
       // Why z-[43]: the dim's layer (unused here), below the dock (44) and the mirrors (46).
       className="fixed right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_14%,transparent)_1px,transparent_1px)] bg-size-[22px_22px] duration-150 fade-in-0"
     >
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={translate('agentHub.canvas.leave', 'Leave the canvas')}
+            onClick={onLeave}
+            className="absolute top-2 right-2 text-muted-foreground"
+          >
+            <X />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left" sideOffset={4}>
+          {translate('agentHub.canvas.leave', 'Leave the canvas')}
+        </TooltipContent>
+      </Tooltip>
       {empty ? (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 text-center">
           <PictureInPicture2 className="size-7 text-muted-foreground" />

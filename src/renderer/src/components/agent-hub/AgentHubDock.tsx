@@ -3,6 +3,7 @@ import {
   BellOff,
   Bot,
   CornerDownRight,
+  Frame,
   Inbox,
   PictureInPicture2,
   SquareTerminal
@@ -60,6 +61,7 @@ export function AgentHubDock({
   muted,
   pinned,
   mirrors,
+  canvas,
   terminals,
   onOpenTab,
   onNextWaiting,
@@ -75,6 +77,8 @@ export function AgentHubDock({
   pinned: boolean
   /** Open mirror windows and the ones parked beside the hub. */
   mirrors: { windows: number; chips: number }
+  /** The canvas switch, while the canvas setting is on. */
+  canvas: { open: boolean; onToggle: () => void } | null
   /** What the agents count (always on show) and the All terminals count (unfolded) read. */
   terminals: Omit<React.ComponentProps<typeof AgentHubTerminalCount>, 'only'>
   onOpenTab: (tab: AgentHubTab) => void
@@ -245,6 +249,21 @@ export function AgentHubDock({
             <DockExtras shown={expanded}>
               {/* With no mirror to act on, the (disabled) button shows only unfolded. */}
               {hasMirrors ? null : mirrorsButton}
+              {canvas ? (
+                <DockButton
+                  label={
+                    canvas.open
+                      ? translate('agentHub.canvas.leave', 'Leave the canvas')
+                      : translate('agentHub.dock.openCanvas', 'Open the canvas')
+                  }
+                  side={side}
+                  className={DOCK_BUTTON}
+                  pressed={canvas.open}
+                  onClick={canvas.onToggle}
+                >
+                  <Frame className="size-3.5" />
+                </DockButton>
+              ) : null}
               <DockButton
                 label={translate('agentHub.tab.all', 'All terminals')}
                 side={side}

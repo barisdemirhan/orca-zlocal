@@ -23,6 +23,7 @@ import {
   useAgentHubAlertQueue
 } from './agent-hub-alert-queue'
 import type { AgentHubAlert } from './agent-hub-alerts'
+import { closeAgentHubCanvas, toggleAgentHubCanvas } from './agent-hub-canvas-store'
 import { registerAgentHubCommands } from './agent-hub-commands'
 import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
@@ -153,6 +154,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const jump = useCallback(
     ({ target, thread }: AgentHubOpenRequest) => {
       closeForNavigation()
+      // The terminal is in its workspace, behind the canvas.
+      closeAgentHubCanvas()
       activateWorkspacePaneTarget(
         {
           worktree: target.worktree,
@@ -242,6 +245,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     inSettings ||
     (preferences.dockAutoHide &&
       !open &&
+      !canvasOpen &&
       hubAlerts.length === 0 &&
       chips.length === 0 &&
       counts.needsYou + counts.working + counts.finished === 0)
@@ -289,6 +293,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   onNextWaiting={jumpToNextWaiting}
                   pinned={open}
                   mirrors={{ windows: windows.length, chips: chips.length }}
+                  canvas={
+                    preferences.canvas ? { open: canvasOpen, onToggle: toggleAgentHubCanvas } : null
+                  }
                   terminals={{
                     threads,
                     includeShells: preferences.showShells,
@@ -346,7 +353,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       ) : null}
       {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}
       <AgentHubDimBackdrop hidden={inSettings || canvasOpen} />
-      {canvasOpen ? <AgentHubCanvas empty={windows.length === 0} /> : null}
+      {canvasOpen ? (
+        <AgentHubCanvas empty={windows.length === 0} onLeave={closeAgentHubCanvas} />
+      ) : null}
       <AgentHubMirrors
         hubRef={anchorRef}
         trayRef={trayRef}

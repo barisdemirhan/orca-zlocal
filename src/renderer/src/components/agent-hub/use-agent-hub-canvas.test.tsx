@@ -1,9 +1,26 @@
 /** @vitest-environment happy-dom */
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/store', async () => {
+  const { create } = await import('zustand')
+  return {
+    useAppStore: create(() => ({
+      activeView: 'terminal',
+      activeWorktreeId: 'worktree-a',
+      rightSidebarOpen: false,
+      setRightSidebarOpen: () => {}
+    }))
+  }
+})
+
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
-import { closeAgentHubCanvas, isAgentHubCanvasOpen } from './agent-hub-canvas-store'
+import {
+  closeAgentHubCanvas,
+  isAgentHubCanvasOpen,
+  resetAgentHubCanvasForTest
+} from './agent-hub-canvas-store'
 import {
   minimizeAgentHubMirror,
   openAgentHubMirror,
@@ -20,7 +37,7 @@ let root: Root | null = null
 afterEach(() => {
   act(() => root?.unmount())
   root = null
-  closeAgentHubCanvas()
+  resetAgentHubCanvasForTest()
   resetAgentHubMirrorsForTest()
 })
 
@@ -82,5 +99,23 @@ describe('the canvas follows mirrors', () => {
 
     renderCanvas(false)
     expect(isAgentHubCanvasOpen()).toBe(false)
+  })
+
+  it('leaves on a click on the current workspace in the left sidebar', () => {
+    const sidebar = document.createElement('div')
+    sidebar.innerHTML =
+      '<div data-worktree-sidebar><div data-worktree-card-surface="true" data-worktree-card-active="primary"></div></div>'
+    document.body.append(sidebar)
+    const shown = renderCanvas(true)
+    act(() => openAgentHubMirror(target('tab-a')))
+    expect(shown()).toBe(true)
+
+    act(() => {
+      sidebar
+        .querySelector('[data-worktree-card-surface]')
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(shown()).toBe(false)
+    sidebar.remove()
   })
 })

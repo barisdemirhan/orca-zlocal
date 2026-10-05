@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
+import { isAgentHubCanvasLeaveClick } from './agent-hub-canvas-sidebar-leave'
 import {
   closeAgentHubCanvas,
   openAgentHubCanvas,
@@ -12,7 +13,8 @@ const NO_KEYS: ReadonlySet<string> = new Set()
 /**
  * Runs the canvas for the hub. While its setting is on, a mirror window that opens (from the
  * hub, an alert, the tray, the mirrors button) shows the canvas, so none floats over the
- * workspace. Returns whether the canvas is showing.
+ * workspace, and a click in the left sidebar on the place it covers leaves it. Returns whether
+ * the canvas is showing.
  */
 export function useAgentHubCanvas(enabled: boolean): boolean {
   const open = useAgentHubCanvasOpen()
@@ -30,5 +32,19 @@ export function useAgentHubCanvas(enabled: boolean): boolean {
   }, [enabled, windows])
   // The setting turned off, or the hub left the screen.
   useLayoutEffect(() => (enabled ? closeAgentHubCanvas : undefined), [enabled])
-  return enabled && open
+  const shown = enabled && open
+  useEffect(() => {
+    if (!shown) {
+      return
+    }
+    const onClick = (event: MouseEvent): void => {
+      if (isAgentHubCanvasLeaveClick(event)) {
+        closeAgentHubCanvas()
+      }
+    }
+    // Why capture: a row that stops the click from bubbling must still be heard.
+    window.addEventListener('click', onClick, true)
+    return () => window.removeEventListener('click', onClick, true)
+  }, [shown])
+  return shown
 }
