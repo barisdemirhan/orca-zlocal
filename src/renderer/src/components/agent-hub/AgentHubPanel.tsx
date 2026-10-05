@@ -237,13 +237,15 @@ export function AgentHubPanel({
       onKeyDown={onKeyDown}
       className="flex max-h-[min(640px,calc(100vh-96px))] min-h-0 flex-col outline-none"
     >
-      <div className="flex shrink-0 items-center gap-2.5 pt-3.5 pr-3 pb-2.5 pl-[18px]">
-        <h2 className="text-[15px] font-semibold tracking-[-0.01em]">
+      <div className="flex shrink-0 items-center gap-3 pt-3.5 pr-3.5 pb-2.5 pl-[18px]">
+        <h2 className="shrink-0 text-[15px] font-semibold tracking-[-0.01em]">
           {translate('agentHub.title', 'Agents')}
         </h2>
         <div
           role="tablist"
-          className="ml-auto flex gap-0.5 rounded-[10px] border border-border bg-background p-0.5"
+          // Why min-w-0 and hidden overflow: in a window narrower than the panel the tabs clip
+          // rather than wrap or push the close button out.
+          className="ml-auto flex min-w-0 gap-0.5 overflow-hidden rounded-[10px] border border-border bg-background p-0.5"
         >
           {AGENT_HUB_TABS.map((value) => (
             <button
@@ -254,7 +256,7 @@ export function AgentHubPanel({
               aria-selected={tab === value}
               data-active={tab === value}
               onClick={() => switchTab(value)}
-              className="group/tab flex items-center gap-1.5 rounded-lg px-[9px] py-1 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
+              className="group/tab flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
             >
               {tabLabel(value)}
               <span
@@ -272,7 +274,7 @@ export function AgentHubPanel({
           tabIndex={-1}
           aria-label={translate('agentHub.close', 'Close (esc)')}
           onClick={onClose}
-          className="grid size-7 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+          className="grid size-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
         >
           <X className="size-[15px]" />
         </button>
