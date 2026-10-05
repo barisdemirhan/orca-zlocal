@@ -231,6 +231,7 @@ export function AgentHubMirrors({
         const key = agentHubPaneTargetKey(target)
         const index = stackIndexOf.get(key) ?? 0
         const thread = threadFor(target)
+        const familyKey = target.paneKey ?? thread?.paneKey
         return (
           <AgentHubMirrorWindow
             key={key}
@@ -250,7 +251,9 @@ export function AgentHubMirrors({
                   ) ?? null)
             }
             onNudged={dismissAgentHubAlert}
-            family={target.paneKey ? agentHubMirrorFamily(target.paneKey, threads, lineage) : null}
+            // Why the thread's pane too: a mirror opened on a quiet tab has no pane of its own
+            // (it follows the tab), and must still show the workers its agent dispatches later.
+            family={familyKey ? agentHubMirrorFamily(familyKey, threads, lineage) : null}
             hubRef={hubRef}
             locationOf={locationOf}
             familyActionsFor={familyActionsFor}

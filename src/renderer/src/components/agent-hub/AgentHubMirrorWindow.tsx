@@ -312,7 +312,7 @@ export function AgentHubMirrorWindow({
       {family && familyBarShown ? (
         <AgentHubMirrorFamilyTabs
           family={family}
-          activeKey={mirrorKey}
+          activeKey={target.paneKey ?? thread?.paneKey ?? mirrorKey}
           locationOf={locationOf}
           actionsFor={familyActionsFor}
           onSelect={onRetarget}
