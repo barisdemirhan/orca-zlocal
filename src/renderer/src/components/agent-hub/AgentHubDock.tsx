@@ -246,6 +246,17 @@ export function AgentHubDock({
               </span>
             </DockButton>
             {hasMirrors ? mirrorsButton : null}
+            {canvas ? (
+              <DockButton
+                label={canvasShortcut ? `${canvasLabel} (${canvasShortcut})` : canvasLabel}
+                side={side}
+                className={DOCK_BUTTON}
+                pressed={canvas.open}
+                onClick={canvas.onToggle}
+              >
+                <Frame className="size-3.5" />
+              </DockButton>
+            ) : null}
             {muted ? (
               <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
                 <BellOff aria-hidden className="size-3" />
@@ -254,17 +265,6 @@ export function AgentHubDock({
             <DockExtras shown={expanded}>
               {/* With no mirror to act on, the (disabled) button shows only unfolded. */}
               {hasMirrors ? null : mirrorsButton}
-              {canvas ? (
-                <DockButton
-                  label={canvasShortcut ? `${canvasLabel} (${canvasShortcut})` : canvasLabel}
-                  side={side}
-                  className={DOCK_BUTTON}
-                  pressed={canvas.open}
-                  onClick={canvas.onToggle}
-                >
-                  <Frame className="size-3.5" />
-                </DockButton>
-              ) : null}
               <DockButton
                 label={translate('agentHub.tab.all', 'All terminals')}
                 side={side}

@@ -1,10 +1,11 @@
 import { createPortal } from 'react-dom'
-import { PictureInPicture2, X } from 'lucide-react'
+import { PanelLeft, PictureInPicture2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
+import { MAC_TRAFFIC_LIGHTS_WIDTH } from '@/app-shell/app-window-chrome'
 import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
@@ -13,8 +14,9 @@ import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-c
 
 /**
  * The page mirrors live on while the canvas setting is on: a dotted surface over the main
- * area, from the left sidebar to the window's right edge, under the title bar and above the
- * status bar. It hides the workspace behind it, so nothing there is hit by accident.
+ * area, from the left sidebar to the window's right edge and from the window's top (the tab
+ * strip included) down to the status bar. It hides the workspace behind it, so nothing there is
+ * hit by accident; its own top strip still drags the window.
  */
 export function AgentHubCanvas({
   empty,
@@ -26,6 +28,7 @@ export function AgentHubCanvas({
 }): React.JSX.Element {
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const sidebarWidth = useAppStore((s) => s.sidebarWidth)
+  const setSidebarOpen = useAppStore((s) => s.setSidebarOpen)
   const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
   const leaveShortcut = useOptionalShortcutLabel('agentHub.toggleCanvas')
   return createPortal(
@@ -34,7 +37,6 @@ export function AgentHubCanvas({
       // Why: the hub portals out of the status bar, whose menu would take this right-click.
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       style={{
-        top: WORKSPACE_TOP_CHROME_HEIGHT,
         // Why the live width: the sidebar's own width is committed only when a resize ends.
         left: sidebarOpen ? `var(--workspace-sidebar-live-width, ${sidebarWidth}px)` : 0,
         bottom: statusBarHeight
@@ -42,8 +44,30 @@ export function AgentHubCanvas({
       // Why preventDefault: a click on the canvas must not pull focus off the mirror typed in.
       onMouseDown={(event) => event.preventDefault()}
       // Why z-[43]: the dim's layer (unused here), below the dock (44) and the mirrors (46).
-      className="fixed right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_14%,transparent)_1px,transparent_1px)] bg-size-[22px_22px] duration-150 fade-in-0"
+      className="fixed top-0 right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_14%,transparent)_1px,transparent_1px)] bg-size-[22px_22px] duration-150 fade-in-0"
     >
+      {/* Why: the canvas covers the title-bar row, which is what moves the window. */}
+      <div
+        aria-hidden
+        style={{ height: WORKSPACE_TOP_CHROME_HEIGHT }}
+        className="absolute inset-x-0 top-0 [-webkit-app-region:drag]"
+      />
+      {sidebarOpen ? null : (
+        // The title bar's own sidebar switch is under the canvas; this one stands in for it,
+        // clear of the macOS window buttons.
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={translate('agentHub.canvas.showSidebar', 'Show the sidebar')}
+          title={translate('agentHub.canvas.showSidebar', 'Show the sidebar')}
+          onClick={() => setSidebarOpen(true)}
+          style={{ left: `calc(${MAC_TRAFFIC_LIGHTS_WIDTH} + 8px)` }}
+          className="absolute top-1 [-webkit-app-region:no-drag]"
+        >
+          <PanelLeft />
+        </Button>
+      )}
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -52,7 +76,9 @@ export function AgentHubCanvas({
             size="icon-sm"
             aria-label={translate('agentHub.canvas.leave', 'Leave the canvas')}
             onClick={onLeave}
-            className="absolute top-2 right-2"
+            // Clear of the Windows/Linux window buttons, which sit over this corner.
+            style={{ right: 'calc(var(--window-controls-width, 0px) + 8px)' }}
+            className="absolute top-1 [-webkit-app-region:no-drag]"
           >
             <X />
           </Button>

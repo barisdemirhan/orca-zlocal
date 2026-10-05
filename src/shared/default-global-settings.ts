@@ -276,7 +276,7 @@ export function buildDefaultSettings(args: {
     agentHubFinishedAutoClearMinutes: 0,
     agentHubDefaultTab: 'inbox',
     agentHubTabAutoPopout: false,
-    agentHubCanvas: false,
+    agentHubCanvas: true,
     experimentalAgentHibernation: false,
     agentHibernationIdleMs: 30 * 60 * 1000,
     experimentalNewWorktreeCardStyle: false,

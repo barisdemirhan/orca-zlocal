@@ -3,6 +3,7 @@ import { PopoverArrow, PopoverContent } from '@/components/ui/popover'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
+import type { AgentHubPopoverOffsets } from './use-agent-hub-canvas-welcome'
 import type { AgentHubTab } from './agent-hub-keys'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import type { AgentHubLists } from './agent-hub-lists'
@@ -77,12 +78,15 @@ function inMirrorLayer(target: EventTarget | null): boolean {
 export function AgentHubPopoverContent({
   side,
   docked,
+  centred,
   anchorRef,
   restoreFocusRef,
   ...body
 }: AgentHubPopoverBodyProps & {
   side: 'top' | 'bottom' | 'left' | 'right'
   docked: boolean
+  /** Set while the panel greets on an empty canvas: it sits mid-canvas, not on the dock. */
+  centred: AgentHubPopoverOffsets | null
   /** The dock or trigger: its own buttons are not "outside" the popover. */
   anchorRef: React.RefObject<HTMLElement | null>
   /** What had focus before the hub opened; cleared when the hub hands focus elsewhere. */
@@ -91,8 +95,9 @@ export function AgentHubPopoverContent({
   return (
     <PopoverContent
       side={side}
-      align={docked ? 'center' : 'end'}
-      sideOffset={docked ? 12 : 8}
+      align={centred ? 'start' : docked ? 'center' : 'end'}
+      sideOffset={centred?.sideOffset ?? (docked ? 12 : 8)}
+      alignOffset={centred?.alignOffset}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
       surface="panel"
@@ -141,7 +146,7 @@ export function AgentHubPopoverContent({
       }}
     >
       <AgentHubPopoverBody {...body} />
-      <PopoverArrow width={14} height={7} />
+      {centred ? null : <PopoverArrow width={14} height={7} />}
     </PopoverContent>
   )
 }

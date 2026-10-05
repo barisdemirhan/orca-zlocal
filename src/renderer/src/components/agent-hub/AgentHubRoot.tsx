@@ -45,6 +45,7 @@ import {
 } from './agent-hub-pane-target'
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubCanvas } from './use-agent-hub-canvas'
+import { useAgentHubCanvasWelcome } from './use-agent-hub-canvas-welcome'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { useAgentHubTabAutoPopoutOnLeave } from './use-agent-hub-tab-auto-popout'
@@ -236,6 +237,14 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
   const { windows, chips } = useAgentHubMirrors()
   const canvasOpen = useAgentHubCanvas(preferences.canvas) && !inSettings
+  const centred = useAgentHubCanvasWelcome({
+    canvasOpen,
+    empty: windows.length === 0,
+    hubOpen: open,
+    anchorRef,
+    side,
+    openAgents: () => openHub('agents')
+  })
   const hubAlerts = alerts.filter(
     (candidate) =>
       !chips.some((chip) => agentHubTargetShowsThread(chip.target, candidate.thread)) &&
@@ -255,6 +264,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     <AgentHubPopoverContent
       side={side}
       docked={docked}
+      centred={centred}
       anchorRef={anchorRef}
       restoreFocusRef={restoreFocusRef}
       lists={lists}

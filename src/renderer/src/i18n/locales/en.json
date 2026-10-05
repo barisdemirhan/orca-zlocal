@@ -21881,7 +21881,8 @@
     "canvas": {
       "emptyTitle": "No mirrors on the canvas",
       "emptyHint": "Pop out a terminal from the hub, or bring a parked mirror back, and it opens here.",
-      "leave": "Leave the canvas"
+      "leave": "Leave the canvas",
+      "showSidebar": "Show the sidebar"
     }
   },
   "workspace": {

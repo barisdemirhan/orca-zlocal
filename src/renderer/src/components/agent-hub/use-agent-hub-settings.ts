@@ -70,7 +70,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       mirrorWindowCap: normalizeAgentHubMirrorWindowCap(raw.mirrorWindowCap),
       defaultTab: normalizeAgentHubDefaultTab(raw.defaultTab),
       tabAutoPopout: raw.tabAutoPopout === true,
-      canvas: raw.canvas === true
+      canvas: raw.canvas !== false
     }),
     [raw]
   )
