@@ -21744,7 +21744,9 @@
       "jumpHint": "Jump to this terminal in its workspace",
       "jump": "Jump",
       "hideWorkers": "Hide the workers bar",
-      "showWorkers": "Show the workers bar"
+      "showWorkers": "Show the workers bar",
+      "cancelDictation": "Cancel dictation",
+      "cancelDictationHint": "Cancel dictation and discard what is not inserted yet"
     },
     "title": "Agents",
     "tab": {

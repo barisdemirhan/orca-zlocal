@@ -1,4 +1,5 @@
-import { Square } from 'lucide-react'
+import { useState } from 'react'
+import { Square, X } from 'lucide-react'
 import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -8,6 +9,7 @@ import { useAppStore } from '@/store'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
 import { DictationGrapes } from '../dictation/DictationGrapes'
 import { useDictationMeter } from '../dictation/dictation-meter-store'
+import { canCancelDictation, cancelDictation } from './agent-hub-dictation-cancel'
 import { useMirrorShowsDictation } from './agent-hub-mirror-dictation-display'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubMirrorMicState } from './use-agent-hub-mirror-mic-state'
@@ -33,6 +35,9 @@ function MirrorDictationIndicator({ phase }: { phase: DictationPhase }): React.J
     : isListening && meter.isSpeaking
       ? translate('auto.components.dictation.DictationIndicator.25f2b7a6a5', 'Speaking')
       : lifecycleLabel
+  // Asked once per indicator: the controller that answers is mounted for the app's lifetime.
+  const [canCancel] = useState(canCancelDictation)
+  const cancelLabel = translate('agentHub.mirror.cancelDictation', 'Cancel dictation')
   const stopLabel = translate(
     'auto.components.dictation.DictationIndicator.335e1bc6cb',
     'Stop dictation'
@@ -55,32 +60,54 @@ function MirrorDictationIndicator({ phase }: { phase: DictationPhase }): React.J
         <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
           {isClipping ? label : lifecycleLabel}
         </span>
-        {phase === 'finishing' ? null : (
-          <>
-            <span aria-hidden className="ml-0.5 h-4 w-px shrink-0 bg-border" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label={stopLabel}
-                  // Why: stopping must not take the keyboard from the terminal being dictated into.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => dispatchDictationControl('stop')}
-                >
-                  <Square className="size-3 fill-current" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={6} className="flex items-center gap-1.5">
-                {stopLabel}
-                {!isHoldMode && shortcut.keys.length > 0 ? (
-                  <ShortcutKeyCombo keys={shortcut.keys} doubleTap={shortcut.doubleTap} />
-                ) : null}
-              </TooltipContent>
-            </Tooltip>
-          </>
+        {phase === 'finishing' && !canCancel ? null : (
+          <span aria-hidden className="ml-0.5 h-4 w-px shrink-0 bg-border" />
         )}
+        {phase === 'finishing' ? null : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={stopLabel}
+                // Why: stopping must not take the keyboard from the terminal being dictated into.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => dispatchDictationControl('stop')}
+              >
+                <Square className="size-3 fill-current" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={6} className="flex items-center gap-1.5">
+              {stopLabel}
+              {!isHoldMode && shortcut.keys.length > 0 ? (
+                <ShortcutKeyCombo keys={shortcut.keys} doubleTap={shortcut.doubleTap} />
+              ) : null}
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {canCancel ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={cancelLabel}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={cancelDictation}
+              >
+                <X className="size-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={6}>
+              {translate(
+                'agentHub.mirror.cancelDictationHint',
+                'Cancel dictation and discard what is not inserted yet'
+              )}
+            </TooltipContent>
+          </Tooltip>
+        ) : null}
       </div>
       {transcript ? (
         <p className="truncate border-t border-border px-3 py-2 text-xs text-muted-foreground">
