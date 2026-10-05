@@ -10,6 +10,7 @@ import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
 } from '../sidebar/workspace-chrome-metrics'
+import { AgentHubCanvasLayoutSwitch } from './AgentHubCanvasLayoutSwitch'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 /**
@@ -88,6 +89,7 @@ export function AgentHubCanvas({
           {leaveShortcut ? ` (${leaveShortcut})` : null}
         </TooltipContent>
       </Tooltip>
+      <AgentHubCanvasLayoutSwitch />
       {empty ? (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 text-center">
           <PictureInPicture2 className="size-7 text-muted-foreground" />
