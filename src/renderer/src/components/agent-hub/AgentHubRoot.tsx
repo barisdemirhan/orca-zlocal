@@ -28,6 +28,7 @@ import {
   dismissAgentHubAlert,
   useAgentHubAlertQueue
 } from './agent-hub-alert-queue'
+import type { AgentHubAlert } from './agent-hub-alerts'
 import { registerAgentHubCommands } from './agent-hub-commands'
 import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
@@ -216,6 +217,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     },
     [acknowledgeAgents, closeForNavigation]
   )
+  const leaveAlertFor = (shown: AgentHubAlert, open: typeof jump): void => {
+    dismissAgentHubAlert(shown.id)
+    open(threadOpenRequest(shown.thread))
+  }
   const jumpToNextWaiting = useCallback(() => {
     const next = needsYouRef.current[0]
     if (!next) {
@@ -340,13 +345,14 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   onNextWaiting={jumpToNextWaiting}
                   pinned={open}
                   mirrors={{ windows: windows.length, chips: chips.length }}
-                  terminalCount={
+                  terminalCountOf={(only) => (
                     <AgentHubTerminalCount
+                      only={only}
                       threads={threads}
                       includeShells={preferences.showShells}
                       parentOf={lineage.parentOf}
                     />
-                  }
+                  )}
                   onToggleMirrors={toggleMirrors}
                   onMove={(position) => void updateSettings({ agentHubDockPosition: position })}
                 />
@@ -390,17 +396,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
               openHub('inbox', opened.thread.paneKey)
               return
             }
-            dismissAgentHubAlert(opened.id)
-            popout(threadOpenRequest(opened.thread))
+            leaveAlertFor(opened, popout)
           }}
-          onPopout={(shown) => {
-            dismissAgentHubAlert(shown.id)
-            popout(threadOpenRequest(shown.thread))
-          }}
-          onJump={(shown) => {
-            dismissAgentHubAlert(shown.id)
-            jump(threadOpenRequest(shown.thread))
-          }}
+          onPopout={(shown) => leaveAlertFor(shown, popout)}
+          onJump={(shown) => leaveAlertFor(shown, jump)}
           onDismiss={dismissAgentHubAlert}
         />
       ) : null}

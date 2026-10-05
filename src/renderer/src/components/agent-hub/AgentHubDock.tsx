@@ -1,5 +1,12 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { BellOff, CornerDownRight, Inbox, PictureInPicture2, SquareTerminal } from 'lucide-react'
+import {
+  BellOff,
+  Bot,
+  CornerDownRight,
+  Inbox,
+  PictureInPicture2,
+  SquareTerminal
+} from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import {
   AGENT_HUB_DOCK_ZOOM,
@@ -51,7 +58,7 @@ export function AgentHubDock({
   muted,
   pinned,
   mirrors,
-  terminalCount,
+  terminalCountOf,
   onOpenTab,
   onNextWaiting,
   onToggleMirrors,
@@ -66,8 +73,8 @@ export function AgentHubDock({
   pinned: boolean
   /** Open mirror windows and the ones parked beside the hub. */
   mirrors: { windows: number; chips: number }
-  /** The All terminals count; rendered only while unfolded. */
-  terminalCount: React.ReactNode
+  /** The agents count (always on show) and the All terminals count (only while unfolded). */
+  terminalCountOf: (only: 'agents' | 'all') => React.ReactNode
   onOpenTab: (tab: AgentHubTab) => void
   onNextWaiting: () => void
   onToggleMirrors: () => void
@@ -90,6 +97,13 @@ export function AgentHubDock({
     notchRef,
     position.edge,
     expanded
+  )
+  // Every agent terminal, busy or idle; at the same spot on both faces, like the counts.
+  const agentCount = (
+    <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
+      <Bot aria-hidden className="size-3.5" />
+      {terminalCountOf('agents')}
+    </span>
   )
   const zoom = AGENT_HUB_DOCK_ZOOM[size]
   // The bar measures in its own (unzoomed) pixels; placement works in the window's.
@@ -193,6 +207,14 @@ export function AgentHubDock({
               <Inbox className="size-3.5" />
             </DockButton>
             <DockCounterGroup counts={counts} side={side} onOpenTab={onOpenTab} />
+            <DockButton
+              label={translate('agentHub.tab.agents', 'Agents')}
+              side={side}
+              className={DOCK_COUNT_BUTTON}
+              onClick={() => onOpenTab('agents')}
+            >
+              {agentCount}
+            </DockButton>
             {/* Right-click lays the floating windows out between the sidebars. */}
             <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
               <DockButton
@@ -217,7 +239,9 @@ export function AgentHubDock({
             >
               <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
                 <SquareTerminal className="size-3.5" />
-                <span className="min-w-[2ch] text-center">{expanded ? terminalCount : null}</span>
+                <span className="min-w-[2ch] text-center">
+                  {expanded ? terminalCountOf('all') : null}
+                </span>
               </span>
             </DockButton>
             <DockButton
@@ -243,6 +267,7 @@ export function AgentHubDock({
               <Inbox aria-hidden className="size-3.5" />
             </span>
             <DockCounterGroup counts={counts} side={side} />
+            <span className={DOCK_COUNT_BUTTON}>{agentCount}</span>
             {/* Parked mirrors show here too, in the slot their button takes once unfolded. */}
             {mirrors.chips > 0 ? (
               <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
