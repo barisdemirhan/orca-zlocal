@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
+import { endAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import {
   agentHubMirrorWindowCap,
   focusAgentHubMirror,
@@ -98,6 +99,8 @@ export function closeAgentHubCanvas(): void {
     return
   }
   open = false
+  // Focus is the canvas's: the mirror flies to the tray from its own place.
+  endAgentHubMirrorFocus()
   stopGuarding?.()
   stopGuarding = null
   parked = readAgentHubMirrors().windows.map(agentHubPaneTargetKey).toReversed()

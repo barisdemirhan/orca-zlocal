@@ -17,7 +17,9 @@ import {
   readAgentHubMirrors,
   rememberAgentHubMirrorOrigin
 } from './agent-hub-mirror-store'
+import type { AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
 import { agentHubPaneTargetKey } from './agent-hub-pane-target'
+import { useMirrorWindowFocus } from './use-mirror-window-focus'
 
 const SETTLE_MS = 340
 const MOVE_THRESHOLD_PX = 3
@@ -72,6 +74,7 @@ function claimMirrorPlace(key: string, besideHubPanel: boolean): AgentHubMirrorG
  * A mirror window's place and size. Why a transform while moving: re-laying out a window that
  * holds a live terminal on every pointer move stutters; the GPU slides it and the new spot is
  * committed on release. Resizing must re-lay out, so it is applied once per frame.
+ * While the mirror is focused it shows in the focus box instead; its own place is kept as it was.
  */
 export function useMirrorWindowGeometry(
   key: string,
@@ -79,7 +82,8 @@ export function useMirrorWindowGeometry(
   besideHubPanel: boolean
 ): {
   geometry: AgentHubMirrorGeometry
-  /** True briefly after the windows are arranged, so the move can glide. */
+  focus: AgentHubMirrorFocusState
+  /** True briefly after the windows are arranged or a focus starts or ends, so the move can glide. */
   settling: boolean
   sectionRef: React.RefObject<HTMLElement | null>
   beginDrag: (mode: DragState['mode']) => (event: React.PointerEvent<HTMLElement>) => void
@@ -103,6 +107,13 @@ export function useMirrorWindowGeometry(
       setGeometry(clampAgentHubMirrorGeometry(placement, viewportSize()))
       setSettling(true)
     }
+  }
+  const focus = useMirrorWindowFocus(key)
+  const focused = focus.box !== null
+  const [seenFocused, setSeenFocused] = useState(focused)
+  if (focused !== seenFocused) {
+    setSeenFocused(focused)
+    setSettling(true)
   }
   useEffect(() => {
     if (!settling) {
@@ -136,7 +147,8 @@ export function useMirrorWindowGeometry(
     (mode: DragState['mode']) =>
       (event: React.PointerEvent<HTMLElement>): void => {
         const onButton = event.target instanceof Element && event.target.closest('button') !== null
-        if (event.button !== 0 || (mode === 'move' && onButton)) {
+        // A focused mirror stays put: a drag would move the place it returns to.
+        if (event.button !== 0 || (mode === 'move' && onButton) || focused) {
           return
         }
         if (mode === 'resize') {
@@ -152,7 +164,7 @@ export function useMirrorWindowGeometry(
           next: geometry
         }
       },
-    [geometry]
+    [geometry, focused]
   )
 
   const onPointerMove = useCallback((event: React.PointerEvent<HTMLElement>): void => {
@@ -218,5 +230,13 @@ export function useMirrorWindowGeometry(
     [key]
   )
 
-  return { geometry, settling, sectionRef, beginDrag, onPointerMove, endDrag }
+  return {
+    geometry: focus.box ?? geometry,
+    focus: focus.state,
+    settling,
+    sectionRef,
+    beginDrag,
+    onPointerMove,
+    endDrag
+  }
 }

@@ -12,7 +12,8 @@ import {
   type AgentHubRect
 } from './agent-hub-floating-arrange'
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
-import { keepAgentHubMirrorPlace } from './agent-hub-mirror-store'
+import { endAgentHubMirrorFocus, readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
+import { keepAgentHubMirrorPlace, readAgentHubMirrorOrigin } from './agent-hub-mirror-store'
 
 // Rows of windows this close (px) read as one row when keeping their order.
 const ROW_BAND = 120
@@ -77,11 +78,18 @@ export function agentHubWorkArea(): AgentHubRect {
  * out evenly in the work area, keeping their reading order so each moves as little as it can.
  */
 export function arrangeAgentHubFloatingWindowsOnScreen(layout: AgentHubFloatingLayout): void {
-  const windows: { key: string | null; rect: DOMRect }[] = []
+  // Arranging ends a focus first; that mirror counts where it belongs, not where it is shown.
+  const focused = readAgentHubMirrorFocus()
+  endAgentHubMirrorFocus()
+  const windows: { key: string | null; rect: { left: number; top: number } }[] = []
   for (const element of document.querySelectorAll<HTMLElement>('[data-agent-hub-mirror-key]')) {
     const key = element.dataset.agentHubMirrorKey
+    const own = key === focused ? readAgentHubMirrorOrigin(key) : null
     if (key) {
-      windows.push({ key, rect: element.getBoundingClientRect() })
+      windows.push({
+        key,
+        rect: own ? { left: own.x, top: own.y } : element.getBoundingClientRect()
+      })
     }
   }
   const panel = document.querySelector('[data-floating-terminal-panel][aria-hidden="false"]')

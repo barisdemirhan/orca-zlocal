@@ -28,12 +28,14 @@ import {
   resetAgentHubCanvasForTest,
   toggleAgentHubCanvas
 } from './agent-hub-canvas-store'
+import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import {
   minimizeAgentHubMirror,
   openAgentHubMirror,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest,
-  setAgentHubMirrorWindowCap
+  setAgentHubMirrorWindowCap,
+  toggleAgentHubMirrorFocus
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
@@ -158,5 +160,16 @@ describe('leaving the canvas', () => {
 
     openAgentHubCanvas()
     expect(windowKeys()).toEqual([])
+  })
+
+  it('ends a focus when the canvas is left', () => {
+    openAgentHubCanvas()
+    openAgentHubMirror(target('tab-a'))
+    toggleAgentHubMirrorFocus('tab-a:leaf')
+    expect(readAgentHubMirrorFocus()).toBe('tab-a:leaf')
+
+    closeAgentHubCanvas()
+
+    expect(readAgentHubMirrorFocus()).toBeNull()
   })
 })

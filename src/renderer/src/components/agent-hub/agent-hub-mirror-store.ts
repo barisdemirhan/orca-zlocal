@@ -1,5 +1,12 @@
 import { DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP } from '../../../../shared/agent-hub-settings'
 import { useSyncExternalStore } from 'react'
+import {
+  endAgentHubMirrorFocus,
+  holdAgentHubMirrorFocusOn,
+  moveAgentHubMirrorFocus,
+  readAgentHubMirrorFocus,
+  setAgentHubMirrorFocus
+} from './agent-hub-mirror-focus'
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
 
@@ -32,6 +39,9 @@ const dockListeners = new Set<() => void>()
 
 function emit(next: AgentHubMirrorState): void {
   state = next
+  // A focused mirror is the front window; any change of the front ends the focus.
+  const front = next.windows.at(-1)
+  holdAgentHubMirrorFocusOn(front ? agentHubPaneTargetKey(front) : null)
   listeners.forEach((listener) => listener())
 }
 
@@ -144,6 +154,7 @@ export function retargetAgentHubMirror(fromKey: string, target: AgentHubPaneTarg
       keptPlaces.add(toKey)
     }
   }
+  moveAgentHubMirrorFocus(fromKey, toKey)
   emit({
     windows: state.windows.map((open, position) => (position === index ? target : open)),
     chips: state.chips.filter((chip) => keyOf(chip.target) !== toKey)
@@ -154,6 +165,19 @@ export function focusAgentHubMirror(key: string): void {
   const target = state.windows.find((open) => keyOf(open) === key)
   if (target && state.windows.at(-1) !== target) {
     emit(showWindow(state.windows, state.chips, target))
+  }
+}
+
+/**
+ * Brings one mirror forward on the canvas, enlarged over the others, or returns it to its place
+ * when it already is. One at a time: focusing another ends the first.
+ */
+export function toggleAgentHubMirrorFocus(key: string): void {
+  if (readAgentHubMirrorFocus() === key) {
+    endAgentHubMirrorFocus()
+  } else if (state.windows.some((open) => keyOf(open) === key)) {
+    focusAgentHubMirror(key)
+    setAgentHubMirrorFocus(key)
   }
 }
 

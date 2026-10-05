@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  agentHubMirrorFocusGeometry,
   agentHubMirrorOpenGeometry,
   agentHubMirrorOpenRegion,
   clampAgentHubMirrorGeometry,
@@ -86,5 +87,34 @@ describe('agent hub mirror geometry', () => {
       { width: 1440, height: 900 }
     )
     expect(geometry.y + geometry.height).toBe(900 - 24)
+  })
+
+  it('focuses a mirror centred in the work area, a margin clear on every side', () => {
+    const viewport = { width: 1440, height: 900 }
+    expect(agentHubMirrorFocusGeometry(AREA, viewport)).toEqual({
+      x: 328,
+      y: 84,
+      width: 714,
+      height: 744
+    })
+  })
+
+  it('caps a focused mirror on a very large window, still centred', () => {
+    const area = { left: 280, top: 36, width: 3080, height: 1698 }
+    expect(agentHubMirrorFocusGeometry(area, { width: 3360, height: 1758 })).toEqual({
+      x: 860,
+      y: 285,
+      width: 1920,
+      height: 1200
+    })
+  })
+
+  it("never focuses a mirror under a mirror's minimum size", () => {
+    const area = { left: 0, top: 36, width: 400, height: 260 }
+    expect(agentHubMirrorFocusGeometry(area, { width: 400, height: 320 })).toMatchObject({
+      x: 0,
+      width: 420,
+      height: 240
+    })
   })
 })

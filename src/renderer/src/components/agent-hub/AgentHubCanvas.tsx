@@ -11,6 +11,7 @@ import {
   WORKSPACE_TOP_CHROME_HEIGHT
 } from '../sidebar/workspace-chrome-metrics'
 import { AgentHubCanvasLayoutSwitch } from './AgentHubCanvasLayoutSwitch'
+import { AgentHubCanvasFocusShade } from './AgentHubMirrorFocusShade'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 /**
@@ -47,6 +48,8 @@ export function AgentHubCanvas({
       // Why z-[43]: the dim's layer (unused here), below the mirrors (46) and the dock (47).
       className="fixed top-0 right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_14%,transparent)_1px,transparent_1px)] bg-size-[22px_22px] duration-150 fade-in-0"
     >
+      {/* First, so the canvas's own controls stay lit and usable over it. */}
+      <AgentHubCanvasFocusShade />
       {/* Why: the canvas covers the title-bar row, which is what moves the window. */}
       <div
         aria-hidden

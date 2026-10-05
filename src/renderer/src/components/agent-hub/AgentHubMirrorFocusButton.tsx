@@ -1,0 +1,46 @@
+import { Expand, Shrink } from 'lucide-react'
+import { translate } from '@/i18n/i18n'
+import { useAgentHubCanvasOpen } from './agent-hub-canvas-store'
+import { toggleAgentHubMirrorFocus } from './agent-hub-mirror-store'
+
+/**
+ * A mirror header's focus switch, on the canvas only: brings this mirror forward, enlarged, with
+ * the others in shadow; again returns it to its place.
+ */
+export function AgentHubMirrorFocusButton({
+  mirrorKey,
+  focused
+}: {
+  mirrorKey: string
+  focused: boolean
+}): React.JSX.Element | null {
+  const onCanvas = useAgentHubCanvasOpen()
+  if (!onCanvas) {
+    return null
+  }
+  const label = focused
+    ? translate('agentHub.mirror.endFocus', 'Return this mirror to its place')
+    : translate('agentHub.mirror.focus', 'Focus this mirror')
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-pressed={focused}
+      onClick={(event) => {
+        toggleAgentHubMirrorFocus(mirrorKey)
+        if (!focused) {
+          // Typing goes to the mirror just brought forward, not to one now in shadow.
+          event.currentTarget
+            .closest('[data-agent-hub-mirror]')
+            ?.querySelector<HTMLElement>('.xterm-helper-textarea')
+            ?.focus()
+        }
+      }}
+      // Why z-40: over the shadow (z-30), so a mirror in shadow can still be focused in one click.
+      className="relative z-40 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground aria-pressed:text-foreground"
+    >
+      {focused ? <Shrink className="size-3.5" /> : <Expand className="size-3.5" />}
+    </button>
+  )
+}

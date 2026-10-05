@@ -19,6 +19,8 @@ import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
+import { AgentHubMirrorFocusButton } from './AgentHubMirrorFocusButton'
+import { AgentHubMirrorFocusShade } from './AgentHubMirrorFocusShade'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import {
@@ -97,7 +99,7 @@ export function AgentHubMirrorWindow({
   onReveal: () => void
 }): React.JSX.Element {
   const mirrorKey = agentHubPaneTargetKey(target)
-  const { geometry, settling, sectionRef, beginDrag, onPointerMove, endDrag } =
+  const { geometry, focus, settling, sectionRef, beginDrag, onPointerMove, endDrag } =
     useMirrorWindowGeometry(mirrorKey, besideHubPanel)
   const slotRef = useCallback(
     (element: HTMLDivElement | null) => onSlot(mirrorKey, element),
@@ -198,6 +200,7 @@ export function AgentHubMirrorWindow({
       data-agent-hub-mirror
       data-agent-hub-mirror-key={mirrorKey}
       data-settling={settling}
+      data-focus={focus ?? undefined}
       data-leaving={leaving}
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
@@ -290,6 +293,7 @@ export function AgentHubMirrorWindow({
               <PictureInPicture2 className="size-3.5" />
             </button>
           </AgentHubArrangeMenu>
+          <AgentHubMirrorFocusButton mirrorKey={mirrorKey} focused={focus === 'focused'} />
           <button
             type="button"
             aria-label={translate('agentHub.mirror.minimize', 'Minimize')}
@@ -365,12 +369,13 @@ export function AgentHubMirrorWindow({
       )}
       <div
         aria-hidden
-        className="absolute right-0 bottom-0 size-3 cursor-nwse-resize"
+        className="absolute right-0 bottom-0 size-3 cursor-nwse-resize group-data-[focus=focused]/mirror:hidden"
         onPointerDown={beginDrag('resize')}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       />
+      <AgentHubMirrorFocusShade layer="mirror" shown={focus === 'shadowed'} />
     </section>
   )
 }

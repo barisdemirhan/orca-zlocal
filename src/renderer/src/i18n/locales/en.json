@@ -21746,7 +21746,9 @@
       "hideWorkers": "Hide the workers bar",
       "showWorkers": "Show the workers bar",
       "cancelDictation": "Cancel dictation",
-      "cancelDictationHint": "Cancel dictation and discard what is not inserted yet"
+      "cancelDictationHint": "Cancel dictation and discard what is not inserted yet",
+      "endFocus": "Return this mirror to its place",
+      "focus": "Focus this mirror"
     },
     "title": "Agents",
     "tab": {

@@ -14,6 +14,10 @@ const CASCADE_STEP = 28
 const CASCADE_SLOTS = 12
 // Two windows this close (px) sit on the same spot.
 const SAME_SPOT = 8
+// A focused mirror keeps this much of the canvas (and its corner controls) clear around it.
+const FOCUS_MARGIN = 48
+const FOCUS_MAX_WIDTH = 1920
+const FOCUS_MAX_HEIGHT = 1200
 
 type Viewport = { width: number; height: number }
 type Size = { width: number; height: number }
@@ -103,6 +107,28 @@ export function agentHubMirrorOpenGeometry(
     }
   }
   return place(0)
+}
+
+/**
+ * The box a focused mirror shows in: centred in the work area and filling it up to a margin,
+ * capped so a very large window does not stretch the terminal past a comfortable read, and
+ * never under the mirror's minimum size.
+ */
+export function agentHubMirrorFocusGeometry(
+  area: AgentHubRect,
+  viewport: Viewport
+): AgentHubMirrorGeometry {
+  const width = Math.max(MIN_WIDTH, Math.min(FOCUS_MAX_WIDTH, area.width - FOCUS_MARGIN * 2))
+  const height = Math.max(MIN_HEIGHT, Math.min(FOCUS_MAX_HEIGHT, area.height - FOCUS_MARGIN * 2))
+  return clampAgentHubMirrorGeometry(
+    {
+      x: Math.round(area.left + (area.width - width) / 2),
+      y: Math.round(area.top + (area.height - height) / 2),
+      width,
+      height
+    },
+    viewport
+  )
 }
 
 /** Fit the window inside the viewport: shrink first, then pull it back on screen. */
