@@ -27,6 +27,7 @@ import { TAB_LABEL_WIDTH_CLASSES } from './tab-width-rules'
 import { useTabStripSlotProps } from './use-tab-strip-slot-props'
 import { useTabStripPointerActivation } from './tab-strip-pointer-activation'
 import { TerminalTabLeadingIcon } from './TerminalTabLeadingIcon'
+import { AgentHubTabAutoPopoutToggle } from '../agent-hub/AgentHubTabAutoPopoutToggle'
 import {
   isTerminalTabActivityLive,
   terminalTabHasUnreadActivity
@@ -311,6 +312,13 @@ export default function SortableTab({
         >
           <Minimize2 className="w-3 h-3" />
         </button>
+      )}
+      {!isEditing && (
+        <AgentHubTabAutoPopoutToggle
+          tabId={tab.id}
+          worktreeId={tab.worktreeId}
+          isActive={isActive}
+        />
       )}
       {!isEditing && !isPinned && (
         <button

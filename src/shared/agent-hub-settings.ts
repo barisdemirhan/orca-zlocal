@@ -49,6 +49,8 @@ export type AgentHubSettings = {
   agentHubTrayPeekSeconds?: number
   /** Agent Hub tab shown on open when nobody is waiting. */
   agentHubDefaultTab?: AgentHubDefaultTab
+  /** Terminal tabs show a toggle that parks the tab's terminal in the hub's tray when it is left. */
+  agentHubTabAutoPopout?: boolean
 }
 
 export const DEFAULT_AGENT_HUB_DOCK_POSITION: AgentHubDockPosition = { edge: 'bottom', offset: 0.5 }

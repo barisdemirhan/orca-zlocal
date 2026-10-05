@@ -44,6 +44,7 @@ import {
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
+import { useAgentHubTabAutoPopoutOnLeave } from './use-agent-hub-tab-auto-popout'
 
 function useGroupNameById(): ReadonlyMap<string, string> {
   const projectGroups = useAppStore((s) => s.projectGroups)
@@ -70,6 +71,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
   const counts = agentHubCounts(lists)
   useAgentHubAlerts(lists, preferences)
+  useAgentHubTabAutoPopoutOnLeave(preferences.tabAutoPopout, threads, lineage.parentOf)
   const alerts = useAgentHubAlertQueue()
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const updateSettings = useAppStore((s) => s.updateSettings)

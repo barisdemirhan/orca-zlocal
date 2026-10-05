@@ -3,6 +3,7 @@ import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-
 import {
   closeAgentHubMirror,
   closeAgentHubMirrorChip,
+  closeAgentHubMirrorChipsOfTab,
   focusAgentHubMirror,
   keepAgentHubMirrorPlace,
   MAX_AGENT_HUB_MIRROR_WINDOWS,
@@ -10,6 +11,7 @@ import {
   minimizeAllAgentHubMirrors,
   openAgentHubMirror,
   openAgentHubMirrors,
+  parkAgentHubMirror,
   readAgentHubMirrorOrigin,
   readAgentHubMirrors,
   rememberAgentHubMirrorOrigin,
@@ -132,5 +134,20 @@ describe('agent hub mirror store', () => {
 
     expect(windowKeys()).toEqual(['tab-d:leaf', 'tab-c:leaf', 'tab-b:leaf', 'tab-a:leaf'])
     expect(chipKeys().toSorted()).toEqual(['tab-e:leaf', 'tab-f:leaf', 'tab-old:leaf'])
+  })
+
+  it('parks a pane straight into the tray, and takes a tab back out of it', () => {
+    openAgentHubMirror(target('tab-open'))
+    parkAgentHubMirror(target('tab-open'))
+    parkAgentHubMirror(target('tab-a'))
+    parkAgentHubMirror(target('tab-a'))
+    parkAgentHubMirror(target('tab-b'))
+    // A pane that already has a window stays a window; nothing is parked twice.
+    expect(windowKeys()).toEqual(['tab-open:leaf'])
+    expect(chipKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
+
+    closeAgentHubMirrorChipsOfTab('tab-a')
+    expect(chipKeys()).toEqual(['tab-b:leaf'])
+    expect(windowKeys()).toEqual(['tab-open:leaf'])
   })
 })

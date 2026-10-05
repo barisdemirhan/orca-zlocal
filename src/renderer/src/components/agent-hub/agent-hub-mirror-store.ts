@@ -165,6 +165,30 @@ export function minimizeAgentHubMirror(key: string): void {
   }
 }
 
+/** Parks a pane in the tray without opening it first; a pane that already has a mirror is left. */
+export function parkAgentHubMirror(target: AgentHubPaneTarget): void {
+  const key = keyOf(target)
+  const present =
+    state.windows.some((open) => keyOf(open) === key) ||
+    state.chips.some((chip) => keyOf(chip.target) === key)
+  if (!present) {
+    emit({ ...state, chips: withChip(state.chips, target) })
+  }
+}
+
+/** Drops the parked mirrors of one terminal tab (the tab is on screen again). */
+export function closeAgentHubMirrorChipsOfTab(tabId: string): void {
+  const kept = state.chips.filter((chip) => chip.target.tab.id !== tabId)
+  if (kept.length !== state.chips.length) {
+    state.chips.forEach((chip) => {
+      if (chip.target.tab.id === tabId) {
+        forgetUnkeptPlace(keyOf(chip.target))
+      }
+    })
+    emit({ ...state, chips: kept })
+  }
+}
+
 /** Every open window into the tray at once, without the flight (see requestAgentHubMirrorsDock). */
 export function minimizeAllAgentHubMirrors(): void {
   if (state.windows.length > 0) {

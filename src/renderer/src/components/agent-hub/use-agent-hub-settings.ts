@@ -27,6 +27,7 @@ export type AgentHubPreferences = {
   finishedClearMinutes: number
   trayPeekSeconds: number
   defaultTab: AgentHubDefaultTab
+  tabAutoPopout: boolean
 }
 
 /** The hub's settings with defaults applied, so profiles saved before a key existed read sanely. */
@@ -44,7 +45,8 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       showShells: s.settings?.agentHubShowShells,
       finishedClearMinutes: s.settings?.agentHubFinishedAutoClearMinutes,
       trayPeekSeconds: s.settings?.agentHubTrayPeekSeconds,
-      defaultTab: s.settings?.agentHubDefaultTab
+      defaultTab: s.settings?.agentHubDefaultTab,
+      tabAutoPopout: s.settings?.agentHubTabAutoPopout
     }))
   )
   return useMemo(
@@ -60,7 +62,8 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       showShells: raw.showShells !== false,
       finishedClearMinutes: normalizeAgentHubFinishedClearMinutes(raw.finishedClearMinutes),
       trayPeekSeconds: normalizeAgentHubTrayPeekSeconds(raw.trayPeekSeconds),
-      defaultTab: normalizeAgentHubDefaultTab(raw.defaultTab)
+      defaultTab: normalizeAgentHubDefaultTab(raw.defaultTab),
+      tabAutoPopout: raw.tabAutoPopout === true
     }),
     [raw]
   )

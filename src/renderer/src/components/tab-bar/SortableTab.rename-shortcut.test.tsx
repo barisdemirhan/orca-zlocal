@@ -208,6 +208,10 @@ vi.mock('@/components/ui/tooltip', () => ({
   }
 }))
 
+vi.mock('../agent-hub/AgentHubTabAutoPopoutToggle', () => ({
+  AgentHubTabAutoPopoutToggle: () => null
+}))
+
 vi.mock('./shell-icons', () => ({
   ShellIcon: function ShellIcon(props: Record<string, unknown>) {
     return { type: 'ShellIcon', props }
