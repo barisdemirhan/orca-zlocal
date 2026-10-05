@@ -17,7 +17,9 @@ import {
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
+import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
+import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import {
   requestAgentHubMirrorsDock,
@@ -263,6 +265,7 @@ export function AgentHubMirrorWindow({
         {/* The window's controls sit close together, apart from the title. */}
         <div className="flex shrink-0 items-center gap-0.5">
           <AgentHubDimToggle appearance="mirror" />
+          <AgentHubMirrorMicButton target={target} reachable={surface !== 'preview'} />
           <button
             type="button"
             title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
@@ -345,6 +348,7 @@ export function AgentHubMirrorWindow({
       ) : (
         // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
         <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">
+          <AgentHubMirrorDictationOverlay target={target} showsTerminal />
           {ptyId ? null : (
             <div className="absolute inset-0 flex items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
               {gaveUp ? (

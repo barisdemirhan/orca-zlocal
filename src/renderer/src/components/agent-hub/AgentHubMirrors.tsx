@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
@@ -16,6 +16,7 @@ import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import { AgentHubMirrorTray, type AgentHubTrayItem } from './AgentHubMirrorTray'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
+import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { agentHubIndicatorKind } from './agent-hub-lists'
@@ -171,6 +172,8 @@ export function AgentHubMirrors({
     setAgentHubTerminalPortals(portals)
   }, [portals])
   useLayoutEffect(() => () => setAgentHubTerminalPortals([]), [])
+  // Each mirror's microphone needs to know which pane a dictation started in.
+  useEffect(trackAgentHubDictationOrigin, [])
 
   if (windows.length === 0 && chips.length === 0) {
     return null

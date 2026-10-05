@@ -21883,6 +21883,25 @@
       "emptyHint": "Pop out a terminal from the hub, or bring a parked mirror back, and it opens here.",
       "leave": "Leave the canvas",
       "showSidebar": "Show the sidebar"
+    },
+    "mic": {
+      "voiceOptions": "Right-click for voice options.",
+      "start": "Dictate into this terminal",
+      "starting": "Starting the microphone… Click to stop.",
+      "stop": "Stop dictation",
+      "finishing": "Finishing the dictation…",
+      "elsewhereNamed": "Dictation is running in “{{name}}”.",
+      "elsewhereTerminal": "Dictation is running in another terminal.",
+      "elsewhere": "Dictation is running elsewhere in Orca.",
+      "onlyOne": "Only one can run at a time.",
+      "disabled": "Voice dictation is off.",
+      "noModel": "No speech model is selected and downloaded.",
+      "unsupported": "Dictation cannot type into a floating workspace terminal from this window.",
+      "enable": "Voice dictation",
+      "model": "Speech model",
+      "noModels": "No downloaded models",
+      "moreModels": "More in settings…",
+      "settings": "Voice settings…"
     }
   },
   "workspace": {

@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import { Columns3, LayoutGrid, Rows3 } from 'lucide-react'
 import {
   ContextMenu,
@@ -15,10 +14,9 @@ import {
   type AgentHubFloatingLayout
 } from '../../../../shared/agent-hub-settings'
 import { arrangeAgentHubFloatingWindowsOnScreen } from './agent-hub-floating-arrangement'
+import { useMenuOpeningClickGuard } from './use-menu-opening-click-guard'
 
 const LAYOUTS: readonly AgentHubFloatingLayout[] = ['grid', 'columns', 'rows']
-// Releasing the right button over the menu it just opened must not pick an item.
-const OPENING_CLICK_MS = 350
 
 function LayoutLabel({ layout }: { layout: AgentHubFloatingLayout }): React.JSX.Element {
   switch (layout) {
@@ -62,13 +60,11 @@ export function AgentHubArrangeMenu({
     normalizeAgentHubFloatingLayout(s.settings?.agentHubFloatingLayout)
   )
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const openedAtRef = useRef(0)
+  const openingClick = useMenuOpeningClickGuard()
   return (
     <ContextMenu
       onOpenChange={(open) => {
-        if (open) {
-          openedAtRef.current = performance.now()
-        }
+        openingClick.noteOpenChange(open)
         onOpenChange?.(open)
       }}
     >
@@ -86,7 +82,7 @@ export function AgentHubArrangeMenu({
               key={option}
               value={option}
               onSelect={(event) => {
-                if (performance.now() - openedAtRef.current < OPENING_CLICK_MS) {
+                if (openingClick.isOpeningClick()) {
                   event.preventDefault()
                   return
                 }

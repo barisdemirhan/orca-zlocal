@@ -9,6 +9,7 @@ import { Square } from 'lucide-react'
 import { dispatchDictationControl } from './dictation-control-events'
 import { DictationGrapes } from './DictationGrapes'
 import { useDictationMeter } from './dictation-meter-store'
+import { useDictationShownInMirror } from '../agent-hub/agent-hub-mirror-dictation-display'
 
 export function DictationIndicator() {
   const dictationState = useAppStore((state) => state.dictationState)
@@ -16,9 +17,14 @@ export function DictationIndicator() {
   const dictationMeter = useDictationMeter()
   const isHoldMode = useAppStore((state) => state.settings?.voice?.dictationMode === 'hold')
   const shortcut = useShortcutKeyDetails('voice.dictation')
+  const shownInMirror = useDictationShownInMirror()
 
   const isVisible = ['listening', 'starting', 'stopping'].includes(dictationState)
   if (!isVisible) {
+    return null
+  }
+  // Why: an Agent Hub mirror that is being dictated into shows this indicator inside itself.
+  if (shownInMirror) {
     return null
   }
 
