@@ -70,10 +70,7 @@ export function DockCounters({ counts }: { counts: AgentHubCounts }): React.JSX.
   )
 }
 
-/**
- * The three counts, built the same in both faces of the dock so they sit at the same spot when
- * it unfolds: the pointer stays on the count it was over.
- */
+/** The three counts; each opens its tab. */
 export function DockCounterGroup({
   counts,
   side,
@@ -81,8 +78,7 @@ export function DockCounterGroup({
 }: {
   counts: AgentHubCounts
   side: 'top' | 'bottom' | 'left' | 'right'
-  /** Present on the unfolded face, where each count opens its tab. */
-  onOpenTab?: (tab: 'running' | 'inbox') => void
+  onOpenTab: (tab: 'running' | 'inbox') => void
 }): React.JSX.Element {
   const items = [
     {
@@ -109,32 +105,27 @@ export function DockCounterGroup({
   ] as const
   return (
     <span className="flex shrink-0 items-center group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
-      {items.map((item) =>
-        onOpenTab ? (
-          <DockButton
-            key={item.kind}
-            label={item.label}
-            side={side}
-            className={DOCK_COUNT_BUTTON}
-            onClick={() => onOpenTab(item.tab)}
-          >
-            <DockCounter kind={item.kind} value={item.value} nested={item.nested} />
-          </DockButton>
-        ) : (
-          <span key={item.kind} className={DOCK_COUNT_BUTTON}>
-            <DockCounter kind={item.kind} value={item.value} nested={item.nested} />
-          </span>
-        )
-      )}
+      {items.map((item) => (
+        <DockButton
+          key={item.kind}
+          label={item.label}
+          side={side}
+          className={DOCK_COUNT_BUTTON}
+          onClick={() => onOpenTab(item.tab)}
+        >
+          <DockCounter kind={item.kind} value={item.value} nested={item.nested} />
+        </DockButton>
+      ))}
     </span>
   )
 }
 
 /**
- * One face of the dock. Both stay mounted so a hover crossfades them; the face not shown leaves
- * the layout (the bar sizes to the shown one) and goes inert.
+ * The buttons the dock shows only unfolded. Folded, they leave the layout (the bar sizes to what
+ * comes before them) but keep the spot they have unfolded, right after their siblings, so the
+ * growing bar uncovers them in place while they fade in.
  */
-export function DockLayer({
+export function DockExtras({
   shown,
   children
 }: {
@@ -143,11 +134,8 @@ export function DockLayer({
 }): React.JSX.Element {
   return (
     <div
-      inert={!shown}
       data-shown={shown}
-      // Why opacity only: a scale would nudge the counts, which must hold still under the pointer.
-      // The face not shown overlays the bar from the same start (same padding as the bar).
-      className="flex shrink-0 items-center gap-0.5 transition-opacity delay-75 duration-200 ease-out group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col data-[shown=false]:pointer-events-none data-[shown=false]:absolute data-[shown=false]:inset-0 data-[shown=false]:opacity-0 data-[shown=false]:delay-0 data-[shown=false]:duration-100 group-data-[edge=bottom]/dock:data-[shown=false]:px-2.5 group-data-[edge=left]/dock:data-[shown=false]:py-2.5 group-data-[edge=right]/dock:data-[shown=false]:py-2.5 group-data-[edge=top]/dock:data-[shown=false]:px-2.5"
+      className="flex shrink-0 items-center gap-0.5 transition-opacity duration-200 ease-out group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col data-[shown=false]:absolute data-[shown=false]:top-0 data-[shown=false]:left-full data-[shown=false]:ml-0.5 data-[shown=false]:opacity-0 group-data-[edge=left]/dock:data-[shown=false]:top-full group-data-[edge=left]/dock:data-[shown=false]:left-0 group-data-[edge=left]/dock:data-[shown=false]:mt-0.5 group-data-[edge=left]/dock:data-[shown=false]:ml-0 group-data-[edge=right]/dock:data-[shown=false]:top-full group-data-[edge=right]/dock:data-[shown=false]:left-0 group-data-[edge=right]/dock:data-[shown=false]:mt-0.5 group-data-[edge=right]/dock:data-[shown=false]:ml-0"
     >
       {children}
     </div>

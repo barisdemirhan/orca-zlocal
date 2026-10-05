@@ -25,7 +25,7 @@ import {
   DOCK_COUNT_BUTTON,
   DockButton,
   DockCounterGroup,
-  DockLayer,
+  DockExtras,
   NotchShape
 } from './AgentHubDockParts'
 import {
@@ -99,12 +99,24 @@ export function AgentHubDock({
     position.edge,
     expanded
   )
-  // Every agent terminal, busy or idle; at the same spot on both faces, like the counts.
-  const agentCount = (
-    <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
-      <Bot aria-hidden className="size-3.5" />
-      <AgentHubTerminalCount only="agents" {...terminals} />
-    </span>
+  const hasMirrors = mirrors.windows + mirrors.chips > 0
+  // Right-click lays the floating windows out between the sidebars.
+  const mirrorsButton = (
+    <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
+      <DockButton
+        label={
+          mirrors.windows > 0
+            ? translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
+            : translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
+        }
+        side={side}
+        className={DOCK_BUTTON}
+        disabled={!hasMirrors}
+        onClick={onToggleMirrors}
+      >
+        <PictureInPicture2 className="size-3.5" />
+      </DockButton>
+    </AgentHubArrangeMenu>
   )
   const zoom = AGENT_HUB_DOCK_ZOOM[size]
   // The bar measures in its own (unzoomed) pixels; placement works in the window's.
@@ -195,10 +207,14 @@ export function AgentHubDock({
           data-dragging={dragPoint !== null}
           className="relative flex cursor-pointer items-center justify-start overflow-hidden data-[edge=left]:flex-col data-[edge=right]:flex-col text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-7 data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:px-2.5 data-[edge=left]:w-7 data-[edge=left]:rounded-r-[14px] data-[edge=left]:py-2.5 data-[edge=right]:w-7 data-[edge=right]:rounded-l-[14px] data-[edge=right]:py-2.5 data-[edge=top]:h-7 data-[edge=top]:rounded-b-[14px] data-[edge=top]:px-2.5"
         >
-          {/* Both faces open with the inbox, the counts and (with mirrors parked) the mirrors
-              button at the same spot; unfolding only adds buttons after them, so whatever is
-              under the pointer stays put. */}
-          <DockLayer shown={expanded}>
+          {/* One face. The inbox, the counts and (with mirrors open or parked) the mirrors button
+              are drawn once and hold still; unfolding only lets the bar grow over the buttons
+              after them, so whatever is under the pointer stays put. */}
+          <div
+            // Folded, the notch is one target: a click opens the inbox and a drag moves it.
+            inert={!expanded}
+            className="relative flex shrink-0 items-center gap-0.5 group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col"
+          >
             <DockButton
               label={translate('agentHub.tab.inbox', 'Inbox')}
               side={side}
@@ -214,73 +230,51 @@ export function AgentHubDock({
               className={DOCK_COUNT_BUTTON}
               onClick={() => onOpenTab('agents')}
             >
-              {agentCount}
-            </DockButton>
-            {/* Right-click lays the floating windows out between the sidebars. */}
-            <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
-              <DockButton
-                label={
-                  mirrors.windows > 0
-                    ? translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
-                    : translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
-                }
-                side={side}
-                className={DOCK_BUTTON}
-                disabled={mirrors.windows + mirrors.chips === 0}
-                onClick={onToggleMirrors}
-              >
-                <PictureInPicture2 className="size-3.5" />
-              </DockButton>
-            </AgentHubArrangeMenu>
-            <DockButton
-              label={translate('agentHub.tab.all', 'All terminals')}
-              side={side}
-              className={DOCK_COUNT_BUTTON}
-              onClick={() => onOpenTab('all')}
-            >
               <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
-                <SquareTerminal className="size-3.5" />
-                <span className="min-w-[2ch] text-center">
-                  {expanded ? <AgentHubTerminalCount only="all" {...terminals} /> : null}
-                </span>
+                <Bot aria-hidden className="size-3.5" />
+                <AgentHubTerminalCount only="agents" {...terminals} />
               </span>
             </DockButton>
-            <DockButton
-              label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
-              side={side}
-              className={DOCK_BUTTON}
-              disabled={counts.needsYou === 0}
-              onClick={onNextWaiting}
-            >
-              <CornerDownRight className="size-3.5" />
-            </DockButton>
-            <AgentHubDockMenu
-              edge={position.edge}
-              size={size}
-              muted={muted}
-              onOpenChange={setMenuOpen}
-              buttonClassName={DOCK_BUTTON}
-            />
-          </DockLayer>
-          <DockLayer shown={!expanded}>
-            {/* Same size as the button it becomes, so the counts line up with the unfolded face. */}
-            <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
-              <Inbox aria-hidden className="size-3.5" />
-            </span>
-            <DockCounterGroup counts={counts} side={side} />
-            <span className={DOCK_COUNT_BUTTON}>{agentCount}</span>
-            {/* Parked mirrors show here too, in the slot their button takes once unfolded. */}
-            {mirrors.chips > 0 ? (
-              <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
-                <PictureInPicture2 aria-hidden className="size-3.5" />
-              </span>
-            ) : null}
+            {hasMirrors ? mirrorsButton : null}
             {muted ? (
               <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
                 <BellOff aria-hidden className="size-3" />
               </span>
             ) : null}
-          </DockLayer>
+            <DockExtras shown={expanded}>
+              {/* With no mirror to act on, the (disabled) button shows only unfolded. */}
+              {hasMirrors ? null : mirrorsButton}
+              <DockButton
+                label={translate('agentHub.tab.all', 'All terminals')}
+                side={side}
+                className={DOCK_COUNT_BUTTON}
+                onClick={() => onOpenTab('all')}
+              >
+                <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
+                  <SquareTerminal className="size-3.5" />
+                  <span className="min-w-[2ch] text-center">
+                    {expanded ? <AgentHubTerminalCount only="all" {...terminals} /> : null}
+                  </span>
+                </span>
+              </DockButton>
+              <DockButton
+                label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
+                side={side}
+                className={DOCK_BUTTON}
+                disabled={counts.needsYou === 0}
+                onClick={onNextWaiting}
+              >
+                <CornerDownRight className="size-3.5" />
+              </DockButton>
+              <AgentHubDockMenu
+                edge={position.edge}
+                size={size}
+                muted={muted}
+                onOpenChange={setMenuOpen}
+                buttonClassName={DOCK_BUTTON}
+              />
+            </DockExtras>
+          </div>
         </div>
       </div>
     </div>
