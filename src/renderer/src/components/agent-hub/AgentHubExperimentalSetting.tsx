@@ -1,6 +1,7 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import {
   AGENT_HUB_FINISHED_CLEAR_MINUTES,
+  AGENT_HUB_MIRROR_WINDOW_CAPS,
   AGENT_HUB_TRAY_PEEK_SECONDS,
   type AgentHubDefaultTab,
   type AgentHubDockSize,
@@ -245,6 +246,31 @@ function AgentHubOptions({
             options={AGENT_HUB_FINISHED_CLEAR_MINUTES.map((minutes) => ({
               value: minutes,
               label: clearAfterLabel(minutes)
+            }))}
+          />
+        }
+      />
+      <SettingsRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.mirrorCap',
+          'Mirror windows open at once'
+        )}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.mirrorCapCopy',
+          'Opening more than this parks the oldest one beside the hub.'
+        )}
+        control={
+          <SettingsSegmentedControl<number>
+            value={preferences.mirrorWindowCap}
+            size="sm"
+            onChange={(value) => updateSettings({ agentHubMirrorWindowCap: value })}
+            ariaLabel={translate(
+              'auto.components.settings.ExperimentalPane.agentHub.mirrorCap',
+              'Mirror windows open at once'
+            )}
+            options={AGENT_HUB_MIRROR_WINDOW_CAPS.map((cap) => ({
+              value: cap,
+              label: String(cap)
             }))}
           />
         }

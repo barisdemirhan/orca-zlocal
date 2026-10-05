@@ -6,6 +6,7 @@ import {
   normalizeAgentHubDockPosition,
   normalizeAgentHubDockSize,
   normalizeAgentHubFinishedClearMinutes,
+  normalizeAgentHubMirrorWindowCap,
   normalizeAgentHubPlacement,
   normalizeAgentHubTrayPeekSeconds,
   type AgentHubDefaultTab,
@@ -26,6 +27,7 @@ export type AgentHubPreferences = {
   showShells: boolean
   finishedClearMinutes: number
   trayPeekSeconds: number
+  mirrorWindowCap: number
   defaultTab: AgentHubDefaultTab
   tabAutoPopout: boolean
 }
@@ -45,6 +47,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       showShells: s.settings?.agentHubShowShells,
       finishedClearMinutes: s.settings?.agentHubFinishedAutoClearMinutes,
       trayPeekSeconds: s.settings?.agentHubTrayPeekSeconds,
+      mirrorWindowCap: s.settings?.agentHubMirrorWindowCap,
       defaultTab: s.settings?.agentHubDefaultTab,
       tabAutoPopout: s.settings?.agentHubTabAutoPopout
     }))
@@ -62,6 +65,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       showShells: raw.showShells !== false,
       finishedClearMinutes: normalizeAgentHubFinishedClearMinutes(raw.finishedClearMinutes),
       trayPeekSeconds: normalizeAgentHubTrayPeekSeconds(raw.trayPeekSeconds),
+      mirrorWindowCap: normalizeAgentHubMirrorWindowCap(raw.mirrorWindowCap),
       defaultTab: normalizeAgentHubDefaultTab(raw.defaultTab),
       tabAutoPopout: raw.tabAutoPopout === true
     }),

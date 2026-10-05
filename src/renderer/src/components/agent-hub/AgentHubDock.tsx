@@ -37,6 +37,7 @@ import {
 import type { AgentHubTab } from './agent-hub-keys'
 import { AgentHubTerminalCount } from './AgentHubTerminalCount'
 import type { AgentHubCounts } from './agent-hub-lists'
+import { agentHubMirrorsToggleAction } from './agent-hub-mirror-tray'
 import { useDockBarMotion } from './use-dock-bar-motion'
 import { useViewportSize } from './use-viewport-size'
 
@@ -105,9 +106,9 @@ export function AgentHubDock({
     <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
       <DockButton
         label={
-          mirrors.windows > 0
-            ? translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
-            : translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
+          agentHubMirrorsToggleAction(mirrors) === 'restore'
+            ? translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
+            : translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
         }
         side={side}
         className={DOCK_BUTTON}

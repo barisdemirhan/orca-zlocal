@@ -6,7 +6,8 @@ import {
   closeAgentHubMirrorChipsOfTab,
   focusAgentHubMirror,
   keepAgentHubMirrorPlace,
-  MAX_AGENT_HUB_MIRROR_WINDOWS,
+  agentHubMirrorWindowCap,
+  setAgentHubMirrorWindowCap,
   minimizeAgentHubMirror,
   minimizeAllAgentHubMirrors,
   openAgentHubMirror,
@@ -54,12 +55,12 @@ describe('agent hub mirror store', () => {
   })
 
   it('shrinks the back-most window into a chip past the cap', () => {
-    const tabs = Array.from({ length: MAX_AGENT_HUB_MIRROR_WINDOWS + 1 }, (_, i) => `tab-${i}`)
+    const tabs = Array.from({ length: agentHubMirrorWindowCap() + 1 }, (_, i) => `tab-${i}`)
     for (const tabId of tabs) {
       openAgentHubMirror(target(tabId))
     }
 
-    expect(readAgentHubMirrors().windows).toHaveLength(MAX_AGENT_HUB_MIRROR_WINDOWS)
+    expect(readAgentHubMirrors().windows).toHaveLength(agentHubMirrorWindowCap())
     expect(chipKeys()).toEqual(['tab-0:leaf'])
   })
 
@@ -149,5 +150,19 @@ describe('agent hub mirror store', () => {
     closeAgentHubMirrorChipsOfTab('tab-a')
     expect(chipKeys()).toEqual(['tab-b:leaf'])
     expect(windowKeys()).toEqual(['tab-open:leaf'])
+  })
+
+  it('parks the oldest windows when the cap is lowered, and allows more when it is raised', () => {
+    for (const id of ['tab-a', 'tab-b', 'tab-c']) {
+      openAgentHubMirror(target(id))
+    }
+    setAgentHubMirrorWindowCap(2)
+    expect(readAgentHubMirrors().windows.map((target) => target.tab.id)).toEqual(['tab-b', 'tab-c'])
+    expect(readAgentHubMirrors().chips.map((chip) => chip.target.tab.id)).toEqual(['tab-a'])
+    setAgentHubMirrorWindowCap(6)
+    for (const id of ['tab-d', 'tab-e', 'tab-f', 'tab-g']) {
+      openAgentHubMirror(target(id))
+    }
+    expect(readAgentHubMirrors().windows).toHaveLength(6)
   })
 })

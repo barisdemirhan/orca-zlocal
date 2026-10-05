@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
+import { normalizeAgentHubFloatingLayout } from '../../../../shared/agent-hub-settings'
 import { requestFloatingWorkspaceBounds } from '../floating-terminal/floating-workspace-place-request'
 import {
   STATUS_BAR_RESERVE_HEIGHT,
@@ -34,17 +35,34 @@ export function readAgentHubMirrorPlacement(key: string): AgentHubMirrorGeometry
   return placements.get(key) ?? null
 }
 
-/** The room between the sidebars, under the title bar and above the status bar. */
+/** The room between the sidebars, under the title bar and above the status bar and the hub's dock. */
 export function agentHubWorkArea(): AgentHubRect {
   const state = useAppStore.getState()
   const left = state.sidebarOpen ? state.sidebarWidth : 0
   const right = state.rightSidebarOpen ? state.rightSidebarWidth : 0
   const bottom = state.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0
-  return {
+  const area = {
     left,
     top: WORKSPACE_TOP_CHROME_HEIGHT,
     width: window.innerWidth - left - right,
     height: window.innerHeight - WORKSPACE_TOP_CHROME_HEIGHT - bottom
+  }
+  // Why: a window laid over the dock would cover the button that sends it back to the hub.
+  const dock = document.querySelector<HTMLElement>('[data-agent-hub-dock]')
+  const edge = dock?.dataset.edge
+  if (!dock || !edge) {
+    return area
+  }
+  const box = dock.getBoundingClientRect()
+  switch (edge) {
+    case 'top':
+      return { ...area, top: area.top + box.height, height: area.height - box.height }
+    case 'left':
+      return { ...area, left: area.left + box.width, width: area.width - box.width }
+    case 'right':
+      return { ...area, width: area.width - box.width }
+    default:
+      return { ...area, height: area.height - box.height }
   }
 }
 
@@ -91,4 +109,16 @@ export function arrangeAgentHubFloatingWindowsOnScreen(layout: AgentHubFloatingL
   placements = next
   version += 1
   listeners.forEach((listener) => listener())
+}
+
+/**
+ * Lays the floating windows out in the user's default layout once the ones just opened have
+ * mounted (the arrangement reads their boxes).
+ */
+export function arrangeAgentHubFloatingWindowsByDefault(): void {
+  requestAnimationFrame(() =>
+    arrangeAgentHubFloatingWindowsOnScreen(
+      normalizeAgentHubFloatingLayout(useAppStore.getState().settings?.agentHubFloatingLayout)
+    )
+  )
 }

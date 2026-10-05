@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
-import { foldAgentHubTray, orderAgentHubTray } from './agent-hub-mirror-tray'
+import {
+  agentHubMirrorsToggleAction,
+  foldAgentHubTray,
+  orderAgentHubTray
+} from './agent-hub-mirror-tray'
 
 function entry(
   title: string,
@@ -30,5 +34,22 @@ describe('agent hub mirror tray', () => {
     expect(foldAgentHubTray(six, false)).toEqual({ shown: [0, 1, 2, 3], folded: 2 })
     expect(foldAgentHubTray(six, true)).toEqual({ shown: six, folded: 0 })
     expect(foldAgentHubTray([0, 1, 2, 3], false)).toEqual({ shown: [0, 1, 2, 3], folded: 0 })
+  })
+})
+
+describe('agentHubMirrorsToggleAction', () => {
+  it('brings parked mirrors back first, beside the ones already open', () => {
+    expect(agentHubMirrorsToggleAction({ windows: 0, chips: 3 })).toBe('restore')
+    expect(agentHubMirrorsToggleAction({ windows: 1, chips: 2 })).toBe('restore')
+  })
+
+  it('sends them all to the hub once every mirror is open, or no more windows fit', () => {
+    expect(agentHubMirrorsToggleAction({ windows: 3, chips: 0 })).toBe('dock')
+    expect(agentHubMirrorsToggleAction({ windows: 4, chips: 2 }, 4)).toBe('dock')
+    expect(agentHubMirrorsToggleAction({ windows: 4, chips: 2 }, 6)).toBe('restore')
+  })
+
+  it('does nothing without mirrors', () => {
+    expect(agentHubMirrorsToggleAction({ windows: 0, chips: 0 })).toBe('none')
   })
 })

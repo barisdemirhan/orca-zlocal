@@ -8024,7 +8024,9 @@
             "never": "Never",
             "seconds": "{{value0}} s",
             "tabAutoPopout": "Show the auto pop-out toggle on terminal tabs",
-            "tabAutoPopoutCopy": "A tab with its toggle on parks its terminal beside the hub when you leave the tab, and takes it back when you return."
+            "tabAutoPopoutCopy": "A tab with its toggle on parks its terminal beside the hub when you leave the tab, and takes it back when you return.",
+            "mirrorCap": "Mirror windows open at once",
+            "mirrorCapCopy": "Opening more than this parks the oldest one beside the hub."
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",

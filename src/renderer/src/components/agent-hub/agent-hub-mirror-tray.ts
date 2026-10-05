@@ -1,6 +1,7 @@
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
 import {
+  agentHubMirrorWindowCap,
   readAgentHubMirrors,
   requestAgentHubMirrorsDock,
   restoreAgentHubMirrors,
@@ -65,18 +66,41 @@ export function agentHubTargetKind(
   return thread ? agentHubIndicatorKind(thread) : 'idle'
 }
 
+/** What the hub's mirrors toggle does now: bring parked mirrors back, or send the open ones away. */
+export function agentHubMirrorsToggleAction(
+  mirrors: { windows: number; chips: number },
+  cap = agentHubMirrorWindowCap()
+): 'restore' | 'dock' | 'none' {
+  // Parked ones come back first, while there is room for another window.
+  if (mirrors.chips > 0 && mirrors.windows < cap) {
+    return 'restore'
+  }
+  return mirrors.windows > 0 ? 'dock' : 'none'
+}
+
 /**
- * The hub's mirrors toggle: sends the open windows to the hub (they fly there), or, with none
- * open, brings back the most urgent parked ones.
+ * The hub's mirrors toggle. With mirrors parked it brings them back (most urgent first, up to
+ * the window cap) beside the ones already open, laid out in the default layout; with every
+ * mirror open it sends them all to the hub (they fly there).
  */
 export function toggleAgentHubMirrors(
-  kindOf: (target: AgentHubPaneTarget) => AgentHubIndicatorKind
+  kindOf: (target: AgentHubPaneTarget) => AgentHubIndicatorKind,
+  arrange: () => void
 ): void {
   const { windows, chips } = readAgentHubMirrors()
-  if (windows.length > 0) {
+  const action = agentHubMirrorsToggleAction({ windows: windows.length, chips: chips.length })
+  if (action === 'dock') {
     requestAgentHubMirrorsDock()
     return
   }
+  if (action === 'none') {
+    return
+  }
   const ordered = orderAgentHubTray(chips.map((chip) => ({ chip, kind: kindOf(chip.target) })))
-  restoreAgentHubMirrors(ordered.map(({ chip }) => agentHubPaneTargetKey(chip.target)))
+  restoreAgentHubMirrors(
+    ordered
+      .slice(0, agentHubMirrorWindowCap() - windows.length)
+      .map(({ chip }) => agentHubPaneTargetKey(chip.target))
+  )
+  arrange()
 }

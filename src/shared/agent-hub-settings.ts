@@ -17,6 +17,9 @@ export type AgentHubDockSize = 'small' | 'medium' | 'large'
  */
 export type AgentHubFloatingDimMode = 'off' | 'on' | 'untilClick' | 'minimizeOnClick'
 
+/** How floating windows are laid out between the sidebars: a grid, one row, or one column. */
+export type AgentHubFloatingLayout = 'grid' | 'columns' | 'rows'
+
 /** Agent Hub's settings, kept out of global-settings-types.ts (at its line budget). */
 export type AgentHubSettings = {
   /** Experimental: Agent Hub — every agent and terminal in one popover, with inline answers. */
@@ -47,6 +50,10 @@ export type AgentHubSettings = {
   agentHubFinishedAutoClearMinutes?: number
   /** Agent Hub tray: seconds its pile stays fanned out when a parked mirror speaks up; 0 never. */
   agentHubTrayPeekSeconds?: number
+  /** Agent Hub: how many mirror windows stay open at once; opening more parks the oldest. */
+  agentHubMirrorWindowCap?: number
+  /** Agent Hub: the layout used when mirrors are brought back or popped out together. */
+  agentHubFloatingLayout?: AgentHubFloatingLayout
   /** Agent Hub tab shown on open when nobody is waiting. */
   agentHubDefaultTab?: AgentHubDefaultTab
   /** Terminal tabs show a toggle that parks the tab's terminal in the hub's tray when it is left. */
@@ -57,6 +64,10 @@ export const DEFAULT_AGENT_HUB_DOCK_POSITION: AgentHubDockPosition = { edge: 'bo
 
 /** Choices for "clear finished agents after"; 0 keeps them until they are read. */
 export const AGENT_HUB_FINISHED_CLEAR_MINUTES = [0, 15, 30, 60] as const
+
+/** Choices for how many mirror windows may be open at once. */
+export const AGENT_HUB_MIRROR_WINDOW_CAPS = [2, 4, 6, 8] as const
+export const DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP = 4
 
 /** Choices for how long the tray fans out on news; 0 leaves it piled. */
 export const AGENT_HUB_TRAY_PEEK_SECONDS = [0, 3, 5, 10] as const
@@ -118,4 +129,14 @@ export function normalizeAgentHubFinishedClearMinutes(value: unknown): number {
 
 export function normalizeAgentHubTrayPeekSeconds(value: unknown): number {
   return AGENT_HUB_TRAY_PEEK_SECONDS.find((seconds) => seconds === value) ?? 5
+}
+
+export function normalizeAgentHubFloatingLayout(value: unknown): AgentHubFloatingLayout {
+  return value === 'columns' || value === 'rows' ? value : 'grid'
+}
+
+export function normalizeAgentHubMirrorWindowCap(value: unknown): number {
+  return (
+    AGENT_HUB_MIRROR_WINDOW_CAPS.find((cap) => cap === value) ?? DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
+  )
 }

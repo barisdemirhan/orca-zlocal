@@ -1,3 +1,4 @@
+import { DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP } from '../../../../shared/agent-hub-settings'
 import { useSyncExternalStore } from 'react'
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -12,7 +13,8 @@ export type AgentHubMirrorState = {
 }
 
 // Each open window is a live terminal; past this the back-most one shrinks into its chip.
-export const MAX_AGENT_HUB_MIRROR_WINDOWS = 4
+// How many windows stay open at once; the user's setting (see setAgentHubMirrorWindowCap).
+let windowCap = DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
 const MAX_CHIPS = 12
 
 let state: AgentHubMirrorState = { windows: [], chips: [] }
@@ -73,7 +75,7 @@ function showWindow(
   const key = keyOf(target)
   const nextWindows = [...windows.filter((open) => keyOf(open) !== key), target]
   let nextChips = chips.filter((chip) => keyOf(chip.target) !== key)
-  while (nextWindows.length > MAX_AGENT_HUB_MIRROR_WINDOWS) {
+  while (nextWindows.length > windowCap) {
     const evicted = nextWindows.shift()
     if (evicted) {
       nextChips = withChip(nextChips, evicted)
@@ -99,13 +101,13 @@ export function openAgentHubMirror(target: AgentHubPaneTarget): void {
  */
 export function openAgentHubMirrors(targets: readonly AgentHubPaneTarget[]): void {
   let next = state
-  for (const target of targets.slice(MAX_AGENT_HUB_MIRROR_WINDOWS)) {
+  for (const target of targets.slice(windowCap)) {
     const key = keyOf(target)
     if (!next.windows.some((open) => keyOf(open) === key)) {
       next = { ...next, chips: withChip(next.chips, target) }
     }
   }
-  for (const target of targets.slice(0, MAX_AGENT_HUB_MIRROR_WINDOWS).toReversed()) {
+  for (const target of targets.slice(0, windowCap).toReversed()) {
     next = showWindow(next.windows, next.chips, target)
   }
   if (next !== state) {
@@ -206,7 +208,7 @@ export function restoreAgentHubMirror(key: string): void {
 /** Brings these chips back as windows, the first one in front; past the cap the rest stay. */
 export function restoreAgentHubMirrors(keys: readonly string[]): void {
   let next = state
-  for (const key of keys.slice(0, MAX_AGENT_HUB_MIRROR_WINDOWS).toReversed()) {
+  for (const key of keys.slice(0, windowCap).toReversed()) {
     const chip = next.chips.find((candidate) => keyOf(candidate.target) === key)
     if (chip) {
       next = showWindow(next.windows, next.chips, chip.target)
@@ -245,7 +247,25 @@ export function closeAgentHubMirrorChip(key: string): void {
 }
 
 /** Test seam: start every case from an empty stage. */
+export function agentHubMirrorWindowCap(): number {
+  return windowCap
+}
+
+/** Applies the user's cap; windows past a lowered one are parked, back-most first. */
+export function setAgentHubMirrorWindowCap(cap: number): void {
+  windowCap = cap
+  if (state.windows.length <= cap) {
+    return
+  }
+  let chips = state.chips
+  for (const evicted of state.windows.slice(0, state.windows.length - cap)) {
+    chips = withChip(chips, evicted)
+  }
+  emit({ windows: state.windows.slice(-cap), chips })
+}
+
 export function resetAgentHubMirrorsForTest(): void {
+  windowCap = DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
   windowOrigins.clear()
   keptPlaces.clear()
   emit({ windows: [], chips: [] })

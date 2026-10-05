@@ -1,4 +1,6 @@
-export type AgentHubFloatingLayout = 'grid' | 'columns' | 'rows'
+import type { AgentHubFloatingLayout } from '../../../../shared/agent-hub-settings'
+
+export type { AgentHubFloatingLayout }
 
 export type AgentHubRect = { left: number; top: number; width: number; height: number }
 

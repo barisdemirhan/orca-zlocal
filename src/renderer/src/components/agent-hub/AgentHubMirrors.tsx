@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { normalizeAgentHubMirrorWindowCap } from '../../../../shared/agent-hub-settings'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
 import {
   setAgentHubTerminalPortals,
@@ -29,6 +30,7 @@ import {
   openAgentHubMirror,
   restoreAgentHubMirror,
   retargetAgentHubMirror,
+  setAgentHubMirrorWindowCap,
   useAgentHubMirrors
 } from './agent-hub-mirror-store'
 import {
@@ -83,6 +85,10 @@ export function AgentHubMirrors({
   onOpenCard: (paneKey: string) => void
 }): React.JSX.Element | null {
   const { windows, chips } = useAgentHubMirrors()
+  const windowCap = useAppStore((s) =>
+    normalizeAgentHubMirrorWindowCap(s.settings?.agentHubMirrorWindowCap)
+  )
+  useLayoutEffect(() => setAgentHubMirrorWindowCap(windowCap), [windowCap])
   const [slots, setSlots] = useState<ReadonlyMap<string, HTMLElement>>(() => new Map())
   const panelInFront = useFloatingPanelInFront(windows.length)
   // The tab on screen in the workspace, so a family member already there offers no jump.
