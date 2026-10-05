@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { useNow } from '@/hooks/use-now'
 import { isEditableTarget } from '@/lib/editable-target'
 import { translate } from '@/i18n/i18n'
+import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubNestedCount } from './AgentHubAtoms'
@@ -35,6 +36,7 @@ import {
   type AgentHubGroupNode,
   type AgentHubTerminalRow
 } from './agent-hub-terminal-tree'
+import { sortAgentHubTerminalTree, type AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
 import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
 
 export type AgentHubOpenRequest = {
@@ -73,6 +75,8 @@ export function AgentHubPanel({
   lists,
   lineage,
   tree,
+  treeOrder,
+  onSortChange,
   terminalCount,
   locationOf,
   rootRef,
@@ -89,6 +93,9 @@ export function AgentHubPanel({
   lists: AgentHubLists
   lineage: AgentHubLineage
   tree: readonly AgentHubGroupNode[]
+  /** How the Agents and All terminals lists are ordered. */
+  treeOrder: AgentHubTreeOrder
+  onSortChange: (sortBy: AgentHubTerminalSort) => void
   terminalCount: number
   locationOf: (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>) => AgentHubLocation
   rootRef: React.RefObject<HTMLDivElement | null>
@@ -131,9 +138,14 @@ export function AgentHubPanel({
   const agentTree = useMemo(() => agentOnlyAgentHubTree(tree), [tree])
   const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
   const listsTerminals = tab === 'agents' || tab === 'all'
+  // Why sort after filtering: a group stands where its best listed workspace does.
   const filteredTree = useMemo(
-    () => filterAgentHubTerminalTree(tab === 'agents' ? agentTree : tree, query),
-    [tab, agentTree, tree, query]
+    () =>
+      sortAgentHubTerminalTree(
+        filterAgentHubTerminalTree(tab === 'agents' ? agentTree : tree, query),
+        treeOrder
+      ),
+    [tab, agentTree, tree, query, treeOrder]
   )
   const items = useMemo<HubItem[]>(() => {
     if (tab === 'inbox') {
@@ -318,6 +330,11 @@ export function AgentHubPanel({
               setSelectedIndex(-1)
             }}
             searchRef={searchRef}
+            sortBy={treeOrder.sortBy}
+            onSortChange={(sortBy) => {
+              onSortChange(sortBy)
+              setSelectedIndex(-1)
+            }}
             collapseOverrides={collapseOverrides}
             onToggleGroup={(group, collapsed) =>
               setCollapseOverrides((current) => new Map(current).set(group.key, collapsed))

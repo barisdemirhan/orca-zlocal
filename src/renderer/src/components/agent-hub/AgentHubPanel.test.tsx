@@ -25,6 +25,7 @@ import {
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 import { buildAgentHubTerminalTree } from './agent-hub-terminal-tree'
+import type { AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
 
 let container: HTMLDivElement
 let root: ReturnType<typeof createRoot>
@@ -90,9 +91,12 @@ function fixture() {
   return { lists: buildAgentHubLists(threads), tree }
 }
 
-function renderPanel() {
+const PROJECT_ORDER: AgentHubTreeOrder = { sortBy: 'repo', workspaceRank: new Map() }
+
+function renderPanel(treeOrder: AgentHubTreeOrder = PROJECT_ORDER) {
   const { lists, tree } = fixture()
   const handlers = {
+    onSortChange: vi.fn(),
     onJump: vi.fn(),
     onOpen: vi.fn(),
     onPopout: vi.fn(),
@@ -108,6 +112,7 @@ function renderPanel() {
           lists={lists}
           lineage={EMPTY_AGENT_HUB_LINEAGE}
           tree={tree}
+          treeOrder={treeOrder}
           terminalCount={3}
           locationOf={() => ({ group: null, project: 'Repo', workspace: 'feature' })}
           rootRef={rootRef}
@@ -185,6 +190,77 @@ describe('AgentHubPanel keyboard', () => {
     press(panel.current, 'Tab', { shiftKey: true })
     const rows = [...container.querySelectorAll('[data-agent-hub-row]')]
     expect(rows).toHaveLength(3)
+  })
+})
+
+describe('AgentHubPanel terminal sort', () => {
+  const rowTitles = (): (string | null)[] =>
+    [...container.querySelectorAll('[data-agent-hub-row]')].map((row) => row.textContent)
+  const sortButton = (): HTMLButtonElement | null =>
+    container.querySelector('button[data-agent-hub-sort]')
+
+  it('shows the order in use on the sort button, on both terminal tabs', () => {
+    const { panel } = renderPanel({ sortBy: 'smart', workspaceRank: new Map() })
+
+    expect(sortButton()).toBeNull()
+    press(panel.current, 'Tab', { shiftKey: true })
+    expect(sortButton()?.getAttribute('aria-label')).toBe('Sort: Agent Activity')
+    press(panel.current, 'Tab', { shiftKey: true })
+    expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+      'Agents'
+    )
+    expect(sortButton()?.dataset.agentHubSort).toBe('smart')
+  })
+
+  it('lists and selects rows in the chosen order', () => {
+    // Agent Activity: the unread results (newest first), then the working agent.
+    const { handlers, panel } = renderPanel({ sortBy: 'smart', workspaceRank: new Map() })
+    press(panel.current, 'Tab', { shiftKey: true })
+    const smartOrder = rowTitles()
+
+    press(panel.current, 'ArrowDown')
+    press(panel.current, 'Enter')
+    expect(handlers.onJump.mock.calls[0]?.[0].thread.paneKey).toBe(PANE_KEY_3)
+    press(panel.current, 'ArrowDown')
+    press(panel.current, 'ArrowDown')
+    press(panel.current, 'Enter')
+    expect(handlers.onJump.mock.calls[1]?.[0].thread.paneKey).toBe(PANE_KEY)
+
+    act(() => root.unmount())
+    root = createRoot(container)
+    const project = renderPanel()
+    press(project.panel.current, 'Tab', { shiftKey: true })
+    expect(rowTitles()).not.toEqual(smartOrder)
+    press(project.panel.current, 'ArrowDown')
+    press(project.panel.current, 'Enter')
+    expect(project.handlers.onJump.mock.calls[0]?.[0].thread.paneKey).toBe(PANE_KEY)
+  })
+
+  it('reports a pick from the sort menu', () => {
+    const { handlers, panel } = renderPanel()
+    press(panel.current, 'Tab', { shiftKey: true })
+
+    act(() => {
+      sortButton()?.dispatchEvent(
+        new MouseEvent('pointerdown', { bubbles: true, button: 0, ctrlKey: false })
+      )
+    })
+    const options = [...document.querySelectorAll('[role="menuitemradio"]')]
+    expect(options.map((option) => option.textContent)).toEqual([
+      'Name',
+      'Agent Activity',
+      'Recent',
+      'Project',
+      'Manual'
+    ])
+    expect(
+      options.find((option) => option.getAttribute('aria-checked') === 'true')?.textContent
+    ).toBe('Project')
+    act(() => {
+      options[2]?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    expect(handlers.onSortChange).toHaveBeenCalledWith('recent')
   })
 })
 

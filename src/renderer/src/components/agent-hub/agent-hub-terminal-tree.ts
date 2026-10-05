@@ -27,6 +27,8 @@ export type AgentHubTerminalRow = {
 
 export type AgentHubWorkspaceNode = {
   key: string
+  /** The workspace's own worktree (synthetic for a folder workspace or the floating terminal). */
+  worktree: Worktree
   projectLabel: string
   /** Worktree name; null for folder workspaces and the floating terminal. */
   workspaceLabel: string | null
@@ -209,6 +211,7 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
       }
       addWorkspace(groupKeyFor(repo?.projectGroupId), {
         key: worktree.id,
+        worktree,
         projectLabel: repo?.displayName ?? input.unknownProjectLabel,
         workspaceLabel: worktree.displayName || worktree.branch || null,
         rows: buildRows(
@@ -237,6 +240,7 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
     const worktree = folderWorkspaceToWorktree(folderWorkspace)
     addWorkspace(groupKeyFor(folderWorkspace.projectGroupId), {
       key: worktree.id,
+      worktree,
       projectLabel: folderWorkspace.name,
       workspaceLabel: null,
       rows: buildRows(
@@ -252,6 +256,7 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
     const { worktree, label } = input.floating
     addWorkspace(AGENT_HUB_FLOATING_GROUP_KEY, {
       key: worktree.id,
+      worktree,
       projectLabel: label,
       workspaceLabel: null,
       rows: buildRows(

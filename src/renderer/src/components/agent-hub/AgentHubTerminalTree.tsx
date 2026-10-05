@@ -1,9 +1,11 @@
 import { Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
+import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { HubChip, HubCollapse, HubCounts, HubFoldChevron, HubKeys } from './AgentHubAtoms'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
+import { AgentHubTerminalSortMenu } from './AgentHubTerminalSortMenu'
 import { agentHubStateWord } from './agent-hub-copy'
 import {
   agentHubIndicatorKind,
@@ -107,6 +109,8 @@ export function AgentHubTerminalTree({
   query,
   onQueryChange,
   searchRef,
+  sortBy,
+  onSortChange,
   collapseOverrides,
   onToggleGroup,
   selectedKey,
@@ -122,6 +126,8 @@ export function AgentHubTerminalTree({
   query: string
   onQueryChange: (query: string) => void
   searchRef: React.RefObject<HTMLInputElement | null>
+  sortBy: AgentHubTerminalSort
+  onSortChange: (sortBy: AgentHubTerminalSort) => void
   collapseOverrides: ReadonlyMap<string, boolean>
   onToggleGroup: (group: AgentHubGroupNode, collapsed: boolean) => void
   selectedKey: string | null
@@ -145,29 +151,36 @@ export function AgentHubTerminalTree({
   }
   return (
     <div>
-      {/* Why the popover-colored shadow: the sticky field must hide rows scrolling under it. */}
-      <label className="sticky top-0 z-[2] mt-0.5 mb-1 flex h-[34px] items-center gap-2 rounded-[10px] border border-foreground/[0.08] bg-background pr-1.5 pl-2.5 text-muted-foreground/70 shadow-[0_-8px_0_var(--popover)] focus-within:border-foreground/20">
-        <Search className="size-3.5 shrink-0" />
-        <input
-          ref={searchRef}
-          value={query}
-          data-agent-hub-search
-          onChange={(event) => onQueryChange(event.target.value)}
-          onKeyDown={(event) => {
-            // The popover keeps itself open for this Esc (see AgentHubRoot).
-            if (event.key === 'Escape' && query) {
-              onQueryChange('')
-            }
-          }}
-          placeholder={translate(
-            'agentHub.terminals.searchPlaceholder',
-            'Filter by terminal, project, group, agent…'
-          )}
-          aria-label={translate('agentHub.terminals.searchLabel', 'Filter terminals')}
-          className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
+      {/* Why the popover color and shadow: the sticky row must hide rows scrolling under it. */}
+      <div className="sticky top-0 z-[2] mt-0.5 mb-1 flex items-center gap-1.5 bg-popover shadow-[0_-8px_0_var(--popover)]">
+        <label className="flex h-[34px] min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-foreground/[0.08] bg-background pr-1.5 pl-2.5 text-muted-foreground/70 focus-within:border-foreground/20">
+          <Search className="size-3.5 shrink-0" />
+          <input
+            ref={searchRef}
+            value={query}
+            data-agent-hub-search
+            onChange={(event) => onQueryChange(event.target.value)}
+            onKeyDown={(event) => {
+              // The popover keeps itself open for this Esc (see AgentHubRoot).
+              if (event.key === 'Escape' && query) {
+                onQueryChange('')
+              }
+            }}
+            placeholder={translate(
+              'agentHub.terminals.searchPlaceholder',
+              'Filter by terminal, project, group, agent…'
+            )}
+            aria-label={translate('agentHub.terminals.searchLabel', 'Filter terminals')}
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
+          />
+          <HubKeys keys={[String(totalCount)]} />
+        </label>
+        <AgentHubTerminalSortMenu
+          sortBy={sortBy}
+          onSortChange={onSortChange}
+          onClosed={() => searchRef.current?.focus()}
         />
-        <HubKeys keys={[String(totalCount)]} />
-      </label>
+      </div>
       {groups.length === 0 ? (
         <div className="flex flex-col items-center gap-1 px-2.5 pt-[22px] pb-[18px] text-center text-xs text-muted-foreground">
           <b className="text-[13px] font-medium text-foreground/85">

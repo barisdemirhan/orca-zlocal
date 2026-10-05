@@ -21796,7 +21796,10 @@
       "ungrouped": "Ungrouped",
       "unknownProject": "Unknown",
       "termCount": "{{value0}} term",
-      "noMatchHint": "Try a project, group, branch or agent name"
+      "noMatchHint": "Try a project, group, branch or agent name",
+      "sortManualHint": "Workspaces in the order you arranged them in the sidebar.",
+      "sortLabel": "Sort: {{value0}}",
+      "sortBy": "Sort by"
     },
     "card": {
       "recommended": "Recommended",

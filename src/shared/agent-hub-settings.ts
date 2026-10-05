@@ -1,3 +1,5 @@
+import type { PersistedUIState } from './persisted-ui-state-types'
+
 /** Where the Agent Hub lives: a draggable dock on a window edge, or a status-bar item. */
 export type AgentHubPlacement = 'dock' | 'status-bar'
 
@@ -19,6 +21,9 @@ export type AgentHubFloatingDimMode = 'off' | 'on' | 'untilClick' | 'minimizeOnC
 
 /** How floating windows are laid out between the sidebars: a grid, one row, or one column. */
 export type AgentHubFloatingLayout = 'grid' | 'columns' | 'rows'
+
+/** How the hub's Agents and All terminals lists are ordered: the sidebar's own sort choices. */
+export type AgentHubTerminalSort = PersistedUIState['sortBy']
 
 /** Agent Hub's settings, kept out of global-settings-types.ts (at its line budget). */
 export type AgentHubSettings = {
@@ -54,6 +59,8 @@ export type AgentHubSettings = {
   agentHubMirrorWindowCap?: number
   /** Agent Hub: the layout used when mirrors are brought back or popped out together. */
   agentHubFloatingLayout?: AgentHubFloatingLayout
+  /** Agent Hub: the order of the Agents and All terminals lists. */
+  agentHubTerminalSort?: AgentHubTerminalSort
   /** Agent Hub tab shown on open when nobody is waiting. */
   agentHubDefaultTab?: AgentHubDefaultTab
   /** Terminal tabs show a toggle that parks the tab's terminal in the hub's tray when it is left. */
@@ -123,6 +130,19 @@ export function normalizeAgentHubDockSize(value: unknown): AgentHubDockSize {
 
 export function normalizeAgentHubDefaultTab(value: unknown): AgentHubDefaultTab {
   return value === 'running' || value === 'all' ? value : 'inbox'
+}
+
+const AGENT_HUB_TERMINAL_SORTS: readonly AgentHubTerminalSort[] = [
+  'name',
+  'smart',
+  'recent',
+  'repo',
+  'manual'
+]
+
+/** Agent Activity unless the user picked another order. */
+export function normalizeAgentHubTerminalSort(value: unknown): AgentHubTerminalSort {
+  return AGENT_HUB_TERMINAL_SORTS.find((sort) => sort === value) ?? 'smart'
 }
 
 export function normalizeAgentHubFinishedClearMinutes(value: unknown): number {

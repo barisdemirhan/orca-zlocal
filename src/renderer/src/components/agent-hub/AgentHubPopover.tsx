@@ -1,5 +1,6 @@
 import { useAppStore } from '@/store'
 import { PopoverArrow, PopoverContent } from '@/components/ui/popover'
+import { normalizeAgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
@@ -9,6 +10,7 @@ import type { AgentHubLineage } from './agent-hub-lineage'
 import type { AgentHubLists } from './agent-hub-lists'
 import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
+import { useAgentHubTreeOrder } from './use-agent-hub-tree-order'
 
 export type AgentHubPopoverRequest = { tab: AgentHubTab; paneKey: string | null; seq: number }
 
@@ -45,6 +47,9 @@ function AgentHubPopoverBody({
   onClose
 }: AgentHubPopoverBodyProps): React.JSX.Element {
   const tree = useAgentHubTerminalTree(threads, includeShells, lineage.parentOf)
+  const sortBy = useAppStore((s) => normalizeAgentHubTerminalSort(s.settings?.agentHubTerminalSort))
+  const treeOrder = useAgentHubTreeOrder(tree, sortBy)
+  const updateSettings = useAppStore((s) => s.updateSettings)
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const terminalCount = tree.reduce((total, group) => total + group.rowCount, 0)
   return (
@@ -54,6 +59,8 @@ function AgentHubPopoverBody({
       lists={lists}
       lineage={lineage}
       tree={tree}
+      treeOrder={treeOrder}
+      onSortChange={(next) => void updateSettings({ agentHubTerminalSort: next })}
       terminalCount={terminalCount}
       locationOf={locationOf}
       rootRef={rootRef}
