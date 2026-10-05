@@ -50,6 +50,7 @@ type MirrorSurface = 'portal' | 'in-workspace' | 'preview'
  */
 export function AgentHubMirrors({
   hidden,
+  onCanvas,
   hubRef,
   trayRef,
   traySide,
@@ -66,6 +67,8 @@ export function AgentHubMirrors({
 }: {
   /** Out of sight but mounted (Settings), so mirrored panes are not moved back and forth. */
   hidden: boolean
+  /** The canvas is up over the workspace, so no pane counts as on screen there. */
+  onCanvas: boolean
   /** The hub (dock or status-bar trigger): windows fly into it and the tray sits beside it. */
   hubRef: React.RefObject<HTMLElement | null>
   trayRef: React.RefObject<HTMLDivElement | null>
@@ -93,7 +96,7 @@ export function AgentHubMirrors({
   const panelInFront = useFloatingPanelInFront(windows.length)
   // The tab on screen in the workspace, so a family member already there offers no jump.
   const onScreenTab = useAppStore((state) =>
-    state.activeView === 'terminal' && state.activeWorktreeId && state.activeTabId
+    !onCanvas && state.activeView === 'terminal' && state.activeWorktreeId && state.activeTabId
       ? `${state.activeWorktreeId}\u0000${state.activeTabId}`
       : null
   )
@@ -119,6 +122,7 @@ export function AgentHubMirrors({
         const leafId = state.terminalLayoutsByTabId[target.tab.id]?.activeLeafId
         const paneKey = target.paneKey ?? (leafId ? makePaneKey(target.tab.id, leafId) : null)
         const onScreen =
+          !onCanvas &&
           state.activeView === 'terminal' &&
           state.activeWorktreeId === target.worktree.id &&
           state.activeTabId === target.tab.id

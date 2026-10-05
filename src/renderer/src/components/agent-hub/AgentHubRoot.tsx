@@ -10,6 +10,7 @@ import { translate } from '@/i18n/i18n'
 import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/activity-thread-actions'
 import { AgentHubAlertStack } from './AgentHubAlertStack'
+import { AgentHubCanvas } from './AgentHubCanvas'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubDimBackdrop } from './AgentHubDimToggle'
 import { AgentHubMirrors } from './AgentHubMirrors'
@@ -42,6 +43,7 @@ import {
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
+import { useAgentHubCanvas } from './use-agent-hub-canvas'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { useAgentHubTabAutoPopoutOnLeave } from './use-agent-hub-tab-auto-popout'
@@ -229,6 +231,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const muted = (preferences.alertsMutedUntil ?? 0) > now
   // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
   const { windows, chips } = useAgentHubMirrors()
+  const canvasOpen = useAgentHubCanvas(preferences.canvas) && !inSettings
   const hubAlerts = alerts.filter(
     (candidate) =>
       !chips.some((chip) => agentHubTargetShowsThread(chip.target, candidate.thread)) &&
@@ -341,7 +344,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
           onDismiss={dismissAgentHubAlert}
         />
       ) : null}
-      <AgentHubDimBackdrop hidden={inSettings} />
+      {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}
+      <AgentHubDimBackdrop hidden={inSettings || canvasOpen} />
+      {canvasOpen ? <AgentHubCanvas empty={windows.length === 0} /> : null}
       <AgentHubMirrors
         hubRef={anchorRef}
         trayRef={trayRef}
@@ -351,6 +356,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         hubOpen={open}
         trayPeekMs={preferences.trayPeekSeconds * 1000}
         hidden={inSettings}
+        onCanvas={canvasOpen}
         threads={threads}
         lineage={lineage}
         alerts={alerts}

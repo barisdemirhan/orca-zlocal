@@ -30,6 +30,7 @@ export type AgentHubPreferences = {
   mirrorWindowCap: number
   defaultTab: AgentHubDefaultTab
   tabAutoPopout: boolean
+  canvas: boolean
 }
 
 /** The hub's settings with defaults applied, so profiles saved before a key existed read sanely. */
@@ -49,7 +50,8 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       trayPeekSeconds: s.settings?.agentHubTrayPeekSeconds,
       mirrorWindowCap: s.settings?.agentHubMirrorWindowCap,
       defaultTab: s.settings?.agentHubDefaultTab,
-      tabAutoPopout: s.settings?.agentHubTabAutoPopout
+      tabAutoPopout: s.settings?.agentHubTabAutoPopout,
+      canvas: s.settings?.agentHubCanvas
     }))
   )
   return useMemo(
@@ -67,7 +69,8 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       trayPeekSeconds: normalizeAgentHubTrayPeekSeconds(raw.trayPeekSeconds),
       mirrorWindowCap: normalizeAgentHubMirrorWindowCap(raw.mirrorWindowCap),
       defaultTab: normalizeAgentHubDefaultTab(raw.defaultTab),
-      tabAutoPopout: raw.tabAutoPopout === true
+      tabAutoPopout: raw.tabAutoPopout === true,
+      canvas: raw.canvas === true
     }),
     [raw]
   )

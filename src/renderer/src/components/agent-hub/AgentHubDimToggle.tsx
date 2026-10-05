@@ -24,6 +24,7 @@ import {
   useFloatingWindowPresence,
   useFloatingWindowsSpotlit
 } from './agent-hub-floating-dim'
+import { useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 
 const FLOATING_WINDOW = '[data-agent-hub-mirror], [data-floating-terminal-panel]'
@@ -66,7 +67,9 @@ export function AgentHubDimToggle({
   const mode = useDimMode()
   const updateSettings = useAppStore((s) => s.updateSettings)
   useFloatingWindowPresence(showing)
-  if (!hubEnabled) {
+  // The canvas hides everything behind the floating windows; there is nothing to dim.
+  const onCanvas = useAgentHubCanvasOpen()
+  if (!hubEnabled || onCanvas) {
     return null
   }
   const label = `${translate('agentHub.dim.title', 'Dim behind floating windows')}: ${dimModeLabel(mode)}`

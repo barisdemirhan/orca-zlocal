@@ -8026,7 +8026,9 @@
             "tabAutoPopout": "Show the auto pop-out toggle on terminal tabs",
             "tabAutoPopoutCopy": "A tab with its toggle on parks its terminal beside the hub when you leave the tab, and takes it back when you return.",
             "mirrorCap": "Mirror windows open at once",
-            "mirrorCapCopy": "Opening more than this parks the oldest one beside the hub."
+            "mirrorCapCopy": "Opening more than this parks the oldest one beside the hub.",
+            "canvas": "Use the canvas for mirrors",
+            "canvasCopy": "Mirrors open on a page of their own instead of floating over the workspace. Leaving the canvas parks them beside the hub; coming back puts them where they were."
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -21874,6 +21876,10 @@
     "tabToggle": {
       "on": "Pops out when you leave this tab (click to stop)",
       "off": "Pop this terminal out when you leave the tab"
+    },
+    "canvas": {
+      "emptyTitle": "No mirrors on the canvas",
+      "emptyHint": "Pop out a terminal from the hub, or bring a parked mirror back, and it opens here."
     }
   },
   "workspace": {

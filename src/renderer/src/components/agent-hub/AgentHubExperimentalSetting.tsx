@@ -319,6 +319,18 @@ function AgentHubOptions({
         checked={preferences.tabAutoPopout}
         onChange={() => updateSettings({ agentHubTabAutoPopout: !preferences.tabAutoPopout })}
       />
+      <SettingsSwitchRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.canvas',
+          'Use the canvas for mirrors'
+        )}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.canvasCopy',
+          'Mirrors open on a page of their own instead of floating over the workspace. Leaving the canvas parks them beside the hub; coming back puts them where they were.'
+        )}
+        checked={preferences.canvas}
+        onChange={() => updateSettings({ agentHubCanvas: !preferences.canvas })}
+      />
     </div>
   )
 }
