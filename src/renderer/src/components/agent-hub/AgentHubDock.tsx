@@ -35,6 +35,7 @@ import {
   isHorizontalAgentHubDock
 } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
+import { AgentHubTerminalCount } from './AgentHubTerminalCount'
 import type { AgentHubCounts } from './agent-hub-lists'
 import { useDockBarMotion } from './use-dock-bar-motion'
 import { useViewportSize } from './use-viewport-size'
@@ -58,7 +59,7 @@ export function AgentHubDock({
   muted,
   pinned,
   mirrors,
-  terminalCountOf,
+  terminals,
   onOpenTab,
   onNextWaiting,
   onToggleMirrors,
@@ -73,8 +74,8 @@ export function AgentHubDock({
   pinned: boolean
   /** Open mirror windows and the ones parked beside the hub. */
   mirrors: { windows: number; chips: number }
-  /** The agents count (always on show) and the All terminals count (only while unfolded). */
-  terminalCountOf: (only: 'agents' | 'all') => React.ReactNode
+  /** What the agents count (always on show) and the All terminals count (unfolded) read. */
+  terminals: Omit<React.ComponentProps<typeof AgentHubTerminalCount>, 'only'>
   onOpenTab: (tab: AgentHubTab) => void
   onNextWaiting: () => void
   onToggleMirrors: () => void
@@ -102,7 +103,7 @@ export function AgentHubDock({
   const agentCount = (
     <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
       <Bot aria-hidden className="size-3.5" />
-      {terminalCountOf('agents')}
+      <AgentHubTerminalCount only="agents" {...terminals} />
     </span>
   )
   const zoom = AGENT_HUB_DOCK_ZOOM[size]
@@ -240,7 +241,7 @@ export function AgentHubDock({
               <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
                 <SquareTerminal className="size-3.5" />
                 <span className="min-w-[2ch] text-center">
-                  {expanded ? terminalCountOf('all') : null}
+                  {expanded ? <AgentHubTerminalCount only="all" {...terminals} /> : null}
                 </span>
               </span>
             </DockButton>

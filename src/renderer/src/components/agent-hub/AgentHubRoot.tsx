@@ -44,7 +44,6 @@ import {
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
-import { AgentHubTerminalCount } from './AgentHubTerminalCount'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
 
 type OpenRequest = { tab: AgentHubTab; paneKey: string | null; seq: number }
@@ -345,14 +344,11 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   onNextWaiting={jumpToNextWaiting}
                   pinned={open}
                   mirrors={{ windows: windows.length, chips: chips.length }}
-                  terminalCountOf={(only) => (
-                    <AgentHubTerminalCount
-                      only={only}
-                      threads={threads}
-                      includeShells={preferences.showShells}
-                      parentOf={lineage.parentOf}
-                    />
-                  )}
+                  terminals={{
+                    threads,
+                    includeShells: preferences.showShells,
+                    parentOf: lineage.parentOf
+                  }}
                   onToggleMirrors={toggleMirrors}
                   onMove={(position) => void updateSettings({ agentHubDockPosition: position })}
                 />
