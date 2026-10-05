@@ -203,6 +203,13 @@ export function createAppCommandHandlers(
       }
     ],
     [
+      'agentHub.toggleCanvas',
+      () => {
+        const toggleCanvas = getAgentHubCommands()?.toggleCanvas
+        return toggleCanvas ? claim('agentHub.toggleCanvas', toggleCanvas) : false
+      }
+    ],
+    [
       'floatingWorkspace.maximize',
       () => {
         if (floatingTerminalOpen || !floatingTerminalEnabled) {

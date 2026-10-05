@@ -216,9 +216,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       registerAgentHubCommands({
         toggle: () => (openRef.current ? setOpen(false) : openHub()),
         jumpToNextWaiting,
-        toggleMirrors
+        toggleMirrors,
+        toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null
       }),
-    [jumpToNextWaiting, openHub, toggleMirrors]
+    [jumpToNextWaiting, openHub, toggleMirrors, preferences.canvas]
   )
 
   const label =

@@ -10,7 +10,8 @@ function globalGroup(): ShortcutGroup {
       'dashboard.toggle',
       'agentHub.toggle',
       'agentHub.nextWaiting',
-      'agentHub.dockMirrors'
+      'agentHub.dockMirrors',
+      'agentHub.toggleCanvas'
     ] as const
   ).map((actionId) => {
     const definition = getKeybindingDefinition(actionId)
@@ -54,7 +55,7 @@ describe('buildShortcutRowVisibility', () => {
 
   it('hides the agent hub shortcuts while its experiment is off', () => {
     const hidden = buildShortcutRowVisibility({ ...baseOptions, groups: [globalGroup()] })
-    expect(hidden.shortcutRows.map((row) => row.item.id)).not.toContain('agentHub.toggle')
+    expect(hidden.shortcutRows.map((row) => row.item.id)).toEqual(['workspace.openBoard'])
 
     const shown = buildShortcutRowVisibility({
       ...baseOptions,
@@ -65,7 +66,8 @@ describe('buildShortcutRowVisibility', () => {
       'workspace.openBoard',
       'agentHub.toggle',
       'agentHub.nextWaiting',
-      'agentHub.dockMirrors'
+      'agentHub.dockMirrors',
+      'agentHub.toggleCanvas'
     ])
   })
 })

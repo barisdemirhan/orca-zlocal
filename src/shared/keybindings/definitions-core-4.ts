@@ -72,6 +72,15 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     allowInTerminal: true
   },
   {
+    id: 'agentHub.toggleCanvas',
+    title: 'Open or Leave the Agent Hub Canvas',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'hub', 'canvas', 'mirror', 'toggle'],
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
+  },
+  {
     id: 'terminal.clearPaneTitle',
     title: 'Clear Pane Title',
     group: 'Terminal Panes',

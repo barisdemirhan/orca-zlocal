@@ -35,7 +35,13 @@ function shortcutState(): AppShortcutState {
   }
 }
 
-function run(actionId: 'agentHub.toggle' | 'agentHub.nextWaiting' | 'agentHub.dockMirrors'): {
+function run(
+  actionId:
+    | 'agentHub.toggle'
+    | 'agentHub.nextWaiting'
+    | 'agentHub.dockMirrors'
+    | 'agentHub.toggleCanvas'
+): {
   claimed: boolean | undefined
   input: ShortcutDispatchInput
 } {
@@ -62,19 +68,45 @@ describe('agent hub shortcuts', () => {
   })
 
   it('routes every hub chord to the mounted hub', () => {
-    const commands = { toggle: vi.fn(), jumpToNextWaiting: vi.fn(), toggleMirrors: vi.fn() }
+    const commands = {
+      toggle: vi.fn(),
+      jumpToNextWaiting: vi.fn(),
+      toggleMirrors: vi.fn(),
+      toggleCanvas: vi.fn()
+    }
     unregister = registerAgentHubCommands(commands)
 
     expect(run('agentHub.toggle').claimed).toBe(true)
     expect(run('agentHub.nextWaiting').claimed).toBe(true)
     expect(run('agentHub.dockMirrors').claimed).toBe(true)
+    expect(run('agentHub.toggleCanvas').claimed).toBe(true)
     expect(commands.toggle).toHaveBeenCalledTimes(1)
     expect(commands.jumpToNextWaiting).toHaveBeenCalledTimes(1)
     expect(commands.toggleMirrors).toHaveBeenCalledTimes(1)
+    expect(commands.toggleCanvas).toHaveBeenCalledTimes(1)
+  })
+
+  it('lets the canvas chord fall through while the canvas setting is off', () => {
+    unregister = registerAgentHubCommands({
+      toggle: vi.fn(),
+      jumpToNextWaiting: vi.fn(),
+      toggleMirrors: vi.fn(),
+      toggleCanvas: null
+    })
+
+    const { claimed, input } = run('agentHub.toggleCanvas')
+
+    expect(claimed).toBe(false)
+    expect(input.preventDefault).not.toHaveBeenCalled()
   })
 
   it('stops claiming the chord once the hub unmounts', () => {
-    const commands = { toggle: vi.fn(), jumpToNextWaiting: vi.fn(), toggleMirrors: vi.fn() }
+    const commands = {
+      toggle: vi.fn(),
+      jumpToNextWaiting: vi.fn(),
+      toggleMirrors: vi.fn(),
+      toggleCanvas: vi.fn()
+    }
     registerAgentHubCommands(commands)()
 
     expect(run('agentHub.toggle').claimed).toBe(false)

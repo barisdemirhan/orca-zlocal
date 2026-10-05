@@ -8,6 +8,7 @@ import {
   PictureInPicture2,
   SquareTerminal
 } from 'lucide-react'
+import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import {
   AGENT_HUB_DOCK_ZOOM,
@@ -105,6 +106,10 @@ export function AgentHubDock({
     expanded
   )
   const hasMirrors = mirrors.windows + mirrors.chips > 0
+  const canvasShortcut = useOptionalShortcutLabel('agentHub.toggleCanvas')
+  const canvasLabel = canvas?.open
+    ? translate('agentHub.canvas.leave', 'Leave the canvas')
+    : translate('agentHub.dock.openCanvas', 'Open the canvas')
   // Right-click lays the floating windows out between the sidebars.
   const mirrorsButton = (
     <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
@@ -251,11 +256,7 @@ export function AgentHubDock({
               {hasMirrors ? null : mirrorsButton}
               {canvas ? (
                 <DockButton
-                  label={
-                    canvas.open
-                      ? translate('agentHub.canvas.leave', 'Leave the canvas')
-                      : translate('agentHub.dock.openCanvas', 'Open the canvas')
-                  }
+                  label={canvasShortcut ? `${canvasLabel} (${canvasShortcut})` : canvasLabel}
                   side={side}
                   className={DOCK_BUTTON}
                   pressed={canvas.open}

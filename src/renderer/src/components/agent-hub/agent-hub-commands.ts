@@ -3,6 +3,8 @@ export type AgentHubCommands = {
   jumpToNextWaiting: () => void
   /** Sends the open mirrors to the hub, or brings the parked ones back when none are open. */
   toggleMirrors: () => void
+  /** Opens or leaves the canvas; null while the canvas setting is off, so the chord falls through. */
+  toggleCanvas: (() => void) | null
 }
 
 // Why a registry: the hub lives in the status bar, so its chords must fall through

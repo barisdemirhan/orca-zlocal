@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom'
 import { PictureInPicture2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import {
@@ -26,6 +27,7 @@ export function AgentHubCanvas({
   const sidebarOpen = useAppStore((s) => s.sidebarOpen)
   const sidebarWidth = useAppStore((s) => s.sidebarWidth)
   const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
+  const leaveShortcut = useOptionalShortcutLabel('agentHub.toggleCanvas')
   return createPortal(
     <div
       data-agent-hub-canvas
@@ -57,6 +59,7 @@ export function AgentHubCanvas({
         </TooltipTrigger>
         <TooltipContent side="left" sideOffset={4}>
           {translate('agentHub.canvas.leave', 'Leave the canvas')}
+          {leaveShortcut ? ` (${leaveShortcut})` : null}
         </TooltipContent>
       </Tooltip>
       {empty ? (
