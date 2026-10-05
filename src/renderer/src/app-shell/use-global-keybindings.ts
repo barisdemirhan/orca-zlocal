@@ -226,7 +226,8 @@ export function useGlobalKeybindings(args: {
         'agentHub.toggle',
         'agentHub.nextWaiting',
         'agentHub.dockMirrors',
-        'agentHub.toggleCanvas'
+        'agentHub.toggleCanvas',
+        'agentHub.arrangeMirrors'
       ] as const) {
         if (matchShortcut(actionId) && handlers.get(actionId)?.()) {
           return

@@ -212,15 +212,19 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     jump(threadOpenRequest(next))
   }, [jump])
 
+  // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
+  const { windows, chips } = useAgentHubMirrors()
+  const mirrorsOpen = windows.length > 0
   useEffect(
     () =>
       registerAgentHubCommands({
         toggle: () => (openRef.current ? setOpen(false) : openHub()),
         jumpToNextWaiting,
         toggleMirrors,
-        toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null
+        toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null,
+        arrangeMirrors: mirrorsOpen ? arrangeAgentHubFloatingWindowsByDefault : null
       }),
-    [jumpToNextWaiting, openHub, toggleMirrors, preferences.canvas]
+    [jumpToNextWaiting, openHub, toggleMirrors, preferences.canvas, mirrorsOpen]
   )
 
   const label =
@@ -234,12 +238,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const docked = preferences.placement === 'dock'
   const side = docked ? agentHubDockPopoverSide(preferences.dockPosition.edge) : 'top'
   const muted = (preferences.alertsMutedUntil ?? 0) > now
-  // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
-  const { windows, chips } = useAgentHubMirrors()
   const canvasOpen = useAgentHubCanvas(preferences.canvas) && !inSettings
   const centred = useAgentHubCanvasWelcome({
     canvasOpen,
-    empty: windows.length === 0,
+    empty: !mirrorsOpen,
     hubOpen: open,
     anchorRef,
     side,
@@ -366,9 +368,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       ) : null}
       {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}
       <AgentHubDimBackdrop hidden={inSettings || canvasOpen} />
-      {canvasOpen ? (
-        <AgentHubCanvas empty={windows.length === 0} onLeave={closeAgentHubCanvas} />
-      ) : null}
+      {canvasOpen ? <AgentHubCanvas empty={!mirrorsOpen} onLeave={closeAgentHubCanvas} /> : null}
       <AgentHubMirrors
         hubRef={anchorRef}
         trayRef={trayRef}

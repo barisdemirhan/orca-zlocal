@@ -81,6 +81,15 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     allowInTerminal: true
   },
   {
+    id: 'agentHub.arrangeMirrors',
+    title: 'Arrange Agent Hub Mirrors in the Default Layout',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'arrange', 'layout', 'grid', 'tile'],
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
+  },
+  {
     id: 'terminal.clearPaneTitle',
     title: 'Clear Pane Title',
     group: 'Terminal Panes',

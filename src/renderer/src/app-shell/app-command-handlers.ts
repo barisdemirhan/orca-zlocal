@@ -210,6 +210,13 @@ export function createAppCommandHandlers(
       }
     ],
     [
+      'agentHub.arrangeMirrors',
+      () => {
+        const arrangeMirrors = getAgentHubCommands()?.arrangeMirrors
+        return arrangeMirrors ? claim('agentHub.arrangeMirrors', arrangeMirrors) : false
+      }
+    ],
+    [
       'floatingWorkspace.maximize',
       () => {
         if (floatingTerminalOpen || !floatingTerminalEnabled) {

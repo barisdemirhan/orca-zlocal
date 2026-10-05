@@ -41,6 +41,7 @@ function run(
     | 'agentHub.nextWaiting'
     | 'agentHub.dockMirrors'
     | 'agentHub.toggleCanvas'
+    | 'agentHub.arrangeMirrors'
 ): {
   claimed: boolean | undefined
   input: ShortcutDispatchInput
@@ -72,7 +73,8 @@ describe('agent hub shortcuts', () => {
       toggle: vi.fn(),
       jumpToNextWaiting: vi.fn(),
       toggleMirrors: vi.fn(),
-      toggleCanvas: vi.fn()
+      toggleCanvas: vi.fn(),
+      arrangeMirrors: vi.fn()
     }
     unregister = registerAgentHubCommands(commands)
 
@@ -80,10 +82,12 @@ describe('agent hub shortcuts', () => {
     expect(run('agentHub.nextWaiting').claimed).toBe(true)
     expect(run('agentHub.dockMirrors').claimed).toBe(true)
     expect(run('agentHub.toggleCanvas').claimed).toBe(true)
+    expect(run('agentHub.arrangeMirrors').claimed).toBe(true)
     expect(commands.toggle).toHaveBeenCalledTimes(1)
     expect(commands.jumpToNextWaiting).toHaveBeenCalledTimes(1)
     expect(commands.toggleMirrors).toHaveBeenCalledTimes(1)
     expect(commands.toggleCanvas).toHaveBeenCalledTimes(1)
+    expect(commands.arrangeMirrors).toHaveBeenCalledTimes(1)
   })
 
   it('lets the canvas chord fall through while the canvas setting is off', () => {
@@ -91,10 +95,26 @@ describe('agent hub shortcuts', () => {
       toggle: vi.fn(),
       jumpToNextWaiting: vi.fn(),
       toggleMirrors: vi.fn(),
-      toggleCanvas: null
+      toggleCanvas: null,
+      arrangeMirrors: vi.fn()
     })
 
     const { claimed, input } = run('agentHub.toggleCanvas')
+
+    expect(claimed).toBe(false)
+    expect(input.preventDefault).not.toHaveBeenCalled()
+  })
+
+  it('lets the arrange chord fall through while no mirror is open', () => {
+    unregister = registerAgentHubCommands({
+      toggle: vi.fn(),
+      jumpToNextWaiting: vi.fn(),
+      toggleMirrors: vi.fn(),
+      toggleCanvas: vi.fn(),
+      arrangeMirrors: null
+    })
+
+    const { claimed, input } = run('agentHub.arrangeMirrors')
 
     expect(claimed).toBe(false)
     expect(input.preventDefault).not.toHaveBeenCalled()
@@ -105,7 +125,8 @@ describe('agent hub shortcuts', () => {
       toggle: vi.fn(),
       jumpToNextWaiting: vi.fn(),
       toggleMirrors: vi.fn(),
-      toggleCanvas: vi.fn()
+      toggleCanvas: vi.fn(),
+      arrangeMirrors: vi.fn()
     }
     registerAgentHubCommands(commands)()
 

@@ -1,5 +1,6 @@
 import { Columns3, LayoutGrid, Rows3 } from 'lucide-react'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import {
@@ -21,6 +22,10 @@ export function AgentHubCanvasLayoutSwitch(): React.JSX.Element {
     normalizeAgentHubFloatingLayout(s.settings?.agentHubFloatingLayout)
   )
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const arrangeShortcut = useOptionalShortcutLabel('agentHub.arrangeMirrors')
+  // The shortcut lays out again in the layout in use, so that layout's button names it.
+  const hint = (option: AgentHubFloatingLayout, label: string): string =>
+    option === layout && arrangeShortcut ? `${label} (${arrangeShortcut})` : label
   return (
     <div className="absolute right-3 bottom-3 rounded-md bg-popover shadow-floating">
       <ToggleGroup
@@ -41,21 +46,21 @@ export function AgentHubCanvasLayoutSwitch(): React.JSX.Element {
         <ToggleGroupItem
           value="grid"
           aria-label={translate('agentHub.arrange.grid', 'In a grid')}
-          title={translate('agentHub.arrange.grid', 'In a grid')}
+          title={hint('grid', translate('agentHub.arrange.grid', 'In a grid'))}
         >
           <LayoutGrid />
         </ToggleGroupItem>
         <ToggleGroupItem
           value="columns"
           aria-label={translate('agentHub.arrange.columns', 'Side by side')}
-          title={translate('agentHub.arrange.columns', 'Side by side')}
+          title={hint('columns', translate('agentHub.arrange.columns', 'Side by side'))}
         >
           <Columns3 />
         </ToggleGroupItem>
         <ToggleGroupItem
           value="rows"
           aria-label={translate('agentHub.arrange.rows', 'Stacked')}
-          title={translate('agentHub.arrange.rows', 'Stacked')}
+          title={hint('rows', translate('agentHub.arrange.rows', 'Stacked'))}
         >
           <Rows3 />
         </ToggleGroupItem>

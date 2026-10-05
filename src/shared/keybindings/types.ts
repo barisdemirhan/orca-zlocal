@@ -46,6 +46,7 @@ export type KeybindingActionId =
   | 'agentHub.nextWaiting'
   | 'agentHub.dockMirrors'
   | 'agentHub.toggleCanvas'
+  | 'agentHub.arrangeMirrors'
   | 'sidebar.left.toggle'
   | 'sidebar.right.toggle'
   | 'sidebar.explorer.toggle'

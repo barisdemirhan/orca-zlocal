@@ -11,14 +11,7 @@ import {
 } from '../../../../shared/keybindings'
 import { Button } from '../ui/button'
 import { SettingsRow } from '../settings/SettingsFormControls'
-
-// Why suggested, not default: an experimental surface must not claim a global chord
-// (see dashboard.toggle); one click here binds them once the user opts in.
-const SUGGESTED_BINDINGS: readonly (readonly [KeybindingActionId, string])[] = [
-  ['agentHub.toggle', 'Mod+Alt+J'],
-  ['agentHub.nextWaiting', 'Mod+Alt+Shift+J'],
-  ['agentHub.dockMirrors', 'Mod+Alt+K']
-]
+import { AGENT_HUB_SUGGESTED_BINDINGS as SUGGESTED_BINDINGS } from './agent-hub-shortcut-suggestions'
 
 const platform = getShortcutPlatform()
 
@@ -88,16 +81,17 @@ export function AgentHubShortcutSetting(): React.JSX.Element {
         (missing.length === SUGGESTED_BINDINGS.length
           ? translate(
               'auto.components.settings.ExperimentalPane.agentHub.shortcutsUnset',
-              'Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub).',
+              'Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub, arrange the mirrors).',
               { value0: suggestedLabel }
             )
           : translate(
               'auto.components.settings.ExperimentalPane.agentHub.shortcutsSet',
-              'Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}}',
+              'Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}} · Arrange the mirrors: {{value3}}',
               {
                 value0: shown(0),
                 value1: shown(1),
-                value2: shown(2)
+                value2: shown(2),
+                value3: shown(3)
               }
             ))
       }

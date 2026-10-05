@@ -20,7 +20,8 @@ const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
   'agentHub.toggle',
   'agentHub.nextWaiting',
   'agentHub.dockMirrors',
-  'agentHub.toggleCanvas'
+  'agentHub.toggleCanvas',
+  'agentHub.arrangeMirrors'
 ])
 
 export function buildShortcutRowVisibility(options: {
