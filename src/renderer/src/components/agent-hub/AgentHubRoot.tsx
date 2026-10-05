@@ -305,6 +305,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   onNextWaiting={jumpToNextWaiting}
                   pinned={open}
                   mirrors={{ windows: windows.length, chips: chips.length }}
+                  flushTop={canvasOpen}
                   canvas={
                     preferences.canvas ? { open: canvasOpen, onToggle: toggleAgentHubCanvas } : null
                   }

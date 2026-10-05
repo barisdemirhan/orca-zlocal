@@ -58,8 +58,11 @@ export function agentHubWorkArea(): AgentHubRect {
   }
   const box = dock.getBoundingClientRect()
   switch (edge) {
-    case 'top':
-      return { ...area, top: area.top + box.height, height: area.height - box.height }
+    case 'top': {
+      // The dock hangs from the title bar, or from the window's edge while the canvas covers it.
+      const top = Math.max(area.top, box.bottom)
+      return { ...area, top, height: area.height - (top - area.top) }
+    }
     case 'left':
       return { ...area, left: area.left + box.width, width: area.width - box.width }
     case 'right':

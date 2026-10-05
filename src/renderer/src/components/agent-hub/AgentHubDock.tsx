@@ -63,6 +63,7 @@ export function AgentHubDock({
   pinned,
   mirrors,
   canvas,
+  flushTop,
   terminals,
   onOpenTab,
   onNextWaiting,
@@ -80,6 +81,8 @@ export function AgentHubDock({
   mirrors: { windows: number; chips: number }
   /** The canvas switch, while the canvas setting is on. */
   canvas: { open: boolean; onToggle: () => void } | null
+  /** The canvas covers the title bar: a top dock hangs from the window's own edge instead. */
+  flushTop: boolean
   /** What the agents count (always on show) and the All terminals count (unfolded) read. */
   terminals: Omit<React.ComponentProps<typeof AgentHubTerminalCount>, 'only'>
   onOpenTab: (tab: AgentHubTab) => void
@@ -137,7 +140,7 @@ export function AgentHubDock({
     : agentHubDockPlacement(
         position,
         viewport,
-        DOCK_CHROME,
+        flushTop ? { ...DOCK_CHROME, titleBarHeight: 0 } : DOCK_CHROME,
         barSize && restSize ? { rest: lengthOf(restSize), current: lengthOf(barSize) } : null
       )
 
