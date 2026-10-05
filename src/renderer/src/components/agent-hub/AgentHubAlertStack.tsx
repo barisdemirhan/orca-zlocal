@@ -8,6 +8,7 @@ import { HubAvatar, HubCrumb } from './AgentHubAtoms'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
+import { useAnchorBinding } from './use-anchor-binding'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const ALERT_VISIBLE_MS = 7000
@@ -208,11 +209,7 @@ export function AgentHubAlertStack({
   })
 
   // The anchor can grow under the stack (the tray fanning out of its pile).
-  useEffect(() => {
-    const anchor = anchorRef.current
-    if (!anchor) {
-      return
-    }
+  useAnchorBinding(anchorRef, side, (anchor) => {
     const observer = new ResizeObserver(() => {
       if (stackRef.current) {
         placeBesideAnchor(stackRef.current, anchor, side)
@@ -220,7 +217,7 @@ export function AgentHubAlertStack({
     })
     observer.observe(anchor)
     return () => observer.disconnect()
-  }, [anchorRef, side])
+  })
 
   // Newest nearest the anchor: last when the stack grows upward, first when it hangs below.
   const ordered = side === 'bottom' ? alerts.toReversed() : alerts

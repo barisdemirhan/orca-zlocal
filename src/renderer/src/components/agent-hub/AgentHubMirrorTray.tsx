@@ -9,6 +9,7 @@ import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
 import { AGENT_HUB_TRAY_VISIBLE, foldAgentHubTray } from './agent-hub-mirror-tray'
 import type { AgentHubLocation } from './agent-hub-pane-target'
+import { useAnchorBinding } from './use-anchor-binding'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 export type AgentHubTrayItem = {
@@ -85,11 +86,7 @@ function TrayPlacement({
     }
   })
   // The hub moves (dragged to an edge, unfolding on hover) and the window resizes.
-  useEffect(() => {
-    const anchor = anchorRef.current
-    if (!anchor) {
-      return
-    }
+  useAnchorBinding(anchorRef, side, (anchor) => {
     const place = (): void => {
       if (trayRef.current) {
         placeTray(trayRef.current, anchor, side)
@@ -109,7 +106,7 @@ function TrayPlacement({
       moves.disconnect()
       window.removeEventListener('resize', place)
     }
-  }, [anchorRef, side, trayRef])
+  })
   return null
 }
 
@@ -165,21 +162,22 @@ export function AgentHubMirrorTray({
     pileTimerRef.current = setTimeout(() => setPointed(false), PILE_DELAY_MS)
   }
   // Pointing at the hub itself fans the pile too: the two read as one spot.
-  useEffect(() => {
-    const anchor = anchorRef.current
-    if (!anchor) {
-      return
-    }
+  useAnchorBinding(anchorRef, 'point', (anchor) => {
     anchor.addEventListener('pointerenter', point)
     anchor.addEventListener('pointerleave', unpoint)
     return () => {
       anchor.removeEventListener('pointerenter', point)
       anchor.removeEventListener('pointerleave', unpoint)
+    }
+  })
+  useEffect(
+    () => () => {
       if (pileTimerRef.current) {
         clearTimeout(pileTimerRef.current)
       }
-    }
-  }, [anchorRef])
+    },
+    []
+  )
   // News from a parked mirror (it asks or finishes) shows the whole pile for a moment.
   const news = items
     .filter((item) => item.kind === 'ask' || item.kind === 'done')
