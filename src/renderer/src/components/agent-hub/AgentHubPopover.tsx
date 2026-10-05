@@ -112,9 +112,11 @@ export function AgentHubPopoverContent({
         }
       }}
       onFocusOutside={(event) => {
-        // Why: a mirror popped out from a row may take focus; the hub stays open for the next one.
+        // Why: a mirror popped out from a row may take focus (the floating terminal's preview
+        // does); the hub stays open and keeps the keys, ready for the next one.
         if (inMirrorLayer(event.target)) {
           event.preventDefault()
+          body.rootRef.current?.focus()
         }
       }}
       onInteractOutside={(event) => {
