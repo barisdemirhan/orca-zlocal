@@ -28,6 +28,7 @@ export function useAgentHubTreeOrder(
   return useMemo(
     () => ({
       sortBy,
+      now,
       workspaceRank: rankAgentHubWorkspaces(tree, sortBy, sources, repoMap, now)
     }),
     [tree, sortBy, sources, repoMap, now]

@@ -36,6 +36,7 @@ import {
   type AgentHubGroupNode,
   type AgentHubTerminalRow
 } from './agent-hub-terminal-tree'
+import { useHeldAgentHubTree } from './use-held-agent-hub-tree'
 import { sortAgentHubTerminalTree, type AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
 import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
 
@@ -139,13 +140,17 @@ export function AgentHubPanel({
   const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
   const listsTerminals = tab === 'agents' || tab === 'all'
   // Why sort after filtering: a group stands where its best listed workspace does.
-  const filteredTree = useMemo(
+  const sortedTree = useMemo(
     () =>
       sortAgentHubTerminalTree(
         filterAgentHubTerminalTree(tab === 'agents' ? agentTree : tree, query),
         treeOrder
       ),
     [tab, agentTree, tree, query, treeOrder]
+  )
+  const filteredTree = useHeldAgentHubTree(
+    sortedTree,
+    `${tab}\u0000${treeOrder.sortBy}\u0000${query}`
   )
   const items = useMemo<HubItem[]>(() => {
     if (tab === 'inbox') {

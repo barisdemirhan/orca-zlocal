@@ -216,6 +216,7 @@ function fixture(agents: AgentFixture[] = AGENTS) {
   ): AgentHubGroupNode[] =>
     sortAgentHubTerminalTree(groups, {
       sortBy,
+      now: NOW,
       workspaceRank: rankAgentHubWorkspaces(tree, sortBy, sources(live), repoMap, NOW)
     })
   return { tree, sort }
@@ -354,6 +355,16 @@ describe('sortAgentHubTerminalTree', () => {
     ])
     // Workers stay under their dispatcher, the one that needs the user first.
     expect(workerTabIds(sorted)).toEqual(['z-worker-b', 'z-worker-a'])
+  })
+
+  it('Agent Activity stops ranking an old unread result above working agents', () => {
+    // A result from two days ago is still unread, but it is no longer news.
+    const { sort } = fixture([
+      { tabId: 'm-done', state: 'done', secondsAgo: 2 * 24 * 60 * 60 },
+      { tabId: 'm-work', state: 'working', secondsAgo: 30 }
+    ])
+
+    expect(rowTabIds(midRows(sort('smart'))).slice(0, 2)).toEqual(['m-work', 'm-done'])
   })
 
   it('Agent Activity ranks a workspace by the workers it lists from other workspaces', () => {

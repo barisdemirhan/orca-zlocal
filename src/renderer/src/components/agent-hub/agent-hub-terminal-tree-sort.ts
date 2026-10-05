@@ -1,6 +1,7 @@
 import type { AppState } from '@/store/types'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import type { Repo } from '../../../../shared/repo-types'
+import { AGENT_STATUS_STALE_AFTER_MS } from '../../../../shared/agent-status-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { buildWorktreeComparator, sortWorktreesSmart } from '../sidebar/smart-sort'
 import { agentHubIndicatorKind, agentHubStateSince } from './agent-hub-lists'
@@ -14,6 +15,8 @@ export type AgentHubTreeOrder = {
   sortBy: AgentHubTerminalSort
   /** Worktree id → its place in the sidebar's order for this sort; empty for Name and Project. */
   workspaceRank: ReadonlyMap<string, number>
+  /** When the order was taken: a result ranks as finished only while it is fresh. */
+  now: number
 }
 
 /** The worktrees of the workers nested under these rows, at any depth. */
@@ -80,9 +83,11 @@ export function rankAgentHubWorkspaces(
 
 /**
  * A row's class in the sidebar's Agent Activity order (needs you, finished, working, the rest),
- * read from the state the row itself shows. Idle agents and shells have no thread and come last.
+ * read from the state the row itself shows. Like the sidebar, a result ranks as finished only
+ * while it is fresh; an older unread one joins the rest instead of sitting above working agents
+ * for days. Idle agents and shells have no thread and come last.
  */
-function rowActivityClass(row: AgentHubTerminalRow): number {
+function rowActivityClass(row: AgentHubTerminalRow, now: number): number {
   if (!row.thread) {
     return row.idleAgent ? 5 : 6
   }
@@ -90,7 +95,7 @@ function rowActivityClass(row: AgentHubTerminalRow): number {
     case 'ask':
       return 1
     case 'done':
-      return 2
+      return now - agentHubStateSince(row.thread) <= AGENT_STATUS_STALE_AFTER_MS ? 2 : 4
     case 'work':
       return 3
     case 'read':
@@ -115,13 +120,13 @@ function rowLatestActivity(row: AgentHubTerminalRow): number {
 type RowComparator = (a: AgentHubTerminalRow, b: AgentHubTerminalRow) => number
 
 /** Null where rows keep their tab order (Project and Manual). */
-function rowComparator(sortBy: AgentHubTerminalSort): RowComparator | null {
+function rowComparator(sortBy: AgentHubTerminalSort, now: number): RowComparator | null {
   switch (sortBy) {
     case 'name':
       return compareRowTitle
     case 'smart':
       return (a, b) =>
-        rowActivityClass(a) - rowActivityClass(b) ||
+        rowActivityClass(a, now) - rowActivityClass(b, now) ||
         rowStateSince(b) - rowStateSince(a) ||
         compareRowTitle(a, b)
     case 'recent':
@@ -160,7 +165,7 @@ export function sortAgentHubTerminalTree(
   groups: readonly AgentHubGroupNode[],
   order: AgentHubTreeOrder
 ): AgentHubGroupNode[] {
-  const { sortBy, workspaceRank } = order
+  const { sortBy, workspaceRank, now } = order
   if (sortBy === 'repo') {
     return [...groups]
   }
@@ -185,7 +190,7 @@ export function sortAgentHubTerminalTree(
     sortBy === 'name'
       ? compareWorkspaceLabel
       : (a: AgentHubWorkspaceNode, b: AgentHubWorkspaceNode): number => rank(a) - rank(b)
-  const compareRows = rowComparator(sortBy)
+  const compareRows = rowComparator(sortBy, now)
   const sorted = groups.map((group) => ({
     ...group,
     workspaces: group.workspaces

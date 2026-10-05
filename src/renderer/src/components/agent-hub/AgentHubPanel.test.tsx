@@ -91,7 +91,7 @@ function fixture() {
   return { lists: buildAgentHubLists(threads), tree }
 }
 
-const PROJECT_ORDER: AgentHubTreeOrder = { sortBy: 'repo', workspaceRank: new Map() }
+const PROJECT_ORDER: AgentHubTreeOrder = { sortBy: 'repo', workspaceRank: new Map(), now: 0 }
 
 function renderPanel(treeOrder: AgentHubTreeOrder = PROJECT_ORDER) {
   const { lists, tree } = fixture()
@@ -200,7 +200,7 @@ describe('AgentHubPanel terminal sort', () => {
     container.querySelector('button[data-agent-hub-sort]')
 
   it('shows the order in use on the sort button, on both terminal tabs', () => {
-    const { panel } = renderPanel({ sortBy: 'smart', workspaceRank: new Map() })
+    const { panel } = renderPanel({ sortBy: 'smart', workspaceRank: new Map(), now: 5_000 })
 
     expect(sortButton()).toBeNull()
     press(panel.current, 'Tab', { shiftKey: true })
@@ -214,7 +214,11 @@ describe('AgentHubPanel terminal sort', () => {
 
   it('lists and selects rows in the chosen order', () => {
     // Agent Activity: the unread results (newest first), then the working agent.
-    const { handlers, panel } = renderPanel({ sortBy: 'smart', workspaceRank: new Map() })
+    const { handlers, panel } = renderPanel({
+      sortBy: 'smart',
+      workspaceRank: new Map(),
+      now: 5_000
+    })
     press(panel.current, 'Tab', { shiftKey: true })
     const smartOrder = rowTitles()
 
