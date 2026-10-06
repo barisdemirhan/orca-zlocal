@@ -4,6 +4,7 @@ import { agentHubActiveTarget } from './agent-hub-active-target'
 import { registerAgentHubCommands, type AgentHubCommands } from './agent-hub-commands'
 import { useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import {
+  closeAgentHubMirror,
   openAgentHubMirror,
   readAgentHubMirrors,
   toggleAgentHubMirrorFocus
@@ -38,6 +39,7 @@ export function useAgentHubMirrorCommands(
           ? () => {
               const front = readAgentHubMirrors().windows.at(-1)
               if (front) {
+                closeAgentHubMirror(agentHubPaneTargetKey(front))
                 jump(front)
               }
             }

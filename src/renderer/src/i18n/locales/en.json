@@ -21917,7 +21917,8 @@
       "dictate": "Dictate",
       "mode": "Microphone action",
       "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available.",
-      "startImproveHint": "Dictate and improve in this terminal. Shift-click to dictate."
+      "startImproveHint": "Dictate and improve in this terminal. Shift-click to dictate.",
+      "improve": "Dictate and improve"
     },
     "shortcut": {
       "doubleTapHint": "You can also record a double tap of a modifier key.",
@@ -21925,6 +21926,24 @@
       "conflict": "{{binding}} conflicts with {{owners}}.",
       "parseError": "Unable to parse shortcut.",
       "saveError": "Failed to save shortcut."
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "toggle": "Open or close the hub",
+      "nextWaiting": "Jump to the next waiting agent",
+      "dockMirrors": "Park or restore mirrors",
+      "popOut": "Pop out the active agent",
+      "jumpToMirror": "Jump to the active mirror’s workspace",
+      "arrangeMirrors": "Arrange mirrors",
+      "toggleCanvas": "Open or leave the canvas",
+      "focusMirror": "Focus or unfocus the active canvas mirror",
+      "hub": "Hub",
+      "mirrors": "Mirrors",
+      "canvas": "Canvas",
+      "dictation": "Dictation",
+      "notSet": "Not set",
+      "setAction": "Set shortcut for {{action}}",
+      "set": "Set shortcut"
     }
   },
   "workspace": {

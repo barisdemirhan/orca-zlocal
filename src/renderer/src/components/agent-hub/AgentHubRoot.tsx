@@ -5,6 +5,7 @@ import { useAppStore } from '@/store'
 import { useNow } from '@/hooks/use-now'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { Popover, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover'
+import { AgentHubShortcutsDialog } from './AgentHubShortcutsDialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
@@ -292,6 +293,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
 
   return (
     <>
+      <AgentHubShortcutsDialog />
       <Popover open={open && !inSettings} onOpenChange={setPopoverOpen}>
         {docked ? (
           dockHidden ? null : (

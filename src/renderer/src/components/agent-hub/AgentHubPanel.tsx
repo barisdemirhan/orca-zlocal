@@ -1,4 +1,5 @@
 import { registerAgentHubSelectedTarget } from './agent-hub-active-target'
+import { AgentHubShortcutsButton } from './AgentHubShortcutsDialog'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { useNow } from '@/hooks/use-now'
@@ -167,7 +168,8 @@ export function AgentHubPanel({
   const activeIndex = Math.min(selectedIndex, items.length - 1)
   const selectedKey = items[activeIndex]?.key ?? null
   const popoutTarget =
-    items[activeIndex]?.target ?? (cardThread ? threadItem(cardThread).target : null)
+    items[activeIndex]?.target ??
+    (tab === 'inbox' && cardThread ? threadItem(cardThread).target : null)
   useEffect(() => registerAgentHubSelectedTarget(popoutTarget), [popoutTarget])
 
   useEffect(() => {
@@ -290,6 +292,7 @@ export function AgentHubPanel({
             </button>
           ))}
         </div>
+        <AgentHubShortcutsButton />
         <button
           type="button"
           tabIndex={-1}

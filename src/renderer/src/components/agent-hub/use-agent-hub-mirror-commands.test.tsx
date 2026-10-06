@@ -3,7 +3,11 @@ import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { getAgentHubCommands } from './agent-hub-commands'
 import { useAgentHubMirrorCommands } from './use-agent-hub-mirror-commands'
-import { openAgentHubMirror, resetAgentHubMirrorsForTest } from './agent-hub-mirror-store'
+import {
+  openAgentHubMirror,
+  readAgentHubMirrors,
+  resetAgentHubMirrorsForTest
+} from './agent-hub-mirror-store'
 import { openAgentHubCanvas, resetAgentHubCanvasForTest } from './agent-hub-canvas-store'
 import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { makeWorktree, makeTabWithIds } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -42,8 +46,9 @@ it('focuses/unfocuses the front canvas mirror and falls through outside the canv
     toggleCanvas: vi.fn(),
     arrangeMirrors: vi.fn()
   }
+  const jump = vi.fn()
   function Hub() {
-    useAgentHubMirrorCommands(commands, vi.fn())
+    useAgentHubMirrorCommands(commands, jump)
     return null
   }
   render(<Hub />)
@@ -53,4 +58,7 @@ it('focuses/unfocuses the front canvas mirror and falls through outside the canv
   expect(readAgentHubMirrorFocus()).toBe('tab-1:leaf')
   act(() => getAgentHubCommands()?.focusMirror?.())
   expect(readAgentHubMirrorFocus()).toBeNull()
+  act(() => getAgentHubCommands()?.jumpToMirror?.())
+  expect(jump).toHaveBeenCalledWith(target)
+  expect(readAgentHubMirrors().windows).toHaveLength(0)
 })

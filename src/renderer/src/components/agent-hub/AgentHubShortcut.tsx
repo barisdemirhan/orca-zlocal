@@ -24,8 +24,8 @@ export function AgentHubShortcut({
   }
   const combos = (
     <span className="inline-flex flex-wrap items-center gap-1">
-      {details.map((detail, index) => (
-        <ShortcutKeyCombo key={index} {...detail} />
+      {details.map((detail) => (
+        <ShortcutKeyCombo key={`${detail.doubleTap}:${detail.keys.join('+')}`} {...detail} />
       ))}
     </span>
   )

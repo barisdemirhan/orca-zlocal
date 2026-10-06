@@ -1,5 +1,7 @@
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { Bell, BellOff, Ellipsis, PanelBottom, Settings } from 'lucide-react'
+import { Bell, BellOff, Ellipsis, Keyboard, PanelBottom, Settings } from 'lucide-react'
+import { agentHubShortcutsLabel } from './AgentHubShortcutsDialog'
+import { openAgentHubShortcuts } from './agent-hub-shortcuts-dialog'
 import { useAppStore } from '@/store'
 import {
   DropdownMenu,
@@ -134,6 +136,10 @@ export function AgentHubDockMenu({
           {translate('agentHub.dock.useStatusBar', 'Show in the status bar instead')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={openAgentHubShortcuts}>
+          <Keyboard />
+          {agentHubShortcutsLabel()}
+        </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() => {
             openSettingsTarget({
