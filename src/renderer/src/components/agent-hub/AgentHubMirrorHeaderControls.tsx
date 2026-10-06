@@ -1,6 +1,6 @@
 import { Minus, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
-import { AgentHubActionTooltip, AgentHubShortcut } from './AgentHubShortcut'
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
 import { AgentHubMirrorFocusButton } from './AgentHubMirrorFocusButton'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
@@ -38,10 +38,9 @@ export function AgentHubMirrorHeaderControls({
         <button
           type="button"
           onClick={onReveal}
-          className="flex h-6 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          className="h-6 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
         >
           {translate('agentHub.mirror.jump', 'Jump')}
-          <AgentHubShortcut actionId="agentHub.jumpToMirror" />
         </button>
       </AgentHubActionTooltip>
       <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">

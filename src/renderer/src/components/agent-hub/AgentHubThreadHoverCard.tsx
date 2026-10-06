@@ -1,4 +1,4 @@
-import { AgentHubShortcut } from './AgentHubShortcut'
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { useNow } from '@/hooks/use-now'
@@ -128,15 +128,19 @@ function ThreadDetails({
       {actions?.onJump || actions?.onPopout ? (
         <div className="flex justify-end gap-1">
           {actions.onPopout ? (
-            <button
-              type="button"
-              onClick={actions.onPopout}
-              className="flex h-6 items-center gap-1.5 rounded-md px-2 text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+            <AgentHubActionTooltip
+              label={translate('agentHub.hover.popout', 'Own window')}
+              actionId="agentHub.popOut"
             >
-              <PictureInPicture2 aria-hidden className="size-3.5" />
-              {translate('agentHub.hover.popout', 'Own window')}
-              <AgentHubShortcut actionId="agentHub.popOut" />
-            </button>
+              <button
+                type="button"
+                onClick={actions.onPopout}
+                className="flex h-6 items-center gap-1.5 rounded-md px-2 text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+              >
+                <PictureInPicture2 aria-hidden className="size-3.5" />
+                {translate('agentHub.hover.popout', 'Own window')}
+              </button>
+            </AgentHubActionTooltip>
           ) : null}
           {actions.onJump ? (
             <button
