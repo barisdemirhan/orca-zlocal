@@ -131,7 +131,12 @@ export function AgentHubMirrorWindow({
       return
     }
     minimizing.current = true
-    flyMirrorWindowToHub(sectionRef.current, hubRef.current, onMinimize, delayMs)
+    flyMirrorWindowToHub(
+      sectionRef.current,
+      hubRef.current,
+      onMinimize,
+      Number.isFinite(delayMs) ? Math.max(0, delayMs) : 0
+    )
   }
   // Picked again from the hub while open: glow so the eye finds it.
   const highlight = useAgentHubMirrorHighlight()
@@ -142,6 +147,7 @@ export function AgentHubMirrorWindow({
     }
     seenHighlight.current = highlight.seq
     if (highlight.key === mirrorKey && sectionRef.current) {
+      minimizing.current = false
       pulseMirrorWindow(sectionRef.current)
     }
   }, [highlight, mirrorKey, sectionRef])
@@ -270,7 +276,7 @@ export function AgentHubMirrorWindow({
           mirrorKey={mirrorKey}
           focused={focus === 'focused'}
           onReveal={onReveal}
-          onMinimize={minimize}
+          onMinimize={() => minimize()}
           onClose={() => leave(onClose)}
         />
       </header>

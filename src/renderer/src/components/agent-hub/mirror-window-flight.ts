@@ -11,6 +11,13 @@ export function flyMirrorWindowToHub(
   land: () => void,
   delayMs = 0
 ): void {
+  let landed = false
+  const landOnce = (): void => {
+    if (!landed) {
+      landed = true
+      land()
+    }
+  }
   const from = element.getBoundingClientRect()
   const to = hub?.getBoundingClientRect()
   const keyframes: Keyframe[] = to
@@ -24,13 +31,17 @@ export function flyMirrorWindowToHub(
         }
       ]
     : [{ opacity: 1 }, { opacity: 0 }]
-  const flight = element.animate(keyframes, {
-    duration: to ? FLIGHT_MS : FADE_MS,
-    delay: delayMs,
-    easing: 'cubic-bezier(0.4, 0, 0.6, 1)',
-    // Why forwards: the window must not flash back at full size before React removes it.
-    fill: 'forwards'
-  })
-  flight.onfinish = land
-  flight.oncancel = land
+  try {
+    const flight = element.animate(keyframes, {
+      duration: to ? FLIGHT_MS : FADE_MS,
+      delay: Number.isFinite(delayMs) ? Math.max(0, delayMs) : 0,
+      easing: 'cubic-bezier(0.4, 0, 0.6, 1)',
+      // Why forwards: the window must not flash back at full size before React removes it.
+      fill: 'forwards'
+    })
+    flight.onfinish = landOnce
+    flight.oncancel = landOnce
+  } catch {
+    landOnce()
+  }
 }
