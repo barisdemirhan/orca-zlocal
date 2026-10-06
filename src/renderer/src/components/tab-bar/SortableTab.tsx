@@ -28,6 +28,8 @@ import { useTabStripSlotProps } from './use-tab-strip-slot-props'
 import { useTabStripPointerActivation } from './tab-strip-pointer-activation'
 import { TerminalTabLeadingIcon } from './TerminalTabLeadingIcon'
 import { AgentHubTabAutoPopoutToggle } from '../agent-hub/AgentHubTabAutoPopoutToggle'
+import { AgentHubFloatingTabPopout } from '../agent-hub/AgentHubFloatingTabPopout'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import {
   isTerminalTabActivityLive,
   terminalTabHasUnreadActivity
@@ -320,6 +322,9 @@ export default function SortableTab({
           isActive={isActive}
         />
       )}
+      {!isEditing && canSplitTerminal && tab.worktreeId === FLOATING_TERMINAL_WORKTREE_ID && (
+        <AgentHubFloatingTabPopout tabId={tab.id} />
+      )}
       {!isEditing && !isPinned && (
         <button
           className={`relative z-10 flex items-center justify-center w-4 h-4 rounded-sm shrink-0 ${
@@ -366,6 +371,12 @@ export default function SortableTab({
           // The hover card is portalled: React still routes its events through this slot.
           if (event.target instanceof Node && event.currentTarget.contains(event.target)) {
             event.preventDefault()
+            if (
+              event.target instanceof Element &&
+              event.target.closest('[data-agent-hub-floating-popout]')
+            ) {
+              return
+            }
             window.dispatchEvent(new Event(CLOSE_ALL_CONTEXT_MENUS_EVENT))
             setMenuPoint({ x: event.clientX, y: event.clientY })
             setMenuOpen(true)
