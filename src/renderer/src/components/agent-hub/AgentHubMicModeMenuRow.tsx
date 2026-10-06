@@ -21,7 +21,7 @@ export function AgentHubMicModeMenuRow({
   return (
     <div className="flex items-center gap-1">
       <ContextMenuItem
-        className="flex-1"
+        className="flex-1 whitespace-nowrap"
         role="menuitemcheckbox"
         aria-checked={improve}
         onSelect={(event) => {

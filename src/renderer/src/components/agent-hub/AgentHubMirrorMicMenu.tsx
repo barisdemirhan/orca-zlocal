@@ -94,7 +94,10 @@ export function AgentHubMirrorMicMenu({
       <ContextMenuTrigger asChild>
         <span className="contents">{children}</span>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-80 max-w-[calc(100vw-2rem)]" data-agent-hub-mirror-mic-menu>
+      <ContextMenuContent
+        className="w-max min-w-80 max-w-[calc(100vw-2rem)]"
+        data-agent-hub-mirror-mic-menu
+      >
         {canImprove ? (
           <>
             <AgentHubMicModeMenuRow isOpeningClick={openingClick.isOpeningClick} />

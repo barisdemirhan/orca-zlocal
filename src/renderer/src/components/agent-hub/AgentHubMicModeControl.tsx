@@ -1,68 +1,36 @@
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import {
-  normalizeAgentHubMicMode,
-  type AgentHubMicMode
-} from '../../../../shared/agent-hub-settings'
-import { SettingsSegmentedControl, SettingsRow } from '../settings/SettingsFormControls'
-import { AgentHubShortcut } from './AgentHubShortcut'
+import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
+import { SettingsSwitchRow } from '../settings/SettingsFormControls'
 import { readAgentHubDictationCapabilities } from './agent-hub-dictation-capabilities'
 
-export function AgentHubMicModeControl({ canImprove }: { canImprove: boolean }): React.JSX.Element {
-  const mode = useAppStore((s) => normalizeAgentHubMicMode(s.settings?.agentHubMicMode))
-  const updateSettings = useAppStore((s) => s.updateSettings)
-  const plain = translate('agentHub.mic.dictate', 'Dictate')
-  const improve = translate('agentHub.mic.dictateAndImprove', 'Dictate and improve')
-  if (!canImprove) {
-    return <span className="text-xs text-muted-foreground">{plain}</span>
-  }
-  const choose = (value: AgentHubMicMode): void => {
-    if (value !== 'improve' || readAgentHubDictationCapabilities().improve) {
-      void updateSettings({ agentHubMicMode: value })
-    }
-  }
-  return (
-    <SettingsSegmentedControl<AgentHubMicMode>
-      value={mode}
-      equalWidth
-      size="sm"
-      ariaLabel={translate('agentHub.mic.mode', 'Microphone action')}
-      onChange={choose}
-      options={[
-        {
-          value: 'dictate',
-          label: plain,
-          tooltip: (
-            <span className="flex items-center gap-2">
-              {plain}
-              <AgentHubShortcut actionId="voice.dictation" />
-            </span>
-          )
-        },
-        {
-          value: 'improve',
-          label: improve,
-          tooltip: (
-            <span className="flex items-center gap-2">
-              {improve}
-              <AgentHubShortcut actionId="voice.dictationImprove" />
-            </span>
-          )
-        }
-      ]}
-    />
-  )
-}
-
 export function AgentHubMicModeSetting(): React.JSX.Element {
+  const improve = useAppStore(
+    (s) => normalizeAgentHubMicMode(s.settings?.agentHubMicMode) === 'improve'
+  )
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  const canImprove = readAgentHubDictationCapabilities().improve
   return (
-    <SettingsRow
-      label={translate('agentHub.mic.mode', 'Microphone action')}
-      description={translate(
-        'agentHub.mic.modeCopy',
-        'Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available.'
-      )}
-      control={<AgentHubMicModeControl canImprove={readAgentHubDictationCapabilities().improve} />}
+    <SettingsSwitchRow
+      label={translate('agentHub.mic.improveWithAgent', 'Improve with an agent')}
+      description={
+        canImprove
+          ? translate(
+              'agentHub.mic.modeSwitchCopy',
+              'Click starts this mode; Shift-click starts the other.'
+            )
+          : translate(
+              'agentHub.mic.improveRequired',
+              'Requires the Improve transcriptions feature.'
+            )
+      }
+      checked={canImprove && improve}
+      disabled={!canImprove}
+      onChange={() => {
+        if (readAgentHubDictationCapabilities().improve) {
+          void updateSettings({ agentHubMicMode: improve ? 'dictate' : 'improve' })
+        }
+      }}
     />
   )
 }

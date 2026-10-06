@@ -72,7 +72,7 @@ export function AgentHubArrangeMenu({
       <ContextMenuTrigger asChild>
         <span className="contents">{children}</span>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-max min-w-80 max-w-[calc(100vw-2rem)]">
+      <ContextMenuContent className="w-max min-w-80 max-w-[calc(100vw-2rem)]" collisionPadding={8}>
         <ContextMenuLabel className="whitespace-nowrap">
           {translate('agentHub.arrange.title', 'Arrange floating windows')}
         </ContextMenuLabel>
