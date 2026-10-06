@@ -21918,7 +21918,9 @@
       "mode": "Microphone action",
       "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available.",
       "startImproveHint": "Dictate and improve in this terminal. Shift-click to dictate.",
-      "improve": "Dictate and improve"
+      "improve": "Dictate and improve",
+      "improveWithAgent": "Improve with an agent",
+      "improveSettings": "Improve transcription settings"
     },
     "shortcut": {
       "doubleTapHint": "You can also record a double tap of a modifier key.",

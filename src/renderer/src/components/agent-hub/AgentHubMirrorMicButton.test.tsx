@@ -5,6 +5,7 @@ import type { AgentHubMirrorMicState } from './agent-hub-mirror-mic-state'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
+import { openAgentHubVoiceSettings } from './agent-hub-voice-settings'
 import {
   makeRepo,
   makeTabWithIds,
@@ -65,6 +66,8 @@ function setMode(mode: 'dictate' | 'improve'): void {
 
 beforeEach(() => {
   setMode('dictate')
+  useAppStore.setState({ keybindings: {} })
+  vi.clearAllMocks()
   control.state = 'idle'
   improve = false
   actions.length = 0
@@ -110,7 +113,7 @@ describe('mirror mic improvement capability', () => {
     expect(mic().getAttribute('aria-label')).toBe('Dictate into this terminal')
     fireEvent.contextMenu(mic())
     await screen.findByRole('menu')
-    expect(screen.queryByText('Dictate and improve')).toBeNull()
+    expect(screen.queryByRole('menuitemcheckbox', { name: 'Improve with an agent' })).toBeNull()
   })
   it('uses the object form for Shift-click only when supported; plain click stays plain', () => {
     improve = true
@@ -125,13 +128,16 @@ describe('mirror mic improvement capability', () => {
     mount()
     expect(mic().querySelector('.lucide-mic')).not.toBeNull()
     fireEvent.contextMenu(mic())
-    const segment = await screen.findByRole('group', { name: 'Microphone action' })
-    const plain = screen.getByRole('menuitemradio', { name: 'Dictate' })
-    const better = screen.getByRole('menuitemradio', { name: 'Dictate and improve' })
-    expect(segment.contains(plain) && segment.contains(better)).toBe(true)
+    const better = await screen.findByRole('menuitemcheckbox', { name: 'Improve with an agent' })
+    expect(better.getAttribute('aria-checked')).toBe('false')
     fireEvent.click(better)
     await waitFor(() => expect(useAppStore.getState().settings?.agentHubMicMode).toBe('improve'))
     expect(actions).toEqual([])
+    expect(screen.getByRole('menu')).toBeTruthy()
+    expect(better.getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(better)
+    expect(useAppStore.getState().settings?.agentHubMicMode).toBe('dictate')
+    fireEvent.click(better)
     expect(mic().querySelector('.lucide-mic-vocal')).not.toBeNull()
     fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
     fireEvent.click(mic())
@@ -153,9 +159,32 @@ describe('mirror mic improvement capability', () => {
     control.state = 'listening'
     mount()
     fireEvent.contextMenu(mic())
-    fireEvent.click(await screen.findByRole('menuitemradio', { name: 'Dictate and improve' }))
+    fireEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Improve with an agent' }))
     expect(actions).toEqual([])
     expect(mic().getAttribute('data-agent-hub-mirror-mic')).toBe('listening')
+  })
+  it('shows only the bound shortcut for the selected default at the row edge', async () => {
+    improve = true
+    useAppStore.setState({
+      keybindings: { 'voice.dictation': ['Mod+F7'] }
+    })
+    mount()
+    fireEvent.contextMenu(mic())
+    const row = (await screen.findByRole('menuitemcheckbox', { name: 'Improve with an agent' }))
+      .parentElement!
+    expect(row.textContent).toContain('F7')
+    fireEvent.click(screen.getByRole('menuitemcheckbox', { name: 'Improve with an agent' }))
+    expect(row.textContent).not.toContain('F7')
+    await waitFor(() => expect(row.querySelector('[data-slot="context-menu-shortcut"]')).toBeNull())
+  })
+  it('opens Voice settings from the gear without starting dictation', async () => {
+    improve = true
+    mount()
+    fireEvent.contextMenu(mic())
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Improve transcription settings' }))
+    expect(openAgentHubVoiceSettings).toHaveBeenCalledOnce()
+    expect(actions).toEqual([])
+    expect(useAppStore.getState().settings?.agentHubMicMode).toBe('dictate')
   })
   it('rechecks the capability before dispatch and falls back to the legacy form', () => {
     improve = true

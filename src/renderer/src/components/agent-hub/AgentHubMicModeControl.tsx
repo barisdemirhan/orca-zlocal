@@ -5,19 +5,10 @@ import {
   type AgentHubMicMode
 } from '../../../../shared/agent-hub-settings'
 import { SettingsSegmentedControl, SettingsRow } from '../settings/SettingsFormControls'
-import { Button } from '../ui/button'
-import { ButtonGroup } from '../ui/button-group'
-import { ContextMenuItem } from '../ui/context-menu'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { readAgentHubDictationCapabilities } from './agent-hub-dictation-capabilities'
 
-export function AgentHubMicModeControl({
-  canImprove,
-  menu = false
-}: {
-  canImprove: boolean
-  menu?: boolean
-}): React.JSX.Element {
+export function AgentHubMicModeControl({ canImprove }: { canImprove: boolean }): React.JSX.Element {
   const mode = useAppStore((s) => normalizeAgentHubMicMode(s.settings?.agentHubMicMode))
   const updateSettings = useAppStore((s) => s.updateSettings)
   const plain = translate('agentHub.mic.dictate', 'Dictate')
@@ -29,42 +20,6 @@ export function AgentHubMicModeControl({
     if (value !== 'improve' || readAgentHubDictationCapabilities().improve) {
       void updateSettings({ agentHubMicMode: value })
     }
-  }
-  if (menu) {
-    return (
-      <ButtonGroup
-        className="w-full"
-        aria-label={translate('agentHub.mic.mode', 'Microphone action')}
-      >
-        {(['dictate', 'improve'] as const).map((value) => (
-          <ContextMenuItem
-            key={value}
-            asChild
-            role="menuitemradio"
-            aria-label={value === 'dictate' ? plain : improve}
-            aria-checked={mode === value}
-            onSelect={(event) => {
-              event.preventDefault()
-              choose(value)
-            }}
-          >
-            <Button
-              variant={mode === value ? 'secondary' : 'ghost'}
-              size="xs"
-              className="h-auto min-w-0 flex-1"
-            >
-              <span className="flex min-w-0 flex-col items-center gap-1">
-                <span className="whitespace-normal">{value === 'dictate' ? plain : improve}</span>
-                <AgentHubShortcut
-                  actionId={value === 'dictate' ? 'voice.dictation' : 'voice.dictationImprove'}
-                  slot="context"
-                />
-              </span>
-            </Button>
-          </ContextMenuItem>
-        ))}
-      </ButtonGroup>
-    )
   }
   return (
     <SettingsSegmentedControl<AgentHubMicMode>

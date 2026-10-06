@@ -1,4 +1,4 @@
-import { AgentHubMicModeControl } from './AgentHubMicModeControl'
+import { AgentHubMicModeMenuRow } from './AgentHubMicModeMenuRow'
 import { useEffect, useState } from 'react'
 import { Mic, Settings } from 'lucide-react'
 import {
@@ -97,9 +97,7 @@ export function AgentHubMirrorMicMenu({
       <ContextMenuContent className="w-80 max-w-[calc(100vw-2rem)]" data-agent-hub-mirror-mic-menu>
         {canImprove ? (
           <>
-            <div className="px-2 py-1.5">
-              <AgentHubMicModeControl canImprove menu />
-            </div>
+            <AgentHubMicModeMenuRow isOpeningClick={openingClick.isOpeningClick} />
             <ContextMenuSeparator />
           </>
         ) : null}
