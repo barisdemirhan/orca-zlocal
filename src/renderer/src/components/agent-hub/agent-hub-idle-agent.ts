@@ -4,7 +4,7 @@ import { resolveRuntimePaneTitleForLeaf } from '@/lib/runtime-pane-title-leaf-id
 import { detectAgentStatusFromTitle, titleShowsNoAgent } from '../../../../shared/agent-detection'
 import { collectAgentTitleEvidence } from '../../../../shared/agent-title-evidence'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
-import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { TerminalAgent } from '../../../../shared/terminal-agent'
 
 /** The store fields that can name a tab's agent when no hook status does. */
 export type AgentHubIdleAgentSignals = Pick<
@@ -26,7 +26,7 @@ export type AgentHubIdleAgentSignals = Pick<
 export function resolveAgentHubIdleAgent(
   tab: TerminalTab,
   signals: AgentHubIdleAgentSignals
-): TuiAgent | null {
+): TerminalAgent | null {
   const layout = signals.terminalLayoutsByTabId[tab.id]
   const liveTitle = layout?.activeLeafId
     ? resolveRuntimePaneTitleForLeaf(

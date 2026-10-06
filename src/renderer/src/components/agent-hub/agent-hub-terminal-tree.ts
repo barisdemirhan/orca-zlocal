@@ -3,7 +3,7 @@ import { folderWorkspaceToWorktree } from '../../../../shared/folder-workspace-w
 import type { ProjectGroup } from '../../../../shared/project-group-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
-import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { TerminalAgent } from '../../../../shared/terminal-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
@@ -20,7 +20,7 @@ export type AgentHubTerminalRow = {
   title: string
   thread: AgentPaneThread | null
   /** A thread-less tab's agent, sitting idle (see agent-hub-idle-agent); null for a real shell. */
-  idleAgent: TuiAgent | null
+  idleAgent: TerminalAgent | null
   /** Worker panes this agent dispatched, listed under it instead of in their own workspace. */
   children: AgentHubTerminalRow[]
 }
@@ -55,7 +55,7 @@ export type AgentHubTerminalTreeInput = {
   /** False lists agent panes only. */
   includeShells: boolean
   /** Names the agent idling in a tab that has no thread. */
-  idleAgentOf?: (tab: TerminalTab) => TuiAgent | null
+  idleAgentOf?: (tab: TerminalTab) => TerminalAgent | null
   ungroupedLabel: string
   /** Project name for worktrees whose repo is not in the catalog (the sidebar's "Unknown"). */
   unknownProjectLabel: string
