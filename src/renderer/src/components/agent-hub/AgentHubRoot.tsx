@@ -47,6 +47,7 @@ import {
 } from './agent-hub-pane-target'
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubCanvas } from './use-agent-hub-canvas'
+import { useAgentHubHostLabels } from './use-agent-hub-host-labels'
 import { useAgentHubCanvasWelcome } from './use-agent-hub-canvas-welcome'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubSessionRestore } from './use-agent-hub-session-restore'
@@ -85,8 +86,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const updateSettings = useAppStore((s) => s.updateSettings)
   const inSettings = useAppStore((s) => s.activeView === 'settings')
   const groupNameById = useGroupNameById()
+  const hostLabels = useAgentHubHostLabels()
   const locationOf = (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>): AgentHubLocation =>
-    agentHubLocation(target, groupNameById)
+    agentHubLocation(target, groupNameById, hostLabels)
   const [open, setOpen] = useState(false)
   const [request, setRequest] = useState<AgentHubPopoverRequest>({
     tab: 'inbox',

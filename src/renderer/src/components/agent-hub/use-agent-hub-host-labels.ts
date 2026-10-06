@@ -1,0 +1,48 @@
+import { useMemo } from 'react'
+import { useAppStore } from '@/store'
+import { getMixedWorktreeHostContextLabels } from '@/components/sidebar/worktree-list/grouping/host-labels'
+import { buildSidebarHostOptions } from '@/components/sidebar/sidebar-host-options'
+import { getSettingsFocusedExecutionHostId } from '../../../../shared/execution-host'
+import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'
+
+/**
+ * "Local Mac" / SSH host / server labels keyed by worktree host identity, only when the workspaces
+ * span more than one host — the sidebar's own rule, fed by the same host options, so a single-host
+ * install shows nothing.
+ */
+export function useAgentHubHostLabels(): ReadonlyMap<string, string> | undefined {
+  const repos = useAppStore((s) => s.repos)
+  const worktreesByRepo = useAppStore((s) => s.worktreesByRepo)
+  const settings = useAppStore((s) => s.settings)
+  const sshTargetLabels = useAppStore((s) => s.sshTargetLabels)
+  const sshConnectionStates = useAppStore((s) => s.sshConnectionStates)
+  const runtimeEnvironments = useAppStore((s) => s.runtimeEnvironments)
+  const runtimeStatusByEnvironmentId = useAppStore((s) => s.runtimeStatusByEnvironmentId)
+  return useMemo(() => {
+    const hostLabelById = new Map(
+      buildSidebarHostOptions({
+        repos,
+        sshTargetLabels,
+        sshConnectionStates,
+        settings,
+        runtimeEnvironments,
+        runtimeStatusByEnvironmentId,
+        hostLabelOverrides: getHostDisplayLabelOverrides(settings)
+      }).map((host) => [host.id, host.label])
+    )
+    return getMixedWorktreeHostContextLabels(
+      Object.values(worktreesByRepo).flat(),
+      new Map(repos.map((repo) => [repo.id, repo])),
+      hostLabelById,
+      getSettingsFocusedExecutionHostId(settings)
+    )
+  }, [
+    repos,
+    worktreesByRepo,
+    settings,
+    sshTargetLabels,
+    sshConnectionStates,
+    runtimeEnvironments,
+    runtimeStatusByEnvironmentId
+  ])
+}

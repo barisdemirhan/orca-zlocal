@@ -6,7 +6,12 @@ import {
   LEAF_ID_2,
   PANE_KEY
 } from '../activity/ActivityPrototypePage-test-fixtures'
-import { agentHubLocationLabel, resolveAgentHubPtyId } from './agent-hub-pane-target'
+import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
+import {
+  agentHubLocation,
+  agentHubLocationLabel,
+  resolveAgentHubPtyId
+} from './agent-hub-pane-target'
 
 describe('resolveAgentHubPtyId', () => {
   const layout = {
@@ -51,5 +56,16 @@ describe('agentHubLocationLabel', () => {
   it('uses the workspace name alone for floating and folder panes', () => {
     const worktree = makeWorktreeWithId('global-floating-terminal', 'floating', 'Floating terminal')
     expect(agentHubLocationLabel({ worktree, repo: null }, new Map())).toBe('Floating terminal')
+  })
+})
+
+describe('agentHubLocation host', () => {
+  const repo = { ...makeRepo(), displayName: 'acme' }
+  const worktree = makeWorktreeWithId('wt-1', repo.id, 'main')
+
+  it('names the machine only when the workspaces span more than one host', () => {
+    const labels = new Map([[getWorktreeHostIdentity(worktree), 'Local Mac']])
+    expect(agentHubLocation({ worktree, repo }, new Map(), labels).host).toBe('Local Mac')
+    expect(agentHubLocation({ worktree, repo }, new Map(), undefined).host).toBeNull()
   })
 })

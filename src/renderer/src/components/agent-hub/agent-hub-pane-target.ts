@@ -6,6 +6,7 @@ import type { AgentType } from '../../../../shared/agent-status-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
 import { readDashboardClientHost } from '../dashboard/dashboard-client-host'
 import { resolveDashboardCardTerminalInput } from '../dashboard/dashboard-card-terminal-input'
@@ -108,20 +109,33 @@ export function resolveAgentHubTerminalInput(
   })
 }
 
-export type AgentHubLocation = { group: string | null; project: string; workspace: string | null }
+export type AgentHubLocation = {
+  group: string | null
+  project: string
+  workspace: string | null
+  /** The machine's name, only when workspaces span more than one host. */
+  host?: string | null
+}
 
 /** Group › project · workspace; folder and floating panes have only the workspace name. */
 export function agentHubLocation(
   target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>,
-  groupNameById: ReadonlyMap<string, string>
+  groupNameById: ReadonlyMap<string, string>,
+  hostLabelByIdentity?: ReadonlyMap<string, string>
 ): AgentHubLocation {
   const workspace = getActivityThreadWorkspaceTitle(target.worktree)
+  const host = hostLabelByIdentity?.get(getWorktreeHostIdentity(target.worktree)) ?? null
   if (!target.repo) {
-    return { group: null, project: workspace, workspace: null }
+    return { group: null, project: workspace, workspace: null, host }
   }
   const project = target.repo.displayName
   const group = target.repo.projectGroupId ? groupNameById.get(target.repo.projectGroupId) : null
-  return { group: group ?? null, project, workspace: workspace === project ? null : workspace }
+  return {
+    group: group ?? null,
+    project,
+    workspace: workspace === project ? null : workspace,
+    host
+  }
 }
 
 export function agentHubLocationLabel(

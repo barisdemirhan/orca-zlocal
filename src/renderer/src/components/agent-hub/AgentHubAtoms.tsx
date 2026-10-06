@@ -4,6 +4,7 @@ import { AgentIcon } from '@/lib/agent-catalog'
 import { agentTypeToIconAgent } from '@/lib/agent-status'
 import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
+import { WorktreeHostContextBadge } from '@/components/sidebar/WorktreeHostContextBadge'
 import type { AgentType } from '../../../../shared/agent-status-types'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import type { AgentHubCounts, AgentHubIndicatorKind } from './agent-hub-lists'
@@ -171,6 +172,9 @@ export function HubCrumb({ location }: { location: AgentHubLocation }): React.JS
           <span className="mx-1 text-muted-foreground/60">·</span>
           {location.workspace}
         </>
+      ) : null}
+      {location.host ? (
+        <WorktreeHostContextBadge label={location.host} className="ml-1.5 align-middle" />
       ) : null}
     </span>
   )
