@@ -65,7 +65,7 @@ export type AgentHubSettings = {
   agentHubDefaultTab?: AgentHubDefaultTab
   /** Terminal tabs show a toggle that parks the tab's terminal in the hub's tray when it is left. */
   agentHubTabAutoPopout?: boolean
-  /** Agent Hub: mirrors live on a page of their own (the canvas) instead of floating over the workspace. */
+  /** Agent Hub: enable the separate mirrors canvas, its controls and session restoration. */
   agentHubCanvas?: boolean
   /** Agent Hub: mirrors, the tray and the canvas come back as they were when Orca restarts. */
   agentHubRestoreOnLaunch?: boolean

@@ -1,3 +1,4 @@
+import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
 import { normalizeAgentHubFloatingLayout } from '../../../../shared/agent-hub-settings'
@@ -42,7 +43,7 @@ export function agentHubWorkArea(): AgentHubRect {
   const left = state.sidebarOpen ? state.sidebarWidth : 0
   // Mirrors on the canvas never share the window with the right sidebar: it is closed there,
   // and a mirror takes its place before the canvas has closed it.
-  const onCanvas = state.settings?.agentHubCanvas !== false
+  const onCanvas = isAgentHubCanvasOpen()
   const right = state.rightSidebarOpen && !onCanvas ? state.rightSidebarWidth : 0
   const bottom = state.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0
   const area = {

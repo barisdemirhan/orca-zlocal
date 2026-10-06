@@ -19,6 +19,7 @@ import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-
 import {
   closeAgentHubCanvas,
   isAgentHubCanvasOpen,
+  openAgentHubCanvas,
   resetAgentHubCanvasForTest
 } from './agent-hub-canvas-store'
 import {
@@ -64,7 +65,7 @@ function renderCanvas(enabled: boolean): () => boolean {
   return () => shown
 }
 
-describe('the canvas follows mirrors', () => {
+describe('the canvas opens only by explicit action', () => {
   it('stays away while the setting is off', () => {
     const shown = renderCanvas(false)
     act(() => openAgentHubMirror(target('tab-a')))
@@ -73,12 +74,12 @@ describe('the canvas follows mirrors', () => {
     expect(isAgentHubCanvasOpen()).toBe(false)
   })
 
-  it('shows when a mirror opens or comes back from the tray', () => {
+  it('never navigates when a mirror opens or comes back from the tray', () => {
     const shown = renderCanvas(true)
     expect(shown()).toBe(false)
 
     act(() => openAgentHubMirror(target('tab-a')))
-    expect(shown()).toBe(true)
+    expect(shown()).toBe(false)
 
     act(() => {
       minimizeAgentHubMirror('tab-a:leaf')
@@ -87,14 +88,16 @@ describe('the canvas follows mirrors', () => {
     expect(shown()).toBe(false)
 
     act(() => restoreAgentHubMirror('tab-a:leaf'))
-    expect(shown()).toBe(true)
+    expect(shown()).toBe(false)
   })
 
-  it('takes floating mirrors in when the setting turns on, and closes when it turns off', () => {
+  it('does not navigate when enabling the canvas; explicit opening works and disabling closes it', () => {
     renderCanvas(false)
     act(() => openAgentHubMirror(target('tab-a')))
 
     const shown = renderCanvas(true)
+    expect(shown()).toBe(false)
+    act(openAgentHubCanvas)
     expect(shown()).toBe(true)
 
     renderCanvas(false)
@@ -107,7 +110,10 @@ describe('the canvas follows mirrors', () => {
       '<div data-worktree-sidebar><div data-worktree-card-surface="true" data-worktree-card-active="primary"></div></div>'
     document.body.append(sidebar)
     const shown = renderCanvas(true)
-    act(() => openAgentHubMirror(target('tab-a')))
+    act(() => {
+      openAgentHubMirror(target('tab-a'))
+      openAgentHubCanvas()
+    })
     expect(shown()).toBe(true)
 
     act(() => {

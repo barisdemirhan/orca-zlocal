@@ -8027,8 +8027,8 @@
             "tabAutoPopoutCopy": "A tab with its toggle on parks its terminal beside the hub when you leave the tab, and takes it back when you return.",
             "mirrorCap": "Mirror windows open at once",
             "mirrorCapCopy": "Opening more than this parks the oldest one beside the hub.",
-            "canvas": "Use the canvas for mirrors",
-            "canvasCopy": "Mirrors open on a page of their own instead of floating over the workspace. Leaving the canvas parks them beside the hub; coming back puts them where they were.",
+            "canvas": "Enable the mirrors canvas",
+            "canvasCopy": "Open the canvas with its button or shortcut to lay out your mirrors. Pop out keeps your current view. Leaving the canvas parks its mirrors; coming back restores them.",
             "restoreOnLaunch": "Restore mirrors and the canvas on launch",
             "restoreOnLaunchCopy": "Mirrors, the tray and the canvas come back as you left them when Orca restarts. A mirror whose terminal was closed is left out."
           },
