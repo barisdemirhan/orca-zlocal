@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { AudioLines, Loader2, Mic, MicOff } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -14,6 +14,8 @@ import { useAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { AgentHubMirrorMicMenu } from './AgentHubMirrorMicMenu'
 import { useAgentHubMirrorMicState } from './use-agent-hub-mirror-mic-state'
+import { readAgentHubDictationCapabilities } from './agent-hub-dictation-capabilities'
+import { startAgentHubDictation } from './agent-hub-dictation-improve'
 
 /** The terminal's own input, which dictation reads as "the focused pane". */
 function findTerminalInput(button: HTMLElement, pane: AgentHubDictationPane): HTMLElement | null {
@@ -38,11 +40,11 @@ function findTerminalInput(button: HTMLElement, pane: AgentHubDictationPane): HT
   return null
 }
 
-function startDictationIn(input: HTMLElement): void {
+function startDictationIn(input: HTMLElement, improve: boolean): void {
   const start = (): void => {
     // Never start without the terminal focused: the text would have nowhere to go.
     if (document.activeElement === input) {
-      dispatchDictationControl('start')
+      startAgentHubDictation(improve)
     }
   }
   input.focus()
@@ -125,6 +127,9 @@ export function AgentHubMirrorMicButton({
   const session = useAgentHubDictationSession()
   const { windows, chips } = useAgentHubMirrors()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [tooltipOpen, setTooltipOpen] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const canImprove = readAgentHubDictationCapabilities().improve
   const pane = agentHubMirrorDictationPane(target)
   const elsewhereName =
     state === 'elsewhere'
@@ -132,16 +137,37 @@ export function AgentHubMirrorMicButton({
           mirrorOwnsDictation(session, agentHubMirrorDictationPane(other))
         )?.title ?? null)
       : null
-  const hint = micHint(state, {
-    name: elsewhereName,
-    inTerminal: session?.pane != null
-  })
+  const hint =
+    state === 'idle' && canImprove
+      ? translate(
+          'agentHub.mic.startWithImproveHint',
+          'Dictate into this terminal. Shift-click to dictate and improve.'
+        )
+      : micHint(state, {
+          name: elsewhereName,
+          inTerminal: session?.pane != null
+        })
   const clickable = state === 'idle' || state === 'starting' || state === 'listening'
   return (
-    <AgentHubMirrorMicMenu onOpenChange={setMenuOpen}>
-      <Tooltip open={menuOpen ? false : undefined}>
+    <AgentHubMirrorMicMenu
+      onOpenChange={setMenuOpen}
+      canImprove={canImprove}
+      improveEnabled={state === 'idle'}
+      onImprove={() => {
+        // The menu closes before the terminal takes the keyboard.
+        requestAnimationFrame(() => {
+          const button = buttonRef.current
+          const input = button ? findTerminalInput(button, pane) : null
+          if (input && readAgentHubDictationCapabilities().improve && state === 'idle') {
+            startDictationIn(input, true)
+          }
+        })
+      }}
+    >
+      <Tooltip open={!menuOpen && tooltipOpen} onOpenChange={setTooltipOpen}>
         <TooltipTrigger asChild>
           <button
+            ref={buttonRef}
             type="button"
             data-agent-hub-mirror-mic={state}
             aria-label={hint}
@@ -160,7 +186,7 @@ export function AgentHubMirrorMicButton({
               // Why focus first: dictation inserts into whatever holds focus when it starts.
               const input = findTerminalInput(event.currentTarget, pane)
               if (input) {
-                startDictationIn(input)
+                startDictationIn(input, event.shiftKey && canImprove)
               }
             }}
             className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground aria-disabled:cursor-default aria-disabled:hover:bg-transparent data-[agent-hub-mirror-mic=disabled]:text-muted-foreground/50 data-[agent-hub-mirror-mic=disabled]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=elsewhere]:text-status-warning data-[agent-hub-mirror-mic=elsewhere]:hover:text-status-warning data-[agent-hub-mirror-mic=finishing]:text-foreground data-[agent-hub-mirror-mic=listening]:bg-foreground data-[agent-hub-mirror-mic=listening]:text-background data-[agent-hub-mirror-mic=listening]:hover:bg-foreground/85 data-[agent-hub-mirror-mic=listening]:hover:text-background data-[agent-hub-mirror-mic=no-model]:text-muted-foreground/50 data-[agent-hub-mirror-mic=no-model]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=starting]:bg-foreground/15 data-[agent-hub-mirror-mic=starting]:text-foreground data-[agent-hub-mirror-mic=unsupported]:text-muted-foreground/50 data-[agent-hub-mirror-mic=unsupported]:hover:text-muted-foreground/50"

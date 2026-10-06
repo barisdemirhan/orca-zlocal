@@ -21910,7 +21910,9 @@
       "model": "Speech model",
       "noModels": "No downloaded models",
       "moreModels": "More in settings…",
-      "settings": "Voice settings…"
+      "settings": "Voice settings…",
+      "startWithImproveHint": "Dictate into this terminal. Shift-click to dictate and improve.",
+      "dictateAndImprove": "Dictate and improve"
     },
     "shortcut": {
       "doubleTapHint": "You can also record a double tap of a modifier key.",

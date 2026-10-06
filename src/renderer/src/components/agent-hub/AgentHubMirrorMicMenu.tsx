@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Mic, Settings } from 'lucide-react'
 import {
   ContextMenu,
@@ -52,10 +52,16 @@ function useSpeechCatalog(): readonly SpeechModelManifest[] {
  */
 export function AgentHubMirrorMicMenu({
   children,
-  onOpenChange
+  onOpenChange,
+  canImprove,
+  improveEnabled,
+  onImprove
 }: {
   children: React.ReactNode
   onOpenChange?: (open: boolean) => void
+  canImprove: boolean
+  improveEnabled: boolean
+  onImprove: () => void
 }): React.JSX.Element {
   const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
   const sttModel = useAppStore((s) => s.settings?.voice?.sttModel)
@@ -63,6 +69,7 @@ export function AgentHubMirrorMicMenu({
   const refreshModelStates = useAppStore((s) => s.refreshModelStates)
   const catalog = useSpeechCatalog()
   const [permissionPending, setPermissionPending] = useState(false)
+  const improveOnCloseRef = useRef(false)
   const openingClick = useMenuOpeningClickGuard()
   // Why on mount too: the button reads these to know whether the selected model is downloaded.
   useEffect(() => {
@@ -91,7 +98,31 @@ export function AgentHubMirrorMicMenu({
       <ContextMenuTrigger asChild>
         <span className="contents">{children}</span>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-60" data-agent-hub-mirror-mic-menu>
+      <ContextMenuContent
+        className="w-60"
+        data-agent-hub-mirror-mic-menu
+        onCloseAutoFocus={(event) => {
+          if (improveOnCloseRef.current) {
+            event.preventDefault()
+            improveOnCloseRef.current = false
+            onImprove()
+          }
+        }}
+      >
+        {canImprove ? (
+          <>
+            <ContextMenuItem
+              disabled={!improveEnabled}
+              onSelect={pick(() => {
+                improveOnCloseRef.current = true
+              })}
+            >
+              <Mic />
+              {translate('agentHub.mic.dictateAndImprove', 'Dictate and improve')}
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+          </>
+        ) : null}
         <ContextMenuItem
           role="menuitemcheckbox"
           aria-checked={voiceEnabled}
