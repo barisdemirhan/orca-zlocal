@@ -1,6 +1,9 @@
 import type { AppState } from '@/store/types'
 import { resolveOpenTabOccupantAgent } from '@/lib/open-tab-occupant-agent'
 import { resolveRuntimePaneTitleForLeaf } from '@/lib/runtime-pane-title-leaf-id'
+import { hasRemoteRuntimePtyForTab } from '@/lib/tab-agent-remote-pty-selector'
+import { worktreeUsesRemoteConnection } from '@/store/terminals/terminal-workspace-routing'
+import { isTerminalLeafId, makePaneKey } from '../../../../shared/stable-pane-id'
 import { detectAgentStatusFromTitle, titleShowsNoAgent } from '../../../../shared/agent-detection'
 import { collectAgentTitleEvidence } from '../../../../shared/agent-title-evidence'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
@@ -15,6 +18,11 @@ export type AgentHubIdleAgentSignals = Pick<
   | 'retainedAgentsByPaneKey'
   | 'sleepingAgentSessionsByPaneKey'
   | 'paneForegroundAgentByPaneKey'
+  | 'ptyIdsByTabId'
+  | 'repos'
+  | 'worktreesByRepo'
+  | 'folderWorkspaces'
+  | 'projectGroups'
 >
 
 /**
@@ -36,6 +44,19 @@ export function resolveAgentHubIdleAgent(
       )
     : null
   const title = liveTitle ?? tab.title
+  const isRemote =
+    worktreeUsesRemoteConnection(signals, tab.worktreeId) ||
+    hasRemoteRuntimePtyForTab(signals.ptyIdsByTabId[tab.id], layout?.ptyIdsByLeafId)
+  const focusedPaneKey =
+    layout?.activeLeafId && isTerminalLeafId(layout.activeLeafId)
+      ? makePaneKey(tab.id, layout.activeLeafId)
+      : null
+  const foreground = focusedPaneKey ? signals.paneForegroundAgentByPaneKey[focusedPaneKey] : null
+  // Why: the tab strip clears an exited agent only for tabs it renders; a pane popped out of another
+  // workspace has none, so OSC 133;D (shell back in front, local only) retires its launch record here.
+  if (!isRemote && foreground?.shellForeground && !foreground.agent) {
+    return null
+  }
   const occupant = resolveOpenTabOccupantAgent({
     tabId: tab.id,
     title,
@@ -45,7 +66,8 @@ export function resolveAgentHubIdleAgent(
     agentStatusByPaneKey: signals.agentStatusByPaneKey,
     retainedAgentsByPaneKey: signals.retainedAgentsByPaneKey,
     sleepingAgentSessionsByPaneKey: signals.sleepingAgentSessionsByPaneKey,
-    paneForegroundAgentByPaneKey: signals.paneForegroundAgentByPaneKey
+    paneForegroundAgentByPaneKey: signals.paneForegroundAgentByPaneKey,
+    isRemote
   })
   if (occupant) {
     return occupant

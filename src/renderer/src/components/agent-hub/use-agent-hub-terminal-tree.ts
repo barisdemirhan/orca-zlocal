@@ -22,6 +22,7 @@ type AgentHubTerminalTreeState = Pick<
   | 'retainedAgentsByPaneKey'
   | 'sleepingAgentSessionsByPaneKey'
   | 'paneForegroundAgentByPaneKey'
+  | 'ptyIdsByTabId'
 >
 
 /** Every open terminal as the hub lists it, from one read of the store. */
@@ -67,7 +68,8 @@ export function useAgentHubTerminalTree(
       agentStatusByPaneKey: s.agentStatusByPaneKey,
       retainedAgentsByPaneKey: s.retainedAgentsByPaneKey,
       sleepingAgentSessionsByPaneKey: s.sleepingAgentSessionsByPaneKey,
-      paneForegroundAgentByPaneKey: s.paneForegroundAgentByPaneKey
+      paneForegroundAgentByPaneKey: s.paneForegroundAgentByPaneKey,
+      ptyIdsByTabId: s.ptyIdsByTabId
     }))
   )
   return useMemo(

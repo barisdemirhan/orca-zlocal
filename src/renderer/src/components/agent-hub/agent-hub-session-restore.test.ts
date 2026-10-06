@@ -88,7 +88,8 @@ function storeWith(tabs: Record<string, string>) {
     agentStatusByPaneKey: {},
     retainedAgentsByPaneKey: {},
     sleepingAgentSessionsByPaneKey: {},
-    paneForegroundAgentByPaneKey: {}
+    paneForegroundAgentByPaneKey: {},
+    ptyIdsByTabId: {}
   }
 }
 

@@ -113,7 +113,8 @@ beforeEach(() => {
     agentStatusByPaneKey: {},
     retainedAgentsByPaneKey: {},
     sleepingAgentSessionsByPaneKey: {},
-    paneForegroundAgentByPaneKey: {}
+    paneForegroundAgentByPaneKey: {},
+    ptyIdsByTabId: {}
   })
 })
 
