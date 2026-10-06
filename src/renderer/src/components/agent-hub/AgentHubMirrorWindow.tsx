@@ -219,10 +219,11 @@ export function AgentHubMirrorWindow({
       }}
       onPointerDownCapture={onFocus}
       onKeyDown={(event) => {
-        // Why: Esc inside the terminal belongs to the agent (interrupt), not to the window.
+        // Esc belongs to the terminal or its open menu before it belongs to the mirror.
         if (
           event.key === 'Escape' &&
-          !(event.target instanceof HTMLElement && event.target.closest('.xterm'))
+          !event.defaultPrevented &&
+          !(event.target instanceof HTMLElement && event.target.closest('.xterm, [role="menu"]'))
         ) {
           event.preventDefault()
           leave(onClose)

@@ -8,7 +8,7 @@ export type AgentHubDockEdge = 'bottom' | 'top' | 'left' | 'right'
 /** The dock's edge and its spot along that edge, 0 (start) to 1 (end). */
 export type AgentHubDockPosition = { edge: AgentHubDockEdge; offset: number }
 
-export type AgentHubDefaultTab = 'inbox' | 'running' | 'all'
+export type AgentHubDefaultTab = 'inbox' | 'running' | 'agents' | 'all'
 
 export type AgentHubDockSize = 'small' | 'medium' | 'large'
 
@@ -131,7 +131,7 @@ export function normalizeAgentHubDockSize(value: unknown): AgentHubDockSize {
 }
 
 export function normalizeAgentHubDefaultTab(value: unknown): AgentHubDefaultTab {
-  return value === 'running' || value === 'all' ? value : 'inbox'
+  return value === 'running' || value === 'agents' || value === 'all' ? value : 'inbox'
 }
 
 const AGENT_HUB_TERMINAL_SORTS: readonly AgentHubTerminalSort[] = [

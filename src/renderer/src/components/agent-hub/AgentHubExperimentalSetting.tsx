@@ -212,6 +212,7 @@ function AgentHubOptions({
             options={[
               { value: 'inbox', label: translate('agentHub.tab.inbox', 'Inbox') },
               { value: 'running', label: translate('agentHub.tab.running', 'Running') },
+              { value: 'agents', label: translate('agentHub.tab.agents', 'Agents') },
               { value: 'all', label: translate('agentHub.tab.all', 'All terminals') }
             ]}
           />

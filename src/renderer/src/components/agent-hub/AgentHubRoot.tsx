@@ -27,6 +27,7 @@ import { closeAgentHubCanvas, toggleAgentHubCanvas } from './agent-hub-canvas-st
 import { registerAgentHubCommands } from './agent-hub-commands'
 import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
+import { agentHubInitialTab } from './agent-hub-initial-tab'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { agentHubCounts } from './agent-hub-lists'
 import { arrangeAgentHubFloatingWindowsByDefault } from './agent-hub-floating-arrangement'
@@ -115,12 +116,14 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     openRef.current = open
   }, [open])
 
-  const defaultTabRef = useRef<AgentHubTab>('inbox')
+  const defaultTabRef = useRef<AgentHubTab>(
+    agentHubInitialTab(preferences.defaultTab, lists.needsYou.length)
+  )
   const shownTabRef = useRef<AgentHubTab>('inbox')
   const needsYouRef = useRef(lists.needsYou)
   useEffect(() => {
     needsYouRef.current = lists.needsYou
-    defaultTabRef.current = lists.needsYou.length > 0 ? 'inbox' : preferences.defaultTab
+    defaultTabRef.current = agentHubInitialTab(preferences.defaultTab, lists.needsYou.length)
   }, [lists.needsYou, preferences.defaultTab])
 
   const openHub = useCallback((tab?: AgentHubTab, paneKey: string | null = null) => {
