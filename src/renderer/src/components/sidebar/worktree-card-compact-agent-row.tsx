@@ -91,6 +91,7 @@ type CompactAgentRowProps = {
   agent: DashboardAgentRowData
   now: number
   parentConversationDescription?: string
+  trailingControl?: React.ReactNode
   onActivate: (tabId: string, paneKey: string) => void
   // Send-target mode temporarily turns compact rows into the picker, matching full agent rows.
   sendTargetStatus?: 'eligible' | 'disabled' | 'sending'
@@ -109,6 +110,7 @@ export const CompactAgentRow = React.memo(function CompactAgentRow({
   agent,
   now,
   parentConversationDescription,
+  trailingControl,
   onActivate,
   sendTargetStatus,
   sendTargetDisabledReason,
@@ -271,6 +273,7 @@ export const CompactAgentRow = React.memo(function CompactAgentRow({
           +{childAgentCount}
         </span>
       )}
+      {trailingControl}
       {cacheTimer && <CacheTimer startedAt={cacheTimer.startedAt} ttlMs={cacheTimer.ttlMs} />}
       {hasChildDisclosure ? (
         <DashboardAgentChildDisclosure

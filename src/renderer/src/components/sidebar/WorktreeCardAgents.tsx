@@ -1,4 +1,5 @@
 import { useWorktreeAgentActivation } from './use-worktree-agent-activation'
+import { AgentHubSidebarPopout } from '../agent-hub/AgentHubSidebarPopout'
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
@@ -221,6 +222,7 @@ const WorktreeCardAgentsBody = React.memo(function WorktreeCardAgentsBody({
       <React.Fragment key={agent.paneKey}>
         <DashboardAgentRow
           agent={agent}
+          trailingControl={<AgentHubSidebarPopout agent={agent} />}
           onDismiss={handleDismissAgent}
           onActivate={
             agent.rowSource === 'retained' ? handleActivateRetainedAgent : handleActivateAgentTab
@@ -281,6 +283,7 @@ const WorktreeCardAgentsBody = React.memo(function WorktreeCardAgentsBody({
       <div key={agent.paneKey} className="min-w-0">
         <CompactAgentRow
           agent={agent}
+          trailingControl={<AgentHubSidebarPopout agent={agent} />}
           now={now}
           parentConversationDescription={
             opensClaudeParentConversation(agent)

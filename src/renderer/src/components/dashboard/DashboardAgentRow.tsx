@@ -67,6 +67,7 @@ function stateDotTooltipLabel(
 
 type Props = {
   agent: DashboardAgentRowData
+  trailingControl?: React.ReactNode
   onDismiss: (paneKey: string) => void
   /** Navigate to this agent's tab; paneKey lets the caller mark-visit the exact clicked row. */
   onActivate: (tabId: string, paneKey: string) => void
@@ -95,6 +96,7 @@ type Props = {
 
 const DashboardAgentRow = React.memo(function DashboardAgentRow({
   agent,
+  trailingControl,
   onDismiss,
   onActivate,
   now,
@@ -348,6 +350,7 @@ const DashboardAgentRow = React.memo(function DashboardAgentRow({
             +{childAgentCount}
           </span>
         )}
+        {trailingControl}
         <DashboardAgentRowTrailingControls
           paneKey={agent.paneKey}
           relativeTimestamp={relativeTimestamp}
