@@ -21853,7 +21853,8 @@
       "size": "Size",
       "dockMirrors": "Send the mirrors to the hub",
       "restoreMirrors": "Bring the mirrors back",
-      "openCanvas": "Open the canvas"
+      "openCanvas": "Open the canvas",
+      "arrange": "Arrange mirrors"
     },
     "children": {
       "agentOne": "1 agent",

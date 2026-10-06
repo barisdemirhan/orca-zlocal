@@ -20,6 +20,7 @@ import {
   WORKSPACE_TOP_CHROME_HEIGHT
 } from '../sidebar/workspace-chrome-metrics'
 import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
+import { AgentHubDockArrangeButton } from './AgentHubDockArrangeButton'
 import { AgentHubDockMenu } from './AgentHubDockMenu'
 import {
   DOCK_BUTTON,
@@ -261,6 +262,11 @@ export function AgentHubDock({
                 <Frame className="size-3.5" />
               </DockButton>
             ) : null}
+            <AgentHubDockArrangeButton
+              open={mirrors.windows > 0}
+              side={side}
+              onOpenChange={setMenuOpen}
+            />
             {muted ? (
               <span className="grid size-6 shrink-0 place-items-center text-muted-foreground">
                 <BellOff aria-hidden className="size-3" />
