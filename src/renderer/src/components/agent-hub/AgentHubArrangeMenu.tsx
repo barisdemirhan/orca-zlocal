@@ -72,8 +72,8 @@ export function AgentHubArrangeMenu({
       <ContextMenuTrigger asChild>
         <span className="contents">{children}</span>
       </ContextMenuTrigger>
-      <ContextMenuContent className="w-56">
-        <ContextMenuLabel>
+      <ContextMenuContent className="w-max min-w-80 max-w-[calc(100vw-2rem)]">
+        <ContextMenuLabel className="whitespace-nowrap">
           {translate('agentHub.arrange.title', 'Arrange floating windows')}
         </ContextMenuLabel>
         {/* Why onSelect: picking the layout already in use should still lay the windows out. */}
@@ -82,6 +82,7 @@ export function AgentHubArrangeMenu({
             <ContextMenuRadioItem
               key={option}
               value={option}
+              className="whitespace-nowrap"
               onSelect={(event) => {
                 if (openingClick.isOpeningClick()) {
                   event.preventDefault()
