@@ -19,7 +19,6 @@ import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
 } from '../sidebar/workspace-chrome-metrics'
-import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDockArrangeButton } from './AgentHubDockArrangeButton'
 import { AgentHubDockMenu } from './AgentHubDockMenu'
 import {
@@ -112,24 +111,21 @@ export function AgentHubDock({
   const canvasLabel = canvas?.open
     ? translate('agentHub.canvas.leave', 'Leave the canvas')
     : translate('agentHub.dock.openCanvas', 'Open the canvas')
-  // Right-click lays the floating windows out between the sidebars.
   const mirrorsButton = (
-    <AgentHubArrangeMenu onOpenChange={setMenuOpen}>
-      <DockButton
-        label={
-          agentHubMirrorsToggleAction(mirrors) === 'restore'
-            ? translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
-            : translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
-        }
-        side={side}
-        className={DOCK_BUTTON}
-        actionId="agentHub.dockMirrors"
-        disabled={!hasMirrors}
-        onClick={onToggleMirrors}
-      >
-        <PictureInPicture2 className="size-3.5" />
-      </DockButton>
-    </AgentHubArrangeMenu>
+    <DockButton
+      label={
+        agentHubMirrorsToggleAction(mirrors) === 'restore'
+          ? translate('agentHub.dock.restoreMirrors', 'Bring the mirrors back')
+          : translate('agentHub.dock.dockMirrors', 'Send the mirrors to the hub')
+      }
+      side={side}
+      className={DOCK_BUTTON}
+      actionId="agentHub.dockMirrors"
+      disabled={!hasMirrors}
+      onClick={onToggleMirrors}
+    >
+      <PictureInPicture2 className="size-3.5" />
+    </DockButton>
   )
   const zoom = AGENT_HUB_DOCK_ZOOM[size]
   // The bar measures in its own (unzoomed) pixels; placement works in the window's.

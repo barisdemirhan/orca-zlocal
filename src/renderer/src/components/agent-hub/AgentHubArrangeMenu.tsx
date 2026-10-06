@@ -46,7 +46,7 @@ function LayoutLabel({ layout }: { layout: AgentHubFloatingLayout }): React.JSX.
 }
 
 /**
- * Right-click on the hub's mirror controls: lay every floating window (mirrors and the floating
+ * Right-click on the hub's Arrange button: lay every floating window (mirrors and the floating
  * workspace) out evenly between the sidebars. The layout picked becomes the default, used when
  * mirrors are brought back or popped out together.
  */

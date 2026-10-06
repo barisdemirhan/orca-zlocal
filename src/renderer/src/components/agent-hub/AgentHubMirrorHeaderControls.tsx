@@ -1,7 +1,6 @@
 import { Minus, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip, AgentHubShortcut } from './AgentHubShortcut'
-import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
 import { AgentHubMirrorFocusButton } from './AgentHubMirrorFocusButton'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
@@ -45,18 +44,16 @@ export function AgentHubMirrorHeaderControls({
           <AgentHubShortcut actionId="agentHub.jumpToMirror" />
         </button>
       </AgentHubActionTooltip>
-      <AgentHubArrangeMenu>
-        <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">
-          <button
-            type="button"
-            aria-label={dockLabel}
-            onClick={() => requestAgentHubMirrorsDock()}
-            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-          >
-            <PictureInPicture2 className="size-3.5" />
-          </button>
-        </AgentHubActionTooltip>
-      </AgentHubArrangeMenu>
+      <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">
+        <button
+          type="button"
+          aria-label={dockLabel}
+          onClick={() => requestAgentHubMirrorsDock()}
+          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+        >
+          <PictureInPicture2 className="size-3.5" />
+        </button>
+      </AgentHubActionTooltip>
       <AgentHubMirrorFocusButton mirrorKey={mirrorKey} focused={focused} />
       <AgentHubActionTooltip label={minimizeLabel}>
         <button

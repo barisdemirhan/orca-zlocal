@@ -15,7 +15,7 @@ function isLayout(value: string): value is AgentHubFloatingLayout {
 
 /**
  * The canvas's quick layout switch: one click lays the mirrors out and makes that layout the
- * default, the same choice the mirrors button offers on right-click.
+ * default, the same choice the Arrange button offers on right-click.
  */
 export function AgentHubCanvasLayoutSwitch(): React.JSX.Element {
   const layout = useAppStore((s) =>
