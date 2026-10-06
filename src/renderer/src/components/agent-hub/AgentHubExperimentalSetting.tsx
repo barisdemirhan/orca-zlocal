@@ -21,6 +21,7 @@ import {
 } from '../settings/SettingsFormControls'
 import { getExperimentalSearchEntry } from '../settings/experimental-search'
 import { AGENT_HUB_DOCK_SIZES, agentHubDockSizeLabel } from './AgentHubDockMenu'
+import { AgentHubMicModeSetting } from './AgentHubMicModeControl'
 import { AgentHubShortcutSetting } from './AgentHubShortcutSetting'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 
@@ -83,6 +84,7 @@ function AgentHubOptions({
         }
       />
       <AgentHubShortcutSetting />
+      <AgentHubMicModeSetting />
       {preferences.placement === 'dock' ? (
         <SettingsRow
           label={translate(

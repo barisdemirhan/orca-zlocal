@@ -10,6 +10,8 @@ export type AgentHubDockPosition = { edge: AgentHubDockEdge; offset: number }
 
 export type AgentHubDefaultTab = 'inbox' | 'running' | 'agents' | 'all'
 
+export type AgentHubMicMode = 'dictate' | 'improve'
+
 export type AgentHubDockSize = 'small' | 'medium' | 'large'
 
 /**
@@ -29,6 +31,8 @@ export type AgentHubTerminalSort = PersistedUIState['sortBy']
 export type AgentHubSettings = {
   /** Experimental: Agent Hub — every agent and terminal in one popover, with inline answers. */
   experimentalAgentHub?: boolean
+  /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */
+  agentHubMicMode?: AgentHubMicMode
   /** Agent Hub: a draggable dock on a window edge (default) or a status-bar item. */
   agentHubPlacement?: AgentHubPlacement
   /** Agent Hub dock: the window edge it sits on and its spot along that edge. */
@@ -163,4 +167,8 @@ export function normalizeAgentHubMirrorWindowCap(value: unknown): number {
   return (
     AGENT_HUB_MIRROR_WINDOW_CAPS.find((cap) => cap === value) ?? DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
   )
+}
+
+export function normalizeAgentHubMicMode(value: unknown): AgentHubMicMode {
+  return value === 'improve' ? 'improve' : 'dictate'
 }

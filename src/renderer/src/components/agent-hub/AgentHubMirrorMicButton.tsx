@@ -1,6 +1,8 @@
+import { useAppStore } from '@/store'
+import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { useRef, useState } from 'react'
-import { AudioLines, Loader2, Mic, MicOff } from 'lucide-react'
+import { AudioLines, Loader2, Mic, MicOff, MicVocal } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
@@ -57,13 +59,23 @@ function startDictationIn(input: HTMLElement, improve: boolean): void {
   }
 }
 
-function MicIcon({ state }: { state: AgentHubMirrorMicState }): React.JSX.Element {
+function MicIcon({
+  state,
+  improve
+}: {
+  state: AgentHubMirrorMicState
+  improve: boolean
+}): React.JSX.Element {
   switch (state) {
     case 'idle':
     case 'listening':
-      return <Mic className="size-3.5" />
+      return improve ? <MicVocal className="size-3.5" /> : <Mic className="size-3.5" />
     case 'starting':
-      return <Mic className="size-3.5 animate-pulse motion-reduce:animate-none" />
+      return improve ? (
+        <MicVocal className="size-3.5 animate-pulse motion-reduce:animate-none" />
+      ) : (
+        <Mic className="size-3.5 animate-pulse motion-reduce:animate-none" />
+      )
     case 'finishing':
       return <Loader2 className="size-3.5 animate-spin" />
     case 'elsewhere':
@@ -131,6 +143,8 @@ export function AgentHubMirrorMicButton({
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const canImprove = readAgentHubDictationCapabilities().improve
+  const storedMode = useAppStore((s) => normalizeAgentHubMicMode(s.settings?.agentHubMicMode))
+  const improveMode = canImprove && storedMode === 'improve'
   const pane = agentHubMirrorDictationPane(target)
   const elsewhereName =
     state === 'elsewhere'
@@ -140,37 +154,29 @@ export function AgentHubMirrorMicButton({
       : null
   const hint =
     state === 'idle' && canImprove
-      ? translate(
-          'agentHub.mic.startWithImproveHint',
-          'Dictate into this terminal. Shift-click to dictate and improve.'
-        )
+      ? improveMode
+        ? translate(
+            'agentHub.mic.startImproveHint',
+            'Dictate and improve in this terminal. Shift-click to dictate.'
+          )
+        : translate(
+            'agentHub.mic.startWithImproveHint',
+            'Dictate into this terminal. Shift-click to dictate and improve.'
+          )
       : micHint(state, {
           name: elsewhereName,
           inTerminal: session?.pane != null
         })
   const clickable = state === 'idle' || state === 'starting' || state === 'listening'
   return (
-    <AgentHubMirrorMicMenu
-      onOpenChange={setMenuOpen}
-      canImprove={canImprove}
-      improveEnabled={state === 'idle'}
-      onImprove={() => {
-        // The menu closes before the terminal takes the keyboard.
-        requestAnimationFrame(() => {
-          const button = buttonRef.current
-          const input = button ? findTerminalInput(button, pane) : null
-          if (input && readAgentHubDictationCapabilities().improve && state === 'idle') {
-            startDictationIn(input, true)
-          }
-        })
-      }}
-    >
+    <AgentHubMirrorMicMenu onOpenChange={setMenuOpen} canImprove={canImprove}>
       <Tooltip open={!menuOpen && tooltipOpen} onOpenChange={setTooltipOpen}>
         <TooltipTrigger asChild>
           <button
             ref={buttonRef}
             type="button"
             data-agent-hub-mirror-mic={state}
+            data-agent-hub-mic-mode={improveMode ? 'improve' : 'dictate'}
             aria-label={hint}
             aria-pressed={state === 'starting' || state === 'listening'}
             aria-disabled={!clickable}
@@ -187,18 +193,22 @@ export function AgentHubMirrorMicButton({
               // Why focus first: dictation inserts into whatever holds focus when it starts.
               const input = findTerminalInput(event.currentTarget, pane)
               if (input) {
-                startDictationIn(input, event.shiftKey && canImprove)
+                const available = readAgentHubDictationCapabilities().improve
+                const chosen = available && storedMode === 'improve'
+                startDictationIn(input, available && (event.shiftKey ? !chosen : chosen))
               }
             }}
             className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground aria-disabled:cursor-default aria-disabled:hover:bg-transparent data-[agent-hub-mirror-mic=disabled]:text-muted-foreground/50 data-[agent-hub-mirror-mic=disabled]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=elsewhere]:text-status-warning data-[agent-hub-mirror-mic=elsewhere]:hover:text-status-warning data-[agent-hub-mirror-mic=finishing]:text-foreground data-[agent-hub-mirror-mic=listening]:bg-foreground data-[agent-hub-mirror-mic=listening]:text-background data-[agent-hub-mirror-mic=listening]:hover:bg-foreground/85 data-[agent-hub-mirror-mic=listening]:hover:text-background data-[agent-hub-mirror-mic=no-model]:text-muted-foreground/50 data-[agent-hub-mirror-mic=no-model]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=starting]:bg-foreground/15 data-[agent-hub-mirror-mic=starting]:text-foreground data-[agent-hub-mirror-mic=unsupported]:text-muted-foreground/50 data-[agent-hub-mirror-mic=unsupported]:hover:text-muted-foreground/50"
           >
-            <MicIcon state={state} />
+            <MicIcon state={state} improve={improveMode} />
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
           <span className="flex items-center gap-2">
             {hint}
-            <AgentHubShortcut actionId="voice.dictation" />
+            <AgentHubShortcut
+              actionId={improveMode ? 'voice.dictationImprove' : 'voice.dictation'}
+            />
           </span>
         </TooltipContent>
       </Tooltip>

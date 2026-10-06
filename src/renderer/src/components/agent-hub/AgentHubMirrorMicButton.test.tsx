@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AgentHubMirrorMicState } from './agent-hub-mirror-mic-state'
+import { useAppStore } from '@/store'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import {
@@ -18,14 +19,19 @@ vi.mock('./use-agent-hub-mirror-mic-state', () => ({
   useAgentHubMirrorMicState: () => control.state
 }))
 vi.mock('./agent-hub-dictation-origin', () => ({ useAgentHubDictationSession: () => null }))
-vi.mock('@/store', () => ({
-  useAppStore: (selector: (state: unknown) => unknown) =>
-    selector({
-      settings: { voice: { enabled: true } },
-      modelStates: [],
-      refreshModelStates: () => Promise.resolve()
+vi.mock('@/store', async () => {
+  const { create } = await import('zustand')
+  const useAppStore = create(() => ({
+    settings: { voice: { enabled: true }, agentHubMicMode: 'dictate' },
+    modelStates: [],
+    keybindings: {},
+    refreshModelStates: () => Promise.resolve(),
+    updateSettings: vi.fn(async (updates: { agentHubMicMode?: string }) => {
+      useAppStore.setState((s) => ({ settings: { ...s.settings, ...updates } }))
     })
-}))
+  }))
+  return { useAppStore }
+})
 vi.mock('./agent-hub-voice-settings', () => ({
   openAgentHubVoiceSettings: vi.fn(),
   toggleAgentHubVoiceDictation: vi.fn(),
@@ -49,7 +55,16 @@ const receive = (event: Event) => {
     actions.push(event.detail)
   }
 }
+function setMode(mode: 'dictate' | 'improve'): void {
+  const settings = useAppStore.getState().settings
+  if (!settings) {
+    throw new Error('Missing test settings')
+  }
+  useAppStore.setState({ settings: { ...settings, agentHubMicMode: mode } })
+}
+
 beforeEach(() => {
+  setMode('dictate')
   control.state = 'idle'
   improve = false
   actions.length = 0
@@ -105,33 +120,42 @@ describe('mirror mic improvement capability', () => {
     expect(actions).toEqual(['start', { action: 'start', improve: true }])
     expect(mic().getAttribute('aria-label')).toContain('Shift-click')
   })
-  it('starts improved dictation from the menu after returning focus to the terminal', async () => {
+  it('chooses a persisted default without starting dictation, updates its microphone icon, and Shift-click uses the other mode', async () => {
     improve = true
     mount()
+    expect(mic().querySelector('.lucide-mic')).not.toBeNull()
     fireEvent.contextMenu(mic())
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Dictate and improve' }))
-    await waitFor(() => expect(actions).toEqual([{ action: 'start', improve: true }]))
-    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Terminal input' }))
-  })
-  it.each([
-    'starting',
-    'listening',
-    'finishing',
-    'elsewhere',
-    'disabled',
-    'no-model',
-    'unsupported'
-  ] as const)('disables the improve menu while %s', async (state) => {
-    improve = true
-    control.state = state
-    mount()
-    fireEvent.contextMenu(mic())
-    expect(
-      (await screen.findByRole('menuitem', { name: 'Dictate and improve' })).getAttribute(
-        'aria-disabled'
-      )
-    ).toBe('true')
+    const segment = await screen.findByRole('group', { name: 'Microphone action' })
+    const plain = screen.getByRole('menuitemradio', { name: 'Dictate' })
+    const better = screen.getByRole('menuitemradio', { name: 'Dictate and improve' })
+    expect(segment.contains(plain) && segment.contains(better)).toBe(true)
+    fireEvent.click(better)
+    await waitFor(() => expect(useAppStore.getState().settings?.agentHubMicMode).toBe('improve'))
     expect(actions).toEqual([])
+    expect(mic().querySelector('.lucide-mic-vocal')).not.toBeNull()
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
+    fireEvent.click(mic())
+    fireEvent.click(mic(), { shiftKey: true })
+    expect(actions).toEqual([{ action: 'start', improve: true }, 'start'])
+  })
+  it('uses plain dictation when the saved improve mode is unsupported without rewriting it', () => {
+    setMode('improve')
+    mount()
+    expect(mic().getAttribute('data-agent-hub-mic-mode')).toBe('dictate')
+    expect(mic().querySelector('.lucide-mic')).not.toBeNull()
+    fireEvent.click(mic())
+    fireEvent.click(mic(), { shiftKey: true })
+    expect(actions).toEqual(['start', 'start'])
+    expect(useAppStore.getState().settings?.agentHubMicMode).toBe('improve')
+  })
+  it('can choose a default while listening without starting or stopping the session', async () => {
+    improve = true
+    control.state = 'listening'
+    mount()
+    fireEvent.contextMenu(mic())
+    fireEvent.click(await screen.findByRole('menuitemradio', { name: 'Dictate and improve' }))
+    expect(actions).toEqual([])
+    expect(mic().getAttribute('data-agent-hub-mirror-mic')).toBe('listening')
   })
   it('rechecks the capability before dispatch and falls back to the legacy form', () => {
     improve = true

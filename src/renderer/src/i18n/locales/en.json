@@ -21913,7 +21913,11 @@
       "moreModels": "More in settings…",
       "settings": "Voice settings…",
       "startWithImproveHint": "Dictate into this terminal. Shift-click to dictate and improve.",
-      "dictateAndImprove": "Dictate and improve"
+      "dictateAndImprove": "Dictate and improve",
+      "dictate": "Dictate",
+      "mode": "Microphone action",
+      "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available.",
+      "startImproveHint": "Dictate and improve in this terminal. Shift-click to dictate."
     },
     "shortcut": {
       "doubleTapHint": "You can also record a double tap of a modifier key.",
