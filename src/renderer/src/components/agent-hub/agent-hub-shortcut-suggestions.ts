@@ -10,5 +10,8 @@ export const AGENT_HUB_SUGGESTED_BINDINGS: readonly (readonly [KeybindingActionI
   ['agentHub.nextWaiting', 'Mod+F8'],
   ['agentHub.dockMirrors', 'Mod+F9'],
   ['agentHub.toggleCanvas', 'Mod+F10'],
-  ['agentHub.arrangeMirrors', 'Mod+F11']
+  ['agentHub.arrangeMirrors', 'Mod+F11'],
+  ['agentHub.focusMirror', 'Mod+F12'],
+  ['agentHub.popOut', 'Mod+F7'],
+  ['agentHub.jumpToMirror', 'Mod+F6']
 ]

@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { ChevronRight, Loader2, Minus, PanelsTopLeft, PictureInPicture2, X } from 'lucide-react'
+import { ChevronRight, Loader2, PanelsTopLeft } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
-import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { AgentTerminalPreview } from '../dashboard-popout/AgentTerminalPreview'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubAvatar, HubCrumb, HubKeys, HubStateIndicator } from './AgentHubAtoms'
+import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import {
   agentHubPaneTargetKey,
@@ -15,17 +14,13 @@ import {
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
-import { AgentHubArrangeMenu } from './AgentHubArrangeMenu'
-import { AgentHubDimToggle } from './AgentHubDimToggle'
+import { AgentHubMirrorHeaderControls } from './AgentHubMirrorHeaderControls'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
-import { AgentHubMirrorFocusButton } from './AgentHubMirrorFocusButton'
 import { AgentHubMirrorFocusShade } from './AgentHubMirrorFocusShade'
-import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import {
   isAgentHubMirrorStageQuiet,
-  requestAgentHubMirrorsDock,
   useAgentHubMirrorHighlight,
   useAgentHubMirrorsDockRequest
 } from './agent-hub-mirror-store'
@@ -173,7 +168,6 @@ export function AgentHubMirrorWindow({
     )
   )
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
-  const dockAllShortcut = useOptionalShortcutLabel('agentHub.dockMirrors')
   const familyRoot = family?.path[0]?.paneKey ?? null
   const familyBarShown = useAgentHubFamilyBarShown(familyRoot)
 
@@ -270,53 +264,15 @@ export function AgentHubMirrorWindow({
             <HubCrumb location={location} />
           </div>
         </div>
-        {/* The window's controls sit close together, apart from the title. */}
-        <div className="flex shrink-0 items-center gap-0.5">
-          <AgentHubDimToggle appearance="mirror" />
-          <AgentHubMirrorMicButton target={target} reachable={surface !== 'preview'} />
-          <button
-            type="button"
-            title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
-            onClick={onReveal}
-            className="flex h-6 items-center gap-1 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-          >
-            {translate('agentHub.mirror.jump', 'Jump')}
-            <HubKeys keys={['↵']} />
-          </button>
-          <AgentHubArrangeMenu>
-            <button
-              type="button"
-              aria-label={translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')}
-              title={
-                dockAllShortcut
-                  ? `${translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')} (${dockAllShortcut})`
-                  : translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
-              }
-              onClick={() => requestAgentHubMirrorsDock()}
-              className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-            >
-              <PictureInPicture2 className="size-3.5" />
-            </button>
-          </AgentHubArrangeMenu>
-          <AgentHubMirrorFocusButton mirrorKey={mirrorKey} focused={focus === 'focused'} />
-          <button
-            type="button"
-            aria-label={translate('agentHub.mirror.minimize', 'Minimize')}
-            title={translate('agentHub.mirror.minimize', 'Minimize')}
-            onClick={() => minimize()}
-            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-          >
-            <Minus className="size-3.5" />
-          </button>
-          <button
-            type="button"
-            aria-label={translate('agentHub.mirror.close', 'Close mirror')}
-            onClick={() => leave(onClose)}
-            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-          >
-            <X className="size-3.5" />
-          </button>
-        </div>
+        <AgentHubMirrorHeaderControls
+          target={target}
+          reachable={surface !== 'preview'}
+          mirrorKey={mirrorKey}
+          focused={focus === 'focused'}
+          onReveal={onReveal}
+          onMinimize={minimize}
+          onClose={() => leave(onClose)}
+        />
       </header>
       {family && familyBarShown ? (
         <AgentHubMirrorFamilyTabs

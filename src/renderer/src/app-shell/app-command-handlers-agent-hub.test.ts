@@ -42,6 +42,9 @@ function run(
     | 'agentHub.dockMirrors'
     | 'agentHub.toggleCanvas'
     | 'agentHub.arrangeMirrors'
+    | 'agentHub.focusMirror'
+    | 'agentHub.popOut'
+    | 'agentHub.jumpToMirror'
 ): {
   claimed: boolean | undefined
   input: ShortcutDispatchInput
@@ -74,6 +77,9 @@ describe('agent hub shortcuts', () => {
       jumpToNextWaiting: vi.fn(),
       toggleMirrors: vi.fn(),
       toggleCanvas: vi.fn(),
+      focusMirror: vi.fn(),
+      popOut: vi.fn(),
+      jumpToMirror: vi.fn(),
       arrangeMirrors: vi.fn()
     }
     unregister = registerAgentHubCommands(commands)
@@ -83,6 +89,9 @@ describe('agent hub shortcuts', () => {
     expect(run('agentHub.dockMirrors').claimed).toBe(true)
     expect(run('agentHub.toggleCanvas').claimed).toBe(true)
     expect(run('agentHub.arrangeMirrors').claimed).toBe(true)
+    expect(run('agentHub.focusMirror').claimed).toBe(true)
+    expect(run('agentHub.popOut').claimed).toBe(true)
+    expect(run('agentHub.jumpToMirror').claimed).toBe(true)
     expect(commands.toggle).toHaveBeenCalledTimes(1)
     expect(commands.jumpToNextWaiting).toHaveBeenCalledTimes(1)
     expect(commands.toggleMirrors).toHaveBeenCalledTimes(1)
@@ -96,6 +105,9 @@ describe('agent hub shortcuts', () => {
       jumpToNextWaiting: vi.fn(),
       toggleMirrors: vi.fn(),
       toggleCanvas: null,
+      focusMirror: vi.fn(),
+      popOut: vi.fn(),
+      jumpToMirror: vi.fn(),
       arrangeMirrors: vi.fn()
     })
 
@@ -111,6 +123,9 @@ describe('agent hub shortcuts', () => {
       jumpToNextWaiting: vi.fn(),
       toggleMirrors: vi.fn(),
       toggleCanvas: vi.fn(),
+      focusMirror: null,
+      popOut: null,
+      jumpToMirror: null,
       arrangeMirrors: null
     })
 
@@ -126,6 +141,9 @@ describe('agent hub shortcuts', () => {
       jumpToNextWaiting: vi.fn(),
       toggleMirrors: vi.fn(),
       toggleCanvas: vi.fn(),
+      focusMirror: vi.fn(),
+      popOut: vi.fn(),
+      jumpToMirror: vi.fn(),
       arrangeMirrors: vi.fn()
     }
     registerAgentHubCommands(commands)()

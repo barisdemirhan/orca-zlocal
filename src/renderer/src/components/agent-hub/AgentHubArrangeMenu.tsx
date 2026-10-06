@@ -1,3 +1,4 @@
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { Columns3, LayoutGrid, Rows3 } from 'lucide-react'
 import {
   ContextMenu,
@@ -91,6 +92,9 @@ export function AgentHubArrangeMenu({
               }}
             >
               <LayoutLabel layout={option} />
+              {option === layout ? (
+                <AgentHubShortcut actionId="agentHub.arrangeMirrors" slot="context" />
+              ) : null}
             </ContextMenuRadioItem>
           ))}
         </ContextMenuRadioGroup>

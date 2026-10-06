@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { useNow } from '@/hooks/use-now'
-import { formatOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { Popover, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -24,7 +24,7 @@ import {
 } from './agent-hub-alert-queue'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { closeAgentHubCanvas, toggleAgentHubCanvas } from './agent-hub-canvas-store'
-import { registerAgentHubCommands } from './agent-hub-commands'
+import { useAgentHubMirrorCommands } from './use-agent-hub-mirror-commands'
 import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
 import { agentHubInitialTab } from './agent-hub-initial-tab'
@@ -86,8 +86,6 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const groupNameById = useGroupNameById()
   const locationOf = (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>): AgentHubLocation =>
     agentHubLocation(target, groupNameById)
-  const keybindings = useAppStore((s) => s.keybindings)
-  const shortcut = formatOptionalShortcutLabel('agentHub.toggle', keybindings)
   const [open, setOpen] = useState(false)
   const [request, setRequest] = useState<AgentHubPopoverRequest>({
     tab: 'inbox',
@@ -220,16 +218,15 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
   const { windows, chips } = useAgentHubMirrors()
   const mirrorsOpen = windows.length > 0
-  useEffect(
-    () =>
-      registerAgentHubCommands({
-        toggle: () => (openRef.current ? setOpen(false) : openHub()),
-        jumpToNextWaiting,
-        toggleMirrors,
-        toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null,
-        arrangeMirrors: mirrorsOpen ? arrangeAgentHubFloatingWindowsByDefault : null
-      }),
-    [jumpToNextWaiting, openHub, toggleMirrors, preferences.canvas, mirrorsOpen]
+  useAgentHubMirrorCommands(
+    {
+      toggle: () => (openRef.current ? setOpen(false) : openHub()),
+      jumpToNextWaiting,
+      toggleMirrors,
+      toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null,
+      arrangeMirrors: mirrorsOpen ? arrangeAgentHubFloatingWindowsByDefault : null
+    },
+    (target) => jump({ target, thread: null })
   )
 
   const label =
@@ -344,8 +341,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
               </PopoverTrigger>
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={6}>
-              {translate('agentHub.title', 'Agents')}
-              {shortcut ? ` (${shortcut})` : null}
+              <span className="flex items-center gap-2">
+                {translate('agentHub.title', 'Agents')}
+                <AgentHubShortcut actionId="agentHub.toggle" />
+              </span>
             </TooltipContent>
           </Tooltip>
         )}

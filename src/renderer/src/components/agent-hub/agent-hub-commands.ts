@@ -1,4 +1,7 @@
 export type AgentHubCommands = {
+  focusMirror: (() => void) | null
+  popOut: (() => void) | null
+  jumpToMirror: (() => void) | null
   toggle: () => void
   jumpToNextWaiting: () => void
   /** Sends the open mirrors to the hub, or brings the parked ones back when none are open. */

@@ -12,7 +12,10 @@ function globalGroup(): ShortcutGroup {
       'agentHub.nextWaiting',
       'agentHub.dockMirrors',
       'agentHub.toggleCanvas',
-      'agentHub.arrangeMirrors'
+      'agentHub.arrangeMirrors',
+      'agentHub.focusMirror',
+      'agentHub.popOut',
+      'agentHub.jumpToMirror'
     ] as const
   ).map((actionId) => {
     const definition = getKeybindingDefinition(actionId)
@@ -69,7 +72,10 @@ describe('buildShortcutRowVisibility', () => {
       'agentHub.nextWaiting',
       'agentHub.dockMirrors',
       'agentHub.toggleCanvas',
-      'agentHub.arrangeMirrors'
+      'agentHub.arrangeMirrors',
+      'agentHub.focusMirror',
+      'agentHub.popOut',
+      'agentHub.jumpToMirror'
     ])
   })
 })

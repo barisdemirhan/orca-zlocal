@@ -1,3 +1,4 @@
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { PictureInPicture2 } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
@@ -52,7 +53,10 @@ function SidebarPopout({ agent }: { agent: DashboardAgentRow }): React.JSX.Eleme
           </Button>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          {label}
+          <span className="flex items-center gap-2">
+            {label}
+            <AgentHubShortcut actionId="agentHub.popOut" />
+          </span>
         </TooltipContent>
       </Tooltip>
     </span>

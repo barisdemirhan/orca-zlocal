@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom'
 import { PanelLeft, PictureInPicture2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
+import { AgentHubActionTooltip, AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { MAC_TRAFFIC_LIGHTS_WIDTH } from '@/app-shell/app-window-chrome'
@@ -32,7 +32,6 @@ export function AgentHubCanvas({
   const sidebarWidth = useAppStore((s) => s.sidebarWidth)
   const setSidebarOpen = useAppStore((s) => s.setSidebarOpen)
   const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
-  const leaveShortcut = useOptionalShortcutLabel('agentHub.toggleCanvas')
   return createPortal(
     <div
       data-agent-hub-canvas
@@ -59,18 +58,22 @@ export function AgentHubCanvas({
       {sidebarOpen ? null : (
         // The title bar's own sidebar switch is under the canvas; this one stands in for it,
         // clear of the macOS window buttons.
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={translate('agentHub.canvas.showSidebar', 'Show the sidebar')}
-          title={translate('agentHub.canvas.showSidebar', 'Show the sidebar')}
-          onClick={() => setSidebarOpen(true)}
-          style={{ left: `calc(${MAC_TRAFFIC_LIGHTS_WIDTH} + 8px)` }}
-          className="absolute top-1 [-webkit-app-region:no-drag]"
+        <AgentHubActionTooltip
+          label={translate('agentHub.canvas.showSidebar', 'Show the sidebar')}
+          actionId="sidebar.left.toggle"
         >
-          <PanelLeft />
-        </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={translate('agentHub.canvas.showSidebar', 'Show the sidebar')}
+            onClick={() => setSidebarOpen(true)}
+            style={{ left: `calc(${MAC_TRAFFIC_LIGHTS_WIDTH} + 8px)` }}
+            className="absolute top-1 [-webkit-app-region:no-drag]"
+          >
+            <PanelLeft />
+          </Button>
+        </AgentHubActionTooltip>
       )}
       <Tooltip>
         <TooltipTrigger asChild>
@@ -89,7 +92,7 @@ export function AgentHubCanvas({
         </TooltipTrigger>
         <TooltipContent side="left" sideOffset={4}>
           {translate('agentHub.canvas.leave', 'Leave the canvas')}
-          {leaveShortcut ? ` (${leaveShortcut})` : null}
+          <AgentHubShortcut actionId="agentHub.toggleCanvas" />
         </TooltipContent>
       </Tooltip>
       <AgentHubCanvasLayoutSwitch />

@@ -1,3 +1,4 @@
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
@@ -145,32 +146,44 @@ function AlertCard({
           </span>
         ) : null}
       </button>
-      <button
-        type="button"
-        aria-label={translate('agentHub.hover.popout', 'Own window')}
-        title={translate('agentHub.hover.popout', 'Own window')}
-        onClick={() => onPopout(alert)}
-        className="absolute top-2 right-14 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+      <AgentHubActionTooltip
+        label={translate('agentHub.hover.popout', 'Own window')}
+        actionId="agentHub.popOut"
       >
-        <PictureInPicture2 className="size-3.5" />
-      </button>
-      <button
-        type="button"
-        aria-label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
-        title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
-        onClick={() => onJump(alert)}
-        className="absolute top-2 right-8 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+        <button
+          type="button"
+          aria-label={translate('agentHub.hover.popout', 'Own window')}
+          onClick={() => onPopout(alert)}
+          className="absolute top-2 right-14 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+        >
+          <PictureInPicture2 className="size-3.5" />
+        </button>
+      </AgentHubActionTooltip>
+      <AgentHubActionTooltip
+        label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
       >
-        <ArrowUpRight className="size-3.5" />
-      </button>
-      <button
-        type="button"
-        aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
-        onClick={() => onDismiss(alert.id)}
-        className="absolute top-2 right-2 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-      >
-        <X className="size-3.5" />
-      </button>
+        <button
+          type="button"
+          aria-label={translate(
+            'agentHub.mirror.jumpHint',
+            'Jump to this terminal in its workspace'
+          )}
+          onClick={() => onJump(alert)}
+          className="absolute top-2 right-8 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+        >
+          <ArrowUpRight className="size-3.5" />
+        </button>
+      </AgentHubActionTooltip>
+      <AgentHubActionTooltip label={translate('agentHub.alert.dismiss', 'Dismiss')}>
+        <button
+          type="button"
+          aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
+          onClick={() => onDismiss(alert.id)}
+          className="absolute top-2 right-2 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+        >
+          <X className="size-3.5" />
+        </button>
+      </AgentHubActionTooltip>
     </div>
   )
 }

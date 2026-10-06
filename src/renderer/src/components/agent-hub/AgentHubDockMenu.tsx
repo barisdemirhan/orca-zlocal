@@ -1,3 +1,4 @@
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { Bell, BellOff, Ellipsis, PanelBottom, Settings } from 'lucide-react'
 import { useAppStore } from '@/store'
 import {
@@ -66,15 +67,17 @@ export function AgentHubDockMenu({
   const side = agentHubDockPopoverSide(edge)
   return (
     <DropdownMenu modal={false} onOpenChange={onOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={translate('agentHub.dock.more', 'More')}
-          className={buttonClassName}
-        >
-          <Ellipsis className="size-3.5" />
-        </button>
-      </DropdownMenuTrigger>
+      <AgentHubActionTooltip label={translate('agentHub.dock.more', 'More')}>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label={translate('agentHub.dock.more', 'More')}
+            className={buttonClassName}
+          >
+            <Ellipsis className="size-3.5" />
+          </button>
+        </DropdownMenuTrigger>
+      </AgentHubActionTooltip>
       <DropdownMenuContent side={side} align="center" sideOffset={10} className="min-w-56">
         <DropdownMenuItem
           onSelect={() => {

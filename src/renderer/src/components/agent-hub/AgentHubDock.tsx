@@ -8,7 +8,6 @@ import {
   PictureInPicture2,
   SquareTerminal
 } from 'lucide-react'
-import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import {
   AGENT_HUB_DOCK_ZOOM,
@@ -109,7 +108,6 @@ export function AgentHubDock({
     expanded
   )
   const hasMirrors = mirrors.windows + mirrors.chips > 0
-  const canvasShortcut = useOptionalShortcutLabel('agentHub.toggleCanvas')
   const canvasLabel = canvas?.open
     ? translate('agentHub.canvas.leave', 'Leave the canvas')
     : translate('agentHub.dock.openCanvas', 'Open the canvas')
@@ -124,6 +122,7 @@ export function AgentHubDock({
         }
         side={side}
         className={DOCK_BUTTON}
+        actionId="agentHub.dockMirrors"
         disabled={!hasMirrors}
         onClick={onToggleMirrors}
       >
@@ -252,7 +251,8 @@ export function AgentHubDock({
             {hasMirrors ? mirrorsButton : null}
             {canvas ? (
               <DockButton
-                label={canvasShortcut ? `${canvasLabel} (${canvasShortcut})` : canvasLabel}
+                label={canvasLabel}
+                actionId="agentHub.toggleCanvas"
                 side={side}
                 className={DOCK_BUTTON}
                 pressed={canvas.open}
@@ -286,6 +286,7 @@ export function AgentHubDock({
                 label={translate('agentHub.dock.nextWaiting', 'Jump to the next agent waiting')}
                 side={side}
                 className={DOCK_BUTTON}
+                actionId="agentHub.nextWaiting"
                 disabled={counts.needsYou === 0}
                 onClick={onNextWaiting}
               >

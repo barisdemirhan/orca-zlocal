@@ -1,3 +1,4 @@
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { useEffect, useRef, useState } from 'react'
 import { Mic, Settings } from 'lucide-react'
 import {
@@ -119,6 +120,7 @@ export function AgentHubMirrorMicMenu({
             >
               <Mic />
               {translate('agentHub.mic.dictateAndImprove', 'Dictate and improve')}
+              <AgentHubShortcut actionId="voice.dictationImprove" slot="context" />
             </ContextMenuItem>
             <ContextMenuSeparator />
           </>

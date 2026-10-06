@@ -16,7 +16,7 @@ import {
   resolveHoveredWorkspaceDeleteTarget
 } from '../components/sidebar/hovered-workspace-delete'
 import { useAppStore } from '../store'
-import { getAgentHubCommands } from '@/components/agent-hub/agent-hub-commands'
+import { agentHubCommandHandlers } from '@/components/agent-hub/agent-hub-command-handlers'
 import type { usePluginCommands } from '@/store/plugin-panels'
 import { isGitRepoKind } from '../../../shared/repo-kind'
 import { openPluginsSettings } from '@/lib/open-plugins-settings'
@@ -181,41 +181,7 @@ export function createAppCommandHandlers(
         })
       }
     ],
-    [
-      'agentHub.toggle',
-      () => {
-        const hub = getAgentHubCommands()
-        return hub ? claim('agentHub.toggle', hub.toggle) : false
-      }
-    ],
-    [
-      'agentHub.nextWaiting',
-      () => {
-        const hub = getAgentHubCommands()
-        return hub ? claim('agentHub.nextWaiting', hub.jumpToNextWaiting) : false
-      }
-    ],
-    [
-      'agentHub.dockMirrors',
-      () => {
-        const hub = getAgentHubCommands()
-        return hub ? claim('agentHub.dockMirrors', hub.toggleMirrors) : false
-      }
-    ],
-    [
-      'agentHub.toggleCanvas',
-      () => {
-        const toggleCanvas = getAgentHubCommands()?.toggleCanvas
-        return toggleCanvas ? claim('agentHub.toggleCanvas', toggleCanvas) : false
-      }
-    ],
-    [
-      'agentHub.arrangeMirrors',
-      () => {
-        const arrangeMirrors = getAgentHubCommands()?.arrangeMirrors
-        return arrangeMirrors ? claim('agentHub.arrangeMirrors', arrangeMirrors) : false
-      }
-    ],
+    ...agentHubCommandHandlers(claim),
     [
       'floatingWorkspace.maximize',
       () => {

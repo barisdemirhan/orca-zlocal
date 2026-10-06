@@ -1,3 +1,4 @@
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -144,6 +145,7 @@ export function DockExtras({
 
 export function DockButton({
   label,
+  actionId,
   side,
   className,
   disabled,
@@ -152,6 +154,7 @@ export function DockButton({
   children
 }: {
   label: string
+  actionId?: string
   side: 'top' | 'bottom' | 'left' | 'right'
   className: string
   disabled?: boolean
@@ -175,7 +178,10 @@ export function DockButton({
         </button>
       </TooltipTrigger>
       <TooltipContent side={side} sideOffset={8}>
-        {label}
+        <span className="flex items-center gap-2">
+          {label}
+          <AgentHubShortcut actionId={actionId} />
+        </span>
       </TooltipContent>
     </Tooltip>
   )

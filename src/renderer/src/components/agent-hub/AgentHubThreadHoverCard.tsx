@@ -1,3 +1,4 @@
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { useNow } from '@/hooks/use-now'
@@ -134,6 +135,7 @@ function ThreadDetails({
             >
               <PictureInPicture2 aria-hidden className="size-3.5" />
               {translate('agentHub.hover.popout', 'Own window')}
+              <AgentHubShortcut actionId="agentHub.popOut" />
             </button>
           ) : null}
           {actions.onJump ? (

@@ -1,3 +1,4 @@
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Lightbulb, LightbulbOff } from 'lucide-react'
@@ -77,23 +78,25 @@ export function AgentHubDimToggle({
     mode === 'off' ? <Lightbulb className="size-3.5" /> : <LightbulbOff className="size-3.5" />
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {appearance === 'panel' ? (
-          <Button type="button" variant="outline" size="icon-xs" aria-label={label} title={label}>
-            {icon}
-          </Button>
-        ) : (
-          <button
-            type="button"
-            aria-label={label}
-            title={label}
-            data-active={mode !== 'off'}
-            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground data-[active=true]:text-status-warning"
-          >
-            {icon}
-          </button>
-        )}
-      </DropdownMenuTrigger>
+      <AgentHubActionTooltip label={label}>
+        <DropdownMenuTrigger asChild>
+          {appearance === 'panel' ? (
+            <Button type="button" variant="outline" size="icon-xs" aria-label={label}>
+              {icon}
+            </Button>
+          ) : (
+            <button
+              type="button"
+              aria-label={label}
+
+              data-active={mode !== 'off'}
+              className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground data-[active=true]:text-status-warning"
+            >
+              {icon}
+            </button>
+          )}
+        </DropdownMenuTrigger>
+      </AgentHubActionTooltip>
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel>
           {translate('agentHub.dim.title', 'Dim behind floating windows')}

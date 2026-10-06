@@ -1,3 +1,4 @@
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { useRef, useState } from 'react'
 import { AudioLines, Loader2, Mic, MicOff } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -195,7 +196,10 @@ export function AgentHubMirrorMicButton({
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          {hint}
+          <span className="flex items-center gap-2">
+            {hint}
+            <AgentHubShortcut actionId="voice.dictation" />
+          </span>
         </TooltipContent>
       </Tooltip>
     </AgentHubMirrorMicMenu>

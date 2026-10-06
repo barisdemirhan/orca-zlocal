@@ -1,3 +1,4 @@
+import { registerAgentHubSelectedTarget } from './agent-hub-active-target'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { useNow } from '@/hooks/use-now'
@@ -165,6 +166,9 @@ export function AgentHubPanel({
   }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, query])
   const activeIndex = Math.min(selectedIndex, items.length - 1)
   const selectedKey = items[activeIndex]?.key ?? null
+  const popoutTarget =
+    items[activeIndex]?.target ?? (cardThread ? threadItem(cardThread).target : null)
+  useEffect(() => registerAgentHubSelectedTarget(popoutTarget), [popoutTarget])
 
   useEffect(() => {
     rootRef.current

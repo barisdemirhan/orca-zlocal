@@ -1,3 +1,4 @@
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
 import { useAppStore } from '@/store'
@@ -36,24 +37,28 @@ function CardAction({
   icon,
   label,
   keys,
+  actionId,
   onClick
 }: {
   icon: React.ReactNode
   label: string
   keys: string[]
+  actionId?: string
   onClick: () => void
 }): React.JSX.Element {
   return (
-    <button
-      type="button"
-      tabIndex={-1}
-      onClick={onClick}
-      className="flex items-center gap-1.5 rounded-[7px] px-[7px] py-[5px] text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
-    >
-      {icon}
-      {label}
-      <HubKeys keys={keys} />
-    </button>
+    <AgentHubActionTooltip label={label} actionId={actionId}>
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={onClick}
+        className="flex items-center gap-1.5 rounded-[7px] px-[7px] py-[5px] text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+      >
+        {icon}
+        {label}
+        <HubKeys keys={keys} />
+      </button>
+    </AgentHubActionTooltip>
   )
 }
 
@@ -347,6 +352,7 @@ export function AgentHubAttentionCard({
           icon={<PictureInPicture2 className="size-[13px]" />}
           label={translate('agentHub.row.popOut', 'Pop out')}
           keys={popoutKeys}
+          actionId="agentHub.popOut"
           onClick={onPopout}
         />
       </div>

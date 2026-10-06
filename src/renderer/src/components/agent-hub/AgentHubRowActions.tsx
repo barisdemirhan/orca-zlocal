@@ -1,5 +1,6 @@
 import { Maximize2, Minus, PictureInPicture2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import {
   closeAgentHubMirror,
@@ -11,10 +12,12 @@ import {
 
 export function HubRowAction({
   label,
+  actionId,
   onClick,
   children
 }: {
   label: string
+  actionId?: string
   onClick: () => void
   children: React.ReactNode
 }): React.JSX.Element {
@@ -38,7 +41,10 @@ export function HubRowAction({
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={4}>
-        {label}
+        <span className="flex items-center gap-2">
+          {label}
+          <AgentHubShortcut actionId={actionId} />
+        </span>
       </TooltipContent>
     </Tooltip>
   )
@@ -72,6 +78,7 @@ export function HubRowMirrorActions({
       ) : null}
       {/* Why one button for all three: it stays mounted, so its hover and tooltip carry over. */}
       <HubRowAction
+        actionId={presence ? undefined : 'agentHub.popOut'}
         label={
           presence === 'window'
             ? translate('agentHub.row.sendToHub', 'Send to the hub')
