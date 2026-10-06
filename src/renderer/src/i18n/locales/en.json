@@ -21911,6 +21911,13 @@
       "noModels": "No downloaded models",
       "moreModels": "More in settings…",
       "settings": "Voice settings…"
+    },
+    "shortcut": {
+      "doubleTapHint": "You can also record a double tap of a modifier key.",
+      "suggestions": "Suggested for missing bindings: {{bindings}}",
+      "conflict": "{{binding}} conflicts with {{owners}}.",
+      "parseError": "Unable to parse shortcut.",
+      "saveError": "Failed to save shortcut."
     }
   },
   "workspace": {

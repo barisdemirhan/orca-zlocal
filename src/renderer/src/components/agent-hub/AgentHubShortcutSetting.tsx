@@ -1,119 +1,125 @@
-import { useState } from 'react'
-import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import { getShortcutPlatform } from '@/lib/shortcut-platform'
-import {
-  findKeybindingConflicts,
-  formatKeybindingList,
-  getEffectiveKeybindingsForDefinition,
-  getKeybindingDefinition,
-  type KeybindingActionId
-} from '../../../../shared/keybindings'
+import { formatKeybindingList } from '../../../../shared/keybindings'
 import { Button } from '../ui/button'
-import { SettingsRow } from '../settings/SettingsFormControls'
-import { AGENT_HUB_SUGGESTED_BINDINGS as SUGGESTED_BINDINGS } from './agent-hub-shortcut-suggestions'
+import { Label } from '../ui/label'
+import { ShortcutRecorderButton } from '../settings/ShortcutRecorderButton'
+import { ShortcutRemoveButton } from '../settings/ShortcutRemoveButton'
+import { AGENT_HUB_SUGGESTED_BINDINGS } from './agent-hub-shortcut-suggestions'
+import { useAgentHubShortcutEditor } from './use-agent-hub-shortcut-editor'
 
-const platform = getShortcutPlatform()
-
-function bindingsFor(
-  actionId: KeybindingActionId,
-  overrides: Parameters<typeof getEffectiveKeybindingsForDefinition>[2]
-): string[] {
-  const definition = getKeybindingDefinition(actionId)
-  return definition ? getEffectiveKeybindingsForDefinition(definition, platform, overrides) : []
-}
-
-/** Shows the hub's shortcuts and binds the suggested chords for any still unset. */
+/** Edits the same bindings as Keyboard Shortcuts, without leaving the hub's settings. */
 export function AgentHubShortcutSetting(): React.JSX.Element {
-  const keybindings = useAppStore((s) => s.keybindings)
-  const setKeybindingOverride = useAppStore((s) => s.setKeybindingOverride)
-  const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
-  const [error, setError] = useState<string | null>(null)
-  const current = SUGGESTED_BINDINGS.map(([actionId]) => bindingsFor(actionId, keybindings))
-  // Why per action: someone who bound the first two before the third existed still gets offered it.
-  const missing = SUGGESTED_BINDINGS.filter((_, index) => (current[index] ?? []).length === 0)
-  const unbound = missing.length > 0
-  const shown = (index: number): string =>
-    formatKeybindingList(current[index] ?? [], platform) ||
-    translate('auto.components.settings.ExperimentalPane.agentHub.shortcutNotSet', 'not set')
-  const suggestedLabel = formatKeybindingList(
-    missing.map(([, binding]) => binding),
-    platform
+  const editor = useAgentHubShortcutEditor()
+  const missing = AGENT_HUB_SUGGESTED_BINDINGS.filter(
+    ([actionId]) => editor.bindingsFor(actionId).length === 0
   )
-
   const applySuggested = async (): Promise<void> => {
-    const next = { ...keybindings }
+    const next = { ...editor.keybindings }
     for (const [actionId, binding] of missing) {
       next[actionId] = [binding]
     }
-    const conflict = findKeybindingConflicts(platform, next).find((candidate) =>
-      missing.some(([actionId]) => candidate.actionIds.includes(actionId))
-    )
-    if (conflict) {
-      const owners = conflict.actionIds
-        .filter((actionId) => !missing.some(([own]) => own === actionId))
-        .map((actionId) => getKeybindingDefinition(actionId)?.title ?? actionId)
-        .join(', ')
-      setError(
-        translate(
-          'auto.components.settings.ExperimentalPane.agentHub.shortcutTaken',
-          '{{value0}} is already used by {{value1}}. Pick other keys in Keyboard Shortcuts.',
-          { value0: formatKeybindingList([conflict.binding], platform), value1: owners }
-        )
+    if (
+      !editor.checkConflicts(
+        missing.map(([actionId]) => actionId),
+        next
       )
+    ) {
       return
     }
-    setError(null)
-    try {
-      for (const [actionId, binding] of missing) {
-        await setKeybindingOverride(actionId, [binding])
+    editor.cancelRecording()
+    for (const [actionId, binding] of missing) {
+      if (!(await editor.saveBindings(actionId, [binding]))) {
+        break
       }
-    } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure))
     }
   }
-
   return (
-    <SettingsRow
-      label={translate('auto.components.settings.ExperimentalPane.agentHub.shortcuts', 'Shortcuts')}
-      description={
-        error ??
-        (missing.length === SUGGESTED_BINDINGS.length
-          ? translate(
-              'auto.components.settings.ExperimentalPane.agentHub.shortcutsUnset',
-              'Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub, arrange the mirrors).',
-              { value0: suggestedLabel }
-            )
-          : translate(
-              'auto.components.settings.ExperimentalPane.agentHub.shortcutsSet',
-              'Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}} · Arrange the mirrors: {{value3}}',
-              {
-                value0: shown(0),
-                value1: shown(1),
-                value2: shown(2),
-                value3: shown(3)
-              }
-            ))
-      }
-      control={
-        unbound ? (
+    <div className="min-w-0 space-y-3 py-3" data-agent-hub-shortcuts>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Label>
+          {translate('auto.components.settings.ExperimentalPane.agentHub.shortcuts', 'Shortcuts')}
+        </Label>
+        {missing.length > 0 ? (
           <Button type="button" variant="outline" size="xs" onClick={() => void applySuggested()}>
             {translate(
               'auto.components.settings.ExperimentalPane.agentHub.useSuggested',
               'Use these'
             )}
           </Button>
-        ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            onClick={() => openSettingsTarget({ pane: 'shortcuts', repoId: null })}
-          >
-            {translate('auto.components.settings.ExperimentalPane.agentHub.editShortcuts', 'Edit')}
-          </Button>
+        ) : null}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {translate(
+          'agentHub.shortcut.doubleTapHint',
+          'You can also record a double tap of a modifier key.'
+        )}
+      </p>
+      {missing.length > 0 ? (
+        <p className="text-xs text-muted-foreground">
+          {translate(
+            'agentHub.shortcut.suggestions',
+            'Suggested for missing bindings: {{bindings}}',
+            {
+              bindings: formatKeybindingList(
+                missing.map(([, binding]) => binding),
+                editor.platform
+              )
+            }
+          )}
+        </p>
+      ) : null}
+      {AGENT_HUB_SUGGESTED_BINDINGS.map(([actionId]) => {
+        const definition = editor.catalog.definitionsByAction.get(actionId)
+        if (!definition) {
+          return null
+        }
+        const bindings = editor.bindingsFor(actionId)
+        const slots = [...bindings, null]
+        return (
+          <div key={actionId} className="space-y-1" data-agent-hub-shortcut={actionId}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="min-w-0 text-xs">{definition.title}</span>
+              <div className="flex max-w-full flex-wrap items-center justify-end gap-1">
+                {slots.map((binding, index) => (
+                  <div key={binding ?? 'append'} className="flex items-center gap-1">
+                    <ShortcutRecorderButton
+                      actionId={actionId}
+                      title={definition.title}
+                      platform={editor.platform}
+                      isDigitIndex={false}
+                      binding={binding}
+                      bindingIndex={index}
+                      bindingCount={bindings.length}
+                      isAppendSlot={binding === null}
+                      recording={
+                        editor.recordingActionId === actionId &&
+                        editor.recordingBindingIndex === index
+                      }
+                      onStartRecording={editor.startRecording}
+                      onCancelRecording={editor.cancelRecording}
+                      onCapture={(id, input) => void editor.capture(id, input)}
+                      onClearError={editor.clearError}
+                    />
+                    {binding !== null ? (
+                      <ShortcutRemoveButton
+                        actionId={actionId}
+                        title={definition.title}
+                        bindingIndex={index}
+                        onRemove={editor.remove}
+                      />
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {editor.errors[actionId] ? (
+              <p role="alert" className="text-xs text-destructive">
+                {editor.errors[actionId]}
+              </p>
+            ) : null}
+          </div>
         )
-      }
-    />
+      })}
+    </div>
   )
 }

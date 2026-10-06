@@ -2,12 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import {
-  findKeybindingConflictsForDefinitions,
-  formatKeybindingList,
   getEffectiveKeybindingsForDefinition,
   getKeybindingDefinition,
   keybindingFromInputForAction,
-  normalizeKeybindingListForAction,
   type KeybindingActionId,
   type KeybindingDefinition,
   type KeybindingInput
@@ -16,11 +13,7 @@ import { EMPTY_DISABLED_TUI_AGENTS } from './shortcut-groups'
 import { useAppStore } from '../../store'
 import { KeybindingsFileActions } from './KeybindingsFileActions'
 import { SettingsSubsectionHeader } from './SettingsFormControls'
-import {
-  hasCommonBindingOverride,
-  removeBindingOverride,
-  sameBindings
-} from './keybinding-override-edits'
+import { hasCommonBindingOverride } from './keybinding-override-edits'
 import { ShortcutFilterRail, type ShortcutFilter } from './ShortcutFilterRail'
 import { ShortcutRowsList } from './ShortcutRowsList'
 import { ShortcutTerminalPolicyControl } from './ShortcutTerminalPolicyControl'
@@ -42,6 +35,7 @@ import { buildShortcutRowVisibility } from './shortcut-row-visibility'
 import { useMacCapturedDigitChords } from './use-mac-captured-digit-chords'
 import { keybindingValidationErrorText } from './keybinding-diagnostic-text'
 import { KeybindingFileDiagnostics } from './KeybindingFileDiagnostics'
+import { useShortcutBindingSave } from '../agent-hub/use-shortcut-binding-save'
 
 const isMac = navigator.userAgent.includes('Mac')
 const platform: NodeJS.Platform = isMac
@@ -80,7 +74,6 @@ export function ShortcutsPane(): React.JSX.Element {
   )
   const agentHubEnabled = useAppStore((state) => state.settings?.experimentalAgentHub === true)
   const mountedRef = useMountedRef()
-  const [errors, setErrors] = useState<Partial<Record<KeybindingActionId, string>>>({})
   const [recordingActionId, setRecordingActionId] = useState<KeybindingActionId | null>(null)
   const [recordingBindingIndex, setRecordingBindingIndex] = useState<number | null>(null)
   const [disableMemory, setDisableMemory] = useState<Partial<Record<KeybindingActionId, string[]>>>(
@@ -100,25 +93,26 @@ export function ShortcutsPane(): React.JSX.Element {
     return () => window.api.ui.setShortcutRecorderFocused(false)
   }, [recordingActionId])
 
-  const { groups, definitions, definitionsByAction, ignoredConflictActionIds, conflictByAction } =
-    useMemo(
-      () =>
-        buildShortcutDefinitionCatalog({
-          disabledTuiAgents,
-          pluginCommands,
-          keybindings,
-          platform,
-          macCapturedDigitChords,
-          missionControlConflictMessage
-        }),
-      [
+  const catalog = useMemo(
+    () =>
+      buildShortcutDefinitionCatalog({
         disabledTuiAgents,
+        pluginCommands,
         keybindings,
+        platform,
         macCapturedDigitChords,
-        missionControlConflictMessage,
-        pluginCommands
-      ]
-    )
+        missionControlConflictMessage
+      }),
+    [
+      disabledTuiAgents,
+      keybindings,
+      macCapturedDigitChords,
+      missionControlConflictMessage,
+      pluginCommands
+    ]
+  )
+  const { groups, definitionsByAction, conflictByAction } = catalog
+  const { errors, setErrors, saveBindings } = useShortcutBindingSave(platform, catalog)
   const definitionForAction = (actionId: KeybindingActionId): KeybindingDefinition | null =>
     definitionsByAction.get(actionId) ?? getKeybindingDefinition(actionId)
   const effectiveBindingsForAction = (
@@ -158,78 +152,6 @@ export function ShortcutsPane(): React.JSX.Element {
       terminalShortcutPolicy
     ]
   )
-
-  const saveBindings = async (
-    actionId: KeybindingActionId,
-    normalized: string[]
-  ): Promise<boolean> => {
-    const normalizedResult = normalizeKeybindingListForAction(actionId, normalized.join(', '))
-    if (!Array.isArray(normalizedResult)) {
-      setErrors((prev) => ({
-        ...prev,
-        [actionId]: normalizedResult.ok
-          ? translate('settings.shortcuts.parseFailed', 'Unable to parse shortcut.')
-          : keybindingValidationErrorText(normalizedResult)
-      }))
-      return false
-    }
-
-    const definition = definitionForAction(actionId)
-    if (!definition) {
-      setErrors((prev) => ({
-        ...prev,
-        [actionId]: translate(
-          'auto.components.settings.ShortcutsPane.shortcutUnavailable',
-          'Shortcut is no longer available.'
-        )
-      }))
-      return false
-    }
-    const defaults = getEffectiveKeybindingsForDefinition(definition, platform, {})
-    const next =
-      (sameBindings(normalizedResult, defaults) ||
-        (normalizedResult.length === 0 && defaults.length === 0)) &&
-      !hasCommonBindingOverride(keybindingSnapshot, actionId)
-        ? removeBindingOverride(keybindings, actionId)
-        : { ...keybindings, [actionId]: normalizedResult }
-    const blockingConflict = findKeybindingConflictsForDefinitions(definitions, platform, next, {
-      ignoredActionIds: ignoredConflictActionIds
-    }).find((conflict) => conflict.actionIds.includes(actionId))
-    if (blockingConflict) {
-      const labels = blockingConflict.actionIds
-        .filter((id) => id !== actionId)
-        .map((id) => definitionsByAction.get(id)?.title ?? id)
-        .join(', ')
-      setErrors((prev) => ({
-        ...prev,
-        [actionId]: translate(
-          'auto.components.settings.shortcutDefinitionCatalog.bindingConflict',
-          '{{binding}} conflicts with {{actions}}.',
-          { binding: formatKeybindingList([blockingConflict.binding], platform), actions: labels }
-        )
-      }))
-      return false
-    }
-
-    setErrors((prev) => ({ ...prev, [actionId]: undefined }))
-    try {
-      const matchesDefault =
-        sameBindings(normalizedResult, defaults) ||
-        (normalizedResult.length === 0 && defaults.length === 0)
-      await (matchesDefault && !hasCommonBindingOverride(keybindingSnapshot, actionId)
-        ? resetKeybindingOverride(actionId)
-        : setKeybindingOverride(actionId, normalizedResult))
-      return true
-    } catch (error) {
-      if (mountedRef.current) {
-        setErrors((prev) => ({
-          ...prev,
-          [actionId]: error instanceof Error ? error.message : 'Failed to save shortcut.'
-        }))
-      }
-      return false
-    }
-  }
 
   const captureBinding = async (
     actionId: KeybindingActionId,

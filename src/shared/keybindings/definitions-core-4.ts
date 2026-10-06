@@ -48,8 +48,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Global',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'agents', 'hub', 'inbox', 'status bar', 'toggle'],
-    // Why: unbound like dashboard.toggle, so an experiment never claims a chord users already
-    // assigned; the hub's settings offer Mod+Alt+J / Mod+Alt+Shift+J in one click.
+    // Unbound until opted in: experiments must not claim users' existing chords.
     defaultBindings: platformBindings([]),
     allowInTerminal: true
   },
