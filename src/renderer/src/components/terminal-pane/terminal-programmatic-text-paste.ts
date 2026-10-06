@@ -12,19 +12,25 @@ type HandleTerminalProgrammaticTextPasteArgs = {
   tabId: string
   getManager: () => PaneManager | null
   getPaneTransports: () => Map<number, PtyTransport>
+  shouldFocusAfterPaste?: () => boolean
+  onFinished?: () => void
 }
 
 export function handleTerminalProgrammaticTextPaste({
   detail,
   tabId,
   getManager,
-  getPaneTransports
+  getPaneTransports,
+  shouldFocusAfterPaste = () => true,
+  onFinished = () => {}
 }: HandleTerminalProgrammaticTextPasteArgs): void {
   if (!detail?.tabId || detail.tabId !== tabId || !detail.text) {
+    onFinished()
     return
   }
   const manager = getManager()
   if (!manager) {
+    onFinished()
     return
   }
   const panes = manager.getPanes()
@@ -33,6 +39,7 @@ export function handleTerminalProgrammaticTextPaste({
       ? (panes.find((candidate) => candidate.id === detail.paneId) ?? null)
       : (manager.getActivePane() ?? panes[0])
   if (!pane) {
+    onFinished()
     return
   }
   const paneTransports = getPaneTransports()
@@ -66,6 +73,8 @@ export function handleTerminalProgrammaticTextPaste({
       return
     }
     recordTerminalUserInputForLeaf(tabId, pane.leafId)
-    pane.terminal.focus()
-  })
+    if (shouldFocusAfterPaste()) {
+      pane.terminal.focus()
+    }
+  }).finally(onFinished)
 }

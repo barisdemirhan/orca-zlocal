@@ -8,6 +8,7 @@ export function createPreviewGridClaim(args: {
   ptyId: string
   container: HTMLElement
   getTerminal: () => Terminal | null
+  isVisible?: () => boolean
 }): { schedule: () => void; dispose: () => void } {
   let lastRequestedFit: string | null = null
   let timer: ReturnType<typeof setTimeout> | null = null
@@ -15,7 +16,7 @@ export function createPreviewGridClaim(args: {
 
   const request = (): void => {
     const terminal = args.getTerminal()
-    if (disposed || !terminal) {
+    if (disposed || !terminal || args.isVisible?.() === false) {
       return
     }
     const screen = args.container.querySelector<HTMLElement>('.xterm-screen')

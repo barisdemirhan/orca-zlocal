@@ -1,4 +1,5 @@
 import type { TerminalTab } from '../../../shared/terminal-tab-types'
+import { hasTerminalMountRetentionLease } from './terminal-pane/terminal-mount-retention-leases'
 import {
   TERMINAL_WORKTREE_COLD_PARK_DELAY_MS,
   canParkTerminalWorktreeRenderers,
@@ -86,6 +87,7 @@ export function collectTerminalParkingPassCandidates(controller: TerminalParking
       isVisible,
       shouldMeasureHiddenWorktree,
       hasActivityTerminalPortal,
+      hasMountRetentionLease: hasTerminalMountRetentionLease(worktreeId),
       hiddenSinceMs: terminalWorktreeHiddenSinceRef.current.get(worktreeId) ?? null,
       parkCooldownUntilMs: terminalWorktreeParkCooldownUntilRef.current.get(worktreeId) ?? null
     })

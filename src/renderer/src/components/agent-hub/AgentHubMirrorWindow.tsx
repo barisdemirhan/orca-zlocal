@@ -32,6 +32,7 @@ import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
 import { toggleAgentHubFamilyBar, useAgentHubFamilyBarShown } from './agent-hub-family-bar'
 import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { returnRetainedPaneDestinationHome } from '../tab-group/retained-pane-destinations'
 
 const LEAVE_MS = 140
 // A tab that has not attached by then is not coming back on its own.
@@ -48,6 +49,8 @@ export function AgentHubMirrorWindow({
   location,
   stackIndex,
   besideHubPanel,
+  previewVisible = true,
+  previewFocus = true,
   surface,
   nudge,
   onNudged,
@@ -70,6 +73,8 @@ export function AgentHubMirrorWindow({
   stackIndex: number
   /** The hub's panel is open: a window opening now takes a place beside it. */
   besideHubPanel: boolean
+  previewVisible?: boolean
+  previewFocus?: boolean
   /**
    * How the terminal is shown: the real pane moved in (`portal`), a note while the pane is on
    * screen in the workspace (`in-workspace`), or the dashboard's preview for floating terminals.
@@ -95,10 +100,17 @@ export function AgentHubMirrorWindow({
   onReveal: () => void
 }): React.JSX.Element {
   const mirrorKey = agentHubPaneTargetKey(target)
+  const previousSlotRef = useRef<HTMLDivElement | null>(null)
   const { geometry, focus, settling, sectionRef, beginDrag, onPointerMove, endDrag } =
     useMirrorWindowGeometry(mirrorKey, besideHubPanel)
   const slotRef = useCallback(
-    (element: HTMLDivElement | null) => onSlot(mirrorKey, element),
+    (element: HTMLDivElement | null) => {
+      if (!element && previousSlotRef.current) {
+        returnRetainedPaneDestinationHome(previousSlotRef.current)
+      }
+      previousSlotRef.current = element
+      onSlot(mirrorKey, element)
+    },
     [onSlot, mirrorKey]
   )
   const ptyId = useAgentHubLivePty(
@@ -314,6 +326,8 @@ export function AgentHubMirrorWindow({
           key={ptyId}
           ptyId={ptyId}
           terminalInput={terminalInput}
+          visible={previewVisible}
+          focusOnActivate={previewFocus}
           className="h-auto min-h-0 flex-1"
         />
       ) : (

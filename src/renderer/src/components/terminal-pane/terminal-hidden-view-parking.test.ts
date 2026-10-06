@@ -167,6 +167,22 @@ describe('canParkTerminalWorktreeRenderers', () => {
   it('parks hidden local terminal renderers after the idle delay', () => {
     expect(canParkTerminalWorktreeRenderers(base)).toBe(true)
   })
+  it('holds an open mirror or dictation mount lease past the parking deadline', () => {
+    expect(
+      canParkTerminalWorktreeRenderers({
+        ...base,
+        hasMountRetentionLease: true,
+        nowMs: nowMs + 1_000_000
+      })
+    ).toBe(false)
+    expect(
+      canParkTerminalWorktreeRenderers({
+        ...base,
+        hasMountRetentionLease: false,
+        nowMs: nowMs + 1_000_000
+      })
+    ).toBe(true)
+  })
 
   it('parks a hidden SSH worktree only under the SSH restore policy', () => {
     const sshArgs = {

@@ -86,6 +86,10 @@ import {
 import { BACKGROUND_WORKTREE_MEASURE_WINDOW_MS } from '../terminal/background-terminal-worktree-visibility'
 import { queueTerminalPaneSplitRequest } from './terminal-pane-split-request-routing'
 import { useTerminalTabColdParking } from './use-terminal-tab-cold-parking'
+import {
+  setTerminalMirrorMountLeases,
+  acquireTerminalInputMountLease
+} from './terminal-mount-retention-leases'
 
 const WORKTREE_ID = 'wt-1'
 
@@ -115,6 +119,7 @@ describe('useTerminalTabColdParking measure-clock contract', () => {
   })
 
   afterEach(() => {
+    act(() => setTerminalMirrorMountLeases([]))
     vi.useRealTimers()
     mocks.exemptTabIds = new Set()
     mocks.exemptSelectCalls = 0
@@ -122,6 +127,25 @@ describe('useTerminalTabColdParking measure-clock contract', () => {
     mocks.storeState.terminalLayoutsByTabId = {}
     mocks.storeState.sleepingAgentSessionsByPaneKey = {}
     mocks.storeState.runtimeStatusByEnvironmentId = new Map()
+  })
+
+  it('keeps a mirrored origin mounted through background, forced and activation-deferred parks until dictation ends', () => {
+    setTerminalMirrorMountLeases([{ worktreeId: WORKTREE_ID, tabId: 'tab-1' }])
+    const releaseInput = acquireTerminalInputMountLease({ worktreeId: WORKTREE_ID, tabId: 'tab-1' })
+    const args = {
+      ...hookArgs(false),
+      coldParkTerminalPanes: true,
+      isForceParked: true,
+      activationDeferredMountTabIds: new Set(['tab-1', 'tab-2'])
+    }
+    const { result } = renderHook(() => useTerminalTabColdParking(args))
+    expect(result.current.has('tab-1')).toBe(false)
+    expect(result.current.has('tab-2')).toBe(true)
+    act(() => setTerminalMirrorMountLeases([]))
+    act(() => vi.advanceTimersByTime(1_000_000))
+    expect(result.current.has('tab-1')).toBe(false)
+    act(releaseInput)
+    expect(result.current.has('tab-1')).toBe(true)
   })
 
   // Why: leaving a worktree gives every tab the same hidden time.

@@ -5,6 +5,8 @@ import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { normalizeAgentHubMirrorWindowCap } from '../../../../shared/agent-hub-settings'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
+import { setTerminalMirrorMountLeases } from '../terminal-pane/terminal-mount-retention-leases'
 import {
   setAgentHubTerminalPortals,
   type ActivityTerminalPortalTarget
@@ -125,11 +127,7 @@ export function AgentHubMirrors({
       windows.map((target) => {
         const leafId = state.terminalLayoutsByTabId[target.tab.id]?.activeLeafId
         const paneKey = target.paneKey ?? (leafId ? makePaneKey(target.tab.id, leafId) : null)
-        const onScreen =
-          !onCanvas &&
-          state.activeView === 'terminal' &&
-          state.activeWorktreeId === target.worktree.id &&
-          state.activeTabId === target.tab.id
+        const onScreen = isTerminalSourceVisible(state, target.worktree.id, target.tab.id, onCanvas)
         return `${paneKey ?? ''}\u0000${onScreen ? '1' : '0'}`
       })
     )
@@ -157,6 +155,8 @@ export function AgentHubMirrors({
         }
         return [
           {
+            owner: 'agent-hub',
+            priority: index,
             slotId: `agent-hub:${key}`,
             requestToken: `agent-hub:${key}:${paneKey}`,
             target: slot,
@@ -164,17 +164,25 @@ export function AgentHubMirrors({
             tabId: target.tab.id,
             paneKey,
             // Only the front window's pane takes keyboard focus on arrival.
-            active: index === windows.length - 1 && !hubOpen && !quiet
+            active: index === windows.length - 1 && !hubOpen && !quiet && !hidden
           }
         ]
       }),
-    [windows, slots, surfaces, hubOpen, quiet]
+    [windows, slots, surfaces, hubOpen, quiet, hidden]
   )
   // Why layout: publish before paint so the pane moves in the same frame the window opens.
   useLayoutEffect(() => {
     setAgentHubTerminalPortals(portals)
   }, [portals])
   useLayoutEffect(() => () => setAgentHubTerminalPortals([]), [])
+  useLayoutEffect(() => {
+    setTerminalMirrorMountLeases(
+      windows
+        .filter((target) => target.worktree.id !== FLOATING_TERMINAL_WORKTREE_ID)
+        .map((target) => ({ worktreeId: target.worktree.id, tabId: target.tab.id }))
+    )
+  }, [windows])
+  useLayoutEffect(() => () => setTerminalMirrorMountLeases([]), [])
   // Each mirror's microphone needs to know which pane a dictation started in.
   useEffect(trackAgentHubDictationOrigin, [])
 
@@ -243,6 +251,8 @@ export function AgentHubMirrors({
             location={locationOf(target)}
             stackIndex={index + 1}
             besideHubPanel={hubOpen}
+            previewVisible={!hidden && index === windows.length - 1 && !hubOpen && !quiet}
+            previewFocus={index === windows.length - 1 && !hubOpen && !quiet && !hidden}
             surface={surfaces[index]?.surface ?? 'portal'}
             // The window raises its own pane's alerts; the hub's bubble skips them.
             // A hidden window leaves its alert queued until it is back in sight.

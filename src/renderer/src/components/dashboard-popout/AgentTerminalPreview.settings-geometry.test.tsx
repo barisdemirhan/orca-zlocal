@@ -13,6 +13,7 @@ type PreviewInstance = {
   options: ITerminalOptions
   container: HTMLElement | null
   dispose: ReturnType<typeof vi.fn>
+  focus: ReturnType<typeof vi.fn>
 }
 const harness = vi.hoisted(() => ({ instances: new Array<PreviewInstance>() }))
 
@@ -157,6 +158,34 @@ async function settleGeometry(): Promise<void> {
     await vi.advanceTimersByTimeAsync(250)
   })
 }
+
+it('retains an inactive preview without focus or grid claims, including delayed attachment and passive restore', async () => {
+  let resolveConnection: ((result: TerminalPreviewConnectResult) => void) | undefined
+  connect.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        resolveConnection = resolve
+      })
+  )
+  const view = render(<AgentTerminalPreview ptyId="pty-1" visible focusOnActivate />)
+  view.rerender(<AgentTerminalPreview ptyId="pty-1" visible={false} focusOnActivate={false} />)
+  await act(async () =>
+    resolveConnection?.({ snapshot: { data: '', cols: 80, rows: 24, seq: 1 }, replay: [] })
+  )
+  await settleGeometry()
+  expect(harness.instances).toHaveLength(1)
+  expect(harness.instances[0].focus).not.toHaveBeenCalled()
+  expect(fit).not.toHaveBeenCalled()
+  view.rerender(<AgentTerminalPreview ptyId="pty-1" visible focusOnActivate={false} />)
+  await settleGeometry()
+  expect(harness.instances[0].focus).not.toHaveBeenCalled()
+  expect(fit).toHaveBeenCalledOnce()
+  view.rerender(<AgentTerminalPreview ptyId="pty-1" visible focusOnActivate />)
+  await settleGeometry()
+  expect(harness.instances[0].focus).toHaveBeenCalledOnce()
+  expect(harness.instances).toHaveLength(1)
+  expect(connect).toHaveBeenCalledOnce()
+})
 
 it.each([
   {

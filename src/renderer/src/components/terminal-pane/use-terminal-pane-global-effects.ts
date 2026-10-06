@@ -13,6 +13,7 @@ import type { IDisposable } from '@xterm/xterm'
 import { handleFocusTerminalPaneDetail } from './focus-terminal-pane-event'
 import { surfaceStaleAgentRow } from './stale-agent-row'
 import { useAppStore } from '@/store'
+import { useTerminalDictationInsertion } from './use-terminal-dictation-insertion'
 import { useTerminalScrollVisibilityMemory } from './use-terminal-scroll-visibility-memory'
 import { useTerminalContainerFitSync } from './use-terminal-container-fit-sync'
 import { handleTerminalProgrammaticTextPaste } from './terminal-programmatic-text-paste'
@@ -30,6 +31,7 @@ import { activePaneIsCoveredByNativeChat } from './native-chat-covered-pane'
 
 type UseTerminalPaneGlobalEffectsArgs = {
   tabId: string
+  worktreeId: string
   cwd?: string
   isActive: boolean
   isVisible: boolean
@@ -64,6 +66,7 @@ function reportRendererPtyVisibility(
 
 export function useTerminalPaneGlobalEffects({
   tabId,
+  worktreeId,
   isActive,
   isVisible,
   isChatViewMode = false,
@@ -79,7 +82,12 @@ export function useTerminalPaneGlobalEffects({
   isVisibleRef,
   toggleExpandPane
 }: UseTerminalPaneGlobalEffectsArgs): void {
-  // Start true so initially hidden panes suspend the WebGL context openTerminal creates instead of exhausting Chromium’s context budget.
+  const worktreeIdRef = useRef(worktreeId)
+  worktreeIdRef.current = worktreeId
+  // Starts true so the first render with isVisible=false triggers a
+  // suspendRendering(). Background worktrees that mount hidden would
+  // otherwise leak WebGL contexts — openTerminal() unconditionally creates
+  // one — and exhaust Chromium's ~8-context budget across worktrees.
   const wasVisibleRef = useRef(true)
   const wasWorktreeActiveRef = useRef(isWorktreeActive)
   const hasCompletedVisibleResumeRef = useRef(false)
@@ -87,7 +95,12 @@ export function useTerminalPaneGlobalEffects({
   const hiddenReasonRef = useRef<TerminalHiddenReason | null>(null)
   const warmedWhileHiddenRef = useRef(false)
   const rendererVisible = isVisible && isWorktreeActive
-  // Watch leaf → PTY rebinds even without activity/visibility changes so main grants the live PTY its interactive reserve.
+  // Why: the active pane can rebind to a new PTY (deferred reattach / eager
+  // adopt) or switch active leaf without isActive/isVisible/isWorktreeActive
+  // flipping. Derive the active leaf's live PTY reactively from the same
+  // leaf→PTY binding the reattach path writes, so the active-renderer-pty report
+  // below re-fires on rebind — otherwise main keeps the stale id and the live
+  // PTY loses its interactive reserve.
   const activeLeafPtyId = useAppStore((state) => {
     const layout = state.terminalLayoutsByTabId[tabId]
     const activeLeafId = layout?.activeLeafId
@@ -280,38 +293,11 @@ export function useTerminalPaneGlobalEffects({
     return () => window.removeEventListener(PASTE_TERMINAL_TEXT_EVENT, onPasteText)
   }, [tabId, managerRef, paneTransportsRef])
 
-  // Global dictation events must reach only the active pane or every mounted tab inserts the text.
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return
-    }
-    const onDictationInsert = (event: Event): void => {
-      if (!isActiveRef.current) {
-        return
-      }
-      const detail = (
-        event as CustomEvent<string | { text?: string; tabId?: string; paneId?: number }>
-      ).detail
-      const text = typeof detail === 'string' ? detail : detail?.text
-      if (!text) {
-        return
-      }
-      if (typeof detail === 'object' && detail.tabId && detail.tabId !== tabId) {
-        return
-      }
-      const requestedPaneId = typeof detail === 'object' ? detail.paneId : undefined
-      handleTerminalProgrammaticTextPaste({
-        detail: {
-          tabId,
-          text,
-          ...(typeof requestedPaneId === 'number' ? { paneId: requestedPaneId } : {})
-        },
-        tabId,
-        getManager: () => managerRef.current,
-        getPaneTransports: () => paneTransportsRef.current
-      })
-    }
-    document.addEventListener('dictation:insertText', onDictationInsert)
-    return () => document.removeEventListener('dictation:insertText', onDictationInsert)
-  }, [isActiveRef, managerRef, paneTransportsRef, tabId])
+  useTerminalDictationInsertion({
+    tabId,
+    worktreeIdRef,
+    managerRef,
+    paneTransportsRef,
+    isActiveRef
+  })
 }

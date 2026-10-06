@@ -1,9 +1,13 @@
 // @vitest-environment happy-dom
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
-import { useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { RetainedPaneHost } from './RetainedPaneHost'
 import { registerTabGroupBody } from './tab-group-body-geometry'
+import { PaneManager } from '@/lib/pane-manager/pane-manager'
+import { Terminal } from '@xterm/headless'
+import { captureInsertionTarget, insertText } from '../dictation/dictation-insertion-target'
+import { returnRetainedPaneDestinationHome } from './retained-pane-destinations'
 
 const disconnect = vi.fn()
 const observerCreated = vi.fn()
@@ -142,9 +146,7 @@ it('measures a group once for all of its visible panes', () => {
   anchors[0].getBoundingClientRect = measureBody
   act(() => notifyResize())
   expect(measureBody).toHaveBeenCalledTimes(1)
-  const hosts = Array.from(
-    view.container.querySelectorAll<HTMLElement>('[data-retained-pane-host]')
-  )
+  const hosts = Array.from(view.container.querySelectorAll<HTMLElement>('.isolate'))
   expect(hosts.map((host) => host.style.width)).toEqual(['300px', '300px', '300px'])
 
   const removeListener = vi.spyOn(window, 'removeEventListener')
@@ -224,4 +226,93 @@ it('mounts a pane at once when it has no group body to measure', () => {
     </RetainedPaneHost>
   )
   expect(view.getByRole('textbox')).toBeTruthy()
+})
+
+it('preserves the manager, xterm, PTY binding and dictation target through 100 destination round trips', () => {
+  const cleanupMount = vi.fn()
+  const managers: PaneManager[] = []
+  const terminals: Terminal[] = []
+  const ptyBindings: object[] = []
+  function TerminalOwner(): React.JSX.Element {
+    const ref = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+      if (!ref.current) {
+        throw new Error('Terminal root missing')
+      }
+      const manager = new PaneManager(ref.current, { linkOpenHint: () => '' })
+      const terminal = new Terminal({ cols: 80, rows: 24 })
+      const binding = { ptyId: 'worktree-a@@retained-pty' }
+      managers.push(manager)
+      terminals.push(terminal)
+      ptyBindings.push(binding)
+      return () => {
+        cleanupMount()
+        manager.destroy()
+        terminal.dispose()
+      }
+    }, [])
+    return (
+      <div ref={ref} data-terminal-tab-id="tab-retained">
+        <div
+          className="pane"
+          data-pane-id="7"
+          data-leaf-id="leaf-retained"
+          data-pty-id="worktree-a@@retained-pty"
+        >
+          <textarea className="xterm-helper-textarea" />
+        </div>
+      </div>
+    )
+  }
+  const mirror = document.createElement('div')
+  const activity = document.createElement('div')
+  document.body.append(mirror, activity)
+  const renderHost = (destination: HTMLElement | null, groupId = 'left') => (
+    <RetainedPaneHost
+      groupId={groupId}
+      isVisible={!destination}
+      retainContent
+      destination={destination}
+    >
+      <TerminalOwner />
+    </RetainedPaneHost>
+  )
+  const view = render(renderHost(null))
+  const home = view.container.firstElementChild
+  const root = view.container.querySelector('[data-terminal-tab-id]')
+  const textarea = view.getByRole('textbox')
+  textarea.focus()
+  const captured = captureInsertionTarget()
+  const insertion = vi.fn()
+  document.addEventListener('dictation:insertText', insertion)
+  for (let index = 0; index < 100; index++) {
+    view.rerender(renderHost(index % 2 ? activity : mirror))
+    expect((index % 2 ? activity : mirror).contains(root)).toBe(true)
+    view.rerender(renderHost(null, index % 2 ? 'left' : 'right'))
+    expect(home?.contains(root)).toBe(true)
+  }
+  expect(managers).toHaveLength(1)
+  expect(terminals).toHaveLength(1)
+  expect(ptyBindings).toEqual([{ ptyId: 'worktree-a@@retained-pty' }])
+  expect(cleanupMount).not.toHaveBeenCalled()
+  expect(captured).toEqual({ kind: 'terminal', tabId: 'tab-retained', paneId: 7 })
+  if (!captured) {
+    throw new Error('Dictation origin missing')
+  }
+  insertText('retained origin', captured)
+  expect(insertion.mock.calls[0][0].detail).toEqual({
+    text: 'retained origin',
+    tabId: 'tab-retained',
+    paneId: 7
+  })
+  view.rerender(renderHost(mirror))
+  returnRetainedPaneDestinationHome(mirror)
+  expect(home?.contains(root)).toBe(true)
+  mirror.remove()
+  view.rerender(renderHost(null))
+  expect(cleanupMount).not.toHaveBeenCalled()
+  view.unmount()
+  expect(cleanupMount).toHaveBeenCalledOnce()
+  document.removeEventListener('dictation:insertText', insertion)
+  activity.remove()
 })

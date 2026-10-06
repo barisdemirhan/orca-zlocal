@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTerminalMountRetentionLeases } from './terminal-pane/terminal-mount-retention-leases'
 import { useAppStore } from '../store'
 import {
   TERMINAL_HIDDEN_WORKTREE_RETENTION_TTL_MS,
@@ -23,6 +24,7 @@ import {
 import type { TerminalParkingFoundation } from './use-terminal-parking-foundation'
 
 export function useTerminalParkingPass(controller: TerminalParkingFoundation): void {
+  const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activeView,
     activityTerminalPortals,
@@ -61,6 +63,7 @@ export function useTerminalParkingPass(controller: TerminalParkingFoundation): v
           isVisible: candidate.isVisible,
           shouldMeasureHiddenWorktree: candidate.shouldMeasureHiddenWorktree,
           hasActivityTerminalPortal: candidate.hasActivityTerminalPortal,
+          hasMountRetentionLease: candidate.hasMountRetentionLease,
           parkCooldownUntilMs: candidate.parkCooldownUntilMs ?? null,
           ordinaryParkingCovers: canOrdinarilyParkRetentionCandidate(controller, pass, candidate),
           hasPendingSpawnWork: tabs.some((tab) =>
@@ -203,6 +206,7 @@ export function useTerminalParkingPass(controller: TerminalParkingFoundation): v
   }, [
     activeView,
     activityTerminalPortals,
+    mountRetentionLeases,
     backgroundMountRevision,
     parkedCaptureDoneRef,
     pendingStartupByTabId,

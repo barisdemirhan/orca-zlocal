@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
+import {
+  hasTerminalMountRetentionLease,
+  useTerminalMountRetentionLeases
+} from './terminal-pane/terminal-mount-retention-leases'
 import { findActivityTerminalPortal } from './activity/activity-terminal-portal'
 import { shouldAutoCreateInitialTerminal } from './terminal/initial-terminal'
 import { findPendingWorktreeCreationId } from '@/lib/pending-worktree-creation'
@@ -58,6 +62,7 @@ type TerminalWatcherController = Pick<
 >
 
 export function useTerminalWatcherEffects(controller: TerminalWatcherController): void {
+  const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activationDeferredMountTabIdsByWorktreeRef,
     activeTabId,
@@ -120,7 +125,11 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
               worktreeId: workspaceId,
               tabId: tab.id
             })
-            if (!activityTerminalPortal && !evictionExemptTerminalTabIds.has(tab.id)) {
+            if (
+              !activityTerminalPortal &&
+              !hasTerminalMountRetentionLease(workspaceId, tab.id) &&
+              !evictionExemptTerminalTabIds.has(tab.id)
+            ) {
               mountedParkedTabIds.add(tab.id)
             }
           }
@@ -135,6 +144,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
             deferredTabIds?.has(tab.id) &&
             !mountedParkedTabIds.has(tab.id) &&
             canWatcherCoverParkedTerminalTab(workspaceId, tab) &&
+            !hasTerminalMountRetentionLease(workspaceId, tab.id) &&
             !findActivityTerminalPortal(activityTerminalPortals, {
               worktreeId: workspaceId,
               tabId: tab.id
@@ -149,6 +159,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
           .filter(
             (tab) =>
               canWatcherCoverParkedTerminalTab(workspaceId, tab) &&
+              !hasTerminalMountRetentionLease(workspaceId, tab.id) &&
               !findActivityTerminalPortal(activityTerminalPortals, {
                 worktreeId: workspaceId,
                 tabId: tab.id
@@ -173,6 +184,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
     activeTabId,
     activeView,
     activityTerminalPortals,
+    mountRetentionLeases,
     activeTabIdByWorktree,
     anyMountedWorktreeHasLayout,
     backgroundMountRevision,

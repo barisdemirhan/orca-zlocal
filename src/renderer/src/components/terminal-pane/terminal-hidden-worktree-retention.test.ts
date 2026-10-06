@@ -182,6 +182,23 @@ describe('selectRetentionForceParkedTerminalWorktrees', () => {
     nowMs
   }
 
+  it('keeps a mirrored worktree out of force-park beyond the cap and TTL', () => {
+    const worktrees = [
+      retentionCandidate('wt-mirror', nowMs - 2 * TERMINAL_HIDDEN_WORKTREE_RETENTION_TTL_MS, {
+        hasMountRetentionLease: true
+      })
+    ]
+    expect(
+      selectRetentionForceParkedTerminalWorktrees({ ...base, worktrees, retentionLimit: 0 })
+    ).toEqual(new Set())
+    expect(
+      selectRetentionForceParkedTerminalWorktrees({
+        ...base,
+        worktrees: worktrees.map((candidate) => ({ ...candidate, hasMountRetentionLease: false }))
+      })
+    ).toEqual(new Set(['wt-mirror']))
+  })
+
   it('returns empty when either kill switch is off', () => {
     const worktrees = [
       retentionCandidate('wt-1', nowMs - TERMINAL_HIDDEN_WORKTREE_RETENTION_TTL_MS)

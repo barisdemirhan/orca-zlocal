@@ -15,6 +15,7 @@ import { showDictationStartErrorToast } from './dictation-start-error-toast'
 import { useHoldDictationGesture } from './use-hold-dictation-gesture'
 import { DICTATION_CONTROL_EVENT, type DictationControlAction } from './dictation-control-events'
 import { publishDictationMeter } from './dictation-meter-store'
+import { useDictationTerminalMountLease } from './use-dictation-terminal-mount-lease'
 
 export function DictationController() {
   const dictationState = useAppStore((s) => s.dictationState)
@@ -36,6 +37,7 @@ export function DictationController() {
   const dictationRunRef = useRef(0)
   const holdGestureActiveRef = useRef(false)
   const insertionTargetRef = useRef<DictationInsertionTarget | null>(null)
+  useDictationTerminalMountLease(dictationState, insertionTargetRef)
   const activeSessionIdRef = useRef<string | null>(null)
   const stoppedSessionIdsRef = useRef(new Set<string>())
   const stoppedResolversRef = useRef(new Map<string, () => void>())

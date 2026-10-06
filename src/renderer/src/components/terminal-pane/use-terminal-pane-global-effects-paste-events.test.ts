@@ -5,6 +5,10 @@ import { PASTE_TERMINAL_TEXT_EVENT } from '@/constants/terminal'
 import { useTerminalPaneGlobalEffects } from './use-terminal-pane-global-effects'
 import { TERMINAL_PASTE_DIRECT_MAX_BYTES } from './terminal-paste-limits'
 import {
+  acquireTerminalInputMountLease,
+  hasTerminalMountRetentionLease
+} from './terminal-mount-retention-leases'
+import {
   cleanupGlobalEffectsTestWindow,
   installGlobalEffectsTestWindow
 } from './use-terminal-pane-global-effects-test-harness'
@@ -120,6 +124,63 @@ describe('useTerminalPaneGlobalEffects', () => {
     installGlobalEffectsTestWindow()
   })
 
+  it('inserts into the leased inactive dictation origin without focusing it or falling back to another pane', async () => {
+    const documentEvents = new EventTarget()
+    vi.stubGlobal('document', documentEvents)
+    const terminal = { focus: vi.fn(), modes: { bracketedPasteMode: false } }
+    const pane = { id: 7, leafId: 'origin-leaf', terminal }
+    const manager = { getPanes: () => [pane], getActivePane: () => pane, suspendRendering: vi.fn() }
+    const transport = { getPtyId: () => 'pty-origin', isConnected: () => true }
+    beginHookRender()
+    useTerminalPaneGlobalEffects({
+      tabId: 'origin-tab',
+      worktreeId: 'wt-origin',
+      isActive: false,
+      isVisible: false,
+      isSyncFitEnabled: false,
+      paneCount: 1,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: inactive effects and the paste path only use the supplied manager methods.
+      managerRef: { current: manager as never },
+      containerRef: { current: null },
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: short unbracketed dictation only reads the transport identity and connection state.
+      paneTransportsRef: { current: new Map([[7, transport]]) as never },
+      isActiveRef: { current: false },
+      isVisibleRef: { current: false },
+      toggleExpandPane: vi.fn()
+    })
+    const release = acquireTerminalInputMountLease({ worktreeId: 'wt-origin', tabId: 'origin-tab' })
+    try {
+      documentEvents.dispatchEvent(
+        new CustomEvent('dictation:insertText', {
+          detail: { tabId: 'origin-tab', paneId: 7, text: 'origin only' }
+        })
+      )
+      release()
+      expect(hasTerminalMountRetentionLease('wt-origin', 'origin-tab')).toBe(true)
+      await flushPasteTasks()
+      expect(hasTerminalMountRetentionLease('wt-origin', 'origin-tab')).toBe(false)
+      expect(mocks.pasteTerminalText).toHaveBeenCalledWith(terminal, 'origin only', {
+        forceBracketedPaste: false
+      })
+      expect(terminal.focus).not.toHaveBeenCalled()
+      mocks.pasteTerminalText.mockClear()
+      const releaseMissing = acquireTerminalInputMountLease({
+        worktreeId: 'wt-origin',
+        tabId: 'origin-tab'
+      })
+      documentEvents.dispatchEvent(
+        new CustomEvent('dictation:insertText', {
+          detail: { tabId: 'origin-tab', paneId: 99, text: 'closed pane' }
+        })
+      )
+      await flushPasteTasks()
+      expect(mocks.pasteTerminalText).not.toHaveBeenCalled()
+      releaseMissing()
+    } finally {
+      release()
+    }
+  })
+
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
@@ -148,6 +209,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     beginHookRender()
     useTerminalPaneGlobalEffects({
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       isActive: true,
       isVisible: true,
       isSyncFitEnabled: true,
@@ -205,6 +267,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     beginHookRender()
     useTerminalPaneGlobalEffects({
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       isActive: true,
       isVisible: true,
       isSyncFitEnabled: true,

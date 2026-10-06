@@ -1,4 +1,7 @@
 import { createPortal } from 'react-dom'
+import { useAppStore } from '../store'
+import { RetainedPaneHost } from './tab-group/RetainedPaneHost'
+import { useTerminalMountRetentionLeases } from './terminal-pane/terminal-mount-retention-leases'
 import TerminalPane from './terminal-pane/TerminalPane'
 import { TerminalRestoringPlaceholder } from './terminal-pane/TerminalRestoringPlaceholder'
 import { findActivityTerminalPortal } from './activity/activity-terminal-portal'
@@ -10,6 +13,8 @@ export function TerminalLegacyTerminalPanes({
 }: {
   controller: TerminalController
 }): React.JSX.Element {
+  const stableHosting = useAppStore((state) => state.settings?.experimentalAgentHub === true)
+  const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activeTabId,
     activeTabType,
@@ -63,7 +68,11 @@ export function TerminalLegacyTerminalPanes({
               {(tabsByWorktree[workspace.id] ?? []).map((tab) => {
                 const isActiveTerminalTab =
                   isVisible && tab.id === activeTabId && activeTabType === 'terminal'
+                const retained = mountRetentionLeases.some(
+                  (lease) => lease.worktreeId === workspace.id && lease.tabId === tab.id
+                )
                 if (
+                  !retained &&
                   !shouldMountBackgroundWorktreeTab(
                     backgroundMountTabIdsByWorktreeRef.current.get(workspace.id) ?? null,
                     tab.id
@@ -80,6 +89,7 @@ export function TerminalLegacyTerminalPanes({
                 if (
                   shouldColdParkTerminalPanes &&
                   !isActivityPortalTab &&
+                  !retained &&
                   !evictionExemptTerminalTabIds.has(tab.id)
                 ) {
                   return null
@@ -90,7 +100,11 @@ export function TerminalLegacyTerminalPanes({
                     tabId={tab.id}
                     worktreeId={workspace.id}
                     cwd={tab.startupCwd ?? workspace.path}
-                    isActive={isActiveTerminalTab || activityTerminalPortal?.active === true}
+                    isActive={
+                      stableHosting && activityTerminalPortal
+                        ? activityTerminalPortal.active
+                        : isActiveTerminalTab || activityTerminalPortal?.active === true
+                    }
                     isVisible={isActiveTerminalTab || isActivityPortalTab}
                     isWorktreeActive={isVisible || isActivityPortalTab}
                     isolatedPaneKey={activityTerminalPortal?.paneKey ?? null}
@@ -98,14 +112,31 @@ export function TerminalLegacyTerminalPanes({
                     onCloseTab={() => handleCloseTab(tab.id)}
                   />
                 )
-                if (activityTerminalPortal) {
-                  return createPortal(
-                    terminalPane,
-                    activityTerminalPortal.target,
-                    `activity-terminal-${tab.id}`
-                  )
+                if (!stableHosting) {
+                  return activityTerminalPortal
+                    ? createPortal(
+                        terminalPane,
+                        activityTerminalPortal.target,
+                        `activity-terminal-${tab.id}`
+                      )
+                    : terminalPane
                 }
-                return terminalPane
+                return (
+                  <RetainedPaneHost
+                    key={tab.id}
+                    groupId={undefined}
+                    unanchored
+                    retainContent
+                    isVisible={isActiveTerminalTab}
+                    measureWhileHidden={shouldMeasureHiddenWorktree}
+                    destination={activityTerminalPortal?.target}
+                    restoreFocusOnMove={
+                      activityTerminalPortal ? activityTerminalPortal.active : isActiveTerminalTab
+                    }
+                  >
+                    {terminalPane}
+                  </RetainedPaneHost>
+                )
               })}
             </div>
           )

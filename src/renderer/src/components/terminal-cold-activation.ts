@@ -1,4 +1,5 @@
 import { useAppStore } from '../store'
+import { getTerminalMountRetentionLeases } from './terminal-pane/terminal-mount-retention-leases'
 import {
   canAdmitTerminalTabsForStartup,
   canDeferColdActivationTabsForHost,
@@ -91,6 +92,11 @@ export function applyTerminalColdActivation(controller: TerminalParkingFoundatio
     for (const portal of activityTerminalPortals) {
       if (portal.worktreeId === renderedActiveWorktreeId) {
         immediateTabIds.add(portal.tabId)
+      }
+    }
+    for (const lease of getTerminalMountRetentionLeases()) {
+      if (lease.worktreeId === renderedActiveWorktreeId) {
+        immediateTabIds.add(lease.tabId)
       }
     }
     for (const tab of worktreeTabs) {

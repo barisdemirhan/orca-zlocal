@@ -1,6 +1,9 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import { returnRetainedPaneDestinationHome } from '../tab-group/retained-pane-destinations'
 
 export type ActivityTerminalPortalTarget = {
+  owner?: 'activity' | 'agent-hub'
+  priority?: number
   slotId: string
   requestToken: string
   target: HTMLElement
@@ -24,6 +27,8 @@ type ActivityTerminalPortalFieldEquals = (
 // Require every descriptor field in this keyed record; omitted equality checks would suppress publication and strand Terminal on stale routing.
 const ACTIVITY_TERMINAL_PORTAL_FIELD_EQUALS: readonly ActivityTerminalPortalFieldEquals[] =
   Object.values({
+    owner: (left, right) => left.owner === right.owner,
+    priority: (left, right) => left.priority === right.priority,
     slotId: (left, right) => left.slotId === right.slotId,
     requestToken: (left, right) => left.requestToken === right.requestToken,
     target: (left, right) => left.target === right.target,
@@ -56,6 +61,11 @@ export function setActivityTerminalPortals(targets: ActivityTerminalPortalTarget
   if (currentTargets === targets || haveSameActivityTerminalPortals(currentTargets, targets)) {
     return
   }
+  for (const previous of currentTargets) {
+    if (!targets.some((target) => target.target === previous.target)) {
+      returnRetainedPaneDestinationHome(previous.target)
+    }
+  }
   currentTargets = targets
   for (const subscriber of subscribers) {
     subscriber()
@@ -64,15 +74,22 @@ export function setActivityTerminalPortals(targets: ActivityTerminalPortalTarget
 
 // The Agent Hub's mirror windows: honored in every view, not only while Activity is open.
 let agentHubTargets: ActivityTerminalPortalTarget[] = []
-let combinedTargets: {
-  activity: ActivityTerminalPortalTarget[]
-  agentHub: ActivityTerminalPortalTarget[]
-  targets: ActivityTerminalPortalTarget[]
-} | null = null
+const combinedTargets = new WeakMap<
+  ActivityTerminalPortalTarget[],
+  {
+    agentHub: ActivityTerminalPortalTarget[]
+    targets: ActivityTerminalPortalTarget[]
+  }
+>()
 
 export function setAgentHubTerminalPortals(targets: ActivityTerminalPortalTarget[]): void {
   if (agentHubTargets === targets || haveSameActivityTerminalPortals(agentHubTargets, targets)) {
     return
+  }
+  for (const previous of agentHubTargets) {
+    if (!targets.some((target) => target.target === previous.target)) {
+      returnRetainedPaneDestinationHome(previous.target)
+    }
   }
   agentHubTargets = targets
   for (const subscriber of subscribers) {
@@ -87,14 +104,12 @@ function withAgentHubTargets(
   if (agentHubTargets.length === 0) {
     return activity
   }
-  if (combinedTargets?.activity !== activity || combinedTargets.agentHub !== agentHubTargets) {
-    combinedTargets = {
-      activity,
-      agentHub: agentHubTargets,
-      targets: [...activity, ...agentHubTargets]
-    }
+  let combined = combinedTargets.get(activity)
+  if (combined?.agentHub !== agentHubTargets) {
+    combined = { agentHub: agentHubTargets, targets: [...activity, ...agentHubTargets] }
+    combinedTargets.set(activity, combined)
   }
-  return combinedTargets.targets
+  return combined.targets
 }
 
 function subscribeActivityTerminalPortals(onStoreChange: () => void): () => void {
@@ -132,6 +147,22 @@ export function findActivityTerminalPortal(
   const matchingTab = targets.filter(
     (target) => target.worktreeId === query.worktreeId && target.tabId === query.tabId
   )
+  const hubTargets = matchingTab.filter((target) => target.owner === 'agent-hub')
+  if (hubTargets.length > 0) {
+    // Why: Hub ownership outranks Activity even when its quiet restore does not request focus.
+    const winner = hubTargets.toSorted(
+      (left, right) =>
+        (right.priority ?? 0) - (left.priority ?? 0) || left.slotId.localeCompare(right.slotId)
+    )[0]
+    if (
+      (query.slotId !== undefined && query.slotId !== winner.slotId) ||
+      (query.paneKey !== undefined && query.paneKey !== winner.paneKey) ||
+      (query.requestToken !== undefined && query.requestToken !== winner.requestToken)
+    ) {
+      return null
+    }
+    return winner
+  }
   if (
     query.slotId !== undefined ||
     query.paneKey !== undefined ||

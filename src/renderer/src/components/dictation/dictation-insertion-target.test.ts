@@ -2,6 +2,17 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getUtf8ByteLength } from '../../../../shared/utf8-byte-limits'
+import { act, renderHook } from '@testing-library/react'
+import { useAppStore } from '@/store'
+import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import type { TerminalTab } from '../../../../shared/terminal-tab-types'
+import { useDictationTerminalMountLease } from './use-dictation-terminal-mount-lease'
+import {
+  hasTerminalMountRetentionLease,
+  setTerminalMirrorMountLeases
+} from '../terminal-pane/terminal-mount-retention-leases'
+import type { DictationState } from '../../../../shared/speech-types'
+import type { DictationInsertionTarget } from './dictation-insertion-target'
 
 import {
   TEXT_CONTROL_PASTE_CHUNK_MAX_BYTES,
@@ -54,6 +65,44 @@ function installExecCommandMock(
 }
 
 describe('dictation insertion target', () => {
+  it('pins the numeric origin through starting, listening and finishing after mirror removal', () => {
+    const previous = useAppStore.getState()
+    const tab: TerminalTab = {
+      id: 'tab-origin',
+      worktreeId: 'wt-origin',
+      ptyId: 'wt-origin@@pty',
+      title: 'Origin',
+      customTitle: null,
+      color: null,
+      sortOrder: 0,
+      createdAt: 1
+    }
+    useAppStore.setState({
+      settings: createGlobalSettingsFixture({ experimentalAgentHub: true }),
+      tabsByWorktree: { 'wt-origin': [tab] }
+    })
+    const target: React.RefObject<DictationInsertionTarget | null> = {
+      current: { kind: 'terminal', tabId: tab.id, paneId: 7 }
+    }
+    const { rerender, unmount } = renderHook(
+      ({ state }: { state: DictationState }) => useDictationTerminalMountLease(state, target),
+      { initialProps: { state: 'starting' } }
+    )
+    try {
+      expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(true)
+      act(() => setTerminalMirrorMountLeases([]))
+      rerender({ state: 'listening' })
+      expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(true)
+      rerender({ state: 'stopping' })
+      expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(true)
+      target.current = null
+      rerender({ state: 'idle' })
+      expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(false)
+    } finally {
+      unmount()
+      useAppStore.setState(previous, true)
+    }
+  })
   it('dispatches terminal dictation with the captured pane target', () => {
     const listener = vi.fn()
     document.addEventListener('dictation:insertText', listener)

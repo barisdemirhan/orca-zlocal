@@ -174,6 +174,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     beginHookRender()
     useTerminalPaneGlobalEffects({
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       isActive: true,
       isVisible: true,
       isSyncFitEnabled: true,
@@ -241,6 +242,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     registerManagerForReset(manager)
     const baseArgs = {
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       managerRef: { current: manager as never },
       containerRef: { current: null },
       paneTransportsRef: { current: new Map() },
@@ -334,6 +336,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     beginHookRender()
     useTerminalPaneGlobalEffects({
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       managerRef: { current: manager as never },
       containerRef: { current: null },
       paneTransportsRef: { current: new Map() },
@@ -382,6 +385,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     registerManagerForReset(manager)
     const baseArgs = {
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       managerRef: { current: manager as never },
       containerRef: { current: null },
       paneTransportsRef: { current: new Map() },
@@ -449,6 +453,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     registerManagerForReset(manager)
     const baseArgs = {
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       managerRef: { current: manager as never },
       containerRef: { current: null },
       paneTransportsRef: { current: new Map() },
@@ -504,6 +509,7 @@ describe('useTerminalPaneGlobalEffects', () => {
     registerManagerForReset(manager)
     const baseArgs = {
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       managerRef: { current: manager as never },
       containerRef: { current: null },
       paneTransportsRef: { current: new Map() },
@@ -597,6 +603,7 @@ describe('useTerminalPaneGlobalEffects', () => {
 
     const baseArgs = {
       tabId: 'tab-1',
+      worktreeId: 'wt-1',
       managerRef: { current: manager as never },
       containerRef: { current: null },
       paneTransportsRef: { current: new Map() },
