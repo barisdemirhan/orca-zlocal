@@ -21755,6 +21755,8 @@
       "showInSidebar": "Show in sidebar",
       "returnToWorkspace": "Return to workspace",
       "tabCount": "{{value0}} tabs",
+      "tabCount_one": "{{value0}} tab",
+      "tabCount_other": "{{value0}} tabs",
       "addHint": "Add terminal to this mirror",
       "pickerSections": "Terminal lists",
       "available": "Available terminals",

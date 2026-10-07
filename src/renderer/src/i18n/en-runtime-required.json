@@ -1,4 +1,35 @@
 {
+  "agentHub": {
+    "alert": {
+      "more": "+{{value0}} more in the hub"
+    },
+    "footer": {
+      "answer": "Answer",
+      "move": "Move",
+      "popOut": "Pop out",
+      "tabs": "Tabs"
+    },
+    "mic": {
+      "dictateAndImprove": "Dictate and improve",
+      "mode": "Microphone action",
+      "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available."
+    },
+    "mirror": {
+      "tabCount_one": "{{value0}} tab",
+      "tabCount_other": "{{value0}} tabs"
+    },
+    "row": {
+      "sendToHub": "Send to the hub"
+    },
+    "tabToggle": {
+      "off": "Pop this terminal out when you leave the tab",
+      "on": "Pops out when you leave this tab (click to stop)"
+    },
+    "terminals": {
+      "searchPlaceholder": "Filter by terminal, project, group, or agent",
+      "shell": "Shell"
+    }
+  },
   "accounts": {
     "claude": {
       "switchSessions": {
@@ -627,6 +658,24 @@
           "0c9a33f468": "Capture app windows so agents can inspect visual state.",
           "4d03dec2d0": "Read app interface trees and perform requested actions.",
           "6b5a2cd3a5": "Accessibility"
+        },
+        "ExperimentalPane": {
+          "0277901cf7": "Adds an Agents entry to the left sidebar with a threaded worktree feed for completed agents, blocking questions, unread state, and worktree creation events. Experimental — the event model and UI may change.",
+          "24416f42cd": "Shared paths on worktrees",
+          "9762364929": "Uses APFS clone-copy on macOS when possible, otherwise symlinks configured folders or files into created worktrees.",
+          "a05bcdaf57": "Agents View",
+          "agentHub": {
+            "editShortcuts": "Edit",
+            "shortcutNotSet": "not set",
+            "shortcutTaken": "{{value0}} is already used by {{value1}}. Pick other keys in Keyboard Shortcuts.",
+            "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}} · Arrange the mirrors: {{value3}}",
+            "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub, arrange the mirrors)."
+          },
+          "f63ea281e3": "Threaded left-sidebar feed for agent completions and blocking states.",
+          "fb82ea1d7a": "Automatically materialize configured files or folders into newly created worktrees.",
+          "newWorktreeCardStyle": {
+            "copy": "Preview updated worktree-card layout, metadata placement, card-display menu options, and status presentation."
+          }
         },
         "McpConfigSection": {
           "detectedServers_one": "{{detected}} detected · {{count}} server",

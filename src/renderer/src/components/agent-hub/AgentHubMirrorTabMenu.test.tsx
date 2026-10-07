@@ -80,6 +80,8 @@ it('lists visible destination windows and routes submenu selection through the s
   await user.hover(submenu)
   const item = await screen.findByText('destination')
   const row = item.closest<HTMLElement>('[role="menuitem"]')!
+  expect(row.textContent).toContain('1 tab')
+  expect(row.textContent).not.toContain('1 tabs')
   expect(row.getAttribute('data-disabled')).toBeNull()
   expect(row.isConnected).toBe(true)
   await act(async () => {
@@ -114,6 +116,7 @@ it('excludes parked destinations and explains why a ten-tab destination is unava
   await user.hover(screen.getByText('Move to mirror'))
   const item = await screen.findByText('full destination')
   const row = item.closest<HTMLElement>('[role="menuitem"]')!
+  expect(row.textContent).toContain('10 tabs')
   expect(row.getAttribute('data-disabled')).toBe('')
   expect(row.title).toBe('A mirror can hold up to 10 terminals.')
   expect(screen.queryByText('parked destination')).toBeNull()

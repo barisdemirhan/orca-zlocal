@@ -45,6 +45,7 @@ function Destination({
           <span className="max-w-48 truncate">{title}</span>
           <span className="ml-auto shrink-0 text-xs text-muted-foreground">
             {translate('agentHub.mirror.tabCount', '{{value0}} tabs', {
+              count: window.tabs.length,
               value0: window.tabs.length
             })}
           </span>
