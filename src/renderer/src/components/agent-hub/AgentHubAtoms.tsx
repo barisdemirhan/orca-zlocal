@@ -159,23 +159,23 @@ export function HubSection({
 /** "Group › project · workspace", with the mock's dim separators. */
 export function HubCrumb({ location }: { location: AgentHubLocation }): React.JSX.Element {
   return (
-    <span className="block truncate text-[11.5px] text-muted-foreground">
-      {location.group ? (
-        <>
-          {location.group}
-          <span className="mx-1 text-muted-foreground/60">›</span>
-        </>
-      ) : null}
-      {location.project}
-      {location.workspace ? (
-        <>
-          <span className="mx-1 text-muted-foreground/60">·</span>
-          {location.workspace}
-        </>
-      ) : null}
-      {location.host ? (
-        <WorktreeHostContextBadge label={location.host} className="ml-1.5 align-middle" />
-      ) : null}
+    <span className="flex min-w-0 items-center text-[11.5px] leading-4 text-muted-foreground">
+      <span className="truncate">
+        {location.group ? (
+          <>
+            {location.group}
+            <span className="mx-1 text-muted-foreground/60">›</span>
+          </>
+        ) : null}
+        {location.project}
+        {location.workspace ? (
+          <>
+            <span className="mx-1 text-muted-foreground/60">·</span>
+            {location.workspace}
+          </>
+        ) : null}
+      </span>
+      {location.host ? <WorktreeHostContextBadge label={location.host} className="ml-1.5" /> : null}
     </span>
   )
 }

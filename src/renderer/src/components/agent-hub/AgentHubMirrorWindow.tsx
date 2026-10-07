@@ -277,7 +277,7 @@ export function AgentHubMirrorWindow({
         ) : null}
         <HubStateIndicator kind={kind} />
         <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
-        <div className="min-w-0 flex-1 text-[12.5px]">
+        <div className="min-w-0 flex-1 text-[12.5px] leading-tight">
           <AgentHubMirrorTitle target={target} />
           <div className="flex items-center gap-1 [&>span]:text-[11px]">
             <HubCrumb location={location} />
