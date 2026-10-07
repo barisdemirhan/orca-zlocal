@@ -1,3 +1,4 @@
+import { AgentHubMirrorTabDragLayer } from './AgentHubMirrorTabDragLayer'
 import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
 import { selectAgentHubMirrorFamilyMember } from './agent-hub-mirror-tab-actions'
 import {
@@ -269,122 +270,124 @@ export function AgentHubMirrors({
   const stableWindows = windows.toSorted((a, b) => a.id.localeCompare(b.id))
 
   return createPortal(
-    <div
-      data-agent-hub-mirrors
-      data-behind={panelInFront}
-      data-hidden={hidden}
-      // Why z-[44] behind: under the floating workspace (45), still over the dim (43).
-      className="pointer-events-none fixed inset-0 z-[46] data-[behind=true]:z-[44] data-[hidden=true]:invisible"
-    >
-      {stableWindows.map((window) => {
-        const target = activeAgentHubMirrorTab(window).target
-        const key = window.id
-        const index = stackIndexOf.get(key) ?? 0
-        const thread = threadFor(target)
-        const familyKey = target.paneKey ?? thread?.paneKey
-        return (
-          <AgentHubMirrorWindow
-            key={key}
-            windowId={key}
-            windowState={window}
-            tabStrip={
-              <AgentHubMirrorTabStrip window={window} threads={threads} lineage={lineage} />
-            }
-            windowKind={agentHubMirrorWindowKind(window, (entry) => {
-              const live = threadFor(entry)
-              return live ? agentHubIndicatorKind(live) : 'idle'
-            })}
-            target={target}
-            thread={thread}
-            location={locationOf(target)}
-            stackIndex={index + 1}
-            besideHubPanel={hubOpen}
-            previewVisible={!hidden}
-            previewFocus={index === windows.length - 1 && !hubOpen && !quiet && !hidden}
-            surface={surfaces[index]?.surface ?? 'portal'}
-            // The window raises its own pane's alerts; the hub's bubble skips them.
-            // A hidden window leaves its alert queued until it is back in sight.
-            nudge={
-              hidden
-                ? null
-                : (alerts.findLast((candidate) =>
-                    agentHubTargetShowsThread(target, candidate.thread)
-                  ) ?? null)
-            }
-            onNudged={dismissAgentHubAlert}
-            // Why the thread's pane too: a mirror opened on a quiet tab has no pane of its own
-            // (it follows the tab), and must still show the workers its agent dispatches later.
-            family={familyKey ? agentHubMirrorFamily(familyKey, threads, lineage) : null}
-            hubRef={hubRef}
-            locationOf={locationOf}
-            familyActionsFor={familyActionsFor}
-            onRetarget={(member) =>
-              selectAgentHubMirrorFamilyMember(
-                key,
-                paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
-              )
-            }
-            onSlot={onSlot}
-            onFocus={(event) => {
-              focusAgentHubMirror(key)
-              requestAgentHubMirrorSelection(
-                key,
-                window.activeTabId,
-                event.target instanceof HTMLElement && event.target.closest('.xterm') !== null,
-                false
-              )
-            }}
-            onClose={() => closeAgentHubMirror(key)}
-            onMinimize={() => minimizeAgentHubMirror(key)}
-            onReveal={() => {
-              closeAgentHubMirrorTab(key, window.activeTabId)
-              onReveal(target, thread)
-            }}
-          />
-        )
-      })}
-      <AgentHubMirrorTray
-        items={trayItems}
-        trayRef={trayRef}
-        anchorRef={hubRef}
-        side={traySide}
-        alertSide={trayAlertSide}
-        hidden={trayHidden || hidden}
-        peekMs={trayPeekMs}
-        onRestore={restoreAgentHubMirror}
-        locationOfAlert={(alert) => locationOf(alert.thread)}
-        onReveal={(item, alert) => {
-          const tab = alert
-            ? item.chip.window.tabs.find((tab) =>
-                agentHubTargetShowsThread(tab.target, alert.thread)
-              )
-            : activeAgentHubMirrorTab(item.chip.window)
-          if (!tab) {
-            return
-          }
-          closeAgentHubMirrorTab(item.key, tab.id)
-          onReveal(
-            alert
-              ? paneTargetFromThread(alert.thread, activityThreadRowCopy(alert.thread).taskTitle)
-              : tab.target,
-            alert?.thread ?? item.thread
+    <AgentHubMirrorTabDragLayer enabled={!hidden && !hubOpen}>
+      <div
+        data-agent-hub-mirrors
+        data-behind={panelInFront}
+        data-hidden={hidden}
+        // Why z-[44] behind: under the floating workspace (45), still over the dim (43).
+        className="pointer-events-none fixed inset-0 z-[46] data-[behind=true]:z-[44] data-[hidden=true]:invisible"
+      >
+        {stableWindows.map((window) => {
+          const target = activeAgentHubMirrorTab(window).target
+          const key = window.id
+          const index = stackIndexOf.get(key) ?? 0
+          const thread = threadFor(target)
+          const familyKey = target.paneKey ?? thread?.paneKey
+          return (
+            <AgentHubMirrorWindow
+              key={key}
+              windowId={key}
+              windowState={window}
+              tabStrip={
+                <AgentHubMirrorTabStrip window={window} threads={threads} lineage={lineage} />
+              }
+              windowKind={agentHubMirrorWindowKind(window, (entry) => {
+                const live = threadFor(entry)
+                return live ? agentHubIndicatorKind(live) : 'idle'
+              })}
+              target={target}
+              thread={thread}
+              location={locationOf(target)}
+              stackIndex={index + 1}
+              besideHubPanel={hubOpen}
+              previewVisible={!hidden}
+              previewFocus={index === windows.length - 1 && !hubOpen && !quiet && !hidden}
+              surface={surfaces[index]?.surface ?? 'portal'}
+              // The window raises its own pane's alerts; the hub's bubble skips them.
+              // A hidden window leaves its alert queued until it is back in sight.
+              nudge={
+                hidden
+                  ? null
+                  : (alerts.findLast((candidate) =>
+                      agentHubTargetShowsThread(target, candidate.thread)
+                    ) ?? null)
+              }
+              onNudged={dismissAgentHubAlert}
+              // Why the thread's pane too: a mirror opened on a quiet tab has no pane of its own
+              // (it follows the tab), and must still show the workers its agent dispatches later.
+              family={familyKey ? agentHubMirrorFamily(familyKey, threads, lineage) : null}
+              hubRef={hubRef}
+              locationOf={locationOf}
+              familyActionsFor={familyActionsFor}
+              onRetarget={(member) =>
+                selectAgentHubMirrorFamilyMember(
+                  key,
+                  paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
+                )
+              }
+              onSlot={onSlot}
+              onFocus={(event) => {
+                focusAgentHubMirror(key)
+                requestAgentHubMirrorSelection(
+                  key,
+                  window.activeTabId,
+                  event.target instanceof HTMLElement && event.target.closest('.xterm') !== null,
+                  false
+                )
+              }}
+              onClose={() => closeAgentHubMirror(key)}
+              onMinimize={() => minimizeAgentHubMirror(key)}
+              onReveal={() => {
+                closeAgentHubMirrorTab(key, window.activeTabId)
+                onReveal(target, thread)
+              }}
+            />
           )
-        }}
-        onClose={closeAgentHubMirrorChip}
-        onOpenAlert={(_key, opened) => {
-          dismissAgentHubAlert(opened.id)
-          // A question is answered on its card; a result is read in the terminal.
-          if (opened.kind === 'done') {
-            openAgentHubMirror(
-              paneTargetFromThread(opened.thread, activityThreadRowCopy(opened.thread).taskTitle)
+        })}
+        <AgentHubMirrorTray
+          items={trayItems}
+          trayRef={trayRef}
+          anchorRef={hubRef}
+          side={traySide}
+          alertSide={trayAlertSide}
+          hidden={trayHidden || hidden}
+          peekMs={trayPeekMs}
+          onRestore={restoreAgentHubMirror}
+          locationOfAlert={(alert) => locationOf(alert.thread)}
+          onReveal={(item, alert) => {
+            const tab = alert
+              ? item.chip.window.tabs.find((tab) =>
+                  agentHubTargetShowsThread(tab.target, alert.thread)
+                )
+              : activeAgentHubMirrorTab(item.chip.window)
+            if (!tab) {
+              return
+            }
+            closeAgentHubMirrorTab(item.key, tab.id)
+            onReveal(
+              alert
+                ? paneTargetFromThread(alert.thread, activityThreadRowCopy(alert.thread).taskTitle)
+                : tab.target,
+              alert?.thread ?? item.thread
             )
-          } else {
-            onOpenCard(opened.thread.paneKey)
-          }
-        }}
-        onDismissAlert={dismissAgentHubAlert}
-      />
-    </div>,
+          }}
+          onClose={closeAgentHubMirrorChip}
+          onOpenAlert={(_key, opened) => {
+            dismissAgentHubAlert(opened.id)
+            // A question is answered on its card; a result is read in the terminal.
+            if (opened.kind === 'done') {
+              openAgentHubMirror(
+                paneTargetFromThread(opened.thread, activityThreadRowCopy(opened.thread).taskTitle)
+              )
+            } else {
+              onOpenCard(opened.thread.paneKey)
+            }
+          }}
+          onDismissAlert={dismissAgentHubAlert}
+        />
+      </div>
+    </AgentHubMirrorTabDragLayer>,
     document.body
   )
 }

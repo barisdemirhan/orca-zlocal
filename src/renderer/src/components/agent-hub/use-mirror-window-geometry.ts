@@ -19,6 +19,11 @@ import {
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
 import { useMirrorWindowFocus } from './use-mirror-window-focus'
+import {
+  claimAgentHubMirrorGesture,
+  releaseAgentHubMirrorGesture,
+  isAgentHubMirrorWindowDragTarget
+} from './agent-hub-mirror-gesture'
 
 const SETTLE_MS = 340
 const MOVE_THRESHOLD_PX = 3
@@ -88,6 +93,7 @@ export function useMirrorWindowGeometry(
   beginDrag: (mode: DragState['mode']) => (event: React.PointerEvent<HTMLElement>) => void
   onPointerMove: (event: React.PointerEvent<HTMLElement>) => void
   endDrag: (event: React.PointerEvent<HTMLElement>) => void
+  cancelDrag: () => void
 } {
   const [geometry, setGeometry] = useState<AgentHubMirrorGeometry>(() =>
     claimMirrorPlace(key, besideHubPanel)
@@ -95,6 +101,48 @@ export function useMirrorWindowGeometry(
   const sectionRef = useRef<HTMLElement | null>(null)
   const dragRef = useRef<DragState | null>(null)
   const frameRef = useRef<number | null>(null)
+  const cancelDrag = useCallback(() => {
+    const drag = dragRef.current
+    dragRef.current = null
+    if (drag) {
+      releaseAgentHubMirrorGesture('window')
+    }
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current)
+    }
+    frameRef.current = null
+    if (sectionRef.current) {
+      sectionRef.current.style.translate = ''
+    }
+    if (drag?.mode === 'resize') {
+      setGeometry(drag.start)
+    }
+  }, [])
+  useEffect(() => {
+    const escape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape' && dragRef.current) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        cancelDrag()
+      }
+    }
+    document.addEventListener('keydown', escape, true)
+    const releasePending = (): void => {
+      if (dragRef.current && !dragRef.current.captured) {
+        cancelDrag()
+      }
+    }
+    document.addEventListener('pointerup', releasePending)
+    document.addEventListener('pointercancel', cancelDrag)
+    window.addEventListener('blur', cancelDrag)
+    return () => {
+      document.removeEventListener('keydown', escape, true)
+      document.removeEventListener('pointerup', releasePending)
+      document.removeEventListener('pointercancel', cancelDrag)
+      window.removeEventListener('blur', cancelDrag)
+      cancelDrag()
+    }
+  }, [cancelDrag])
   // "Arrange floating windows" hands each mirror a new place.
   const arrangeVersion = useAgentHubArrangeVersion()
   const [seenArrangeVersion, setSeenArrangeVersion] = useState(arrangeVersion)
@@ -145,9 +193,13 @@ export function useMirrorWindowGeometry(
   const beginDrag = useCallback(
     (mode: DragState['mode']) =>
       (event: React.PointerEvent<HTMLElement>): void => {
-        const onButton = event.target instanceof Element && event.target.closest('button') !== null
         // A focused mirror stays put: a drag would move the place it returns to.
-        if (event.button !== 0 || (mode === 'move' && onButton) || focused) {
+        if (
+          event.button !== 0 ||
+          (mode === 'move' && !isAgentHubMirrorWindowDragTarget(event.target)) ||
+          focused ||
+          !claimAgentHubMirrorGesture('window', event.pointerId)
+        ) {
           return
         }
         if (mode === 'resize') {
@@ -176,6 +228,7 @@ export function useMirrorWindowGeometry(
     if (!drag.captured && event.buttons === 0) {
       // The button came up outside the title bar before the pointer was captured.
       dragRef.current = null
+      releaseAgentHubMirrorGesture('window')
       return
     }
     if (!drag.captured) {
@@ -218,13 +271,17 @@ export function useMirrorWindowGeometry(
       }
       dragRef.current = null
       if (drag.captured) {
-        event.currentTarget.releasePointerCapture(event.pointerId)
+        releaseAgentHubMirrorGesture('window')
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId)
+        }
         setGeometry(drag.next)
         keepAgentHubMirrorPlace(key)
         if (drag.mode === 'resize') {
           lastResizedTo = { width: drag.next.width, height: drag.next.height }
         }
       }
+      releaseAgentHubMirrorGesture('window')
     },
     [key]
   )
@@ -236,6 +293,7 @@ export function useMirrorWindowGeometry(
     sectionRef,
     beginDrag,
     onPointerMove,
-    endDrag
+    endDrag,
+    cancelDrag
   }
 }

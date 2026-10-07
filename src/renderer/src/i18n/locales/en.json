@@ -21764,7 +21764,8 @@
       "add": "Add terminal",
       "tabLimit": "A mirror can hold up to 10 terminals.",
       "addUnavailable": "This terminal is no longer available to add.",
-      "alreadyOwned": "This terminal is already popped out."
+      "alreadyOwned": "This terminal is already popped out.",
+      "dropUnavailable": "Cannot drop here"
     },
     "title": "Agents",
     "tab": {

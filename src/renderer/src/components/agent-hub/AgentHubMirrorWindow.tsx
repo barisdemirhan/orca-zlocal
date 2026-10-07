@@ -106,7 +106,7 @@ export function AgentHubMirrorWindow({
 }): React.JSX.Element {
   const mirrorKey = windowId
   const previousSlotRef = useRef<HTMLDivElement | null>(null)
-  const { geometry, focus, settling, sectionRef, beginDrag, onPointerMove, endDrag } =
+  const { geometry, focus, settling, sectionRef, beginDrag, onPointerMove, endDrag, cancelDrag } =
     useMirrorWindowGeometry(mirrorKey, besideHubPanel)
   const slotRef = useCallback(
     (element: HTMLDivElement | null) => {
@@ -263,7 +263,8 @@ export function AgentHubMirrorWindow({
         onPointerDown={beginDrag('move')}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        onPointerCancel={cancelDrag}
+        onLostPointerCapture={cancelDrag}
       >
         {familyRoot ? (
           // A disclosure arrow by the title folds the workers bar away, like a tree row.
@@ -375,7 +376,8 @@ export function AgentHubMirrorWindow({
         onPointerDown={beginDrag('resize')}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        onPointerCancel={cancelDrag}
+        onLostPointerCapture={cancelDrag}
       />
       <AgentHubMirrorFocusShade layer="mirror" shown={focus === 'shadowed'} />
     </section>
