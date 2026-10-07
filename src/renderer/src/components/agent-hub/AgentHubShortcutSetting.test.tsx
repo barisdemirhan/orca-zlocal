@@ -130,7 +130,9 @@ describe('inline Agent Hub shortcuts', () => {
     }
   })
   it('preflights all suggestions so a late collision applies none', async () => {
-    useAppStore.setState({ keybindings: { 'worktree.quickOpen': ['Mod+F11'] } })
+    useAppStore.setState({
+      keybindings: { 'worktree.quickOpen': [AGENT_HUB_SUGGESTED_BINDINGS[4][1]] }
+    })
     mount()
     fireEvent.click(screen.getByRole('button', { name: 'Use these' }))
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('conflicts with'))

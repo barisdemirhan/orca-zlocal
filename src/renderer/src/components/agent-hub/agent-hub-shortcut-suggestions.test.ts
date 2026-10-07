@@ -8,26 +8,68 @@ import {
   getKeybindingDefinition,
   type KeybindingOverrides
 } from '../../../../shared/keybindings'
-import { AGENT_HUB_SUGGESTED_BINDINGS } from './agent-hub-shortcut-suggestions'
+import { agentHubSuggestedBindings } from './agent-hub-shortcut-suggestions'
 
 const PLATFORMS: readonly NodeJS.Platform[] = ['darwin', 'linux', 'win32']
 
 describe('agent hub shortcut suggestions', () => {
-  it('offers every hub action with one modifier and one key', () => {
-    expect(AGENT_HUB_SUGGESTED_BINDINGS.map(([id]) => id)).toEqual(
-      KEYBINDING_DEFINITIONS.filter((item) => item.id.startsWith('agentHub.')).map(
-        (item) => item.id
-      )
-    )
-    for (const [id, binding] of AGENT_HUB_SUGGESTED_BINDINGS) {
-      expect(binding.split('+')).toHaveLength(2)
-      expect(binding).toMatch(/^Mod\+/)
-      expect(normalizeKeybindingListForAction(id, binding)).toEqual([binding])
+  it.each(PLATFORMS)('avoids common terminal, editor and native menu chords on %s', (platform) => {
+    const common =
+      platform === 'darwin'
+        ? [
+            'Ctrl+C',
+            'Ctrl+D',
+            'Ctrl+R',
+            'Ctrl+U',
+            'Ctrl+W',
+            'Ctrl+Z',
+            'Mod+Shift+P',
+            'Mod+Shift+K',
+            'Mod+Shift+L',
+            'Mod+Alt+H',
+            'Mod+Alt+M',
+            'Mod+Alt+D',
+            'Mod+Alt+I'
+          ]
+        : [
+            'Ctrl+C',
+            'Ctrl+D',
+            'Ctrl+R',
+            'Ctrl+U',
+            'Ctrl+W',
+            'Ctrl+Z',
+            'Ctrl+Shift+C',
+            'Ctrl+Shift+V',
+            'Ctrl+Shift+P',
+            'Ctrl+Shift+K',
+            'Ctrl+Shift+L',
+            'Alt+Shift+F',
+            'Alt+Shift+I',
+            'Alt+Shift+O',
+            'Alt+Shift+A'
+          ]
+    for (const [, binding] of agentHubSuggestedBindings(platform)) {
+      expect(common, binding).not.toContain(binding)
     }
   })
+  it.each(PLATFORMS)(
+    'offers every hub action with two modifiers and a mnemonic key on %s',
+    (platform) => {
+      expect(agentHubSuggestedBindings(platform).map(([id]) => id)).toEqual(
+        KEYBINDING_DEFINITIONS.filter((item) => item.id.startsWith('agentHub.')).map(
+          (item) => item.id
+        )
+      )
+      for (const [id, binding] of agentHubSuggestedBindings(platform)) {
+        expect(binding.split('+')).toHaveLength(3)
+        expect(binding).toMatch(platform === 'darwin' ? /^Mod\+Alt\+[A-Z]$/ : /^Alt\+Shift\+[A-Z]$/)
+        expect(normalizeKeybindingListForAction(id, binding)).toEqual([binding])
+      }
+    }
+  )
 
   it.each(PLATFORMS)('leaves every hub action unbound by default on %s', (platform) => {
-    for (const [actionId] of AGENT_HUB_SUGGESTED_BINDINGS) {
+    for (const [actionId] of agentHubSuggestedBindings(platform)) {
       const definition = getKeybindingDefinition(actionId)
       expect(definition, actionId).toBeDefined()
       expect(
@@ -39,9 +81,9 @@ describe('agent hub shortcut suggestions', () => {
 
   it.each(PLATFORMS)('suggests chords no default binding uses on %s', (platform) => {
     const overrides: KeybindingOverrides = Object.fromEntries(
-      AGENT_HUB_SUGGESTED_BINDINGS.map(([actionId, binding]) => [actionId, [binding]])
+      agentHubSuggestedBindings(platform).map(([actionId, binding]) => [actionId, [binding]])
     )
-    const own = new Set(AGENT_HUB_SUGGESTED_BINDINGS.map(([actionId]) => actionId))
+    const own = new Set(agentHubSuggestedBindings(platform).map(([actionId]) => actionId))
 
     const conflicts = findKeybindingConflicts(platform, overrides).filter((conflict) =>
       conflict.actionIds.some((actionId) => own.has(actionId))

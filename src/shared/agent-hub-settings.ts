@@ -69,6 +69,8 @@ export type AgentHubSettings = {
   agentHubDefaultTab?: AgentHubDefaultTab
   /** Show a button on terminal tabs to open their terminal in a mirror. */
   agentHubTabAutoPopout?: boolean
+  /** The one-time shortcut suggestions have been considered; manual removals stay empty. */
+  agentHubShortcutsInitialized?: boolean
   /** Agent Hub: enable the separate mirrors canvas, its controls and session restoration. */
   agentHubCanvas?: boolean
   /** Agent Hub: mirrors, the tray and the canvas come back as they were when Orca restarts. */
