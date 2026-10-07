@@ -67,7 +67,7 @@ export type AgentHubSettings = {
   agentHubTerminalSort?: AgentHubTerminalSort
   /** Agent Hub tab shown on open when nobody is waiting. */
   agentHubDefaultTab?: AgentHubDefaultTab
-  /** Terminal tabs show a toggle that parks the tab's terminal in the hub's tray when it is left. */
+  /** Show a button on terminal tabs to open their terminal in a mirror. */
   agentHubTabAutoPopout?: boolean
   /** Agent Hub: enable the separate mirrors canvas, its controls and session restoration. */
   agentHubCanvas?: boolean

@@ -313,11 +313,11 @@ function AgentHubOptions({
       <SettingsSwitchRow
         label={translate(
           'auto.components.settings.ExperimentalPane.agentHub.tabAutoPopout',
-          'Show the auto pop-out toggle on terminal tabs'
+          'Show a pop-out button on terminal tabs'
         )}
         description={translate(
           'auto.components.settings.ExperimentalPane.agentHub.tabAutoPopoutCopy',
-          'A tab with its toggle on parks its terminal beside the hub when you leave the tab, and takes it back when you return.'
+          'Open a terminal in a mirror directly from its tab.'
         )}
         checked={preferences.tabAutoPopout}
         onChange={() => updateSettings({ agentHubTabAutoPopout: !preferences.tabAutoPopout })}

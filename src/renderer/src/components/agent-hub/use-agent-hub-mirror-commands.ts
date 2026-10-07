@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { useAppStore } from '@/store'
 import { agentHubActiveTarget } from './agent-hub-active-target'
 import { registerAgentHubCommands, type AgentHubCommands } from './agent-hub-commands'
+import { popOutAgentHubTab } from './agent-hub-tab-popout'
 import { useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import {
   closeAgentHubMirror,
-  openAgentHubMirror,
   readAgentHubMirrors,
   toggleAgentHubMirrorFocus
 } from './agent-hub-mirror-store'
@@ -32,7 +32,7 @@ export function useAgentHubMirrorCommands(
         popOut: () => {
           const target = agentHubActiveTarget(useAppStore.getState())
           if (target) {
-            openAgentHubMirror(target)
+            popOutAgentHubTab(target)
           }
         },
         jumpToMirror: commands.arrangeMirrors

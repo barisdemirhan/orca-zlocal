@@ -26,7 +26,6 @@ const snapshot = agentHubSessionSnapshot({
   mirrors: [{ ...mirror, tabId: 'tab-b', paneKey: null, minimized: true, minimizedAt: 7 }, mirror],
   canvasOpen: true,
   canvasParked: ['tab-b'],
-  autoPopoutTabIds: ['tab-a'],
   hiddenFamilyRoots: ['tab-a:11111111-1111-4111-8111-111111111111']
 })
 
@@ -70,8 +69,7 @@ describe('the agent hub session snapshot', () => {
         { ...mirror, tabId: 'tab-e', geometry: { x: 0, y: 0, width: 0, height: 10 }, agentType: 9 }
       ],
       canvasOpen: 'yes',
-      canvasParked: ['tab-a', 4, ''],
-      autoPopoutTabIds: 'tab-a'
+      canvasParked: ['tab-a', 4, '']
     })
 
     expect(parsed?.mirrors.map((saved) => saved.tabId)).toEqual(['tab-a', 'tab-d', 'tab-e'])
@@ -80,8 +78,13 @@ describe('the agent hub session snapshot', () => {
     expect(parsed).toMatchObject({
       canvasOpen: false,
       canvasParked: ['tab-a'],
-      autoPopoutTabIds: [],
       hiddenFamilyRoots: []
     })
   })
+})
+
+it('ignores legacy auto pop-out marks while restoring mirrors', () => {
+  const parsed = parseAgentHubSessionSnapshot({ ...snapshot, autoPopoutTabIds: ['tab-a', 42] })
+  expect(parsed).toEqual(snapshot)
+  expect(parsed).not.toHaveProperty('autoPopoutTabIds')
 })

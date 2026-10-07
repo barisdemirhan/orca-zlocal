@@ -14,7 +14,6 @@ import {
   readAgentHubSessionSnapshot,
   writeAgentHubSessionSnapshot
 } from './agent-hub-session-snapshot'
-import { subscribeAgentHubTabAutoPopouts } from './agent-hub-tab-auto-popout'
 
 const WRITE_DEBOUNCE_MS = 400
 
@@ -53,7 +52,6 @@ function keepAgentHubSessionSaved(): () => void {
     subscribeAgentHubMirrors(schedule),
     subscribeAgentHubMirrorPlaces(schedule),
     subscribeAgentHubCanvas(schedule),
-    subscribeAgentHubTabAutoPopouts(schedule),
     subscribeAgentHubFamilyBars(schedule)
   ]
   window.addEventListener('beforeunload', flush)

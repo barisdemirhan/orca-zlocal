@@ -53,11 +53,6 @@ import {
   type AgentHubSavedMirror,
   type AgentHubSessionSnapshot
 } from './agent-hub-session-snapshot'
-import {
-  isAgentHubTabAutoPopout,
-  resetAgentHubTabAutoPopoutForTest,
-  toggleAgentHubTabAutoPopout
-} from './agent-hub-tab-auto-popout'
 
 const LEAF_A = '11111111-1111-4111-8111-111111111111'
 const LEAF_B = '22222222-2222-4222-8222-222222222222'
@@ -116,7 +111,6 @@ function snapshotOf(
     mirrors,
     canvasOpen: false,
     canvasParked: [],
-    autoPopoutTabIds: [],
     hiddenFamilyRoots: [],
     ...rest
   })
@@ -131,7 +125,6 @@ const chipKeys = (): string[] => keysOf(readAgentHubMirrors().chips.map((chip) =
 afterEach(() => {
   resetAgentHubCanvasForTest()
   resetAgentHubMirrorsForTest()
-  resetAgentHubTabAutoPopoutForTest()
   setAgentHubHiddenFamilyBars([])
 })
 
@@ -211,17 +204,15 @@ describe('resolving a saved hub session against the store', () => {
     expect(floating.canvasParked).toEqual([])
   })
 
-  it('drops tab toggles and hidden worker bars of tabs that are gone', () => {
+  it('drops hidden worker bars of tabs that are gone', () => {
     const restored = resolveAgentHubSession(
       snapshotOf([], {
-        autoPopoutTabIds: ['tab-a', 'tab-gone'],
         hiddenFamilyRoots: [`tab-a:${LEAF_A}`, `tab-gone:${LEAF_B}`, 'not-a-pane']
       }),
       storeWith({ 'tab-a': LEAF_A }),
       options
     )
 
-    expect(restored.autoPopoutTabIds).toEqual(['tab-a'])
     expect(restored.hiddenFamilyRoots).toEqual([`tab-a:${LEAF_A}`])
   })
 })
@@ -237,20 +228,18 @@ describe('a hub session saved and put back', () => {
     agentType: null
   })
 
-  it('returns the same windows, tray, places, toggles and bars', () => {
+  it('returns the same windows, tray, places and bars', () => {
     for (const tabId of ['tab-a', 'tab-b', 'tab-c']) {
       openAgentHubMirror(liveTarget(tabId))
       rememberAgentHubMirrorOrigin(tabId, { ...PLACE, x: PLACE.x + tabId.charCodeAt(4) })
     }
     keepAgentHubMirrorPlace('tab-c')
     minimizeAgentHubMirror('tab-b')
-    toggleAgentHubTabAutoPopout('tab-a')
     toggleAgentHubFamilyBar(`tab-a:${LEAF_A}`)
     const snapshot = captureAgentHubSession()
     const places = ['tab-a', 'tab-b', 'tab-c'].map(readAgentHubMirrorOrigin)
 
     resetAgentHubMirrorsForTest()
-    resetAgentHubTabAutoPopoutForTest()
     setAgentHubHiddenFamilyBars([])
     applyAgentHubSession(resolveAgentHubSession(snapshot, state, options))
 
@@ -262,7 +251,6 @@ describe('a hub session saved and put back', () => {
       false,
       true
     ])
-    expect(isAgentHubTabAutoPopout('tab-a')).toBe(true)
     expect([...readAgentHubHiddenFamilyBars()]).toEqual([`tab-a:${LEAF_A}`])
   })
 

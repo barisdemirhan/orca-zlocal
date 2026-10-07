@@ -10,7 +10,7 @@ import { renderFloatingTerminalOrchestrationCard } from './FloatingTerminalOrche
 import { FloatingTerminalOrchestrationDialog } from './FloatingTerminalOrchestrationDialog'
 import { FloatingTerminalResizeHandles } from './FloatingTerminalResizeHandles'
 import { FloatingTerminalWindowControls } from './FloatingTerminalWindowControls'
-import { AgentHubFloatingPopoutProvider } from '../agent-hub/AgentHubFloatingTabPopout'
+import { AgentHubFloatingPopoutProvider } from '../agent-hub/AgentHubTabPopout'
 import type { useFloatingTerminalPanelController } from './use-floating-terminal-panel-controller'
 
 const NO_ACTIVITY_TERMINAL_PORTALS: [] = []

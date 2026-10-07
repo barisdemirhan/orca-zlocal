@@ -208,8 +208,8 @@ vi.mock('@/components/ui/tooltip', () => ({
   }
 }))
 
-vi.mock('../agent-hub/AgentHubTabAutoPopoutToggle', () => ({
-  AgentHubTabAutoPopoutToggle: () => null
+vi.mock('../agent-hub/AgentHubTabPopout', () => ({
+  AgentHubTabPopout: () => null
 }))
 
 vi.mock('./shell-icons', () => ({

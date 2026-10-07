@@ -70,7 +70,6 @@ function saveSession(tabIds: string[]): void {
       mirrors: tabIds.map(saved),
       canvasOpen: false,
       canvasParked: [],
-      autoPopoutTabIds: [],
       hiddenFamilyRoots: []
     })
   )

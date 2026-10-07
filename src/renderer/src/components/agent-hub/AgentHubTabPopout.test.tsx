@@ -5,24 +5,34 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
-import { makeTabWithIds } from '../activity/ActivityPrototypePage-test-fixtures'
+import {
+  makeTabWithIds,
+  makeRepo,
+  makeWorktree
+} from '../activity/ActivityPrototypePage-test-fixtures'
 import SortableTab from '../tab-bar/SortableTab'
 import BrowserTab from '../tab-bar/BrowserTab'
 import { TooltipProvider } from '../ui/tooltip'
-import { AgentHubFloatingPopoutProvider } from './AgentHubFloatingTabPopout'
+import { AgentHubFloatingPopoutProvider } from './AgentHubTabPopout'
 import { readAgentHubMirrors, resetAgentHubMirrorsForTest } from './agent-hub-mirror-store'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   return {
     useAppStore: create(() => ({
-      settings: { experimentalAgentHub: true },
+      settings: { experimentalAgentHub: true, agentHubTabAutoPopout: true },
       keybindings: { 'agentHub.popOut': ['Mod+F7'] },
       projectGroups: [],
       repos: [],
       worktreesByRepo: {},
       folderWorkspaces: [],
       tabsByWorktree: {},
+      groupsByWorktree: {},
+      unifiedTabsByWorktree: {},
+      activeWorktreeId: null,
+      activeView: 'terminal',
+      activeTabId: null,
+      activeTabType: 'terminal',
       terminalLayoutsByTabId: {},
       runtimePaneTitlesByTabId: {},
       agentStatusByPaneKey: {},
@@ -60,7 +70,12 @@ function fixture(agent = false, worktreeId = FLOATING_TERMINAL_WORKTREE_ID) {
     title: 'Terminal',
     ...(agent ? { launchAgent: 'claude' as const } : {})
   }
-  useAppStore.setState({ tabsByWorktree: { [worktreeId]: [tab] } })
+  const repo = makeRepo()
+  useAppStore.setState({
+    tabsByWorktree: { [worktreeId]: [tab] },
+    repos: [repo],
+    worktreesByRepo: { [repo.id]: [{ ...makeWorktree(), id: worktreeId }] }
+  })
   const onOpenChange = vi.fn()
   const onActivate = vi.fn()
   const onClose = vi.fn()
@@ -108,6 +123,9 @@ function fixture(agent = false, worktreeId = FLOATING_TERMINAL_WORKTREE_ID) {
 beforeEach(() => {
   resetAgentHubMirrorsForTest()
   setEnabled(true)
+  useAppStore.setState((s) => ({
+    settings: s.settings ? { ...s.settings, agentHubTabAutoPopout: true } : null
+  }))
 })
 afterEach(() => {
   cleanup()
@@ -161,8 +179,20 @@ describe('floating terminal pop-out', () => {
     expect(onOpenChange).not.toHaveBeenCalled()
   })
 
-  it('does not add a button to normal workspace tabs', () => {
-    fixture(false, 'normal-workspace')
+  it('opens normal workspace tabs without hiding the floating panel', () => {
+    const { onOpenChange } = fixture(false, 'normal-workspace')
+    fireEvent.click(screen.getByRole('button', { name: 'Pop out' }))
+    expect(readAgentHubMirrors().windows[0]?.worktree.id).toBe('normal-workspace')
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it('honors the stored tab button setting', () => {
+    fixture()
+    act(() =>
+      useAppStore.setState((s) => ({
+        settings: s.settings ? { ...s.settings, agentHubTabAutoPopout: false } : null
+      }))
+    )
     expect(screen.queryByRole('button', { name: 'Pop out' })).toBeNull()
   })
 

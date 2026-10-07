@@ -8023,8 +8023,8 @@
             "trayPeekCopy": "When a parked mirror asks or finishes, the pile beside the hub opens this long, then folds again.",
             "never": "Never",
             "seconds": "{{value0}} s",
-            "tabAutoPopout": "Show the auto pop-out toggle on terminal tabs",
-            "tabAutoPopoutCopy": "A tab with its toggle on parks its terminal beside the hub when you leave the tab, and takes it back when you return.",
+            "tabAutoPopout": "Show a pop-out button on terminal tabs",
+            "tabAutoPopoutCopy": "Open a terminal in a mirror directly from its tab.",
             "mirrorCap": "Mirror windows open at once",
             "mirrorCapCopy": "Opening more than this parks the oldest one beside the hub.",
             "canvas": "Enable the mirrors canvas",
@@ -21758,7 +21758,9 @@
       "inbox": "Inbox",
       "running": "Running",
       "all": "All terminals",
-      "agents": "Agents"
+      "agents": "Agents",
+      "shownInMirror": "Shown in a mirror",
+      "bringBack": "Bring back"
     },
     "inbox": {
       "previous": "Previous",

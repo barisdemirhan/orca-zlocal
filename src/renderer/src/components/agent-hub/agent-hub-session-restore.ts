@@ -23,11 +23,7 @@ import {
   type AgentHubSavedMirror,
   type AgentHubSessionSnapshot
 } from './agent-hub-session-snapshot'
-import {
-  agentHubRowOfTab,
-  readAgentHubTabAutoPopouts,
-  setAgentHubTabAutoPopouts
-} from './agent-hub-tab-auto-popout'
+import { agentHubRowOfTab } from './agent-hub-tab-row'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 
 type AgentHubSessionState = Parameters<typeof agentHubTerminalTreeFromState>[0]
@@ -35,7 +31,6 @@ type AgentHubSessionState = Parameters<typeof agentHubTerminalTreeFromState>[0]
 export type AgentHubRestoredSession = {
   mirrors: AgentHubReopenedMirror[]
   canvasParked: string[]
-  autoPopoutTabIds: string[]
   hiddenFamilyRoots: string[]
 }
 
@@ -113,7 +108,6 @@ export function resolveAgentHubSession(
   return {
     mirrors,
     canvasParked: options.canvas ? snapshot.canvasParked.filter((key) => keys.has(key)) : [],
-    autoPopoutTabIds: snapshot.autoPopoutTabIds.filter((tabId) => tabIds.has(tabId)),
     hiddenFamilyRoots: snapshot.hiddenFamilyRoots.filter((root) =>
       tabIds.has(parsePaneKey(root)?.tabId ?? '')
     )
@@ -122,9 +116,6 @@ export function resolveAgentHubSession(
 
 /** Puts a resolved session on the stage, under whatever the user set since launch. */
 export function applyAgentHubSession(restored: AgentHubRestoredSession): void {
-  if (restored.autoPopoutTabIds.length > 0) {
-    setAgentHubTabAutoPopouts([...restored.autoPopoutTabIds, ...readAgentHubTabAutoPopouts()])
-  }
   if (restored.hiddenFamilyRoots.length > 0) {
     setAgentHubHiddenFamilyBars([...restored.hiddenFamilyRoots, ...readAgentHubHiddenFamilyBars()])
   }
@@ -163,7 +154,6 @@ export function captureAgentHubSession(): AgentHubSessionSnapshot {
     ],
     canvasOpen: isAgentHubCanvasOpen(),
     canvasParked: [...readAgentHubCanvasParked()],
-    autoPopoutTabIds: [...readAgentHubTabAutoPopouts()],
     hiddenFamilyRoots: [...readAgentHubHiddenFamilyBars()]
   })
 }

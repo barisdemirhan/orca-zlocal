@@ -29,7 +29,6 @@ export type AgentHubSessionSnapshot = {
   canvasOpen: boolean
   /** The mirrors the canvas parked when it was last left, front first. */
   canvasParked: string[]
-  autoPopoutTabIds: string[]
   hiddenFamilyRoots: string[]
 }
 
@@ -93,7 +92,6 @@ export function parseAgentHubSessionSnapshot(value: unknown): AgentHubSessionSna
     mirrors: value.mirrors.flatMap((mirror) => parseMirror(mirror) ?? []).slice(0, MAX_MIRRORS),
     canvasOpen: value.canvasOpen === true,
     canvasParked: strings(value.canvasParked),
-    autoPopoutTabIds: strings(value.autoPopoutTabIds),
     hiddenFamilyRoots: strings(value.hiddenFamilyRoots)
   }
 }

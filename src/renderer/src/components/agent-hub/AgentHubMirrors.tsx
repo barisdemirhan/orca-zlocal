@@ -5,6 +5,7 @@ import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { normalizeAgentHubMirrorWindowCap } from '../../../../shared/agent-hub-settings'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { useAgentHubBorrowedTabs } from './agent-hub-borrowed-tabs'
 import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
 import { setTerminalMirrorMountLeases } from '../terminal-pane/terminal-mount-retention-leases'
 import {
@@ -92,6 +93,7 @@ export function AgentHubMirrors({
   onOpenCard: (paneKey: string) => void
 }): React.JSX.Element | null {
   const { windows, chips } = useAgentHubMirrors()
+  const borrowed = useAgentHubBorrowedTabs()
   // Mirrors put back at launch take the keyboard from nobody until the user picks one.
   const quiet = useAgentHubMirrorStageQuiet()
   const windowCap = useAppStore((s) =>
@@ -127,7 +129,10 @@ export function AgentHubMirrors({
       windows.map((target) => {
         const leafId = state.terminalLayoutsByTabId[target.tab.id]?.activeLeafId
         const paneKey = target.paneKey ?? (leafId ? makePaneKey(target.tab.id, leafId) : null)
-        const onScreen = isTerminalSourceVisible(state, target.worktree.id, target.tab.id, onCanvas)
+        const onScreen =
+          !borrowed.some(
+            (tab) => tab.tabId === target.tab.id && tab.worktreeId === target.worktree.id
+          ) && isTerminalSourceVisible(state, target.worktree.id, target.tab.id, onCanvas)
         return `${paneKey ?? ''}\u0000${onScreen ? '1' : '0'}`
       })
     )

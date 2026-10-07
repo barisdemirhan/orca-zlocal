@@ -27,9 +27,7 @@ import { TAB_LABEL_WIDTH_CLASSES } from './tab-width-rules'
 import { useTabStripSlotProps } from './use-tab-strip-slot-props'
 import { useTabStripPointerActivation } from './tab-strip-pointer-activation'
 import { TerminalTabLeadingIcon } from './TerminalTabLeadingIcon'
-import { AgentHubTabAutoPopoutToggle } from '../agent-hub/AgentHubTabAutoPopoutToggle'
-import { AgentHubFloatingTabPopout } from '../agent-hub/AgentHubFloatingTabPopout'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { AgentHubTabPopout } from '../agent-hub/AgentHubTabPopout'
 import {
   isTerminalTabActivityLive,
   terminalTabHasUnreadActivity
@@ -315,15 +313,8 @@ export default function SortableTab({
           <Minimize2 className="w-3 h-3" />
         </button>
       )}
-      {!isEditing && (
-        <AgentHubTabAutoPopoutToggle
-          tabId={tab.id}
-          worktreeId={tab.worktreeId}
-          isActive={isActive}
-        />
-      )}
-      {!isEditing && canSplitTerminal && tab.worktreeId === FLOATING_TERMINAL_WORKTREE_ID && (
-        <AgentHubFloatingTabPopout tabId={tab.id} />
+      {!isEditing && canSplitTerminal && (
+        <AgentHubTabPopout tabId={tab.id} worktreeId={tab.worktreeId} />
       )}
       {!isEditing && !isPinned && (
         <button
@@ -373,7 +364,7 @@ export default function SortableTab({
             event.preventDefault()
             if (
               event.target instanceof Element &&
-              event.target.closest('[data-agent-hub-floating-popout]')
+              event.target.closest('[data-agent-hub-tab-popout]')
             ) {
               return
             }

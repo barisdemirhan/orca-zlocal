@@ -1,7 +1,7 @@
 import { parsePaneKey } from '../../../../shared/stable-pane-id'
 import type { DashboardAgentRow } from '../dashboard/useDashboardData'
 import { paneTargetFromTerminalRow, type AgentHubPaneTarget } from './agent-hub-pane-target'
-import { agentHubRowOfTab } from './agent-hub-tab-auto-popout'
+import { agentHubRowOfTab } from './agent-hub-tab-row'
 import type { AgentHubGroupNode } from './agent-hub-terminal-tree'
 
 export function agentHubSidebarPopoutTarget(
