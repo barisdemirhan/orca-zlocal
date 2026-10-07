@@ -27,7 +27,6 @@ export function AgentHubMirrorSidebarReveal({
           variant="ghost"
           size="icon-xs"
           aria-label={label}
-          className="text-muted-foreground"
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.stopPropagation()

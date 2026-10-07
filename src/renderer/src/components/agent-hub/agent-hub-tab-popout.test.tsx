@@ -11,6 +11,7 @@ import {
   closeAgentHubMirror,
   minimizeAgentHubMirror,
   readAgentHubMirrors,
+  retargetAgentHubMirror,
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -132,9 +133,33 @@ it.each(['close', 'minimize', 'select another', 'disable'])(
         })
       }
     })
-    popOutAgentHubTab(target)
-    render(<AgentHubBorrowedTerminal worktreeId="wt-1" groupId="group" />)
-    expect(readAgentHubMirrors().windows).toHaveLength(0)
+    expect(readAgentHubMirrors().windows).toHaveLength(
+      action === 'close' || action === 'minimize' ? 0 : 1
+    )
     expect(screen.queryByText('Shown in a mirror')).toBeNull()
   }
 )
+
+it('returns a singleton after its mirror targets a different pane in the same tab', () => {
+  render(<AgentHubBorrowedTerminal worktreeId="wt-1" groupId="group" />)
+  act(() => popOutAgentHubTab(target))
+  act(() => retargetAgentHubMirror('source', { ...target, paneKey: 'other-pane' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Bring back' }))
+  expect(readAgentHubMirrors().windows).toHaveLength(0)
+  expect(screen.queryByText('Shown in a mirror')).toBeNull()
+})
+
+it('leaving the source tab never opens a mirror', () => {
+  fixture(['source', 'other'])
+  useAppStore.getState().activateTab('other')
+  expect(readAgentHubMirrors().windows).toHaveLength(0)
+})
+
+it('raises an existing mirror without changing the active tab', () => {
+  fixture(['source', 'other'])
+  popOutAgentHubTab(target)
+  vi.clearAllMocks()
+  popOutAgentHubTab(target)
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
+  expect(useAppStore.getState().activateTab).not.toHaveBeenCalled()
+})
