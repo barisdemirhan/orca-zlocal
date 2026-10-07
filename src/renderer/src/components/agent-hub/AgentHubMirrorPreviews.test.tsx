@@ -67,30 +67,43 @@ function fixture(): AgentHubMirrorWindowState {
 }
 it('retains visited floating previews across selection and refits only the visible entry', () => {
   const window = fixture()
-  const view = render(<AgentHubMirrorPreviews window={window} visible />)
+  const view = render(<AgentHubMirrorPreviews windows={[window]} slots={new Map()} visible />)
   const first = view.container.querySelector('[data-pty="one"]')
   expect(lifecycle.mounted).toEqual(['one'])
-  view.rerender(<AgentHubMirrorPreviews window={{ ...window, activeTabId: 'two' }} visible />)
+  view.rerender(
+    <AgentHubMirrorPreviews
+      windows={[{ ...window, activeTabId: 'two' }]}
+      slots={new Map()}
+      visible
+    />
+  )
   expect(view.container.querySelector('[data-pty="one"]')).toBe(first)
   expect(first?.getAttribute('data-visible')).toBe('false')
   expect(first?.parentElement?.hidden).toBe(true)
   expect(lifecycle.mounted).toEqual(['one', 'two'])
-  view.rerender(<AgentHubMirrorPreviews window={window} visible />)
+  view.rerender(<AgentHubMirrorPreviews windows={[window]} slots={new Map()} visible />)
   expect(view.container.querySelector('[data-pty="one"]')).toBe(first)
   expect(lifecycle.unmounted).toEqual([])
   expect(first?.getAttribute('data-visible')).toBe('true')
   expect(first?.getAttribute('data-focus')).toBe('false')
-  view.rerender(<AgentHubMirrorPreviews window={window} visible={false} />)
+  view.rerender(<AgentHubMirrorPreviews windows={[window]} slots={new Map()} visible={false} />)
   expect(view.container.querySelectorAll('[data-visible="true"]')).toHaveLength(0)
   expect(lifecycle.unmounted).toEqual([])
 })
 it('releases only a removed entry and does not build previews for workspace terminals', () => {
   const window = fixture()
-  const view = render(<AgentHubMirrorPreviews window={window} visible />)
-  view.rerender(<AgentHubMirrorPreviews window={{ ...window, activeTabId: 'two' }} visible />)
+  const view = render(<AgentHubMirrorPreviews windows={[window]} slots={new Map()} visible />)
   view.rerender(
     <AgentHubMirrorPreviews
-      window={{ ...window, activeTabId: 'two', tabs: window.tabs.slice(1) }}
+      windows={[{ ...window, activeTabId: 'two' }]}
+      slots={new Map()}
+      visible
+    />
+  )
+  view.rerender(
+    <AgentHubMirrorPreviews
+      windows={[{ ...window, activeTabId: 'two', tabs: window.tabs.slice(1) }]}
+      slots={new Map()}
       visible
     />
   )
@@ -102,7 +115,37 @@ it('releases only a removed entry and does not build previews for workspace term
       target: { ...entry.target, worktree: makeWorktree() }
     }))
   }
-  view.rerender(<AgentHubMirrorPreviews window={workspaceWindow} visible />)
+  view.rerender(<AgentHubMirrorPreviews windows={[workspaceWindow]} slots={new Map()} visible />)
   expect(view.container.querySelectorAll('[data-pty]')).toHaveLength(0)
   expect(lifecycle.mounted).toEqual(['one', 'two'])
+})
+
+it('keeps the same preview owner and DOM container while its entry moves between windows', () => {
+  const window = fixture()
+  const first = document.createElement('div'),
+    second = document.createElement('div')
+  document.body.append(first, second)
+  const slots = new Map([
+    ['window', first],
+    ['destination', second]
+  ])
+  const view = render(<AgentHubMirrorPreviews windows={[window]} slots={slots} visible />)
+  const terminal = first.querySelector('[data-pty="one"]')
+  expect(terminal).not.toBeNull()
+  view.rerender(
+    <AgentHubMirrorPreviews
+      windows={[
+        { ...window, tabs: window.tabs.slice(1), activeTabId: 'two' },
+        { id: 'destination', tabs: window.tabs.slice(0, 1), activeTabId: 'one' }
+      ]}
+      slots={slots}
+      visible
+    />
+  )
+  expect(second.querySelector('[data-pty="one"]')).toBe(terminal)
+  expect(lifecycle.mounted).toEqual(['one', 'two'])
+  expect(lifecycle.unmounted).toEqual([])
+  view.unmount()
+  first.remove()
+  second.remove()
 })

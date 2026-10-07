@@ -4,16 +4,21 @@ import { Ban } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { TabDragProvider } from '../tab-group/tab-drag-context'
 import { useAgentHubMirrorTabDrag } from './use-agent-hub-mirror-tab-drag'
-import type { MirrorStripDrop } from './agent-hub-mirror-drop-target'
-import { currentMirrorDragEntry } from './agent-hub-mirror-drop-target'
+import {
+  canAcceptMirrorTabDrop,
+  currentMirrorDragEntry,
+  type MirrorTabDrop
+} from './agent-hub-mirror-drop-target'
+import { AgentHubMirrorDetachDrop } from './AgentHubMirrorDetachDrop'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import type { AgentHubMirrorTabDrag } from './agent-hub-mirror-drag-data'
 
 const MirrorTabDragContext = createContext<{
   active: AgentHubMirrorTabDrag | null
-  drop: MirrorStripDrop | null
+  drop: MirrorTabDrop | null
   enabled: boolean
-}>({ active: null, drop: null, enabled: false })
+  allowed: boolean
+}>({ active: null, drop: null, enabled: false, allowed: false })
 export const useAgentHubMirrorDrag = () => useContext(MirrorTabDragContext)
 
 function MirrorDragPreview({
@@ -59,9 +64,10 @@ export function AgentHubMirrorTabDragLayer({
   children: React.ReactNode
 }): React.JSX.Element {
   const drag = useAgentHubMirrorTabDrag(enabled)
+  const allowed = canAcceptMirrorTabDrop(drag.active, drag.drop)
   const value = useMemo(
-    () => ({ active: drag.active, drop: drag.drop, enabled }),
-    [drag.active, drag.drop, enabled]
+    () => ({ active: drag.active, drop: drag.drop, enabled, allowed }),
+    [drag.active, drag.drop, enabled, allowed]
   )
   return (
     <MirrorTabDragContext.Provider value={value}>
@@ -81,11 +87,10 @@ export function AgentHubMirrorTabDragLayer({
         >
           <div ref={drag.setDragRootNode} className="contents">
             {children}
+            <AgentHubMirrorDetachDrop active={enabled ? drag.active : null} drop={drag.drop} />
           </div>
           <DragOverlay dropAnimation={null} className="pointer-events-none">
-            {drag.active ? (
-              <MirrorDragPreview drag={drag.active} allowed={drag.drop !== null} />
-            ) : null}
+            {drag.active ? <MirrorDragPreview drag={drag.active} allowed={allowed} /> : null}
           </DragOverlay>
         </DndContext>
       </TabDragProvider>

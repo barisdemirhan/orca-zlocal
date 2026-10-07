@@ -22,7 +22,8 @@ vi.mock('@/store', async () => {
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
   agentHubWorkArea,
-  arrangeAgentHubFloatingWindowsOnScreen
+  arrangeAgentHubFloatingWindowsOnScreen,
+  requestAgentHubMirrorPlacement
 } from './agent-hub-floating-arrangement'
 import { isAgentHubMirrorFocusEscape, readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import {
@@ -102,6 +103,13 @@ function focusBox(): AgentHubMirrorGeometry {
 }
 
 describe('a focused mirror window', () => {
+  it('keeps a work-area-clamped detach smaller than the usual minimum when applying its place', () => {
+    const shown = renderMirrors(['tab-a:leaf'])
+    const placement = { x: 280, y: 40, width: 300, height: 200 }
+    act(() => requestAgentHubMirrorPlacement(mirrorWindowIdFor('tab-a:leaf'), placement))
+    expect(shown('tab-a:leaf').geometry).toEqual(placement)
+    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'))).toEqual(placement)
+  })
   it('shows in the focus box, gliding there, with the others in shadow', () => {
     const shown = renderMirrors(['tab-a:leaf', 'tab-b:leaf'])
     expect(shown('tab-a:leaf')).toMatchObject({ geometry: OWN_PLACE, focus: null })

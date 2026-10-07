@@ -14,21 +14,25 @@ import { getTabDragActivationDistance } from '../tab-group/useTabDragSplit'
 import { isAgentHubMirrorTabDrag, type AgentHubMirrorTabDrag } from './agent-hub-mirror-drag-data'
 import {
   currentMirrorDragEntry,
-  mirrorStripDropAtPoint,
-  type MirrorStripDrop
+  mirrorTabDropAtPoint,
+  type MirrorTabDrop
 } from './agent-hub-mirror-drop-target'
 import { commitMirrorTabDrop } from './agent-hub-mirror-drag-commit'
 import {
   agentHubMirrorGestureOwner,
+  blockAgentHubMirrorTabClick,
+  isAgentHubMirrorTabClickBlocked,
   releaseAgentHubMirrorGesture
 } from './agent-hub-mirror-gesture'
-import { subscribeAgentHubMirrors } from './agent-hub-mirror-store'
+import { subscribeAgentHubMirrors, readAgentHubMirrors } from './agent-hub-mirror-store'
+import { mirrorTabTransferFeedback } from './agent-hub-mirror-transfer-feedback'
 
 export function useAgentHubMirrorTabDrag(enabled: boolean) {
   const [active, setActive] = useState<AgentHubMirrorTabDrag | null>(null)
   const activeRef = useRef<AgentHubMirrorTabDrag | null>(null)
   const pointRef = useRef<{ x: number; y: number } | null>(null)
-  const [drop, setDrop] = useState<MirrorStripDrop | null>(null)
+  const [drop, setDrop] = useState<MirrorTabDrop | null>(null)
+  const dropRef = useRef<MirrorTabDrop | null>(null)
   const isTabDragActiveRef = useRef(false)
   const clearDragStateRef = useRef<() => void>(() => {})
   const lifecycle = useTabDragGestureLifecycle({
@@ -40,13 +44,13 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
     isTabDragActiveRef.current = false
     activeRef.current = null
     pointRef.current = null
+    dropRef.current = null
     releaseAgentHubMirrorGesture('tab')
     releaseMissedEndFallback()
     releaseWebviewDragPassthrough()
     setActive(null)
     setDrop(null)
   }, [releaseMissedEndFallback, releaseWebviewDragPassthrough])
-  clearDragStateRef.current = clear
   const cancel = useCallback(() => {
     if (agentHubMirrorGestureOwner() === 'tab') {
       // The shared sensor owns its document listeners even before distance activation.
@@ -54,6 +58,7 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
     }
     clear()
   }, [clear])
+  clearDragStateRef.current = cancel
   const options = useMemo(
     () => ({ activationConstraint: { distance: getTabDragActivationDistance(enabled) } }),
     [enabled]
@@ -92,9 +97,29 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
     document.addEventListener('lostpointercapture', lost)
     document.addEventListener('pointerup', released)
     document.addEventListener('pointermove', missedMove)
+    const click = (event: MouseEvent): void => {
+      if (event.detail > 0 && isAgentHubMirrorTabClickBlocked()) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+      }
+    }
+    const nextGesture = (): void => {
+      if (!isTabDragActiveRef.current) {
+        blockAgentHubMirrorTabClick(false)
+      }
+    }
+    window.addEventListener('click', click, true)
+    document.addEventListener('pointerdown', nextGesture, true)
     const stop = subscribeAgentHubMirrors(() => {
       if (activeRef.current && !currentMirrorDragEntry(activeRef.current)) {
         cancel()
+      }
+      const target = dropRef.current
+      if (target?.kind === 'strip') {
+        const window = readAgentHubMirrors().windows.find((item) => item.id === target.windowId)
+        if (!window || (target.entryId && !window.tabs.some((tab) => tab.id === target.entryId))) {
+          cancel()
+        }
       }
     })
     const observer = new MutationObserver(() => {
@@ -111,6 +136,9 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
       document.removeEventListener('lostpointercapture', lost)
       document.removeEventListener('pointerup', released)
       document.removeEventListener('pointermove', missedMove)
+      window.removeEventListener('click', click, true)
+      document.removeEventListener('pointerdown', nextGesture, true)
+      blockAgentHubMirrorTabClick(false)
       stop()
       observer.disconnect()
       cancel()
@@ -118,9 +146,8 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
   }, [cancel])
 
   const resolveDrop = useCallback(
-    (point: { x: number; y: number } | null): MirrorStripDrop | null => {
-      const target = point ? mirrorStripDropAtPoint(point) : null
-      return target?.windowId === activeRef.current?.windowId ? target : null
+    (point: { x: number; y: number } | null): MirrorTabDrop | null => {
+      return point ? mirrorTabDropAtPoint(point) : null
     },
     []
   )
@@ -130,7 +157,9 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
         return []
       }
       const target = resolveDrop(args.pointerCoordinates)
-      return target ? [{ id: `mirror-strip:${target.windowId}` }] : []
+      return target
+        ? [{ id: target.kind === 'strip' ? `mirror-strip:${target.windowId}` : 'mirror-detach' }]
+        : []
     },
     [resolveDrop]
   )
@@ -146,6 +175,7 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
       return
     }
     activeRef.current = payload
+    blockAgentHubMirrorTabClick(true)
     isTabDragActiveRef.current = true
     setActive(payload)
     lifecycle.installMissedEndFallback()
@@ -154,13 +184,15 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
   const onDragMove = (event: DragMoveEvent): void => {
     if (isTabDragActiveRef.current) {
       pointRef.current = getDragPointer(event)
-      setDrop(resolveDrop(pointRef.current))
+      dropRef.current = resolveDrop(pointRef.current)
+      setDrop(dropRef.current)
     }
   }
   useEffect(() => {
     const scrolled = (): void => {
       if (isTabDragActiveRef.current) {
-        setDrop(resolveDrop(pointRef.current))
+        dropRef.current = resolveDrop(pointRef.current)
+        setDrop(dropRef.current)
       }
     }
     document.addEventListener('scroll', scrolled, true)
@@ -172,7 +204,7 @@ export function useAgentHubMirrorTabDrag(enabled: boolean) {
     // Clear before publishing membership so subscriber revalidation cannot cancel a completed gesture.
     clear()
     if (payload && target) {
-      commitMirrorTabDrop(payload, target)
+      mirrorTabTransferFeedback(commitMirrorTabDrop(payload, target))
     }
   }
   return {

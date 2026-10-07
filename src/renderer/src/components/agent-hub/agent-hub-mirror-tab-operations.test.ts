@@ -31,6 +31,7 @@ import {
 import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { rememberAgentHubMirrorOrigin, readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import { captureAgentHubSession } from './agent-hub-session-restore'
+import { agentHubWorkArea } from './agent-hub-floating-arrangement'
 
 const { disappeared } = vi.hoisted(() => ({ disappeared: new Set<string>() }))
 vi.mock('./agent-hub-mirror-source', async (original) => ({
@@ -226,7 +227,7 @@ describe('mirror container membership', () => {
     expect(readAgentHubMirrorOrigin(a.window.id)).toMatchObject({
       width: 500,
       height: 300,
-      x: 80,
+      x: Math.max(80, agentHubWorkArea().left),
       y: 90
     })
     addAgentHubMirrorTab(a.window.id, target('b'))

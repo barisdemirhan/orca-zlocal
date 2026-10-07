@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
@@ -10,11 +11,13 @@ import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 function PreviewEntry({
   entry,
   active,
-  visible
+  visible,
+  destination
 }: {
   entry: AgentHubMirrorTab
   active: boolean
   visible: boolean
+  destination: HTMLElement | null
 }): React.JSX.Element {
   const target = entry.target
   const ptyId = useAgentHubLivePty(target.worktree.id, target.tab.id, target.paneKey, false)
@@ -22,49 +25,69 @@ function PreviewEntry({
     useShallow((state) => (ptyId ? resolveAgentHubTerminalInput(state, target, ptyId) : null))
   )
   return (
-    <div
-      hidden={!active}
-      inert={!active || !visible}
-      data-agent-hub-preview-entry={entry.id}
-      className="relative min-h-0 flex-1"
+    <RetainedPaneHost
+      groupId={undefined}
+      isVisible={active && visible}
+      retainContent
+      destination={destination}
     >
-      {ptyId ? (
-        <AgentTerminalPreview
-          key={ptyId}
-          ptyId={ptyId}
-          terminalInput={input}
-          visible={active && visible}
-          focusOnActivate={false}
-          className="h-full"
-        />
-      ) : null}
-    </div>
+      <div
+        hidden={!active}
+        inert={!active || !visible}
+        data-agent-hub-preview-entry={entry.id}
+        className="relative min-h-0 flex-1"
+      >
+        {ptyId ? (
+          <AgentTerminalPreview
+            key={ptyId}
+            ptyId={ptyId}
+            terminalInput={input}
+            visible={active && visible}
+            focusOnActivate={false}
+            className="h-full"
+          />
+        ) : null}
+      </div>
+    </RetainedPaneHost>
   )
 }
 
 export function AgentHubMirrorPreviews({
-  window,
+  windows,
+  slots,
   visible
 }: {
-  window: AgentHubMirrorWindowState
+  windows: readonly AgentHubMirrorWindowState[]
+  slots: ReadonlyMap<string, HTMLElement>
   visible: boolean
 }): React.JSX.Element {
   const visited = useRef(new Set<string>())
-  visited.current.add(window.activeTabId)
+  for (const window of windows) {
+    visited.current.add(window.activeTabId)
+  }
+  const entries = windows.flatMap((window) => window.tabs.map((entry) => ({ window, entry })))
+  const present = new Set(entries.map((item) => item.entry.id))
+  for (const id of visited.current) {
+    if (!present.has(id)) {
+      visited.current.delete(id)
+    }
+  }
   return (
     <>
-      {window.tabs
+      {entries
         .filter(
-          (entry) =>
+          ({ entry }) =>
             visited.current.has(entry.id) &&
             entry.target.worktree.id === FLOATING_TERMINAL_WORKTREE_ID
         )
-        .map((entry) => (
+        .toSorted((a, b) => a.entry.id.localeCompare(b.entry.id))
+        .map(({ window, entry }) => (
           <PreviewEntry
             key={entry.id}
             entry={entry}
             active={entry.id === window.activeTabId}
             visible={visible}
+            destination={entry.id === window.activeTabId ? (slots.get(window.id) ?? null) : null}
           />
         ))}
     </>

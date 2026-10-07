@@ -21765,7 +21765,10 @@
       "tabLimit": "A mirror can hold up to 10 terminals.",
       "addUnavailable": "This terminal is no longer available to add.",
       "alreadyOwned": "This terminal is already popped out.",
-      "dropUnavailable": "Cannot drop here"
+      "dropUnavailable": "Cannot drop here",
+      "openInNew": "Open in new mirror",
+      "moveToMirror": "Move to mirror",
+      "moveUnavailable": "This terminal is no longer available to move."
     },
     "title": "Agents",
     "tab": {

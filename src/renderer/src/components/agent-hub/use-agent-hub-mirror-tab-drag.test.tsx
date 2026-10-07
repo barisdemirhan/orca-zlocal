@@ -17,6 +17,12 @@ import {
   releaseAgentHubMirrorGesture
 } from './agent-hub-mirror-gesture'
 import { useAgentHubMirrorTabDrag } from './use-agent-hub-mirror-tab-drag'
+import {
+  endAgentHubMirrorFocus,
+  isAgentHubMirrorFocusEscape,
+  readAgentHubMirrorFocus,
+  setAgentHubMirrorFocus
+} from './agent-hub-mirror-focus'
 
 const lease = vi.hoisted(() => ({ acquire: vi.fn(), release: vi.fn() }))
 vi.mock('../browser-pane/host-guest/webview-registry', () => ({
@@ -32,6 +38,7 @@ afterEach(() => {
   cleanup()
   resetAgentHubMirrorsForTest()
   releaseAgentHubMirrorGesture('tab')
+  endAgentHubMirrorFocus()
   vi.restoreAllMocks()
   vi.clearAllMocks()
 })
@@ -65,6 +72,8 @@ it.each([
   'lostpointercapture',
   'pointercancel',
   'missed-end',
+  'blur',
+  'modal',
   'unmount',
   'disable',
   'park'
@@ -87,9 +96,16 @@ it.each([
     act(() => document.dispatchEvent(new Event('lostpointercapture')))
   } else if (reason === 'pointercancel') {
     act(() => result.current.onDragCancel())
-  } else if (reason === 'missed-end') {
-    act(() => window.dispatchEvent(new Event('pointerup')))
+  } else if (reason === 'missed-end' || reason === 'blur') {
+    act(() => window.dispatchEvent(new Event(reason === 'blur' ? 'blur' : 'pointerup')))
     await act(() => new Promise((resolve) => setTimeout(resolve, 5)))
+  } else if (reason === 'modal') {
+    const overlay = document.createElement('div')
+    overlay.dataset.slot = 'dialog-overlay'
+    await act(async () => {
+      document.body.append(overlay)
+    })
+    overlay.remove()
   } else if (reason === 'unmount') {
     unmount()
   } else if (reason === 'disable') {
@@ -109,4 +125,49 @@ it.each([
   expect(lease.acquire).toHaveBeenCalledTimes(1)
   expect(lease.release).toHaveBeenCalledTimes(1)
   expect(agentHubMirrorGestureOwner()).toBeNull()
+})
+
+it('suppresses the delayed pointer click after Escape until a new intentional gesture', () => {
+  const dragEvent = event()
+  const { result } = renderHook(() => useAgentHubMirrorTabDrag(true))
+  const clicked = vi.fn()
+  const button = document.createElement('button')
+  button.addEventListener('click', clicked)
+  document.body.append(button)
+  act(() => result.current.onDragStart(dragEvent))
+  act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+  const click = new MouseEvent('click', { detail: 1, bubbles: true, cancelable: true })
+  button.dispatchEvent(click)
+  expect(click.defaultPrevented).toBe(true)
+  expect(clicked).not.toHaveBeenCalled()
+  button.dispatchEvent(new MouseEvent('click', { detail: 0, bubbles: true }))
+  expect(clicked).toHaveBeenCalledTimes(1)
+  button.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+  button.dispatchEvent(new MouseEvent('click', { detail: 1, bubbles: true }))
+  expect(clicked).toHaveBeenCalledTimes(2)
+  button.remove()
+})
+
+it('gives Escape to the drag before the canvas focus handler', () => {
+  const dragEvent = event()
+  const { result } = renderHook(() => useAgentHubMirrorTabDrag(true))
+  setAgentHubMirrorFocus('focused-window')
+  const canvasEscape = (event: KeyboardEvent): void => {
+    if (isAgentHubMirrorFocusEscape(event)) {
+      endAgentHubMirrorFocus()
+    }
+  }
+  window.addEventListener('keydown', canvasEscape, true)
+  try {
+    act(() => result.current.onDragStart(dragEvent))
+    act(() =>
+      document.body.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+      )
+    )
+    expect(result.current.active).toBeNull()
+    expect(readAgentHubMirrorFocus()).toBe('focused-window')
+  } finally {
+    window.removeEventListener('keydown', canvasEscape, true)
+  }
 })

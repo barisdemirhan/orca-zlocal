@@ -1,6 +1,6 @@
 import { tabInsertionSide } from '../tab-group/tab-insertion-geometry'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
-import { agentHubMirrorSourceKey } from './agent-hub-mirror-membership'
+import { agentHubMirrorSourceKey, AGENT_HUB_MIRROR_TAB_CAP } from './agent-hub-mirror-membership'
 import { agentHubPaneTargetKey } from './agent-hub-pane-target'
 import type { AgentHubMirrorTabDrag } from './agent-hub-mirror-drag-data'
 
@@ -9,6 +9,45 @@ export type MirrorStripDrop = {
   windowId: string
   entryId: string | null
   side: 'left' | 'right'
+}
+export type MirrorTabDrop = MirrorStripDrop | { kind: 'detach'; point: { x: number; y: number } }
+
+export function canAcceptMirrorTabDrop(
+  drag: AgentHubMirrorTabDrag | null,
+  drop: MirrorTabDrop | null
+): boolean {
+  if (!drag || !drop || !currentMirrorDragEntry(drag)) {
+    return false
+  }
+  if (drop.kind === 'detach' || drop.windowId === drag.windowId) {
+    return true
+  }
+  const window = readAgentHubMirrors().windows.find((item) => item.id === drop.windowId)
+  return !!window && window.tabs.length < AGENT_HUB_MIRROR_TAB_CAP
+}
+
+export function mirrorTabDropAtPoint(point: { x: number; y: number }): MirrorTabDrop | null {
+  const strip = mirrorStripDropAtPoint(point)
+  if (strip) {
+    return strip
+  }
+  const element = document.elementFromPoint(point.x, point.y)
+  if (
+    !element ||
+    element.closest(
+      'button,input,textarea,select,[role="menu"],[data-agent-hub-mirror],[data-agent-hub-dock],[data-agent-hub-mirrors][data-hidden="true"]'
+    )
+  ) {
+    return null
+  }
+  if (
+    element.matches(
+      '[data-agent-hub-new-mirror-drop], [data-agent-hub-canvas], [data-agent-hub-mirror-stage-background]'
+    )
+  ) {
+    return { kind: 'detach', point }
+  }
+  return null
 }
 
 export function currentMirrorDragEntry(drag: AgentHubMirrorTabDrag) {

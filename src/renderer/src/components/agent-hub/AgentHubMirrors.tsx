@@ -1,3 +1,4 @@
+import { AgentHubMirrorPreviews } from './AgentHubMirrorPreviews'
 import { AgentHubMirrorTabDragLayer } from './AgentHubMirrorTabDragLayer'
 import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
 import { selectAgentHubMirrorFamilyMember } from './agent-hub-mirror-tab-actions'
@@ -270,7 +271,7 @@ export function AgentHubMirrors({
   const stableWindows = windows.toSorted((a, b) => a.id.localeCompare(b.id))
 
   return createPortal(
-    <AgentHubMirrorTabDragLayer enabled={!hidden && !hubOpen}>
+    <AgentHubMirrorTabDragLayer enabled={!hidden}>
       <div
         data-agent-hub-mirrors
         data-behind={panelInFront}
@@ -301,7 +302,6 @@ export function AgentHubMirrors({
               location={locationOf(target)}
               stackIndex={index + 1}
               besideHubPanel={hubOpen}
-              previewVisible={!hidden}
               previewFocus={index === windows.length - 1 && !hubOpen && !quiet && !hidden}
               surface={surfaces[index]?.surface ?? 'portal'}
               // The window raises its own pane's alerts; the hub's bubble skips them.
@@ -345,6 +345,7 @@ export function AgentHubMirrors({
             />
           )
         })}
+        <AgentHubMirrorPreviews windows={windows} slots={slots} visible={!hidden} />
         <AgentHubMirrorTray
           items={trayItems}
           trayRef={trayRef}

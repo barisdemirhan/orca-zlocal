@@ -10,7 +10,7 @@ export function flyMirrorWindowToHub(
   hub: HTMLElement | null,
   land: () => void,
   delayMs = 0
-): void {
+): () => void {
   let landed = false
   const landOnce = (): void => {
     if (!landed) {
@@ -41,7 +41,9 @@ export function flyMirrorWindowToHub(
     })
     flight.onfinish = landOnce
     flight.oncancel = landOnce
+    return () => flight.cancel()
   } catch {
     landOnce()
+    return () => {}
   }
 }

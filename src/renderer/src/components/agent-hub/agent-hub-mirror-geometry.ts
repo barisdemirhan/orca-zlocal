@@ -134,14 +134,18 @@ export function agentHubMirrorFocusGeometry(
 /** Fit the window inside the viewport: shrink first, then pull it back on screen. */
 export function clampAgentHubMirrorGeometry(
   geometry: AgentHubMirrorGeometry,
-  viewport: Viewport
+  viewport: Viewport,
+  minimumSize: Size = { width: MIN_WIDTH, height: MIN_HEIGHT }
 ): AgentHubMirrorGeometry {
   // Why the reserve: a mirror dragged down must not cover the status bar's controls.
   const usableHeight = viewport.height - STATUS_BAR_RESERVE_HEIGHT
   const maxWidth = Math.max(MIN_WIDTH, viewport.width - EDGE_GAP * 2)
   const maxHeight = Math.max(MIN_HEIGHT, usableHeight - EDGE_GAP * 2)
-  const width = Math.min(maxWidth, Math.max(MIN_WIDTH, geometry.width))
-  const height = Math.min(maxHeight, Math.max(MIN_HEIGHT, geometry.height))
+  const width = Math.min(maxWidth, Math.max(Math.min(MIN_WIDTH, minimumSize.width), geometry.width))
+  const height = Math.min(
+    maxHeight,
+    Math.max(Math.min(MIN_HEIGHT, minimumSize.height), geometry.height)
+  )
   return {
     x: Math.min(Math.max(0, geometry.x), Math.max(0, viewport.width - width)),
     y: Math.min(Math.max(0, geometry.y), Math.max(0, usableHeight - height)),

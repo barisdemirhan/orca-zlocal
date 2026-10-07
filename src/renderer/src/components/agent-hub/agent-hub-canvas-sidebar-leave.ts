@@ -1,3 +1,4 @@
+import { isAgentHubMirrorTabClickBlocked } from './agent-hub-mirror-gesture'
 // Where the user already is: the current workspace's card, or the current page's nav button.
 // Going anywhere else changes the page or workspace, which leaves the canvas by itself.
 const CURRENT_DESTINATION =
@@ -11,7 +12,14 @@ const NESTED_CONTROL = 'button, a, input, [role="button"], [role="menuitem"]'
 export function isAgentHubCanvasLeaveClick(
   event: Pick<MouseEvent, 'target' | 'button' | 'metaKey' | 'ctrlKey' | 'shiftKey' | 'altKey'>
 ): boolean {
-  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+  if (
+    isAgentHubMirrorTabClickBlocked() ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  ) {
     return false
   }
   const target = event.target

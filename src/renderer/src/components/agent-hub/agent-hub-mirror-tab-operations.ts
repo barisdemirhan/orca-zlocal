@@ -2,7 +2,6 @@ import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
-  activeAgentHubMirrorTab,
   agentHubMirrorWindows,
   findAgentHubMirrorMembership,
   replaceAgentHubMirrorWindow,
@@ -14,11 +13,6 @@ import {
 } from './agent-hub-mirror-membership'
 import { commitAgentHubMirrorState, readAgentHubMirrors } from './agent-hub-mirror-store'
 import { resolveAgentHubMirrorTarget } from './agent-hub-mirror-source'
-import {
-  clampAgentHubMirrorGeometry,
-  agentHubMirrorOpenGeometry
-} from './agent-hub-mirror-geometry'
-import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 
 export type AgentHubMirrorTabResult =
   | { status: 'changed'; windowId: string; tabId: string }
@@ -149,85 +143,4 @@ export function closeAgentHubMirrorTab(windowId: string, tabId: string): AgentHu
   )
   return changed(window, tabId)
 }
-export function moveAgentHubMirrorTab(
-  fromId: string,
-  tabId: string,
-  toId: string,
-  index: number
-): AgentHubMirrorTabResult {
-  const source = findWindow(fromId)
-  const destination = findWindow(toId)
-  if (!source || !destination) {
-    return { status: 'missing-window' }
-  }
-  const tab = source.tabs.find((entry) => entry.id === tabId)
-  if (!tab) {
-    return { status: 'missing-entry' }
-  }
-  const target = resolveAgentHubMirrorTarget(tab.target)
-  if (!target) {
-    return { status: 'missing-source' }
-  }
-  if (!Number.isFinite(index)) {
-    return { status: 'invalid-order' }
-  }
-  if (fromId !== toId && destination.tabs.length >= AGENT_HUB_MIRROR_TAB_CAP) {
-    return { status: 'tab-cap' }
-  }
-  const tabs = destination.tabs
-    .filter((entry) => entry.id !== tabId)
-    .map((entry) => ({ ...entry, origin: 'manual' as const }))
-  tabs.splice(Math.max(0, Math.min(tabs.length, Math.trunc(index))), 0, {
-    ...tab,
-    target,
-    origin: 'manual'
-  })
-  const next = { ...destination, tabs, activeTabId: tabId }
-  let state = readAgentHubMirrors()
-  if (fromId !== toId) {
-    state = replaceAgentHubMirrorWindow(state, fromId, removeAgentHubMirrorTab(source, tabId))
-  }
-  commitAgentHubMirrorState(replaceAgentHubMirrorWindow(state, toId, next), toId)
-  return changed(next, tabId)
-}
-export function detachAgentHubMirrorTab(
-  windowId: string,
-  tabId: string,
-  point: { x: number; y: number }
-): AgentHubMirrorTabResult {
-  const source = findWindow(windowId)
-  if (!source) {
-    return { status: 'missing-window' }
-  }
-  const tab = source.tabs.find((entry) => entry.id === tabId)
-  if (!tab) {
-    return { status: 'missing-entry' }
-  }
-  const target = resolveAgentHubMirrorTarget(tab.target)
-  if (!target) {
-    return { status: 'missing-source' }
-  }
-  if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
-    return { status: 'invalid-order' }
-  }
-  const viewport = { width: window.innerWidth, height: window.innerHeight }
-  const original =
-    readAgentHubMirrorOrigin(source.id) ??
-    agentHubMirrorOpenGeometry({ width: 640, height: 400 }, { left: 0, top: 0, ...viewport }, [])
-  const geometry = clampAgentHubMirrorGeometry({ ...original, ...point }, viewport)
-  const single = source.tabs.length === 1
-  const next = {
-    id: single ? source.id : createBrowserUuid(),
-    tabs: [{ ...tab, target, origin: 'manual' as const }],
-    activeTabId: tab.id
-  }
-  const state = replaceAgentHubMirrorWindow(
-    readAgentHubMirrors(),
-    source.id,
-    single ? null : removeAgentHubMirrorTab(source, tabId)
-  )
-  // Geometry belongs to the window; a last-entry detach reuses its original identity and size.
-  rememberAgentHubMirrorOrigin(next.id, geometry)
-  commitAgentHubMirrorState({ ...state, windows: [...state.windows, next] })
-  return changed(next, activeAgentHubMirrorTab(next).id)
-}
+export { moveAgentHubMirrorTab, detachAgentHubMirrorTab } from './agent-hub-mirror-tab-transfer'

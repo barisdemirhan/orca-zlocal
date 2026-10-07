@@ -1,5 +1,4 @@
 import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selection-focus'
-import { AgentHubMirrorPreviews } from './AgentHubMirrorPreviews'
 import { agentHubMirrorPanelId, agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
 import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
@@ -21,7 +20,7 @@ import {
   useAgentHubMirrorHighlight,
   useAgentHubMirrorsDockRequest
 } from './agent-hub-mirror-store'
-import { flyMirrorWindowToHub } from './mirror-window-flight'
+import { useMirrorWindowDeparture } from './use-mirror-window-departure'
 import { nudgeMirrorWindow, pulseMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
 import type { AgentHubAlert } from './agent-hub-alerts'
@@ -31,7 +30,6 @@ import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import { returnRetainedPaneDestinationHome } from '../tab-group/retained-pane-destinations'
 
-const LEAVE_MS = 140
 // A tab that has not attached by then is not coming back on its own.
 const ATTACH_GIVE_UP_MS = 10_000
 
@@ -50,7 +48,6 @@ export function AgentHubMirrorWindow({
   location,
   stackIndex,
   besideHubPanel,
-  previewVisible = true,
   previewFocus = true,
   surface,
   nudge,
@@ -78,7 +75,6 @@ export function AgentHubMirrorWindow({
   stackIndex: number
   /** The hub's panel is open: a window opening now takes a place beside it. */
   besideHubPanel: boolean
-  previewVisible?: boolean
   previewFocus?: boolean
   /**
    * How the terminal is shown: the real pane moved in (`portal`), a note while the pane is on
@@ -127,34 +123,13 @@ export function AgentHubMirrorWindow({
   const [gaveUp, setGaveUp] = useState(false)
   // Put back at launch: it is simply there, without the opening animation.
   const [restored] = useState(isAgentHubMirrorStageQuiet)
-  const [leaving, setLeaving] = useState(false)
-  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // Fades the window out before it closes or shrinks into its chip.
-  const leave = (then: () => void): void => {
-    setLeaving(true)
-    leaveTimerRef.current = setTimeout(then, LEAVE_MS)
-  }
-  useEffect(
-    () => () => {
-      if (leaveTimerRef.current) {
-        clearTimeout(leaveTimerRef.current)
-      }
-    },
-    []
+  const { leaving, minimizing, leave, minimize } = useMirrorWindowDeparture(
+    mirrorKey,
+    windowState,
+    sectionRef,
+    hubRef,
+    onMinimize
   )
-  const minimizing = useRef(false)
-  const minimize = (delayMs = 0): void => {
-    if (minimizing.current || !sectionRef.current) {
-      return
-    }
-    minimizing.current = true
-    flyMirrorWindowToHub(
-      sectionRef.current,
-      hubRef.current,
-      onMinimize,
-      Number.isFinite(delayMs) ? Math.max(0, delayMs) : 0
-    )
-  }
   // Picked again from the hub while open: glow so the eye finds it.
   const highlight = useAgentHubMirrorHighlight()
   const seenHighlight = useRef(highlight.seq)
@@ -167,7 +142,7 @@ export function AgentHubMirrorWindow({
       minimizing.current = false
       pulseMirrorWindow(sectionRef.current)
     }
-  }, [highlight, mirrorKey, sectionRef])
+  }, [highlight, mirrorKey, sectionRef, minimizing])
   // "Send all to the hub" reaches every open window, the front one first; a hub row asks one.
   const dockRequest = useAgentHubMirrorsDockRequest()
   const seenDockRequest = useRef(dockRequest.seq)
@@ -365,10 +340,9 @@ export function AgentHubMirrorWindow({
               </div>
             )}
           </div>
-        ) : null}
-        {windowState ? (
-          <AgentHubMirrorPreviews window={windowState} visible={previewVisible} />
-        ) : null}
+        ) : (
+          <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1" />
+        )}
       </div>
       <div
         aria-hidden

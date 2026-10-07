@@ -54,7 +54,7 @@ function claimMirrorPlace(key: string, besideHubPanel: boolean): AgentHubMirrorG
   const viewport = viewportSize()
   const remembered = readAgentHubMirrorOrigin(key)
   if (remembered) {
-    return clampAgentHubMirrorGeometry(remembered, viewport)
+    return clampAgentHubMirrorGeometry(remembered, viewport, remembered)
   }
   const panel = besideHubPanel
     ? document.querySelector('[data-agent-hub-panel]')?.getBoundingClientRect()
@@ -151,7 +151,7 @@ export function useMirrorWindowGeometry(
     setSeenArrangeVersion(arrangeVersion)
     const placement = readAgentHubMirrorPlacement(key)
     if (placement) {
-      setGeometry(clampAgentHubMirrorGeometry(placement, viewportSize()))
+      setGeometry(clampAgentHubMirrorGeometry(placement, viewportSize(), placement))
       setSettling(true)
     }
   }

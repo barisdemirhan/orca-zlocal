@@ -1,5 +1,12 @@
 type MirrorGesture = { owner: 'tab' | 'window'; pointerId: number }
 let gesture: MirrorGesture | null = null
+let tabClickBlocked = false
+export function blockAgentHubMirrorTabClick(blocked: boolean): void {
+  tabClickBlocked = blocked
+}
+export function isAgentHubMirrorTabClickBlocked(): boolean {
+  return tabClickBlocked
+}
 
 export function claimAgentHubMirrorGesture(
   owner: MirrorGesture['owner'],

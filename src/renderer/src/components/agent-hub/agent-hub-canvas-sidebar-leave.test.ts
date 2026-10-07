@@ -1,8 +1,10 @@
 /** @vitest-environment happy-dom */
 import { afterEach, describe, expect, it } from 'vitest'
 import { isAgentHubCanvasLeaveClick } from './agent-hub-canvas-sidebar-leave'
+import { blockAgentHubMirrorTabClick } from './agent-hub-mirror-gesture'
 
 afterEach(() => {
+  blockAgentHubMirrorTabClick(false)
   document.body.innerHTML = ''
 })
 
@@ -20,6 +22,14 @@ function click(selector: string, keys: Partial<MouseEvent> = {}): boolean {
 }
 
 describe('a left-sidebar click that leaves the canvas', () => {
+  it('keeps the canvas open for a suppressed post-drag sidebar click', () => {
+    document.body.innerHTML =
+      '<div data-contextual-tour-target="sidebar-navigation"><button id="tasks" aria-current="page">Tasks</button></div>'
+    blockAgentHubMirrorTabClick(true)
+    expect(click('#tasks')).toBe(false)
+    blockAgentHubMirrorTabClick(false)
+    expect(click('#tasks')).toBe(true)
+  })
   it('is a plain click on the current workspace card, not on a control inside it', () => {
     document.body.innerHTML = `
       <div data-worktree-sidebar>

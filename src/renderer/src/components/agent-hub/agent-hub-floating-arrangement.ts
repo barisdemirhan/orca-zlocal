@@ -37,6 +37,15 @@ export function readAgentHubMirrorPlacement(key: string): AgentHubMirrorGeometry
   return placements.get(key) ?? null
 }
 
+export function requestAgentHubMirrorPlacement(
+  key: string,
+  geometry: AgentHubMirrorGeometry
+): void {
+  placements = new Map([[key, geometry]])
+  version += 1
+  listeners.forEach((listener) => listener())
+}
+
 /** The room between the sidebars, under the title bar and above the status bar and the hub's dock. */
 export function agentHubWorkArea(): AgentHubRect {
   const state = useAppStore.getState()

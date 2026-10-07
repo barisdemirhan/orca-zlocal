@@ -43,7 +43,11 @@ export function AgentHubMirrorTabStrip({
   const drag = useAgentHubMirrorDrag()
   const droppable = useDroppable({ id: `mirror-strip:${window.id}`, disabled: !drag.enabled })
   const scroll = useMirrorTabStripScroll(stripRef, window.tabs.length)
-  const append = drag.drop?.windowId === window.id && drag.drop.entryId === null
+  const append =
+    drag.allowed &&
+    drag.drop?.kind === 'strip' &&
+    drag.drop.windowId === window.id &&
+    drag.drop.entryId === null
   const selection = useAgentHubMirrorSelection()
   const seen = useRef(0)
   const session = useAgentHubDictationSession()

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { agentHubMirrorGestureOwner } from './agent-hub-mirror-gesture'
 
 /** How a mirror stands while one is focused: the one brought forward, or one left in shadow. */
 export type AgentHubMirrorFocusState = 'focused' | 'shadowed' | null
@@ -61,7 +62,12 @@ export function moveAgentHubMirrorFocus(fromKey: string, toKey: string): void {
  */
 export function isAgentHubMirrorFocusEscape(event: KeyboardEvent): boolean {
   const target = event.target
-  if (event.key !== 'Escape' || event.defaultPrevented || !(target instanceof Element)) {
+  if (
+    event.key !== 'Escape' ||
+    event.defaultPrevented ||
+    agentHubMirrorGestureOwner() !== null ||
+    !(target instanceof Element)
+  ) {
     return false
   }
   const onStage =
