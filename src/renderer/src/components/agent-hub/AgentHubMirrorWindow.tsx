@@ -18,6 +18,7 @@ import { AgentHubMirrorHeaderControls } from './AgentHubMirrorHeaderControls'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
 import { AgentHubMirrorFocusShade } from './AgentHubMirrorFocusShade'
+import { AgentHubMirrorSidebarReveal } from './AgentHubMirrorSidebarReveal'
 import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import {
   isAgentHubMirrorStageQuiet,
@@ -278,8 +279,9 @@ export function AgentHubMirrorWindow({
         <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
         <div className="min-w-0 flex-1 text-[12.5px]">
           <AgentHubMirrorTitle target={target} />
-          <div className="[&>span]:text-[11px]">
+          <div className="flex items-center gap-1 [&>span]:text-[11px]">
             <HubCrumb location={location} />
+            <AgentHubMirrorSidebarReveal target={target} />
           </div>
         </div>
         <AgentHubMirrorHeaderControls

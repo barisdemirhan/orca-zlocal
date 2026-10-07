@@ -21750,7 +21750,8 @@
       "cancelDictation": "Cancel dictation",
       "cancelDictationHint": "Cancel dictation and discard what is not inserted yet",
       "endFocus": "Return this mirror to its place",
-      "focus": "Focus this mirror"
+      "focus": "Focus this mirror",
+      "showInSidebar": "Show in sidebar"
     },
     "title": "Agents",
     "tab": {

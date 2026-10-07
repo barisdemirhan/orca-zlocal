@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConfirmationDialogProvider } from '@/components/confirmation-dialog'
 import {
+  requestWorkspaceSidebarReveal,
   requestScrollToCurrentWorkspaceReveal,
   requestScrollToCurrentWorkspaceRevealAndRename
 } from '@/lib/scroll-to-current-workspace-status'
@@ -237,4 +238,31 @@ describe('revealing a filtered workspace', () => {
       })
     }
   )
+})
+
+it('reveals an explicit mirror target under its host without changing the current workspace', async () => {
+  args = {
+    ...args,
+    currentSidebarWorktreeId: 'another-workspace',
+    currentSidebarExecutionHostId: 'local'
+  }
+  await render()
+  await act(async () => requestWorkspaceSidebarReveal('wt-1', 'ssh:dev'))
+  expect(state.revealWorktreeInSidebar).not.toHaveBeenCalled()
+  await click('Adjust filters and reveal')
+  expect(state.revealWorktreeInSidebar).toHaveBeenCalledWith('wt-1', {
+    behavior: 'smooth',
+    highlight: true,
+    beginRename: false,
+    executionHostId: 'ssh:dev'
+  })
+  expect(args.currentSidebarWorktreeId).toBe('another-workspace')
+})
+
+it('keeps filters when an explicit target reveal is cancelled', async () => {
+  await render()
+  await act(async () => requestWorkspaceSidebarReveal('wt-1', 'ssh:dev'))
+  await click('Keep filters')
+  expect(state.revealWorktreeInSidebar).not.toHaveBeenCalled()
+  expect(args.revealWorkspaceFilters).not.toHaveBeenCalled()
 })
