@@ -72,7 +72,9 @@ export function AgentHubChildGroup({
   indent = false,
   now,
   onOpenParent,
-  children
+  children,
+  onToggle,
+  focusable = false
 }: {
   parentKey: string
   childAgents: AgentHubChildren
@@ -82,6 +84,8 @@ export function AgentHubChildGroup({
   onOpenParent: () => void
   /** The worker rows, rendered by the caller (each surface has its own row model). */
   children: React.ReactNode
+  onToggle?: () => void
+  focusable?: boolean
 }): React.JSX.Element | null {
   const { workers, subagents } = childAgents
   if (workers.length === 0 && subagents.length === 0) {
@@ -91,9 +95,9 @@ export function AgentHubChildGroup({
     <div data-indent={indent} className="mb-1 ml-[30px] data-[indent=true]:ml-[44px]">
       <button
         type="button"
-        tabIndex={-1}
+        tabIndex={focusable ? 0 : -1}
         aria-expanded={expanded}
-        onClick={() => toggleAgentHubChildren(parentKey)}
+        onClick={onToggle ?? (() => toggleAgentHubChildren(parentKey))}
         className="flex h-7 w-full items-center gap-2 rounded-lg bg-foreground/[0.04] px-2.5 text-left text-[12px] text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
       >
         <span className="min-w-0 flex-1 truncate">

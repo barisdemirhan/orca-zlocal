@@ -1,4 +1,6 @@
 export type AgentHubCommands = {
+  nextMirrorTab?: (() => void) | null
+  previousMirrorTab?: (() => void) | null
   focusMirror: (() => void) | null
   popOut: (() => void) | null
   jumpToMirror: (() => void) | null

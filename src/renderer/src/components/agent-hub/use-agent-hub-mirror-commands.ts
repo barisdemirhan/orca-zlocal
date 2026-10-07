@@ -1,3 +1,4 @@
+import { cycleAgentHubMirrorTab } from './agent-hub-mirror-tab-command'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import { useEffect } from 'react'
@@ -18,6 +19,8 @@ export function useAgentHubMirrorCommands(
     () =>
       registerAgentHubCommands({
         ...commands,
+        nextMirrorTab: () => cycleAgentHubMirrorTab(1),
+        previousMirrorTab: () => cycleAgentHubMirrorTab(-1),
         focusMirror:
           canvasOpen && commands.arrangeMirrors
             ? () => {

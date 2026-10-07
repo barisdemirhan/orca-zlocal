@@ -293,7 +293,7 @@ describe('AgentHubPanel row mirror button', () => {
     expect(handlers.onPopout).toHaveBeenCalledTimes(1)
   })
 
-  it('turns pop out into send to the hub, then bring back, with a close beside it', () => {
+  it('raises an open owner and restores a parked owner with a close beside it', () => {
     const { handlers } = renderPanel()
     const popOut = rowButton('Pop out')
     click(popOut)
@@ -301,7 +301,9 @@ describe('AgentHubPanel row mirror button', () => {
 
     act(() => openAgentHubMirror(target))
     // The same button, so the pointer already rests on the next step.
-    expect(rowButton('Send to the hub')).toBe(popOut)
+    expect(rowButton('Show in mirror')).toBe(popOut)
+    click(popOut)
+    expect(readAgentHubMirrors().windows).toHaveLength(1)
     expect(rowButton('Close mirror')).not.toBeNull()
 
     act(() => minimizeAgentHubMirror(mirrorWindowIdFor(target.paneKey)))

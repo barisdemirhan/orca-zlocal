@@ -21754,7 +21754,17 @@
       "focus": "Focus this mirror",
       "showInSidebar": "Show in sidebar",
       "returnToWorkspace": "Return to workspace",
-      "tabCount": "{{value0}} tabs"
+      "tabCount": "{{value0}} tabs",
+      "addHint": "Add terminal to this mirror",
+      "pickerSections": "Terminal lists",
+      "available": "Available terminals",
+      "noneAvailable": "No terminals available to add",
+      "returnTab": "Return {{value0}} to workspace",
+      "terminals": "Mirror terminals",
+      "add": "Add terminal",
+      "tabLimit": "A mirror can hold up to 10 terminals.",
+      "addUnavailable": "This terminal is no longer available to add.",
+      "alreadyOwned": "This terminal is already popped out."
     },
     "title": "Agents",
     "tab": {
@@ -21928,7 +21938,8 @@
       "improveWithAgent": "Improve with an agent",
       "improveSettings": "Improve transcription settings",
       "modeSwitchCopy": "When on, the mirror microphone dictates and improves; Shift-click does the opposite.",
-      "improveRequired": "Requires the Improve transcriptions feature."
+      "improveRequired": "Requires the Improve transcriptions feature.",
+      "listeningTab": "Dictation in this terminal"
     },
     "shortcut": {
       "doubleTapHint": "You can also record a double tap of a modifier key.",

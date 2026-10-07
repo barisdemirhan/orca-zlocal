@@ -1,14 +1,13 @@
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
-import { Maximize2, Minus, PictureInPicture2, X } from 'lucide-react'
+import { Maximize2, PictureInPicture2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import {
   readAgentHubMirrors,
   openAgentHubMirror,
-  requestAgentHubMirrorsDock,
   useAgentHubMirrorPresence
 } from './agent-hub-mirror-store'
 
@@ -90,18 +89,14 @@ export function HubRowMirrorActions({
       <HubRowAction
         actionId={presence ? undefined : 'agentHub.popOut'}
         label={
-          presence === 'window' && grouped
+          presence === 'window'
             ? translate('agentHub.row.showInMirror', 'Show in mirror')
-            : presence === 'window'
-              ? translate('agentHub.row.sendToHub', 'Send to the hub')
-              : presence === 'chip'
-                ? translate('agentHub.row.bringBack', 'Bring back')
-                : translate('agentHub.row.popOut', 'Pop out')
+            : presence === 'chip'
+              ? translate('agentHub.row.bringBack', 'Bring back')
+              : translate('agentHub.row.popOut', 'Pop out')
         }
         onClick={() => {
-          if (presence === 'window' && !grouped && owner) {
-            requestAgentHubMirrorsDock(owner.window.id)
-          } else if (owner) {
+          if (owner) {
             openAgentHubMirror(target ?? owner.tab.target)
           } else {
             onPopout()
@@ -109,7 +104,7 @@ export function HubRowMirrorActions({
         }}
       >
         {presence === 'window' ? (
-          <Minus className="size-[13px]" />
+          <PictureInPicture2 className="size-[13px]" />
         ) : presence === 'chip' ? (
           <Maximize2 className="size-[13px]" />
         ) : (

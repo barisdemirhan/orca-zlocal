@@ -96,7 +96,11 @@ function mount() {
   return render(
     <TooltipProvider>
       <div data-agent-hub-mirror>
-        <textarea className="xterm-helper-textarea" aria-label="Terminal input" />
+        <div data-terminal-tab-id="mic-tab">
+          <div className="pane" data-leaf-id="leaf">
+            <textarea className="xterm-helper-textarea" aria-label="Terminal input" />
+          </div>
+        </div>
         <AgentHubMirrorMicButton target={target} reachable />
       </div>
     </TooltipProvider>
@@ -114,6 +118,15 @@ describe('mirror mic improvement capability', () => {
     fireEvent.contextMenu(mic())
     await screen.findByRole('menu')
     expect(screen.queryByRole('menuitemcheckbox', { name: 'Improve with an agent' })).toBeNull()
+  })
+  it('ignores an earlier input belonging to another entry', () => {
+    const view = mount()
+    const other = document.createElement('textarea')
+    other.className = 'xterm-helper-textarea'
+    view.container.querySelector('[data-agent-hub-mirror]')?.prepend(other)
+    fireEvent.click(mic())
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Terminal input' }))
+    expect(actions).toEqual(['start'])
   })
   it('uses the object form for Shift-click only when supported; plain click stays plain', () => {
     improve = true

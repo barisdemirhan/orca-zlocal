@@ -1,3 +1,4 @@
+import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import { prepareAgentHubMirrorBatch } from './agent-hub-mirror-batch-open'
 import {
   createAgentHubMirrorWindowAtPreferredPlace as createAgentHubMirrorWindow,
@@ -89,6 +90,7 @@ export function openAgentHubMirror(
   if (owner?.presence === 'window') {
     highlightAgentHubMirror(window.id)
   }
+  requestAgentHubMirrorSelection(window.id, window.activeTabId)
   return 'opened'
 }
 
@@ -185,6 +187,7 @@ export function restoreAgentHubMirror(id: string): void {
     if (window) {
       quiet = false
       emit(showWindow(state, window))
+      requestAgentHubMirrorSelection(window.id, window.activeTabId)
     } else {
       emit(replaceAgentHubMirrorWindow(state, id, null))
     }

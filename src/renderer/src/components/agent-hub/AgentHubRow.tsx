@@ -1,5 +1,5 @@
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
-import { ArrowUpRight, CheckCheck } from 'lucide-react'
+import { ArrowUpRight, CheckCheck, Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import type { AgentType } from '../../../../shared/agent-status-types'
@@ -23,7 +23,8 @@ export function AgentHubRow({
   onOpen,
   onPopout,
   onJump,
-  onMarkRead
+  onMarkRead,
+  selectionMode = false
 }: {
   kind: AgentHubIndicatorKind
   agentType: AgentType | null
@@ -45,6 +46,7 @@ export function AgentHubRow({
   onPopout: () => void
   onJump: () => void
   onMarkRead?: () => void
+  selectionMode?: boolean
 }): React.JSX.Element {
   const current = useAppStore(
     (s) =>
@@ -87,21 +89,33 @@ export function AgentHubRow({
           </span>
         ) : null}
         <span className="hidden gap-0.5 group-hover/row:flex group-data-[selected=true]/row:flex">
-          {onMarkRead ? (
-            <HubRowAction
-              label={translate('agentHub.row.markRead', 'Mark read')}
-              onClick={onMarkRead}
-            >
-              <CheckCheck className="size-[13px]" />
+          {selectionMode ? (
+            <HubRowAction label={translate('agentHub.mirror.add', 'Add terminal')} onClick={onOpen}>
+              <Plus className="size-3.5" />
             </HubRowAction>
-          ) : null}
-          <HubRowMirrorActions mirrorKey={mirrorKey} target={mirrorTarget} onPopout={onPopout} />
-          <HubRowAction
-            label={translate('agentHub.row.jump', 'Jump to this terminal')}
-            onClick={onJump}
-          >
-            <ArrowUpRight className="size-[13px]" />
-          </HubRowAction>
+          ) : (
+            <>
+              {onMarkRead ? (
+                <HubRowAction
+                  label={translate('agentHub.row.markRead', 'Mark read')}
+                  onClick={onMarkRead}
+                >
+                  <CheckCheck className="size-[13px]" />
+                </HubRowAction>
+              ) : null}
+              <HubRowMirrorActions
+                mirrorKey={mirrorKey}
+                target={mirrorTarget}
+                onPopout={onPopout}
+              />
+              <HubRowAction
+                label={translate('agentHub.row.jump', 'Jump to this terminal')}
+                onClick={onJump}
+              >
+                <ArrowUpRight className="size-[13px]" />
+              </HubRowAction>
+            </>
+          )}
         </span>
       </span>
     </div>

@@ -53,12 +53,14 @@ describe('agent hub shortcut suggestions', () => {
     }
   })
   it.each(PLATFORMS)(
-    'offers every hub action with two modifiers and a mnemonic key on %s',
+    'offers hub actions except opt-in tab cycling with mnemonic keys on %s',
     (platform) => {
       expect(agentHubSuggestedBindings(platform).map(([id]) => id)).toEqual(
-        KEYBINDING_DEFINITIONS.filter((item) => item.id.startsWith('agentHub.')).map(
-          (item) => item.id
-        )
+        KEYBINDING_DEFINITIONS.filter(
+          (item) =>
+            item.id.startsWith('agentHub.') &&
+            !['agentHub.nextMirrorTab', 'agentHub.previousMirrorTab'].includes(item.id)
+        ).map((item) => item.id)
       )
       for (const [id, binding] of agentHubSuggestedBindings(platform)) {
         expect(binding.split('+')).toHaveLength(3)

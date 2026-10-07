@@ -1,3 +1,4 @@
+import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
@@ -73,11 +74,13 @@ export function addAgentHubMirrorTab(
     activeTabId: tab.id
   }
   commitAgentHubMirrorState(replaceAgentHubMirrorWindow(state, window.id, next), window.id)
+  requestAgentHubMirrorSelection(next.id, tab.id)
   return changed(next, tab.id)
 }
 export function activateAgentHubMirrorTab(
   windowId: string,
-  tabId: string
+  tabId: string,
+  focusTerminal = true
 ): AgentHubMirrorTabResult {
   const window = findWindow(windowId)
   if (!window) {
@@ -99,6 +102,7 @@ export function activateAgentHubMirrorTab(
     ),
     windowId
   )
+  requestAgentHubMirrorSelection(windowId, tabId, focusTerminal)
   return changed(window, tabId)
 }
 export function reorderAgentHubMirrorTabs(

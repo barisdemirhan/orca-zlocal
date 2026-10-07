@@ -1,17 +1,14 @@
+import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selection-focus'
+import { AgentHubMirrorPreviews } from './AgentHubMirrorPreviews'
+import { agentHubMirrorPanelId, agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
+import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { ChevronRight, Loader2, PanelsTopLeft } from 'lucide-react'
-import { useShallow } from 'zustand/react/shallow'
-import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import { AgentTerminalPreview } from '../dashboard-popout/AgentTerminalPreview'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
 import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
-import {
-  resolveAgentHubTerminalInput,
-  type AgentHubLocation,
-  type AgentHubPaneTarget
-} from './agent-hub-pane-target'
+import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 import { AgentHubMirrorHeaderControls } from './AgentHubMirrorHeaderControls'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
@@ -45,6 +42,8 @@ const ATTACH_GIVE_UP_MS = 10_000
  */
 export function AgentHubMirrorWindow({
   windowId,
+  windowState,
+  tabStrip,
   target,
   windowKind,
   thread,
@@ -68,6 +67,8 @@ export function AgentHubMirrorWindow({
   onReveal
 }: {
   windowId: string
+  windowState?: AgentHubMirrorWindowState
+  tabStrip?: React.ReactNode
   windowKind?: AgentHubIndicatorKind
   target: AgentHubPaneTarget
   /** Live thread for an agent pane, for its state glyph; null for a shell. */
@@ -97,7 +98,7 @@ export function AgentHubMirrorWindow({
   hubRef: React.RefObject<HTMLElement | null>
   /** Registers the box the real pane is moved into. */
   onSlot: (key: string, element: HTMLDivElement | null) => void
-  onFocus: () => void
+  onFocus: (event: React.PointerEvent<HTMLElement>) => void
   onClose: () => void
   /** Parks the window as a chip beside the hub; the mirror keeps running. */
   onMinimize: () => void
@@ -183,13 +184,16 @@ export function AgentHubMirrorWindow({
       dockWhenAsked()
     }
   }, [dockRequest])
-  // Why subscribed: an agent starting or exiting in this pane changes its key encodings.
-  const terminalInput = useAppStore(
-    useShallow((state) =>
-      surface === 'preview' && ptyId ? resolveAgentHubTerminalInput(state, target, ptyId) : null
-    )
-  )
-  const kind = windowKind ?? (thread ? agentHubIndicatorKind(thread) : 'idle')
+  const activeKind = thread ? agentHubIndicatorKind(thread) : 'idle'
+  const kind = windowKind ?? activeKind
+  useAgentHubMirrorSelectionFocus({
+    windowId,
+    tabId: windowState?.activeTabId ?? '',
+    target,
+    rootRef: sectionRef,
+    allowed: previewFocus && surface !== 'in-workspace',
+    preview: surface === 'preview'
+  })
   const familyRoot = family?.path[0]?.paneKey ?? null
   const familyBarShown = useAgentHubFamilyBarShown(familyRoot)
 
@@ -240,7 +244,13 @@ export function AgentHubMirrorWindow({
         if (
           event.key === 'Escape' &&
           !event.defaultPrevented &&
-          !(event.target instanceof HTMLElement && event.target.closest('.xterm, [role="menu"]'))
+          !event.nativeEvent.isComposing &&
+          !(
+            event.target instanceof HTMLElement &&
+            event.target.closest(
+              '.xterm, [role="menu"], input, textarea, [contenteditable="true"], [data-agent-hub-picker]'
+            )
+          )
         ) {
           event.preventDefault()
           leave(onClose)
@@ -279,10 +289,10 @@ export function AgentHubMirrorWindow({
             />
           </button>
         ) : null}
-        <HubStateIndicator kind={kind} />
-        <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
+        <HubStateIndicator kind={activeKind} />
+        <HubAvatar agentType={target.agentType} kind={thread ? activeKind : null} />
         <div className="min-w-0 flex-1 text-[12.5px] leading-tight">
-          <AgentHubMirrorTitle target={target} />
+          <AgentHubMirrorTitle key={windowState?.activeTabId} target={target} />
           <div className="flex items-center gap-1 [&>span]:text-[11px]">
             <HubCrumb location={location} />
             <AgentHubMirrorSidebarReveal target={target} />
@@ -298,62 +308,67 @@ export function AgentHubMirrorWindow({
           onClose={() => leave(onClose)}
         />
       </header>
-      {family && familyBarShown ? (
-        <AgentHubMirrorFamilyTabs
-          family={family}
-          activeKey={target.paneKey ?? thread?.paneKey ?? mirrorKey}
-          locationOf={locationOf}
-          actionsFor={familyActionsFor}
-          onSelect={onRetarget}
-        />
-      ) : null}
-      {surface === 'in-workspace' ? (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-popover/60 px-8 text-center">
-          <PanelsTopLeft className="size-6 text-muted-foreground" />
-          <div className="text-sm font-semibold">
-            {translate('agentHub.mirror.inWorkspaceTitle', "You're in this workspace")}
-          </div>
-          <p className="max-w-[340px] text-xs text-muted-foreground">
-            {translate(
-              'agentHub.mirror.inWorkspace',
-              'This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.'
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={() => minimize()}
-            className="mt-1 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-          >
-            {translate('agentHub.mirror.minimize', 'Minimize')}
-          </button>
-        </div>
-      ) : surface === 'preview' && ptyId ? (
-        <AgentTerminalPreview
-          key={ptyId}
-          ptyId={ptyId}
-          terminalInput={terminalInput}
-          visible={previewVisible}
-          focusOnActivate={previewFocus}
-          className="h-auto min-h-0 flex-1"
-        />
-      ) : (
-        // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
-        <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">
-          <AgentHubMirrorDictationOverlay target={target} showsTerminal />
-          {ptyId ? null : (
-            <div className="absolute inset-0 flex items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
-              {gaveUp ? (
-                translate('agentHub.mirror.noTerminal', 'This pane has no live terminal right now.')
-              ) : (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" />
-                  {translate('agentHub.mirror.connecting', 'Connecting to the terminal…')}
-                </>
-              )}
+      {tabStrip}
+      <div
+        role="tabpanel"
+        id={agentHubMirrorPanelId(windowId)}
+        aria-labelledby={windowState ? agentHubMirrorTabId(windowState.activeTabId) : undefined}
+        className="flex min-h-0 flex-1 flex-col"
+      >
+        {family && familyBarShown ? (
+          <AgentHubMirrorFamilyTabs
+            family={family}
+            activeKey={target.paneKey ?? thread?.paneKey ?? mirrorKey}
+            locationOf={locationOf}
+            actionsFor={familyActionsFor}
+            onSelect={onRetarget}
+          />
+        ) : null}
+        {surface === 'in-workspace' ? (
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-popover/60 px-8 text-center">
+            <PanelsTopLeft className="size-6 text-muted-foreground" />
+            <div className="text-sm font-semibold">
+              {translate('agentHub.mirror.inWorkspaceTitle', "You're in this workspace")}
             </div>
-          )}
-        </div>
-      )}
+            <p className="max-w-[340px] text-xs text-muted-foreground">
+              {translate(
+                'agentHub.mirror.inWorkspace',
+                'This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.'
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => minimize()}
+              className="mt-1 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+            >
+              {translate('agentHub.mirror.minimize', 'Minimize')}
+            </button>
+          </div>
+        ) : surface !== 'preview' ? (
+          // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
+          <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">
+            <AgentHubMirrorDictationOverlay target={target} showsTerminal />
+            {ptyId ? null : (
+              <div className="absolute inset-0 flex items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
+                {gaveUp ? (
+                  translate(
+                    'agentHub.mirror.noTerminal',
+                    'This pane has no live terminal right now.'
+                  )
+                ) : (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    {translate('agentHub.mirror.connecting', 'Connecting to the terminal…')}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
+        {windowState ? (
+          <AgentHubMirrorPreviews window={windowState} visible={previewVisible} />
+        ) : null}
+      </div>
       <div
         aria-hidden
         className="absolute right-0 bottom-0 size-3 cursor-nwse-resize group-data-[focus=focused]/mirror:hidden"

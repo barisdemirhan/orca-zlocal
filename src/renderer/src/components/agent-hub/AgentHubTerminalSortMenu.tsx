@@ -45,12 +45,14 @@ function sortHint(option: (typeof SORT_OPTIONS)[number]): string | null {
 export function AgentHubTerminalSortMenu({
   sortBy,
   onSortChange,
-  onClosed
+  onClosed,
+  focusable = false
 }: {
   sortBy: AgentHubTerminalSort
   onSortChange: (sortBy: AgentHubTerminalSort) => void
   /** The menu closed: the caller decides where focus goes. */
   onClosed: () => void
+  focusable?: boolean
 }): React.JSX.Element {
   const current = SORT_OPTIONS.find((option) => option.id === sortBy)?.label ?? ''
   const label = translate('agentHub.terminals.sortLabel', 'Sort: {{value0}}', {
@@ -63,7 +65,7 @@ export function AgentHubTerminalSortMenu({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              tabIndex={-1}
+              tabIndex={focusable ? 0 : -1}
               aria-label={label}
               data-agent-hub-sort={sortBy}
               className="grid size-[34px] shrink-0 place-items-center rounded-[10px] border border-foreground/[0.08] bg-background text-muted-foreground hover:text-foreground data-[state=open]:border-foreground/20 data-[state=open]:text-foreground"

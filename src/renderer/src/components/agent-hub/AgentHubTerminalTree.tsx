@@ -45,6 +45,8 @@ type TreeRowContext = {
   query: string
   selectedKey: string | null
   now: number
+  selectionMode?: boolean
+  onToggleChildren?: (key: string) => void
   onOpen: (row: AgentHubTerminalRow) => void
   onPopout: (row: AgentHubTerminalRow) => void
   onJump: (row: AgentHubTerminalRow) => void
@@ -63,10 +65,12 @@ function TreeRow({
   const { now } = context
   const kind = rowKind(row)
   const tool = row.thread && kind === 'work' ? agentHubToolName(row.thread) : null
-  const subagents = row.paneKey ? context.lineage.childrenOf(row.paneKey).subagents : []
+  const subagents =
+    !context.selectionMode && row.paneKey ? context.lineage.childrenOf(row.paneKey).subagents : []
   return (
     <>
       <AgentHubRow
+        selectionMode={context.selectionMode}
         kind={kind}
         agentType={row.thread?.agentType ?? row.idleAgent}
         title={row.title}
@@ -90,11 +94,13 @@ function TreeRow({
         onJump={() => context.onJump(row)}
       />
       <AgentHubChildGroup
+        onToggle={context.onToggleChildren ? () => context.onToggleChildren?.(row.key) : undefined}
         parentKey={row.key}
         childAgents={{ workers: row.children.flatMap((child) => child.thread ?? []), subagents }}
         expanded={isAgentHubRowExpanded(row.key, context.expandedKeys, context.query)}
         indent={!nested}
         now={now}
+        focusable={context.selectionMode}
         onOpenParent={() => context.onOpen(row)}
       >
         {row.children.map((child) => (
@@ -121,10 +127,14 @@ export function AgentHubTerminalTree({
   expandedKeys,
   onOpen,
   onPopout,
-  onJump
+  onJump,
+  selectionMode = false,
+  onToggleChildren,
+  emptyLabel
 }: {
   groups: readonly AgentHubGroupNode[]
   totalCount: number
+  emptyLabel?: string
   query: string
   onQueryChange: (query: string) => void
   searchRef: React.RefObject<HTMLInputElement | null>
@@ -134,6 +144,8 @@ export function AgentHubTerminalTree({
   onToggleGroup: (group: AgentHubGroupNode, collapsed: boolean) => void
   selectedKey: string | null
   now: number
+  selectionMode?: boolean
+  onToggleChildren?: (key: string) => void
   lineage: AgentHubLineage
   expandedKeys: ReadonlySet<string>
   onOpen: (row: AgentHubTerminalRow) => void
@@ -143,6 +155,8 @@ export function AgentHubTerminalTree({
   const trimmedQuery = query.trim()
   const rowContext: TreeRowContext = {
     lineage,
+    selectionMode,
+    onToggleChildren,
     expandedKeys,
     query,
     selectedKey,
@@ -178,6 +192,7 @@ export function AgentHubTerminalTree({
           <HubKeys keys={[String(totalCount)]} />
         </label>
         <AgentHubTerminalSortMenu
+          focusable={selectionMode}
           sortBy={sortBy}
           onSortChange={onSortChange}
           onClosed={() => searchRef.current?.focus()}
@@ -190,7 +205,7 @@ export function AgentHubTerminalTree({
               ? translate('agentHub.terminals.noMatch', 'No terminal matches “{{value0}}”', {
                   value0: trimmedQuery
                 })
-              : translate('agentHub.terminals.empty', 'No open terminals')}
+              : (emptyLabel ?? translate('agentHub.terminals.empty', 'No open terminals'))}
           </b>
           {trimmedQuery ? (
             <span>
@@ -208,7 +223,14 @@ export function AgentHubTerminalTree({
           <section key={group.key} className="mt-1">
             <button
               type="button"
-              tabIndex={-1}
+              tabIndex={selectionMode ? 0 : -1}
+              onKeyDown={(event) => {
+                if (selectionMode && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onToggleGroup(group, event.key === 'ArrowLeft')
+                }
+              }}
               aria-expanded={!collapsed}
               onClick={() => onToggleGroup(group, !collapsed)}
               className="flex w-full items-center gap-[7px] rounded-[10px] bg-foreground/[0.03] px-2 py-[7px] text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.05]"

@@ -116,6 +116,22 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     allowInTerminal: true
   },
   {
+    id: 'agentHub.nextMirrorTab',
+    title: 'Next Agent Hub Mirror Tab',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'tab', 'next'],
+    defaultBindings: platformBindings([])
+  },
+  {
+    id: 'agentHub.previousMirrorTab',
+    title: 'Previous Agent Hub Mirror Tab',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'tab', 'previous'],
+    defaultBindings: platformBindings([])
+  },
+  {
     id: 'terminal.clearPaneTitle',
     title: 'Clear Pane Title',
     group: 'Terminal Panes',

@@ -50,6 +50,8 @@ export type KeybindingActionId =
   | 'agentHub.focusMirror'
   | 'agentHub.popOut'
   | 'agentHub.jumpToMirror'
+  | 'agentHub.nextMirrorTab'
+  | 'agentHub.previousMirrorTab'
   | 'sidebar.left.toggle'
   | 'sidebar.right.toggle'
   | 'sidebar.explorer.toggle'

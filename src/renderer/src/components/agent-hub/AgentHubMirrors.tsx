@@ -1,10 +1,16 @@
+import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
+import { selectAgentHubMirrorFamilyMember } from './agent-hub-mirror-tab-actions'
+import {
+  requestAgentHubMirrorSelection,
+  useAgentHubMirrorSelection
+} from './agent-hub-mirror-selection'
 import {
   activeAgentHubMirrorTab,
   findAgentHubMirrorMembership
 } from './agent-hub-mirror-membership'
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
 import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
@@ -39,7 +45,6 @@ import {
   minimizeAgentHubMirror,
   openAgentHubMirror,
   restoreAgentHubMirror,
-  retargetAgentHubMirror,
   setAgentHubMirrorWindowCap,
   useAgentHubMirrors,
   useAgentHubMirrorStageQuiet
@@ -98,6 +103,17 @@ export function AgentHubMirrors({
   onOpenCard: (paneKey: string) => void
 }): React.JSX.Element | null {
   const { windows, chips } = useAgentHubMirrors()
+  const selection = useAgentHubMirrorSelection()
+  const visited = useRef(new Set<string>())
+  for (const window of windows) {
+    visited.current.add(window.activeTabId)
+  }
+  const present = new Set(windows.flatMap((window) => window.tabs.map((tab) => tab.id)))
+  for (const id of visited.current) {
+    if (!present.has(id)) {
+      visited.current.delete(id)
+    }
+  }
   const borrowed = useAgentHubBorrowedTabs()
   // Mirrors put back at launch take the keyboard from nobody until the user picks one.
   const quiet = useAgentHubMirrorStageQuiet()
@@ -177,11 +193,18 @@ export function AgentHubMirrors({
             tabId: target.tab.id,
             paneKey,
             // Only the front window's pane takes keyboard focus on arrival.
-            active: index === windows.length - 1 && !hubOpen && !quiet && !hidden
+            active:
+              selection.windowId === window.id &&
+              selection.tabId === window.activeTabId &&
+              selection.focusTerminal &&
+              index === windows.length - 1 &&
+              !hubOpen &&
+              !quiet &&
+              !hidden
           }
         ]
       }),
-    [windows, slots, surfaces, hubOpen, quiet, hidden]
+    [windows, slots, surfaces, hubOpen, quiet, hidden, selection]
   )
   // Why layout: publish before paint so the pane moves in the same frame the window opens.
   useLayoutEffect(() => {
@@ -191,7 +214,9 @@ export function AgentHubMirrors({
   useLayoutEffect(() => {
     setTerminalMirrorMountLeases(
       windows
-        .flatMap((window) => window.tabs.map((tab) => tab.target))
+        .flatMap((window) =>
+          window.tabs.filter((tab) => visited.current.has(tab.id)).map((tab) => tab.target)
+        )
         .filter((target) => target.worktree.id !== FLOATING_TERMINAL_WORKTREE_ID)
         .map((target) => ({ worktreeId: target.worktree.id, tabId: target.tab.id }))
     )
@@ -261,6 +286,10 @@ export function AgentHubMirrors({
           <AgentHubMirrorWindow
             key={key}
             windowId={key}
+            windowState={window}
+            tabStrip={
+              <AgentHubMirrorTabStrip window={window} threads={threads} lineage={lineage} />
+            }
             windowKind={agentHubMirrorWindowKind(window, (entry) => {
               const live = threadFor(entry)
               return live ? agentHubIndicatorKind(live) : 'idle'
@@ -270,7 +299,7 @@ export function AgentHubMirrors({
             location={locationOf(target)}
             stackIndex={index + 1}
             besideHubPanel={hubOpen}
-            previewVisible={!hidden && index === windows.length - 1 && !hubOpen && !quiet}
+            previewVisible={!hidden}
             previewFocus={index === windows.length - 1 && !hubOpen && !quiet && !hidden}
             surface={surfaces[index]?.surface ?? 'portal'}
             // The window raises its own pane's alerts; the hub's bubble skips them.
@@ -290,13 +319,21 @@ export function AgentHubMirrors({
             locationOf={locationOf}
             familyActionsFor={familyActionsFor}
             onRetarget={(member) =>
-              retargetAgentHubMirror(
+              selectAgentHubMirrorFamilyMember(
                 key,
                 paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
               )
             }
             onSlot={onSlot}
-            onFocus={() => focusAgentHubMirror(key)}
+            onFocus={(event) => {
+              focusAgentHubMirror(key)
+              requestAgentHubMirrorSelection(
+                key,
+                window.activeTabId,
+                event.target instanceof HTMLElement && event.target.closest('.xterm') !== null,
+                false
+              )
+            }}
             onClose={() => closeAgentHubMirror(key)}
             onMinimize={() => minimizeAgentHubMirror(key)}
             onReveal={() => {

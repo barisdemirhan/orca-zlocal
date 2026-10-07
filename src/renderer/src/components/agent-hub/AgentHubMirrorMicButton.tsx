@@ -1,3 +1,4 @@
+import { findAttachedAgentHubMirrorInput } from './agent-hub-mirror-input'
 import { agentHubMirrorWindows } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
 import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
@@ -23,9 +24,13 @@ import { startAgentHubDictation } from './agent-hub-dictation-improve'
 
 /** The terminal's own input, which dictation reads as "the focused pane". */
 function findTerminalInput(button: HTMLElement, pane: AgentHubDictationPane): HTMLElement | null {
-  const inMirror = button
-    .closest('[data-agent-hub-mirror]')
-    ?.querySelector<HTMLElement>('.xterm-helper-textarea')
+  const root = button.closest<HTMLElement>('[data-agent-hub-mirror]')
+  const inMirror = root
+    ? findAttachedAgentHubMirrorInput(root, {
+        tab: { id: pane.tabId },
+        paneKey: pane.leafId ? `${pane.tabId}:${pane.leafId}` : null
+      })
+    : null
   if (inMirror) {
     return inMirror
   }
