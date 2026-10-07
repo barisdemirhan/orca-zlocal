@@ -16,6 +16,7 @@ export function AgentHubRow({
   chips,
   time,
   selected,
+  optionId,
   indent = false,
   worktreeId,
   mirrorKey,
@@ -34,6 +35,7 @@ export function AgentHubRow({
   chips?: React.ReactNode
   time?: string
   selected: boolean
+  optionId?: string
   indent?: boolean
   /** The row's workspace; a row in the one already on screen reads as quieter. */
   worktreeId?: string
@@ -55,6 +57,7 @@ export function AgentHubRow({
   return (
     <div
       role="option"
+      id={optionId}
       aria-selected={selected}
       data-selected={selected}
       data-indent={indent}

@@ -1,9 +1,17 @@
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render as renderDOM,
+  screen,
+  waitFor
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubMirrorTabMenu } from './AgentHubMirrorTabMenu'
 import {
   openAgentHubMirror,
@@ -12,6 +20,9 @@ import {
   minimizeAgentHubMirror
 } from './agent-hub-mirror-store'
 import { addAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+function render(ui: React.ReactNode) {
+  return renderDOM(<TooltipProvider>{ui}</TooltipProvider>)
+}
 const feedback = vi.hoisted(() => vi.fn())
 vi.mock('./agent-hub-mirror-transfer-feedback', () => ({ mirrorTabTransferFeedback: feedback }))
 
@@ -109,4 +120,24 @@ it('excludes parked destinations and explains why a ten-tab destination is unava
   fireEvent.click(row)
   expect(readAgentHubMirrors()).toBe(before)
   expect(feedback).not.toHaveBeenCalled()
+})
+
+it('opens from Shift+F10 and returns focus after Escape without closing the terminal', async () => {
+  const source = open('source')
+  const onClose = vi.fn()
+  const user = userEvent.setup()
+  render(
+    <AgentHubMirrorTabMenu windowId={source.id} entryId={source.tabs[0]!.id} onClose={onClose}>
+      <button>Terminal tab</button>
+    </AgentHubMirrorTabMenu>
+  )
+  const trigger = screen.getByRole('button', { name: 'Terminal tab' })
+  trigger.focus()
+  await user.keyboard('{Shift>}{F10}{/Shift}')
+  expect(screen.getByRole('menuitem', { name: 'Open in new mirror' })).toBeTruthy()
+  await user.keyboard('{Escape}')
+  await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
+  expect(document.activeElement).toBe(trigger)
+  expect(onClose).not.toHaveBeenCalled()
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
 })

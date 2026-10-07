@@ -6,6 +6,7 @@ import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { agentHubIndicatorKind } from './agent-hub-lists'
+import { agentHubStateWord } from './agent-hub-copy'
 import { HubAvatar, HubStateIndicator } from './AgentHubAtoms'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
@@ -60,7 +61,6 @@ export function AgentHubMirrorTab({
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              {...draggable.attributes}
               {...draggable.listeners}
               onPointerDown={(event) => {
                 event.stopPropagation()
@@ -77,6 +77,10 @@ export function AgentHubMirrorTab({
               id={agentHubMirrorTabId(tab.id)}
               aria-controls={panelId}
               aria-selected={active}
+              aria-label={translate('agentHub.mirror.tabLabel', '{{value0}}, {{value1}}', {
+                value0: title,
+                value1: agentHubStateWord(thread)
+              })}
               tabIndex={active ? 0 : -1}
               data-agent-hub-tab-id={tab.id}
               data-kind={kind}
@@ -96,7 +100,7 @@ export function AgentHubMirrorTab({
               ) : null}
             </button>
           </TooltipTrigger>
-          <TooltipContent>{title}</TooltipContent>
+          <TooltipContent respectReducedMotion>{title}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -112,7 +116,7 @@ export function AgentHubMirrorTab({
               <X />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent respectReducedMotion>
             {translate('agentHub.mirror.returnToWorkspace', 'Return to workspace')}
           </TooltipContent>
         </Tooltip>

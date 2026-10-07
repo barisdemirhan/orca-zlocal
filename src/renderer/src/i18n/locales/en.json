@@ -21768,7 +21768,8 @@
       "dropUnavailable": "Cannot drop here",
       "openInNew": "Open in new mirror",
       "moveToMirror": "Move to mirror",
-      "moveUnavailable": "This terminal is no longer available to move."
+      "moveUnavailable": "This terminal is no longer available to move.",
+      "tabLabel": "{{value0}}, {{value1}}"
     },
     "title": "Agents",
     "tab": {

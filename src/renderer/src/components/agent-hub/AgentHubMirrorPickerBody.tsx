@@ -2,6 +2,7 @@ import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { useAgentHubMirrors } from './agent-hub-mirror-store'
@@ -110,76 +111,66 @@ export function AgentHubMirrorPickerBody({
         }
       }}
     >
-      <div
-        className="flex items-center gap-1 pb-2"
-        role="tablist"
-        aria-label={translate('agentHub.mirror.pickerSections', 'Terminal lists')}
-      >
-        {(['agents', 'all'] as const).map((value) => (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={section === value}
-            data-active={section === value}
-            onClick={() => {
-              setSection(value)
-              setSelectedKey(null)
-              searchRef.current?.focus()
-            }}
-            className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
-          >
-            {value === 'agents'
-              ? translate('agentHub.tab.agents', 'Agents')
-              : translate('agentHub.tab.all', 'All terminals')}
-          </button>
-        ))}
-      </div>
-      <div
-        role="listbox"
-        aria-label={translate('agentHub.mirror.available', 'Available terminals')}
-        className="max-h-80 overflow-y-auto scrollbar-sleek"
-      >
-        <AgentHubTerminalTree
-          groups={groups}
-          totalCount={totalCount}
-          query={query}
-          searchRef={searchRef}
-          onQueryChange={(value) => {
-            onQueryChange(value)
+      <Tabs
+        value={section}
+        onValueChange={(value) => {
+          if (value === 'agents' || value === 'all') {
+            setSection(value)
             setSelectedKey(null)
-          }}
-          sortBy={sortBy}
-          onSortChange={(value) => {
-            setSortBy(value)
-            setSelectedKey(null)
-          }}
-          collapseOverrides={collapsed}
-          onToggleGroup={(group, value) =>
-            setCollapsed((current) => new Map(current).set(group.key, value))
           }
-          emptyLabel={translate('agentHub.mirror.noneAvailable', 'No terminals available to add')}
-          selectedKey={selectedKey}
-          now={now}
-          lineage={lineage}
-          expandedKeys={expanded}
-          selectionMode
-          onToggleChildren={(key) =>
-            setExpanded((current) => {
-              const next = new Set(current)
-              if (next.has(key)) {
-                next.delete(key)
-              } else {
-                next.add(key)
+        }}
+      >
+        <TabsList aria-label={translate('agentHub.mirror.pickerSections', 'Terminal lists')}>
+          <TabsTrigger value="agents">{translate('agentHub.tab.agents', 'Agents')}</TabsTrigger>
+          <TabsTrigger value="all">{translate('agentHub.tab.all', 'All terminals')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value={section}>
+          <div className="max-h-80 overflow-y-auto scrollbar-sleek">
+            <AgentHubTerminalTree
+              groups={groups}
+              totalCount={totalCount}
+              query={query}
+              searchRef={searchRef}
+              onQueryChange={(value) => {
+                onQueryChange(value)
+                setSelectedKey(null)
+              }}
+              sortBy={sortBy}
+              onSortChange={(value) => {
+                setSortBy(value)
+                setSelectedKey(null)
+              }}
+              collapseOverrides={collapsed}
+              onToggleGroup={(group, value) =>
+                setCollapsed((current) => new Map(current).set(group.key, value))
               }
-              return next
-            })
-          }
-          onOpen={onAdd}
-          onPopout={onAdd}
-          onJump={onAdd}
-        />
-      </div>
+              emptyLabel={translate(
+                'agentHub.mirror.noneAvailable',
+                'No terminals available to add'
+              )}
+              selectedKey={rows.some((row) => row.key === selectedKey) ? selectedKey : null}
+              now={now}
+              lineage={lineage}
+              expandedKeys={expanded}
+              selectionMode
+              onToggleChildren={(key) =>
+                setExpanded((current) => {
+                  const next = new Set(current)
+                  if (next.has(key)) {
+                    next.delete(key)
+                  } else {
+                    next.add(key)
+                  }
+                  return next
+                })
+              }
+              onOpen={onAdd}
+              onPopout={onAdd}
+              onJump={onAdd}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

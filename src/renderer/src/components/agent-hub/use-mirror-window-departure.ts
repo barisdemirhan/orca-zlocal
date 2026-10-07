@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import { flyMirrorWindowToHub } from './mirror-window-flight'
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
 
 export function useMirrorWindowDeparture(
   windowId: string,
@@ -11,6 +12,7 @@ export function useMirrorWindowDeparture(
   onMinimize: () => void
 ) {
   const [leaving, setLeaving] = useState(false)
+  const reducedMotion = usePrefersReducedMotion()
   const minimizing = useRef(false)
   const token = useRef(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -46,13 +48,17 @@ export function useMirrorWindowDeparture(
       clearTimeout(timer.current)
     }
     setLeaving(true)
-    timer.current = setTimeout(guard(callback), 140)
+    timer.current = setTimeout(guard(callback), reducedMotion ? 0 : 140)
   }
   const minimize = (delayMs = 0): void => {
     if (minimizing.current || !section.current) {
       return
     }
     minimizing.current = true
+    if (reducedMotion) {
+      guard(onMinimize)()
+      return
+    }
     cancelFlight.current = flyMirrorWindowToHub(
       section.current,
       hub.current,

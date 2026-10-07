@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
 import { Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
@@ -46,6 +47,7 @@ type TreeRowContext = {
   selectedKey: string | null
   now: number
   selectionMode?: boolean
+  selectionListId?: string
   onToggleChildren?: (key: string) => void
   onOpen: (row: AgentHubTerminalRow) => void
   onPopout: (row: AgentHubTerminalRow) => void
@@ -71,6 +73,7 @@ function TreeRow({
     <>
       <AgentHubRow
         selectionMode={context.selectionMode}
+        optionId={context.selectionListId ? `${context.selectionListId}-${row.key}` : undefined}
         kind={kind}
         agentType={row.thread?.agentType ?? row.idleAgent}
         title={row.title}
@@ -152,10 +155,12 @@ export function AgentHubTerminalTree({
   onPopout: (row: AgentHubTerminalRow) => void
   onJump: (row: AgentHubTerminalRow) => void
 }): React.JSX.Element {
+  const listId = useId()
   const trimmedQuery = query.trim()
   const rowContext: TreeRowContext = {
     lineage,
     selectionMode,
+    selectionListId: selectionMode ? listId : undefined,
     onToggleChildren,
     expandedKeys,
     query,
@@ -187,6 +192,10 @@ export function AgentHubTerminalTree({
               'Filter by terminal, project, group, agent…'
             )}
             aria-label={translate('agentHub.terminals.searchLabel', 'Filter terminals')}
+            aria-controls={selectionMode ? listId : undefined}
+            aria-activedescendant={
+              selectionMode && selectedKey ? `${listId}-${selectedKey}` : undefined
+            }
             className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
           />
           <HubKeys keys={[String(totalCount)]} />
@@ -217,51 +226,62 @@ export function AgentHubTerminalTree({
           ) : null}
         </div>
       ) : null}
-      {groups.map((group) => {
-        const collapsed = isAgentHubGroupCollapsed(group, collapseOverrides, query)
-        return (
-          <section key={group.key} className="mt-1">
-            <button
-              type="button"
-              tabIndex={selectionMode ? 0 : -1}
-              onKeyDown={(event) => {
-                if (selectionMode && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
-                  event.preventDefault()
-                  event.stopPropagation()
-                  onToggleGroup(group, event.key === 'ArrowLeft')
-                }
-              }}
-              aria-expanded={!collapsed}
-              onClick={() => onToggleGroup(group, !collapsed)}
-              className="flex w-full items-center gap-[7px] rounded-[10px] bg-foreground/[0.03] px-2 py-[7px] text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.05]"
-            >
-              <HubFoldChevron open={!collapsed} className="size-[13px] text-muted-foreground/70" />
-              <span className="min-w-0 truncate">{group.label}</span>
-              <GroupSummary group={group} />
-            </button>
-            <HubCollapse open={!collapsed}>
-              {group.workspaces.map((workspace) => (
-                <div key={workspace.key}>
-                  <div className="flex items-center gap-[5px] pt-[5px] pr-2 pb-[3px] pl-7 text-[11.5px] text-muted-foreground/70">
-                    <Folder className="size-3 shrink-0" />
-                    <span className="truncate">{workspace.projectLabel}</span>
-                    {workspace.workspaceLabel ? (
-                      <>
-                        <span>·</span>
-                        <GitBranch className="size-[11px] shrink-0" />
-                        <span className="truncate">{workspace.workspaceLabel}</span>
-                      </>
-                    ) : null}
+      <div
+        id={selectionMode ? listId : undefined}
+        role={selectionMode ? 'listbox' : undefined}
+        aria-label={
+          selectionMode ? translate('agentHub.mirror.available', 'Available terminals') : undefined
+        }
+      >
+        {groups.map((group) => {
+          const collapsed = isAgentHubGroupCollapsed(group, collapseOverrides, query)
+          return (
+            <section key={group.key} className="mt-1">
+              <button
+                type="button"
+                tabIndex={selectionMode ? 0 : -1}
+                onKeyDown={(event) => {
+                  if (selectionMode && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    onToggleGroup(group, event.key === 'ArrowLeft')
+                  }
+                }}
+                aria-expanded={!collapsed}
+                onClick={() => onToggleGroup(group, !collapsed)}
+                className="flex w-full items-center gap-[7px] rounded-[10px] bg-foreground/[0.03] px-2 py-[7px] text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.05]"
+              >
+                <HubFoldChevron
+                  open={!collapsed}
+                  className="size-[13px] text-muted-foreground/70"
+                />
+                <span className="min-w-0 truncate">{group.label}</span>
+                <GroupSummary group={group} />
+              </button>
+              <HubCollapse open={!collapsed}>
+                {group.workspaces.map((workspace) => (
+                  <div key={workspace.key}>
+                    <div className="flex items-center gap-[5px] pt-[5px] pr-2 pb-[3px] pl-7 text-[11.5px] text-muted-foreground/70">
+                      <Folder className="size-3 shrink-0" />
+                      <span className="truncate">{workspace.projectLabel}</span>
+                      {workspace.workspaceLabel ? (
+                        <>
+                          <span>·</span>
+                          <GitBranch className="size-[11px] shrink-0" />
+                          <span className="truncate">{workspace.workspaceLabel}</span>
+                        </>
+                      ) : null}
+                    </div>
+                    {workspace.rows.map((row) => (
+                      <TreeRow key={row.key} row={row} nested={false} context={rowContext} />
+                    ))}
                   </div>
-                  {workspace.rows.map((row) => (
-                    <TreeRow key={row.key} row={row} nested={false} context={rowContext} />
-                  ))}
-                </div>
-              ))}
-            </HubCollapse>
-          </section>
-        )
-      })}
+                ))}
+              </HubCollapse>
+            </section>
+          )
+        })}
+      </div>
     </div>
   )
 }

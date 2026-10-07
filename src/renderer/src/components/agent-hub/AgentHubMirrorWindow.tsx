@@ -4,6 +4,7 @@ import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { ChevronRight, Loader2, PanelsTopLeft } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
 import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
@@ -101,6 +102,7 @@ export function AgentHubMirrorWindow({
   onReveal: () => void
 }): React.JSX.Element {
   const mirrorKey = windowId
+  const reducedMotion = usePrefersReducedMotion()
   const previousSlotRef = useRef<HTMLDivElement | null>(null)
   const { geometry, focus, settling, sectionRef, beginDrag, onPointerMove, endDrag, cancelDrag } =
     useMirrorWindowGeometry(mirrorKey, besideHubPanel)
@@ -140,9 +142,11 @@ export function AgentHubMirrorWindow({
     seenHighlight.current = highlight.seq
     if (highlight.key === mirrorKey && sectionRef.current) {
       minimizing.current = false
-      pulseMirrorWindow(sectionRef.current)
+      if (!reducedMotion) {
+        pulseMirrorWindow(sectionRef.current)
+      }
     }
-  }, [highlight, mirrorKey, sectionRef, minimizing])
+  }, [highlight, mirrorKey, sectionRef, minimizing, reducedMotion])
   // "Send all to the hub" reaches every open window, the front one first; a hub row asks one.
   const dockRequest = useAgentHubMirrorsDockRequest()
   const seenDockRequest = useRef(dockRequest.seq)
@@ -178,9 +182,11 @@ export function AgentHubMirrorWindow({
     if (!nudgeId || !nudgeKind || !sectionRef.current) {
       return
     }
-    nudgeMirrorWindow(sectionRef.current, nudgeKind)
+    if (!reducedMotion) {
+      nudgeMirrorWindow(sectionRef.current, nudgeKind)
+    }
     onNudged(nudgeId)
-  }, [nudgeId, nudgeKind, onNudged, sectionRef])
+  }, [nudgeId, nudgeKind, onNudged, sectionRef, reducedMotion])
 
   useEffect(() => {
     setGaveUp(false)
@@ -205,7 +211,7 @@ export function AgentHubMirrorWindow({
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none data-[settling=true]:transition-[left,top,width,height] data-[settling=true]:duration-300 data-[settling=true]:ease-out"
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none data-[settling=true]:transition-[left,top,width,height] data-[settling=true]:duration-300 data-[settling=true]:ease-out motion-reduce:animate-none! motion-reduce:transition-none!"
       style={{
         left: geometry.x,
         top: geometry.y,

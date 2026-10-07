@@ -1,5 +1,6 @@
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '../ui/tooltip'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -138,4 +139,18 @@ it('disables the add affordance at ten entries and refuses another addition', ()
   expect(screen.getByRole('button', { name: 'Add' }).hasAttribute('disabled')).toBe(true)
   expect(addAgentHubMirrorTab(id, target('eleven'))).toEqual({ status: 'tab-cap' })
   expect(screen.getAllByRole('tab')).toHaveLength(10)
+})
+
+it('returns a keyboard-closed tab home and keeps focus on its surviving neighbour', async () => {
+  stage()
+  const user = userEvent.setup()
+  const active = screen.getByRole('tab', { name: 'entry-2, idle' })
+  active.focus()
+  await user.keyboard('{Shift>}{F10}{/Shift}')
+  await user.keyboard('{ArrowDown}{Enter}')
+  await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
+  const neighbour = screen.getByRole('tab', { name: 'entry-1, idle' })
+  expect(neighbour.getAttribute('aria-selected')).toBe('true')
+  expect(document.activeElement).toBe(neighbour)
+  expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
 })

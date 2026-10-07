@@ -58,12 +58,13 @@ export function AgentHubMirrorAddButton({
             </PopoverTrigger>
           </span>
         </TooltipTrigger>
-        <TooltipContent>{label}</TooltipContent>
+        <TooltipContent respectReducedMotion>{label}</TooltipContent>
       </Tooltip>
       <PopoverContent
         align="start"
         surface="panel"
         wheelScroll
+        respectReducedMotion
         onOpenAutoFocus={(event) => {
           event.preventDefault()
           searchRef.current?.focus()

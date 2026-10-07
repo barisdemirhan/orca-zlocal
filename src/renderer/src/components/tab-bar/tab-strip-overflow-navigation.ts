@@ -27,6 +27,18 @@ import { useTabDragActive } from '../tab-group/tab-drag-context'
 const TAB_STRIP_SCROLL_FRACTION = 0.75
 const TAB_STRIP_MIN_SCROLL_STEP_PX = 120
 
+export function bindTabStripWheelScroll(el: HTMLElement, onScroll: () => void): () => void {
+  const onWheel = (event: WheelEvent): void => {
+    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+      event.preventDefault()
+      el.scrollLeft += event.deltaY
+      onScroll()
+    }
+  }
+  el.addEventListener('wheel', onWheel, { passive: false })
+  return () => el.removeEventListener('wheel', onWheel)
+}
+
 export function scrollTabStripByStep(
   el: HTMLElement,
   direction: 'start' | 'end',
@@ -124,15 +136,7 @@ export function useTabStripOverflowNavigation({
     if (!el) {
       return
     }
-    const onWheel = (e: WheelEvent): void => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault()
-        el.scrollLeft += e.deltaY
-        updateTabStripOverflowState()
-      }
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
+    return bindTabStripWheelScroll(el, updateTabStripOverflowState)
   }, [updateTabStripOverflowState])
 
   useEffect(() => {

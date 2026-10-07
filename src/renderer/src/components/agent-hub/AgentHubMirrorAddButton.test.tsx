@@ -1,5 +1,6 @@
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '../ui/tooltip'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -156,4 +157,28 @@ it('keeps search present when no terminal is available and disables the full-win
       .getByRole('button', { name: 'A mirror can hold up to 10 terminals.' })
       .hasAttribute('disabled')
   ).toBe(true)
+})
+
+it('switches picker sections with arrow keys and links keyboard selection to the available option', async () => {
+  setup()
+  const user = userEvent.setup()
+  const agents = screen.getByRole('tab', { name: 'Agents' })
+  agents.focus()
+  await user.keyboard('{ArrowRight}')
+  const all = screen.getByRole('tab', { name: 'All terminals' })
+  expect(document.activeElement).toBe(all)
+  expect(all.getAttribute('aria-selected')).toBe('true')
+  expect(agents.tabIndex).toBe(-1)
+  const panelId = all.getAttribute('aria-controls')
+  expect(panelId && document.getElementById(panelId)?.getAttribute('role')).toBe('tabpanel')
+  const search = screen.getByRole('textbox')
+  search.focus()
+  fireEvent.change(search, { target: { value: 'available' } })
+  await user.keyboard('{ArrowDown}')
+  const selectedId = search.getAttribute('aria-activedescendant')
+  expect(selectedId && document.getElementById(selectedId)?.getAttribute('aria-selected')).toBe(
+    'true'
+  )
+  await user.keyboard('{Enter}')
+  await waitFor(() => expect(screen.queryByRole('textbox')).toBeNull())
 })

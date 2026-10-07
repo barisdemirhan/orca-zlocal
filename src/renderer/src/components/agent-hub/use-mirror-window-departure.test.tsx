@@ -84,3 +84,29 @@ it('cancels an old close token after membership changes and on unmount', () => {
   act(() => vi.runAllTimers())
   expect(readAgentHubMirrors().windows).toHaveLength(1)
 })
+
+it('parks immediately with reduced motion and never starts a flight animation', () => {
+  vi.spyOn(window, 'matchMedia').mockReturnValue({
+    matches: true,
+    media: '(prefers-reduced-motion: reduce)',
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn()
+  })
+  const source = open('reduced motion')
+  const element = document.createElement('section')
+  const animate = vi.fn()
+  Object.defineProperty(element, 'animate', { value: animate })
+  const { result } = renderHook(() =>
+    useMirrorWindowDeparture(source.id, source, { current: element }, { current: null }, () =>
+      minimizeAgentHubMirror(source.id)
+    )
+  )
+  act(() => result.current.minimize(200))
+  expect(readAgentHubMirrors().windows).toHaveLength(0)
+  expect(readAgentHubMirrors().chips[0]?.window.id).toBe(source.id)
+  expect(animate).not.toHaveBeenCalled()
+})
