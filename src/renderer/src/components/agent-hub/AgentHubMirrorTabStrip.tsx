@@ -90,7 +90,7 @@ export function AgentHubMirrorTabStrip({
         ref={stripRef}
         role="tablist"
         aria-label={translate('agentHub.mirror.terminals', 'Mirror terminals')}
-        className="relative flex min-w-0 flex-1 gap-0.5 overflow-x-auto scrollbar-sleek"
+        className="terminal-tab-strip relative flex min-w-0 flex-1 gap-0.5 overflow-x-auto"
         onPointerMove={scroll.onPointerMove}
         onPointerLeave={scroll.onPointerLeave}
         onScroll={scroll.onScroll}

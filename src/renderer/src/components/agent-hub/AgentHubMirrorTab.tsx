@@ -55,7 +55,7 @@ export function AgentHubMirrorTab({
         data-agent-hub-tab-entry={tab.id}
         data-dragging={draggable.isDragging}
         data-active={active}
-        className="group/tab relative flex min-w-24 max-w-48 basis-40 items-center gap-1 rounded-t-md border border-transparent px-1 data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background"
+        className="group/tab relative flex min-w-40 max-w-48 basis-48 items-center gap-1 rounded-t-md border border-transparent px-1 data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background"
       >
         <Tooltip>
           <TooltipTrigger asChild>

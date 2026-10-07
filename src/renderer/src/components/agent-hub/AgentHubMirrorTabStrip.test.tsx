@@ -84,7 +84,7 @@ it('keeps a singleton tablist and add affordance, and reserves a shrinking scrol
   expect(screen.getByRole('button', { name: 'Add' })).toBeTruthy()
   const tablist = screen.getByRole('tablist')
   expect(tablist.className).toContain('overflow-x-auto')
-  expect(screen.getByRole('tab').parentElement?.className).toContain('min-w-24')
+  expect(screen.getByRole('tab').parentElement?.className).toContain('min-w-40')
 })
 it('roves Left/Right/Home/End while preserving strip focus, and Enter requests terminal focus', () => {
   stage()
