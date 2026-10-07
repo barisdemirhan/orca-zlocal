@@ -1,9 +1,9 @@
 import { useEffect, useEffectEvent } from 'react'
 import { useAppStore } from '@/store'
-import { subscribeAgentHubCanvas } from './agent-hub-canvas-store'
+import { rememberAgentHubCanvasParked, subscribeAgentHubCanvas } from './agent-hub-canvas-store'
 import { subscribeAgentHubFamilyBars } from './agent-hub-family-bar'
 import { subscribeAgentHubMirrorPlaces } from './agent-hub-mirror-places'
-import { subscribeAgentHubMirrors } from './agent-hub-mirror-store'
+import { commitAgentHubMirrorState, subscribeAgentHubMirrors } from './agent-hub-mirror-store'
 import {
   applyAgentHubSession,
   captureAgentHubSession,
@@ -68,6 +68,8 @@ function keepAgentHubSessionSaved(preserveDamaged: boolean): () => void {
         clearTimeout(timer)
       }
       clearAgentHubSessionSnapshot()
+      commitAgentHubMirrorState({ windows: [], chips: [] })
+      rememberAgentHubCanvasParked([])
     } else {
       flush()
     }

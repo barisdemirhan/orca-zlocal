@@ -18,11 +18,16 @@ import {
   makeTabWithIds,
   makeWorktree
 } from '../activity/ActivityPrototypePage-test-fixtures'
-import { resetAgentHubCanvasForTest } from './agent-hub-canvas-store'
+import {
+  readAgentHubCanvasParked,
+  rememberAgentHubCanvasParked,
+  resetAgentHubCanvasForTest
+} from './agent-hub-canvas-store'
 import { rememberAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import {
   closeAgentHubMirror,
   isAgentHubMirrorStageQuiet,
+  minimizeAgentHubMirror,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
@@ -37,6 +42,7 @@ import {
   resetAgentHubSessionRestoreForTest,
   useAgentHubSessionRestore
 } from './use-agent-hub-session-restore'
+import { moveAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 
 Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true)
 
@@ -242,5 +248,43 @@ describe('restoring the hub session on launch', () => {
     root = null
 
     expect(readAgentHubSessionSnapshot()).toBeNull()
+  })
+
+  it('releases grouped and parked mirrors on disable without changing source terminals', () => {
+    const tabs = ['tab-a', 'tab-b', 'tab-c'].map((id) => makeTabWithIds(id, worktree.id))
+    useAppStore.setState({
+      ...READY,
+      tabsByWorktree: { [worktree.id]: tabs },
+      ptyIdsByTabId: { 'tab-a': ['pty-a'], 'tab-b': ['pty-b'], 'tab-c': ['pty-c'] }
+    })
+    saveSession(tabs.map((tab) => tab.id))
+    mountHub()
+    const a = mirrorWindowIdFor('tab-a')
+    const b = readAgentHubMirrors().windows.find(
+      (window) => window.id === mirrorWindowIdFor('tab-b')
+    )!
+    act(() => {
+      moveAgentHubMirrorTab(b.id, b.activeTabId, a, 1)
+      minimizeAgentHubMirror(mirrorWindowIdFor('tab-c'))
+      rememberAgentHubCanvasParked([a])
+    })
+    const sources = useAppStore.getState()
+    expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
+    expect(readAgentHubMirrors().chips).toHaveLength(1)
+
+    act(() => {
+      useAppStore.setState({ settings: hubSettings(false) })
+      root?.unmount()
+    })
+    root = null
+    expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
+    expect(readAgentHubCanvasParked()).toEqual([])
+    expect(readAgentHubSessionSnapshot()).toBeNull()
+    expect(useAppStore.getState().tabsByWorktree).toBe(sources.tabsByWorktree)
+    expect(useAppStore.getState().ptyIdsByTabId).toBe(sources.ptyIdsByTabId)
+
+    useAppStore.setState({ settings: hubSettings(true) })
+    mountHub()
+    expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
   })
 })
