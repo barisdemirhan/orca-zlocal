@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest'
 import { buildChildAgentLineageTree } from '../activity/activity-thread-child-agent'
+import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { projectResolvedWorktreeLineage } from '../../../../shared/resolved-worktree-lineage'
 import type { WorktreeLineage } from '../../../../shared/worktree/lineage-types'
 import { PANE_KEY, PANE_KEY_2 } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -7,7 +8,7 @@ import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
 
-function sshThreads(withParent: boolean) {
+function sshThreads(withParent: boolean): AgentPaneThread[] {
   const threads = agentHubThreadsFor([
     { paneKey: PANE_KEY, state: 'working', at: 1_000 },
     { paneKey: PANE_KEY_2, state: 'working', at: 1_000 }
