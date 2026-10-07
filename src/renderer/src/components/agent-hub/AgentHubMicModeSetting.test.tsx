@@ -46,7 +46,11 @@ it('uses the same settings switch grammar and persists both default modes', () =
   fireEvent.click(control)
   expect(useAppStore.getState().settings?.agentHubMicMode).toBe('dictate')
   expect(screen.queryByRole('group', { name: 'Microphone action' })).toBeNull()
-  expect(screen.getByText('Click starts this mode; Shift-click starts the other.')).toBeTruthy()
+  expect(
+    screen.getByText(
+      'When on, the mirror microphone dictates and improves; Shift-click does the opposite.'
+    )
+  ).toBeTruthy()
 })
 
 it('disables unavailable improvement without rewriting the stored default', () => {

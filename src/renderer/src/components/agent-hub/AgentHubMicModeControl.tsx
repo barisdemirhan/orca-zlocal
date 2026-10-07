@@ -17,7 +17,7 @@ export function AgentHubMicModeSetting(): React.JSX.Element {
         canImprove
           ? translate(
               'agentHub.mic.modeSwitchCopy',
-              'Click starts this mode; Shift-click starts the other.'
+              'When on, the mirror microphone dictates and improves; Shift-click does the opposite.'
             )
           : translate(
               'agentHub.mic.improveRequired',
