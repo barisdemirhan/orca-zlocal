@@ -1,3 +1,4 @@
+import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
 import {
@@ -7,11 +8,7 @@ import {
   restoreAgentHubMirrors,
   type AgentHubMirrorChip
 } from './agent-hub-mirror-store'
-import {
-  agentHubPaneTargetKey,
-  agentHubTargetShowsThread,
-  type AgentHubPaneTarget
-} from './agent-hub-pane-target'
+import { agentHubTargetShowsThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
 
 /** Chips the tray shows before folding the rest into "+N". */
 export const AGENT_HUB_TRAY_VISIBLE = 4
@@ -96,11 +93,11 @@ export function toggleAgentHubMirrors(
   if (action === 'none') {
     return
   }
-  const ordered = orderAgentHubTray(chips.map((chip) => ({ chip, kind: kindOf(chip.target) })))
+  const ordered = orderAgentHubTray(
+    chips.map((chip) => ({ chip, kind: agentHubMirrorWindowKind(chip.window, kindOf) }))
+  )
   restoreAgentHubMirrors(
-    ordered
-      .slice(0, agentHubMirrorWindowCap() - windows.length)
-      .map(({ chip }) => agentHubPaneTargetKey(chip.target))
+    ordered.slice(0, agentHubMirrorWindowCap() - windows.length).map(({ chip }) => chip.window.id)
   )
   arrange()
 }

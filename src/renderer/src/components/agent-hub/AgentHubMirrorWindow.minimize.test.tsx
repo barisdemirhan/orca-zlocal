@@ -1,3 +1,5 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 /** @vitest-environment happy-dom */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -67,8 +69,9 @@ it('clicks each real header minimize button into its own chip when animation can
       <TooltipProvider>
         {windows.map((entry) => (
           <AgentHubMirrorWindow
-            key={entry.tab.id}
-            target={entry}
+            key={entry.id}
+            windowId={entry.id}
+            target={activeAgentHubMirrorTab(entry).target}
             thread={null}
             location={{ group: null, project: 'Workspace', workspace: null }}
             stackIndex={1}
@@ -84,13 +87,13 @@ it('clicks each real header minimize button into its own chip when animation can
             onSlot={vi.fn()}
             onFocus={vi.fn()}
             onClose={vi.fn()}
-            onMinimize={() => minimizeAgentHubMirror(entry.paneKey ?? entry.tab.id)}
+            onMinimize={() => minimizeAgentHubMirror(entry.id)}
             onReveal={vi.fn()}
           />
         ))}
         {chips.map((chip) => (
-          <span key={chip.target.tab.id} data-chip>
-            {chip.target.title} chip
+          <span key={chip.window.id} data-chip>
+            {activeAgentHubMirrorTab(chip.window).target.title} chip
           </span>
         ))}
       </TooltipProvider>
@@ -128,3 +131,10 @@ it('lands immediately when the animation API throws', () => {
   flyMirrorWindowToHub(element, null, land)
   expect(land).toHaveBeenCalledOnce()
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

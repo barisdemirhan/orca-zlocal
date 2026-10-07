@@ -1,3 +1,4 @@
+import { agentHubMirrorWindows } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
 import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
 import { AgentHubShortcut } from './AgentHubShortcut'
@@ -148,9 +149,10 @@ export function AgentHubMirrorMicButton({
   const pane = agentHubMirrorDictationPane(target)
   const elsewhereName =
     state === 'elsewhere'
-      ? ([...windows, ...chips.map((chip) => chip.target)].find((other) =>
-          mirrorOwnsDictation(session, agentHubMirrorDictationPane(other))
-        )?.title ?? null)
+      ? (agentHubMirrorWindows({ windows, chips })
+          .flatMap((window) => window.tabs.map((tab) => tab.target))
+          .find((other) => mirrorOwnsDictation(session, agentHubMirrorDictationPane(other)))
+          ?.title ?? null)
       : null
   const hint =
     state === 'idle' && canImprove

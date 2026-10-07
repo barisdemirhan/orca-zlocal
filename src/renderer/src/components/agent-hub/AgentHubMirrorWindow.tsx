@@ -6,9 +6,8 @@ import { translate } from '@/i18n/i18n'
 import { AgentTerminalPreview } from '../dashboard-popout/AgentTerminalPreview'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
-import { agentHubIndicatorKind } from './agent-hub-lists'
+import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
 import {
-  agentHubPaneTargetKey,
   resolveAgentHubTerminalInput,
   type AgentHubLocation,
   type AgentHubPaneTarget
@@ -45,7 +44,9 @@ const ATTACH_GIVE_UP_MS = 10_000
  * and mouse. It fits the window while here and returns to its place on close.
  */
 export function AgentHubMirrorWindow({
+  windowId,
   target,
+  windowKind,
   thread,
   location,
   stackIndex,
@@ -66,6 +67,8 @@ export function AgentHubMirrorWindow({
   onMinimize,
   onReveal
 }: {
+  windowId: string
+  windowKind?: AgentHubIndicatorKind
   target: AgentHubPaneTarget
   /** Live thread for an agent pane, for its state glyph; null for a shell. */
   thread: AgentPaneThread | null
@@ -100,7 +103,7 @@ export function AgentHubMirrorWindow({
   onMinimize: () => void
   onReveal: () => void
 }): React.JSX.Element {
-  const mirrorKey = agentHubPaneTargetKey(target)
+  const mirrorKey = windowId
   const previousSlotRef = useRef<HTMLDivElement | null>(null)
   const { geometry, focus, settling, sectionRef, beginDrag, onPointerMove, endDrag } =
     useMirrorWindowGeometry(mirrorKey, besideHubPanel)
@@ -186,7 +189,7 @@ export function AgentHubMirrorWindow({
       surface === 'preview' && ptyId ? resolveAgentHubTerminalInput(state, target, ptyId) : null
     )
   )
-  const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
+  const kind = windowKind ?? (thread ? agentHubIndicatorKind(thread) : 'idle')
   const familyRoot = family?.path[0]?.paneKey ?? null
   const familyBarShown = useAgentHubFamilyBarShown(familyRoot)
 
@@ -201,12 +204,13 @@ export function AgentHubMirrorWindow({
   }, [nudgeId, nudgeKind, onNudged, sectionRef])
 
   useEffect(() => {
+    setGaveUp(false)
     if (ptyId) {
       return
     }
     const timer = setTimeout(() => setGaveUp(true), ATTACH_GIVE_UP_MS)
     return () => clearTimeout(timer)
-  }, [ptyId])
+  }, [ptyId, target.tab.id, target.paneKey])
 
   return (
     <section

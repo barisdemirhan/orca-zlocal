@@ -48,6 +48,12 @@ export function forgetUnkeptAgentHubMirrorPlace(key: string): void {
   }
 }
 
+/** Source preferences retain chosen geometry after a window's ownership ends. */
+export function releaseAgentHubMirrorPlace(key: string): void {
+  origins.delete(key)
+  kept.delete(key)
+}
+
 /** The window at `fromKey` now shows another pane: that pane's mirror stands where it stood. */
 export function copyAgentHubMirrorPlace(fromKey: string, toKey: string): void {
   const origin = origins.get(fromKey)

@@ -18,7 +18,6 @@ import {
 } from './agent-hub-mirror-places'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
-import { agentHubPaneTargetKey } from './agent-hub-pane-target'
 import { useMirrorWindowFocus } from './use-mirror-window-focus'
 
 const SETTLE_MS = 340
@@ -56,7 +55,7 @@ function claimMirrorPlace(key: string, besideHubPanel: boolean): AgentHubMirrorG
     ? document.querySelector('[data-agent-hub-panel]')?.getBoundingClientRect()
     : null
   const taken = readAgentHubMirrors().windows.flatMap(
-    (open) => readAgentHubMirrorOrigin(agentHubPaneTargetKey(open)) ?? []
+    (open) => readAgentHubMirrorOrigin(open.id) ?? []
   )
   const place = clampAgentHubMirrorGeometry(
     agentHubMirrorOpenGeometry(

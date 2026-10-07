@@ -1,12 +1,14 @@
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
+import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import { Maximize2, Minus, PictureInPicture2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import {
-  closeAgentHubMirror,
-  closeAgentHubMirrorChip,
+  readAgentHubMirrors,
+  openAgentHubMirror,
   requestAgentHubMirrorsDock,
-  restoreAgentHubMirror,
   useAgentHubMirrorPresence
 } from './agent-hub-mirror-store'
 
@@ -56,22 +58,30 @@ export function HubRowAction({
  */
 export function HubRowMirrorActions({
   mirrorKey,
+  target,
   onPopout
 }: {
   mirrorKey: string
+  target?: AgentHubPaneTarget
   onPopout: () => void
 }): React.JSX.Element {
-  const presence = useAgentHubMirrorPresence(mirrorKey)
+  const presence = useAgentHubMirrorPresence(target ?? mirrorKey)
+  const owner = findAgentHubMirrorMembership(readAgentHubMirrors(), target ?? mirrorKey)
+  const grouped = (owner?.window.tabs.length ?? 0) > 1
   return (
     <>
       {presence ? (
         <HubRowAction
-          label={translate('agentHub.mirror.close', 'Close mirror')}
-          onClick={() =>
-            presence === 'window'
-              ? closeAgentHubMirror(mirrorKey)
-              : closeAgentHubMirrorChip(mirrorKey)
+          label={
+            grouped
+              ? translate('agentHub.mirror.returnToWorkspace', 'Return to workspace')
+              : translate('agentHub.mirror.close', 'Close mirror')
           }
+          onClick={() => {
+            if (owner) {
+              closeAgentHubMirrorTab(owner.window.id, owner.tab.id)
+            }
+          }}
         >
           <X className="size-[13px]" />
         </HubRowAction>
@@ -80,17 +90,19 @@ export function HubRowMirrorActions({
       <HubRowAction
         actionId={presence ? undefined : 'agentHub.popOut'}
         label={
-          presence === 'window'
-            ? translate('agentHub.row.sendToHub', 'Send to the hub')
-            : presence === 'chip'
-              ? translate('agentHub.row.bringBack', 'Bring back')
-              : translate('agentHub.row.popOut', 'Pop out')
+          presence === 'window' && grouped
+            ? translate('agentHub.row.showInMirror', 'Show in mirror')
+            : presence === 'window'
+              ? translate('agentHub.row.sendToHub', 'Send to the hub')
+              : presence === 'chip'
+                ? translate('agentHub.row.bringBack', 'Bring back')
+                : translate('agentHub.row.popOut', 'Pop out')
         }
         onClick={() => {
-          if (presence === 'window') {
-            requestAgentHubMirrorsDock(mirrorKey)
-          } else if (presence === 'chip') {
-            restoreAgentHubMirror(mirrorKey)
+          if (presence === 'window' && !grouped && owner) {
+            requestAgentHubMirrorsDock(owner.window.id)
+          } else if (owner) {
+            openAgentHubMirror(target ?? owner.tab.target)
           } else {
             onPopout()
           }

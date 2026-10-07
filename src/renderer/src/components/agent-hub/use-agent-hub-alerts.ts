@@ -49,7 +49,9 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
       (alert) =>
         !isVisibleForegroundPaneKey(state, alert.thread.worktree.id, alert.thread.paneKey) &&
         (!alert.mirrorOnly ||
-          chips.some((chip) => agentHubTargetShowsThread(chip.target, alert.thread)))
+          chips.some((chip) =>
+            chip.window.tabs.some((tab) => agentHubTargetShowsThread(tab.target, alert.thread))
+          ))
     )
     if (unseen.length === 0) {
       return

@@ -61,8 +61,14 @@ export function agentHubPaneTargetKey(target: AgentHubPaneTarget): string {
 /** Whether a target mirrors this agent; a shell target (no pane key) owns its tab's agent. */
 export function agentHubTargetShowsThread(
   target: AgentHubPaneTarget,
-  thread: Pick<AgentPaneThread, 'paneKey' | 'tab'>
+  thread: Pick<AgentPaneThread, 'paneKey' | 'tab'> & Partial<Pick<AgentPaneThread, 'worktree'>>
 ): boolean {
+  if (
+    thread.worktree &&
+    getWorktreeHostIdentity(target.worktree) !== getWorktreeHostIdentity(thread.worktree)
+  ) {
+    return false
+  }
   return target.paneKey ? target.paneKey === thread.paneKey : target.tab.id === thread.tab.id
 }
 

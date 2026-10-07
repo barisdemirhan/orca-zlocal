@@ -21725,7 +21725,8 @@
       "markRead": "Mark read",
       "currentWorkspace": "In the workspace you have open",
       "sendToHub": "Send to the hub",
-      "bringBack": "Bring back"
+      "bringBack": "Bring back",
+      "showInMirror": "Show in mirror"
     },
     "mirror": {
       "close": "Close mirror",
@@ -21751,7 +21752,9 @@
       "cancelDictationHint": "Cancel dictation and discard what is not inserted yet",
       "endFocus": "Return this mirror to its place",
       "focus": "Focus this mirror",
-      "showInSidebar": "Show in sidebar"
+      "showInSidebar": "Show in sidebar",
+      "returnToWorkspace": "Return to workspace",
+      "tabCount": "{{value0}} tabs"
     },
     "title": "Agents",
     "tab": {

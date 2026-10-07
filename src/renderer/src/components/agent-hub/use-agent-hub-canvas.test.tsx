@@ -1,3 +1,5 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 /** @vitest-environment happy-dom */
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -82,12 +84,12 @@ describe('the canvas opens only by explicit action', () => {
     expect(shown()).toBe(false)
 
     act(() => {
-      minimizeAgentHubMirror('tab-a:leaf')
+      minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
       closeAgentHubCanvas()
     })
     expect(shown()).toBe(false)
 
-    act(() => restoreAgentHubMirror('tab-a:leaf'))
+    act(() => restoreAgentHubMirror(mirrorWindowIdFor('tab-a:leaf')))
     expect(shown()).toBe(false)
   })
 
@@ -125,3 +127,10 @@ describe('the canvas opens only by explicit action', () => {
     sidebar.remove()
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

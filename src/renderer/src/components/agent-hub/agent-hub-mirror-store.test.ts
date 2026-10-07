@@ -1,4 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
   keepAgentHubMirrorPlace,
@@ -39,9 +42,12 @@ function target(tabId: string): AgentHubPaneTarget {
   }
 }
 
-const windowKeys = (): string[] => readAgentHubMirrors().windows.map((open) => open.paneKey ?? '')
+const windowKeys = (): string[] =>
+  readAgentHubMirrors().windows.map((open) => activeAgentHubMirrorTab(open).target.paneKey ?? '')
 const chipKeys = (): string[] =>
-  readAgentHubMirrors().chips.map((chip) => chip.target.paneKey ?? '')
+  readAgentHubMirrors().chips.map(
+    (chip) => activeAgentHubMirrorTab(chip.window).target.paneKey ?? ''
+  )
 
 describe('agent hub mirror store', () => {
   beforeEach(() => {
@@ -54,7 +60,7 @@ describe('agent hub mirror store', () => {
     openAgentHubMirror(target('tab-a'))
 
     expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-a:leaf'])
-    focusAgentHubMirror('tab-b:leaf')
+    focusAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
     expect(windowKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
   })
 
@@ -77,7 +83,7 @@ describe('agent hub mirror store', () => {
     expect(windowKeys()).toEqual([])
     expect(chipKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf', 'tab-c:leaf'])
     // The first key asked for ends up in front.
-    restoreAgentHubMirrors(['tab-c:leaf', 'tab-a:leaf'])
+    restoreAgentHubMirrors(['tab-c:leaf', 'tab-a:leaf'].map(mirrorWindowIdFor))
     expect(windowKeys()).toEqual(['tab-a:leaf', 'tab-c:leaf'])
     expect(chipKeys()).toEqual(['tab-b:leaf'])
   })
@@ -85,23 +91,28 @@ describe('agent hub mirror store', () => {
   it('restores a chip as the front window and closes only the one asked', () => {
     openAgentHubMirror(target('tab-a'))
     openAgentHubMirror(target('tab-b'))
-    minimizeAgentHubMirror('tab-a:leaf')
-    restoreAgentHubMirror('tab-a:leaf')
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
+    restoreAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
 
     expect(chipKeys()).toEqual([])
     expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-a:leaf'])
-    closeAgentHubMirror('tab-b:leaf')
+    closeAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
     expect(windowKeys()).toEqual(['tab-a:leaf'])
   })
 
   it('switches a window to another pane in place, keeping its spot', () => {
-    rememberAgentHubMirrorOrigin('tab-a:leaf', { x: 50, y: 60, width: 640, height: 400 })
     openAgentHubMirror(target('tab-a'))
+    rememberAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'), {
+      x: 50,
+      y: 60,
+      width: 640,
+      height: 400
+    })
     openAgentHubMirror(target('tab-b'))
-    retargetAgentHubMirror('tab-a:leaf', target('tab-c'))
+    retargetAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'), target('tab-c'))
 
     expect(windowKeys()).toEqual(['tab-c:leaf', 'tab-b:leaf'])
-    expect(readAgentHubMirrorOrigin('tab-c:leaf')).toEqual({
+    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-c:leaf'))).toEqual({
       x: 50,
       y: 60,
       width: 640,
@@ -110,27 +121,45 @@ describe('agent hub mirror store', () => {
 
     // A pane already in its own window is brought forward rather than opened twice.
     openAgentHubMirror(target('tab-c'))
-    retargetAgentHubMirror('tab-b:leaf', target('tab-c'))
+    retargetAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'), target('tab-c'))
     expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-c:leaf'])
   })
 
   it('forgets where a closed window stood unless the user put it there', () => {
     const place = { x: 50, y: 60, width: 640, height: 400 }
     openAgentHubMirror(target('tab-a'))
-    rememberAgentHubMirrorOrigin('tab-a:leaf', place)
+    const aId = mirrorWindowIdFor('tab-a:leaf')
+    rememberAgentHubMirrorOrigin(aId, place)
     // Parked and brought back, it returns to its place.
-    minimizeAgentHubMirror('tab-a:leaf')
-    restoreAgentHubMirror('tab-a:leaf')
-    expect(readAgentHubMirrorOrigin('tab-a:leaf')).toEqual(place)
-    closeAgentHubMirror('tab-a:leaf')
-    expect(readAgentHubMirrorOrigin('tab-a:leaf')).toBeNull()
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
+    restoreAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
+    expect(readAgentHubMirrorOrigin(aId)).toEqual(place)
+    closeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
+    expect(readAgentHubMirrorOrigin(aId)).toBeNull()
 
     openAgentHubMirror(target('tab-b'))
-    rememberAgentHubMirrorOrigin('tab-b:leaf', place)
-    keepAgentHubMirrorPlace('tab-b:leaf')
-    minimizeAgentHubMirror('tab-b:leaf')
-    closeAgentHubMirrorChip('tab-b:leaf')
-    expect(readAgentHubMirrorOrigin('tab-b:leaf')).toEqual(place)
+    const bId = mirrorWindowIdFor('tab-b:leaf')
+    rememberAgentHubMirrorOrigin(bId, place)
+    keepAgentHubMirrorPlace(mirrorWindowIdFor('tab-b:leaf'))
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
+    closeAgentHubMirrorChip(mirrorWindowIdFor('tab-b:leaf'))
+    expect(readAgentHubMirrorOrigin(bId)).toBeNull()
+    openAgentHubMirror(target('tab-b'))
+    expect(mirrorWindowIdFor('tab-b:leaf')).not.toBe(bId)
+    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-b:leaf'))).toEqual(place)
+  })
+
+  it('reopens a source at its chosen place with a new window identity', () => {
+    const place = { x: 80, y: 90, width: 500, height: 320 }
+    openAgentHubMirror(target('tab-a'))
+    const firstId = mirrorWindowIdFor('tab-a:leaf')
+    rememberAgentHubMirrorOrigin(firstId, place)
+    keepAgentHubMirrorPlace(firstId)
+    closeAgentHubMirror(firstId)
+    openAgentHubMirror(target('tab-a'))
+    const nextId = mirrorWindowIdFor('tab-a:leaf')
+    expect(nextId).not.toBe(firstId)
+    expect(readAgentHubMirrorOrigin(nextId)).toEqual(place)
   })
 
   it('opens many panes at once: windows up to the cap, the first in front, the rest parked', () => {
@@ -161,8 +190,12 @@ describe('agent hub mirror store', () => {
       openAgentHubMirror(target(id))
     }
     setAgentHubMirrorWindowCap(2)
-    expect(readAgentHubMirrors().windows.map((target) => target.tab.id)).toEqual(['tab-b', 'tab-c'])
-    expect(readAgentHubMirrors().chips.map((chip) => chip.target.tab.id)).toEqual(['tab-a'])
+    expect(
+      readAgentHubMirrors().windows.map((window) => activeAgentHubMirrorTab(window).target.tab.id)
+    ).toEqual(['tab-b', 'tab-c'])
+    expect(
+      readAgentHubMirrors().chips.map((chip) => activeAgentHubMirrorTab(chip.window).target.tab.id)
+    ).toEqual(['tab-a'])
     setAgentHubMirrorWindowCap(6)
     for (const id of ['tab-d', 'tab-e', 'tab-f', 'tab-g']) {
       openAgentHubMirror(target(id))
@@ -172,7 +205,11 @@ describe('agent hub mirror store', () => {
 
   describe('putting back the mirrors of the last session', () => {
     const reopened = (tabId: string, minimized = false) => ({
-      target: target(tabId),
+      window: {
+        id: `saved-${tabId}`,
+        tabs: [{ id: `entry-${tabId}`, target: target(tabId), origin: 'manual' as const }],
+        activeTabId: `entry-${tabId}`
+      },
       minimized,
       minimizedAt: 1,
       place: { geometry: { x: 10, y: 20, width: 640, height: 400 }, kept: true }
@@ -183,15 +220,23 @@ describe('agent hub mirror store', () => {
 
       expect(windowKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
       expect(chipKeys()).toEqual(['tab-p:leaf'])
-      expect(readAgentHubMirrorOrigin('tab-b:leaf')).toEqual({
+      const bId = mirrorWindowIdFor('tab-b:leaf')
+      expect(readAgentHubMirrorOrigin(bId)).toEqual({
         x: 10,
         y: 20,
         width: 640,
         height: 400
       })
       // Its place was the user's: it outlives closing the mirror.
-      closeAgentHubMirror('tab-b:leaf')
-      expect(readAgentHubMirrorOrigin('tab-b:leaf')).not.toBeNull()
+      closeAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
+      expect(readAgentHubMirrorOrigin(bId)).toBeNull()
+      openAgentHubMirror(target('tab-b'))
+      expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-b:leaf'))).toEqual({
+        x: 10,
+        y: 20,
+        width: 640,
+        height: 400
+      })
     })
 
     it('parks the back-most windows past a lowered cap', () => {
@@ -207,10 +252,10 @@ describe('agent hub mirror store', () => {
       expect(isAgentHubMirrorStageQuiet()).toBe(true)
 
       // Parking or closing one is not picking one.
-      minimizeAgentHubMirror('tab-a:leaf')
+      minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
       expect(isAgentHubMirrorStageQuiet()).toBe(true)
 
-      focusAgentHubMirror('tab-b:leaf')
+      focusAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
       expect(isAgentHubMirrorStageQuiet()).toBe(false)
     })
 
@@ -223,3 +268,10 @@ describe('agent hub mirror store', () => {
     })
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

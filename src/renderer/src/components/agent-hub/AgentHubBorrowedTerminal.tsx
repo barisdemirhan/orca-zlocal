@@ -1,9 +1,10 @@
+import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { Button } from '../ui/button'
 import { useAgentHubBorrowedTabs } from './agent-hub-borrowed-tabs'
-import { closeAgentHubMirror, readAgentHubMirrors } from './agent-hub-mirror-store'
-import { agentHubPaneTargetKey } from './agent-hub-pane-target'
+import { readAgentHubMirrors } from './agent-hub-mirror-store'
 
 export function AgentHubBorrowedTerminal({
   worktreeId,
@@ -30,10 +31,17 @@ export function AgentHubBorrowedTerminal({
         variant="outline"
         size="xs"
         onClick={() => {
-          const target = readAgentHubMirrors().windows.find(
-            (item) => item.tab.id === borrowed.tabId && item.worktree.id === worktreeId
+          const window = readAgentHubMirrors().windows.find(
+            (item) =>
+              item.id === borrowed.mirrorKey &&
+              item.tabs.some(
+                (tab) =>
+                  tab.target.tab.id === borrowed.tabId && tab.target.worktree.id === worktreeId
+              )
           )
-          closeAgentHubMirror(target ? agentHubPaneTargetKey(target) : borrowed.mirrorKey)
+          if (window) {
+            closeAgentHubMirrorTab(window.id, activeAgentHubMirrorTab(window).id)
+          }
         }}
       >
         {translate('agentHub.tab.bringBack', 'Bring back')}

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
+import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
+import { createAgentHubMirrorWindow } from './agent-hub-mirror-membership'
+import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
   agentHubMirrorsToggleAction,
   foldAgentHubTray,
@@ -18,6 +21,32 @@ const titles = (entries: readonly { title: string }[]): string[] =>
   entries.map(({ title }) => title)
 
 describe('agent hub mirror tray', () => {
+  it('keeps an inactive asking member ahead of another window whose active terminal is working', () => {
+    const worktree = makeWorktree()
+    const target = (id: string) => ({
+      worktree,
+      repo: null,
+      tab: makeTabWithIds(id, worktree.id),
+      paneKey: null,
+      title: id,
+      agentType: null
+    })
+    const window = createAgentHubMirrorWindow(target('idle'))
+    const grouped = {
+      ...window,
+      tabs: [
+        ...window.tabs,
+        { id: 'waiting-entry', target: target('waiting'), origin: 'manual' as const }
+      ]
+    }
+    const kind = agentHubMirrorWindowKind(grouped, (target) =>
+      target.tab.id === 'waiting' ? 'ask' : 'idle'
+    )
+    expect(grouped.activeTabId).toBe(window.activeTabId)
+    expect(
+      titles(orderAgentHubTray([entry('working', 'work', 20), entry('grouped', kind, 1)]))
+    ).toEqual(['grouped', 'working'])
+  })
   it('puts questions first, then results, then running work, newest first within each', () => {
     const ordered = orderAgentHubTray([
       entry('working-old', 'work', 1),

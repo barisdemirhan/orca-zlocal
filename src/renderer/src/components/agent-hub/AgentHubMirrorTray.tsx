@@ -127,6 +127,7 @@ export function AgentHubMirrorTray({
   onReveal,
   onClose,
   onOpenAlert,
+  locationOfAlert,
   onDismissAlert
 }: {
   /** Already ordered, most urgent first. */
@@ -143,7 +144,8 @@ export function AgentHubMirrorTray({
   /** How long the pile fans out when a parked mirror asks or finishes; 0 never. */
   peekMs: number
   onRestore: (key: string) => void
-  onReveal: (item: AgentHubTrayItem) => void
+  onReveal: (item: AgentHubTrayItem, alert?: AgentHubAlert) => void
+  locationOfAlert?: (alert: AgentHubAlert) => AgentHubLocation
   onClose: (key: string) => void
   onOpenAlert: (key: string, alert: AgentHubAlert) => void
   onDismissAlert: (id: string) => void
@@ -253,8 +255,9 @@ export function AgentHubMirrorTray({
             location={item.location}
             alert={item.alert}
             alertSide={alertSide}
+            locationOfAlert={locationOfAlert}
             onRestore={() => onRestore(item.key)}
-            onReveal={() => onReveal(item)}
+            onReveal={(alert) => onReveal(item, alert)}
             onClose={() => onClose(item.key)}
             onOpenAlert={(alert) => onOpenAlert(item.key, alert)}
             onDismissAlert={onDismissAlert}

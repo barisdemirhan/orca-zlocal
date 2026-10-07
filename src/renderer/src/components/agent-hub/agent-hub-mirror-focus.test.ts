@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-places'
@@ -27,7 +29,7 @@ function target(tabId: string): AgentHubPaneTarget {
   }
 }
 
-const frontKey = (): string | null => readAgentHubMirrors().windows.at(-1)?.paneKey ?? null
+const frontKey = (): string | null => readAgentHubMirrors().windows.at(-1)?.id ?? null
 
 describe('agent hub mirror focus', () => {
   beforeEach(() => {
@@ -38,48 +40,48 @@ describe('agent hub mirror focus', () => {
   })
 
   it('brings the focused mirror to the front, and returns it on the second ask', () => {
-    toggleAgentHubMirrorFocus('tab-a:leaf')
-    expect(readAgentHubMirrorFocus()).toBe('tab-a:leaf')
-    expect(frontKey()).toBe('tab-a:leaf')
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
+    expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-a:leaf'))
+    expect(frontKey()).toBe(mirrorWindowIdFor('tab-a:leaf'))
 
-    toggleAgentHubMirrorFocus('tab-a:leaf')
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
     expect(readAgentHubMirrorFocus()).toBeNull()
   })
 
   it('focuses one mirror at a time: focusing another takes the focus over', () => {
-    toggleAgentHubMirrorFocus('tab-a:leaf')
-    toggleAgentHubMirrorFocus('tab-b:leaf')
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-b:leaf'))
 
-    expect(readAgentHubMirrorFocus()).toBe('tab-b:leaf')
-    expect(frontKey()).toBe('tab-b:leaf')
+    expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-b:leaf'))
+    expect(frontKey()).toBe(mirrorWindowIdFor('tab-b:leaf'))
   })
 
   it('ignores a mirror that is not open in a window', () => {
-    minimizeAgentHubMirror('tab-a:leaf')
-    toggleAgentHubMirrorFocus('tab-a:leaf')
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
 
     expect(readAgentHubMirrorFocus()).toBeNull()
   })
 
   it("leaves the focused mirror's own place as it was", () => {
     const place = { x: 40, y: 60, width: 500, height: 320 }
-    rememberAgentHubMirrorOrigin('tab-a:leaf', place)
+    rememberAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'), place)
 
-    toggleAgentHubMirrorFocus('tab-a:leaf')
-    expect(readAgentHubMirrorOrigin('tab-a:leaf')).toBe(place)
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
+    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'))).toBe(place)
 
-    toggleAgentHubMirrorFocus('tab-a:leaf')
-    expect(readAgentHubMirrorOrigin('tab-a:leaf')).toBe(place)
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
+    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'))).toBe(place)
   })
 
   it.each([
-    ['minimizing it', () => minimizeAgentHubMirror('tab-a:leaf')],
-    ['closing it', () => closeAgentHubMirror('tab-a:leaf')],
+    ['minimizing it', () => minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))],
+    ['closing it', () => closeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))],
     ['sending every mirror to the tray', () => minimizeAllAgentHubMirrors()],
-    ['another mirror coming forward', () => focusAgentHubMirror('tab-b:leaf')],
+    ['another mirror coming forward', () => focusAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))],
     ['another mirror opening', () => openAgentHubMirror(target('tab-d'))]
   ])('ends the focus on %s', (_, act) => {
-    toggleAgentHubMirrorFocus('tab-a:leaf')
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
 
     act()
 
@@ -87,18 +89,25 @@ describe('agent hub mirror focus', () => {
   })
 
   it('keeps the focus when a mirror behind it closes', () => {
-    toggleAgentHubMirrorFocus('tab-a:leaf')
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
 
-    closeAgentHubMirror('tab-b:leaf')
+    closeAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
 
-    expect(readAgentHubMirrorFocus()).toBe('tab-a:leaf')
+    expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-a:leaf'))
   })
 
   it('follows the focused window to the pane it switches to', () => {
-    toggleAgentHubMirrorFocus('tab-a:leaf')
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
 
-    retargetAgentHubMirror('tab-a:leaf', target('tab-e'))
+    retargetAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'), target('tab-e'))
 
-    expect(readAgentHubMirrorFocus()).toBe('tab-e:leaf')
+    expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-e:leaf'))
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

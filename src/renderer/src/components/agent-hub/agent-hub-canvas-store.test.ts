@@ -1,3 +1,6 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 /** @vitest-environment happy-dom */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -51,13 +54,16 @@ function target(tabId: string): AgentHubPaneTarget {
   }
 }
 
-const windowKeys = (): string[] => readAgentHubMirrors().windows.map((open) => open.paneKey ?? '')
+const windowKeys = (): string[] =>
+  readAgentHubMirrors().windows.map((open) => activeAgentHubMirrorTab(open).target.paneKey ?? '')
 const chipKeys = (): string[] =>
-  readAgentHubMirrors().chips.map((chip) => chip.target.paneKey ?? '')
+  readAgentHubMirrors().chips.map(
+    (chip) => activeAgentHubMirrorTab(chip.window).target.paneKey ?? ''
+  )
 
 /** Leaves the canvas and lands its mirrors in the tray, as each window does after its flight. */
 function leaveCanvas(): void {
-  const onCanvas = windowKeys()
+  const onCanvas = readAgentHubMirrors().windows.map((window) => window.id)
   closeAgentHubCanvas()
   onCanvas.forEach(minimizeAgentHubMirror)
 }
@@ -165,11 +171,18 @@ describe('leaving the canvas', () => {
   it('ends a focus when the canvas is left', () => {
     openAgentHubCanvas()
     openAgentHubMirror(target('tab-a'))
-    toggleAgentHubMirrorFocus('tab-a:leaf')
-    expect(readAgentHubMirrorFocus()).toBe('tab-a:leaf')
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
+    expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-a:leaf'))
 
     closeAgentHubCanvas()
 
     expect(readAgentHubMirrorFocus()).toBeNull()
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

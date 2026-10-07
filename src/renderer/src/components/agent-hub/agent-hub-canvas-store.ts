@@ -8,7 +8,6 @@ import {
   requestAgentHubMirrorsDock,
   restoreAgentHubMirrors
 } from './agent-hub-mirror-store'
-import { agentHubPaneTargetKey } from './agent-hub-pane-target'
 
 // Focus inside these stays put when the canvas opens; anywhere else it is behind the canvas.
 const OVER_THE_CANVAS =
@@ -72,7 +71,7 @@ function bringParkedMirrorsBack(): void {
   const { windows, chips } = readAgentHubMirrors()
   const room = agentHubMirrorWindowCap() - windows.length
   const back = parked
-    .filter((key) => chips.some((chip) => agentHubPaneTargetKey(chip.target) === key))
+    .filter((key) => chips.some((chip) => chip.window.id === key))
     .slice(0, Math.max(0, room))
   parked = []
   if (back.length === 0) {
@@ -81,7 +80,7 @@ function bringParkedMirrorsBack(): void {
   const front = windows.at(-1)
   restoreAgentHubMirrors(back)
   if (front) {
-    focusAgentHubMirror(agentHubPaneTargetKey(front))
+    focusAgentHubMirror(front.id)
   }
 }
 
@@ -115,7 +114,9 @@ export function closeAgentHubCanvas(): void {
   endAgentHubMirrorFocus()
   stopGuarding?.()
   stopGuarding = null
-  parked = readAgentHubMirrors().windows.map(agentHubPaneTargetKey).toReversed()
+  parked = readAgentHubMirrors()
+    .windows.map((window) => window.id)
+    .toReversed()
   requestAgentHubMirrorsDock()
   if (rightSidebarWasOpen) {
     useAppStore.getState().setRightSidebarOpen(true)

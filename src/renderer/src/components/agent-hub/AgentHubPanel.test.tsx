@@ -1,3 +1,6 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 // @vitest-environment happy-dom
 
 import { act, createRef } from 'react'
@@ -301,13 +304,22 @@ describe('AgentHubPanel row mirror button', () => {
     expect(rowButton('Send to the hub')).toBe(popOut)
     expect(rowButton('Close mirror')).not.toBeNull()
 
-    act(() => minimizeAgentHubMirror(target.paneKey))
+    act(() => minimizeAgentHubMirror(mirrorWindowIdFor(target.paneKey)))
     expect(rowButton('Bring back')).toBe(popOut)
     click(popOut)
-    expect(readAgentHubMirrors().windows).toEqual([target])
+    expect(
+      readAgentHubMirrors().windows.map((window) => activeAgentHubMirrorTab(window).target)
+    ).toEqual([target])
 
     click(rowButton('Close mirror'))
     expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
     expect(rowButton('Pop out')).toBe(popOut)
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

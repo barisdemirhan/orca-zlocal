@@ -1,3 +1,4 @@
+import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
 import { Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
@@ -83,6 +84,7 @@ function TreeRow({
         indent={!nested}
         // Same key the mirror store gives this row's target (see agentHubPaneTargetKey).
         mirrorKey={row.paneKey ?? row.tab.id}
+        mirrorTarget={paneTargetFromTerminalRow(row)}
         onOpen={() => context.onOpen(row)}
         onPopout={() => context.onPopout(row)}
         onJump={() => context.onJump(row)}

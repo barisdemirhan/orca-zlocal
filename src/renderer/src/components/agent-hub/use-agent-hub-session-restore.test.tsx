@@ -1,3 +1,6 @@
+import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
+import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 /** @vitest-environment happy-dom */
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -52,11 +55,20 @@ const READY = {
 
 function saved(tabId: string): AgentHubSavedMirror {
   return {
-    worktreeId: worktree.id,
-    tabId,
-    paneKey: null,
-    title: tabId,
-    agentType: null,
+    id: `window-${tabId}`,
+    tabs: [
+      {
+        id: `entry-${tabId}`,
+        worktreeId: worktree.id,
+        tabId,
+        paneKey: null,
+        hostIdentity: getWorktreeHostIdentity(worktree),
+        title: tabId,
+        agentType: null,
+        origin: 'manual'
+      }
+    ],
+    activeTabId: `entry-${tabId}`,
     minimized: false,
     minimizedAt: 0,
     geometry: { x: 40, y: 60, width: 640, height: 400 },
@@ -67,7 +79,7 @@ function saved(tabId: string): AgentHubSavedMirror {
 function saveSession(tabIds: string[]): void {
   writeAgentHubSessionSnapshot(
     agentHubSessionSnapshot({
-      mirrors: tabIds.map(saved),
+      windows: tabIds.map(saved),
       canvasOpen: false,
       canvasParked: [],
       hiddenFamilyRoots: []
@@ -86,7 +98,10 @@ function mountHub(restoreOnLaunch = true): void {
   act(() => root?.render(<Hub />))
 }
 
-const windowKeys = (): string[] => readAgentHubMirrors().windows.map(agentHubPaneTargetKey)
+const windowKeys = (): string[] =>
+  readAgentHubMirrors().windows.map((window) =>
+    agentHubPaneTargetKey(activeAgentHubMirrorTab(window).target)
+  )
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -154,7 +169,7 @@ describe('restoring the hub session on launch', () => {
     mountHub()
     act(() => vi.advanceTimersByTime(5000))
 
-    expect(readAgentHubSessionSnapshot()?.mirrors).toHaveLength(1)
+    expect(readAgentHubSessionSnapshot()?.windows).toHaveLength(1)
   })
 
   it('restores nothing with the setting off, and saves the stage as it now is', () => {
@@ -164,7 +179,7 @@ describe('restoring the hub session on launch', () => {
     act(() => vi.advanceTimersByTime(1000))
 
     expect(windowKeys()).toEqual([])
-    expect(readAgentHubSessionSnapshot()?.mirrors).toEqual([])
+    expect(readAgentHubSessionSnapshot()?.windows).toEqual([])
   })
 
   it('saves a change a moment later: a closed mirror leaves the snapshot, a moved one moves', () => {
@@ -173,14 +188,19 @@ describe('restoring the hub session on launch', () => {
     mountHub()
 
     act(() => {
-      closeAgentHubMirror('tab-a')
-      rememberAgentHubMirrorOrigin('tab-b', { x: 300, y: 200, width: 700, height: 420 })
+      closeAgentHubMirror(mirrorWindowIdFor('tab-a'))
+      rememberAgentHubMirrorOrigin(mirrorWindowIdFor('tab-b'), {
+        x: 300,
+        y: 200,
+        width: 700,
+        height: 420
+      })
     })
-    expect(readAgentHubSessionSnapshot()?.mirrors).toHaveLength(2)
+    expect(readAgentHubSessionSnapshot()?.windows).toHaveLength(2)
     act(() => vi.advanceTimersByTime(1000))
 
-    expect(readAgentHubSessionSnapshot()?.mirrors).toMatchObject([
-      { tabId: 'tab-b', geometry: { x: 300, y: 200, width: 700, height: 420 } }
+    expect(readAgentHubSessionSnapshot()?.windows).toMatchObject([
+      { tabs: [{ tabId: 'tab-b' }], geometry: { x: 300, y: 200, width: 700, height: 420 } }
     ])
   })
 
@@ -190,17 +210,19 @@ describe('restoring the hub session on launch', () => {
     mountHub()
     act(() => vi.advanceTimersByTime(1000))
 
-    act(() => closeAgentHubMirror('tab-a'))
+    act(() => closeAgentHubMirror(mirrorWindowIdFor('tab-a')))
     window.dispatchEvent(new Event('beforeunload'))
 
-    expect(readAgentHubSessionSnapshot()?.mirrors.map((mirror) => mirror.tabId)).toEqual(['tab-b'])
+    expect(readAgentHubSessionSnapshot()?.windows.map((mirror) => mirror.tabs[0]?.tabId)).toEqual([
+      'tab-b'
+    ])
   })
 
   it('restores once: a hub that mounts again leaves the stage alone', () => {
     saveSession(['tab-a'])
     useAppStore.setState(READY)
     mountHub()
-    act(() => closeAgentHubMirror('tab-a'))
+    act(() => closeAgentHubMirror(mirrorWindowIdFor('tab-a')))
     act(() => root?.unmount())
     saveSession(['tab-b'])
     mountHub()
@@ -213,7 +235,7 @@ describe('restoring the hub session on launch', () => {
     useAppStore.setState(READY)
     mountHub()
     act(() => vi.advanceTimersByTime(1000))
-    expect(readAgentHubSessionSnapshot()?.mirrors).toHaveLength(1)
+    expect(readAgentHubSessionSnapshot()?.windows).toHaveLength(1)
 
     useAppStore.setState({ settings: hubSettings(false) })
     act(() => root?.unmount())

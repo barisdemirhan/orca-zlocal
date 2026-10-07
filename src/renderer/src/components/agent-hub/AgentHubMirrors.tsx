@@ -1,3 +1,9 @@
+import {
+  activeAgentHubMirrorTab,
+  findAgentHubMirrorMembership
+} from './agent-hub-mirror-membership'
+import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
+import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -39,7 +45,6 @@ import {
   useAgentHubMirrorStageQuiet
 } from './agent-hub-mirror-store'
 import {
-  agentHubPaneTargetKey,
   agentHubTargetShowsThread,
   paneTargetFromThread,
   type AgentHubLocation,
@@ -126,7 +131,8 @@ export function AgentHubMirrors({
   // that tab is on screen in the workspace right now — the pane can only be in one place.
   const placement = useAppStore(
     useShallow((state) =>
-      windows.map((target) => {
+      windows.map((window) => {
+        const target = activeAgentHubMirrorTab(window).target
         const leafId = state.terminalLayoutsByTabId[target.tab.id]?.activeLeafId
         const paneKey = target.paneKey ?? (leafId ? makePaneKey(target.tab.id, leafId) : null)
         const onScreen =
@@ -139,7 +145,8 @@ export function AgentHubMirrors({
   )
   const surfaces = useMemo(
     () =>
-      windows.map((target, index): { surface: MirrorSurface; paneKey: string | null } => {
+      windows.map((window, index): { surface: MirrorSurface; paneKey: string | null } => {
+        const target = activeAgentHubMirrorTab(window).target
         const [paneKey = '', onScreen] = (placement[index] ?? '').split('\u0000')
         if (target.worktree.id === FLOATING_TERMINAL_WORKTREE_ID) {
           // The floating panel draws its own terminals; the dashboard preview stands in.
@@ -151,8 +158,9 @@ export function AgentHubMirrors({
   )
   const portals = useMemo(
     () =>
-      windows.flatMap((target, index): ActivityTerminalPortalTarget[] => {
-        const key = agentHubPaneTargetKey(target)
+      windows.flatMap((window, index): ActivityTerminalPortalTarget[] => {
+        const target = activeAgentHubMirrorTab(window).target
+        const key = window.id
         const slot = slots.get(key)
         const { surface, paneKey } = surfaces[index] ?? { surface: 'portal', paneKey: null }
         if (surface !== 'portal' || !slot || !paneKey) {
@@ -183,6 +191,7 @@ export function AgentHubMirrors({
   useLayoutEffect(() => {
     setTerminalMirrorMountLeases(
       windows
+        .flatMap((window) => window.tabs.map((tab) => tab.target))
         .filter((target) => target.worktree.id !== FLOATING_TERMINAL_WORKTREE_ID)
         .map((target) => ({ worktreeId: target.worktree.id, tabId: target.tab.id }))
     )
@@ -196,12 +205,9 @@ export function AgentHubMirrors({
   }
   const threadFor = (target: AgentHubPaneTarget): AgentPaneThread | null =>
     threads.find((thread) => agentHubTargetShowsThread(target, thread)) ?? null
-  const openKeys = new Set(
-    [...windows, ...chips.map((chip) => chip.target)].map(agentHubPaneTargetKey)
-  )
   const familyActionsFor = (member: AgentPaneThread): AgentHubThreadCardActions => {
     const target = paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
-    const inWindow = openKeys.has(member.paneKey)
+    const inWindow = findAgentHubMirrorMembership({ windows, chips }, target) !== null
     const onScreen = onScreenTab === `${member.worktree.id}\u0000${member.tab.id}`
     return {
       ...(inWindow || onScreen ? {} : { onJump: () => onReveal(target, member) }),
@@ -211,29 +217,31 @@ export function AgentHubMirrors({
   }
   const trayItems = orderAgentHubTray(
     chips.map((chip): AgentHubTrayItem => {
-      const thread = threadFor(chip.target)
+      const target = activeAgentHubMirrorTab(chip.window).target
+      const thread = threadFor(target)
       return {
-        key: agentHubPaneTargetKey(chip.target),
+        key: chip.window.id,
         chip,
         thread,
-        kind: thread ? agentHubIndicatorKind(thread) : 'idle',
-        location: locationOf(chip.target),
+        kind: agentHubMirrorWindowKind(chip.window, (entry) => {
+          const live = threadFor(entry)
+          return live ? agentHubIndicatorKind(live) : 'idle'
+        }),
+        location: locationOf(target),
         alert: hidden
           ? null
           : (alerts.findLast((candidate) =>
-              agentHubTargetShowsThread(chip.target, candidate.thread)
+              chip.window.tabs.some((tab) =>
+                agentHubTargetShowsThread(tab.target, candidate.thread)
+              )
             ) ?? null)
       }
     })
   )
   // Why a fixed DOM order: bringing a window forward only changes its z-index; moving its node
   // mid-click would drop the terminal's focus and the pointer.
-  const stackIndexOf = new Map(
-    windows.map((target, index) => [agentHubPaneTargetKey(target), index])
-  )
-  const stableWindows = windows.toSorted((a, b) =>
-    agentHubPaneTargetKey(a).localeCompare(agentHubPaneTargetKey(b))
-  )
+  const stackIndexOf = new Map(windows.map((window, index) => [window.id, index]))
+  const stableWindows = windows.toSorted((a, b) => a.id.localeCompare(b.id))
 
   return createPortal(
     <div
@@ -243,14 +251,20 @@ export function AgentHubMirrors({
       // Why z-[44] behind: under the floating workspace (45), still over the dim (43).
       className="pointer-events-none fixed inset-0 z-[46] data-[behind=true]:z-[44] data-[hidden=true]:invisible"
     >
-      {stableWindows.map((target) => {
-        const key = agentHubPaneTargetKey(target)
+      {stableWindows.map((window) => {
+        const target = activeAgentHubMirrorTab(window).target
+        const key = window.id
         const index = stackIndexOf.get(key) ?? 0
         const thread = threadFor(target)
         const familyKey = target.paneKey ?? thread?.paneKey
         return (
           <AgentHubMirrorWindow
             key={key}
+            windowId={key}
+            windowKind={agentHubMirrorWindowKind(window, (entry) => {
+              const live = threadFor(entry)
+              return live ? agentHubIndicatorKind(live) : 'idle'
+            })}
             target={target}
             thread={thread}
             location={locationOf(target)}
@@ -286,7 +300,7 @@ export function AgentHubMirrors({
             onClose={() => closeAgentHubMirror(key)}
             onMinimize={() => minimizeAgentHubMirror(key)}
             onReveal={() => {
-              closeAgentHubMirror(key)
+              closeAgentHubMirrorTab(key, window.activeTabId)
               onReveal(target, thread)
             }}
           />
@@ -301,16 +315,32 @@ export function AgentHubMirrors({
         hidden={trayHidden || hidden}
         peekMs={trayPeekMs}
         onRestore={restoreAgentHubMirror}
-        onReveal={(item) => {
-          closeAgentHubMirrorChip(item.key)
-          onReveal(item.chip.target, item.thread)
+        locationOfAlert={(alert) => locationOf(alert.thread)}
+        onReveal={(item, alert) => {
+          const tab = alert
+            ? item.chip.window.tabs.find((tab) =>
+                agentHubTargetShowsThread(tab.target, alert.thread)
+              )
+            : activeAgentHubMirrorTab(item.chip.window)
+          if (!tab) {
+            return
+          }
+          closeAgentHubMirrorTab(item.key, tab.id)
+          onReveal(
+            alert
+              ? paneTargetFromThread(alert.thread, activityThreadRowCopy(alert.thread).taskTitle)
+              : tab.target,
+            alert?.thread ?? item.thread
+          )
         }}
         onClose={closeAgentHubMirrorChip}
-        onOpenAlert={(key, opened) => {
+        onOpenAlert={(_key, opened) => {
           dismissAgentHubAlert(opened.id)
           // A question is answered on its card; a result is read in the terminal.
           if (opened.kind === 'done') {
-            restoreAgentHubMirror(key)
+            openAgentHubMirror(
+              paneTargetFromThread(opened.thread, activityThreadRowCopy(opened.thread).taskTitle)
+            )
           } else {
             onOpenCard(opened.thread.paneKey)
           }

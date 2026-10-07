@@ -1,137 +1,240 @@
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
+import { migrateAgentHubSessionV1 } from './agent-hub-session-migration'
+import {
+  isWorktreeHostIdentity,
+  getWorktreeIdFromHostIdentity
+} from '../../../../shared/worktree/host-qualified-identity'
+import { AGENT_HUB_MIRROR_TAB_CAP, AGENT_HUB_MIRROR_ENTRY_CAP } from './agent-hub-mirror-membership'
 
-export const AGENT_HUB_SESSION_STORAGE_KEY = 'orca-agent-hub-session-v1'
-const VERSION = 1
-// A hand-edited or damaged record must not flood the stage.
-const MAX_MIRRORS = 32
-const MAX_IDS = 256
-
-/** One mirror as a restart keeps it: ids and hints only, resolved against the live store on return. */
-export type AgentHubSavedMirror = {
+export const AGENT_HUB_SESSION_STORAGE_KEY = 'orca-agent-hub-session-v2'
+export const AGENT_HUB_LEGACY_SESSION_STORAGE_KEY = 'orca-agent-hub-session-v1'
+export const AGENT_HUB_SAVED_WINDOW_CAP = 32
+export type AgentHubSavedMirrorTab = {
+  id: string
   worktreeId: string
   tabId: string
-  /** Null follows the tab's active pane. */
   paneKey: string | null
+  hostIdentity: string | null
   title: string
   agentType: string | null
-  /** Parked in the tray rather than open in a window. */
+  origin: 'manual' | 'auto'
+}
+export type AgentHubSavedMirror = {
+  id: string
+  tabs: AgentHubSavedMirrorTab[]
+  activeTabId: string
   minimized: boolean
   minimizedAt: number
   geometry: AgentHubMirrorGeometry | null
-  /** The user chose the place, so it outlives closing the mirror. */
   keptPlace: boolean
 }
-
 export type AgentHubSessionSnapshot = {
-  version: typeof VERSION
-  /** Parked mirrors in the tray's order, then the open windows back to front. */
-  mirrors: AgentHubSavedMirror[]
+  version: 2
+  windows: AgentHubSavedMirror[]
   canvasOpen: boolean
-  /** The mirrors the canvas parked when it was last left, front first. */
   canvasParked: string[]
   hiddenFamilyRoots: string[]
 }
-
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isAgentHubSavedRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
-
-function strings(value: unknown): string[] {
+export function agentHubSavedStrings(value: unknown): string[] {
   return Array.isArray(value)
-    ? value
-        .filter((item): item is string => typeof item === 'string' && item !== '')
-        .slice(0, MAX_IDS)
+    ? value.slice(0, 256).filter((item): item is string => typeof item === 'string' && item !== '')
     : []
 }
-
-function finite(value: unknown): number | null {
+export function agentHubSavedFinite(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
-
-function parseGeometry(value: unknown): AgentHubMirrorGeometry | null {
-  if (!isRecord(value)) {
+export function parseAgentHubSavedGeometry(value: unknown): AgentHubMirrorGeometry | null {
+  if (!isAgentHubSavedRecord(value)) {
     return null
   }
-  const x = finite(value.x)
-  const y = finite(value.y)
-  const width = finite(value.width)
-  const height = finite(value.height)
+  const x = agentHubSavedFinite(value.x),
+    y = agentHubSavedFinite(value.y)
+  const width = agentHubSavedFinite(value.width),
+    height = agentHubSavedFinite(value.height)
   return x === null || y === null || width === null || height === null || width <= 0 || height <= 0
     ? null
     : { x, y, width, height }
 }
-
-function parseMirror(value: unknown): AgentHubSavedMirror | null {
-  if (!isRecord(value)) {
+function parseTab(value: unknown): AgentHubSavedMirrorTab | null {
+  if (!isAgentHubSavedRecord(value)) {
     return null
   }
-  const { worktreeId, tabId, paneKey, title, agentType } = value
-  if (typeof worktreeId !== 'string' || !worktreeId || typeof tabId !== 'string' || !tabId) {
+  const { id, worktreeId, tabId, hostIdentity } = value
+  if (
+    typeof id !== 'string' ||
+    !id ||
+    typeof worktreeId !== 'string' ||
+    !worktreeId ||
+    typeof tabId !== 'string' ||
+    !tabId
+  ) {
+    return null
+  }
+  if (
+    typeof hostIdentity !== 'string' ||
+    !isWorktreeHostIdentity(hostIdentity) ||
+    getWorktreeIdFromHostIdentity(hostIdentity) !== worktreeId
+  ) {
     return null
   }
   return {
+    id,
     worktreeId,
     tabId,
-    paneKey: typeof paneKey === 'string' && paneKey ? paneKey : null,
-    title: typeof title === 'string' ? title : '',
-    agentType: typeof agentType === 'string' && agentType ? agentType : null,
-    minimized: value.minimized === true,
-    minimizedAt: finite(value.minimizedAt) ?? 0,
-    geometry: parseGeometry(value.geometry),
-    keptPlace: value.keptPlace === true
+    hostIdentity,
+    paneKey: typeof value.paneKey === 'string' && value.paneKey ? value.paneKey : null,
+    title: typeof value.title === 'string' ? value.title : '',
+    agentType: typeof value.agentType === 'string' && value.agentType ? value.agentType : null,
+    origin: value.origin === 'auto' ? 'auto' : 'manual'
   }
 }
-
-/** The snapshot in `value`, or null when it is not one this version wrote; bad entries are left out. */
+/** Bounded salvage, in stored order: first owner wins and an invalid active reference is repaired. */
 export function parseAgentHubSessionSnapshot(value: unknown): AgentHubSessionSnapshot | null {
-  if (!isRecord(value) || value.version !== VERSION || !Array.isArray(value.mirrors)) {
+  if (!isAgentHubSavedRecord(value)) {
     return null
   }
+  if (value.version === 1) {
+    return migrateAgentHubSessionV1(value)
+  }
+  if (value.version !== 2 || !Array.isArray(value.windows)) {
+    return null
+  }
+  const windows: AgentHubSavedMirror[] = []
+  const windowIds = new Set<string>(),
+    entryIds = new Set<string>(),
+    sources = new Set<string>()
+  let total = 0
+  for (const raw of value.windows.slice(0, AGENT_HUB_SAVED_WINDOW_CAP)) {
+    if (
+      !isAgentHubSavedRecord(raw) ||
+      typeof raw.id !== 'string' ||
+      !raw.id ||
+      windowIds.has(raw.id) ||
+      !Array.isArray(raw.tabs)
+    ) {
+      continue
+    }
+    const tabs: AgentHubSavedMirrorTab[] = []
+    for (const candidate of raw.tabs.slice(0, AGENT_HUB_MIRROR_TAB_CAP)) {
+      if (total >= AGENT_HUB_MIRROR_ENTRY_CAP) {
+        break
+      }
+      const tab = parseTab(candidate)
+      if (!tab) {
+        continue
+      }
+      const source = JSON.stringify([tab.hostIdentity, tab.tabId])
+      if (entryIds.has(tab.id) || sources.has(source)) {
+        continue
+      }
+      entryIds.add(tab.id)
+      sources.add(source)
+      tabs.push(tab)
+      total++
+    }
+    const first = tabs[0]
+    if (!first) {
+      continue
+    }
+    windowIds.add(raw.id)
+    windows.push({
+      id: raw.id,
+      tabs,
+      activeTabId:
+        tabs.some((tab) => tab.id === raw.activeTabId) && typeof raw.activeTabId === 'string'
+          ? raw.activeTabId
+          : first.id,
+      minimized: raw.minimized === true,
+      minimizedAt: agentHubSavedFinite(raw.minimizedAt) ?? 0,
+      geometry: parseAgentHubSavedGeometry(raw.geometry),
+      keptPlace: raw.keptPlace === true
+    })
+  }
+  const parked = new Set(windows.filter((window) => window.minimized).map((window) => window.id))
   return {
-    version: VERSION,
-    mirrors: value.mirrors.flatMap((mirror) => parseMirror(mirror) ?? []).slice(0, MAX_MIRRORS),
+    version: 2,
+    windows,
     canvasOpen: value.canvasOpen === true,
-    canvasParked: strings(value.canvasParked),
-    hiddenFamilyRoots: strings(value.hiddenFamilyRoots)
+    canvasParked: [...new Set(agentHubSavedStrings(value.canvasParked))].filter((id) =>
+      parked.has(id)
+    ),
+    hiddenFamilyRoots: agentHubSavedStrings(value.hiddenFamilyRoots)
   }
 }
-
 export function agentHubSessionSnapshot(
   session: Omit<AgentHubSessionSnapshot, 'version'>
 ): AgentHubSessionSnapshot {
-  return { version: VERSION, ...session }
+  return { version: 2, ...session }
 }
-
 function storage(): Storage | null {
   return typeof window === 'undefined' ? null : window.localStorage
 }
-
-/**
- * Why localStorage, like the floating terminal panel's bounds: the mirrors belong to this window
- * of this profile. ui.json is shared with paired clients (ui.set), where a place on this screen
- * means nothing.
- */
+export type AgentHubSessionRead = {
+  status: 'absent' | 'valid' | 'migrated' | 'damaged' | 'unsupported' | 'unavailable'
+  snapshot: AgentHubSessionSnapshot | null
+}
+export function readAgentHubSessionRecord(): AgentHubSessionRead {
+  try {
+    const store = storage()
+    if (!store) {
+      return { status: 'unavailable', snapshot: null }
+    }
+    const v2 = store.getItem(AGENT_HUB_SESSION_STORAGE_KEY)
+    if (v2 !== null) {
+      let raw: unknown
+      try {
+        raw = JSON.parse(v2)
+      } catch {
+        return { status: 'damaged', snapshot: null }
+      }
+      if (isAgentHubSavedRecord(raw) && raw.version !== 2) {
+        return { status: 'unsupported', snapshot: null }
+      }
+      const snapshot = parseAgentHubSessionSnapshot(raw)
+      return { status: snapshot ? 'valid' : 'damaged', snapshot }
+    }
+    const legacy = store.getItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY)
+    if (legacy === null) {
+      return { status: 'absent', snapshot: null }
+    }
+    let raw: unknown
+    try {
+      raw = JSON.parse(legacy)
+    } catch {
+      return { status: 'damaged', snapshot: null }
+    }
+    const snapshot =
+      isAgentHubSavedRecord(raw) && raw.version === 1 ? migrateAgentHubSessionV1(raw) : null
+    return { status: snapshot ? 'migrated' : 'damaged', snapshot }
+  } catch {
+    return { status: 'unavailable', snapshot: null }
+  }
+}
 export function readAgentHubSessionSnapshot(): AgentHubSessionSnapshot | null {
+  return readAgentHubSessionRecord().snapshot
+}
+/** Leave v1 intact as the downgrade snapshot; grouped windows cannot be truthfully dual-written. */
+export function writeAgentHubSessionSnapshot(snapshot: AgentHubSessionSnapshot): boolean {
   try {
-    const serialized = storage()?.getItem(AGENT_HUB_SESSION_STORAGE_KEY)
-    return serialized ? parseAgentHubSessionSnapshot(JSON.parse(serialized)) : null
+    const store = storage()
+    if (!store) {
+      return false
+    }
+    store.setItem(AGENT_HUB_SESSION_STORAGE_KEY, JSON.stringify(snapshot))
+    return true
   } catch {
-    return null
+    return false
   }
 }
-
-export function writeAgentHubSessionSnapshot(snapshot: AgentHubSessionSnapshot): void {
-  try {
-    storage()?.setItem(AGENT_HUB_SESSION_STORAGE_KEY, JSON.stringify(snapshot))
-  } catch {
-    // Storage can be unavailable or full; the hub then stays session-local.
-  }
-}
-
 export function clearAgentHubSessionSnapshot(): void {
-  try {
-    storage()?.removeItem(AGENT_HUB_SESSION_STORAGE_KEY)
-  } catch {
-    // Nothing to clear without storage.
+  for (const key of [AGENT_HUB_SESSION_STORAGE_KEY, AGENT_HUB_LEGACY_SESSION_STORAGE_KEY]) {
+    try {
+      storage()?.removeItem(key)
+    } catch {
+      /* Storage is optional. */
+    }
   }
 }

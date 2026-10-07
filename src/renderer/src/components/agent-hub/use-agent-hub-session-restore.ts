@@ -11,7 +11,7 @@ import {
 } from './agent-hub-session-restore'
 import {
   clearAgentHubSessionSnapshot,
-  readAgentHubSessionSnapshot,
+  readAgentHubSessionRecord,
   writeAgentHubSessionSnapshot
 } from './agent-hub-session-snapshot'
 
@@ -30,11 +30,13 @@ export function resetAgentHubSessionRestoreForTest(): void {
  * the window unloads. Stopping writes what is pending, unless the hub itself was turned off:
  * then the snapshot is dropped, so nothing from this session comes back when it is turned on.
  */
-function keepAgentHubSessionSaved(): () => void {
+function keepAgentHubSessionSaved(preserveDamaged: boolean): () => void {
   let timer: ReturnType<typeof setTimeout> | null = null
   const write = (): void => {
     timer = null
-    writeAgentHubSessionSnapshot(captureAgentHubSession())
+    if (!preserveDamaged) {
+      writeAgentHubSessionSnapshot(captureAgentHubSession())
+    }
   }
   const schedule = (): void => {
     if (timer !== null) {
@@ -90,7 +92,7 @@ export function useAgentHubSessionRestore(restoreOnLaunch: boolean, canvas: bool
       return
     }
     settled = true
-    const snapshot = restoreOnLaunch ? readAgentHubSessionSnapshot() : null
+    const snapshot = restoreOnLaunch ? readAgentHubSessionRecord().snapshot : null
     if (snapshot) {
       applyAgentHubSession(
         resolveAgentHubSession(snapshot, useAppStore.getState(), {
@@ -106,6 +108,9 @@ export function useAgentHubSessionRestore(restoreOnLaunch: boolean, canvas: bool
       return
     }
     restoreOnce()
-    return keepAgentHubSessionSaved()
+    const record = readAgentHubSessionRecord()
+    return keepAgentHubSessionSaved(
+      record.status === 'unsupported' || (record.status === 'damaged' && !record.snapshot)
+    )
   }, [ready])
 }

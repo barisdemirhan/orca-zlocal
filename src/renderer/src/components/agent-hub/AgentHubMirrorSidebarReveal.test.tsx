@@ -1,3 +1,4 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
 /** @vitest-environment happy-dom */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -100,3 +101,10 @@ it('omits floating workspace mirrors', () => {
   )
   expect(screen.queryByRole('button')).toBeNull()
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

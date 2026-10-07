@@ -1,3 +1,5 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 /** @vitest-environment happy-dom */
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -75,14 +77,16 @@ function renderMirrors(keys: readonly string[]): (key: string) => Shown {
   }
   for (const key of keys) {
     openAgentHubMirror(target(key.replace(':leaf', '')))
-    rememberAgentHubMirrorOrigin(key, OWN_PLACE)
+    rememberAgentHubMirrorOrigin(mirrorWindowIdFor(key), OWN_PLACE)
   }
   host = document.createElement('div')
   document.body.append(host)
   root = createRoot(host)
-  act(() => root?.render(keys.map((key) => <Mirror key={key} mirrorKey={key} />)))
+  act(() =>
+    root?.render(keys.map((key) => <Mirror key={key} mirrorKey={mirrorWindowIdFor(key)} />))
+  )
   return (key) => {
-    const current = shown.get(key)
+    const current = shown.get(mirrorWindowIdFor(key))
     if (!current) {
       throw new Error(`No mirror rendered for ${key}`)
     }
@@ -102,7 +106,7 @@ describe('a focused mirror window', () => {
     const shown = renderMirrors(['tab-a:leaf', 'tab-b:leaf'])
     expect(shown('tab-a:leaf')).toMatchObject({ geometry: OWN_PLACE, focus: null })
 
-    act(() => toggleAgentHubMirrorFocus('tab-a:leaf'))
+    act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
 
     expect(focusBox()).not.toEqual(OWN_PLACE)
     expect(shown('tab-a:leaf')).toMatchObject({
@@ -116,18 +120,18 @@ describe('a focused mirror window', () => {
   it('keeps its own place stored while focused, and returns to exactly that box', () => {
     const shown = renderMirrors(['tab-a:leaf', 'tab-b:leaf'])
 
-    act(() => toggleAgentHubMirrorFocus('tab-a:leaf'))
-    expect(readAgentHubMirrorOrigin('tab-a:leaf')).toEqual(OWN_PLACE)
+    act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
+    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'))).toEqual(OWN_PLACE)
 
-    act(() => toggleAgentHubMirrorFocus('tab-a:leaf'))
+    act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
     expect(shown('tab-a:leaf')).toMatchObject({ geometry: OWN_PLACE, focus: null })
     expect(shown('tab-b:leaf')).toMatchObject({ geometry: OWN_PLACE, focus: null })
-    expect(readAgentHubMirrorOrigin('tab-a:leaf')).toEqual(OWN_PLACE)
+    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'))).toEqual(OWN_PLACE)
   })
 
   it('ends the focus when the windows are arranged, and takes its arranged place', () => {
     const shown = renderMirrors(['tab-a:leaf', 'tab-b:leaf'])
-    act(() => toggleAgentHubMirrorFocus('tab-a:leaf'))
+    act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
 
     act(() => arrangeAgentHubFloatingWindowsOnScreen('columns'))
 
@@ -175,3 +179,10 @@ describe('Escape while a mirror is focused', () => {
     expect(escapeOn('<div data-agent-hub-panel><input /></div>', 'input')).toBe(false)
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

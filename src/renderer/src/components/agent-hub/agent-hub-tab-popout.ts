@@ -1,21 +1,19 @@
+import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
 import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
 import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { borrowAgentHubTab } from './agent-hub-borrowed-tabs'
 import { openAgentHubMirror, readAgentHubMirrors } from './agent-hub-mirror-store'
-import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 export function popOutAgentHubTab(target: AgentHubPaneTarget): void {
   const state = useAppStore.getState()
   if (state.settings?.experimentalAgentHub !== true) {
     return
   }
-  const { windows, chips } = readAgentHubMirrors()
-  const existing = [...windows, ...chips.map((chip) => chip.target)].find(
-    (item) => item.worktree.id === target.worktree.id && item.tab.id === target.tab.id
-  )
+  const existing = findAgentHubMirrorMembership(readAgentHubMirrors(), target)
   if (existing) {
-    openAgentHubMirror(existing)
+    openAgentHubMirror(target)
     return
   }
   const worktreeId = target.worktree.id
@@ -37,7 +35,8 @@ export function popOutAgentHubTab(target: AgentHubPaneTarget): void {
         tabId: target.tab.id,
         unifiedTabId: tab.id,
         groupId: group.id,
-        mirrorKey: agentHubPaneTargetKey(target)
+        mirrorKey:
+          findAgentHubMirrorMembership(readAgentHubMirrors(), target)?.window.id ?? target.tab.id
       })
       return
     }

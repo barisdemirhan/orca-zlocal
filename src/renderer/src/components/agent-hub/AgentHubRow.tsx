@@ -1,3 +1,4 @@
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { ArrowUpRight, CheckCheck } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
@@ -18,6 +19,7 @@ export function AgentHubRow({
   indent = false,
   worktreeId,
   mirrorKey,
+  mirrorTarget,
   onOpen,
   onPopout,
   onJump,
@@ -36,6 +38,7 @@ export function AgentHubRow({
   worktreeId?: string
   /** The pane's key among the mirrors (see agentHubPaneTargetKey). */
   mirrorKey: string
+  mirrorTarget?: AgentHubPaneTarget
   /** A click on the row: opens the mirror and leaves the hub. */
   onOpen: () => void
   /** The pop-out button: opens the mirror and keeps the hub open for the next one. */
@@ -92,7 +95,7 @@ export function AgentHubRow({
               <CheckCheck className="size-[13px]" />
             </HubRowAction>
           ) : null}
-          <HubRowMirrorActions mirrorKey={mirrorKey} onPopout={onPopout} />
+          <HubRowMirrorActions mirrorKey={mirrorKey} target={mirrorTarget} onPopout={onPopout} />
           <HubRowAction
             label={translate('agentHub.row.jump', 'Jump to this terminal')}
             onClick={onJump}

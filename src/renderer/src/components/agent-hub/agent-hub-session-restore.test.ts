@@ -1,3 +1,7 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
+import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
+import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 /** @vitest-environment happy-dom */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -51,6 +55,7 @@ import {
 import {
   agentHubSessionSnapshot,
   type AgentHubSavedMirror,
+  type AgentHubSavedMirrorTab,
   type AgentHubSessionSnapshot
 } from './agent-hub-session-snapshot'
 
@@ -88,18 +93,38 @@ function storeWith(tabs: Record<string, string>) {
   }
 }
 
-function saved(tabId: string, overrides: Partial<AgentHubSavedMirror> = {}): AgentHubSavedMirror {
+function saved(
+  tabId: string,
+  overrides: Partial<AgentHubSavedMirror & AgentHubSavedMirrorTab> = {}
+): AgentHubSavedMirror {
+  const {
+    paneKey = null,
+    title = tabId,
+    agentType = null,
+    worktreeId = worktree.id,
+    ...window
+  } = overrides
   return {
-    worktreeId: worktree.id,
-    tabId,
-    paneKey: null,
-    title: tabId,
-    agentType: null,
+    id: `window-${tabId}`,
+    tabs: [
+      {
+        id: `entry-${tabId}`,
+        worktreeId,
+        tabId,
+        paneKey,
+        hostIdentity:
+          worktreeId === worktree.id ? getWorktreeHostIdentity(worktree) : `|${worktreeId}`,
+        title,
+        agentType,
+        origin: 'manual'
+      }
+    ],
+    activeTabId: `entry-${tabId}`,
     minimized: false,
     minimizedAt: 0,
     geometry: PLACE,
     keptPlace: false,
-    ...overrides
+    ...window
   }
 }
 
@@ -108,7 +133,7 @@ function snapshotOf(
   rest: Partial<AgentHubSessionSnapshot> = {}
 ): AgentHubSessionSnapshot {
   return agentHubSessionSnapshot({
-    mirrors,
+    windows: mirrors,
     canvasOpen: false,
     canvasParked: [],
     hiddenFamilyRoots: [],
@@ -119,8 +144,10 @@ function snapshotOf(
 const options = { canvas: false, viewport: VIEWPORT, now: 1000 }
 const keysOf = (targets: readonly AgentHubPaneTarget[]): string[] =>
   targets.map(agentHubPaneTargetKey)
-const windowKeys = (): string[] => keysOf(readAgentHubMirrors().windows)
-const chipKeys = (): string[] => keysOf(readAgentHubMirrors().chips.map((chip) => chip.target))
+const windowKeys = (): string[] =>
+  keysOf(readAgentHubMirrors().windows.map((window) => activeAgentHubMirrorTab(window).target))
+const chipKeys = (): string[] =>
+  keysOf(readAgentHubMirrors().chips.map((chip) => activeAgentHubMirrorTab(chip.window).target))
 
 afterEach(() => {
   resetAgentHubCanvasForTest()
@@ -139,14 +166,14 @@ describe('resolving a saved hub session against the store', () => {
     )
 
     expect(mirrors).toHaveLength(1)
-    expect(mirrors[0]?.target).toMatchObject({
+    expect(mirrors[0]?.window.tabs[0]?.target).toMatchObject({
       paneKey,
       title: 'Fix the build',
       agentType: 'claude'
     })
-    expect(mirrors[0]?.target.tab).toBe(state.tabsByWorktree[worktree.id]?.[0])
-    expect(mirrors[0]?.target.worktree).toBe(worktree)
-    expect(mirrors[0]?.target.repo).toBe(repo)
+    expect(mirrors[0]?.window.tabs[0]?.target.tab).toBe(state.tabsByWorktree[worktree.id]?.[0])
+    expect(mirrors[0]?.window.tabs[0]?.target.worktree).toBe(worktree)
+    expect(mirrors[0]?.window.tabs[0]?.target.repo).toBe(repo)
   })
 
   it('leaves out a mirror whose tab or workspace is gone and keeps the others', () => {
@@ -160,7 +187,9 @@ describe('resolving a saved hub session against the store', () => {
       options
     )
 
-    expect(keysOf(mirrors.map((mirror) => mirror.target))).toEqual(['tab-a'])
+    expect(keysOf(mirrors.map((mirror) => activeAgentHubMirrorTab(mirror.window).target))).toEqual([
+      'tab-a'
+    ])
   })
 
   it('follows the tab when the saved pane was closed, without doubling its mirror', () => {
@@ -171,7 +200,7 @@ describe('resolving a saved hub session against the store', () => {
     )
 
     expect(mirrors).toHaveLength(1)
-    expect(mirrors[0]?.target.paneKey).toBeNull()
+    expect(mirrors[0]?.window.tabs[0]?.target.paneKey).toBeNull()
   })
 
   it('pulls a place saved on a larger display into the window as it is now', () => {
@@ -191,12 +220,12 @@ describe('resolving a saved hub session against the store', () => {
   it('keeps the windows parked when the canvas is on and was left', () => {
     const state = storeWith({ 'tab-a': LEAF_A, 'tab-b': LEAF_B })
     const snapshot = snapshotOf([saved('tab-a'), saved('tab-b', { minimized: true })], {
-      canvasParked: ['tab-b', 'tab-gone']
+      canvasParked: ['window-tab-b', 'window-tab-gone']
     })
 
     const left = resolveAgentHubSession(snapshot, state, { ...options, canvas: true })
     expect(left.mirrors.map((mirror) => mirror.minimized)).toEqual([true, true])
-    expect(left.canvasParked).toEqual(['tab-b'])
+    expect(left.canvasParked).toEqual(['window-tab-b'])
 
     // With the canvas off the mirrors float as they did, and nothing waits for a canvas.
     const floating = resolveAgentHubSession(snapshot, state, options)
@@ -231,13 +260,17 @@ describe('a hub session saved and put back', () => {
   it('returns the same windows, tray, places and bars', () => {
     for (const tabId of ['tab-a', 'tab-b', 'tab-c']) {
       openAgentHubMirror(liveTarget(tabId))
-      rememberAgentHubMirrorOrigin(tabId, { ...PLACE, x: PLACE.x + tabId.charCodeAt(4) })
+      rememberAgentHubMirrorOrigin(mirrorWindowIdFor(tabId), {
+        ...PLACE,
+        x: PLACE.x + tabId.charCodeAt(4)
+      })
     }
-    keepAgentHubMirrorPlace('tab-c')
-    minimizeAgentHubMirror('tab-b')
+    keepAgentHubMirrorPlace(mirrorWindowIdFor('tab-c'))
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-b'))
     toggleAgentHubFamilyBar(`tab-a:${LEAF_A}`)
     const snapshot = captureAgentHubSession()
-    const places = ['tab-a', 'tab-b', 'tab-c'].map(readAgentHubMirrorOrigin)
+    const ids = ['tab-a', 'tab-b', 'tab-c'].map(mirrorWindowIdFor)
+    const places = ids.map(readAgentHubMirrorOrigin)
 
     resetAgentHubMirrorsForTest()
     setAgentHubHiddenFamilyBars([])
@@ -245,8 +278,8 @@ describe('a hub session saved and put back', () => {
 
     expect(windowKeys()).toEqual(['tab-a', 'tab-c'])
     expect(chipKeys()).toEqual(['tab-b'])
-    expect(['tab-a', 'tab-b', 'tab-c'].map(readAgentHubMirrorOrigin)).toEqual(places)
-    expect(captureAgentHubSession().mirrors.map((mirror) => mirror.keptPlace)).toEqual([
+    expect(ids.map(readAgentHubMirrorOrigin)).toEqual(places)
+    expect(captureAgentHubSession().windows.map((mirror) => mirror.keptPlace)).toEqual([
       false,
       false,
       true
@@ -256,10 +289,10 @@ describe('a hub session saved and put back', () => {
 
   it('saves a focused mirror at its own place, not the box it is enlarged to', () => {
     openAgentHubMirror(liveTarget('tab-a'))
-    rememberAgentHubMirrorOrigin('tab-a', PLACE)
-    toggleAgentHubMirrorFocus('tab-a')
+    rememberAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a'), PLACE)
+    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a'))
 
-    expect(captureAgentHubSession().mirrors[0]?.geometry).toEqual(PLACE)
+    expect(captureAgentHubSession().windows[0]?.geometry).toEqual(PLACE)
   })
 
   it('saves the canvas as left, with the mirrors it will bring back', () => {
@@ -268,18 +301,26 @@ describe('a hub session saved and put back', () => {
     expect(captureAgentHubSession().canvasOpen).toBe(true)
 
     closeAgentHubCanvas()
-    minimizeAgentHubMirror('tab-a')
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-a'))
+    const id = mirrorWindowIdFor('tab-a')
     const snapshot = captureAgentHubSession()
-    expect(snapshot).toMatchObject({ canvasOpen: false, canvasParked: ['tab-a'] })
+    expect(snapshot).toMatchObject({ canvasOpen: false, canvasParked: [id] })
 
     resetAgentHubCanvasForTest()
     resetAgentHubMirrorsForTest()
     applyAgentHubSession(resolveAgentHubSession(snapshot, state, { ...options, canvas: true }))
     expect(chipKeys()).toEqual(['tab-a'])
-    expect(readAgentHubCanvasParked()).toEqual(['tab-a'])
+    expect(readAgentHubCanvasParked()).toEqual([id])
 
     // Coming back to the canvas brings the mirror it parked.
     openAgentHubCanvas()
     expect(windowKeys()).toEqual(['tab-a'])
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))

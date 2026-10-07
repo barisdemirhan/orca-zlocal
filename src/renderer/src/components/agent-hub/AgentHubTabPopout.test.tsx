@@ -1,3 +1,4 @@
+import type * as MirrorSource from './agent-hub-mirror-source'
 /** @vitest-environment happy-dom */
 import { act } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -144,9 +145,15 @@ describe('floating terminal pop-out', () => {
       fireEvent.click(button)
       expect(readAgentHubMirrors().windows).toMatchObject([
         {
-          tab: { id: tab.id },
-          worktree: { id: FLOATING_TERMINAL_WORKTREE_ID },
-          agentType: agent ? 'claude' : null
+          tabs: [
+            {
+              target: {
+                tab: { id: tab.id },
+                worktree: { id: FLOATING_TERMINAL_WORKTREE_ID },
+                agentType: agent ? 'claude' : null
+              }
+            }
+          ]
         }
       ])
       expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false)
@@ -182,7 +189,7 @@ describe('floating terminal pop-out', () => {
   it('opens normal workspace tabs without hiding the floating panel', () => {
     const { onOpenChange } = fixture(false, 'normal-workspace')
     fireEvent.click(screen.getByRole('button', { name: 'Pop out' }))
-    expect(readAgentHubMirrors().windows[0]?.worktree.id).toBe('normal-workspace')
+    expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.worktree.id).toBe('normal-workspace')
     expect(onOpenChange).not.toHaveBeenCalled()
   })
 
@@ -241,3 +248,10 @@ describe('floating terminal pop-out', () => {
     expect(screen.queryByRole('button', { name: 'Pop out' })).toBeNull()
   })
 })
+
+vi.mock('./agent-hub-mirror-source', async (original) => ({
+  ...(await original<typeof MirrorSource>()),
+  resolveAgentHubMirrorTarget: (
+    target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
+  ) => target
+}))
