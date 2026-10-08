@@ -67,7 +67,8 @@ function stateDotTooltipLabel(
 
 type Props = {
   agent: DashboardAgentRowData
-  trailingControl?: React.ReactNode
+  // Why: a render function (not a node) keeps the memoized row from re-rendering on every parent pass.
+  renderTrailingControl?: (agent: DashboardAgentRowData) => React.ReactNode
   onDismiss: (paneKey: string) => void
   /** Navigate to this agent's tab; paneKey lets the caller mark-visit the exact clicked row. */
   onActivate: (tabId: string, paneKey: string) => void
@@ -96,7 +97,7 @@ type Props = {
 
 const DashboardAgentRow = React.memo(function DashboardAgentRow({
   agent,
-  trailingControl,
+  renderTrailingControl,
   onDismiss,
   onActivate,
   now,
@@ -350,7 +351,7 @@ const DashboardAgentRow = React.memo(function DashboardAgentRow({
             +{childAgentCount}
           </span>
         )}
-        {trailingControl}
+        {renderTrailingControl?.(agent)}
         <DashboardAgentRowTrailingControls
           paneKey={agent.paneKey}
           relativeTimestamp={relativeTimestamp}

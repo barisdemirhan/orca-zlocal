@@ -7,7 +7,10 @@ import {
   PANE_KEY
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { buildAgentHubTerminalTree } from './agent-hub-terminal-tree'
-import { agentHubSidebarPopoutTarget } from './agent-hub-sidebar-popout'
+import {
+  agentHubSidebarPopoutTarget,
+  canPopOutAgentHubSidebarRow
+} from './agent-hub-sidebar-popout'
 
 function fixture(folder = false, ssh = false) {
   const repo = { ...makeRepo(), ...(ssh ? { connectionId: 'ssh-host' } : {}) }
@@ -82,6 +85,16 @@ describe('sidebar pop-out eligibility', () => {
     const { agent, tree } = fixture()
     for (const rowSource of ['retained', 'subagent'] as const) {
       expect(agentHubSidebarPopoutTarget({ ...agent, rowSource }, tree, true, null)).toBeNull()
+      expect(canPopOutAgentHubSidebarRow({ ...agent, rowSource }, null)).toBe(false)
     }
+  })
+  it('decides row eligibility from row data without the terminal tree', () => {
+    const { agent, worktreeId } = fixture()
+    expect(canPopOutAgentHubSidebarRow(agent, 'other')).toBe(true)
+    expect(canPopOutAgentHubSidebarRow(agent, null)).toBe(true)
+    expect(canPopOutAgentHubSidebarRow(agent, worktreeId)).toBe(false)
+    expect(canPopOutAgentHubSidebarRow({ ...agent, paneKey: 'not-a-pane-key' }, 'other')).toBe(
+      false
+    )
   })
 })

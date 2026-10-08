@@ -6,11 +6,16 @@ import { Button } from '../ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import type { DashboardAgentRow } from '../dashboard/useDashboardData'
 import { openAgentHubMirror } from './agent-hub-mirror-store'
-import { agentHubSidebarPopoutTarget } from './agent-hub-sidebar-popout'
-import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
+import {
+  agentHubSidebarPopoutTarget,
+  canPopOutAgentHubSidebarRow
+} from './agent-hub-sidebar-popout'
+import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 
-const NO_THREADS = [] as const
-const NO_PARENTS: ReadonlyMap<string, string> = new Map()
+// Stable reference so memoized sidebar rows do not re-render when their parent does.
+export function renderAgentHubSidebarPopout(agent: DashboardAgentRow): React.JSX.Element {
+  return <AgentHubSidebarPopout agent={agent} />
+}
 
 export function AgentHubSidebarPopout({
   agent
@@ -22,12 +27,10 @@ export function AgentHubSidebarPopout({
 }
 
 function SidebarPopout({ agent }: { agent: DashboardAgentRow }): React.JSX.Element | null {
-  const tree = useAgentHubTerminalTree(NO_THREADS, true, NO_PARENTS)
   const visibleWorkspace = useAppStore((s) =>
     s.activeView === 'terminal' ? s.activeWorktreeId : null
   )
-  const target = agentHubSidebarPopoutTarget(agent, tree, true, visibleWorkspace)
-  if (!target) {
+  if (!canPopOutAgentHubSidebarRow(agent, visibleWorkspace)) {
     return null
   }
   const label = translate('agentHub.row.popOut', 'Pop out')
@@ -45,8 +48,14 @@ function SidebarPopout({ agent }: { agent: DashboardAgentRow }): React.JSX.Eleme
             onDoubleClick={(event) => event.stopPropagation()}
             onClick={(event) => {
               event.stopPropagation()
+              const state = useAppStore.getState()
+              const tree = agentHubTerminalTreeFromState(state, [], true, new Map())
+              const target = agentHubSidebarPopoutTarget(agent, tree, true, visibleWorkspace)
+              if (!target) {
+                return
+              }
               openAgentHubMirror(target)
-              useAppStore.getState().acknowledgeAgents([agent.paneKey])
+              state.acknowledgeAgents([agent.paneKey])
             }}
           >
             <PictureInPicture2 className="size-3" />
