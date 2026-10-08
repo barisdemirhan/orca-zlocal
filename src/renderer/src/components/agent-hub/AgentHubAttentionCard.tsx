@@ -117,11 +117,9 @@ export function AgentHubAttentionCard({
   // arrives, and forget the dismissal once the prompt clears so an identical later one shows.
   const nativeCardKey = useMemo(() => nativeChatCardDismissKey(card), [card])
   const [dismissedNativeKey, setDismissedNativeKey] = useState<string | null>(null)
-  useEffect(() => {
-    if (card === null) {
-      setDismissedNativeKey(null)
-    }
-  }, [card])
+  if (card === null && dismissedNativeKey !== null) {
+    setDismissedNativeKey(null)
+  }
   const nativeCardDismissed = dismissedNativeKey !== null && dismissedNativeKey === nativeCardKey
   const cardKey = agentHubCardKey(paneKey, agentHubStateSince(thread))
   const [chosen, setChosenState] = useState(() => readAnsweredAgentHubCard(cardKey))
