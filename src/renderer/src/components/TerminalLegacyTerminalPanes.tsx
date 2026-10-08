@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAppStore } from '../store'
 import { RetainedPaneHost } from './tab-group/RetainedPaneHost'
@@ -13,7 +14,11 @@ export function TerminalLegacyTerminalPanes({
 }: {
   controller: TerminalController
 }): React.JSX.Element {
-  const stableHosting = useAppStore((state) => state.settings?.experimentalAgentHub === true)
+  // Why read once: switching host type remounts every pane and loses its TUI state, so a toggled
+  // setting reaches this surface the next time it mounts.
+  const [stableHosting] = useState(
+    () => useAppStore.getState().settings?.experimentalAgentHub === true
+  )
   const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activeTabId,

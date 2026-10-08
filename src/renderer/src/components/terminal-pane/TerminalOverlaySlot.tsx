@@ -47,7 +47,10 @@ export const TerminalOverlaySlot = memo(function TerminalOverlaySlot({
   consumeSuppressedPtyExit,
   captureEmptiedReaction
 }: TerminalOverlaySlotProps): React.JSX.Element {
-  const stableHosting = useAppStore((state) => state.settings?.experimentalAgentHub === true)
+  // Why read once: switching host type remounts the pane and loses its TUI state.
+  const [stableHosting] = useState(
+    () => useAppStore.getState().settings?.experimentalAgentHub === true
+  )
   const [shouldMeasureHiddenStartup, setShouldMeasureHiddenStartup] = useState(
     () => useAppStore.getState().pendingStartupByTabId[terminalTabId] !== undefined
   )
