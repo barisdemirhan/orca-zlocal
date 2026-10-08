@@ -4,6 +4,7 @@ import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
 import { AgentHubMirrorFocusButton } from './AgentHubMirrorFocusButton'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
+import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
@@ -12,6 +13,7 @@ export function AgentHubMirrorHeaderControls({
   reachable,
   mirrorKey,
   focused,
+  showJump = true,
   onReveal,
   onMinimize,
   onClose
@@ -20,6 +22,7 @@ export function AgentHubMirrorHeaderControls({
   reachable: boolean
   mirrorKey: string
   focused: boolean
+  showJump?: boolean
   onReveal: () => void
   onMinimize: () => void
   onClose: () => void
@@ -31,18 +34,7 @@ export function AgentHubMirrorHeaderControls({
     <div className="flex shrink-0 items-center gap-0.5">
       <AgentHubDimToggle appearance="mirror" />
       <AgentHubMirrorMicButton target={target} reachable={reachable} />
-      <AgentHubActionTooltip
-        label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
-        actionId="agentHub.jumpToMirror"
-      >
-        <button
-          type="button"
-          onClick={onReveal}
-          className="h-6 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-        >
-          {translate('agentHub.mirror.jump', 'Jump')}
-        </button>
-      </AgentHubActionTooltip>
+      {showJump ? <AgentHubMirrorJumpButton onReveal={onReveal} /> : null}
       <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">
         <button
           type="button"

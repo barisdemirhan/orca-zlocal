@@ -296,6 +296,7 @@ export function AgentHubMirrors({
                   threads={threads}
                   lineage={lineage}
                   locationOf={locationOf}
+                  onReveal={onReveal}
                 />
               }
               windowKind={agentHubMirrorWindowKind(window, (entry) => {

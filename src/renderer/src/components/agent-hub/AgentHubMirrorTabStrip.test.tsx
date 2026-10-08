@@ -23,7 +23,9 @@ import {
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
-  return { useAppStore: create(() => ({ tabsByWorktree: {}, setTabCustomTitle: vi.fn() })) }
+  return {
+    useAppStore: create(() => ({ keybindings: {}, tabsByWorktree: {}, setTabCustomTitle: vi.fn() }))
+  }
 })
 vi.mock('./AgentHubMirrorAddButton', () => ({
   AgentHubMirrorAddButton: ({ count }: { count: number }) => (
@@ -50,7 +52,7 @@ function target(id: string): AgentHubPaneTarget {
     agentType: null
   }
 }
-function stage(count = 3) {
+function stage(count = 3, onReveal = vi.fn()) {
   openAgentHubMirror(target('one'))
   const id = readAgentHubMirrors().windows[0]?.id
   if (!id) {
@@ -77,6 +79,7 @@ function stage(count = 3) {
               workspace: target.tab.id,
               host: target.tab.id === 'one' ? 'Local Mac' : 'workhost'
             })}
+            onReveal={onReveal}
           />
         ))}
       </TooltipProvider>
@@ -93,7 +96,45 @@ it('keeps the complete header identity and add affordance without a singleton cl
   expect(tablist.className).toContain('overflow-x-auto')
   expect(within(screen.getByRole('tab')).getByText('Local Mac')).toBeTruthy()
   expect(screen.getByRole('tab').textContent).toContain('Project')
-  expect(screen.queryByRole('button', { name: 'Return one to workspace' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Close mirror tab one' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
+})
+
+it('jumps an inactive tab to its own workspace and keeps the other tab in the mirror', () => {
+  const reveal = vi.fn()
+  stage(2, reveal)
+  const inactive = screen.getByRole('tab', { name: 'one, idle' })
+  const entry = inactive.closest('[data-agent-hub-tab-entry]')
+  if (!(entry instanceof HTMLElement)) {
+    throw new Error('No tab entry')
+  }
+  expect(inactive.getAttribute('aria-selected')).toBe('false')
+  fireEvent.click(within(entry).getByRole('button', { name: 'Jump' }))
+  expect(reveal).toHaveBeenCalledWith(target('one'), null)
+  expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.tab.id)).toEqual([
+    'entry-1'
+  ])
+  expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
+})
+
+it('shows an icon-only Jump and names the tab close control on hover', async () => {
+  stage(2)
+  const user = userEvent.setup()
+  const entry = screen.getByRole('tab', { name: 'one, idle' }).closest('[data-agent-hub-tab-entry]')
+  if (!(entry instanceof HTMLElement)) {
+    throw new Error('No tab entry')
+  }
+  const jump = within(entry).getByRole('button', { name: 'Jump' })
+  expect(jump.textContent).toBe('')
+  expect(jump.querySelector('svg')).not.toBeNull()
+  await user.hover(jump)
+  expect((await screen.findByRole('tooltip')).textContent).toContain(
+    'Jump to this terminal in its workspace'
+  )
+  await user.unhover(jump)
+  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull())
+  await user.hover(within(entry).getByRole('button', { name: 'Close mirror tab one' }))
+  expect((await screen.findByRole('tooltip')).textContent).toContain('Close tab')
 })
 it('roves Left/Right/Home/End while preserving strip focus, and Enter requests terminal focus', () => {
   stage()
@@ -135,11 +176,11 @@ it('does not reveal the active tab during passive renders', () => {
 it('returns entries home and removes individual close buttons once only one remains', () => {
   stage()
   const active = readAgentHubMirrors().windows[0]?.activeTabId
-  fireEvent.click(screen.getByRole('button', { name: 'Return one to workspace' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Close mirror tab one' }))
   expect(readAgentHubMirrors().windows[0]?.activeTabId).toBe(active)
-  fireEvent.click(screen.getByRole('button', { name: 'Return entry-2 to workspace' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Close mirror tab entry-2' }))
   expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.title).toBe('entry-1')
-  expect(screen.queryByRole('button', { name: 'Return entry-1 to workspace' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Close mirror tab entry-1' })).toBeNull()
   expect(readAgentHubMirrors().windows).toHaveLength(1)
 })
 it('disables the add affordance at ten entries and refuses another addition', () => {

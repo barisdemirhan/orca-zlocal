@@ -38,12 +38,14 @@ export function AgentHubMirrorTabStrip({
   window,
   threads,
   lineage,
-  locationOf
+  locationOf,
+  onReveal
 }: {
   window: AgentHubMirrorWindowState
   threads: readonly AgentPaneThread[]
   lineage: AgentHubLineage
   locationOf: (target: AgentHubPaneTarget) => AgentHubLocation
+  onReveal: (target: AgentHubPaneTarget, thread: AgentPaneThread | null) => void
 }): React.JSX.Element {
   const stripRef = useRef<HTMLDivElement>(null)
   const drag = useAgentHubMirrorDrag()
@@ -150,6 +152,13 @@ export function AgentHubMirrorTabStrip({
             closable={window.tabs.length > 1}
             inputOwner={mirrorOwnsDictation(session, agentHubMirrorDictationPane(tab.target))}
             onSelect={(focusTerminal) => select(tab.id, focusTerminal)}
+            onReveal={() => {
+              closeAgentHubMirrorTab(window.id, tab.id)
+              onReveal(
+                tab.target,
+                threads.find((thread) => agentHubTargetShowsThread(tab.target, thread)) ?? null
+              )
+            }}
             onClose={() => close(tab)}
           />
         ))}

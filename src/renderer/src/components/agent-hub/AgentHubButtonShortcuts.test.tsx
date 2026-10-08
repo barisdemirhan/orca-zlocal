@@ -74,11 +74,11 @@ async function renderAction(surface: 'mirror' | 'hover-card', onClick = vi.fn())
 }
 
 describe.each([
-  { surface: 'mirror', actionId: 'agentHub.jumpToMirror', key: 'F6', label: 'Jump' },
+  { surface: 'mirror', actionId: 'agentHub.jumpToMirror', key: 'F6', label: '' },
   { surface: 'hover-card', actionId: 'agentHub.popOut', key: 'F7', label: 'Own window' }
 ] as const)('$surface button shortcuts', ({ surface, actionId, key, label }) => {
   it.each(['hover', 'focus'] as const)(
-    'keeps the resting label plain and shows its bound shortcut on %s',
+    'shows its bound shortcut only on %s',
     async (interaction) => {
       useAppStore.setState({ keybindings: { [actionId]: [`Mod+${key}`] } })
       const button = await renderAction(surface)

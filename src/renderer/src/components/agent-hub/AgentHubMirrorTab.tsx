@@ -10,6 +10,7 @@ import { agentHubStateWord } from './agent-hub-copy'
 import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
 import { AgentHubMirrorTitle, useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { AgentHubMirrorSidebarReveal } from './AgentHubMirrorSidebarReveal'
+import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
 import { useAgentHubMirrorDrag } from './AgentHubMirrorTabDragLayer'
@@ -27,6 +28,7 @@ export function AgentHubMirrorTab({
   inputOwner,
   panelId,
   onSelect,
+  onReveal,
   onClose
 }: {
   windowId: string
@@ -38,6 +40,7 @@ export function AgentHubMirrorTab({
   inputOwner: boolean
   panelId: string
   onSelect: (focusTerminal: boolean) => void
+  onReveal: () => void
   onClose: () => void
 }): React.JSX.Element {
   const title = useAgentHubTargetTitle(tab.target)
@@ -133,6 +136,7 @@ export function AgentHubMirrorTab({
           <TooltipContent respectReducedMotion>{title}</TooltipContent>
         </Tooltip>
         <AgentHubMirrorSidebarReveal target={tab.target} />
+        {closable ? <AgentHubMirrorJumpButton onReveal={onReveal} showShortcut={active} /> : null}
         {closable ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -140,8 +144,8 @@ export function AgentHubMirrorTab({
                 variant="ghost"
                 size="icon-xs"
                 aria-label={translate(
-                  'agentHub.mirror.returnTab',
-                  'Return {{value0}} to workspace',
+                  'agentHub.mirror.closeTabNamed',
+                  'Close mirror tab {{value0}}',
                   {
                     value0: title
                   }
@@ -152,8 +156,8 @@ export function AgentHubMirrorTab({
                 <X />
               </Button>
             </TooltipTrigger>
-            <TooltipContent respectReducedMotion>
-              {translate('agentHub.mirror.returnToWorkspace', 'Return to workspace')}
+            <TooltipContent side="top" sideOffset={4} respectReducedMotion>
+              {translate('agentHub.mirror.closeTab', 'Close tab')}
             </TooltipContent>
           </Tooltip>
         ) : null}

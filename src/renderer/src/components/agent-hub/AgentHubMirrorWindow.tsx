@@ -290,6 +290,7 @@ export function AgentHubMirrorWindow({
           reachable={surface !== 'preview'}
           mirrorKey={mirrorKey}
           focused={focus === 'focused'}
+          showJump={(windowState?.tabs.length ?? 1) === 1}
           onReveal={onReveal}
           onMinimize={() => minimize()}
           onClose={() => leave(onClose)}

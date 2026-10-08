@@ -1,7 +1,7 @@
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '../ui/tooltip'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -139,7 +139,7 @@ it('lands immediately when the animation API throws', () => {
   expect(land).toHaveBeenCalledOnce()
 })
 
-it('hosts full tabs and add in one header, keeps shared controls on the active tab and closes the container', async () => {
+it('moves Jump beside each tab close button, restores it for a singleton and closes the container', async () => {
   const reveal = vi.fn()
   openAgentHubMirror(target('first'))
   function Stage(): React.JSX.Element {
@@ -163,6 +163,7 @@ it('hosts full tabs and add in one header, keeps shared controls on the active t
                     project: target.tab.id,
                     workspace: null
                   })}
+                  onReveal={(target) => reveal(target.tab.id)}
                 />
               }
               target={active}
@@ -193,7 +194,10 @@ it('hosts full tabs and add in one header, keeps shared controls on the active t
   const header = screen.getByRole('dialog').querySelector('header')
   expect(screen.getByRole('tablist').closest('header')).toBe(header)
   expect(screen.getByRole('button', { name: 'Add terminal' }).closest('header')).toBe(header)
-  expect(screen.queryByRole('button', { name: /Return .* to workspace/ })).toBeNull()
+  expect(screen.queryByRole('button', { name: /Close mirror tab .*/ })).toBeNull()
+  expect(
+    screen.getByRole('button', { name: 'Jump' }).closest('[data-agent-hub-tab-entry]')
+  ).toBeNull()
   const windowId = screen.getByRole('dialog').getAttribute('data-agent-hub-mirror-key')
   if (!windowId) {
     throw new Error('No mirror window')
@@ -201,9 +205,21 @@ it('hosts full tabs and add in one header, keeps shared controls on the active t
   act(() => {
     addAgentHubMirrorTab(windowId, target('second'))
   })
-  fireEvent.click(screen.getByRole('tab', { name: 'first, idle' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Jump' }))
+  expect(screen.getAllByRole('button', { name: 'Jump' })).toHaveLength(2)
+  const entry = screen
+    .getByRole('tab', { name: 'first, idle' })
+    .closest('[data-agent-hub-tab-entry]')
+  if (!(entry instanceof HTMLElement)) {
+    throw new Error('No inactive tab entry')
+  }
+  fireEvent.click(within(entry).getByRole('button', { name: 'Jump' }))
   expect(reveal).toHaveBeenLastCalledWith('first')
+  expect(screen.getAllByRole('tab')).toHaveLength(1)
+  expect(
+    screen.getByRole('button', { name: 'Jump' }).closest('[data-agent-hub-tab-entry]')
+  ).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Jump' }))
+  expect(reveal).toHaveBeenLastCalledWith('second')
   fireEvent.click(screen.getByRole('button', { name: 'Close mirror' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 })

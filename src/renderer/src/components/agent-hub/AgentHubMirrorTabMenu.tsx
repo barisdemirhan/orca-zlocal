@@ -162,7 +162,7 @@ export function AgentHubMirrorTabMenu({
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={onClose}>
-          {translate('agentHub.mirror.returnToWorkspace', 'Return to workspace')}
+          {translate('agentHub.mirror.closeTab', 'Close tab')}
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
