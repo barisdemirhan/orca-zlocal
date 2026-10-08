@@ -307,7 +307,6 @@ export function AgentHubMirrors({
               })}
               target={target}
               thread={thread}
-              location={locationOf(target)}
               stackIndex={index + 1}
               besideHubPanel={hubOpen}
               previewFocus={index === windows.length - 1 && !hubOpen && !quiet && !hidden}

@@ -78,9 +78,9 @@ it('clicks each real header minimize button into its own chip when animation can
           <AgentHubMirrorWindow
             key={entry.id}
             windowId={entry.id}
+            tabStrip={<span />}
             target={activeAgentHubMirrorTab(entry).target}
             thread={null}
-            location={{ group: null, project: 'Workspace', workspace: null }}
             stackIndex={1}
             besideHubPanel={false}
             surface="in-workspace"
@@ -168,7 +168,6 @@ it('moves Jump beside each tab close button, restores it for a singleton and clo
               }
               target={active}
               thread={null}
-              location={{ group: null, project: active.tab.id, workspace: null }}
               stackIndex={1}
               besideHubPanel={false}
               surface="in-workspace"

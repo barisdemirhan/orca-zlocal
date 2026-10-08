@@ -6,7 +6,6 @@ import { ChevronRight, Loader2, PanelsTopLeft } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
 import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
@@ -14,8 +13,6 @@ import { AgentHubMirrorHeaderControls } from './AgentHubMirrorHeaderControls'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
 import { AgentHubMirrorFocusShade } from './AgentHubMirrorFocusShade'
-import { AgentHubMirrorSidebarReveal } from './AgentHubMirrorSidebarReveal'
-import { AgentHubMirrorTitle } from './AgentHubMirrorTitle'
 import {
   isAgentHubMirrorStageQuiet,
   useAgentHubMirrorHighlight,
@@ -46,7 +43,6 @@ export function AgentHubMirrorWindow({
   target,
   windowKind,
   thread,
-  location,
   stackIndex,
   besideHubPanel,
   previewFocus = true,
@@ -66,12 +62,11 @@ export function AgentHubMirrorWindow({
 }: {
   windowId: string
   windowState?: AgentHubMirrorWindowState
-  tabStrip?: React.ReactNode
+  tabStrip: React.ReactNode
   windowKind?: AgentHubIndicatorKind
   target: AgentHubPaneTarget
   /** Live thread for an agent pane, for its state glyph; null for a shell. */
   thread: AgentPaneThread | null
-  location: AgentHubLocation
   /** Its place in the stack of open mirrors (higher is in front). */
   stackIndex: number
   /** The hub's panel is open: a window opening now takes a place beside it. */
@@ -271,20 +266,8 @@ export function AgentHubMirrorWindow({
             />
           </button>
         ) : null}
-        {tabStrip ?? (
-          <>
-            <HubStateIndicator kind={activeKind} />
-            <HubAvatar agentType={target.agentType} kind={thread ? activeKind : null} />
-            <div className="min-w-0 flex-1 text-[12.5px] leading-tight">
-              <AgentHubMirrorTitle key={windowState?.activeTabId} target={target} />
-              <div className="flex items-center gap-1 [&>span]:text-[11px]">
-                <HubCrumb location={location} />
-                <AgentHubMirrorSidebarReveal target={target} />
-              </div>
-            </div>
-          </>
-        )}
-        {tabStrip ? <div aria-hidden className="min-w-4 flex-1 self-stretch" /> : null}
+        {tabStrip}
+        <div aria-hidden className="min-w-4 flex-1 self-stretch" />
         <AgentHubMirrorHeaderControls
           target={target}
           reachable={surface !== 'preview'}
