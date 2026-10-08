@@ -26,11 +26,18 @@ import {
 } from './AgentHubAnswerBody'
 import { agentHubAlwaysAllowKey, readApprovalTool } from './agent-hub-approval'
 import { agentHubStateSince } from './agent-hub-lists'
+import {
+  agentHubCardKey,
+  readAnsweredAgentHubCard,
+  recordAgentHubCardAnswer
+} from './agent-hub-answered-cards'
 import { resolveAgentHubPtyId, type AgentHubLocation } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 
 // Why a pause: the agent needs a beat to leave its approval prompt before the instruction lands.
 const DENY_THEN_INSTRUCT_DELAY_MS = 400
+// Why: paging or closing the hub must not cut an answer off halfway through its keystrokes.
+const FINISH_ANSWER_AFTER_UNMOUNT = { finishAnswerAfterUnmount: true }
 /** Number keys are ignored this long after a card appears. */
 export const AGENT_HUB_CARD_KEY_GUARD_MS = 400
 
@@ -101,9 +108,19 @@ export function AgentHubAttentionCard({
     [interactivePrompt, toolName, thread.agentType]
   )
   const ptyId = useAgentHubLivePty(thread.worktree.id, tabId, paneKey, false)
-  const send = useNativeChatInteractiveSend(paneKey, ptyId, thread.agentType)
+  const send = useNativeChatInteractiveSend(
+    paneKey,
+    ptyId,
+    thread.agentType,
+    FINISH_ANSWER_AFTER_UNMOUNT
+  )
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
-  const [chosen, setChosen] = useState<number | null>(null)
+  const cardKey = agentHubCardKey(paneKey, agentHubStateSince(thread))
+  const [chosen, setChosenState] = useState(() => readAnsweredAgentHubCard(cardKey))
+  const setChosen = (choice: number | null): void => {
+    recordAgentHubCardAnswer(cardKey, choice)
+    setChosenState(choice)
+  }
   // The deny option first asks for an instruction; Enter on an empty field denies plainly.
   const [instructing, setInstructing] = useState(false)
   const replyRef = useRef<HTMLInputElement>(null)

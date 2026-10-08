@@ -18,6 +18,10 @@ import {
   AgentHubAttentionCard,
   type AgentHubCardControl
 } from './AgentHubAttentionCard'
+import {
+  AGENT_HUB_ANSWER_HOLD_MS,
+  resetAgentHubAnsweredCardsForTest
+} from './agent-hub-answered-cards'
 
 const send = vi.hoisted(() => ({
   sendAnswer: vi.fn(),
@@ -46,6 +50,7 @@ beforeEach(() => {
   document.body.appendChild(container)
   root = createRoot(container)
   Object.values(send).forEach((fn) => fn.mockClear())
+  resetAgentHubAnsweredCardsForTest()
 })
 
 afterEach(() => {
@@ -144,4 +149,25 @@ it('denies with a single Escape, not the Stop sequence', () => {
 
   expect(send.cancelAsk).toHaveBeenCalledTimes(1)
   expect(send.cancel).not.toHaveBeenCalled()
+})
+
+it('keeps a reopened card answered while its answer is on the way, then allows a retry', () => {
+  const first = renderApprovalCard('claude')
+  afterGuard()
+  expect(first.current?.chooseOption(0)).toBe(true)
+
+  act(() => root.render(<div />))
+  const reopened = renderApprovalCard('claude')
+  afterGuard()
+  expect(reopened.current?.chooseOption(0)).toBe(false)
+  expect(send.sendRaw).toHaveBeenCalledTimes(1)
+
+  act(() => {
+    vi.advanceTimersByTime(AGENT_HUB_ANSWER_HOLD_MS)
+  })
+  act(() => root.render(<div />))
+  const later = renderApprovalCard('claude')
+  afterGuard()
+  expect(later.current?.chooseOption(0)).toBe(true)
+  expect(send.sendRaw).toHaveBeenCalledTimes(2)
 })
