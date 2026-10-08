@@ -1,11 +1,18 @@
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import {
+  activityThreadStatusId,
+  threadAgentStateLabel
+} from '../activity/activity-thread-presentation'
 import { agentHubIndicatorKind, agentHubIsApproval } from './agent-hub-lists'
 
 /** The one-word state the mock shows in chips and row subtitles. */
 export function agentHubStateWord(thread: AgentPaneThread | null): string {
   if (!thread) {
     return translate('agentHub.state.idle', 'idle')
+  }
+  if (activityThreadStatusId(thread) === 'unverifiable') {
+    return threadAgentStateLabel(thread)
   }
   switch (agentHubIndicatorKind(thread)) {
     case 'ask':
