@@ -50,7 +50,7 @@ export function agentHubTerminalTreeFromState(
   })
 }
 
-/** The All terminals tree. Mounted only while the popover is open, so tab churn costs nothing otherwise. */
+/** The terminals tree. Each caller rebuilds it on tab and status changes, so keep callers few. */
 export function useAgentHubTerminalTree(
   threads: readonly AgentPaneThread[],
   includeShells: boolean,

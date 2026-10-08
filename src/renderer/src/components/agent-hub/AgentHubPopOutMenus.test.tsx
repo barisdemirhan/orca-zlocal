@@ -17,7 +17,9 @@ vi.mock('@/store', () => ({
 }))
 vi.mock('./use-dock-bar-motion', () => ({ useDockBarMotion: () => ({ size: null, rest: null }) }))
 vi.mock('./use-viewport-size', () => ({ useViewportSize: () => ({ width: 1000, height: 800 }) }))
-vi.mock('./AgentHubTerminalCount', () => ({ AgentHubTerminalCount: () => 0 }))
+vi.mock('./use-agent-hub-terminal-counts', () => ({
+  useAgentHubTerminalCounts: () => ({ agents: 0, all: 0 })
+}))
 vi.mock('./AgentHubDockMenu', () => ({ AgentHubDockMenu: () => null }))
 vi.mock('./AgentHubMirrorMicButton', () => ({ AgentHubMirrorMicButton: () => null }))
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimToggle: () => null }))

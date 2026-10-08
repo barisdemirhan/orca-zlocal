@@ -36,7 +36,10 @@ import {
   isHorizontalAgentHubDock
 } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
-import { AgentHubTerminalCount } from './AgentHubTerminalCount'
+import {
+  useAgentHubTerminalCounts,
+  type AgentHubTerminalCountInput
+} from './use-agent-hub-terminal-counts'
 import type { AgentHubCounts } from './agent-hub-lists'
 import { agentHubMirrorsToggleAction } from './agent-hub-mirror-tray'
 import { useDockBarMotion } from './use-dock-bar-motion'
@@ -83,13 +86,14 @@ export function AgentHubDock({
   /** The canvas covers the title bar: a top dock hangs from the window's own edge instead. */
   flushTop: boolean
   /** What the agents count (always on show) and the All terminals count (unfolded) read. */
-  terminals: Omit<React.ComponentProps<typeof AgentHubTerminalCount>, 'only'>
+  terminals: AgentHubTerminalCountInput
   onOpenTab: (tab: AgentHubTab) => void
   onNextWaiting: () => void
   onToggleMirrors: () => void
   onMove: (position: AgentHubDockPosition) => void
 }): React.JSX.Element {
   const viewport = useViewportSize()
+  const terminalCounts = useAgentHubTerminalCounts(terminals)
   const [hovered, setHovered] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [dragPoint, setDragPoint] = useState<{ x: number; y: number } | null>(null)
@@ -242,7 +246,7 @@ export function AgentHubDock({
             >
               <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
                 <Bot aria-hidden className="size-3.5" />
-                <AgentHubTerminalCount only="agents" {...terminals} />
+                {terminalCounts.agents}
               </span>
             </DockButton>
             {hasMirrors ? mirrorsButton : null}
@@ -280,7 +284,7 @@ export function AgentHubDock({
                 <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
                   <SquareTerminal className="size-3.5" />
                   <span className="min-w-[2ch] text-center">
-                    {expanded ? <AgentHubTerminalCount only="all" {...terminals} /> : null}
+                    {expanded ? terminalCounts.all : null}
                   </span>
                 </span>
               </DockButton>
