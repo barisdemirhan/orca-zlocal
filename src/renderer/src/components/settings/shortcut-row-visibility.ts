@@ -24,7 +24,9 @@ const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
   'agentHub.arrangeMirrors',
   'agentHub.focusMirror',
   'agentHub.popOut',
-  'agentHub.jumpToMirror'
+  'agentHub.jumpToMirror',
+  'agentHub.nextMirrorTab',
+  'agentHub.previousMirrorTab'
 ])
 
 export function buildShortcutRowVisibility(options: {

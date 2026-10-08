@@ -13,6 +13,11 @@ vi.mock('@/lib/terminal-shortcut-capture-notification', () => ({
   showTerminalShortcutCaptureNotification: vi.fn()
 }))
 
+const mirrorTabAvailable = vi.hoisted(() => ({ value: true }))
+vi.mock('@/components/agent-hub/agent-hub-mirror-tab-command', () => ({
+  agentHubMirrorTabCommandAvailable: () => mirrorTabAvailable.value
+}))
+
 import { createAppCommandHandlers } from './app-command-handlers'
 import { registerAgentHubCommands } from '@/components/agent-hub/agent-hub-commands'
 
@@ -45,6 +50,8 @@ function run(
     | 'agentHub.focusMirror'
     | 'agentHub.popOut'
     | 'agentHub.jumpToMirror'
+    | 'agentHub.nextMirrorTab'
+    | 'agentHub.previousMirrorTab'
 ): {
   claimed: boolean | undefined
   input: ShortcutDispatchInput
@@ -133,6 +140,34 @@ describe('agent hub shortcuts', () => {
 
     expect(claimed).toBe(false)
     expect(input.preventDefault).not.toHaveBeenCalled()
+  })
+
+  it('cycles mirror tabs only while a multi-tab mirror has focus', () => {
+    const commands = {
+      toggle: vi.fn(),
+      jumpToNextWaiting: vi.fn(),
+      toggleMirrors: vi.fn(),
+      toggleCanvas: vi.fn(),
+      focusMirror: vi.fn(),
+      popOut: vi.fn(),
+      jumpToMirror: vi.fn(),
+      arrangeMirrors: vi.fn(),
+      nextMirrorTab: vi.fn(),
+      previousMirrorTab: vi.fn()
+    }
+    unregister = registerAgentHubCommands(commands)
+
+    expect(run('agentHub.nextMirrorTab').claimed).toBe(true)
+    expect(run('agentHub.previousMirrorTab').claimed).toBe(true)
+    expect(commands.nextMirrorTab).toHaveBeenCalledTimes(1)
+    expect(commands.previousMirrorTab).toHaveBeenCalledTimes(1)
+
+    mirrorTabAvailable.value = false
+    const fallThrough = run('agentHub.nextMirrorTab')
+    expect(fallThrough.claimed).toBe(false)
+    expect(fallThrough.input.preventDefault).not.toHaveBeenCalled()
+    expect(commands.nextMirrorTab).toHaveBeenCalledTimes(1)
+    mirrorTabAvailable.value = true
   })
 
   it('stops claiming the chord once the hub unmounts', () => {

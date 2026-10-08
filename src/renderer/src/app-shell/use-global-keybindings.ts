@@ -230,7 +230,9 @@ export function useGlobalKeybindings(args: {
         'agentHub.arrangeMirrors',
         'agentHub.focusMirror',
         'agentHub.popOut',
-        'agentHub.jumpToMirror'
+        'agentHub.jumpToMirror',
+        'agentHub.nextMirrorTab',
+        'agentHub.previousMirrorTab'
       ] as const) {
         if (matchShortcut(actionId) && handlers.get(actionId)?.()) {
           return
