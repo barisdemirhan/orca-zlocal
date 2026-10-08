@@ -24,6 +24,7 @@ vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const useAppStore = create(() => ({
     settings: { voice: { enabled: true }, agentHubMicMode: 'dictate' },
+    terminalLayoutsByTabId: {},
     modelStates: [],
     keybindings: {},
     refreshModelStates: () => Promise.resolve(),
