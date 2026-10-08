@@ -8,6 +8,7 @@ import { translate } from '@/i18n/i18n'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { AgentHubTabSwitcher } from './AgentHubTabSwitcher'
 import { HubNestedCount } from './AgentHubSectionHeader'
 import type { AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubPanelFooter, agentHubPopoutKeys } from './AgentHubPanelFooter'
@@ -276,34 +277,23 @@ export function AgentHubPanel({
     >
       <div className="flex shrink-0 items-center gap-3 pt-3.5 pr-3.5 pb-2.5 pl-4.5">
         <h2 className="shrink-0 text-sm font-semibold">{translate('agentHub.title', 'Agents')}</h2>
-        <div
-          role="tablist"
-          // Why min-w-0 and hidden overflow: in a window narrower than the panel the tabs clip
-          // rather than wrap or push the close button out.
-          className="ml-auto flex min-w-0 gap-0.5 overflow-hidden rounded-lg border border-border bg-background p-0.5"
-        >
-          {AGENT_HUB_TABS.map((value) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              tabIndex={-1}
-              aria-selected={tab === value}
-              data-active={tab === value}
-              onClick={() => switchTab(value)}
-              className="group/tab flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs whitespace-nowrap text-muted-foreground hover:text-foreground data-[active=true]:bg-muted data-[active=true]:text-foreground"
-            >
-              {tabLabel(value)}
-              <span
-                data-ask={value === 'inbox' && needsYou.length > 0}
-                className="font-mono text-[11px] text-muted-foreground/70 group-data-[active=true]/tab:text-muted-foreground data-[ask=true]:text-agent-question group-data-[active=true]/tab:data-[ask=true]:text-agent-question"
-              >
-                {counts[value]}
-                {value === 'running' ? <HubNestedCount value={lists.nestedWorking} /> : null}
-              </span>
-            </button>
-          ))}
-        </div>
+        <AgentHubTabSwitcher
+          tabs={AGENT_HUB_TABS.map((value) => ({ value, label: tabLabel(value) }))}
+          value={tab}
+          onChange={switchTab}
+          askValue={needsYou.length > 0 ? 'inbox' : undefined}
+          counts={{
+            inbox: counts.inbox,
+            running: (
+              <>
+                {counts.running}
+                <HubNestedCount value={lists.nestedWorking} />
+              </>
+            ),
+            agents: counts.agents,
+            all: counts.all
+          }}
+        />
         <AgentHubShortcutsButton />
         <button
           type="button"

@@ -162,10 +162,10 @@ it('keeps search present when no terminal is available and disables the full-win
 it('switches picker sections with arrow keys and links keyboard selection to the available option', async () => {
   setup()
   const user = userEvent.setup()
-  const agents = screen.getByRole('tab', { name: 'Agents' })
+  const agents = screen.getByRole('tab', { name: /^Agents/ })
   agents.focus()
   await user.keyboard('{ArrowRight}')
-  const all = screen.getByRole('tab', { name: 'All terminals' })
+  const all = screen.getByRole('tab', { name: /^All terminals/ })
   expect(document.activeElement).toBe(all)
   expect(all.getAttribute('aria-selected')).toBe('true')
   expect(agents.tabIndex).toBe(-1)

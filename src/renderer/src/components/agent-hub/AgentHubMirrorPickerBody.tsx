@@ -2,7 +2,6 @@ import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { useAgentHubMirrors } from './agent-hub-mirror-store'
@@ -18,6 +17,14 @@ import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub
 import { sortAgentHubTerminalTree } from './agent-hub-terminal-tree-sort'
 import { moveAgentHubSelection } from './agent-hub-keys'
 import { AgentHubTerminalTree } from './AgentHubTerminalTree'
+import { AgentHubTabSwitcher, agentHubTabSwitcherPanelProps } from './AgentHubTabSwitcher'
+
+const PICKER_TAB_ID = 'agent-hub-picker'
+const PICKER_SECTIONS = ['agents', 'all'] as const
+
+function countRows(tree: readonly { rowCount: number }[]): number {
+  return tree.reduce((count, group) => count + group.rowCount, 0)
+}
 
 export function AgentHubMirrorPickerBody({
   threads,
@@ -59,7 +66,7 @@ export function AgentHubMirrorPickerBody({
   const groups = useHeldAgentHubTree(sorted, `${section}\u0000${sortBy}\u0000${query}`)
   const rows = visibleAgentHubTreeRows(groups, collapsed, query, expanded)
   const now = useNow(30_000)
-  const totalCount = sectionTree.reduce((count, group) => count + group.rowCount, 0)
+  const totalCount = countRows(sectionTree)
   useEffect(() => {
     rootRef.current
       ?.querySelector('[data-agent-hub-row][data-selected="true"]')
@@ -111,66 +118,69 @@ export function AgentHubMirrorPickerBody({
         }
       }}
     >
-      <Tabs
-        value={section}
-        onValueChange={(value) => {
-          if (value === 'agents' || value === 'all') {
+      <div className="flex items-center px-2.5 pt-2.5 pb-2.5">
+        <AgentHubTabSwitcher
+          tabs={PICKER_SECTIONS.map((value) => ({
+            value,
+            label:
+              value === 'agents'
+                ? translate('agentHub.tab.agents', 'Agents')
+                : translate('agentHub.tab.all', 'All terminals')
+          }))}
+          value={section}
+          ariaLabel={translate('agentHub.mirror.pickerSections', 'Terminal lists')}
+          focusIdPrefix={PICKER_TAB_ID}
+          counts={{ agents: countRows(agentTree), all: countRows(available) }}
+          onChange={(value) => {
             setSection(value)
             setSelectedKey(null)
-          }
-        }}
+          }}
+        />
+      </div>
+      <div
+        {...agentHubTabSwitcherPanelProps(PICKER_TAB_ID, section)}
+        className="max-h-[min(520px,calc(100vh-160px))] overflow-y-auto px-2.5 pb-2.5 scrollbar-sleek"
       >
-        <TabsList aria-label={translate('agentHub.mirror.pickerSections', 'Terminal lists')}>
-          <TabsTrigger value="agents">{translate('agentHub.tab.agents', 'Agents')}</TabsTrigger>
-          <TabsTrigger value="all">{translate('agentHub.tab.all', 'All terminals')}</TabsTrigger>
-        </TabsList>
-        <TabsContent value={section}>
-          <div className="max-h-80 overflow-y-auto scrollbar-sleek">
-            <AgentHubTerminalTree
-              groups={groups}
-              totalCount={totalCount}
-              query={query}
-              searchRef={searchRef}
-              onQueryChange={(value) => {
-                onQueryChange(value)
-                setSelectedKey(null)
-              }}
-              sortBy={sortBy}
-              onSortChange={(value) => {
-                setSortBy(value)
-                setSelectedKey(null)
-              }}
-              collapseOverrides={collapsed}
-              onToggleGroup={(group, value) =>
-                setCollapsed((current) => new Map(current).set(group.key, value))
+        <AgentHubTerminalTree
+          groups={groups}
+          totalCount={totalCount}
+          query={query}
+          searchRef={searchRef}
+          onQueryChange={(value) => {
+            onQueryChange(value)
+            setSelectedKey(null)
+          }}
+          sortBy={sortBy}
+          onSortChange={(value) => {
+            setSortBy(value)
+            setSelectedKey(null)
+          }}
+          collapseOverrides={collapsed}
+          onToggleGroup={(group, value) =>
+            setCollapsed((current) => new Map(current).set(group.key, value))
+          }
+          emptyLabel={translate('agentHub.mirror.noneAvailable', 'No terminals available to add')}
+          selectedKey={rows.some((row) => row.key === selectedKey) ? selectedKey : null}
+          now={now}
+          lineage={lineage}
+          expandedKeys={expanded}
+          selectionMode
+          onToggleChildren={(key) =>
+            setExpanded((current) => {
+              const next = new Set(current)
+              if (next.has(key)) {
+                next.delete(key)
+              } else {
+                next.add(key)
               }
-              emptyLabel={translate(
-                'agentHub.mirror.noneAvailable',
-                'No terminals available to add'
-              )}
-              selectedKey={rows.some((row) => row.key === selectedKey) ? selectedKey : null}
-              now={now}
-              lineage={lineage}
-              expandedKeys={expanded}
-              selectionMode
-              onToggleChildren={(key) =>
-                setExpanded((current) => {
-                  const next = new Set(current)
-                  if (next.has(key)) {
-                    next.delete(key)
-                  } else {
-                    next.add(key)
-                  }
-                  return next
-                })
-              }
-              onOpen={onAdd}
-              onPopout={onAdd}
-              onJump={onAdd}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
+              return next
+            })
+          }
+          onOpen={onAdd}
+          onPopout={onAdd}
+          onJump={onAdd}
+        />
+      </div>
     </div>
   )
 }
