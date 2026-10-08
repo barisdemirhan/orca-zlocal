@@ -101,7 +101,7 @@ export function AgentHubAttentionCard({
     [interactivePrompt, toolName, thread.agentType]
   )
   const ptyId = useAgentHubLivePty(thread.worktree.id, tabId, paneKey, false)
-  const send = useNativeChatInteractiveSend(tabId, paneKey, ptyId, thread.agentType)
+  const send = useNativeChatInteractiveSend(paneKey, ptyId, thread.agentType)
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
   const [chosen, setChosen] = useState<number | null>(null)
   // The deny option first asks for an instruction; Enter on an empty field denies plainly.

@@ -183,6 +183,36 @@ describe('useNativeChatInteractiveSend', () => {
     expect(mocks.cancel).toHaveBeenCalledOnce()
   })
 
+  it('cancels delayed answer writes when the view unmounts', () => {
+    const { result, unmount } = renderHook(() =>
+      useNativeChatInteractiveSend(PANE_KEY, 'pty-1', 'claude')
+    )
+
+    act(() => result.current.sendAnswer(PROMPT, [{ indices: [0] }]))
+    unmount()
+
+    expect(mocks.cancel).toHaveBeenCalledOnce()
+  })
+
+  it('lets a chosen answer finish after a short-lived card unmounts, unless its PTY changes', () => {
+    const options = { finishAnswerAfterUnmount: true }
+    const first = renderHook(() =>
+      useNativeChatInteractiveSend(PANE_KEY, 'pty-1', 'claude', options)
+    )
+    act(() => first.result.current.sendAnswer(PROMPT, [{ indices: [0] }]))
+    first.unmount()
+    expect(mocks.cancel).not.toHaveBeenCalled()
+
+    const second = renderHook(
+      ({ targetPtyId }) =>
+        useNativeChatInteractiveSend(PANE_KEY, targetPtyId, 'claude', options),
+      { initialProps: { targetPtyId: 'pty-1' } }
+    )
+    act(() => second.result.current.sendAnswer(PROMPT, [{ indices: [0] }]))
+    second.rerender({ targetPtyId: 'pty-2' })
+    expect(mocks.cancel).toHaveBeenCalledOnce()
+  })
+
   it('cancels delayed answer writes when the pane identity changes', () => {
     const { result, rerender } = renderHook(
       ({ paneKey }) => useNativeChatInteractiveSend(paneKey, 'pty-1', 'claude'),
