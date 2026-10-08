@@ -19,6 +19,7 @@ export function TerminalLegacyTerminalPanes({
   const [stableHosting] = useState(
     () => useAppStore.getState().settings?.experimentalAgentHub === true
   )
+  const pendingStartupByTabId = useAppStore((state) => state.pendingStartupByTabId)
   const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activeTabId,
@@ -133,7 +134,11 @@ export function TerminalLegacyTerminalPanes({
                     unanchored
                     retainContent
                     isVisible={isActiveTerminalTab}
-                    measureWhileHidden={shouldMeasureHiddenWorktree}
+                    // Why: a background tab with a pending startup must still measure its grid.
+                    measureWhileHidden={
+                      shouldMeasureHiddenWorktree ||
+                      (!isActiveTerminalTab && pendingStartupByTabId[tab.id] !== undefined)
+                    }
                     destination={activityTerminalPortal?.target}
                     restoreFocusOnMove={
                       activityTerminalPortal ? activityTerminalPortal.active : isActiveTerminalTab
