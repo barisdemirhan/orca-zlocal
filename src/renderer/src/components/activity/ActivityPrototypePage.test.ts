@@ -138,9 +138,24 @@ import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
 
       expect(result.events).toHaveLength(1)
       expect(result.liveAgentByPaneKey[PANE_KEY]).toBeUndefined()
-      // The pane's own row is still `working`, but only a fresh turn may say so.
-      expect(activityThreadStatusId(makeThreads(result)[0])).toBe('done')
+      // Silence cannot prove the current turn ended or revive a previous completion.
+      expect(activityThreadStatusId(makeThreads(result)[0])).toBe('unverifiable')
     })
+
+    it.each(['waiting', 'blocked'] as const)(
+      'keeps an unanswered %s agent in its state after the freshness window',
+      (state) => {
+        const result = makeActivityResult({
+          entries: {
+            [PANE_KEY]: { ...makeWorkingEntryWithPriorDone(), state }
+          },
+          now: 2_000 + AGENT_STATUS_STALE_AFTER_MS + 1
+        })
+
+        expect(result.liveAgentByPaneKey[PANE_KEY]).toBeUndefined()
+        expect(activityThreadStatusId(makeThreads(result)[0])).toBe(state)
+      }
+    )
 
     it('creates a thread for a fresh running agent with no historical events', () => {
       const result = makeActivityResult({
