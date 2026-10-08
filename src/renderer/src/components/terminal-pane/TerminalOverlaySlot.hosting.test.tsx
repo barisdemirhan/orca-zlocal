@@ -47,6 +47,13 @@ afterEach(() => {
   container.remove()
 })
 
+function setAgentHub(enabled: boolean): void {
+  const settings = useAppStore.getState().settings
+  if (settings) {
+    act(() => useAppStore.setState({ settings: { ...settings, experimentalAgentHub: enabled } }))
+  }
+}
+
 function renderSlot(tabId: string): void {
   act(() => {
     root.render(
@@ -73,9 +80,9 @@ it('keeps an open pane mounted when the Agent Hub setting is toggled', () => {
   renderSlot('tab-1')
   expect(harness.mounts).toBe(1)
 
-  act(() => useAppStore.setState({ settings: { experimentalAgentHub: true } }))
+  setAgentHub(true)
   renderSlot('tab-1')
-  act(() => useAppStore.setState({ settings: { experimentalAgentHub: false } }))
+  setAgentHub(false)
   renderSlot('tab-1')
 
   expect(harness.mounts).toBe(1)
