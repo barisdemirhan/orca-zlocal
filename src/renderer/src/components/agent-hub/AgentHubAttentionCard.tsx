@@ -12,6 +12,7 @@ import {
   NativeChatInteractiveCard,
   type NativeChatInteractiveCardControl
 } from '../native-chat/NativeChatInteractiveCard'
+import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agent-support'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
 import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
@@ -94,8 +95,8 @@ export function AgentHubAttentionCard({
     return entry?.interactivePrompt ? (entry.toolName ?? null) : null
   })
   const card = useMemo(
-    () => parseInteractivePrompt(interactivePrompt, toolName ?? undefined),
-    [interactivePrompt, toolName]
+    () => parseInteractivePrompt(interactivePrompt, toolName ?? undefined, thread.agentType),
+    [interactivePrompt, toolName, thread.agentType]
   )
   const ptyId = useAgentHubLivePty(thread.worktree.id, tabId, paneKey, false)
   const send = useNativeChatInteractiveSend(tabId, paneKey, ptyId, thread.agentType)
@@ -123,7 +124,8 @@ export function AgentHubAttentionCard({
         {
           id: 'allow-once',
           label: translate('agentHub.card.allowOnce', 'Yes, run it once'),
-          send: '1'
+          // Why: OpenCode accepts with Enter, not a number; same key as the chat approval card.
+          send: nativeChatApprovalAcceptKey(thread.agentType)
         },
         ...(alwaysAllowKey && command
           ? [
@@ -196,7 +198,7 @@ export function AgentHubAttentionCard({
       }
       setChosen(index)
       if (option.deny) {
-        send.cancel()
+        send.cancelAsk()
       } else {
         send.sendRaw(option.send)
       }
@@ -216,7 +218,7 @@ export function AgentHubAttentionCard({
     }
     if (approval) {
       setChosen(denyIndex)
-      send.cancel()
+      send.cancelAsk()
       if (!text) {
         return
       }
