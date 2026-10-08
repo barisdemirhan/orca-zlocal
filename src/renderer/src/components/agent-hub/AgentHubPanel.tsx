@@ -118,12 +118,15 @@ export function AgentHubPanel({
   initialPaneKey?: string | null
 }): React.JSX.Element {
   const [tab, setTab] = useState<AgentHubTab>(initialTab)
-  const [cardIndex, setCardIndex] = useState(() =>
-    Math.max(
+  // Why a pane key: a card can sort in ahead of the one being read (an approval's grace ending),
+  // and a number key must still answer the card on screen. The index only places a replacement.
+  const [cardFocus, setCardFocus] = useState(() => ({
+    paneKey: initialPaneKey,
+    index: Math.max(
       0,
       lists.needsYou.findIndex((thread) => thread.paneKey === initialPaneKey)
     )
-  )
+  }))
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [query, setQuery] = useState('')
   const [collapseOverrides, setCollapseOverrides] = useState<ReadonlyMap<string, boolean>>(
@@ -136,8 +139,18 @@ export function AgentHubPanel({
   const popoutKeys = agentHubPopoutKeys()
 
   const needsYou = lists.needsYou
-  const activeCardIndex = Math.min(cardIndex, Math.max(0, needsYou.length - 1))
+  const focusedCardIndex =
+    cardFocus.paneKey === null
+      ? -1
+      : needsYou.findIndex((thread) => thread.paneKey === cardFocus.paneKey)
+  const activeCardIndex =
+    focusedCardIndex >= 0
+      ? focusedCardIndex
+      : Math.min(cardFocus.index, Math.max(0, needsYou.length - 1))
   const cardThread = needsYou[activeCardIndex] ?? null
+  if (cardThread && cardThread.paneKey !== cardFocus.paneKey) {
+    setCardFocus({ paneKey: cardThread.paneKey, index: activeCardIndex })
+  }
   const agentTree = useMemo(() => agentOnlyAgentHubTree(tree), [tree])
   const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
   const listsTerminals = tab === 'agents' || tab === 'all'
@@ -191,7 +204,8 @@ export function AgentHubPanel({
 
   const pageCard = (delta: 1 | -1): void => {
     if (needsYou.length > 0) {
-      setCardIndex((activeCardIndex + delta + needsYou.length) % needsYou.length)
+      const index = (activeCardIndex + delta + needsYou.length) % needsYou.length
+      setCardFocus({ paneKey: needsYou[index]?.paneKey ?? null, index })
     }
   }
 

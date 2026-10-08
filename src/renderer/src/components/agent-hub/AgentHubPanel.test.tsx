@@ -325,3 +325,103 @@ vi.mock('./agent-hub-mirror-source', async (original) => ({
     target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
   ) => target
 }))
+
+describe('AgentHubPanel inbox card', () => {
+  function waitingLists(waiting: readonly (readonly [string, number])[]) {
+    const repo = makeRepo()
+    const worktree = makeWorktree()
+    const tabs = ['tab-1', 'tab-2', 'tab-3'].map((id) => makeTabWithIds(id, worktree.id))
+    const entries = Object.fromEntries(
+      waiting.map(([paneKey, at]) => [
+        paneKey,
+        {
+          state: 'waiting',
+          prompt: `Question ${paneKey.slice(0, 5)}`,
+          updatedAt: at,
+          stateStartedAt: at,
+          paneKey,
+          terminalTitle: 'Claude',
+          stateHistory: [],
+          agentType: 'claude'
+        } satisfies AgentStatusEntry
+      ])
+    )
+    const threads = makeThreads(
+      buildActivityEvents({
+        agentStatusByPaneKey: entries,
+        retainedAgentsByPaneKey: {},
+        tabsByWorktree: { [worktree.id]: tabs },
+        worktreeMap: new Map([[worktree.id, worktree]]),
+        repoMap: new Map([[repo.id, repo]]),
+        acknowledgedAgentsByPaneKey: {},
+        now: 10_000
+      })
+    )
+    return buildAgentHubLists(threads)
+  }
+
+  function render(lists: ReturnType<typeof buildAgentHubLists>) {
+    const { tree } = fixture()
+    act(() => {
+      root.render(
+        <TooltipProvider>
+          <AgentHubPanel
+            lists={lists}
+            lineage={EMPTY_AGENT_HUB_LINEAGE}
+            tree={tree}
+            treeOrder={PROJECT_ORDER}
+            terminalCount={3}
+            locationOf={() => ({ group: null, project: 'Repo', workspace: 'feature' })}
+            rootRef={createRef<HTMLDivElement>()}
+            onSortChange={vi.fn()}
+            onJump={vi.fn()}
+            onOpen={vi.fn()}
+            onPopout={vi.fn()}
+            onPopoutAll={vi.fn()}
+            onMarkRead={vi.fn()}
+            onClose={vi.fn()}
+          />
+        </TooltipProvider>
+      )
+    })
+  }
+
+  const shownCard = (): string | null =>
+    container
+      .querySelector('[data-agent-hub-attention-card]')
+      ?.getAttribute('data-agent-hub-attention-card') ?? null
+
+  it('stays on the card being read when an older one sorts in ahead of it', () => {
+    render(waitingLists([[PANE_KEY_2, 5_000]]))
+    expect(shownCard()).toBe(PANE_KEY_2)
+
+    render(
+      waitingLists([
+        [PANE_KEY, 1_000],
+        [PANE_KEY_2, 5_000]
+      ])
+    )
+
+    expect(shownCard()).toBe(PANE_KEY_2)
+  })
+
+  it('moves to the card now in the same place once the shown one is answered', () => {
+    render(
+      waitingLists([
+        [PANE_KEY, 1_000],
+        [PANE_KEY_2, 5_000],
+        [PANE_KEY_3, 6_000]
+      ])
+    )
+    expect(shownCard()).toBe(PANE_KEY)
+
+    render(
+      waitingLists([
+        [PANE_KEY_2, 5_000],
+        [PANE_KEY_3, 6_000]
+      ])
+    )
+
+    expect(shownCard()).toBe(PANE_KEY_2)
+  })
+})

@@ -1,5 +1,5 @@
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { formatAgentTypeLabel } from '@/lib/agent-status'
@@ -31,6 +31,8 @@ import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 
 // Why a pause: the agent needs a beat to leave its approval prompt before the instruction lands.
 const DENY_THEN_INSTRUCT_DELAY_MS = 400
+/** Number keys are ignored this long after a card appears. */
+export const AGENT_HUB_CARD_KEY_GUARD_MS = 400
 
 export type AgentHubCardControl = NativeChatInteractiveCardControl
 
@@ -206,7 +208,15 @@ export function AgentHubAttentionCard({
     }
     return nativeControlRef.current?.chooseOption(index) ?? false
   }
-  useImperativeHandle(controlRef, () => ({ chooseOption: choose }))
+  // Why: a key pressed as this card replaces an answered one was meant for the previous card.
+  const shownAtRef = useRef(Number.POSITIVE_INFINITY)
+  useEffect(() => {
+    shownAtRef.current = performance.now()
+  }, [])
+  useImperativeHandle(controlRef, () => ({
+    chooseOption: (index) =>
+      performance.now() - shownAtRef.current >= AGENT_HUB_CARD_KEY_GUARD_MS && choose(index)
+  }))
 
   const reply = (text: string): void => {
     if (!ptyId || chosen !== null) {
