@@ -37,6 +37,21 @@ export type OrchestrationPointerBatch = {
   heldDeliveryId: string | undefined
 }
 
+/**
+ * A status row reports liveness, so it must not wake a reader blocked for the actionable types. It
+ * stays unread and rides along with the next pointer or `check`. Unfiltered waiters never get here.
+ */
+function isQuietOrchestrationPointerBatch(
+  messages: readonly { type: string }[],
+  waiters: ReadonlySet<OrchestrationMessageWaiter> | undefined
+): boolean {
+  return (
+    (waiters?.size ?? 0) > 0 &&
+    messages.length > 0 &&
+    messages.every((message) => message.type === 'status')
+  )
+}
+
 /** Both delivery lanes share this synchronous SQL selection; unfiltered waiters preempt all pointers.
  * Concrete waiter types are excluded byte-exactly in SQL; no JavaScript post-filter is needed.
  * An unacked batch defers rather than drops: only mail it does not hold is eligible, once each. */
@@ -58,15 +73,23 @@ export function selectOrchestrationPointerBatch(input: {
     }
   }
   const held = input.db.getOutstandingMailboxDelivery?.(input.mailboxHandle)
-  return {
-    messages: input.db.getUndeliveredUnreadMessages(input.mailboxHandle, undefined, {
-      excludeTypes: [...excludedTypes],
+  const unread = (excludeTypes: string[], limit: number): MessageRow[] =>
+    input.db.getUndeliveredUnreadMessages(input.mailboxHandle, undefined, {
+      excludeTypes,
       excludeIds: held?.messageIds,
       excludeRunOwnedDirect: input.excludeRunOwnedDirect,
-      limit: ORCHESTRATION_DELIVERY_BATCH_LIMIT
-    }),
-    heldDeliveryId: held?.id
-  }
+      limit
+    })
+  const batch = unread([...excludedTypes], ORCHESTRATION_DELIVERY_BATCH_LIMIT)
+  // Why: quiet rows stay undelivered and pile up oldest-first, so a full page of them can hide an
+  // actionable row past the limit; that row must still point.
+  const silent =
+    isQuietOrchestrationPointerBatch(batch, input.waiters) &&
+    !(
+      batch.length >= ORCHESTRATION_DELIVERY_BATCH_LIMIT &&
+      unread([...excludedTypes, 'status'], 1).length > 0
+    )
+  return { messages: silent ? [] : batch, heldDeliveryId: held?.id }
 }
 
 export function shouldReleaseOrchestrationPointer(
