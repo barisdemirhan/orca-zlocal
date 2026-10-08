@@ -61,9 +61,10 @@ describe('Agent Hub shortcuts help', () => {
       dialog.querySelector('[data-agent-hub-shortcut-help="agentHub.popOut"]')?.textContent
     ).toContain('Not set')
     expect(dialog.textContent).toContain('double tap of a modifier key')
+    const availableBindingIds: readonly string[] = KEYBINDING_DEFINITIONS.map((entry) => entry.id)
     expect(
       dialog.querySelector('[data-agent-hub-shortcut-help="voice.dictationImprove"]') !== null
-    ).toBe(KEYBINDING_DEFINITIONS.some((entry) => entry.id === 'voice.dictationImprove'))
+    ).toBe(availableBindingIds.includes('voice.dictationImprove'))
     fireEvent.keyDown(document.activeElement ?? dialog, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
