@@ -78,11 +78,13 @@ function MirrorDictationIndicator({ phase }: { phase: DictationPhase }): React.J
                 <Square className="size-3 fill-current" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6} className="flex items-center gap-1.5">
-              {stopLabel}
-              {!isHoldMode && shortcut.keys.length > 0 ? (
-                <ShortcutKeyCombo keys={shortcut.keys} doubleTap={shortcut.doubleTap} />
-              ) : null}
+            <TooltipContent side="top" sideOffset={6}>
+              <span className="flex items-center gap-1.5">
+                {stopLabel}
+                {!isHoldMode && shortcut.keys.length > 0 ? (
+                  <ShortcutKeyCombo keys={shortcut.keys} doubleTap={shortcut.doubleTap} />
+                ) : null}
+              </span>
             </TooltipContent>
           </Tooltip>
         )}
