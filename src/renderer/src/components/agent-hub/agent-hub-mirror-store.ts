@@ -21,7 +21,12 @@ import {
   type AgentHubReopenedMirror
 } from './agent-hub-mirror-session-reopen'
 export type { AgentHubReopenedMirror } from './agent-hub-mirror-session-reopen'
-import { resolveAgentHubMirrorTarget, resolveAgentHubMirrorWindow } from './agent-hub-mirror-source'
+import { useAppStore } from '@/store'
+import {
+  isAgentHubMirrorSourceClosed,
+  resolveAgentHubMirrorTarget,
+  resolveAgentHubMirrorWindow
+} from './agent-hub-mirror-source'
 import {
   DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP,
   normalizeAgentHubMirrorWindowCap
@@ -40,7 +45,7 @@ import {
   findAgentHubMirrorMembership,
   selectAgentHubMirrorTarget,
   replaceAgentHubMirrorWindow,
-  removeAgentHubMirrorChipsOfTab,
+  removeAgentHubMirrorEntries,
   hasAgentHubMirrorEntryRoom,
   type AgentHubMirrorState,
   type AgentHubMirrorWindowState
@@ -168,9 +173,12 @@ export function parkAgentHubMirror(request: AgentHubPaneTarget): void {
     emit({ ...state, chips: withChip(state.chips, createAgentHubMirrorWindow(target)) })
   }
 }
-/** Removes that source entry only; a grouped chip survives with a repaired active entry. */
-export function closeAgentHubMirrorChipsOfTab(tabId: string): void {
-  const next = removeAgentHubMirrorChipsOfTab(state, tabId)
+/** Drops entries whose source tab or split leaf was closed; a window goes when it empties. */
+export function pruneClosedAgentHubMirrorSources(): void {
+  const app = useAppStore.getState()
+  const next = removeAgentHubMirrorEntries(state, (target) =>
+    isAgentHubMirrorSourceClosed(app, target)
+  )
   if (next !== state) {
     emit(next)
   }

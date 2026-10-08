@@ -117,16 +117,21 @@ export function hasAgentHubMirrorEntryRoom(current: AgentHubMirrorState): boolea
   )
 }
 
-export function removeAgentHubMirrorChipsOfTab(
+/** Drops entries whose source is gone, from open windows and chips alike. */
+export function removeAgentHubMirrorEntries(
   state: AgentHubMirrorState,
-  tabId: string
+  isGone: (target: AgentHubPaneTarget) => boolean
 ): AgentHubMirrorState {
   let next = state
-  for (const chip of state.chips) {
-    for (const tab of chip.window.tabs.filter((entry) => entry.target.tab.id === tabId)) {
-      const window = agentHubMirrorWindows(next).find((item) => item.id === chip.window.id)
-      if (window) {
-        next = replaceAgentHubMirrorWindow(next, window.id, removeAgentHubMirrorTab(window, tab.id))
+  for (const window of agentHubMirrorWindows(state)) {
+    for (const tab of window.tabs.filter((entry) => isGone(entry.target))) {
+      const current = agentHubMirrorWindows(next).find((item) => item.id === window.id)
+      if (current) {
+        next = replaceAgentHubMirrorWindow(
+          next,
+          current.id,
+          removeAgentHubMirrorTab(current, tab.id)
+        )
       }
     }
   }

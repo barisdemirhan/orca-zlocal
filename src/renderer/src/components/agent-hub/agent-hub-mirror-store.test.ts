@@ -11,7 +11,6 @@ import {
 import {
   closeAgentHubMirror,
   closeAgentHubMirrorChip,
-  closeAgentHubMirrorChipsOfTab,
   focusAgentHubMirror,
   isAgentHubMirrorStageQuiet,
   reopenAgentHubMirrors,
@@ -22,6 +21,7 @@ import {
   openAgentHubMirror,
   openAgentHubMirrors,
   parkAgentHubMirror,
+  pruneClosedAgentHubMirrorSources,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest,
   restoreAgentHubMirror,
@@ -29,6 +29,7 @@ import {
   retargetAgentHubMirror
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { useAppStore } from '@/store'
 
 function target(tabId: string): AgentHubPaneTarget {
   const worktree = makeWorktree()
@@ -179,10 +180,25 @@ describe('agent hub mirror store', () => {
     // A pane that already has a window stays a window; nothing is parked twice.
     expect(windowKeys()).toEqual(['tab-open:leaf'])
     expect(chipKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
+  })
 
-    closeAgentHubMirrorChipsOfTab('tab-a')
-    expect(chipKeys()).toEqual(['tab-b:leaf'])
+  it('drops a closed source from windows and chips, and keeps one whose workspace is unknown', () => {
+    openAgentHubMirror(target('tab-open'))
+    parkAgentHubMirror(target('tab-a'))
+    parkAgentHubMirror(target('tab-b'))
+    const worktreeId = target('tab-a').worktree.id
+
+    useAppStore.setState({ tabsByWorktree: {} })
+    pruneClosedAgentHubMirrorSources()
     expect(windowKeys()).toEqual(['tab-open:leaf'])
+    expect(chipKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
+
+    useAppStore.setState({
+      tabsByWorktree: { [worktreeId]: [makeTabWithIds('tab-b', worktreeId)] }
+    })
+    pruneClosedAgentHubMirrorSources()
+    expect(windowKeys()).toEqual([])
+    expect(chipKeys()).toEqual(['tab-b:leaf'])
   })
 
   it('parks the oldest windows when the cap is lowered, and allows more when it is raised', () => {

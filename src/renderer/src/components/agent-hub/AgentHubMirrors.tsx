@@ -39,6 +39,7 @@ import type { AgentHubLineage } from './agent-hub-lineage'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { orderAgentHubTray } from './agent-hub-mirror-tray'
 import { useFloatingPanelInFront } from './use-floating-panel-in-front'
+import { usePruneClosedAgentHubMirrorSources } from './use-prune-closed-agent-hub-mirror-sources'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
 import {
   closeAgentHubMirror,
@@ -226,6 +227,7 @@ export function AgentHubMirrors({
   useLayoutEffect(() => () => setTerminalMirrorMountLeases([]), [])
   // Each mirror's microphone needs to know which pane a dictation started in.
   useEffect(trackAgentHubDictationOrigin, [])
+  usePruneClosedAgentHubMirrorSources()
 
   if (windows.length === 0 && chips.length === 0) {
     return null

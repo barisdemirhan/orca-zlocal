@@ -54,6 +54,28 @@ export function agentHubMirrorPaneExists(
   )
 }
 
+/**
+ * True only when the source's workspace is loaded and no longer holds its tab or split leaf.
+ * An unknown workspace (not hydrated yet, a disconnected host) is not proof that it closed.
+ */
+export function isAgentHubMirrorSourceClosed(
+  state: SourceState,
+  target: AgentHubPaneTarget
+): boolean {
+  const tabs = state.tabsByWorktree[target.worktree.id]
+  if (!tabs) {
+    return false
+  }
+  if (!tabs.some((tab) => tab.id === target.tab.id)) {
+    return true
+  }
+  return Boolean(
+    target.paneKey &&
+    state.terminalLayoutsByTabId[target.tab.id] &&
+    !agentHubMirrorPaneExists(state, target.tab.id, target.paneKey)
+  )
+}
+
 /** Re-read labels and source ownership immediately before committing membership changes. */
 export function resolveAgentHubMirrorTarget(target: AgentHubPaneTarget): AgentHubPaneTarget | null {
   const state = useAppStore.getState()
