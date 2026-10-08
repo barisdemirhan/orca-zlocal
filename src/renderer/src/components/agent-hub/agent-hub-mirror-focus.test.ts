@@ -12,7 +12,6 @@ import {
   openAgentHubMirror,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest,
-  retargetAgentHubMirror,
   toggleAgentHubMirrorFocus
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -94,14 +93,6 @@ describe('agent hub mirror focus', () => {
     closeAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
 
     expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-a:leaf'))
-  })
-
-  it('follows the focused window to the pane it switches to', () => {
-    toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf'))
-
-    retargetAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'), target('tab-e'))
-
-    expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-e:leaf'))
   })
 })
 

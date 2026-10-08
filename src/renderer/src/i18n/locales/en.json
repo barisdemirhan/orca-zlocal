@@ -21768,6 +21768,7 @@
       "tabLimit": "A mirror can hold up to 10 terminals.",
       "addUnavailable": "This terminal is no longer available to add.",
       "alreadyOwned": "This terminal is already popped out.",
+      "trayFull": "The oldest minimized mirror was closed to make room. Its terminals are still in their workspaces.",
       "dropUnavailable": "Cannot drop here",
       "openInNew": "Open in new mirror",
       "moveToMirror": "Move to mirror",

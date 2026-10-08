@@ -6,6 +6,14 @@ import {
 } from '../activity/activity-thread-presentation'
 import { agentHubIndicatorKind, agentHubIsApproval } from './agent-hub-lists'
 
+/** Said when the tray drops its oldest chip to make room for a new one. */
+export function agentHubMirrorTrayFullReason(): string {
+  return translate(
+    'agentHub.mirror.trayFull',
+    'The oldest minimized mirror was closed to make room. Its terminals are still in their workspaces.'
+  )
+}
+
 /** The one-word state the mock shows in chips and row subtitles. */
 export function agentHubStateWord(thread: AgentPaneThread | null): string {
   if (!thread) {

@@ -2,6 +2,7 @@ import type * as MirrorSource from './agent-hub-mirror-source'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { toast } from 'sonner'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
   keepAgentHubMirrorPlace,
@@ -20,16 +21,16 @@ import {
   minimizeAllAgentHubMirrors,
   openAgentHubMirror,
   openAgentHubMirrors,
-  parkAgentHubMirror,
   pruneClosedAgentHubMirrorSources,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest,
   restoreAgentHubMirror,
-  restoreAgentHubMirrors,
-  retargetAgentHubMirror
+  restoreAgentHubMirrors
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAppStore } from '@/store'
+
+vi.mock('sonner', () => ({ toast: { message: vi.fn() } }))
 
 function target(tabId: string): AgentHubPaneTarget {
   const worktree = makeWorktree()
@@ -101,31 +102,6 @@ describe('agent hub mirror store', () => {
     expect(windowKeys()).toEqual(['tab-a:leaf'])
   })
 
-  it('switches a window to another pane in place, keeping its spot', () => {
-    openAgentHubMirror(target('tab-a'))
-    rememberAgentHubMirrorOrigin(mirrorWindowIdFor('tab-a:leaf'), {
-      x: 50,
-      y: 60,
-      width: 640,
-      height: 400
-    })
-    openAgentHubMirror(target('tab-b'))
-    retargetAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'), target('tab-c'))
-
-    expect(windowKeys()).toEqual(['tab-c:leaf', 'tab-b:leaf'])
-    expect(readAgentHubMirrorOrigin(mirrorWindowIdFor('tab-c:leaf'))).toEqual({
-      x: 50,
-      y: 60,
-      width: 640,
-      height: 400
-    })
-
-    // A pane already in its own window is brought forward rather than opened twice.
-    openAgentHubMirror(target('tab-c'))
-    retargetAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'), target('tab-c'))
-    expect(windowKeys()).toEqual(['tab-b:leaf', 'tab-c:leaf'])
-  })
-
   it('forgets where a closed window stood unless the user put it there', () => {
     const place = { x: 50, y: 60, width: 640, height: 400 }
     openAgentHubMirror(target('tab-a'))
@@ -171,21 +147,42 @@ describe('agent hub mirror store', () => {
     expect(chipKeys().toSorted()).toEqual(['tab-e:leaf', 'tab-f:leaf', 'tab-old:leaf'])
   })
 
-  it('parks a pane straight into the tray, and takes a tab back out of it', () => {
+  it('minimizes a pane into the tray, and takes a tab back out of it', () => {
     openAgentHubMirror(target('tab-open'))
-    parkAgentHubMirror(target('tab-open'))
-    parkAgentHubMirror(target('tab-a'))
-    parkAgentHubMirror(target('tab-a'))
-    parkAgentHubMirror(target('tab-b'))
-    // A pane that already has a window stays a window; nothing is parked twice.
+    openAgentHubMirror(target('tab-a'))
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
+    openAgentHubMirror(target('tab-b'))
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
     expect(windowKeys()).toEqual(['tab-open:leaf'])
     expect(chipKeys()).toEqual(['tab-a:leaf', 'tab-b:leaf'])
+
+    openAgentHubMirror(target('tab-a'))
+    expect(windowKeys()).toEqual(['tab-open:leaf', 'tab-a:leaf'])
+    expect(chipKeys()).toEqual(['tab-b:leaf'])
+  })
+
+  it('reports the oldest chip the tray drops when minimizing past its cap', () => {
+    vi.mocked(toast.message).mockClear()
+    for (let index = 0; index < 12; index += 1) {
+      openAgentHubMirror(target(`tab-${index}`))
+      minimizeAgentHubMirror(mirrorWindowIdFor(`tab-${index}:leaf`))
+    }
+    expect(toast.message).not.toHaveBeenCalled()
+
+    openAgentHubMirror(target('tab-12'))
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-12:leaf'))
+    expect(chipKeys()).toHaveLength(12)
+    expect(chipKeys()).not.toContain('tab-0:leaf')
+    expect(toast.message).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(toast.message).mock.calls[0][0]).toContain('oldest minimized mirror')
   })
 
   it('drops a closed source from windows and chips, and keeps one whose workspace is unknown', () => {
     openAgentHubMirror(target('tab-open'))
-    parkAgentHubMirror(target('tab-a'))
-    parkAgentHubMirror(target('tab-b'))
+    openAgentHubMirror(target('tab-a'))
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-a:leaf'))
+    openAgentHubMirror(target('tab-b'))
+    minimizeAgentHubMirror(mirrorWindowIdFor('tab-b:leaf'))
     const worktreeId = target('tab-a').worktree.id
 
     useAppStore.setState({ tabsByWorktree: {} })

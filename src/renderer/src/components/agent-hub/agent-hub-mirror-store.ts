@@ -7,6 +7,8 @@ import {
   resetAgentHubMirrorSourcePlacesForTest
 } from './agent-hub-mirror-source-places'
 import { highlightAgentHubMirror } from './agent-hub-mirror-signals'
+import { toast } from 'sonner'
+import { agentHubMirrorTrayFullReason } from './agent-hub-copy'
 export {
   useAgentHubMirrorHighlight,
   requestAgentHubMirrorsDock,
@@ -47,6 +49,7 @@ import {
   replaceAgentHubMirrorWindow,
   removeAgentHubMirrorEntries,
   hasAgentHubMirrorEntryRoom,
+  type AgentHubMirrorChip,
   type AgentHubMirrorState,
   type AgentHubMirrorWindowState
 } from './agent-hub-mirror-membership'
@@ -56,6 +59,7 @@ let windowCap = DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
 let state: AgentHubMirrorState = { windows: [], chips: [] }
 const listeners = new Set<() => void>()
 let quiet = false
+let chipEvicted = false
 
 function emit(next: AgentHubMirrorState): void {
   rememberAgentHubMirrorSourcePlacesLeaving(state, next)
@@ -68,12 +72,33 @@ function emit(next: AgentHubMirrorState): void {
   state = next
   holdAgentHubMirrorFocusOn(next.windows.at(-1)?.id ?? null)
   listeners.forEach((listener) => listener())
+  if (chipEvicted) {
+    chipEvicted = false
+    toast.message(agentHubMirrorTrayFullReason())
+  }
+}
+/** Flags a cap eviction: a chip other than `exemptId` present before and gone after. */
+function noteChipEvictions(
+  before: readonly AgentHubMirrorChip[],
+  after: AgentHubMirrorChip[],
+  exemptId?: string
+): AgentHubMirrorChip[] {
+  const kept = new Set(after.map((chip) => chip.window.id))
+  if (before.some((chip) => chip.window.id !== exemptId && !kept.has(chip.window.id))) {
+    chipEvicted = true
+  }
+  return after
+}
+function parkChip(chips: readonly AgentHubMirrorChip[], window: AgentHubMirrorWindowState) {
+  return noteChipEvictions(chips, withChip(chips, window), window.id)
 }
 function showWindow(
   current: AgentHubMirrorState,
   window: AgentHubMirrorWindowState
 ): AgentHubMirrorState {
-  return raiseAgentHubMirrorWindow(current, window, windowCap)
+  const next = raiseAgentHubMirrorWindow(current, window, windowCap)
+  noteChipEvictions(current.chips, next.chips, window.id)
+  return next
 }
 /** Pop-out always selects the requested source tab, including a different split leaf. */
 export function openAgentHubMirror(
@@ -107,34 +132,6 @@ export function openAgentHubMirrors(targets: readonly AgentHubPaneTarget[]): voi
   }
 }
 
-/** Phase 2's singleton family UI replaces content without changing window or entry identity. */
-export function retargetAgentHubMirror(windowId: string, request: AgentHubPaneTarget): void {
-  const target = resolveAgentHubMirrorTarget(request)
-  if (!target) {
-    return
-  }
-  const window = state.windows.find((open) => open.id === windowId)
-  if (!window) {
-    return
-  }
-  const owner = findAgentHubMirrorMembership(state, target)
-  if (owner) {
-    openAgentHubMirror(target)
-    return
-  }
-  const active = window.tabs.find((tab) => tab.id === window.activeTabId)
-  if (!active) {
-    return
-  }
-  quiet = false
-  emit(
-    replaceAgentHubMirrorWindow(
-      state,
-      windowId,
-      selectAgentHubMirrorTarget(window, active.id, target)
-    )
-  )
-}
 export function focusAgentHubMirror(id: string): void {
   const window = state.windows.find((open) => open.id === id)
   if (window) {
@@ -160,17 +157,8 @@ export function minimizeAgentHubMirror(id: string): void {
   if (window) {
     emit({
       windows: state.windows.filter((open) => open.id !== id),
-      chips: withChip(state.chips, window)
+      chips: parkChip(state.chips, window)
     })
-  }
-}
-export function parkAgentHubMirror(request: AgentHubPaneTarget): void {
-  const target = resolveAgentHubMirrorTarget(request)
-  if (!target) {
-    return
-  }
-  if (!findAgentHubMirrorMembership(state, target) && hasAgentHubMirrorEntryRoom(state)) {
-    emit({ ...state, chips: withChip(state.chips, createAgentHubMirrorWindow(target)) })
   }
 }
 /** Drops entries whose source tab or split leaf was closed; a window goes when it empties. */
@@ -185,7 +173,7 @@ export function pruneClosedAgentHubMirrorSources(): void {
 }
 export function minimizeAllAgentHubMirrors(): void {
   if (state.windows.length) {
-    emit({ windows: [], chips: state.windows.reduce(withChip, state.chips) })
+    emit({ windows: [], chips: state.windows.reduce(parkChip, state.chips) })
   }
 }
 export function restoreAgentHubMirror(id: string): void {
@@ -216,7 +204,7 @@ export function restoreAgentHubMirrors(ids: readonly string[]): void {
   }
 }
 export function reopenAgentHubMirrors(saved: readonly AgentHubReopenedMirror[]): void {
-  const next = reopenAgentHubMirrorState(state, saved, windowCap, withChip)
+  const next = reopenAgentHubMirrorState(state, saved, windowCap, parkChip)
   if (next) {
     quiet = state.windows.length === 0
     emit(next)
@@ -244,7 +232,7 @@ export function setAgentHubMirrorWindowCap(cap: number): void {
   }
   let chips = state.chips
   for (const window of state.windows.slice(0, -windowCap)) {
-    chips = withChip(chips, window)
+    chips = parkChip(chips, window)
   }
   emit({ windows: state.windows.slice(-windowCap), chips })
 }
@@ -285,7 +273,7 @@ export function commitAgentHubMirrorState(next: AgentHubMirrorState, raiseId?: s
   while (windows.length > windowCap) {
     const evicted = windows.shift()
     if (evicted) {
-      chips = withChip(chips, evicted)
+      chips = parkChip(chips, evicted)
     }
   }
   emit({ windows, chips })

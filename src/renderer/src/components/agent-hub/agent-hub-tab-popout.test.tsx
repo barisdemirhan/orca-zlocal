@@ -14,7 +14,6 @@ import {
   closeAgentHubMirror,
   minimizeAgentHubMirror,
   readAgentHubMirrors,
-  retargetAgentHubMirror,
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -184,17 +183,6 @@ it.each(['close', 'minimize', 'select another', 'disable'])(
     expect(screen.queryByText('Shown in a mirror')).toBeNull()
   }
 )
-
-it('returns a singleton after its mirror targets a different pane in the same tab', () => {
-  render(<AgentHubBorrowedTerminal worktreeId="wt-1" groupId="group" />)
-  act(() => popOutAgentHubTab(target))
-  act(() =>
-    retargetAgentHubMirror(mirrorWindowIdFor('source'), { ...target, paneKey: 'other-pane' })
-  )
-  fireEvent.click(screen.getByRole('button', { name: 'Bring back' }))
-  expect(readAgentHubMirrors().windows).toHaveLength(0)
-  expect(screen.queryByText('Shown in a mirror')).toBeNull()
-})
 
 it('leaving the source tab never opens a mirror', () => {
   fixture(['source', 'other'])
