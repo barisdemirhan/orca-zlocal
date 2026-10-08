@@ -9,6 +9,7 @@ import { HubCollapse, HubFoldChevron } from './AgentHubFold'
 import { HubCounts } from './AgentHubStateMarks'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
+import { closeAgentHubAgent } from './agent-hub-close-agent'
 import { AgentHubTerminalSortMenu } from './AgentHubTerminalSortMenu'
 import { agentHubStateWord } from './agent-hub-copy'
 import {
@@ -97,6 +98,7 @@ function TreeRow({
         onOpen={() => context.onOpen(row)}
         onPopout={() => context.onPopout(row)}
         onJump={() => context.onJump(row)}
+        onClose={() => closeAgentHubAgent(paneTargetFromTerminalRow(row), kind)}
       />
       <AgentHubChildGroup
         onToggle={context.onToggleChildren ? () => context.onToggleChildren?.(row.key) : undefined}

@@ -55,6 +55,12 @@ export type RequestActiveTerminalPaneSplitDetail = {
 /** Unlike a split request, a close always names its tab: an untargeted close must not reach every mounted pane. */
 export type RequestActiveTerminalPaneCloseDetail = {
   tabId: string
+  /** Closes this split instead of the active one; unknown to the mounted pane, it stays unhandled. */
+  leafId?: string
+  /** False skips the running-process prompt (the caller already asked). Default true. */
+  confirm?: boolean
+  /** Set by the mounted pane that took the request. */
+  handled?: boolean
 }
 
 export type CloseTerminalPaneDetail = {

@@ -32,4 +32,18 @@ describe('active terminal pane close request', () => {
 
     expect(close).not.toHaveBeenCalled()
   })
+
+  it('hands the leaf and confirm option to the pane and reports it handled', () => {
+    const close = vi.fn()
+    unsubscribes.push(onActiveTerminalPaneCloseRequest('tab-a', close))
+
+    expect(requestActiveTerminalPaneClose('tab-a', { leafId: 'leaf-1', confirm: false })).toBe(true)
+    expect(close).toHaveBeenCalledWith({ leafId: 'leaf-1', confirm: false })
+  })
+
+  it('reports unhandled when the pane declines or none is mounted', () => {
+    expect(requestActiveTerminalPaneClose('tab-a')).toBe(false)
+    unsubscribes.push(onActiveTerminalPaneCloseRequest('tab-a', () => false))
+    expect(requestActiveTerminalPaneClose('tab-a', { leafId: 'gone' })).toBe(false)
+  })
 })

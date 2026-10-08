@@ -9,6 +9,7 @@ import { HubSection } from './AgentHubSectionHeader'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
+import { closeAgentHubAgent } from './agent-hub-close-agent'
 import {
   agentHubStateSince,
   agentHubToolName,
@@ -17,7 +18,11 @@ import {
 } from './agent-hub-lists'
 import { activeAgentHubChildren, type AgentHubLineage } from './agent-hub-lineage'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
-import type { AgentHubLocation } from './agent-hub-pane-target'
+import {
+  paneTargetFromThread,
+  type AgentHubLocation,
+  type AgentHubPaneTarget
+} from './agent-hub-pane-target'
 
 export type AgentHubThreadActions = {
   locationOf: (thread: AgentPaneThread) => AgentHubLocation
@@ -183,12 +188,17 @@ export function AgentHubInboxBody({
               onPopout={() => actions.onPopout(thread)}
               onJump={() => actions.onJump(thread)}
               onMarkRead={() => onMarkRead([thread.paneKey])}
+              onClose={() => closeAgentHubAgent(closeTarget(thread), 'done')}
             />
           ))}
         </>
       ) : null}
     </>
   )
+}
+
+function closeTarget(thread: AgentPaneThread): AgentHubPaneTarget {
+  return paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle)
 }
 
 /** A working agent, then the workers and subagents it still has at work. */
@@ -222,6 +232,7 @@ function RunningRow({
         onOpen={() => actions.onOpen(thread)}
         onPopout={() => actions.onPopout(thread)}
         onJump={() => actions.onJump(thread)}
+        onClose={() => closeAgentHubAgent(closeTarget(thread), 'work')}
       />
       <AgentHubChildGroup
         parentKey={thread.paneKey}

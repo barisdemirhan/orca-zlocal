@@ -5,7 +5,7 @@ import { useAppStore } from '@/store'
 import type { AgentType } from '../../../../shared/agent-status-types'
 import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
-import { HubRowAction, HubRowMirrorActions } from './AgentHubRowActions'
+import { HubRowAction, HubRowCloseAgent, HubRowMirrorActions } from './AgentHubRowActions'
 
 /** One agent or shell row: click opens the live mirror, ↵ jumps to the pane. */
 export function AgentHubRow({
@@ -26,6 +26,7 @@ export function AgentHubRow({
   onPopout,
   onJump,
   onMarkRead,
+  onClose,
   selectionMode = false
 }: {
   kind: AgentHubIndicatorKind
@@ -49,6 +50,8 @@ export function AgentHubRow({
   onPopout: () => void
   onJump: () => void
   onMarkRead?: () => void
+  /** Ends the row's agent and closes its pane; absent hides the button. */
+  onClose?: () => void
   selectionMode?: boolean
 }): React.JSX.Element {
   const current = useAppStore(
@@ -118,6 +121,7 @@ export function AgentHubRow({
               >
                 <ArrowUpRight className="size-3.5" />
               </HubRowAction>
+              {onClose ? <HubRowCloseAgent isAgent={agentType !== null} onClose={onClose} /> : null}
             </>
           )}
         </span>

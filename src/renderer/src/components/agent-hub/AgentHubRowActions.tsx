@@ -1,7 +1,7 @@
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
-import { Maximize2, PictureInPicture2, X } from 'lucide-react'
+import { Maximize2, PictureInPicture2, Minimize2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
@@ -82,7 +82,7 @@ export function HubRowMirrorActions({
             }
           }}
         >
-          <X className="size-3.5" />
+          <Minimize2 className="size-3.5" />
         </HubRowAction>
       ) : null}
       {/* Why one button for all three: it stays mounted, so its hover and tooltip carry over. */}
@@ -112,5 +112,27 @@ export function HubRowMirrorActions({
         )}
       </HubRowAction>
     </>
+  )
+}
+
+/** Ends the pane's agent (or shell) and closes its pane or tab, unlike the mirror's own close. */
+export function HubRowCloseAgent({
+  isAgent,
+  onClose
+}: {
+  isAgent: boolean
+  onClose: () => void
+}): React.JSX.Element {
+  return (
+    <HubRowAction
+      label={
+        isAgent
+          ? translate('agentHub.row.closeAgent', 'Close agent')
+          : translate('agentHub.row.closeShell', 'Close terminal')
+      }
+      onClick={onClose}
+    >
+      <X className="size-3.5" />
+    </HubRowAction>
   )
 }

@@ -19,6 +19,7 @@ import {
   PANE_KEY_3
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { AgentHubPanel } from './AgentHubPanel'
+import { AgentHubRow } from './AgentHubRow'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { buildAgentHubLists } from './agent-hub-lists'
 import {
@@ -271,6 +272,33 @@ describe('AgentHubPanel terminal sort', () => {
   })
 })
 
+describe('AgentHubRow close button', () => {
+  it.each([
+    [false, 1],
+    [true, 0]
+  ])('selectionMode=%s shows %s close buttons', (selectionMode, count) => {
+    act(() =>
+      root.render(
+        <TooltipProvider>
+          <AgentHubRow
+            kind="idle"
+            agentType={null}
+            title="Shell"
+            selected={false}
+            mirrorKey="tab-1"
+            selectionMode={selectionMode}
+            onOpen={vi.fn()}
+            onPopout={vi.fn()}
+            onJump={vi.fn()}
+            onClose={vi.fn()}
+          />
+        </TooltipProvider>
+      )
+    )
+    expect(container.querySelectorAll('button[aria-label="Close terminal"]')).toHaveLength(count)
+  })
+})
+
 describe('AgentHubPanel row mirror button', () => {
   const rowButton = (label: string): HTMLButtonElement | null =>
     container.querySelector(`[data-agent-hub-row] button[aria-label="${label}"]`)
@@ -291,6 +319,12 @@ describe('AgentHubPanel row mirror button', () => {
     click(container.querySelector('[data-agent-hub-row]'))
     expect(handlers.onOpen).toHaveBeenCalledTimes(1)
     expect(handlers.onPopout).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers a close-agent button on a row', () => {
+    renderPanel()
+    expect(rowButton('Close agent')).not.toBeNull()
+    expect(rowButton('Close mirror')).toBeNull()
   })
 
   it('raises an open owner and restores a parked owner with a close beside it', () => {

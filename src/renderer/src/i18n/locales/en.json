@@ -21726,7 +21726,9 @@
       "currentWorkspace": "In the workspace you have open",
       "sendToHub": "Send to the hub",
       "bringBack": "Bring back",
-      "showInMirror": "Show in mirror"
+      "showInMirror": "Show in mirror",
+      "closeAgent": "Close agent",
+      "closeShell": "Close terminal"
     },
     "mirror": {
       "close": "Close mirror",
