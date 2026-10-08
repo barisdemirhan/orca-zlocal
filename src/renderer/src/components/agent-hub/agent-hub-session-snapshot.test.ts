@@ -2,7 +2,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AGENT_HUB_SESSION_STORAGE_KEY,
-  AGENT_HUB_LEGACY_SESSION_STORAGE_KEY,
   agentHubSessionSnapshot,
   clearAgentHubSessionSnapshot,
   parseAgentHubSessionSnapshot,
@@ -43,7 +42,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-describe('session v2 and migration', () => {
+describe('session v2', () => {
   it('round-trips complete ordered windows with stable identities and selection', () => {
     const a = saved('a')
     const grouped = { ...a, tabs: [...a.tabs, ...saved('c').tabs], activeTabId: 'entry-c' }
@@ -52,46 +51,7 @@ describe('session v2 and migration', () => {
     expect(readAgentHubSessionSnapshot()).toEqual(session)
     expect(readAgentHubSessionRecord().status).toBe('valid')
   })
-  it('uses deterministic migration ids and maps geometry, chip order and canvas references', () => {
-    const legacy = {
-      version: 1,
-      mirrors: [
-        {
-          worktreeId: 'wt-1',
-          tabId: 'a',
-          paneKey: null,
-          title: 'A',
-          minimized: true,
-          minimizedAt: 7,
-          geometry: saved('a').geometry,
-          keptPlace: true
-        },
-        { worktreeId: 'wt-1', tabId: 'b', paneKey: null, title: 'B' }
-      ],
-      canvasOpen: false,
-      canvasParked: ['a', 'gone']
-    }
-    window.localStorage.setItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY, JSON.stringify(legacy))
-    const first = readAgentHubSessionRecord()
-    expect(first.status).toBe('migrated')
-    expect(first.snapshot).toEqual(parseAgentHubSessionSnapshot(legacy))
-    expect(first.snapshot?.windows.map((window) => window.tabs[0]?.tabId)).toEqual(['a', 'b'])
-    expect(first.snapshot?.windows[0]).toMatchObject({
-      minimizedAt: 7,
-      geometry: saved('a').geometry,
-      keptPlace: true,
-      tabs: [{ origin: 'manual' }]
-    })
-    expect(first.snapshot?.canvasParked).toEqual([first.snapshot?.windows[0]?.id])
-    expect(window.localStorage.getItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY)).toBe(
-      JSON.stringify(legacy)
-    )
-  })
-  it('prefers v2 and never falls back to stale v1 when v2 is damaged or unsupported', () => {
-    window.localStorage.setItem(
-      AGENT_HUB_LEGACY_SESSION_STORAGE_KEY,
-      JSON.stringify({ version: 1, mirrors: [{ worktreeId: 'wt-1', tabId: 'old' }] })
-    )
+  it('reports damaged and unsupported v2 records as unusable', () => {
     writeAgentHubSessionSnapshot(snapshot)
     expect(readAgentHubSessionSnapshot()).toEqual(snapshot)
     window.localStorage.setItem(AGENT_HUB_SESSION_STORAGE_KEY, '{broken')
@@ -143,21 +103,20 @@ describe('session v2 and migration', () => {
     expect(parsed?.hiddenFamilyRoots).toHaveLength(256)
     expect(parseAgentHubSessionSnapshot({ version: 3, windows })).toBeNull()
   })
-  it('distinguishes absent storage and clears both versions', () => {
+  it('distinguishes absent storage and clears the session', () => {
     expect(readAgentHubSessionRecord()).toEqual({ status: 'absent', snapshot: null })
-    window.localStorage.setItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY, '{}')
     writeAgentHubSessionSnapshot(snapshot)
     clearAgentHubSessionSnapshot()
-    expect(window.localStorage.getItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY)).toBeNull()
+    expect(window.localStorage.getItem(AGENT_HUB_SESSION_STORAGE_KEY)).toBeNull()
     expect(readAgentHubSessionRecord().status).toBe('absent')
   })
-  it('handles blocked storage without losing the legacy record or throwing', () => {
-    window.localStorage.setItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY, 'legacy')
+  it('handles blocked storage without losing the stored record or throwing', () => {
+    window.localStorage.setItem(AGENT_HUB_SESSION_STORAGE_KEY, 'stored')
     vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
       throw new Error('full')
     })
     expect(writeAgentHubSessionSnapshot(snapshot)).toBe(false)
-    expect(window.localStorage.getItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY)).toBe('legacy')
+    expect(window.localStorage.getItem(AGENT_HUB_SESSION_STORAGE_KEY)).toBe('stored')
   })
   it('ignores removed auto-popout marks rather than restoring old automation', () => {
     expect(parseAgentHubSessionSnapshot({ ...snapshot, autoPopoutTabIds: ['a'] })).toEqual(snapshot)

@@ -41,8 +41,6 @@ export type AgentHubSettings = {
   agentHubDockSize?: AgentHubDockSize
   /** Dim everything behind floating windows (mirrors, the floating workspace) to spotlight them. */
   agentHubFloatingDimMode?: AgentHubFloatingDimMode
-  /** Earlier on/off form of the dim; read when no mode is set (on meant until a click behind). */
-  agentHubFloatingDim?: boolean
   /** Agent Hub dock: stay out of sight while no agent is working, waiting, or unread. */
   agentHubDockAutoHide?: boolean
   /** Agent Hub alert (bubble, plus sound when enabled) when an agent asks or needs approval. */
@@ -93,16 +91,13 @@ export const AGENT_HUB_TRAY_PEEK_SECONDS = [0, 3, 5, 10] as const
 export const AGENT_HUB_MUTE_DURATION_MS = 2 * 60 * 60 * 1000
 
 export function agentHubFloatingDimMode(
-  settings:
-    | Pick<AgentHubSettings, 'agentHubFloatingDimMode' | 'agentHubFloatingDim'>
-    | null
-    | undefined
+  settings: Pick<AgentHubSettings, 'agentHubFloatingDimMode'> | null | undefined
 ): AgentHubFloatingDimMode {
   const mode = settings?.agentHubFloatingDimMode
   if (mode === 'off' || mode === 'on' || mode === 'untilClick' || mode === 'minimizeOnClick') {
     return mode
   }
-  return settings?.agentHubFloatingDim === true ? 'untilClick' : 'off'
+  return 'off'
 }
 
 export function normalizeAgentHubPlacement(value: unknown): AgentHubPlacement {

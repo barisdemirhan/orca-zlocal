@@ -1,5 +1,4 @@
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
-import { migrateAgentHubSessionV1 } from './agent-hub-session-migration'
 import {
   isWorktreeHostIdentity,
   getWorktreeIdFromHostIdentity
@@ -7,7 +6,6 @@ import {
 import { AGENT_HUB_MIRROR_TAB_CAP, AGENT_HUB_MIRROR_ENTRY_CAP } from './agent-hub-mirror-membership'
 
 export const AGENT_HUB_SESSION_STORAGE_KEY = 'orca-agent-hub-session-v2'
-export const AGENT_HUB_LEGACY_SESSION_STORAGE_KEY = 'orca-agent-hub-session-v1'
 export const AGENT_HUB_SAVED_WINDOW_CAP = 32
 export type AgentHubSavedMirrorTab = {
   id: string
@@ -96,9 +94,6 @@ export function parseAgentHubSessionSnapshot(value: unknown): AgentHubSessionSna
   if (!isAgentHubSavedRecord(value)) {
     return null
   }
-  if (value.version === 1) {
-    return migrateAgentHubSessionV1(value)
-  }
   if (value.version !== 2 || !Array.isArray(value.windows)) {
     return null
   }
@@ -173,7 +168,7 @@ function storage(): Storage | null {
   return typeof window === 'undefined' ? null : window.localStorage
 }
 export type AgentHubSessionRead = {
-  status: 'absent' | 'valid' | 'migrated' | 'damaged' | 'unsupported' | 'unavailable'
+  status: 'absent' | 'valid' | 'damaged' | 'unsupported' | 'unavailable'
   snapshot: AgentHubSessionSnapshot | null
 }
 export function readAgentHubSessionRecord(): AgentHubSessionRead {
@@ -182,33 +177,21 @@ export function readAgentHubSessionRecord(): AgentHubSessionRead {
     if (!store) {
       return { status: 'unavailable', snapshot: null }
     }
-    const v2 = store.getItem(AGENT_HUB_SESSION_STORAGE_KEY)
-    if (v2 !== null) {
-      let raw: unknown
-      try {
-        raw = JSON.parse(v2)
-      } catch {
-        return { status: 'damaged', snapshot: null }
-      }
-      if (isAgentHubSavedRecord(raw) && raw.version !== 2) {
-        return { status: 'unsupported', snapshot: null }
-      }
-      const snapshot = parseAgentHubSessionSnapshot(raw)
-      return { status: snapshot ? 'valid' : 'damaged', snapshot }
-    }
-    const legacy = store.getItem(AGENT_HUB_LEGACY_SESSION_STORAGE_KEY)
-    if (legacy === null) {
+    const stored = store.getItem(AGENT_HUB_SESSION_STORAGE_KEY)
+    if (stored === null) {
       return { status: 'absent', snapshot: null }
     }
     let raw: unknown
     try {
-      raw = JSON.parse(legacy)
+      raw = JSON.parse(stored)
     } catch {
       return { status: 'damaged', snapshot: null }
     }
-    const snapshot =
-      isAgentHubSavedRecord(raw) && raw.version === 1 ? migrateAgentHubSessionV1(raw) : null
-    return { status: snapshot ? 'migrated' : 'damaged', snapshot }
+    if (isAgentHubSavedRecord(raw) && raw.version !== 2) {
+      return { status: 'unsupported', snapshot: null }
+    }
+    const snapshot = parseAgentHubSessionSnapshot(raw)
+    return { status: snapshot ? 'valid' : 'damaged', snapshot }
   } catch {
     return { status: 'unavailable', snapshot: null }
   }
@@ -216,7 +199,6 @@ export function readAgentHubSessionRecord(): AgentHubSessionRead {
 export function readAgentHubSessionSnapshot(): AgentHubSessionSnapshot | null {
   return readAgentHubSessionRecord().snapshot
 }
-/** Leave v1 intact as the downgrade snapshot; grouped windows cannot be truthfully dual-written. */
 export function writeAgentHubSessionSnapshot(snapshot: AgentHubSessionSnapshot): boolean {
   try {
     const store = storage()
@@ -230,11 +212,9 @@ export function writeAgentHubSessionSnapshot(snapshot: AgentHubSessionSnapshot):
   }
 }
 export function clearAgentHubSessionSnapshot(): void {
-  for (const key of [AGENT_HUB_SESSION_STORAGE_KEY, AGENT_HUB_LEGACY_SESSION_STORAGE_KEY]) {
-    try {
-      storage()?.removeItem(key)
-    } catch {
-      /* Storage is optional. */
-    }
+  try {
+    storage()?.removeItem(AGENT_HUB_SESSION_STORAGE_KEY)
+  } catch {
+    /* Storage is optional. */
   }
 }
