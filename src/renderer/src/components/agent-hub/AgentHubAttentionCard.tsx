@@ -14,6 +14,7 @@ import {
   type NativeChatInteractiveCardControl
 } from '../native-chat/NativeChatInteractiveCard'
 import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agent-support'
+import { nativeChatCardDismissKey } from '../native-chat/native-chat-dismiss-key'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
 import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
@@ -112,6 +113,16 @@ export function AgentHubAttentionCard({
     FINISH_ANSWER_AFTER_UNMOUNT
   )
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
+  // The native card no longer hides itself after an answer: hide it until a different prompt
+  // arrives, and forget the dismissal once the prompt clears so an identical later one shows.
+  const nativeCardKey = useMemo(() => nativeChatCardDismissKey(card), [card])
+  const [dismissedNativeKey, setDismissedNativeKey] = useState<string | null>(null)
+  useEffect(() => {
+    if (card === null) {
+      setDismissedNativeKey(null)
+    }
+  }, [card])
+  const nativeCardDismissed = dismissedNativeKey !== null && dismissedNativeKey === nativeCardKey
   const cardKey = agentHubCardKey(paneKey, agentHubStateSince(thread))
   const [chosen, setChosenState] = useState(() => readAnsweredAgentHubCard(cardKey))
   const setChosen = (choice: number | null): void => {
@@ -342,14 +353,16 @@ export function AgentHubAttentionCard({
         </>
       ) : canAnswer ? (
         <div className="mt-3">
-          <NativeChatInteractiveCard
-            card={card}
-            send={send}
-            canSend
-            layout="embedded"
-            highlightRecommended
-            controlRef={nativeControlRef}
-          />
+          {nativeCardDismissed ? null : (
+            <NativeChatInteractiveCard
+              card={card}
+              send={send}
+              onDismiss={() => setDismissedNativeKey(nativeCardKey)}
+              layout="embedded"
+              highlightRecommended
+              controlRef={nativeControlRef}
+            />
+          )}
         </div>
       ) : (
         // Why: the structured prompt can be absent (older hook, relay trimmed it) or the

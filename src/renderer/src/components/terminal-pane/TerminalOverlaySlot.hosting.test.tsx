@@ -70,7 +70,7 @@ function renderSlot(tabId: string): void {
         activityTerminalPortal={null}
         onFocusOwningGroup={undefined}
         consumeSuppressedPtyExit={() => false}
-        leaveWorktreeIfEmpty={() => {}}
+        captureEmptiedReaction={() => () => {}}
       />
     )
   })

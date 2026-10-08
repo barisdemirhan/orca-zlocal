@@ -153,9 +153,6 @@ export function NativeChatInteractiveCard({
         layout={layout}
         highlightRecommended={highlightRecommended}
         controlRef={questionControlRef}
-        layout={layout}
-        highlightRecommended={highlightRecommended}
-        controlRef={questionControlRef}
         onAnswer={(selections) => {
           if (submittingRef.current) {
             return

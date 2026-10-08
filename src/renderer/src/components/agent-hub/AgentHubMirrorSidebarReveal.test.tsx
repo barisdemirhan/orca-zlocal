@@ -21,6 +21,7 @@ vi.mock('@/store', async () => {
   const useAppStore = create(() => ({
     sidebarOpen: false,
     activeWorktreeId: 'keep-active',
+    floatingWorkspacePanelOpen: false,
     settings: { experimentalAgentHub: true },
     setSidebarOpen: vi.fn((sidebarOpen: boolean) => useAppStore.setState({ sidebarOpen }))
   }))
@@ -55,10 +56,13 @@ it.each(['git', 'folder'])('opens the sidebar and parks all mirrors for a %s wor
   }
   openAgentHubMirror(target)
   openAgentHubMirror({ ...target, tab: makeTabWithIds('tab-2', worktree.id) })
-  const panel = document.createElement('div')
-  panel.setAttribute('data-floating-terminal-panel', '')
-  panel.setAttribute('aria-hidden', 'false')
-  document.body.append(panel)
+  const { settings } = useAppStore.getState()
+  if (settings) {
+    useAppStore.setState({
+      floatingWorkspacePanelOpen: true,
+      settings: { ...settings, floatingTerminalEnabled: true }
+    })
+  }
   const hide = vi.fn()
   const reveal = vi.fn()
   window.addEventListener(TOGGLE_FLOATING_TERMINAL_EVENT, hide)
@@ -81,7 +85,7 @@ it.each(['git', 'folder'])('opens the sidebar and parks all mirrors for a %s wor
   expect(useAppStore.getState().activeWorktreeId).toBe('keep-active')
   window.removeEventListener(TOGGLE_FLOATING_TERMINAL_EVENT, hide)
   window.removeEventListener(SCROLL_TO_CURRENT_WORKSPACE_REVEAL_REQUEST_EVENT, reveal)
-  panel.remove()
+  useAppStore.setState({ floatingWorkspacePanelOpen: false })
 })
 
 it('omits floating workspace mirrors', () => {

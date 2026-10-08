@@ -16,8 +16,10 @@ vi.mock('@/attention/agent-attention-notification-delivery', () => ({
   readAgentAttentionNotificationSound: () => undefined
 }))
 vi.mock('../terminal-pane/terminal-notification-pane-visibility', () => ({
-  isOrcaWindowForegroundFocused: () => false,
-  isVisibleForegroundPaneKey: () => false
+  isOrcaWindowForegroundFocused: () => false
+}))
+vi.mock('../terminal-pane/terminal-attention-surface', () => ({
+  createTerminalAttentionSurface: () => ({ isSurfaceViewed: () => false })
 }))
 vi.mock('./agent-hub-alert-queue', () => ({ pushAgentHubAlerts: vi.fn() }))
 vi.mock('./agent-hub-chime', () => ({ playAgentHubAlertSound: vi.fn() }))

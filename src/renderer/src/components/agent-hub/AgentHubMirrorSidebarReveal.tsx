@@ -5,7 +5,7 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { requestWorkspaceSidebarReveal } from '@/lib/scroll-to-current-workspace-status'
 import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
-import { isFloatingWorkspacePanelVisible } from '@/lib/floating-workspace-terminal-actions'
+import { selectFloatingWorkspacePanelVisible } from '@/store/floating-workspace-panel-selector'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { minimizeAllAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -35,7 +35,7 @@ export function AgentHubMirrorSidebarReveal({
               state.setSidebarOpen(true)
             }
             minimizeAllAgentHubMirrors()
-            if (isFloatingWorkspacePanelVisible()) {
+            if (selectFloatingWorkspacePanelVisible(state)) {
               window.dispatchEvent(new Event(TOGGLE_FLOATING_TERMINAL_EVENT))
             }
             // The newly opened sidebar must subscribe before it receives the reveal request.

@@ -4,10 +4,8 @@ import {
   isNativeAgentBannerRefused,
   readAgentAttentionNotificationSound
 } from '@/attention/agent-attention-notification-delivery'
-import {
-  isOrcaWindowForegroundFocused,
-  isVisibleForegroundPaneKey
-} from '../terminal-pane/terminal-notification-pane-visibility'
+import { isOrcaWindowForegroundFocused } from '../terminal-pane/terminal-notification-pane-visibility'
+import { createTerminalAttentionSurface } from '../terminal-pane/terminal-attention-surface'
 import { pushAgentHubAlerts } from './agent-hub-alert-queue'
 import {
   agentHubAlertBaseline,
@@ -52,9 +50,13 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
     const state = useAppStore.getState()
     // The pane the user is looking at needs no alert: they are watching it happen.
     const { chips } = readAgentHubMirrors()
+    const surface = createTerminalAttentionSurface(state)
     const unseen = fresh.filter(
       (alert) =>
-        !isVisibleForegroundPaneKey(state, alert.thread.worktree.id, alert.thread.paneKey) &&
+        !surface.isSurfaceViewed({
+          workspaceId: alert.thread.worktree.id,
+          surfaceKey: alert.thread.paneKey
+        }) &&
         (!alert.mirrorOnly ||
           chips.some((chip) =>
             chip.window.tabs.some((tab) => agentHubTargetShowsThread(tab.target, alert.thread))
