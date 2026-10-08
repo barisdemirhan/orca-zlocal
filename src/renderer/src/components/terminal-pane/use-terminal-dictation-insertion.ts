@@ -7,6 +7,24 @@ import {
 } from './terminal-mount-retention-leases'
 import { handleTerminalProgrammaticTextPaste } from './terminal-programmatic-text-paste'
 
+type DictationInsertDetail = { text?: string; tabId?: string; paneId?: number }
+
+function readDictationInsertDetail(detail: unknown): string | DictationInsertDetail | null {
+  if (typeof detail === 'string') {
+    return detail
+  }
+  if (typeof detail !== 'object' || detail === null) {
+    return null
+  }
+  if ('tabId' in detail && detail.tabId !== undefined && typeof detail.tabId !== 'string') {
+    return null
+  }
+  const text = 'text' in detail && typeof detail.text === 'string' ? detail.text : undefined
+  const tabId = 'tabId' in detail && typeof detail.tabId === 'string' ? detail.tabId : undefined
+  const paneId = 'paneId' in detail && typeof detail.paneId === 'number' ? detail.paneId : undefined
+  return { text, tabId, paneId }
+}
+
 type DictationInsertionArgs = {
   tabId: string
   worktreeIdRef: React.RefObject<string>
@@ -27,21 +45,22 @@ export function useTerminalDictationInsertion({
       return
     }
     const onDictationInsert = (event: Event): void => {
-      const detail = (
-        event as CustomEvent<string | { text?: string; tabId?: string; paneId?: number }>
-      ).detail
+      const detail = readDictationInsertDetail('detail' in event ? event.detail : undefined)
+      if (!detail) {
+        return
+      }
       // Why: a locked dictation origin remains writable after its mirror returns home.
       if (
         !isActiveRef.current &&
         !(
           typeof detail === 'object' &&
-          detail?.tabId === tabId &&
+          detail.tabId === tabId &&
           hasTerminalMountRetentionLease(worktreeIdRef.current, tabId)
         )
       ) {
         return
       }
-      const text = typeof detail === 'string' ? detail : detail?.text
+      const text = typeof detail === 'string' ? detail : detail.text
       if (!text) {
         return
       }
