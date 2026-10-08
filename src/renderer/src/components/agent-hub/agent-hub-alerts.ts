@@ -56,6 +56,33 @@ export function diffAgentHubAlerts(
   return { baseline: new Set(current.map((alert) => alert.id)), fresh }
 }
 
+/** Bounds the raised-alert memory; the oldest ids drop first. */
+export const RAISED_ALERT_MEMORY_LIMIT = 200
+
+export function rememberRaisedAlertIds(raised: Set<string>, ids: Iterable<string>): void {
+  for (const id of ids) {
+    raised.delete(id)
+    raised.add(id)
+    const oldest = raised.values().next()
+    if (raised.size > RAISED_ALERT_MEMORY_LIMIT && !oldest.done) {
+      raised.delete(oldest.value)
+    }
+  }
+}
+
+/** Alerts not raised yet, recorded as raised. Why: a result re-entering the lists must not re-alert. */
+export function takeUnraisedAlerts(
+  raised: Set<string>,
+  alerts: readonly AgentHubAlert[]
+): AgentHubAlert[] {
+  const unraised = alerts.filter((alert) => !raised.has(alert.id))
+  rememberRaisedAlertIds(
+    raised,
+    unraised.map((alert) => alert.id)
+  )
+  return unraised
+}
+
 /**
  * True when Orca's desktop notification for this agent will make its own sound. Why: the
  * delivery service skips the banner only for the active worktree of a focused window, so the

@@ -12,13 +12,18 @@ import { pushAgentHubAlerts } from './agent-hub-alert-queue'
 import {
   agentHubAlertBaseline,
   diffAgentHubAlerts,
-  orcaNotificationWillSound
+  orcaNotificationWillSound,
+  rememberRaisedAlertIds,
+  takeUnraisedAlerts
 } from './agent-hub-alerts'
 import { playAgentHubAlertSound } from './agent-hub-chime'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubTargetShowsThread } from './agent-hub-pane-target'
 import type { AgentHubLists } from './agent-hub-lists'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
+
+/** Module-level so a remount of the hub does not forget what was already announced. */
+const raisedAlertIds = new Set<string>()
 
 /**
  * Queues an alert when an agent starts asking, needs approval, or finishes. A reader of the
@@ -32,13 +37,15 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
     // Why a baseline first: whatever is already waiting at mount was seen elsewhere.
     if (baselineRef.current === null) {
       baselineRef.current = agentHubAlertBaseline(lists)
+      rememberRaisedAlertIds(raisedAlertIds, baselineRef.current)
       return
     }
-    const { baseline, fresh } = diffAgentHubAlerts(baselineRef.current, lists, {
+    const diff = diffAgentHubAlerts(baselineRef.current, lists, {
       onNeedsInput: alertOnNeedsInput,
       onFinished: alertOnFinished
     })
-    baselineRef.current = baseline
+    baselineRef.current = diff.baseline
+    const fresh = takeUnraisedAlerts(raisedAlertIds, diff.fresh)
     if (fresh.length === 0 || (alertsMutedUntil ?? 0) > Date.now()) {
       return
     }
