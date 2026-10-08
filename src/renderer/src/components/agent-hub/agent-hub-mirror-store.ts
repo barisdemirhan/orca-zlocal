@@ -80,17 +80,21 @@ function emit(next: AgentHubMirrorState): void {
 /** Flags a cap eviction: a chip other than `exemptId` present before and gone after. */
 function noteChipEvictions(
   before: readonly AgentHubMirrorChip[],
-  after: AgentHubMirrorChip[],
+  after: readonly AgentHubMirrorChip[],
   exemptId?: string
-): AgentHubMirrorChip[] {
+): void {
   const kept = new Set(after.map((chip) => chip.window.id))
   if (before.some((chip) => chip.window.id !== exemptId && !kept.has(chip.window.id))) {
     chipEvicted = true
   }
-  return after
 }
-function parkChip(chips: readonly AgentHubMirrorChip[], window: AgentHubMirrorWindowState) {
-  return noteChipEvictions(chips, withChip(chips, window), window.id)
+function parkChip(
+  chips: readonly AgentHubMirrorChip[],
+  window: AgentHubMirrorWindowState
+): AgentHubMirrorChip[] {
+  const next = withChip(chips, window)
+  noteChipEvictions(chips, next, window.id)
+  return next
 }
 function showWindow(
   current: AgentHubMirrorState,
