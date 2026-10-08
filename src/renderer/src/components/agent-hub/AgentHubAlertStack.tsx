@@ -12,6 +12,7 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAnchorBinding } from './use-anchor-binding'
+import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const ALERT_VISIBLE_MS = 7000
@@ -115,83 +116,95 @@ function AlertCard({
   }, [alert.id])
 
   const text = alertText(alert)
+  const current = useAgentHubWorktreeCurrent(alert.thread.worktree.id)
   return (
     <div
       role="status"
       data-agent-hub-alert={alert.kind}
-      className="relative w-80 shrink-0 animate-in rounded-xl border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95"
+      className="w-80 shrink-0 animate-in rounded-xl border border-foreground/[0.12] bg-popover text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95"
       onMouseEnter={stopTimer}
       onMouseLeave={startTimer}
     >
-      <button type="button" className="block w-full text-left" onClick={() => onOpen(alert)}>
-        <span className="flex items-center gap-2.5 pr-20">
-          <HubAvatar
-            agentType={alert.thread.agentType}
-            kind={alert.kind === 'done' ? 'done' : 'ask'}
-          />
-          <span className="min-w-0 flex-1 text-[13px]">
-            <span className="block truncate">
-              <span className="font-semibold">@{alert.thread.agentType}</span>{' '}
-              <span
-                data-kind={alert.kind}
-                className="text-agent-question-text data-[kind=done]:text-status-success"
-              >
-                {alertHeadline(alert)}
+      {/* Why an inner layer: the card's enter animation owns the root's opacity. */}
+      <div
+        data-current={current}
+        title={
+          current
+            ? translate('agentHub.row.currentWorkspace', 'In the workspace you have open')
+            : undefined
+        }
+        className="relative px-3 py-2.5 transition-opacity data-[current=true]:opacity-55 data-[current=true]:hover:opacity-100"
+      >
+        <button type="button" className="block w-full text-left" onClick={() => onOpen(alert)}>
+          <span className="flex items-center gap-2.5 pr-20">
+            <HubAvatar
+              agentType={alert.thread.agentType}
+              kind={alert.kind === 'done' ? 'done' : 'ask'}
+            />
+            <span className="min-w-0 flex-1 text-[13px]">
+              <span className="block truncate">
+                <span className="font-semibold">@{alert.thread.agentType}</span>{' '}
+                <span
+                  data-kind={alert.kind}
+                  className="text-agent-question-text data-[kind=done]:text-status-success"
+                >
+                  {alertHeadline(alert)}
+                </span>
               </span>
+              <HubCrumb location={location} />
             </span>
-            <HubCrumb location={location} />
           </span>
-        </span>
-        {text ? (
-          <span className="mt-1.5 line-clamp-3 text-[13px] break-words text-foreground/85">
-            {text}
-          </span>
-        ) : null}
-      </button>
-      <AgentHubActionTooltip
-        label={translate('agentHub.hover.popout', 'Own window')}
-        actionId="agentHub.popOut"
-      >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={translate('agentHub.hover.popout', 'Own window')}
-          onClick={() => onPopout(alert)}
-          className="absolute top-2 right-14"
+          {text ? (
+            <span className="mt-1.5 line-clamp-3 text-[13px] break-words text-foreground/85">
+              {text}
+            </span>
+          ) : null}
+        </button>
+        <AgentHubActionTooltip
+          label={translate('agentHub.hover.popout', 'Own window')}
+          actionId="agentHub.popOut"
         >
-          <PictureInPicture2 className="size-3.5" />
-        </Button>
-      </AgentHubActionTooltip>
-      <AgentHubActionTooltip
-        label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
-      >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={translate(
-            'agentHub.mirror.jumpHint',
-            'Jump to this terminal in its workspace'
-          )}
-          onClick={() => onJump(alert)}
-          className="absolute top-2 right-8"
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={translate('agentHub.hover.popout', 'Own window')}
+            onClick={() => onPopout(alert)}
+            className="absolute top-2 right-14"
+          >
+            <PictureInPicture2 className="size-3.5" />
+          </Button>
+        </AgentHubActionTooltip>
+        <AgentHubActionTooltip
+          label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
         >
-          <ArrowUpRight className="size-3.5" />
-        </Button>
-      </AgentHubActionTooltip>
-      <AgentHubActionTooltip label={translate('agentHub.alert.dismiss', 'Dismiss')}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
-          onClick={() => onDismiss(alert.id)}
-          className="absolute top-2 right-2"
-        >
-          <X className="size-3.5" />
-        </Button>
-      </AgentHubActionTooltip>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={translate(
+              'agentHub.mirror.jumpHint',
+              'Jump to this terminal in its workspace'
+            )}
+            onClick={() => onJump(alert)}
+            className="absolute top-2 right-8"
+          >
+            <ArrowUpRight className="size-3.5" />
+          </Button>
+        </AgentHubActionTooltip>
+        <AgentHubActionTooltip label={translate('agentHub.alert.dismiss', 'Dismiss')}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
+            onClick={() => onDismiss(alert.id)}
+            className="absolute top-2 right-2"
+          >
+            <X className="size-3.5" />
+          </Button>
+        </AgentHubActionTooltip>
+      </div>
     </div>
   )
 }
