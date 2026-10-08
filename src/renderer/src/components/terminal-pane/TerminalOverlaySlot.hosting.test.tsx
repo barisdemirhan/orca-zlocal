@@ -11,7 +11,7 @@ vi.mock('../../store', async () => {
   const { create } = await import('zustand')
   const useAppStore = create(() => ({
     pendingStartupByTabId: {} as Record<string, unknown>,
-    settings: { experimentalAgentHub: false } as Record<string, unknown>,
+    settings: { experimentalAgentHub: false },
     focusGroup: () => {}
   }))
   return { useAppStore }
