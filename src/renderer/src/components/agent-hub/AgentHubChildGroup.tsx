@@ -2,7 +2,9 @@ import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import type { AgentChildRowModel } from '../../../../shared/agent-child-row-model'
 import { agentChildRowText } from '../agent-child-row-text'
-import { HubChip, HubCollapse, HubCounts, HubFoldChevron, HubStateIndicator } from './AgentHubAtoms'
+import { HubChip } from './AgentHubInlineLabels'
+import { HubCollapse, HubFoldChevron } from './AgentHubFold'
+import { HubCounts, HubStateIndicator } from './AgentHubStateMarks'
 import { toggleAgentHubChildren } from './agent-hub-child-expansion'
 import {
   agentHubChildCounts,
@@ -47,12 +49,12 @@ function SubagentRow({
       type="button"
       tabIndex={-1}
       onClick={onOpen}
-      className="flex w-full items-center gap-2.5 rounded-[10px] px-2 py-[5px] text-left hover:bg-foreground/[0.03]"
+      className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-foreground/[0.03]"
     >
       <span className="grid w-3 shrink-0 place-items-center">
         <HubStateIndicator kind={agentHubSubagentKind(row)} />
       </span>
-      <span className="min-w-0 flex-1 truncate text-[12px]">
+      <span className="min-w-0 flex-1 truncate text-xs">
         <span className="font-medium text-foreground/90">{text.lead}</span>
         {text.trail ? <span className="text-muted-foreground"> · {text.trail}</span> : null}
       </span>
@@ -92,18 +94,18 @@ export function AgentHubChildGroup({
     return null
   }
   return (
-    <div data-indent={indent} className="mb-1 ml-[30px] data-[indent=true]:ml-[44px]">
+    <div data-indent={indent} className="mb-1 ml-7.5 data-[indent=true]:ml-11">
       <button
         type="button"
         tabIndex={focusable ? 0 : -1}
         aria-expanded={expanded}
         onClick={onToggle ?? (() => toggleAgentHubChildren(parentKey))}
-        className="flex h-7 w-full items-center gap-2 rounded-lg bg-foreground/[0.04] px-2.5 text-left text-[12px] text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+        className="flex h-7 w-full items-center gap-2 rounded-lg bg-foreground/[0.04] px-2.5 text-left text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
       >
         <span className="min-w-0 flex-1 truncate">
           {childGroupLabel(workers.length, subagents.length)}
         </span>
-        <span className="flex items-center gap-[9px] font-mono text-[11px] text-muted-foreground/70">
+        <span className="flex items-center gap-2.5 font-mono text-[11px] text-muted-foreground/70">
           <HubCounts counts={agentHubChildCounts(childAgents)} />
         </span>
         <HubFoldChevron open={expanded} className="size-3.5" />

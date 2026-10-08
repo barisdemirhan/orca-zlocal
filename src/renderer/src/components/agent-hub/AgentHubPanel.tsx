@@ -8,7 +8,7 @@ import { translate } from '@/i18n/i18n'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubNestedCount } from './AgentHubAtoms'
+import { HubNestedCount } from './AgentHubSectionHeader'
 import type { AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubPanelFooter, agentHubPopoutKeys } from './AgentHubPanelFooter'
 import {
@@ -274,15 +274,13 @@ export function AgentHubPanel({
       onKeyDown={onKeyDown}
       className="flex max-h-[min(640px,calc(100vh-96px))] min-h-0 flex-col outline-none"
     >
-      <div className="flex shrink-0 items-center gap-3 pt-3.5 pr-3.5 pb-2.5 pl-[18px]">
-        <h2 className="shrink-0 text-[15px] font-semibold tracking-[-0.01em]">
-          {translate('agentHub.title', 'Agents')}
-        </h2>
+      <div className="flex shrink-0 items-center gap-3 pt-3.5 pr-3.5 pb-2.5 pl-4.5">
+        <h2 className="shrink-0 text-sm font-semibold">{translate('agentHub.title', 'Agents')}</h2>
         <div
           role="tablist"
           // Why min-w-0 and hidden overflow: in a window narrower than the panel the tabs clip
           // rather than wrap or push the close button out.
-          className="ml-auto flex min-w-0 gap-0.5 overflow-hidden rounded-[10px] border border-border bg-background p-0.5"
+          className="ml-auto flex min-w-0 gap-0.5 overflow-hidden rounded-lg border border-border bg-background p-0.5"
         >
           {AGENT_HUB_TABS.map((value) => (
             <button
@@ -298,7 +296,7 @@ export function AgentHubPanel({
               {tabLabel(value)}
               <span
                 data-ask={value === 'inbox' && needsYou.length > 0}
-                className="font-mono text-[10.5px] text-muted-foreground/70 group-data-[active=true]/tab:text-muted-foreground data-[ask=true]:text-agent-question group-data-[active=true]/tab:data-[ask=true]:text-agent-question"
+                className="font-mono text-[11px] text-muted-foreground/70 group-data-[active=true]/tab:text-muted-foreground data-[ask=true]:text-agent-question group-data-[active=true]/tab:data-[ask=true]:text-agent-question"
               >
                 {counts[value]}
                 {value === 'running' ? <HubNestedCount value={lists.nestedWorking} /> : null}
@@ -314,7 +312,7 @@ export function AgentHubPanel({
           onClick={onClose}
           className="grid size-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
         >
-          <X className="size-[15px]" />
+          <X className="size-4" />
         </button>
       </div>
       <div

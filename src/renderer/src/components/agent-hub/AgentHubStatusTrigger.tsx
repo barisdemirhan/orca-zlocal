@@ -21,10 +21,10 @@ export function AgentHubStatusTrigger({
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       {...buttonProps}
       data-open={open}
-      className="flex h-[22px] cursor-pointer items-center gap-1.5 rounded-[5px] pr-2 pl-1 whitespace-nowrap text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground data-[open=true]:bg-foreground/[0.07] data-[open=true]:text-foreground"
+      className="flex h-5.5 cursor-pointer items-center gap-1.5 rounded-sm pr-2 pl-1 whitespace-nowrap text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground data-[open=true]:bg-foreground/[0.07] data-[open=true]:text-foreground"
       aria-label={label}
     >
-      <span className="flex h-[18px] items-center gap-2 rounded-full border border-foreground/10 bg-background px-[7px]">
+      <span className="flex h-4.5 items-center gap-2 rounded-full border border-foreground/10 bg-background px-2">
         <DockCounters counts={counts} />
       </span>
       {iconOnly ? null : (

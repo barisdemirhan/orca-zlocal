@@ -3,7 +3,7 @@ import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubDockEdge } from '../../../../shared/agent-hub-settings'
-import { HubNestedCount } from './AgentHubAtoms'
+import { HubNestedCount } from './AgentHubSectionHeader'
 import { agentHubNotchShape } from './agent-hub-dock-geometry'
 import type { AgentHubCounts } from './agent-hub-lists'
 
@@ -49,7 +49,7 @@ export function DockCounter({
   return (
     <span
       data-zero={value === 0}
-      className="flex shrink-0 items-center gap-1 font-mono text-[10.5px] text-muted-foreground tabular-nums data-[zero=true]:opacity-45 group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col"
+      className="flex shrink-0 items-center gap-1 font-mono text-[11px] text-muted-foreground tabular-nums data-[zero=true]:opacity-45 group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col"
     >
       <CounterIndicator kind={kind} active={value > 0} />
       <span>

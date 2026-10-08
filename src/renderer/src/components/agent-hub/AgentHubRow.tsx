@@ -3,7 +3,8 @@ import { ArrowUpRight, CheckCheck, Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import type { AgentType } from '../../../../shared/agent-status-types'
-import { HubAvatar, HubStateIndicator, type AgentHubIndicatorKind } from './AgentHubAtoms'
+import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
+import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import { HubRowAction, HubRowMirrorActions } from './AgentHubRowActions'
 
 /** One agent or shell row: click opens the live mirror, ↵ jumps to the pane. */
@@ -68,7 +69,7 @@ export function AgentHubRow({
           ? translate('agentHub.row.currentWorkspace', 'In the workspace you have open')
           : undefined
       }
-      className="jump-palette-item group/row flex cursor-pointer items-center gap-2.5 rounded-[10px] border border-transparent px-2 py-[7px] transition-opacity hover:bg-foreground/[0.03] data-[current=true]:opacity-55 data-[indent=true]:ml-3.5 data-[current=true]:hover:opacity-100 data-[current=true]:data-[selected=true]:opacity-100"
+      className="jump-palette-item group/row flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-2 py-2 transition-opacity hover:bg-foreground/[0.03] data-[current=true]:opacity-55 data-[indent=true]:ml-3.5 data-[current=true]:hover:opacity-100 data-[current=true]:data-[selected=true]:opacity-100"
       onClick={onOpen}
     >
       <span className="grid w-3 shrink-0 place-items-center">
@@ -76,12 +77,12 @@ export function AgentHubRow({
       </span>
       <HubAvatar agentType={agentType} kind={agentType ? kind : null} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[12.5px] font-medium">{title}</span>
+        <span className="block truncate text-[13px] font-medium">{title}</span>
         {subtitle ? (
-          <span className="block truncate text-[11.5px] text-muted-foreground">{subtitle}</span>
+          <span className="block truncate text-xs text-muted-foreground">{subtitle}</span>
         ) : null}
         {snippet ? (
-          <span className="block truncate text-[11.5px] text-muted-foreground/70">“{snippet}”</span>
+          <span className="block truncate text-xs text-muted-foreground/70">“{snippet}”</span>
         ) : null}
       </span>
       <span className="flex shrink-0 items-center gap-2 font-mono text-[11px] text-muted-foreground/70">
@@ -103,7 +104,7 @@ export function AgentHubRow({
                   label={translate('agentHub.row.markRead', 'Mark read')}
                   onClick={onMarkRead}
                 >
-                  <CheckCheck className="size-[13px]" />
+                  <CheckCheck className="size-3.5" />
                 </HubRowAction>
               ) : null}
               <HubRowMirrorActions
@@ -115,7 +116,7 @@ export function AgentHubRow({
                 label={translate('agentHub.row.jump', 'Jump to this terminal')}
                 onClick={onJump}
               >
-                <ArrowUpRight className="size-[13px]" />
+                <ArrowUpRight className="size-3.5" />
               </HubRowAction>
             </>
           )}

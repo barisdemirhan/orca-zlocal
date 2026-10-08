@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
@@ -10,7 +11,8 @@ import {
   threadAgentStateLabel
 } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubAvatar, HubChip, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
+import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
+import { HubChip, HubCrumb } from './AgentHubInlineLabels'
 import { agentHubIndicatorKind, agentHubStateSince, agentHubToolName } from './agent-hub-lists'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useClaudeSessionModel } from './use-claude-session-model'
@@ -83,13 +85,11 @@ function ThreadDetails({
   const model = reportedModel || scannedModel
   const tool = kind === 'work' ? agentHubToolName(thread) : null
   return (
-    <div className="flex flex-col gap-2.5 text-[11.5px]">
+    <div className="flex flex-col gap-2.5 text-xs">
       <div className="flex items-center gap-2.5">
         <HubAvatar agentType={thread.agentType} kind={kind} />
         <div className="min-w-0">
-          <div className="truncate text-[12.5px] font-semibold text-foreground">
-            {copy.taskTitle}
-          </div>
+          <div className="truncate text-[13px] font-semibold text-foreground">{copy.taskTitle}</div>
           <div className="truncate text-muted-foreground">
             {formatAgentTypeLabel(thread.agentType)}
             {model ? ` · ${model}` : ''}
@@ -132,25 +132,17 @@ function ThreadDetails({
               label={translate('agentHub.hover.popout', 'Own window')}
               actionId="agentHub.popOut"
             >
-              <button
-                type="button"
-                onClick={actions.onPopout}
-                className="flex h-6 items-center gap-1.5 rounded-md px-2 text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-              >
+              <Button type="button" variant="ghost" size="xs" onClick={actions.onPopout}>
                 <PictureInPicture2 aria-hidden className="size-3.5" />
                 {translate('agentHub.hover.popout', 'Own window')}
-              </button>
+              </Button>
             </AgentHubActionTooltip>
           ) : null}
           {actions.onJump ? (
-            <button
-              type="button"
-              onClick={actions.onJump}
-              className="flex h-6 items-center gap-1.5 rounded-md px-2 text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-            >
+            <Button type="button" variant="ghost" size="xs" onClick={actions.onJump}>
               <ArrowUpRight aria-hidden className="size-3.5" />
               {translate('agentHub.mirror.jump', 'Jump')}
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}

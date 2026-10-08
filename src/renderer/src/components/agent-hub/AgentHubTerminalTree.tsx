@@ -4,7 +4,9 @@ import { Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
-import { HubChip, HubCollapse, HubCounts, HubFoldChevron, HubKeys } from './AgentHubAtoms'
+import { HubChip, HubKeys } from './AgentHubInlineLabels'
+import { HubCollapse, HubFoldChevron } from './AgentHubFold'
+import { HubCounts } from './AgentHubStateMarks'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
 import { AgentHubTerminalSortMenu } from './AgentHubTerminalSortMenu'
@@ -31,7 +33,7 @@ function rowSubtitle(row: AgentHubTerminalRow): string {
 
 function GroupSummary({ group }: { group: AgentHubGroupNode }): React.JSX.Element {
   return (
-    <span className="ml-auto flex items-center gap-[9px] font-mono text-[11px] font-normal text-muted-foreground/70">
+    <span className="ml-auto flex items-center gap-2.5 font-mono text-[11px] font-normal text-muted-foreground/70">
       <HubCounts counts={group.counts} />
       <span>
         {translate('agentHub.terminals.termCount', '{{value0}} term', { value0: group.rowCount })}
@@ -174,7 +176,7 @@ export function AgentHubTerminalTree({
     <div>
       {/* Why the popover color and shadow: the sticky row must hide rows scrolling under it. */}
       <div className="sticky top-0 z-[2] mt-0.5 mb-1 flex items-center gap-1.5 bg-popover shadow-[0_-8px_0_var(--popover)]">
-        <label className="flex h-[34px] min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-foreground/[0.08] bg-background pr-1.5 pl-2.5 text-muted-foreground/70 focus-within:border-foreground/20">
+        <label className="flex h-8.5 min-w-0 flex-1 items-center gap-2 rounded-lg border border-foreground/[0.08] bg-background pr-1.5 pl-2.5 text-muted-foreground/70 focus-within:border-foreground/20">
           <Search className="size-3.5 shrink-0" />
           <input
             ref={searchRef}
@@ -208,7 +210,7 @@ export function AgentHubTerminalTree({
         />
       </div>
       {groups.length === 0 ? (
-        <div className="flex flex-col items-center gap-1 px-2.5 pt-[22px] pb-[18px] text-center text-xs text-muted-foreground">
+        <div className="flex flex-col items-center gap-1 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground">
           <b className="text-[13px] font-medium text-foreground/85">
             {trimmedQuery
               ? translate('agentHub.terminals.noMatch', 'No terminal matches “{{value0}}”', {
@@ -249,25 +251,22 @@ export function AgentHubTerminalTree({
                 }}
                 aria-expanded={!collapsed}
                 onClick={() => onToggleGroup(group, !collapsed)}
-                className="flex w-full items-center gap-[7px] rounded-[10px] bg-foreground/[0.03] px-2 py-[7px] text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.05]"
+                className="flex w-full items-center gap-2 rounded-lg bg-foreground/[0.03] px-2 py-2 text-left text-xs font-semibold text-foreground/85 select-none hover:bg-foreground/[0.05]"
               >
-                <HubFoldChevron
-                  open={!collapsed}
-                  className="size-[13px] text-muted-foreground/70"
-                />
+                <HubFoldChevron open={!collapsed} className="size-3.5 text-muted-foreground/70" />
                 <span className="min-w-0 truncate">{group.label}</span>
                 <GroupSummary group={group} />
               </button>
               <HubCollapse open={!collapsed}>
                 {group.workspaces.map((workspace) => (
                   <div key={workspace.key}>
-                    <div className="flex items-center gap-[5px] pt-[5px] pr-2 pb-[3px] pl-7 text-[11.5px] text-muted-foreground/70">
+                    <div className="flex items-center gap-1.5 pt-1.5 pr-2 pb-1 pl-7 text-xs text-muted-foreground/70">
                       <Folder className="size-3 shrink-0" />
                       <span className="truncate">{workspace.projectLabel}</span>
                       {workspace.workspaceLabel ? (
                         <>
                           <span>·</span>
-                          <GitBranch className="size-[11px] shrink-0" />
+                          <GitBranch className="size-3 shrink-0" />
                           <span className="truncate">{workspace.workspaceLabel}</span>
                         </>
                       ) : null}

@@ -51,7 +51,7 @@ export function AgentHubMirrorTitle({ target }: { target: AgentHubPaneTarget }):
           setEditing(false)
         }
       }}
-      className="w-full min-w-0 rounded-[5px] bg-background px-1 font-semibold outline-none ring-1 ring-border focus:ring-ring"
+      className="w-full min-w-0 rounded-sm bg-background px-1 font-semibold outline-none ring-1 ring-border focus:ring-ring"
     />
   )
 }

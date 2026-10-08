@@ -5,7 +5,8 @@ import { translate } from '@/i18n/i18n'
 import { Badge } from '../ui/badge'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
+import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
+import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubAlertStack, type AgentHubAlertSide } from './AgentHubAlertStack'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
@@ -78,13 +79,13 @@ export function AgentHubMirrorChip({
         }}
         // Why a mini header: the chip should say whose terminal it is, where, and let it go.
         // The ask tint is a layer over the opaque card, so piled chips never show through.
-        className="group/chip flex h-10 w-[280px] shrink-0 animate-in cursor-pointer items-center gap-2 rounded-xl border border-foreground/20 bg-popover pr-1 pl-2 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-95 hover:border-foreground/35 data-[restored=true]:animate-none data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-linear-to-r data-[kind=ask]:from-agent-question/10 data-[kind=ask]:to-agent-question/10 data-[kind=done]:border-status-success/50 motion-reduce:animate-none!"
+        className="group/chip flex h-10 w-70 shrink-0 animate-in cursor-pointer items-center gap-2 rounded-xl border border-foreground/20 bg-popover pr-1 pl-2 text-popover-foreground shadow-floating duration-200 select-none fade-in-0 zoom-in-95 hover:border-foreground/35 data-[restored=true]:animate-none data-[kind=ask]:border-agent-question/60 data-[kind=ask]:bg-linear-to-r data-[kind=ask]:from-agent-question/10 data-[kind=ask]:to-agent-question/10 data-[kind=done]:border-status-success/50 motion-reduce:animate-none!"
       >
         <HubStateIndicator kind={kind} />
         <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
-        <span className="min-w-0 flex-1 text-[12px] leading-tight">
+        <span className="min-w-0 flex-1 text-xs leading-tight">
           <span className="block truncate font-semibold">{title}</span>
-          <span className="block truncate [&>span]:text-[10.5px]">
+          <span className="block truncate [&>span]:text-[11px]">
             <HubCrumb location={location} />
           </span>
         </span>

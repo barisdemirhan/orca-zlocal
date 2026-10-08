@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -5,7 +6,8 @@ import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
-import { HubAvatar, HubCrumb } from './AgentHubAtoms'
+import { HubAvatar } from './AgentHubStateMarks'
+import { HubCrumb } from './AgentHubInlineLabels'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
@@ -117,7 +119,7 @@ function AlertCard({
     <div
       role="status"
       data-agent-hub-alert={alert.kind}
-      className="relative w-[320px] shrink-0 animate-in rounded-[14px] border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95"
+      className="relative w-80 shrink-0 animate-in rounded-xl border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95"
       onMouseEnter={stopTimer}
       onMouseLeave={startTimer}
     >
@@ -127,7 +129,7 @@ function AlertCard({
             agentType={alert.thread.agentType}
             kind={alert.kind === 'done' ? 'done' : 'ask'}
           />
-          <span className="min-w-0 flex-1 text-[12.5px]">
+          <span className="min-w-0 flex-1 text-[13px]">
             <span className="block truncate">
               <span className="font-semibold">@{alert.thread.agentType}</span>{' '}
               <span
@@ -141,7 +143,7 @@ function AlertCard({
           </span>
         </span>
         {text ? (
-          <span className="mt-1.5 line-clamp-3 text-[12.5px] break-words text-foreground/85">
+          <span className="mt-1.5 line-clamp-3 text-[13px] break-words text-foreground/85">
             {text}
           </span>
         ) : null}
@@ -150,39 +152,45 @@ function AlertCard({
         label={translate('agentHub.hover.popout', 'Own window')}
         actionId="agentHub.popOut"
       >
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           aria-label={translate('agentHub.hover.popout', 'Own window')}
           onClick={() => onPopout(alert)}
-          className="absolute top-2 right-14 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          className="absolute top-2 right-14"
         >
           <PictureInPicture2 className="size-3.5" />
-        </button>
+        </Button>
       </AgentHubActionTooltip>
       <AgentHubActionTooltip
         label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
       >
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           aria-label={translate(
             'agentHub.mirror.jumpHint',
             'Jump to this terminal in its workspace'
           )}
           onClick={() => onJump(alert)}
-          className="absolute top-2 right-8 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          className="absolute top-2 right-8"
         >
           <ArrowUpRight className="size-3.5" />
-        </button>
+        </Button>
       </AgentHubActionTooltip>
       <AgentHubActionTooltip label={translate('agentHub.alert.dismiss', 'Dismiss')}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
           onClick={() => onDismiss(alert.id)}
-          className="absolute top-2 right-2 grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+          className="absolute top-2 right-2"
         >
           <X className="size-3.5" />
-        </button>
+        </Button>
       </AgentHubActionTooltip>
     </div>
   )

@@ -1,9 +1,9 @@
 import { translate } from '@/i18n/i18n'
-import { HubKeys } from './AgentHubAtoms'
+import { HubKeys } from './AgentHubInlineLabels'
 
 function Hint({ keys, label }: { keys: string[]; label: string }): React.JSX.Element {
   return (
-    <span className="flex items-center gap-[5px]">
+    <span className="flex items-center gap-1.5">
       <HubKeys keys={keys} />
       {label}
     </span>
@@ -17,7 +17,7 @@ export function agentHubPopoutKeys(): string[] {
 export function AgentHubPanelFooter(): React.JSX.Element {
   const isMac = navigator.userAgent.includes('Mac')
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-border px-4 py-[9px] text-[11px] text-muted-foreground/70">
+    <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-border px-4 py-2.5 text-[11px] text-muted-foreground/70">
       <Hint keys={['↑↓']} label={translate('agentHub.footer.move', 'move')} />
       <Hint keys={['↵']} label={translate('agentHub.footer.jump', 'jump')} />
       <Hint keys={agentHubPopoutKeys()} label={translate('agentHub.footer.popOut', 'pop out')} />

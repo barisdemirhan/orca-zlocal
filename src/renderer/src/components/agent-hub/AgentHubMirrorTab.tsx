@@ -7,7 +7,8 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubStateWord } from './agent-hub-copy'
-import { HubAvatar, HubCrumb, HubStateIndicator } from './AgentHubAtoms'
+import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
+import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubMirrorTitle, useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { AgentHubMirrorSidebarReveal } from './AgentHubMirrorSidebarReveal'
 import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
@@ -110,14 +111,14 @@ export function AgentHubMirrorTab({
                   onSelect(true)
                 }
               }}
-              className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-[9px] rounded-md px-1 text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="shrink-0">
                 <HubStateIndicator kind={kind} />
               </span>
               <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} />
               <div
-                className="min-w-0 flex-1 text-[12.5px] leading-tight"
+                className="min-w-0 flex-1 text-[13px] leading-tight"
                 onDoubleClick={() => onSelect(false)}
               >
                 <AgentHubMirrorTitle target={tab.target} />

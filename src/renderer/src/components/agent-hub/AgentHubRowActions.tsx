@@ -82,7 +82,7 @@ export function HubRowMirrorActions({
             }
           }}
         >
-          <X className="size-[13px]" />
+          <X className="size-3.5" />
         </HubRowAction>
       ) : null}
       {/* Why one button for all three: it stays mounted, so its hover and tooltip carry over. */}
@@ -104,11 +104,11 @@ export function HubRowMirrorActions({
         }}
       >
         {presence === 'window' ? (
-          <PictureInPicture2 className="size-[13px]" />
+          <PictureInPicture2 className="size-3.5" />
         ) : presence === 'chip' ? (
-          <Maximize2 className="size-[13px]" />
+          <Maximize2 className="size-3.5" />
         ) : (
-          <PictureInPicture2 className="size-[13px]" />
+          <PictureInPicture2 className="size-3.5" />
         )}
       </HubRowAction>
     </>

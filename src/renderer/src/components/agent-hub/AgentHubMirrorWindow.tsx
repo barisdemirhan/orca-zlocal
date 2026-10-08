@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selection-focus'
 import { agentHubMirrorPanelId, agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
 import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
@@ -235,7 +236,7 @@ export function AgentHubMirrorWindow({
     >
       <header
         // Why tinted: a mirror whose agent asks or just finished should read so at a glance.
-        className="flex h-[42px] shrink-0 cursor-grab items-center gap-[9px] border-b border-border bg-popover pr-1.5 pl-3 transition-colors select-none active:cursor-grabbing group-data-[kind=ask]/mirror:border-agent-question/40 group-data-[kind=ask]/mirror:bg-agent-question/15 group-data-[kind=done]/mirror:border-status-success/35 group-data-[kind=done]/mirror:bg-status-success/12"
+        className="flex h-10.5 shrink-0 cursor-grab items-center gap-2.5 border-b border-border bg-popover pr-1.5 pl-3 transition-colors select-none active:cursor-grabbing group-data-[kind=ask]/mirror:border-agent-question/40 group-data-[kind=ask]/mirror:bg-agent-question/15 group-data-[kind=done]/mirror:border-status-success/35 group-data-[kind=done]/mirror:bg-status-success/12"
         onPointerDown={beginDrag('move')}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -300,19 +301,21 @@ export function AgentHubMirrorWindow({
             <div className="text-sm font-semibold">
               {translate('agentHub.mirror.inWorkspaceTitle', "You're in this workspace")}
             </div>
-            <p className="max-w-[340px] text-xs text-muted-foreground">
+            <p className="max-w-85 text-xs text-muted-foreground">
               {translate(
                 'agentHub.mirror.inWorkspace',
                 'This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.'
               )}
             </p>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="xs"
               onClick={() => minimize()}
-              className="mt-1 rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
+              className="mt-1"
             >
               {translate('agentHub.mirror.minimize', 'Minimize')}
-            </button>
+            </Button>
           </div>
         ) : surface !== 'preview' ? (
           // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.

@@ -5,7 +5,7 @@ import { AgentIcon } from '@/lib/agent-catalog'
 import { agentTypeToIconAgent } from '@/lib/agent-status'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubStateIndicator } from './AgentHubAtoms'
+import { HubStateIndicator } from './AgentHubStateMarks'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
 import type { AgentHubLocation } from './agent-hub-pane-target'
@@ -46,7 +46,7 @@ function FamilyButton({
           data-level={level}
           data-active={active}
           onClick={() => onSelect(thread)}
-          className="flex h-6 max-w-[220px] shrink-0 items-center gap-1.5 rounded-md px-1.5 text-[11.5px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground data-[active=true]:bg-foreground/[0.1] data-[active=true]:text-foreground data-[level=dispatcher]:font-semibold data-[level=dispatcher]:text-foreground"
+          className="flex h-6 max-w-55 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground data-[active=true]:bg-foreground/[0.1] data-[active=true]:text-foreground data-[level=dispatcher]:font-semibold data-[level=dispatcher]:text-foreground"
         >
           {children}
           <span data-family-dot className="grid shrink-0 place-items-center">
@@ -60,7 +60,7 @@ function FamilyButton({
               aria-label={translate('agentHub.mirror.workerCount', '{{value0}} workers', {
                 value0: childCount
               })}
-              className="flex shrink-0 items-center rounded-[4px] bg-foreground/[0.08] pl-1 font-mono text-[10px] tabular-nums"
+              className="flex shrink-0 items-center rounded-sm bg-foreground/[0.08] pl-1 font-mono text-[11px] tabular-nums"
             >
               {childCount}
               <ChevronRight aria-hidden className="size-3" />
@@ -148,7 +148,7 @@ export function AgentHubMirrorFamilyTabs({
         {/* The elbow reaches up to the parent above, so the row reads as its children. */}
         <span
           aria-hidden
-          className="-mt-1 mr-1 h-4 w-2.5 shrink-0 self-start rounded-bl-[5px] border-b border-l border-muted-foreground/40"
+          className="-mt-1 mr-1 h-4 w-2.5 shrink-0 self-start rounded-bl-sm border-b border-l border-muted-foreground/40"
         />
         <div
           role="tablist"

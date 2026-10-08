@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { Minus, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
@@ -36,35 +37,38 @@ export function AgentHubMirrorHeaderControls({
       <AgentHubMirrorMicButton target={target} reachable={reachable} />
       {showJump ? <AgentHubMirrorJumpButton onReveal={onReveal} /> : null}
       <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           aria-label={dockLabel}
           onClick={() => requestAgentHubMirrorsDock()}
-          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
         >
           <PictureInPicture2 className="size-3.5" />
-        </button>
+        </Button>
       </AgentHubActionTooltip>
       <AgentHubMirrorFocusButton mirrorKey={mirrorKey} focused={focused} />
       <AgentHubActionTooltip label={minimizeLabel}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           aria-label={minimizeLabel}
           onClick={onMinimize}
-          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
         >
           <Minus className="size-3.5" />
-        </button>
+        </Button>
       </AgentHubActionTooltip>
       <AgentHubActionTooltip label={closeLabel}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-xs"
           aria-label={closeLabel}
           onClick={onClose}
-          className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
         >
           <X className="size-3.5" />
-        </button>
+        </Button>
       </AgentHubActionTooltip>
     </div>
   )

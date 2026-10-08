@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
@@ -16,7 +17,8 @@ import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agen
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
 import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
-import { HubAvatar, HubChip, HubCrumb, HubKeys } from './AgentHubAtoms'
+import { HubAvatar } from './AgentHubStateMarks'
+import { HubChip, HubCrumb, HubKeys } from './AgentHubInlineLabels'
 import {
   HubApprovalSummary,
   HubOptionList,
@@ -58,16 +60,11 @@ function CardAction({
 }): React.JSX.Element {
   return (
     <AgentHubActionTooltip label={label} actionId={actionId}>
-      <button
-        type="button"
-        tabIndex={-1}
-        onClick={onClick}
-        className="flex items-center gap-1.5 rounded-[7px] px-[7px] py-[5px] text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
-      >
+      <Button type="button" variant="ghost" size="xs" tabIndex={-1} onClick={onClick}>
         {icon}
         {label}
         <HubKeys keys={keys} />
-      </button>
+      </Button>
     </AgentHubActionTooltip>
   )
 }
@@ -276,14 +273,12 @@ export function AgentHubAttentionCard({
     <section
       aria-label={copy.taskTitle}
       data-agent-hub-attention-card={paneKey}
-      className="relative animate-in rounded-[14px] border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1"
+      className="relative animate-in rounded-xl border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1"
     >
-      <div className="mb-2.5 truncate pr-5 text-[15px] font-semibold tracking-[-0.01em]">
-        {copy.taskTitle}
-      </div>
+      <div className="mb-2.5 truncate pr-5 text-sm font-semibold">{copy.taskTitle}</div>
       <div className="flex items-center gap-2.5">
         <HubAvatar agentType={thread.agentType} kind="ask" />
-        <div className="min-w-0 text-[12.5px]">
+        <div className="min-w-0 text-[13px]">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold">@{thread.agentType}</span>
             <HubChip tone="ask">
@@ -372,13 +367,13 @@ export function AgentHubAttentionCard({
 
       <div className="mt-2 -ml-1.5 flex gap-1">
         <CardAction
-          icon={<ArrowUpRight className="size-[13px]" />}
+          icon={<ArrowUpRight className="size-3.5" />}
           label={translate('agentHub.card.jump', 'Jump to terminal')}
           keys={['↵']}
           onClick={onJump}
         />
         <CardAction
-          icon={<PictureInPicture2 className="size-[13px]" />}
+          icon={<PictureInPicture2 className="size-3.5" />}
           label={translate('agentHub.row.popOut', 'Pop out')}
           keys={popoutKeys}
           actionId="agentHub.popOut"

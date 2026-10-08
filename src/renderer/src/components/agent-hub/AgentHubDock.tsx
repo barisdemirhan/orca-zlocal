@@ -219,7 +219,7 @@ export function AgentHubDock({
           data-edge={position.edge}
           data-expanded={expanded}
           data-dragging={dragPoint !== null}
-          className="relative flex cursor-pointer items-center justify-start overflow-hidden data-[edge=left]:flex-col data-[edge=right]:flex-col text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-[14px] data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-7 data-[edge=bottom]:rounded-t-[14px] data-[edge=bottom]:px-2.5 data-[edge=left]:w-7 data-[edge=left]:rounded-r-[14px] data-[edge=left]:py-2.5 data-[edge=right]:w-7 data-[edge=right]:rounded-l-[14px] data-[edge=right]:py-2.5 data-[edge=top]:h-7 data-[edge=top]:rounded-b-[14px] data-[edge=top]:px-2.5"
+          className="relative flex cursor-pointer items-center justify-start overflow-hidden data-[edge=left]:flex-col data-[edge=right]:flex-col text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-xl data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-7 data-[edge=bottom]:rounded-t-xl data-[edge=bottom]:px-2.5 data-[edge=left]:w-7 data-[edge=left]:rounded-r-xl data-[edge=left]:py-2.5 data-[edge=right]:w-7 data-[edge=right]:rounded-l-xl data-[edge=right]:py-2.5 data-[edge=top]:h-7 data-[edge=top]:rounded-b-xl data-[edge=top]:px-2.5"
         >
           {/* One face. The inbox, the counts and (with mirrors open or parked) the mirrors button
               are drawn once and hold still; unfolding only lets the bar grow over the buttons
@@ -244,7 +244,7 @@ export function AgentHubDock({
               className={DOCK_COUNT_BUTTON}
               onClick={() => onOpenTab('agents')}
             >
-              <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
+              <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
                 <Bot aria-hidden className="size-3.5" />
                 {terminalCounts.agents}
               </span>
@@ -281,7 +281,7 @@ export function AgentHubDock({
                 className={DOCK_COUNT_BUTTON}
                 onClick={() => onOpenTab('all')}
               >
-                <span className="flex items-center gap-1 font-mono text-[10.5px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
+                <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
                   <SquareTerminal className="size-3.5" />
                   <span className="min-w-[2ch] text-center">
                     {expanded ? terminalCounts.all : null}

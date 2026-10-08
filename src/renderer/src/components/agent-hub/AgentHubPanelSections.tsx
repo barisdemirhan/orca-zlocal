@@ -4,7 +4,8 @@ import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { HubChip, HubCrumb, HubSection } from './AgentHubAtoms'
+import { HubChip, HubCrumb } from './AgentHubInlineLabels'
+import { HubSection } from './AgentHubSectionHeader'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
@@ -101,7 +102,7 @@ export function AgentHubInboxBody({
                       <i
                         key={thread.paneKey}
                         data-active={index === cardIndex}
-                        className="h-1.5 w-1.5 rounded-[3px] bg-foreground/20 transition-[width,background-color] data-[active=true]:w-4 data-[active=true]:bg-foreground/80"
+                        className="h-1.5 w-1.5 rounded-sm bg-foreground/20 transition-[width,background-color] data-[active=true]:w-4 data-[active=true]:bg-foreground/80"
                       />
                     ))}
                   </span>
@@ -128,7 +129,7 @@ export function AgentHubInboxBody({
           />
         </>
       ) : (
-        <div className="flex flex-col items-center gap-1 px-2.5 pt-[22px] pb-[18px] text-center text-xs text-muted-foreground">
+        <div className="flex flex-col items-center gap-1 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground">
           <CheckCheck className="mb-1 size-5 text-status-success" />
           <b className="text-[13px] font-medium text-foreground/85">
             {translate('agentHub.inbox.emptyTitle', 'Nobody is waiting on you')}
@@ -160,7 +161,7 @@ export function AgentHubInboxBody({
                 type="button"
                 tabIndex={-1}
                 onClick={() => onMarkRead(finished.map((thread) => thread.paneKey))}
-                className="text-[11.5px] font-medium text-muted-foreground hover:text-foreground"
+                className="text-xs font-medium text-muted-foreground hover:text-foreground"
               >
                 {translate('agentHub.inbox.markAllRead', 'Mark all read')}
               </button>
@@ -265,7 +266,7 @@ export function AgentHubRunningBody({
 }): React.JSX.Element {
   if (working.length === 0) {
     return (
-      <div className="flex flex-col items-center px-2.5 pt-[22px] pb-[18px] text-center">
+      <div className="flex flex-col items-center px-2.5 pt-5.5 pb-4.5 text-center">
         <b className="text-[13px] font-medium text-foreground/85">
           {translate('agentHub.running.empty', 'No agent is working right now')}
         </b>
@@ -284,7 +285,7 @@ export function AgentHubRunningBody({
               type="button"
               tabIndex={-1}
               onClick={onPopoutAll}
-              className="mr-2 flex items-center gap-1 text-[11.5px] font-medium text-muted-foreground hover:text-foreground"
+              className="mr-2 flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               <PictureInPicture2 aria-hidden className="size-3" />
               {translate('agentHub.running.popOutAll', 'Pop out all')}

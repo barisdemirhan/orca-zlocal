@@ -102,7 +102,7 @@ export function AgentHubCanvas({
           <div className="text-sm font-semibold">
             {translate('agentHub.canvas.emptyTitle', 'No mirrors on the canvas')}
           </div>
-          <p className="max-w-[340px] text-xs text-muted-foreground">
+          <p className="max-w-85 text-xs text-muted-foreground">
             {translate(
               'agentHub.canvas.emptyHint',
               'Pop out a terminal from the hub, or bring a parked mirror back, and it opens here.'
