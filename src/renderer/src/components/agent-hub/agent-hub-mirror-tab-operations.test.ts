@@ -177,6 +177,11 @@ describe('mirror container membership', () => {
     expect(reorderAgentHubMirrorTabs(id, [owner('a').tab.id, owner('a').tab.id]).status).toBe(
       'invalid-order'
     )
+    // A disconnected entry does not block reordering the window it sits in.
+    disappeared.add('b')
+    expect(reorderAgentHubMirrorTabs(id, [owner('a').tab.id, owner('b').tab.id]).status).toBe(
+      'changed'
+    )
     expectInvariants()
   })
   it('moves atomically, preserves both places, and removes an emptied source window', () => {

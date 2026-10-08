@@ -114,10 +114,8 @@ export function reorderAgentHubMirrorTabs(
   ) {
     return { status: 'invalid-order' }
   }
+  // Why no source check: reordering moves nothing out of the window, so a disconnected entry can stay.
   const tabs = order.flatMap((id) => window.tabs.find((tab) => tab.id === id) ?? [])
-  if (tabs.some((tab) => !resolveAgentHubMirrorTarget(tab.target))) {
-    return { status: 'missing-source' }
-  }
   if (tabs.every((tab, index) => tab === window.tabs[index])) {
     return { status: 'noop' }
   }
