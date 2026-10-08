@@ -1,17 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import {
+  makeRepo,
+  makeTabWithIds,
+  makeWorktree
+} from '../activity/ActivityPrototypePage-test-fixtures'
 
-const mocks = vi.hoisted(() => ({
-  layouts: {} as Record<string, unknown>,
-  settings: { skipCloseTerminalWithRunningProcessConfirm: false },
-  closeTerminalTab: vi.fn(),
-  closeLeaf: vi.fn(),
-  requestConfirm: vi.fn(),
-  requestPane: vi.fn(),
-  closeRemote: vi.fn(),
-  ptyKill: vi.fn()
-}))
+const mocks = vi.hoisted(() => {
+  const layouts: Record<string, unknown> = {}
+  return {
+    layouts,
+    settings: { skipCloseTerminalWithRunningProcessConfirm: false },
+    closeTerminalTab: vi.fn(),
+    closeLeaf: vi.fn(),
+    requestConfirm: vi.fn(),
+    requestPane: vi.fn(),
+    closeRemote: vi.fn(),
+    ptyKill: vi.fn()
+  }
+})
 
 vi.mock('@/store', () => ({
   useAppStore: {
@@ -36,12 +44,15 @@ const LEAF_A = '11111111-1111-4111-8111-111111111111'
 const LEAF_B = '22222222-2222-4222-8222-222222222222'
 
 function target(leaf: string | null): AgentHubPaneTarget {
+  const worktree = makeWorktree()
   return {
-    tab: { id: 'tab-1' },
+    worktree,
+    repo: makeRepo(),
+    tab: makeTabWithIds('tab-1', worktree.id),
     paneKey: leaf ? `tab-1:${leaf}` : null,
-    title: 'Fix bug'
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the close path reads only tab.id, paneKey and title.
-  } as unknown as AgentHubPaneTarget
+    title: 'Fix bug',
+    agentType: null
+  }
 }
 
 beforeEach(() => {
