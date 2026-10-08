@@ -62,8 +62,8 @@ describe('Agent Hub shortcuts help', () => {
     ).toContain('Not set')
     expect(dialog.textContent).toContain('double tap of a modifier key')
     expect(
-      dialog.querySelector('[data-agent-hub-shortcut-help="voice.dictationImprove"]')
-    ).toBeNull()
+      dialog.querySelector('[data-agent-hub-shortcut-help="voice.dictationImprove"]') !== null
+    ).toBe(KEYBINDING_DEFINITIONS.some((entry) => entry.id === 'voice.dictationImprove'))
     fireEvent.keyDown(document.activeElement ?? dialog, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })

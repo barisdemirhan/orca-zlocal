@@ -1,14 +1,18 @@
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 /** @vitest-environment happy-dom */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '../ui/tooltip'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
+import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
+import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
+import { addAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import {
   minimizeAgentHubMirror,
+  closeAgentHubMirror,
   openAgentHubMirror,
   resetAgentHubMirrorsForTest,
   useAgentHubMirrors
@@ -38,6 +42,9 @@ vi.mock('./AgentHubMirrorMicButton', () => ({ AgentHubMirrorMicButton: () => nul
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimToggle: () => null }))
 vi.mock('./AgentHubMirrorFocusButton', () => ({ AgentHubMirrorFocusButton: () => null }))
 vi.mock('./AgentHubMirrorFocusShade', () => ({ AgentHubMirrorFocusShade: () => null }))
+vi.mock('./AgentHubMirrorAddButton', () => ({
+  AgentHubMirrorAddButton: () => <button>Add terminal</button>
+}))
 
 afterEach(() => {
   cleanup()
@@ -130,6 +137,75 @@ it('lands immediately when the animation API throws', () => {
   const land = vi.fn()
   flyMirrorWindowToHub(element, null, land)
   expect(land).toHaveBeenCalledOnce()
+})
+
+it('hosts full tabs and add in one header, keeps shared controls on the active tab and closes the container', async () => {
+  const reveal = vi.fn()
+  openAgentHubMirror(target('first'))
+  function Stage(): React.JSX.Element {
+    const { windows } = useAgentHubMirrors()
+    return (
+      <TooltipProvider>
+        {windows.map((entry) => {
+          const active = activeAgentHubMirrorTab(entry).target
+          return (
+            <AgentHubMirrorWindow
+              key={entry.id}
+              windowId={entry.id}
+              windowState={entry}
+              tabStrip={
+                <AgentHubMirrorTabStrip
+                  window={entry}
+                  threads={[]}
+                  lineage={EMPTY_AGENT_HUB_LINEAGE}
+                  locationOf={(target) => ({
+                    group: null,
+                    project: target.tab.id,
+                    workspace: null
+                  })}
+                />
+              }
+              target={active}
+              thread={null}
+              location={{ group: null, project: active.tab.id, workspace: null }}
+              stackIndex={1}
+              besideHubPanel={false}
+              surface="in-workspace"
+              nudge={null}
+              onNudged={vi.fn()}
+              family={null}
+              locationOf={() => ({ group: null, project: 'Workspace', workspace: null })}
+              familyActionsFor={() => ({})}
+              onRetarget={vi.fn()}
+              hubRef={{ current: null }}
+              onSlot={vi.fn()}
+              onFocus={vi.fn()}
+              onClose={() => closeAgentHubMirror(entry.id)}
+              onMinimize={() => minimizeAgentHubMirror(entry.id)}
+              onReveal={() => reveal(active.tab.id)}
+            />
+          )
+        })}
+      </TooltipProvider>
+    )
+  }
+  render(<Stage />)
+  const header = screen.getByRole('dialog').querySelector('header')
+  expect(screen.getByRole('tablist').closest('header')).toBe(header)
+  expect(screen.getByRole('button', { name: 'Add terminal' }).closest('header')).toBe(header)
+  expect(screen.queryByRole('button', { name: /Return .* to workspace/ })).toBeNull()
+  const windowId = screen.getByRole('dialog').getAttribute('data-agent-hub-mirror-key')
+  if (!windowId) {
+    throw new Error('No mirror window')
+  }
+  act(() => {
+    addAgentHubMirrorTab(windowId, target('second'))
+  })
+  fireEvent.click(screen.getByRole('tab', { name: 'first, idle' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Jump' }))
+  expect(reveal).toHaveBeenLastCalledWith('first')
+  fireEvent.click(screen.getByRole('button', { name: 'Close mirror' }))
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
 })
 
 vi.mock('./agent-hub-mirror-source', async (original) => ({

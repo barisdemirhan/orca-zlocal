@@ -291,7 +291,12 @@ export function AgentHubMirrors({
               windowId={key}
               windowState={window}
               tabStrip={
-                <AgentHubMirrorTabStrip window={window} threads={threads} lineage={lineage} />
+                <AgentHubMirrorTabStrip
+                  window={window}
+                  threads={threads}
+                  lineage={lineage}
+                  locationOf={locationOf}
+                />
               }
               windowKind={agentHubMirrorWindowKind(window, (entry) => {
                 const live = threadFor(entry)

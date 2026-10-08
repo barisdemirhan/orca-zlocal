@@ -271,15 +271,20 @@ export function AgentHubMirrorWindow({
             />
           </button>
         ) : null}
-        <HubStateIndicator kind={activeKind} />
-        <HubAvatar agentType={target.agentType} kind={thread ? activeKind : null} />
-        <div className="min-w-0 flex-1 text-[12.5px] leading-tight">
-          <AgentHubMirrorTitle key={windowState?.activeTabId} target={target} />
-          <div className="flex items-center gap-1 [&>span]:text-[11px]">
-            <HubCrumb location={location} />
-            <AgentHubMirrorSidebarReveal target={target} />
-          </div>
-        </div>
+        {tabStrip ?? (
+          <>
+            <HubStateIndicator kind={activeKind} />
+            <HubAvatar agentType={target.agentType} kind={thread ? activeKind : null} />
+            <div className="min-w-0 flex-1 text-[12.5px] leading-tight">
+              <AgentHubMirrorTitle key={windowState?.activeTabId} target={target} />
+              <div className="flex items-center gap-1 [&>span]:text-[11px]">
+                <HubCrumb location={location} />
+                <AgentHubMirrorSidebarReveal target={target} />
+              </div>
+            </div>
+          </>
+        )}
+        {tabStrip ? <div aria-hidden className="min-w-4 flex-1 self-stretch" /> : null}
         <AgentHubMirrorHeaderControls
           target={target}
           reachable={surface !== 'preview'}
@@ -290,7 +295,6 @@ export function AgentHubMirrorWindow({
           onClose={() => leave(onClose)}
         />
       </header>
-      {tabStrip}
       <div
         role="tabpanel"
         id={agentHubMirrorPanelId(windowId)}

@@ -20,7 +20,11 @@ import {
 } from './agent-hub-mirror-selection'
 import { useAgentHubDictationSession } from './agent-hub-dictation-origin'
 import { agentHubMirrorDictationPane, mirrorOwnsDictation } from './agent-hub-mirror-mic-state'
-import { agentHubTargetShowsThread } from './agent-hub-pane-target'
+import {
+  agentHubTargetShowsThread,
+  type AgentHubLocation,
+  type AgentHubPaneTarget
+} from './agent-hub-pane-target'
 import { AgentHubMirrorAddButton } from './AgentHubMirrorAddButton'
 
 export function agentHubMirrorPanelId(windowId: string): string {
@@ -33,11 +37,13 @@ export function agentHubMirrorTabId(tabId: string): string {
 export function AgentHubMirrorTabStrip({
   window,
   threads,
-  lineage
+  lineage,
+  locationOf
 }: {
   window: AgentHubMirrorWindowState
   threads: readonly AgentPaneThread[]
   lineage: AgentHubLineage
+  locationOf: (target: AgentHubPaneTarget) => AgentHubLocation
 }): React.JSX.Element {
   const stripRef = useRef<HTMLDivElement>(null)
   const drag = useAgentHubMirrorDrag()
@@ -82,7 +88,7 @@ export function AgentHubMirrorTabStrip({
   }
   return (
     <div
-      className="flex shrink-0 items-center gap-1 border-b border-border bg-muted px-1 pt-1"
+      className="flex min-w-0 shrink items-center gap-1 self-stretch"
       data-agent-hub-tab-strip={window.id}
       ref={droppable.setNodeRef}
     >
@@ -140,6 +146,8 @@ export function AgentHubMirrorTabStrip({
             active={window.activeTabId === tab.id}
             panelId={agentHubMirrorPanelId(window.id)}
             thread={threads.find((thread) => agentHubTargetShowsThread(tab.target, thread)) ?? null}
+            location={locationOf(tab.target)}
+            closable={window.tabs.length > 1}
             inputOwner={mirrorOwnsDictation(session, agentHubMirrorDictationPane(tab.target))}
             onSelect={(focusTerminal) => select(tab.id, focusTerminal)}
             onClose={() => close(tab)}

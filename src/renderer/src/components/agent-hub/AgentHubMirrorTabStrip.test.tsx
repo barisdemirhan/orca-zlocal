@@ -1,5 +1,5 @@
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '../ui/tooltip'
@@ -23,7 +23,7 @@ import {
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
-  return { useAppStore: create(() => ({ tabsByWorktree: {} })) }
+  return { useAppStore: create(() => ({ tabsByWorktree: {}, setTabCustomTitle: vi.fn() })) }
 })
 vi.mock('./AgentHubMirrorAddButton', () => ({
   AgentHubMirrorAddButton: ({ count }: { count: number }) => (
@@ -71,6 +71,12 @@ function stage(count = 3) {
             window={window}
             threads={[]}
             lineage={EMPTY_AGENT_HUB_LINEAGE}
+            locationOf={(target) => ({
+              group: null,
+              project: 'Project',
+              workspace: target.tab.id,
+              host: target.tab.id === 'one' ? 'Local Mac' : 'workhost'
+            })}
           />
         ))}
       </TooltipProvider>
@@ -79,13 +85,15 @@ function stage(count = 3) {
   render(<Stage />)
   return id
 }
-it('keeps a singleton tablist and add affordance, and reserves a shrinking scroll strip', () => {
+it('keeps the complete header identity and add affordance without a singleton close button', () => {
   stage(1)
   expect(screen.getAllByRole('tab')).toHaveLength(1)
   expect(screen.getByRole('button', { name: 'Add' })).toBeTruthy()
   const tablist = screen.getByRole('tablist')
   expect(tablist.className).toContain('overflow-x-auto')
-  expect(screen.getByRole('tab').parentElement?.className).toContain('min-w-40')
+  expect(within(screen.getByRole('tab')).getByText('Local Mac')).toBeTruthy()
+  expect(screen.getByRole('tab').textContent).toContain('Project')
+  expect(screen.queryByRole('button', { name: 'Return one to workspace' })).toBeNull()
 })
 it('roves Left/Right/Home/End while preserving strip focus, and Enter requests terminal focus', () => {
   stage()
@@ -124,15 +132,15 @@ it('does not reveal the active tab during passive renders', () => {
   )
   expect(scroll.mock.calls.length).toBe(before)
 })
-it('returns inactive entries home and removes the final window without terminal destruction', () => {
+it('returns entries home and removes individual close buttons once only one remains', () => {
   stage()
   const active = readAgentHubMirrors().windows[0]?.activeTabId
   fireEvent.click(screen.getByRole('button', { name: 'Return one to workspace' }))
   expect(readAgentHubMirrors().windows[0]?.activeTabId).toBe(active)
   fireEvent.click(screen.getByRole('button', { name: 'Return entry-2 to workspace' }))
   expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.title).toBe('entry-1')
-  fireEvent.click(screen.getByRole('button', { name: 'Return entry-1 to workspace' }))
-  expect(readAgentHubMirrors().windows).toHaveLength(0)
+  expect(screen.queryByRole('button', { name: 'Return entry-1 to workspace' })).toBeNull()
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
 })
 it('disables the add affordance at ten entries and refuses another addition', () => {
   const id = stage(10)
@@ -153,4 +161,21 @@ it('returns a keyboard-closed tab home and keeps focus on its surviving neighbou
   expect(neighbour.getAttribute('aria-selected')).toBe('true')
   expect(document.activeElement).toBe(neighbour)
   expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
+})
+
+it('shows each tab location and keeps a title editor from triggering terminal selection', () => {
+  stage(2)
+  const local = screen.getByRole('tab', { name: 'one, idle' })
+  const remote = screen.getByRole('tab', { name: 'entry-1, idle' })
+  expect(within(local).getByText('Local Mac')).toBeTruthy()
+  expect(within(remote).getByText('workhost')).toBeTruthy()
+  fireEvent.doubleClick(within(remote).getByText('entry-1'))
+  const editor = screen.getByRole('textbox', { name: 'Rename terminal' })
+  fireEvent.click(editor)
+  fireEvent.keyDown(editor, { key: 'Escape' })
+  expect(screen.queryByRole('textbox')).toBeNull()
+  expect(screen.getByTestId('focus-policy').textContent).toBe('false')
+  fireEvent.keyDown(local, { key: ' ' })
+  expect(local.getAttribute('aria-selected')).toBe('true')
+  expect(screen.getByTestId('focus-policy').textContent).toBe('true')
 })
