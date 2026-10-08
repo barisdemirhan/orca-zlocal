@@ -45,7 +45,7 @@ it('shows SSH workers from separate worktrees when pane orchestration reaches th
   const activity = buildChildAgentLineageTree(threads)
   expect(hub.parentOf.get(PANE_KEY_2)).toBe(PANE_KEY)
   expect(activity.childPaneKeys.has(PANE_KEY_2)).toBe(true)
-  expect(agentHubMirrorFamily(PANE_KEY, threads, hub)?.members[0]?.thread.paneKey).toBe(PANE_KEY_2)
+  expect(agentHubMirrorFamily(PANE_KEY, threads, hub)?.tree[0]?.thread.paneKey).toBe(PANE_KEY_2)
 })
 
 it('distinguishes sidebar worktree children from agent-pane dispatch lineage', () => {

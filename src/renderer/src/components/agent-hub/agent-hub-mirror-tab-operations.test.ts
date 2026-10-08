@@ -11,6 +11,7 @@ import {
 import {
   addAgentHubMirrorTab,
   activateAgentHubMirrorTab,
+  retargetAgentHubMirrorTab,
   closeAgentHubMirrorTab,
   reorderAgentHubMirrorTabs,
   moveAgentHubMirrorTab,
@@ -76,6 +77,54 @@ function expectInvariants(): void {
 beforeEach(() => {
   resetAgentHubMirrorsForTest()
   disappeared.clear()
+})
+
+describe('retargetAgentHubMirrorTab', () => {
+  it('replaces the tab target in place and keeps the tab count', () => {
+    openAgentHubMirror(target('a'))
+    const window = readAgentHubMirrors().windows[0]
+    const tabId = window?.activeTabId ?? ''
+    expect(retargetAgentHubMirrorTab(window?.id ?? '', tabId, target('b')).status).toBe('changed')
+    const next = readAgentHubMirrors().windows[0]
+    expect(next?.tabs.map((tab) => tab.id)).toEqual([tabId])
+    expect(next?.tabs[0]?.target.title).toBe('b')
+    expectInvariants()
+  })
+  it('is a noop for the pane the tab already shows', () => {
+    openAgentHubMirror(target('a', 'pane-1'))
+    const window = readAgentHubMirrors().windows[0]
+    expect(
+      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('a', 'pane-1'))
+        .status
+    ).toBe('noop')
+  })
+  it('retargets to another pane of the same tab', () => {
+    openAgentHubMirror(target('a', 'pane-1'))
+    const window = readAgentHubMirrors().windows[0]
+    expect(
+      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('a', 'pane-2'))
+        .status
+    ).toBe('changed')
+    expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.paneKey).toBe('pane-2')
+  })
+  it('refuses a terminal another tab already owns', () => {
+    openAgentHubMirror(target('a'))
+    openAgentHubMirror(target('b'))
+    const window = readAgentHubMirrors().windows[0]
+    expect(
+      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('b')).status
+    ).toBe('already-owned')
+    expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.title).toBe('a')
+  })
+  it('reports a vanished source without changing the tab', () => {
+    openAgentHubMirror(target('a'))
+    const window = readAgentHubMirrors().windows[0]
+    disappeared.add('gone')
+    expect(
+      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('gone')).status
+    ).toBe('missing-source')
+    expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.title).toBe('a')
+  })
 })
 
 describe('mirror container membership', () => {

@@ -1,6 +1,6 @@
 import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import { createBrowserUuid } from '@/lib/browser-uuid'
-import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
   agentHubMirrorWindows,
   findAgentHubMirrorMembership,
@@ -70,6 +70,39 @@ export function addAgentHubMirrorTab(
   commitAgentHubMirrorState(replaceAgentHubMirrorWindow(state, window.id, next), window.id)
   requestAgentHubMirrorSelection(next.id, tab.id)
   return changed(next, tab.id)
+}
+/** Points an existing tab at another agent (the family bar), unlike `add`, which opens a new tab. */
+export function retargetAgentHubMirrorTab(
+  windowId: string,
+  tabId: string,
+  request: AgentHubPaneTarget
+): AgentHubMirrorTabResult {
+  const window = findWindow(windowId)
+  if (!window) {
+    return { status: 'missing-window' }
+  }
+  if (!window.tabs.some((entry) => entry.id === tabId)) {
+    return { status: 'missing-entry' }
+  }
+  const target = resolveAgentHubMirrorTarget(request)
+  if (!target) {
+    return { status: 'missing-source' }
+  }
+  const state = readAgentHubMirrors()
+  const owner = findAgentHubMirrorMembership(state, target)
+  // Why same-tab is allowed through: split panes of one tab share a source, only the pane differs.
+  if (owner && owner.tab.id !== tabId) {
+    return { status: 'already-owned' }
+  }
+  if (owner && agentHubPaneTargetKey(owner.tab.target) === agentHubPaneTargetKey(target)) {
+    return { status: 'noop' }
+  }
+  commitAgentHubMirrorState(
+    replaceAgentHubMirrorWindow(state, windowId, selectAgentHubMirrorTarget(window, tabId, target)),
+    windowId
+  )
+  requestAgentHubMirrorSelection(windowId, tabId)
+  return changed(window, tabId)
 }
 export function activateAgentHubMirrorTab(
   windowId: string,

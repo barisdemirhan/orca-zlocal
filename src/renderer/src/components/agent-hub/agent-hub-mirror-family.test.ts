@@ -7,7 +7,7 @@ import {
   PANE_KEY_3
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { buildAgentHubLineage } from './agent-hub-lineage'
-import { agentHubMirrorFamily } from './agent-hub-mirror-family'
+import { agentHubMirrorFamily, type AgentHubFamilyNode } from './agent-hub-mirror-family'
 import { agentHubThreadsFor as threadsFor } from './agent-hub-test-fixtures'
 
 // tab-4 matches the fourth fixture's tab.
@@ -22,39 +22,72 @@ const threads = threadsFor([
 ])
 const lineage = buildAgentHubLineage(threads, 1_000)
 
-function describeFamily(paneKey: string): { path: string[]; members: string[] } | null {
-  const family = agentHubMirrorFamily(paneKey, threads, lineage)
+type Row = { key: string; depth: number }
+const rows = (nodes: readonly AgentHubFamilyNode[]): Row[] =>
+  nodes.flatMap((node) => [{ key: node.thread.paneKey, depth: node.depth }, ...rows(node.children)])
+
+function describeFamily(
+  paneKey: string,
+  source = threads,
+  graph = lineage
+): { path: string[]; ancestors: string[]; tree: Row[] } | null {
+  const family = agentHubMirrorFamily(paneKey, source, graph)
   return (
     family && {
       path: family.path.map((thread) => thread.paneKey),
-      members: family.members.map(
-        (member) => `${member.thread.paneKey}${member.childCount ? ` +${member.childCount}` : ''}`
-      )
+      ancestors: family.ancestors.map((thread) => thread.paneKey),
+      tree: rows(family.tree)
     }
   )
 }
 
 describe('agentHubMirrorFamily', () => {
-  it("lists a dispatcher's workers, marking the one that dispatched workers of its own", () => {
+  it('hides a dispatcher above itself and nests its workers and their workers', () => {
     expect(describeFamily(PANE_KEY)).toEqual({
       path: [PANE_KEY],
-      members: [`${PANE_KEY_2} +1`, PANE_KEY_4]
+      ancestors: [],
+      tree: [
+        { key: PANE_KEY_2, depth: 0 },
+        { key: PANE_KEY_3, depth: 1 },
+        { key: PANE_KEY_4, depth: 0 }
+      ]
     })
   })
 
-  it('shows a worker beside its siblings, under its dispatcher', () => {
-    expect(describeFamily(PANE_KEY_4)?.path).toEqual([PANE_KEY])
+  it('shows a leaf worker beside its siblings, under its dispatcher', () => {
+    expect(describeFamily(PANE_KEY_4)).toEqual({
+      path: [PANE_KEY],
+      ancestors: [PANE_KEY],
+      tree: [
+        { key: PANE_KEY_2, depth: 0 },
+        { key: PANE_KEY_3, depth: 1 },
+        { key: PANE_KEY_4, depth: 0 }
+      ]
+    })
   })
 
-  it('goes a level deeper for a worker with workers, and keeps the way back up', () => {
+  it('lists only the children of a worker that dispatched, and keeps the way back up', () => {
     expect(describeFamily(PANE_KEY_2)).toEqual({
       path: [PANE_KEY, PANE_KEY_2],
-      members: [PANE_KEY_3]
+      ancestors: [PANE_KEY],
+      tree: [{ key: PANE_KEY_3, depth: 0 }]
     })
     expect(describeFamily(PANE_KEY_3)).toEqual({
       path: [PANE_KEY, PANE_KEY_2],
-      members: [PANE_KEY_3]
+      ancestors: [PANE_KEY, PANE_KEY_2],
+      tree: [{ key: PANE_KEY_3, depth: 0 }]
     })
+  })
+
+  it('stops at a dispatch cycle instead of repeating rows', () => {
+    const looped = threadsFor([
+      { paneKey: PANE_KEY, state: 'working', at: 1_000, parentPaneKey: PANE_KEY_2 },
+      { paneKey: PANE_KEY_2, state: 'working', at: 1_000, parentPaneKey: PANE_KEY }
+    ])
+    const family = describeFamily(PANE_KEY, looped, buildAgentHubLineage(looped, 1_000))
+    const keys = family?.tree.map((row) => row.key) ?? []
+    expect(new Set(keys).size).toBe(keys.length)
+    expect(keys).not.toContain(PANE_KEY)
   })
 
   it('has no family for an agent that neither dispatched nor was dispatched', () => {

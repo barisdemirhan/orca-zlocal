@@ -47,34 +47,44 @@ function open(id: string): string {
   }
   return windowId
 }
-it('adds a worker without replacing its dispatcher and selects the new member', () => {
+it('retargets the active tab to a worker without adding a tab', () => {
   const id = open('dispatcher')
-  selectAgentHubMirrorFamilyMember(id, target('worker'))
+  const tabId = readAgentHubMirrors().windows.at(-1)?.activeTabId ?? ''
+  selectAgentHubMirrorFamilyMember(id, tabId, target('worker'))
   const window = readAgentHubMirrors().windows.at(-1)
-  expect(window?.tabs.map((tab) => tab.target.title)).toEqual(['dispatcher', 'worker'])
-  expect(window?.activeTabId).toBe(window?.tabs[1]?.id)
+  expect(window?.tabs.map((tab) => tab.target.title)).toEqual(['worker'])
+  expect(window?.activeTabId).toBe(tabId)
 })
 it('raises the existing owner, including a parked owner, instead of creating a duplicate', () => {
   const source = open('dispatcher'),
     owner = open('worker')
   addAgentHubMirrorTab(owner, target('other'))
   minimizeAgentHubMirror(owner)
-  selectAgentHubMirrorFamilyMember(source, target('worker'))
+  selectAgentHubMirrorFamilyMember(
+    source,
+    readAgentHubMirrors().windows.find((item) => item.id === source)?.activeTabId ?? '',
+    target('worker')
+  )
   const window = readAgentHubMirrors().windows.at(-1)
   expect(window?.id).toBe(owner)
   expect(window?.tabs.find((tab) => tab.id === window.activeTabId)?.target.title).toBe('worker')
   expect(readAgentHubMirrors().chips).toHaveLength(0)
   expect(readAgentHubMirrors().windows).toHaveLength(2)
 })
-it('reports the same cap reason for picker and family additions', () => {
+it('reports the cap reason for picker additions only; a full window can still retarget', () => {
   const id = open('a')
   for (let i = 1; i < 10; i++) {
     addAgentHubMirrorTab(id, target(String(i)))
   }
   expect(addAgentHubMirrorTabWithFeedback(id, target('eleven')).status).toBe('tab-cap')
-  selectAgentHubMirrorFamilyMember(id, target('twelve'))
   expect(toast.error).toHaveBeenCalledWith(agentHubMirrorTabCapReason())
-  expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(10)
+  vi.clearAllMocks()
+  const tabId = readAgentHubMirrors().windows[0]?.activeTabId ?? ''
+  selectAgentHubMirrorFamilyMember(id, tabId, target('twelve'))
+  expect(toast.error).not.toHaveBeenCalled()
+  const window = readAgentHubMirrors().windows[0]
+  expect(window?.tabs).toHaveLength(10)
+  expect(window?.tabs.find((tab) => tab.id === tabId)?.target.title).toBe('twelve')
 })
 it('rejects a stale picker reservation with truthful feedback without raising its owner', () => {
   const owner = open('owned')

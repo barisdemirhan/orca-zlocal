@@ -1,20 +1,23 @@
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
 
-export type AgentHubFamilyMember = {
+export type AgentHubFamilyNode = {
   thread: AgentPaneThread
-  /** Workers this one dispatched itself; a member with some can be opened a level deeper. */
-  childCount: number
+  /** 0 for the first row under the bar's dispatcher chain. */
+  depth: number
+  children: readonly AgentHubFamilyNode[]
 }
 
 /**
  * Where a mirrored pane sits in its orchestration tree, for the bar under the mirror's header.
  * `path` runs from the top dispatcher down to the agent whose workers are listed: the shown pane
  * itself when it dispatched workers, else its own dispatcher, so a worker sees its siblings.
+ * `ancestors` is `path` without the shown pane, so a dispatcher is never listed above itself.
  */
 export type AgentHubMirrorFamily = {
   path: readonly AgentPaneThread[]
-  members: readonly AgentHubFamilyMember[]
+  ancestors: readonly AgentPaneThread[]
+  tree: readonly AgentHubFamilyNode[]
 }
 
 export function agentHubMirrorFamily(
@@ -39,11 +42,18 @@ export function agentHubMirrorFamily(
     seen.add(parent)
   }
   const threadByKey = new Map(threads.map((thread) => [thread.paneKey, thread]))
-  return {
-    path: pathKeys.flatMap((key) => threadByKey.get(key) ?? []),
-    // Dispatch order, so tabs stay put while their workers' activity reorders the hub.
-    members: workersOf(listedKey)
+  const path = pathKeys.flatMap((key) => threadByKey.get(key) ?? [])
+  // Why `visited` is shared: a cycle or a worker listed twice must not repeat or recurse forever.
+  const visited = new Set(pathKeys)
+  const build = (key: string, depth: number): AgentHubFamilyNode[] =>
+    workersOf(key)
+      // Dispatch order, so rows stay put while their workers' activity reorders the hub.
       .toSorted((a, b) => a.tab.createdAt - b.tab.createdAt || a.paneKey.localeCompare(b.paneKey))
-      .map((thread) => ({ thread, childCount: workersOf(thread.paneKey).length }))
+      .filter((thread) => !visited.has(thread.paneKey) && visited.add(thread.paneKey))
+      .map((thread) => ({ thread, depth, children: build(thread.paneKey, depth + 1) }))
+  return {
+    path,
+    ancestors: path.filter((thread) => thread.paneKey !== paneKey),
+    tree: build(listedKey, 0)
   }
 }

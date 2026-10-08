@@ -330,6 +330,7 @@ export function AgentHubMirrors({
               onRetarget={(member) =>
                 selectAgentHubMirrorFamilyMember(
                   key,
+                  window.activeTabId,
                   paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
                 )
               }
