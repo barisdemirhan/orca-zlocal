@@ -3,7 +3,7 @@ import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selectio
 import { agentHubMirrorPanelId, agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
 import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { ChevronRight, Loader2, PanelsTopLeft } from 'lucide-react'
+import { Loader2, PanelsTopLeft } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
@@ -24,7 +24,7 @@ import { nudgeMirrorWindow, pulseMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
-import { toggleAgentHubFamilyBar, useAgentHubFamilyBarShown } from './agent-hub-family-bar'
+import { useAgentHubFamilyBarShown } from './agent-hub-family-bar'
 import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import { returnRetainedPaneDestinationHome } from '../tab-group/retained-pane-destinations'
@@ -243,30 +243,6 @@ export function AgentHubMirrorWindow({
         onPointerCancel={cancelDrag}
         onLostPointerCapture={cancelDrag}
       >
-        {familyRoot ? (
-          // A disclosure arrow by the title folds the workers bar away, like a tree row.
-          <button
-            type="button"
-            aria-label={
-              familyBarShown
-                ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
-                : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
-            }
-            title={
-              familyBarShown
-                ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
-                : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
-            }
-            aria-expanded={familyBarShown}
-            onClick={() => toggleAgentHubFamilyBar(familyRoot)}
-            className="-mr-1 -ml-1.5 grid size-4 shrink-0 place-items-center rounded text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground"
-          >
-            <ChevronRight
-              data-open={familyBarShown}
-              className="size-3 transition-transform duration-150 data-[open=true]:rotate-90"
-            />
-          </button>
-        ) : null}
         {tabStrip}
         <div aria-hidden className="min-w-4 flex-1 self-stretch" />
         <AgentHubMirrorHeaderControls

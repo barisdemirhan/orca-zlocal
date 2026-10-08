@@ -11,11 +11,29 @@ import type { AgentHubFamilyNode, AgentHubMirrorFamily } from './agent-hub-mirro
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { AgentHubThreadHoverCard, type AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 
+function windowRootOf(from: Element): ParentNode {
+  return from.closest('[data-agent-hub-mirror]') ?? document
+}
+
+/** Moves focus from a tab into the workers tree: the active row, else the first. */
+export function focusAgentHubFamilyTree(from: Element): void {
+  const rows = windowRootOf(from).querySelectorAll<HTMLElement>('[role="tree"] [role="treeitem"]')
+  const target = Array.from(rows).find((row) => row.tabIndex === 0) ?? rows[0]
+  target?.focus({ preventScroll: false })
+}
+
+function focusActiveTab(from: Element): void {
+  windowRootOf(from)
+    .querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+    ?.focus({ preventScroll: true })
+}
+
 function FamilyButton({
   thread,
   level,
   depth = 0,
   active,
+  tabStop = false,
   location,
   actions,
   onSelect,
@@ -26,6 +44,8 @@ function FamilyButton({
   /** Nesting of a worker row, announced as its tree level. */
   depth?: number
   active: boolean
+  /** The tree's one Tab stop; the other rows are reached with the arrow keys. */
+  tabStop?: boolean
   location: AgentHubLocation
   actions: AgentHubThreadCardActions
   onSelect: (thread: AgentPaneThread) => void
@@ -42,6 +62,7 @@ function FamilyButton({
           aria-level={level === 'worker' ? depth + 1 : undefined}
           aria-selected={level === 'worker' ? active : undefined}
           aria-current={level === 'dispatcher' && active ? 'page' : undefined}
+          tabIndex={level === 'worker' && !tabStop ? -1 : undefined}
           data-level={level}
           data-active={active}
           onClick={() => onSelect(thread)}
@@ -94,6 +115,12 @@ export function AgentHubMirrorFamilyTabs({
   onSelect: (thread: AgentPaneThread) => void
 }): React.JSX.Element {
   const hasParentRow = family.ancestors.length > 0
+  const firstKey = family.tree[0]?.thread.paneKey
+  const stopKey = family.tree.some(function has(node): boolean {
+    return node.thread.paneKey === activeKey || node.children.some(has)
+  })
+    ? activeKey
+    : firstKey
   const renderNode = (node: AgentHubFamilyNode): React.JSX.Element => (
     <Fragment key={node.thread.paneKey}>
       {/* Indent is per level; the elbow reaches up to the row it hangs from. */}
@@ -113,6 +140,7 @@ export function AgentHubMirrorFamilyTabs({
           level="worker"
           depth={node.depth}
           active={node.thread.paneKey === activeKey}
+          tabStop={node.thread.paneKey === stopKey}
           location={locationOf(node.thread)}
           actions={actionsFor(node.thread)}
           onSelect={onSelect}
@@ -152,6 +180,33 @@ export function AgentHubMirrorFamilyTabs({
       <div
         role="tree"
         aria-label={translate('agentHub.mirror.workers', 'Workers')}
+        onKeyDown={(event) => {
+          const row = event.target
+          if (
+            !(row instanceof HTMLElement) ||
+            row.getAttribute('role') !== 'treeitem' ||
+            event.nativeEvent.isComposing ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.altKey
+          ) {
+            return
+          }
+          const rows = Array.from(
+            event.currentTarget.querySelectorAll<HTMLElement>('[role="treeitem"]')
+          )
+          const index = rows.indexOf(row)
+          if (event.key === 'Escape' || (event.key === 'ArrowUp' && index === 0)) {
+            // Why stop: the window's Esc would otherwise close the mirror.
+            event.preventDefault()
+            event.stopPropagation()
+            focusActiveTab(row)
+          } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault()
+            event.stopPropagation()
+            rows[index + (event.key === 'ArrowDown' ? 1 : -1)]?.focus()
+          }
+        }}
         className="mt-0.5 flex max-h-40 min-w-0 flex-col gap-0.5 overflow-y-auto scrollbar-sleek"
       >
         {family.tree.map(renderNode)}

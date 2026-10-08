@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
@@ -48,16 +49,23 @@ export function AgentHubThreadHoverCard({
   thread,
   location,
   actions,
+  suppressed = false,
   children
 }: {
   thread: AgentPaneThread
   location: AgentHubLocation
   actions?: AgentHubThreadCardActions
+  /** Keeps the card shut while the trigger is busy (a drag, a rename). */
+  suppressed?: boolean
   children: React.ReactElement
 }): React.JSX.Element {
+  const [open, setOpen] = useState(false)
   return (
-    <HoverCard openDelay={350} closeDelay={80}>
-      <HoverCardTrigger asChild>{children}</HoverCardTrigger>
+    <HoverCard openDelay={350} closeDelay={80} open={open && !suppressed} onOpenChange={setOpen}>
+      {/* Pressing the trigger is a commitment to it; the card would only sit on top. */}
+      <HoverCardTrigger asChild onPointerDown={() => setOpen(false)}>
+        {children}
+      </HoverCardTrigger>
       <HoverCardContent side="bottom" align="start" className="w-72">
         <ThreadDetails thread={thread} location={location} actions={actions} />
       </HoverCardContent>

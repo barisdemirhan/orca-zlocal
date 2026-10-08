@@ -1,5 +1,6 @@
 import { useDraggable } from '@dnd-kit/core'
-import { AudioLines, X } from 'lucide-react'
+import { useState } from 'react'
+import { AudioLines, ChevronRight, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -18,6 +19,8 @@ import { useAgentHubMirrorDrag } from './AgentHubMirrorTabDragLayer'
 import { mirrorTabDragData } from './agent-hub-mirror-drag-data'
 import { claimAgentHubMirrorGesture } from './agent-hub-mirror-gesture'
 import { AgentHubMirrorTabMenu } from './AgentHubMirrorTabMenu'
+import { AgentHubThreadHoverCard } from './AgentHubThreadHoverCard'
+import { toggleAgentHubFamilyBar, useAgentHubFamilyBarShown } from './agent-hub-family-bar'
 
 export function AgentHubMirrorTab({
   windowId,
@@ -25,6 +28,7 @@ export function AgentHubMirrorTab({
   active,
   thread,
   location,
+  familyRoot,
   closable,
   inputOwner,
   panelId,
@@ -37,6 +41,8 @@ export function AgentHubMirrorTab({
   active: boolean
   thread: AgentPaneThread | null
   location: AgentHubLocation
+  /** Top dispatcher's pane when this tab's pane belongs to an orchestration family. */
+  familyRoot: string | null
   closable: boolean
   inputOwner: boolean
   panelId: string
@@ -47,6 +53,8 @@ export function AgentHubMirrorTab({
   const title = useAgentHubTargetTitle(tab.target)
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
   const drag = useAgentHubMirrorDrag()
+  const familyBarShown = useAgentHubFamilyBarShown(familyRoot)
+  const [editing, setEditing] = useState(false)
   const draggable = useDraggable({
     id: `mirror-entry:${tab.id}`,
     data: mirrorTabDragData(windowId, tab),
@@ -59,6 +67,73 @@ export function AgentHubMirrorTab({
     drag.drop.entryId === tab.id
       ? drag.drop.side
       : null
+  const familyLabel = familyBarShown
+    ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
+    : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
+  const tabNode = (
+    <div
+      {...draggable.listeners}
+      onPointerDown={(event) => {
+        event.stopPropagation()
+        if (event.target instanceof Element && event.target.closest('input, button')) {
+          return
+        }
+        if (
+          drag.enabled &&
+          event.button === 0 &&
+          claimAgentHubMirrorGesture('tab', event.pointerId)
+        ) {
+          draggable.listeners?.onPointerDown?.(event)
+        }
+      }}
+      role="tab"
+      id={agentHubMirrorTabId(tab.id)}
+      aria-controls={panelId}
+      aria-selected={active}
+      aria-label={translate('agentHub.mirror.tabLabel', '{{value0}}, {{value1}}', {
+        value0: title,
+        value1: agentHubStateWord(thread)
+      })}
+      tabIndex={active ? 0 : -1}
+      data-agent-hub-tab-id={tab.id}
+      data-kind={kind}
+      onClick={(event) => {
+        if (
+          event.detail < 2 &&
+          (!(event.target instanceof Element) || !event.target.closest('input'))
+        ) {
+          onSelect(true)
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === ' ' && event.target === event.currentTarget) {
+          event.preventDefault()
+          onSelect(true)
+        }
+      }}
+      className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <span className="shrink-0">
+        <HubStateIndicator kind={kind} />
+      </span>
+      <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} />
+      <div
+        className="min-w-0 flex-1 text-[13px] leading-tight"
+        onDoubleClick={() => onSelect(false)}
+      >
+        <AgentHubMirrorTitle target={tab.target} onEditingChange={setEditing} />
+        <div className="flex items-center [&>span]:text-[11px]">
+          <HubCrumb location={location} />
+        </div>
+      </div>
+      {inputOwner ? (
+        <AudioLines
+          aria-label={translate('agentHub.mic.listeningTab', 'Dictation in this terminal')}
+          className="size-3 shrink-0"
+        />
+      ) : null}
+    </div>
+  )
   return (
     <AgentHubMirrorTabMenu windowId={windowId} entryId={tab.id} onClose={onClose}>
       <div
@@ -69,73 +144,39 @@ export function AgentHubMirrorTab({
         data-single={!closable}
         className="group/tab relative flex min-w-64 max-w-80 basis-80 items-center gap-1 rounded-md border border-transparent px-1 data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background data-[single=true]:border-transparent data-[single=true]:bg-transparent"
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              {...draggable.listeners}
-              onPointerDown={(event) => {
-                event.stopPropagation()
-                if (event.target instanceof Element && event.target.closest('input, button')) {
-                  return
-                }
-                if (
-                  drag.enabled &&
-                  event.button === 0 &&
-                  claimAgentHubMirrorGesture('tab', event.pointerId)
-                ) {
-                  draggable.listeners?.onPointerDown?.(event)
-                }
-              }}
-              role="tab"
-              id={agentHubMirrorTabId(tab.id)}
-              aria-controls={panelId}
-              aria-selected={active}
-              aria-label={translate('agentHub.mirror.tabLabel', '{{value0}}, {{value1}}', {
-                value0: title,
-                value1: agentHubStateWord(thread)
-              })}
-              tabIndex={active ? 0 : -1}
-              data-agent-hub-tab-id={tab.id}
-              data-kind={kind}
-              onClick={(event) => {
-                if (
-                  event.detail < 2 &&
-                  (!(event.target instanceof Element) || !event.target.closest('input'))
-                ) {
-                  onSelect(true)
-                }
-              }}
-              onKeyDown={(event) => {
-                if (event.key === ' ' && event.target === event.currentTarget) {
-                  event.preventDefault()
-                  onSelect(true)
-                }
-              }}
-              className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <span className="shrink-0">
-                <HubStateIndicator kind={kind} />
-              </span>
-              <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} />
-              <div
-                className="min-w-0 flex-1 text-[13px] leading-tight"
-                onDoubleClick={() => onSelect(false)}
-              >
-                <AgentHubMirrorTitle target={tab.target} />
-                <div className="flex items-center [&>span]:text-[11px]">
-                  <HubCrumb location={location} />
-                </div>
-              </div>
-              {inputOwner ? (
-                <AudioLines
-                  aria-label={translate('agentHub.mic.listeningTab', 'Dictation in this terminal')}
-                  className="size-3 shrink-0"
-                />
-              ) : null}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent respectReducedMotion>{title}</TooltipContent>
-        </Tooltip>
+        {active && familyRoot ? (
+          // Why a sibling of the tab: a button inside role="tab" is invalid nesting.
+          <button
+            type="button"
+            aria-label={familyLabel}
+            title={familyLabel}
+            aria-expanded={familyBarShown}
+            data-agent-hub-no-tab-drop
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => toggleAgentHubFamilyBar(familyRoot)}
+            className="grid size-4 shrink-0 place-items-center rounded text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ChevronRight
+              data-open={familyBarShown}
+              className="size-3 transition-transform duration-150 data-[open=true]:rotate-90"
+            />
+          </button>
+        ) : null}
+        {thread ? (
+          <AgentHubThreadHoverCard
+            thread={thread}
+            location={location}
+            actions={undefined}
+            suppressed={drag.active !== null || editing}
+          >
+            {tabNode}
+          </AgentHubThreadHoverCard>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>{tabNode}</TooltipTrigger>
+            <TooltipContent respectReducedMotion>{title}</TooltipContent>
+          </Tooltip>
+        )}
         <AgentHubMirrorSidebarReveal target={tab.target} />
         {closable ? <AgentHubMirrorJumpButton onReveal={onReveal} showShortcut={active} /> : null}
         {closable ? (

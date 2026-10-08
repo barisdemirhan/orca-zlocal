@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -14,10 +14,17 @@ export function useAgentHubTargetTitle(target: AgentHubPaneTarget): string {
 }
 
 /** A mirror's title: double-click renames the terminal tab, like its tab in the workspace. */
-export function AgentHubMirrorTitle({ target }: { target: AgentHubPaneTarget }): React.JSX.Element {
+export function AgentHubMirrorTitle({
+  target,
+  onEditingChange
+}: {
+  target: AgentHubPaneTarget
+  onEditingChange?: (editing: boolean) => void
+}): React.JSX.Element {
   const title = useAgentHubTargetTitle(target)
   const setTabCustomTitle = useAppStore((s) => s.setTabCustomTitle)
   const [editing, setEditing] = useState(false)
+  useEffect(() => onEditingChange?.(editing), [editing, onEditingChange])
   if (!editing) {
     return (
       <div

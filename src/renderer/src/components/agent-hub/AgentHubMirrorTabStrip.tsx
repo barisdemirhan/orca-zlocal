@@ -26,6 +26,9 @@ import {
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import { AgentHubMirrorAddButton } from './AgentHubMirrorAddButton'
+import { agentHubMirrorFamily } from './agent-hub-mirror-family'
+import { readAgentHubHiddenFamilyBars, toggleAgentHubFamilyBar } from './agent-hub-family-bar'
+import { focusAgentHubFamilyTree } from './AgentHubMirrorFamilyTabs'
 
 export function agentHubMirrorPanelId(windowId: string): string {
   return `mirror-panel-${windowId}`
@@ -71,6 +74,14 @@ export function AgentHubMirrorTabStrip({
       .getElementById(agentHubMirrorTabId(selection.tabId))
       ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }, [selection, window.id])
+  const familyRootOf = (tab: MirrorTabEntry): string | null => {
+    const paneKey =
+      tab.target.paneKey ??
+      threads.find((thread) => agentHubTargetShowsThread(tab.target, thread))?.paneKey
+    return (
+      (paneKey ? agentHubMirrorFamily(paneKey, threads, lineage)?.path[0]?.paneKey : null) ?? null
+    )
+  }
   const select = (tabId: string, focusTerminal: boolean): void => {
     activateAgentHubMirrorTab(window.id, tabId, focusTerminal)
   }
@@ -124,6 +135,29 @@ export function AgentHubMirrorTabStrip({
             next = 0
           } else if (event.key === 'End') {
             next = window.tabs.length - 1
+          } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            // Down opens the workers bar and steps into it; Up folds it away again.
+            const root = window.tabs[index] ? familyRootOf(window.tabs[index]) : null
+            if (!root) {
+              return
+            }
+            event.preventDefault()
+            event.stopPropagation()
+            const tabElement = event.target
+            if (event.key === 'ArrowUp') {
+              if (!readAgentHubHiddenFamilyBars().has(root)) {
+                toggleAgentHubFamilyBar(root)
+              }
+              return
+            }
+            if (readAgentHubHiddenFamilyBars().has(root)) {
+              toggleAgentHubFamilyBar(root)
+              // Why a frame: the bar mounts on the next render.
+              requestAnimationFrame(() => focusAgentHubFamilyTree(tabElement))
+            } else {
+              focusAgentHubFamilyTree(tabElement)
+            }
+            return
           } else if (event.key === 'Enter') {
             event.preventDefault()
             requestAgentHubMirrorSelection(window.id, window.activeTabId)
@@ -149,6 +183,7 @@ export function AgentHubMirrorTabStrip({
             panelId={agentHubMirrorPanelId(window.id)}
             thread={threads.find((thread) => agentHubTargetShowsThread(tab.target, thread)) ?? null}
             location={locationOf(tab.target)}
+            familyRoot={familyRootOf(tab)}
             closable={window.tabs.length > 1}
             inputOwner={mirrorOwnsDictation(session, agentHubMirrorDictationPane(tab.target))}
             onSelect={(focusTerminal) => select(tab.id, focusTerminal)}
