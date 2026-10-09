@@ -232,14 +232,10 @@ export function AgentHubDock({
             <DockButton
               label={translate('agentHub.tab.inbox', 'Inbox')}
               side={side}
-              className={DOCK_COUNT_BUTTON}
+              className={DOCK_BUTTON}
               onClick={() => onOpenTab('inbox')}
             >
-              {/* Same tally as the hub's Inbox tab: waiting plus finished. */}
-              <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
-                <Inbox aria-hidden className="size-3.5" />
-                {counts.needsYou + counts.finished}
-              </span>
+              <Inbox className="size-3.5" />
             </DockButton>
             <DockCounterGroup counts={counts} side={side} onOpenTab={onOpenTab} />
             <DockButton
