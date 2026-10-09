@@ -337,12 +337,26 @@ export function AgentHubMirrors({
               onSlot={onSlot}
               onFocus={(event) => {
                 focusAgentHubMirror(key)
-                requestAgentHubMirrorSelection(
-                  key,
-                  window.activeTabId,
-                  event.target instanceof HTMLElement && event.target.closest('.xterm') !== null,
-                  false
-                )
+                const element = event.target instanceof HTMLElement ? event.target : null
+                const inTerminal = element?.closest('.xterm') != null
+                // Why: the pane's own chrome (split, close, rename) renders only while the pane is
+                // active; re-selecting it without terminal focus unmounts the button mid-click.
+                if (!inTerminal && element?.closest('[data-agent-hub-mirror-slot]') != null) {
+                  const alreadyActive =
+                    selection.windowId === key &&
+                    selection.tabId === window.activeTabId &&
+                    selection.focusTerminal
+                  if (!alreadyActive) {
+                    requestAgentHubMirrorSelection(
+                      key,
+                      window.activeTabId,
+                      element.closest('input, textarea, [contenteditable="true"]') == null,
+                      false
+                    )
+                  }
+                  return
+                }
+                requestAgentHubMirrorSelection(key, window.activeTabId, inTerminal, false)
               }}
               onClose={() => closeAgentHubMirror(key)}
               onMinimize={() => minimizeAgentHubMirror(key)}
