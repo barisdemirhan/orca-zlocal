@@ -1,3 +1,5 @@
+import { getConnectionId } from '@/lib/connection-context'
+import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { AgentHubPeekChips } from './AgentHubPeekChips'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
@@ -242,6 +244,15 @@ export function AgentHubAttentionCard({
       performance.now() - shownAtRef.current >= AGENT_HUB_CARD_KEY_GUARD_MS && choose(index)
   }))
 
+  // Why the agent's host: an SSH or paired-runtime agent reads the image from its own disk.
+  const pasteImage = (): Promise<string | null> => {
+    const state = useAppStore.getState()
+    return window.api.ui.saveClipboardImageAsTempFile({
+      connectionId: getConnectionId(thread.worktree.id) ?? null,
+      runtimeEnvironmentId: getRuntimeEnvironmentIdForWorktree(state, thread.worktree.id) ?? null
+    })
+  }
+
   const reply = (text: string): void => {
     if (!ptyId || chosen !== null) {
       return
@@ -321,6 +332,7 @@ export function AgentHubAttentionCard({
             })}
             disabled={chosen !== null}
             onSend={reply}
+            onPasteImage={pasteImage}
           />
         </>
       ) : canAnswer && approval ? (
@@ -348,6 +360,7 @@ export function AgentHubAttentionCard({
             disabled={chosen !== null}
             allowEmpty={instructing}
             onSend={reply}
+            onPasteImage={pasteImage}
           />
         </>
       ) : canAnswer ? (

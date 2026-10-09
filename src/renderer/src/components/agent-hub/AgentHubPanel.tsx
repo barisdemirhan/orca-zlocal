@@ -259,12 +259,16 @@ export function AgentHubPanel({
       case 'pageCard':
         pageCard(action.delta)
         break
-      case 'open':
-        openItem(
-          items[activeIndex] ?? (tab === 'inbox' && cardThread ? threadItem(cardThread) : null),
-          action.popout ? onPopout : onJump
-        )
+      case 'open': {
+        const row = items[activeIndex]
+        if (row) {
+          openItem(row, action.popout ? onPopout : onJump)
+        } else if (tab === 'inbox' && cardThread) {
+          // The card's own Pop out: its mirror takes over and the hub closes.
+          openItem(threadItem(cardThread), action.popout ? onOpen : onJump)
+        }
         break
+      }
       case 'answer':
         if (!cardControlRef.current?.chooseOption(action.optionIndex)) {
           return

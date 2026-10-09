@@ -130,7 +130,9 @@ export function AgentHubInboxBody({
             popoutKeys={popoutKeys}
             controlRef={cardControlRef}
             onJump={() => actions.onJump(cardThread)}
-            onPopout={() => actions.onPopout(cardThread)}
+            // Why open, not pop out: the card answers one agent, so its mirror takes over and the
+            // hub steps aside; an open mirror comes forward and glows.
+            onPopout={() => actions.onOpen(cardThread)}
           />
         </>
       ) : (

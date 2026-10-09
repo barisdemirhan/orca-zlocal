@@ -21854,7 +21854,9 @@
       "replyTo": "Reply to @{{value0}}…",
       "instead": "Tell it what to do instead…",
       "jump": "Jump to terminal",
-      "insteadOrDeny": "Tell it what to do instead, or press Enter to just deny…"
+      "insteadOrDeny": "Tell it what to do instead, or press Enter to just deny…",
+      "pastedImage": "Image {{value0}}",
+      "removeImage": "Remove {{value0}}"
     },
     "close": "Close (esc)",
     "state": {

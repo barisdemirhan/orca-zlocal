@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
-import { Mic, SendHorizontal, ShieldQuestion } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Mic, SendHorizontal, ShieldQuestion, X } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { AskQuestion } from '../../../../shared/native-chat-ask-types'
@@ -84,7 +84,8 @@ export function HubReplyField({
   disabled,
   allowEmpty = false,
   inputRef,
-  onSend
+  onSend,
+  onPasteImage
 }: {
   placeholder: string
   disabled: boolean
@@ -92,63 +93,137 @@ export function HubReplyField({
   allowEmpty?: boolean
   inputRef?: React.Ref<HTMLInputElement>
   onSend: (text: string) => void
+  /** Saves the clipboard's image where the agent runs and returns its path. */
+  onPasteImage?: () => Promise<string | null>
 }): React.JSX.Element {
   const [value, setValue] = useState('')
+  const [images, setImages] = useState<readonly { path: string; preview: string }[]>([])
   const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
+  const previews = useRef(new Set<string>())
+  useEffect(() => {
+    const owned = previews.current
+    return () => owned.forEach((url) => URL.revokeObjectURL(url))
+  }, [])
+  /** Drops these attached images (all of them for null) and frees their previews. */
+  const dropImages = (paths: ReadonlySet<string> | null): void => {
+    for (const image of images) {
+      if (!paths || paths.has(image.path)) {
+        URL.revokeObjectURL(image.preview)
+        previews.current.delete(image.preview)
+      }
+    }
+    setImages((current) => (paths ? current.filter((image) => !paths.has(image.path)) : []))
+  }
   const submit = (): void => {
     const text = value.trim()
-    if ((text || allowEmpty) && !disabled) {
-      onSend(text)
+    if ((text || images.length > 0 || allowEmpty) && !disabled) {
+      // Why paths: an answer travels as typed text, and both agents read an image from its path.
+      onSend([text, ...images.map((image) => image.path)].filter(Boolean).join(' '))
       setValue('')
+      dropImages(null)
     }
   }
+  const pasteImage = (event: React.ClipboardEvent<HTMLInputElement>): void => {
+    const file = Array.from(event.clipboardData.files).find((entry) =>
+      entry.type.startsWith('image/')
+    )
+    // Why text wins: a copied page carries both, and the words are what was meant.
+    if (!onPasteImage || !file || event.clipboardData.getData('text/plain')) {
+      return
+    }
+    event.preventDefault()
+    const preview = URL.createObjectURL(file)
+    previews.current.add(preview)
+    void onPasteImage()
+      .then((path) => {
+        if (path) {
+          setImages((current) => [...current, { path, preview }])
+        } else {
+          URL.revokeObjectURL(preview)
+        }
+      })
+      .catch(() => URL.revokeObjectURL(preview))
+  }
   return (
-    <form
-      className="mt-2.5 flex items-center gap-0.5 rounded-lg border border-foreground/[0.08] bg-background/60 py-1 pr-1 pl-3 focus-within:border-foreground/20"
-      onSubmit={(event) => {
-        event.preventDefault()
-        submit()
-      }}
-    >
-      <input
-        ref={inputRef}
-        value={value}
-        disabled={disabled}
-        onChange={(event) => setValue(event.target.value)}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        className="min-w-0 flex-1 bg-transparent py-1.5 text-[13px] outline-none placeholder:text-muted-foreground/70"
-      />
-      {voiceEnabled ? (
+    <>
+      {images.length > 0 ? (
+        <div className="mt-2.5 flex flex-wrap gap-1.5" data-agent-hub-reply-images>
+          {images.map((image, index) => {
+            const name = translate('agentHub.card.pastedImage', 'Image {{value0}}', {
+              value0: index + 1
+            })
+            return (
+              <span
+                key={image.path}
+                title={image.path}
+                className="flex items-center gap-1.5 rounded-md border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-0.5 text-xs text-muted-foreground"
+              >
+                <img src={image.preview} alt="" className="size-6 rounded object-cover" />
+                {name}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={translate('agentHub.card.removeImage', 'Remove {{value0}}', {
+                    value0: name
+                  })}
+                  onClick={() => dropImages(new Set([image.path]))}
+                >
+                  <X />
+                </Button>
+              </span>
+            )
+          })}
+        </div>
+      ) : null}
+      <form
+        className="mt-2.5 flex items-center gap-0.5 rounded-lg border border-foreground/[0.08] bg-background/60 py-1 pr-1 pl-3 focus-within:border-foreground/20"
+        onSubmit={(event) => {
+          event.preventDefault()
+          submit()
+        }}
+      >
+        <input
+          ref={inputRef}
+          value={value}
+          disabled={disabled}
+          onChange={(event) => setValue(event.target.value)}
+          onPaste={pasteImage}
+          placeholder={placeholder}
+          aria-label={placeholder}
+          className="min-w-0 flex-1 bg-transparent py-1.5 text-[13px] outline-none placeholder:text-muted-foreground/70"
+        />
+        {voiceEnabled ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            tabIndex={-1}
+            aria-label={translate('agentHub.card.dictate', 'Dictate')}
+            className="size-7"
+            onClick={(event) => {
+              // Why focus first: dictation inserts into whatever field holds focus when it starts.
+              event.currentTarget.form?.querySelector('input')?.focus()
+              dispatchDictationControl('toggle')
+            }}
+          >
+            <Mic className="size-4" />
+          </Button>
+        ) : null}
         <Button
-          type="button"
+          type="submit"
           variant="ghost"
           size="icon-sm"
           tabIndex={-1}
-          aria-label={translate('agentHub.card.dictate', 'Dictate')}
+          // Why enabled when empty is allowed: a disabled default button blocks Enter submission.
+          disabled={disabled || (!allowEmpty && !value.trim() && images.length === 0)}
+          aria-label={translate('agentHub.card.send', 'Send')}
           className="size-7"
-          onClick={(event) => {
-            // Why focus first: dictation inserts into whatever field holds focus when it starts.
-            event.currentTarget.form?.querySelector('input')?.focus()
-            dispatchDictationControl('toggle')
-          }}
         >
-          <Mic className="size-4" />
+          <SendHorizontal className="size-4" />
         </Button>
-      ) : null}
-      <Button
-        type="submit"
-        variant="ghost"
-        size="icon-sm"
-        tabIndex={-1}
-        // Why enabled when empty is allowed: a disabled default button blocks Enter submission.
-        disabled={disabled || (!allowEmpty && !value.trim())}
-        aria-label={translate('agentHub.card.send', 'Send')}
-        className="size-7"
-      >
-        <SendHorizontal className="size-4" />
-      </Button>
-    </form>
+      </form>
+    </>
   )
 }
 
