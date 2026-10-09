@@ -34,6 +34,11 @@ import { launchAgentSessionContinuation } from '@/lib/launch-agent-session-conti
 import { useAppStore } from '@/store'
 import { isTuiAgentEnabled } from '../../../../shared/tui-agent-selection'
 import type { TuiAgent } from '../../../../shared/tui-agent'
+import {
+  AGENT_SESSION_CONTINUATION_PLACEMENTS,
+  DEFAULT_AGENT_SESSION_CONTINUATION_PLACEMENT,
+  type AgentSessionContinuationPlacement
+} from '@/lib/agent-session-continuation-placement'
 import { chooseInitialContinuationAgent } from './agent-session-continuation-selection'
 
 type AgentSessionContinuationDialogProps = {
@@ -43,6 +48,37 @@ type AgentSessionContinuationDialogProps = {
   onOpenChange: (open: boolean) => void
   /** Fires after the new session launched, so a host can step aside for the new tab. */
   onStarted?: () => void
+}
+
+function placementLabel(placement: AgentSessionContinuationPlacement): string {
+  switch (placement) {
+    case 'tab':
+      return translate('components.agentSessionContinuation.placementTab', 'New tab')
+    case 'pane':
+      return translate('components.agentSessionContinuation.placementPane', 'New pane')
+    case 'jump':
+      return translate('components.agentSessionContinuation.placementJump', 'Jump to it')
+  }
+}
+
+function placementDescription(placement: AgentSessionContinuationPlacement): string {
+  switch (placement) {
+    case 'tab':
+      return translate(
+        'components.agentSessionContinuation.placementTabDescription',
+        'Adds a tab next to this one and keeps you here. In a mirror, it becomes a tab of that mirror.'
+      )
+    case 'pane':
+      return translate(
+        'components.agentSessionContinuation.placementPaneDescription',
+        'Splits beside this pane. A mirror shows one pane, so it also gets a mirror tab for the new one.'
+      )
+    case 'jump':
+      return translate(
+        'components.agentSessionContinuation.placementJumpDescription',
+        'Opens a new tab and switches the workspace to it.'
+      )
+  }
 }
 
 const EMPTY_DISABLED_AGENTS: TuiAgent[] = []
@@ -67,6 +103,10 @@ export function AgentSessionContinuationDialog({
     request: AgentSessionContinuationRequest | null
     mode: AgentSessionContinuationContextMode
   } | null>(null)
+  const [placementPick, setPlacementPick] = useState<{
+    request: AgentSessionContinuationRequest | null
+    placement: AgentSessionContinuationPlacement
+  } | null>(null)
   if (!open) {
     if (pick) {
       setPick(null)
@@ -74,8 +114,15 @@ export function AgentSessionContinuationDialog({
     if (contextPick) {
       setContextPick(null)
     }
+    if (placementPick) {
+      setPlacementPick(null)
+    }
   }
   const contextMode = contextPick?.request === request ? contextPick.mode : 'focused'
+  const placement =
+    placementPick?.request === request
+      ? placementPick.placement
+      : DEFAULT_AGENT_SESSION_CONTINUATION_PLACEMENT
   const [starting, setStarting] = useState(false)
   const [showStarting, setShowStarting] = useState(false)
   const disabledAgents = settings?.disabledTuiAgents ?? EMPTY_DISABLED_AGENTS
@@ -148,7 +195,9 @@ export function AgentSessionContinuationDialog({
       initialCwd: request.initialCwd,
       launchChoice: selection.choice,
       launchSource: request.launchSource,
-      signal: abortRef.current?.signal
+      signal: abortRef.current?.signal,
+      // Why: only a pane-started request has a view to stay in; sidebar launches keep jumping.
+      ...(request.sourceTabId ? { placement, sourceTabId: request.sourceTabId } : {})
     })
     setStarting(false)
     if (launched) {
@@ -315,6 +364,38 @@ export function AgentSessionContinuationDialog({
                       )}
             </p>
           </div>
+
+          {request?.sourceTabId ? (
+            <div className="min-w-0 space-y-1.5">
+              <label className="text-xs font-medium">
+                {translate('components.agentSessionContinuation.openIn', 'Open in')}
+              </label>
+              <Select
+                disabled={controlsDisabled}
+                value={placement}
+                onValueChange={(value) => {
+                  const next = AGENT_SESSION_CONTINUATION_PLACEMENTS.find((item) => item === value)
+                  if (next) {
+                    setPlacementPick({ request, placement: next })
+                  }
+                }}
+              >
+                <SelectTrigger className="min-w-0 w-full" size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGENT_SESSION_CONTINUATION_PLACEMENTS.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {placementLabel(item)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] leading-4 text-muted-foreground">
+                {placementDescription(placement)}
+              </p>
+            </div>
+          ) : null}
 
           <div className="min-h-4 text-[11px] text-muted-foreground">
             {workingDirectory ? (

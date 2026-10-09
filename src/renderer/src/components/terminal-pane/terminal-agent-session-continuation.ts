@@ -84,6 +84,7 @@ export function prepareAgentSessionContinuationFromPane({
     source,
     worktreeId,
     groupId,
+    sourceTabId: tabId,
     workspacePath,
     initialCwd: initialCwd || workspacePath,
     launchSource: 'terminal_context_menu'

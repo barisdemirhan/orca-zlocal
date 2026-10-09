@@ -3,16 +3,33 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const launchAgentInNewTab = vi.hoisted(() => vi.fn())
 const writeClipboardText = vi.hoisted(() => vi.fn(async () => undefined))
 const ensureDetectedAgentsForWorktree = vi.hoisted(() => vi.fn())
-const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }))
-const store: {
-  settings: { disabledTuiAgents: string[]; experimentalNativeChat?: boolean }
-  getKnownWorktreeById: () => undefined
-} = vi.hoisted(() => ({
-  settings: { disabledTuiAgents: [] },
-  getKnownWorktreeById: () => undefined
+const toast = vi.hoisted(() => ({
+  error: vi.fn(),
+  success: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn()
 }))
+const mirror = vi.hoisted(() => ({
+  findWindowId: vi.fn((): string | null => null),
+  addTab: vi.fn(() => ({ status: 'changed' }))
+}))
+const store = vi.hoisted(() => {
+  const settings: { disabledTuiAgents: string[]; experimentalNativeChat?: boolean } = {
+    disabledTuiAgents: []
+  }
+  return {
+    createEmptySplitGroup: vi.fn((): string | null => 'group-split'),
+    closeEmptyGroup: vi.fn(),
+    getKnownWorktreeById: () => undefined,
+    settings
+  }
+})
 
 vi.mock('@/store', () => ({ useAppStore: { getState: () => store } }))
+vi.mock('@/components/agent-hub/agent-hub-mirror-continuation', () => ({
+  findAgentHubMirrorWindowIdForTab: mirror.findWindowId,
+  addLaunchedSessionToAgentHubMirror: mirror.addTab
+}))
 vi.mock('@/lib/launch-agent-in-new-tab', () => ({ launchAgentInNewTab }))
 vi.mock('@/lib/agent-catalog', () => ({
   getAgentCatalog: () => [{ id: 'claude', label: 'Claude' }],
@@ -45,6 +62,9 @@ vi.mock('@/i18n/i18n', () => ({
 describe('launchAgentSessionContinuation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mirror.findWindowId.mockReturnValue(null)
+    mirror.addTab.mockReturnValue({ status: 'changed' })
+    store.createEmptySplitGroup.mockReturnValue('group-split')
     store.settings.disabledTuiAgents = []
     ensureDetectedAgentsForWorktree.mockResolvedValue(['claude', 'codex'])
     launchAgentInNewTab.mockReturnValue({
@@ -192,6 +212,109 @@ describe('launchAgentSessionContinuation', () => {
       expect.objectContaining({ duration: Infinity, dismissible: true })
     )
     expect(toast.warning).not.toHaveBeenCalled()
+  })
+
+  describe('placement', () => {
+    const base = {
+      agent: 'claude',
+      prompt: 'continue',
+      worktreeId: 'wt-1',
+      groupId: 'group-1',
+      launchSource: 'terminal_context_menu',
+      sourceTabId: 'tab-src'
+    } as const
+
+    it('keeps the legacy jump when no placement is given', async () => {
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+      await launchAgentSessionContinuation({ ...base, placement: undefined })
+
+      const args = launchAgentInNewTab.mock.calls[0]?.[0]
+      expect(args).toMatchObject({ groupId: 'group-1' })
+      expect(args).not.toHaveProperty('activate')
+      expect(mirror.addTab).not.toHaveBeenCalled()
+    })
+
+    it('opens "jump" in the source group and activates it, even from a mirror', async () => {
+      mirror.findWindowId.mockReturnValue('mirror-1')
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+      await launchAgentSessionContinuation({ ...base, placement: 'jump' })
+
+      expect(launchAgentInNewTab.mock.calls[0]?.[0]).not.toHaveProperty('activate')
+      expect(mirror.addTab).not.toHaveBeenCalled()
+    })
+
+    it('adds a background tab in the workspace for "tab"', async () => {
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+      await launchAgentSessionContinuation({ ...base, placement: 'tab' })
+
+      expect(launchAgentInNewTab).toHaveBeenCalledWith(
+        expect.objectContaining({ groupId: 'group-1', activate: false })
+      )
+      expect(store.createEmptySplitGroup).not.toHaveBeenCalled()
+      expect(mirror.addTab).not.toHaveBeenCalled()
+    })
+
+    it('adds the new session as a tab of the source mirror for "tab"', async () => {
+      mirror.findWindowId.mockReturnValue('mirror-1')
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+      await launchAgentSessionContinuation({ ...base, placement: 'tab' })
+
+      expect(launchAgentInNewTab).toHaveBeenCalledWith(expect.objectContaining({ activate: false }))
+      expect(mirror.addTab).toHaveBeenCalledWith({
+        windowId: 'mirror-1',
+        worktreeId: 'wt-1',
+        sourceTabId: 'tab-src',
+        newTabId: 'tab-new',
+        agent: 'claude'
+      })
+    })
+
+    it('splits beside the pane and focuses it for "pane" in the workspace', async () => {
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+      await launchAgentSessionContinuation({ ...base, placement: 'pane' })
+
+      expect(store.createEmptySplitGroup).toHaveBeenCalledWith('wt-1', 'group-1', 'right', {
+        activate: true
+      })
+      const args = launchAgentInNewTab.mock.calls[0]?.[0]
+      expect(args).toMatchObject({ groupId: 'group-split' })
+      expect(args).not.toHaveProperty('activate')
+    })
+
+    it('splits quietly and mirrors the new pane for "pane" from a mirror', async () => {
+      mirror.findWindowId.mockReturnValue('mirror-1')
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+      await launchAgentSessionContinuation({ ...base, placement: 'pane' })
+
+      expect(store.createEmptySplitGroup).toHaveBeenCalledWith('wt-1', 'group-1', 'right', {
+        activate: false
+      })
+      expect(launchAgentInNewTab).toHaveBeenCalledWith(
+        expect.objectContaining({ groupId: 'group-split', activate: false })
+      )
+      expect(mirror.addTab).toHaveBeenCalledOnce()
+    })
+
+    it('removes the empty split when the launch fails', async () => {
+      launchAgentInNewTab.mockReturnValue(null)
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+
+      await expect(launchAgentSessionContinuation({ ...base, placement: 'pane' })).resolves.toBe(
+        false
+      )
+      expect(store.closeEmptyGroup).toHaveBeenCalledWith('wt-1', 'group-split')
+    })
+
+    it('tells the user when the mirror cannot take the tab', async () => {
+      mirror.findWindowId.mockReturnValue('mirror-1')
+      mirror.addTab.mockReturnValue({ status: 'tab-cap' })
+      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
+
+      await expect(launchAgentSessionContinuation({ ...base, placement: 'tab' })).resolves.toBe(
+        true
+      )
+      expect(toast.info).toHaveBeenCalled()
+    })
   })
 })
 

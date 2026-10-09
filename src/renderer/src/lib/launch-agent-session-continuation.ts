@@ -10,6 +10,11 @@ import {
 } from './host-chat-program-acquisition'
 import { agentChoicePending } from './host-chat-program'
 import { worktreeLaunchWorkspace } from './agent-launch-route-input'
+import {
+  addLaunchedSessionToAgentHubMirror,
+  findAgentHubMirrorWindowIdForTab
+} from '@/components/agent-hub/agent-hub-mirror-continuation'
+import type { AgentSessionContinuationPlacement } from '@/lib/agent-session-continuation-placement'
 import { isTuiAgentEnabled } from '../../../shared/tui-agent-selection'
 import type { LaunchSource } from '../../../shared/telemetry-events'
 import type { TuiAgent } from '../../../shared/tui-agent'
@@ -33,6 +38,10 @@ type LaunchAgentSessionContinuationArgs = {
   launchChoice?: AgentLaunchChoice
   launchSource: LaunchSource
   signal?: AbortSignal
+  /** Omitted keeps the legacy behavior: a new tab in the group that the workspace jumps to. */
+  placement?: AgentSessionContinuationPlacement
+  /** The terminal tab the user started from; decides whether that pane lives in a mirror. */
+  sourceTabId?: string
 }
 
 /** Detected agents, then those that open as a chat on the workspace's host without their CLI. */
@@ -101,15 +110,27 @@ export async function launchAgentSessionContinuation({
   initialCwd,
   launchChoice,
   launchSource,
-  signal
+  signal,
+  placement,
+  sourceTabId
 }: LaunchAgentSessionContinuationArgs): Promise<boolean> {
   const label = getAgentLabel(agent)
-  // Blind PTY writes do not prove prompt delivery; claiming success can hide a lost handoff (#22479).
+  // Why: a mirror shows one pane, so its sessions are added as mirror tabs, not workspace splits.
+  const mirrorWindowId =
+    placement && placement !== 'jump' && sourceTabId
+      ? findAgentHubMirrorWindowIdForTab(worktreeId, sourceTabId)
+      : null
+  // Why: a mirror user stays in the mirror; "New tab" elsewhere also keeps the current view.
+  const keepWorkspaceView = placement === 'tab' || mirrorWindowId !== null
+  // Why: the paste helper writes blind when the agent's composer was never observed, so a
+  // written prompt is not a delivered one. Claiming success there is how the whole handoff
+  // could vanish silently (#22479).
   let deliveryUnconfirmed = false
   const delivery = {
     agent,
     worktreeId,
     ...(groupId ? { groupId } : {}),
+    ...(keepWorkspaceView ? { activate: false, keepTabType: true } : {}),
     prompt,
     promptDelivery: agent === 'claude' ? ('draft' as const) : ('submit-after-ready' as const),
     launchSource,
@@ -159,10 +180,42 @@ export async function launchAgentSessionContinuation({
   const workspace = state.getKnownWorktreeById(worktreeId, executionHostId)
   const workspaceName =
     (workspace && resolveWorktreeDisplayName(workspace)) || initialCwd || worktreeId
-  const result = launchAgentInNewTab({ ...delivery, agentSessionLaunchPlan: plan })
+  // Why: the split opens only once the agent is confirmed, so a cancelled pick leaves no empty pane.
+  const splitGroupId =
+    placement === 'pane' && groupId
+      ? (useAppStore
+          .getState()
+          .createEmptySplitGroup(worktreeId, groupId, 'right', { activate: !keepWorkspaceView }) ??
+        null)
+      : null
+  const result = launchAgentInNewTab({
+    ...delivery,
+    ...(splitGroupId ? { groupId: splitGroupId } : {}),
+    agentSessionLaunchPlan: plan
+  })
   if (!result) {
+    if (splitGroupId) {
+      useAppStore.getState().closeEmptyGroup(worktreeId, splitGroupId)
+    }
     notifyLaunchFailed(label)
     return false
+  }
+  if (mirrorWindowId && sourceTabId && result.surface.kind === 'local-terminal') {
+    const mirrored = addLaunchedSessionToAgentHubMirror({
+      windowId: mirrorWindowId,
+      worktreeId,
+      sourceTabId,
+      newTabId: result.surface.tabId,
+      agent
+    })
+    if (mirrored.status !== 'changed') {
+      toast.info(
+        translate(
+          'components.agentSessionContinuation.mirrorNotAdded',
+          'The new session opened in the workspace; the mirror could not add it as a tab.'
+        )
+      )
+    }
   }
 
   if (result.promptDeliveryResult) {

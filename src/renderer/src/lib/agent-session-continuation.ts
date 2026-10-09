@@ -21,6 +21,8 @@ export type AgentSessionContinuationRequest = {
   source: AgentSessionContinuationSource
   worktreeId: string
   groupId?: string | null
+  /** The terminal tab the request came from; set only when started from a pane. */
+  sourceTabId?: string
   workspacePath: string
   initialCwd?: string | null
   launchSource: LaunchSource
