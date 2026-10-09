@@ -31,11 +31,26 @@ export function HubKeys({ keys }: { keys: string[] }): React.JSX.Element {
   )
 }
 
-/** "Group › project · workspace", with the mock's dim separators. */
-export function HubCrumb({ location }: { location: AgentHubLocation }): React.JSX.Element {
+/**
+ * "Group › project · workspace", with the mock's dim separators.
+ * `wrap` breaks long names onto more lines instead of cutting them with an ellipsis.
+ */
+export function HubCrumb({
+  location,
+  wrap = false
+}: {
+  location: AgentHubLocation
+  wrap?: boolean
+}): React.JSX.Element {
   return (
-    <span className="flex min-w-0 items-center text-xs leading-4 text-muted-foreground">
-      <span className="truncate">
+    <span
+      className={
+        wrap
+          ? 'flex min-w-0 flex-wrap items-center break-words text-xs leading-4 text-muted-foreground'
+          : 'flex min-w-0 items-center text-xs leading-4 text-muted-foreground'
+      }
+    >
+      <span className={wrap ? 'min-w-0 break-words' : 'truncate'}>
         {location.group ? (
           <>
             {location.group}

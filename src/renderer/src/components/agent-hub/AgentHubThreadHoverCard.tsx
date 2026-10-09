@@ -97,7 +97,9 @@ function ThreadDetails({
       <div className="flex items-center gap-2.5">
         <HubAvatar agentType={thread.agentType} kind={kind} />
         <div className="min-w-0">
-          <div className="truncate text-[13px] font-semibold text-foreground">{copy.taskTitle}</div>
+          <div className="break-words text-[13px] font-semibold text-foreground">
+            {copy.taskTitle}
+          </div>
           <div className="truncate text-muted-foreground">
             {formatAgentTypeLabel(thread.agentType)}
             {model ? ` · ${model}` : ''}
@@ -121,8 +123,8 @@ function ThreadDetails({
           </span>
         </Detail>
         <Detail label={translate('agentHub.hover.where', 'Where')}>
-          <span className="block truncate">
-            <HubCrumb location={location} />
+          <span className="block min-w-0">
+            <HubCrumb location={location} wrap />
           </span>
         </Detail>
       </dl>
