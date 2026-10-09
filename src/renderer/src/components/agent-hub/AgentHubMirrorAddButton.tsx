@@ -52,7 +52,7 @@ export function AgentHubMirrorAddButton({
             aria-label={full ? label : undefined}
           >
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon-xs" disabled={full} aria-label={label}>
+              <Button variant="outline" size="icon-sm" disabled={full} aria-label={label}>
                 <Plus />
               </Button>
             </PopoverTrigger>

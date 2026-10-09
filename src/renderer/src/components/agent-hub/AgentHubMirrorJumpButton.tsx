@@ -4,16 +4,14 @@ import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 
 export function AgentHubMirrorJumpButton({
-  onReveal,
-  showShortcut = true
+  onReveal
 }: {
   onReveal: () => void
-  showShortcut?: boolean
 }): React.JSX.Element {
   return (
     <AgentHubActionTooltip
       label={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
-      actionId={showShortcut ? 'agentHub.jumpToMirror' : undefined}
+      actionId="agentHub.jumpToMirror"
     >
       <Button
         type="button"

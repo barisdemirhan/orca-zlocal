@@ -100,39 +100,28 @@ it('keeps the complete header identity and add affordance without a singleton cl
   expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
 })
 
-it('jumps an inactive tab to its own workspace and keeps the other tab in the mirror', () => {
+it('jumps an inactive tab to its own workspace from its menu and keeps the other tab', async () => {
   const reveal = vi.fn()
   stage(2, reveal)
   const inactive = screen.getByRole('tab', { name: 'one, idle' })
-  const entry = inactive.closest('[data-agent-hub-tab-entry]')
-  if (!(entry instanceof HTMLElement)) {
-    throw new Error('No tab entry')
-  }
   expect(inactive.getAttribute('aria-selected')).toBe('false')
-  fireEvent.click(within(entry).getByRole('button', { name: 'Jump' }))
+  fireEvent.contextMenu(inactive)
+  fireEvent.click(
+    await screen.findByRole('menuitem', { name: 'Jump to this terminal in its workspace' })
+  )
   expect(reveal).toHaveBeenCalledWith(target('one'), null)
   expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.tab.id)).toEqual([
     'entry-1'
   ])
-  expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
 })
 
-it('shows an icon-only Jump and names the tab close control on hover', async () => {
+it('names the tab close control on hover', async () => {
   stage(2)
   const user = userEvent.setup()
   const entry = screen.getByRole('tab', { name: 'one, idle' }).closest('[data-agent-hub-tab-entry]')
   if (!(entry instanceof HTMLElement)) {
     throw new Error('No tab entry')
   }
-  const jump = within(entry).getByRole('button', { name: 'Jump' })
-  expect(jump.textContent).toBe('')
-  expect(jump.querySelector('svg')).not.toBeNull()
-  await user.hover(jump)
-  expect((await screen.findByRole('tooltip')).textContent).toContain(
-    'Jump to this terminal in its workspace'
-  )
-  await user.unhover(jump)
-  await waitFor(() => expect(screen.queryByRole('tooltip')).toBeNull())
   await user.hover(within(entry).getByRole('button', { name: 'Close mirror tab one' }))
   expect((await screen.findByRole('tooltip')).textContent).toContain('Close tab')
 })
@@ -196,7 +185,7 @@ it('returns a keyboard-closed tab home and keeps focus on its surviving neighbou
   const active = screen.getByRole('tab', { name: 'entry-2, idle' })
   active.focus()
   await user.keyboard('{Shift>}{F10}{/Shift}')
-  await user.keyboard('{ArrowDown}{Enter}')
+  await user.keyboard('{End}{Enter}')
   await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
   const neighbour = screen.getByRole('tab', { name: 'entry-1, idle' })
   expect(neighbour.getAttribute('aria-selected')).toBe('true')

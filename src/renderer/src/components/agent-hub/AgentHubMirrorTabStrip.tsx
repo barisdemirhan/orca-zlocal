@@ -101,7 +101,8 @@ export function AgentHubMirrorTabStrip({
   }
   return (
     <div
-      className="flex min-w-0 shrink items-center gap-1 self-stretch"
+      // Why the add button sits outside the tablist: it stays put while the tabs scroll.
+      className="flex min-w-0 shrink items-center gap-1.5 self-stretch"
       data-agent-hub-tab-strip={window.id}
       ref={droppable.setNodeRef}
     >

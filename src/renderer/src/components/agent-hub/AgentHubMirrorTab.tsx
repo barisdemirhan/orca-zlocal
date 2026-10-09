@@ -8,11 +8,13 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubStateWord } from './agent-hub-copy'
-import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
+import { HubAvatar } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubMirrorTitle, useAgentHubTargetTitle } from './AgentHubMirrorTitle'
-import { AgentHubMirrorSidebarReveal } from './AgentHubMirrorSidebarReveal'
-import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
+import {
+  canRevealAgentHubTargetInSidebar,
+  revealAgentHubTargetInSidebar
+} from './agent-hub-sidebar-reveal'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
 import { useAgentHubMirrorDrag } from './AgentHubMirrorTabDragLayer'
@@ -20,7 +22,11 @@ import { mirrorTabDragData } from './agent-hub-mirror-drag-data'
 import { claimAgentHubMirrorGesture } from './agent-hub-mirror-gesture'
 import { AgentHubMirrorTabMenu } from './AgentHubMirrorTabMenu'
 import { AgentHubThreadHoverCard } from './AgentHubThreadHoverCard'
-import { toggleAgentHubFamilyBar, useAgentHubFamilyBarShown } from './agent-hub-family-bar'
+import {
+  showAgentHubFamilyBar,
+  toggleAgentHubFamilyBar,
+  useAgentHubFamilyBarShown
+} from './agent-hub-family-bar'
 
 export function AgentHubMirrorTab({
   windowId,
@@ -67,9 +73,19 @@ export function AgentHubMirrorTab({
     drag.drop.entryId === tab.id
       ? drag.drop.side
       : null
-  const familyLabel = familyBarShown
+  // An inactive tab's workers bar is not on screen, whatever its family's setting.
+  const familyBarOpen = active && familyBarShown
+  const familyLabel = familyBarOpen
     ? translate('agentHub.mirror.hideWorkers', 'Hide the workers bar')
     : translate('agentHub.mirror.showWorkers', 'Show the workers bar')
+  // One set of actions for the hover card and the context menu, so the two cannot drift.
+  const actions = {
+    onShowInSidebar: canRevealAgentHubTargetInSidebar(tab.target)
+      ? () => revealAgentHubTargetInSidebar(tab.target)
+      : undefined,
+    // A window's only tab has Jump in the window header.
+    onJump: closable ? onReveal : undefined
+  }
   const tabNode = (
     <div
       {...draggable.listeners}
@@ -111,11 +127,8 @@ export function AgentHubMirrorTab({
           onSelect(true)
         }
       }}
-      className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none hover:bg-accent hover:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none group-hover/tab:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <span className="shrink-0">
-        <HubStateIndicator kind={kind} />
-      </span>
       <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} />
       <div
         className="min-w-0 flex-1 text-[13px] leading-tight"
@@ -135,29 +148,42 @@ export function AgentHubMirrorTab({
     </div>
   )
   return (
-    <AgentHubMirrorTabMenu windowId={windowId} entryId={tab.id} onClose={onClose}>
+    <AgentHubMirrorTabMenu
+      windowId={windowId}
+      entryId={tab.id}
+      onReveal={actions.onJump}
+      onShowInSidebar={actions.onShowInSidebar}
+      onClose={onClose}
+    >
       <div
         ref={draggable.setNodeRef}
         data-agent-hub-tab-entry={tab.id}
         data-dragging={draggable.isDragging}
         data-active={active}
         data-single={!closable}
-        className="group/tab relative flex min-w-64 max-w-80 basis-80 items-center gap-1 rounded-md border border-transparent px-1 data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background data-[single=true]:border-transparent data-[single=true]:bg-transparent"
+        className="group/tab relative flex min-w-60 max-w-80 basis-80 items-center gap-1 rounded-md border border-transparent px-1 hover:bg-accent data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background data-[single=true]:border-transparent data-[single=true]:bg-transparent data-[single=true]:hover:bg-accent"
       >
-        {active && familyRoot ? (
+        {familyRoot ? (
           // Why a sibling of the tab: a button inside role="tab" is invalid nesting.
           <button
             type="button"
             aria-label={familyLabel}
             title={familyLabel}
-            aria-expanded={familyBarShown}
+            aria-expanded={familyBarOpen}
             data-agent-hub-no-tab-drop
             onPointerDown={(event) => event.stopPropagation()}
-            onClick={() => toggleAgentHubFamilyBar(familyRoot)}
+            onClick={() => {
+              if (active) {
+                toggleAgentHubFamilyBar(familyRoot)
+              } else {
+                onSelect(false)
+                showAgentHubFamilyBar(familyRoot)
+              }
+            }}
             className="grid size-4 shrink-0 place-items-center rounded text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronRight
-              data-open={familyBarShown}
+              data-open={familyBarOpen}
               className="size-3 transition-transform duration-150 data-[open=true]:rotate-90"
             />
           </button>
@@ -166,7 +192,7 @@ export function AgentHubMirrorTab({
           <AgentHubThreadHoverCard
             thread={thread}
             location={location}
-            actions={undefined}
+            actions={{ ...actions, showJumpShortcut: active }}
             suppressed={drag.active !== null || editing}
           >
             {tabNode}
@@ -177,31 +203,32 @@ export function AgentHubMirrorTab({
             <TooltipContent respectReducedMotion>{title}</TooltipContent>
           </Tooltip>
         )}
-        <AgentHubMirrorSidebarReveal target={tab.target} />
-        {closable ? <AgentHubMirrorJumpButton onReveal={onReveal} showShortcut={active} /> : null}
         {closable ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                aria-label={translate(
-                  'agentHub.mirror.closeTabNamed',
-                  'Close mirror tab {{value0}}',
-                  {
-                    value0: title
-                  }
-                )}
-                data-agent-hub-no-tab-drop
-                onClick={onClose}
-              >
-                <X />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={4} respectReducedMotion>
-              {translate('agentHub.mirror.closeTab', 'Close tab')}
-            </TooltipContent>
-          </Tooltip>
+          // Why a wrapper: the button keeps its primitive look; only its visibility follows the tab.
+          <span className="flex shrink-0 opacity-0 transition-opacity duration-100 group-hover/tab:opacity-100 group-data-[active=true]/tab:opacity-100 focus-within:opacity-100">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={translate(
+                    'agentHub.mirror.closeTabNamed',
+                    'Close mirror tab {{value0}}',
+                    {
+                      value0: title
+                    }
+                  )}
+                  data-agent-hub-no-tab-drop
+                  onClick={onClose}
+                >
+                  <X />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4} respectReducedMotion>
+                {translate('agentHub.mirror.closeTab', 'Close tab')}
+              </TooltipContent>
+            </Tooltip>
+          </span>
         ) : null}
         {insertion ? (
           <span

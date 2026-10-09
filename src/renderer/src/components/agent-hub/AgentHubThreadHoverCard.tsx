@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
+import { ArrowUpRight, Crosshair, PictureInPicture2 } from 'lucide-react'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
@@ -23,6 +23,10 @@ export type AgentHubThreadCardActions = {
   onJump?: () => void
   /** Present when the agent has no window of its own yet. */
   onPopout?: () => void
+  /** Opens the sidebar on the agent's workspace. */
+  onShowInSidebar?: () => void
+  /** Names the jump-to-mirror shortcut on Jump; only the active mirror tab's Jump has it. */
+  showJumpShortcut?: boolean
 }
 
 function Detail({
@@ -135,8 +139,14 @@ function ThreadDetails({
           {copy.statusLine}
         </p>
       ) : null}
-      {actions?.onJump || actions?.onPopout ? (
+      {actions?.onJump || actions?.onPopout || actions?.onShowInSidebar ? (
         <div className="flex justify-end gap-1">
+          {actions.onShowInSidebar ? (
+            <Button type="button" variant="ghost" size="xs" onClick={actions.onShowInSidebar}>
+              <Crosshair aria-hidden className="size-3.5" />
+              {translate('agentHub.mirror.showInSidebar', 'Show in sidebar')}
+            </Button>
+          ) : null}
           {actions.onPopout ? (
             <AgentHubActionTooltip
               label={translate('agentHub.hover.popout', 'Own window')}
@@ -149,10 +159,18 @@ function ThreadDetails({
             </AgentHubActionTooltip>
           ) : null}
           {actions.onJump ? (
-            <Button type="button" variant="ghost" size="xs" onClick={actions.onJump}>
-              <ArrowUpRight aria-hidden className="size-3.5" />
-              {translate('agentHub.mirror.jump', 'Jump')}
-            </Button>
+            <AgentHubActionTooltip
+              label={translate(
+                'agentHub.mirror.jumpHint',
+                'Jump to this terminal in its workspace'
+              )}
+              actionId={actions.showJumpShortcut ? 'agentHub.jumpToMirror' : undefined}
+            >
+              <Button type="button" variant="ghost" size="xs" onClick={actions.onJump}>
+                <ArrowUpRight aria-hidden className="size-3.5" />
+                {translate('agentHub.mirror.jump', 'Jump')}
+              </Button>
+            </AgentHubActionTooltip>
           ) : null}
         </div>
       ) : null}

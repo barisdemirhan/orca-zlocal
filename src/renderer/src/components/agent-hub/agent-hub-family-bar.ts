@@ -28,6 +28,16 @@ export function toggleAgentHubFamilyBar(rootPaneKey: string): void {
   listeners.forEach((listener) => listener())
 }
 
+export function showAgentHubFamilyBar(rootPaneKey: string): void {
+  if (!hidden.has(rootPaneKey)) {
+    return
+  }
+  const next = new Set(hidden)
+  next.delete(rootPaneKey)
+  hidden = next
+  listeners.forEach((listener) => listener())
+}
+
 /** Whether this family's worker bar shows; every mirror of the family follows the same switch. */
 export function useAgentHubFamilyBarShown(rootPaneKey: string | null): boolean {
   return useSyncExternalStore(

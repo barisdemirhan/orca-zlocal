@@ -1,7 +1,7 @@
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '../ui/tooltip'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -139,7 +139,7 @@ it('lands immediately when the animation API throws', () => {
   expect(land).toHaveBeenCalledOnce()
 })
 
-it('moves Jump beside each tab close button, restores it for a singleton and closes the container', async () => {
+it('moves Jump into each tab menu, restores it for a singleton and closes the container', async () => {
   const reveal = vi.fn()
   openAgentHubMirror(target('first'))
   function Stage(): React.JSX.Element {
@@ -204,14 +204,11 @@ it('moves Jump beside each tab close button, restores it for a singleton and clo
   act(() => {
     addAgentHubMirrorTab(windowId, target('second'))
   })
-  expect(screen.getAllByRole('button', { name: 'Jump' })).toHaveLength(2)
-  const entry = screen
-    .getByRole('tab', { name: 'first, idle' })
-    .closest('[data-agent-hub-tab-entry]')
-  if (!(entry instanceof HTMLElement)) {
-    throw new Error('No inactive tab entry')
-  }
-  fireEvent.click(within(entry).getByRole('button', { name: 'Jump' }))
+  expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
+  fireEvent.contextMenu(screen.getByRole('tab', { name: 'first, idle' }))
+  fireEvent.click(
+    await screen.findByRole('menuitem', { name: 'Jump to this terminal in its workspace' })
+  )
   expect(reveal).toHaveBeenLastCalledWith('first')
   expect(screen.getAllByRole('tab')).toHaveLength(1)
   expect(

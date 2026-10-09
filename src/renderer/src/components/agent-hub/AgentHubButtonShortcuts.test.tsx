@@ -26,7 +26,10 @@ vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimToggle: () => null }))
 vi.mock('./AgentHubMirrorFocusButton', () => ({ AgentHubMirrorFocusButton: () => null }))
 afterEach(cleanup)
 
-async function renderAction(surface: 'mirror' | 'hover-card', onClick = vi.fn()) {
+async function renderAction(
+  surface: 'mirror' | 'hover-card' | 'hover-card-jump',
+  onClick = vi.fn()
+) {
   if (surface === 'mirror') {
     render(
       <TooltipProvider delayDuration={0}>
@@ -61,7 +64,11 @@ async function renderAction(surface: 'mirror' | 'hover-card', onClick = vi.fn())
       <AgentHubThreadHoverCard
         thread={thread}
         location={{ group: null, project: 'Orca', workspace: null }}
-        actions={{ onPopout: onClick }}
+        actions={
+          surface === 'hover-card'
+            ? { onPopout: onClick }
+            : { onJump: onClick, showJumpShortcut: true }
+        }
       >
         <button>Agent details</button>
       </AgentHubThreadHoverCard>
@@ -70,12 +77,13 @@ async function renderAction(surface: 'mirror' | 'hover-card', onClick = vi.fn())
   fireEvent.pointerEnter(screen.getByRole('button', { name: 'Agent details' }), {
     pointerType: 'mouse'
   })
-  return screen.findByRole('button', { name: 'Own window' })
+  return screen.findByRole('button', { name: surface === 'hover-card' ? 'Own window' : 'Jump' })
 }
 
 describe.each([
   { surface: 'mirror', actionId: 'agentHub.jumpToMirror', key: 'F6', label: '' },
-  { surface: 'hover-card', actionId: 'agentHub.popOut', key: 'F7', label: 'Own window' }
+  { surface: 'hover-card', actionId: 'agentHub.popOut', key: 'F7', label: 'Own window' },
+  { surface: 'hover-card-jump', actionId: 'agentHub.jumpToMirror', key: 'F8', label: 'Jump' }
 ] as const)('$surface button shortcuts', ({ surface, actionId, key, label }) => {
   it.each(['hover', 'focus'] as const)(
     'shows its bound shortcut only on %s',
@@ -101,7 +109,7 @@ describe.each([
     expect(button.textContent).toBe(label)
     fireEvent.focus(button)
     const tooltip = await screen.findByRole('tooltip')
-    expect(tooltip.textContent).not.toMatch(/F6|F7|↵/)
+    expect(tooltip.textContent).not.toMatch(/F6|F7|F8|↵/)
     fireEvent.click(button)
     expect(onClick).toHaveBeenCalledOnce()
   })

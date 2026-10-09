@@ -20428,8 +20428,8 @@
       "placementTab": "New tab",
       "placementPane": "New pane",
       "placementJump": "Jump to it",
-      "placementTabDescription": "Adds a tab next to this one and keeps you here. In a mirror, it becomes a tab of that mirror.",
-      "placementPaneDescription": "Splits beside this pane. A mirror shows one pane, so it also gets a mirror tab for the new one.",
+      "placementTabDescription": "Adds it as a tab of this mirror and keeps you here.",
+      "placementPaneDescription": "Splits beside this pane in its workspace and adds a mirror tab for the new one.",
       "placementJumpDescription": "Opens a new tab and switches the workspace to it.",
       "mirrorNotAdded": "The new session opened in the workspace; the mirror could not add it as a tab.",
       "startsIn": "Starts in:",
@@ -21783,7 +21783,8 @@
       "openInNew": "Open in new mirror",
       "moveToMirror": "Move to mirror",
       "moveUnavailable": "This terminal is no longer available to move.",
-      "tabLabel": "{{value0}}, {{value1}}"
+      "tabLabel": "{{value0}}, {{value1}}",
+      "dictationStopKey": "to stop"
     },
     "title": "Agents",
     "tab": {
@@ -21984,6 +21985,36 @@
       "notSet": "Not set",
       "setAction": "Set shortcut for {{action}}",
       "set": "Set shortcut"
+    },
+    "windowFilter": {
+      "label": "Filter by window",
+      "labelActive": "Filter: {{value0}}",
+      "title": "Show",
+      "any": "All",
+      "open": "Open in a window",
+      "emptyOpen": "No terminal is open in a window",
+      "minimized": "Minimized",
+      "emptyMinimized": "No terminal is minimized",
+      "none": "Not in a window",
+      "emptyNone": "Every terminal is in a window"
+    },
+    "peek": {
+      "kindWeb": "Web",
+      "kindImage": "Image",
+      "kindPdf": "PDF",
+      "kindMedia": "Media",
+      "source": "From {{value0}}",
+      "showSource": "Bring this mirror to the front",
+      "openInTab": "Open in tab",
+      "openInEditor": "Open in editor",
+      "openInBrowser": "Open in browser",
+      "openWithApp": "Open with default app",
+      "back": "Previous peek",
+      "close": "Close (esc)",
+      "chips": "Links in this message",
+      "chipLabel": "Peek at {{value0}}",
+      "unreadable": "This file could not be shown here.",
+      "action": "Peek"
     }
   },
   "workspace": {

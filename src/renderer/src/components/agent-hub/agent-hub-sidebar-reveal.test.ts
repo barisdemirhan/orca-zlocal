@@ -1,14 +1,15 @@
 import type * as MirrorSource from './agent-hub-mirror-source'
 /** @vitest-environment happy-dom */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { SCROLL_TO_CURRENT_WORKSPACE_REVEAL_REQUEST_EVENT } from '@/lib/scroll-to-current-workspace-status'
 import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
-import { TooltipProvider } from '../ui/tooltip'
-import { AgentHubMirrorSidebarReveal } from './AgentHubMirrorSidebarReveal'
+import {
+  canRevealAgentHubTargetInSidebar,
+  revealAgentHubTargetInSidebar
+} from './agent-hub-sidebar-reveal'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,
@@ -29,7 +30,6 @@ vi.mock('@/store', async () => {
 })
 
 afterEach(() => {
-  cleanup()
   resetAgentHubMirrorsForTest()
   vi.unstubAllGlobals()
   vi.clearAllMocks()
@@ -67,12 +67,7 @@ it.each(['git', 'folder'])('opens the sidebar and parks all mirrors for a %s wor
   const reveal = vi.fn()
   window.addEventListener(TOGGLE_FLOATING_TERMINAL_EVENT, hide)
   window.addEventListener(SCROLL_TO_CURRENT_WORKSPACE_REVEAL_REQUEST_EVENT, reveal)
-  render(
-    <TooltipProvider>
-      <AgentHubMirrorSidebarReveal target={target} />
-    </TooltipProvider>
-  )
-  fireEvent.click(screen.getByRole('button', { name: 'Show in sidebar' }))
+  revealAgentHubTargetInSidebar(target)
   expect(useAppStore.getState().sidebarOpen).toBe(true)
   expect(readAgentHubMirrors().windows).toHaveLength(0)
   expect(readAgentHubMirrors().chips).toHaveLength(2)
@@ -88,7 +83,7 @@ it.each(['git', 'folder'])('opens the sidebar and parks all mirrors for a %s wor
   useAppStore.setState({ floatingWorkspacePanelOpen: false })
 })
 
-it('omits floating workspace mirrors', () => {
+it('has no sidebar row for floating workspace mirrors', () => {
   const worktree = { ...makeWorktree(), id: FLOATING_TERMINAL_WORKTREE_ID }
   const target: AgentHubPaneTarget = {
     worktree,
@@ -98,12 +93,8 @@ it('omits floating workspace mirrors', () => {
     title: 'Terminal',
     agentType: null
   }
-  render(
-    <TooltipProvider>
-      <AgentHubMirrorSidebarReveal target={target} />
-    </TooltipProvider>
-  )
-  expect(screen.queryByRole('button')).toBeNull()
+  expect(canRevealAgentHubTargetInSidebar(target)).toBe(false)
+  expect(canRevealAgentHubTargetInSidebar({ ...target, worktree: makeWorktree() })).toBe(true)
 })
 
 vi.mock('./agent-hub-mirror-source', async (original) => ({

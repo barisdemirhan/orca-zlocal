@@ -61,11 +61,16 @@ function Destination({
 export function AgentHubMirrorTabMenu({
   windowId,
   entryId,
+  onReveal,
+  onShowInSidebar,
   onClose,
   children
 }: {
   windowId: string
   entryId: string
+  /** Jumps to the terminal in its workspace; absent for a window's only tab (its header has it). */
+  onReveal?: () => void
+  onShowInSidebar?: () => void
   onClose: () => void
   children: React.ReactNode
 }): React.JSX.Element {
@@ -160,6 +165,17 @@ export function AgentHubMirrorTabMenu({
         >
           {translate('agentHub.mirror.openInNew', 'Open in new mirror')}
         </ContextMenuItem>
+        {onReveal || onShowInSidebar ? <ContextMenuSeparator /> : null}
+        {onShowInSidebar ? (
+          <ContextMenuItem onSelect={onShowInSidebar}>
+            {translate('agentHub.mirror.showInSidebar', 'Show in sidebar')}
+          </ContextMenuItem>
+        ) : null}
+        {onReveal ? (
+          <ContextMenuItem onSelect={onReveal}>
+            {translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
+          </ContextMenuItem>
+        ) : null}
         <ContextMenuSeparator />
         <ContextMenuItem onSelect={onClose}>
           {translate('agentHub.mirror.closeTab', 'Close tab')}
