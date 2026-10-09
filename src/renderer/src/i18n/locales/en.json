@@ -8030,7 +8030,9 @@
             "canvas": "Enable the mirrors canvas",
             "canvasCopy": "Open the canvas with its button or shortcut to lay out your mirrors. Pop out keeps your current view. Leaving the canvas parks its mirrors; coming back restores them.",
             "restoreOnLaunch": "Restore mirrors and the canvas on launch",
-            "restoreOnLaunchCopy": "Mirrors, the tray and the canvas come back as you left them when Orca restarts. A mirror whose terminal was closed is left out."
+            "restoreOnLaunchCopy": "Mirrors, the tray and the canvas come back as you left them when Orca restarts. A mirror whose terminal was closed is left out.",
+            "focusedPaneOutline": "Outline the focused terminal",
+            "focusedPaneOutlineCopy": "A thin blue frame on the pane that has the keyboard, in the workspace and in mirrors: where typing and dictation go."
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -22019,6 +22021,9 @@
       "action": "Peek",
       "exitFullScreen": "Exit full screen",
       "fullScreen": "Full screen"
+    },
+    "dictation": {
+      "here": "Dictating here"
     }
   },
   "workspace": {

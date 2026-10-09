@@ -20,12 +20,6 @@ export function HubChip({
 }
 
 /** Compact key chips sized for the hub's dense rows; same platform-label rules as everywhere. */
-/**
- * Header icon buttons read as one row: quiet until hovered. The ghost Button sets no colour of
- * its own, so without this the hand-styled buttons beside it look dimmer.
- */
-export const HUB_HEADER_ICON_BUTTON = 'text-muted-foreground hover:text-foreground'
-
 export function HubKeys({ keys }: { keys: string[] }): React.JSX.Element {
   return (
     <ShortcutKeyCombo

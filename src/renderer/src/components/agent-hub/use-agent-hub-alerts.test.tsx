@@ -33,6 +33,7 @@ const preferences: AgentHubPreferences = {
   alertOnNeedsInput: true,
   alertOnFinished: true,
   alertSound: false,
+  focusedPaneOutline: true,
   alertsMutedUntil: null,
   showShells: false,
   finishedClearMinutes: 15,

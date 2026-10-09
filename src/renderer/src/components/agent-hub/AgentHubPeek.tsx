@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { ArrowLeft, Expand, ExternalLink, Minus, PanelTop, Shrink, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { HUB_HEADER_ICON_BUTTON, HubChip } from './AgentHubInlineLabels'
+import { HubChip } from './AgentHubInlineLabels'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { AgentHubPeekBrowser, closeLeftoverAgentHubPeekPages } from './AgentHubPeekBrowser'
@@ -69,7 +69,7 @@ function SourceButton({
         type="button"
         variant="ghost"
         size="xs"
-        className={HUB_HEADER_ICON_BUTTON}
+        className="text-muted-foreground hover:text-foreground"
         aria-label={label}
         onClick={() => {
           closeAgentHubPeek()
@@ -177,7 +177,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
               type="button"
               variant="ghost"
               size="icon-xs"
-              className={HUB_HEADER_ICON_BUTTON}
+              className="text-muted-foreground hover:text-foreground"
               aria-label={translate('agentHub.peek.back', 'Previous peek')}
               onClick={goBackAgentHubPeek}
             >
@@ -203,7 +203,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
               type="button"
               variant="ghost"
               size="icon-xs"
-              className={HUB_HEADER_ICON_BUTTON}
+              className="text-muted-foreground hover:text-foreground"
               aria-label={openOutLabel}
               onClick={() => item.openExternally && leave(item.openExternally)}
             >
@@ -216,7 +216,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
             type="button"
             variant="ghost"
             size="icon-xs"
-            className={HUB_HEADER_ICON_BUTTON}
+            className="text-muted-foreground hover:text-foreground"
             aria-label={fullScreenLabel}
             aria-pressed={fullScreen}
             onClick={() => setFullScreen(!fullScreen)}
@@ -229,7 +229,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
             type="button"
             variant="ghost"
             size="icon-xs"
-            className={HUB_HEADER_ICON_BUTTON}
+            className="text-muted-foreground hover:text-foreground"
             aria-label={translate('agentHub.peek.close', 'Close (esc)')}
             onClick={closeAgentHubPeek}
           >

@@ -7,9 +7,7 @@ import {
   type AgentHubDockSize,
   type AgentHubPlacement
 } from '../../../../shared/agent-hub-settings'
-import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
-import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { SearchableSetting } from '../settings/SearchableSetting'
 import {
@@ -23,6 +21,7 @@ import { getExperimentalSearchEntry } from '../settings/experimental-search'
 import { AGENT_HUB_DOCK_SIZES, agentHubDockSizeLabel } from './AgentHubDockMenu'
 import { AgentHubMicModeSetting } from './AgentHubMicModeControl'
 import { AgentHubShortcutSetting } from './AgentHubShortcutSetting'
+import { AgentHubAlertSettings } from './AgentHubAlertSettings'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 
 function clearAfterLabel(minutes: number): string {
@@ -45,9 +44,6 @@ function AgentHubOptions({
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }): React.JSX.Element {
   const preferences = useAgentHubPreferences()
-  const now = useNow(30_000)
-  const mutedUntil = preferences.alertsMutedUntil
-  const muted = mutedUntil !== null && mutedUntil > now
   return (
     <div className="ml-4 space-y-3 border-l border-border pl-4">
       <SettingsRow
@@ -123,71 +119,22 @@ function AgentHubOptions({
         />
       ) : null}
 
-      <SettingsSubsectionHeader
-        className="pt-2"
-        title={translate('auto.components.settings.ExperimentalPane.agentHub.alerts', 'Alerts')}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.alertsCopy',
-          "A bubble next to the hub that opens the agent's card. Skipped for the pane you are looking at."
-        )}
-      />
       <SettingsSwitchRow
         label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.alertNeedsInput',
-          'When an agent asks or needs approval'
+          'auto.components.settings.ExperimentalPane.agentHub.focusedPaneOutline',
+          'Outline the focused terminal'
         )}
-        checked={preferences.alertOnNeedsInput}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.focusedPaneOutlineCopy',
+          'A thin blue frame on the pane that has the keyboard, in the workspace and in mirrors: where typing and dictation go.'
+        )}
+        checked={preferences.focusedPaneOutline}
         onChange={() =>
-          updateSettings({ agentHubAlertOnNeedsInput: !preferences.alertOnNeedsInput })
+          updateSettings({ agentHubFocusedPaneOutline: !preferences.focusedPaneOutline })
         }
       />
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.alertFinished',
-          'When an agent finishes'
-        )}
-        checked={preferences.alertOnFinished}
-        onChange={() => updateSettings({ agentHubAlertOnFinished: !preferences.alertOnFinished })}
-      />
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.sound',
-          'Play a sound'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.soundCopy',
-          "Uses the sound and volume from Notifications (a short chime for System), and stays quiet when Orca's own notification already plays one."
-        )}
-        checked={preferences.alertSound}
-        onChange={() => updateSettings({ agentHubAlertSound: !preferences.alertSound })}
-      />
-      {muted && mutedUntil !== null ? (
-        <SettingsRow
-          label={translate(
-            'auto.components.settings.ExperimentalPane.agentHub.mutedUntil',
-            'Alerts are muted until {{value0}}',
-            {
-              value0: new Date(mutedUntil).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-              })
-            }
-          )}
-          control={
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              onClick={() => updateSettings({ agentHubAlertsMutedUntil: null })}
-            >
-              {translate(
-                'auto.components.settings.ExperimentalPane.agentHub.unmute',
-                'Turn back on'
-              )}
-            </Button>
-          }
-        />
-      ) : null}
+
+      <AgentHubAlertSettings preferences={preferences} updateSettings={updateSettings} />
 
       <SettingsSubsectionHeader
         className="pt-2"

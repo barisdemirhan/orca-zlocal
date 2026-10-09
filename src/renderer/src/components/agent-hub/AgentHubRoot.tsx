@@ -16,6 +16,8 @@ import { AgentHubCanvas } from './AgentHubCanvas'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubDimBackdrop } from './AgentHubDimToggle'
 import { AgentHubPeek } from './AgentHubPeek'
+import { AgentHubDictationPaneTag } from './AgentHubDictationPaneTag'
+import { useAgentHubFocusedPaneOutline } from './use-agent-hub-focused-pane-outline'
 import { AgentHubMirrors } from './AgentHubMirrors'
 import type { AgentHubOpenRequest } from './AgentHubPanel'
 import { AgentHubPopoverContent, type AgentHubPopoverRequest } from './AgentHubPopover'
@@ -85,6 +87,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const inSettings = useAppStore((s) => s.activeView === 'settings')
+  useAgentHubFocusedPaneOutline(preferences.focusedPaneOutline && !inSettings)
   const groupNameById = useGroupNameById()
   const hostLabels = useAgentHubHostLabels()
   const locationOf = (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>): AgentHubLocation =>
@@ -399,6 +402,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         onOpenCard={(paneKey) => openHub('inbox', paneKey)}
       />
       {inSettings ? null : <AgentHubPeek />}
+      <AgentHubDictationPaneTag />
     </>
   )
 }

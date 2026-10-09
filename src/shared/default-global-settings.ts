@@ -271,6 +271,7 @@ export function buildDefaultSettings(args: {
     agentHubAlertOnNeedsInput: true,
     agentHubAlertOnFinished: true,
     agentHubAlertSound: true,
+    agentHubFocusedPaneOutline: true,
     agentHubAlertsMutedUntil: null,
     agentHubShowShells: true,
     agentHubFinishedAutoClearMinutes: 0,

@@ -3,7 +3,6 @@ import { Minus, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
-import { HUB_HEADER_ICON_BUTTON } from './AgentHubInlineLabels'
 import { AgentHubMirrorFocusButton } from './AgentHubMirrorFocusButton'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
@@ -42,7 +41,7 @@ export function AgentHubMirrorHeaderControls({
           type="button"
           variant="ghost"
           size="icon-xs"
-          className={HUB_HEADER_ICON_BUTTON}
+          className="text-muted-foreground hover:text-foreground"
           aria-label={dockLabel}
           onClick={() => requestAgentHubMirrorsDock()}
         >
@@ -55,7 +54,7 @@ export function AgentHubMirrorHeaderControls({
           type="button"
           variant="ghost"
           size="icon-xs"
-          className={HUB_HEADER_ICON_BUTTON}
+          className="text-muted-foreground hover:text-foreground"
           aria-label={minimizeLabel}
           onClick={onMinimize}
         >
@@ -67,7 +66,7 @@ export function AgentHubMirrorHeaderControls({
           type="button"
           variant="ghost"
           size="icon-xs"
-          className={HUB_HEADER_ICON_BUTTON}
+          className="text-muted-foreground hover:text-foreground"
           aria-label={closeLabel}
           onClick={onClose}
         >

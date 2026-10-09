@@ -2,7 +2,6 @@ import { ArrowUpRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { HUB_HEADER_ICON_BUTTON } from './AgentHubInlineLabels'
 
 export function AgentHubMirrorJumpButton({
   onReveal
@@ -18,7 +17,7 @@ export function AgentHubMirrorJumpButton({
         type="button"
         variant="ghost"
         size="icon-xs"
-        className={HUB_HEADER_ICON_BUTTON}
+        className="text-muted-foreground hover:text-foreground"
         aria-label={translate('agentHub.mirror.jump', 'Jump')}
         data-agent-hub-no-tab-drop
         onPointerDown={(event) => event.stopPropagation()}

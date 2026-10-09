@@ -1,0 +1,92 @@
+import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import { useNow } from '@/hooks/use-now'
+import { translate } from '@/i18n/i18n'
+import { Button } from '../ui/button'
+import {
+  SettingsRow,
+  SettingsSubsectionHeader,
+  SettingsSwitchRow
+} from '../settings/SettingsFormControls'
+import type { AgentHubPreferences } from './use-agent-hub-settings'
+
+/** The Alerts part of the Agent Hub settings: what raises a bubble, the sound, and the mute. */
+export function AgentHubAlertSettings({
+  preferences,
+  updateSettings
+}: {
+  preferences: AgentHubPreferences
+  updateSettings: (updates: Partial<GlobalSettings>) => void
+}): React.JSX.Element {
+  const now = useNow(30_000)
+  const mutedUntil = preferences.alertsMutedUntil
+  const muted = mutedUntil !== null && mutedUntil > now
+  return (
+    <>
+      <SettingsSubsectionHeader
+        className="pt-2"
+        title={translate('auto.components.settings.ExperimentalPane.agentHub.alerts', 'Alerts')}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.alertsCopy',
+          "A bubble next to the hub that opens the agent's card. Skipped for the pane you are looking at."
+        )}
+      />
+      <SettingsSwitchRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.alertNeedsInput',
+          'When an agent asks or needs approval'
+        )}
+        checked={preferences.alertOnNeedsInput}
+        onChange={() =>
+          updateSettings({ agentHubAlertOnNeedsInput: !preferences.alertOnNeedsInput })
+        }
+      />
+      <SettingsSwitchRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.alertFinished',
+          'When an agent finishes'
+        )}
+        checked={preferences.alertOnFinished}
+        onChange={() => updateSettings({ agentHubAlertOnFinished: !preferences.alertOnFinished })}
+      />
+      <SettingsSwitchRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.sound',
+          'Play a sound'
+        )}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.soundCopy',
+          "Uses the sound and volume from Notifications (a short chime for System), and stays quiet when Orca's own notification already plays one."
+        )}
+        checked={preferences.alertSound}
+        onChange={() => updateSettings({ agentHubAlertSound: !preferences.alertSound })}
+      />
+      {muted && mutedUntil !== null ? (
+        <SettingsRow
+          label={translate(
+            'auto.components.settings.ExperimentalPane.agentHub.mutedUntil',
+            'Alerts are muted until {{value0}}',
+            {
+              value0: new Date(mutedUntil).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+              })
+            }
+          )}
+          control={
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              onClick={() => updateSettings({ agentHubAlertsMutedUntil: null })}
+            >
+              {translate(
+                'auto.components.settings.ExperimentalPane.agentHub.unmute',
+                'Turn back on'
+              )}
+            </Button>
+          }
+        />
+      ) : null}
+    </>
+  )
+}

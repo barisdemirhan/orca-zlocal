@@ -172,6 +172,22 @@
     inset 0 0 0 3px color-mix(in srgb, var(--terminal-pane-locate) 18%, transparent);
 }
 
+/* The pane that has the keyboard, kept outlined (Agent Hub's "Outline the focused terminal"):
+   where typing and dictation go. ::after, so the locate flash's ::before still plays over it. */
+:root[data-agent-hub-focused-pane-outline] .pane:focus-within::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: 30;
+  pointer-events: none;
+  border: 1.5px solid color-mix(in srgb, var(--terminal-pane-locate) 55%, transparent);
+  border-radius: 2px;
+}
+
+:root[data-agent-hub-focused-pane-outline] .pane:focus-within .pane-title-text {
+  color: var(--terminal-pane-locate);
+}
+
 @keyframes pane-focus-rim-flash {
   0% {
     opacity: 1;

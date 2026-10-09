@@ -23,6 +23,7 @@ export type AgentHubPreferences = {
   alertOnNeedsInput: boolean
   alertOnFinished: boolean
   alertSound: boolean
+  focusedPaneOutline: boolean
   alertsMutedUntil: number | null
   showShells: boolean
   finishedClearMinutes: number
@@ -45,6 +46,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       alertOnNeedsInput: s.settings?.agentHubAlertOnNeedsInput,
       alertOnFinished: s.settings?.agentHubAlertOnFinished,
       alertSound: s.settings?.agentHubAlertSound,
+      focusedPaneOutline: s.settings?.agentHubFocusedPaneOutline,
       alertsMutedUntil: s.settings?.agentHubAlertsMutedUntil,
       showShells: s.settings?.agentHubShowShells,
       finishedClearMinutes: s.settings?.agentHubFinishedAutoClearMinutes,
@@ -65,6 +67,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       alertOnNeedsInput: raw.alertOnNeedsInput !== false,
       alertOnFinished: raw.alertOnFinished !== false,
       alertSound: raw.alertSound !== false,
+      focusedPaneOutline: raw.focusedPaneOutline !== false,
       alertsMutedUntil: typeof raw.alertsMutedUntil === 'number' ? raw.alertsMutedUntil : null,
       showShells: raw.showShells !== false,
       finishedClearMinutes: normalizeAgentHubFinishedClearMinutes(raw.finishedClearMinutes),
