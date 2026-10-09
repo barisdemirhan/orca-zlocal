@@ -13,6 +13,7 @@ import { canCancelDictation, cancelDictation } from './agent-hub-dictation-cance
 import { useMirrorShowsDictation } from './agent-hub-mirror-dictation-display'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubMirrorMicState } from './use-agent-hub-mirror-mic-state'
+import { HubKeys } from './AgentHubInlineLabels'
 
 type DictationPhase = 'starting' | 'listening' | 'finishing'
 
@@ -60,6 +61,17 @@ function MirrorDictationIndicator({ phase }: { phase: DictationPhase }): React.J
         <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
           {isClipping ? label : lifecycleLabel}
         </span>
+        {/* Why on the pill: a stop shortcut kept in a tooltip goes unnoticed. */}
+        {phase !== 'finishing' && !isHoldMode && shortcut.keys.length > 0 ? (
+          <span
+            aria-hidden
+            data-agent-hub-dictation-stop-key
+            className="flex shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground"
+          >
+            <HubKeys keys={shortcut.keys} />
+            {translate('agentHub.mirror.dictationStopKey', 'to stop')}
+          </span>
+        ) : null}
         {phase === 'finishing' && !canCancel ? null : (
           <span aria-hidden className="ml-0.5 h-4 w-px shrink-0 bg-border" />
         )}
