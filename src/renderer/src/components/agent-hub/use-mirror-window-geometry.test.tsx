@@ -132,15 +132,17 @@ describe('a focused mirror window', () => {
   })
 
   it('glides by transform from the old box when focus starts or ends, not by resizing', () => {
-    const animate = vi.fn(() => ({ cancel: () => {} }) as unknown as Animation)
+    const animate = vi.fn((_frames: Keyframe[], _options?: KeyframeAnimationOptions) => ({
+      cancel: () => {}
+    }))
     Object.defineProperty(HTMLElement.prototype, 'animate', { value: animate, configurable: true })
     try {
       renderMirrors(['tab-a:leaf'])
       expect(animate).not.toHaveBeenCalled()
       act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
       expect(animate).toHaveBeenCalledTimes(1)
-      const [frames] = animate.mock.calls[0] as unknown as [Keyframe[]]
-      expect(frames[1]).toEqual({ transform: 'none' })
+      const frames = animate.mock.calls[0]?.[0]
+      expect(frames?.[1]).toEqual({ transform: 'none' })
       act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
       expect(animate).toHaveBeenCalledTimes(2)
     } finally {
@@ -149,7 +151,9 @@ describe('a focused mirror window', () => {
   })
 
   it('does not glide under reduced motion', () => {
-    const animate = vi.fn(() => ({ cancel: () => {} }) as unknown as Animation)
+    const animate = vi.fn((_frames: Keyframe[], _options?: KeyframeAnimationOptions) => ({
+      cancel: () => {}
+    }))
     Object.defineProperty(HTMLElement.prototype, 'animate', { value: animate, configurable: true })
     const matchMedia = vi.fn(() => ({
       matches: true,

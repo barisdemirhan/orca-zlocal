@@ -129,6 +129,8 @@ describe('terminal programmatic text paste', () => {
   it('returns whether the pane could take the paste', async () => {
     const pane = makePane()
     const transport = makeTransport()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the paste only reads getPtyId, isConnected and sendInput, which makeTransport implements.
+    const transports = new Map([[pane.id, transport]]) as never
     const base = {
       getManager: () => makeManager(pane) as never,
       tabId: 'tab-1',
@@ -139,7 +141,7 @@ describe('terminal programmatic text paste', () => {
       handleTerminalProgrammaticTextPaste({
         ...base,
         detail: { tabId: 'tab-1', text: 'ok' },
-        getPaneTransports: () => new Map([[pane.id, transport]]) as never
+        getPaneTransports: () => transports
       })
     ).toBe(true)
     expect(
@@ -153,14 +155,14 @@ describe('terminal programmatic text paste', () => {
       handleTerminalProgrammaticTextPaste({
         ...base,
         detail: { tabId: 'other-tab', text: 'wrong tab' },
-        getPaneTransports: () => new Map([[pane.id, transport]]) as never
+        getPaneTransports: () => transports
       })
     ).toBe(false)
     expect(
       handleTerminalProgrammaticTextPaste({
         ...base,
         detail: { tabId: 'tab-1', text: 'missing pane', paneId: 99 },
-        getPaneTransports: () => new Map([[pane.id, transport]]) as never
+        getPaneTransports: () => transports
       })
     ).toBe(false)
     await flushPasteTasks()
