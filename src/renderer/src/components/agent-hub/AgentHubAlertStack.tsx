@@ -9,7 +9,7 @@ import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubCrumb, HubKeys } from './AgentHubInlineLabels'
-import { useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
+import { quickAnswerTargetOf, useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
@@ -137,7 +137,7 @@ function AlertCard({
 
   const text = alertText(alert)
   const current = useAgentHubWorktreeCurrent(alert.thread.worktree.id)
-  const quick = useAgentHubQuickAnswer(alert.thread)
+  const quick = useAgentHubQuickAnswer(quickAnswerTargetOf(alert.thread))
   const options = alert.kind === 'done' ? [] : quick.options.slice(0, QUICK_OPTION_LIMIT)
   const choose = (index: number): boolean => {
     if (!quick.choose(index)) {

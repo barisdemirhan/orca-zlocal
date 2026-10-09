@@ -8032,7 +8032,9 @@
             "restoreOnLaunch": "Restore mirrors and the canvas on launch",
             "restoreOnLaunchCopy": "Mirrors, the tray and the canvas come back as you left them when Orca restarts. A mirror whose terminal was closed is left out.",
             "focusedPaneOutline": "Outline the focused terminal",
-            "focusedPaneOutlineCopy": "A thin blue frame on the pane that has the keyboard, in the workspace and in mirrors: where typing and dictation go."
+            "focusedPaneOutlineCopy": "A thin blue frame on the pane that has the keyboard, in the workspace and in mirrors: where typing and dictation go.",
+            "paneQuickReply": "Quick reply in the terminal",
+            "paneQuickReplyCopy": "When a terminal agent asks or needs approval, a card with its options opens over the pane's corner. Esc closes it; the terminal still takes the answer."
           },
           "browserExtensions": {
             "copy": "Adds Settings › Browser › Extensions for local browser profiles.",
@@ -22028,7 +22030,12 @@
     "quick": {
       "answerWith": "Answer: {{value0}}",
       "more": "↵ for all {{value0}}",
-      "deny": "No"
+      "deny": "No",
+      "title": "Quick reply",
+      "close": "Close and answer in the terminal (esc)",
+      "recommended": "Recommended",
+      "ownWords": "Your own answer…",
+      "escHint": "terminal"
     }
   },
   "workspace": {

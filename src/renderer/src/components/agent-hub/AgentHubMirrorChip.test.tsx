@@ -19,6 +19,7 @@ import {
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 import type { AgentHubAlert } from './agent-hub-alerts'
+import type * as QuickAnswer from './use-agent-hub-quick-answer'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -33,12 +34,15 @@ vi.mock('@/store', async () => {
   }
 })
 // The chip's bubbles are not about answering; the answer path needs the live pane and PTY.
-vi.mock('./use-agent-hub-quick-answer', () => ({
+vi.mock('./use-agent-hub-quick-answer', async (original) => ({
+  ...(await original<typeof QuickAnswer>()),
   useAgentHubQuickAnswer: () => ({
+    question: null,
     options: [],
     chosen: null,
     canAnswer: false,
-    choose: () => false
+    choose: () => false,
+    reply: null
   })
 }))
 vi.mock('./agent-hub-mirror-source', async (original) => ({

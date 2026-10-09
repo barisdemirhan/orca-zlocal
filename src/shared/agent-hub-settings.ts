@@ -51,6 +51,8 @@ export type AgentHubSettings = {
   agentHubAlertSound?: boolean
   /** Agent Hub alerts stay silent until this time (ms since epoch); null when not muted. */
   agentHubAlertsMutedUntil?: number | null
+  /** A question or approval from a terminal agent also opens as a card inside its pane. */
+  agentHubPaneQuickReply?: boolean
   /** A thin outline on the terminal pane that has the keyboard: where typing and dictation go. */
   agentHubFocusedPaneOutline?: boolean
   /** Agent Hub "All terminals" also lists plain shells, not only agents. */

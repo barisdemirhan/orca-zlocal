@@ -133,6 +133,18 @@ function AgentHubOptions({
           updateSettings({ agentHubFocusedPaneOutline: !preferences.focusedPaneOutline })
         }
       />
+      <SettingsSwitchRow
+        label={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.paneQuickReply',
+          'Quick reply in the terminal'
+        )}
+        description={translate(
+          'auto.components.settings.ExperimentalPane.agentHub.paneQuickReplyCopy',
+          "When a terminal agent asks or needs approval, a card with its options opens over the pane's corner. Esc closes it; the terminal still takes the answer."
+        )}
+        checked={preferences.paneQuickReply}
+        onChange={() => updateSettings({ agentHubPaneQuickReply: !preferences.paneQuickReply })}
+      />
 
       <AgentHubAlertSettings preferences={preferences} updateSettings={updateSettings} />
 

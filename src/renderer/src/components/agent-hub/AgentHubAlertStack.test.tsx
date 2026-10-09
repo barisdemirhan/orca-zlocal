@@ -7,15 +7,24 @@ import { TooltipProvider } from '../ui/tooltip'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import { AgentHubAlertStack } from './AgentHubAlertStack'
+import type * as QuickAnswer from './use-agent-hub-quick-answer'
 import type { AgentHubQuickAnswer } from './use-agent-hub-quick-answer'
 
 const quick = vi.hoisted(() => {
   const state: { answer: AgentHubQuickAnswer | null } = { answer: null }
   return state
 })
-vi.mock('./use-agent-hub-quick-answer', () => ({
+vi.mock('./use-agent-hub-quick-answer', async (original) => ({
+  ...(await original<typeof QuickAnswer>()),
   useAgentHubQuickAnswer: () =>
-    quick.answer ?? { options: [], chosen: null, canAnswer: false, choose: () => false }
+    quick.answer ?? {
+      question: null,
+      options: [],
+      chosen: null,
+      canAnswer: false,
+      choose: () => false,
+      reply: null
+    }
 }))
 
 vi.mock('@/store', async () => {
@@ -80,7 +89,9 @@ it('answers the newest question from its bubble by click or number key, then let
     ],
     chosen: null,
     canAnswer: true,
-    choose
+    choose,
+    question: 'Keep it?',
+    reply: null
   }
   const thread = agentHubThreadsFor([{ paneKey: PANE_KEY, state: 'waiting', at: 1000 }])[0]
   const onDismiss = vi.fn()

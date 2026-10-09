@@ -16,7 +16,7 @@ import {
   resetAgentHubAnsweredCardsForTest
 } from './agent-hub-answered-cards'
 import { agentHubStateSince } from './agent-hub-lists'
-import { useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
+import { quickAnswerTargetOf, useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
 
 const send = vi.hoisted(() => ({
   sendAnswer: vi.fn(() => ({ settleAfterMs: 0 })),
@@ -85,7 +85,7 @@ it('answers a single question with its option and shares the answer with the hub
       ]
     })
   )
-  const hook = renderHook(() => useAgentHubQuickAnswer(thread))
+  const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
   expect(hook.result.current.options.map((option) => option.label)).toEqual([
     'Add delete',
     'Keep as is'
@@ -110,7 +110,7 @@ it('answers a single question with its option and shares the answer with the hub
 
 it('allows an approval once with the agent key and denies with Esc', () => {
   const thread = threadWith(JSON.stringify({ approval: { tool: 'bash', summary: 'pnpm test' } }))
-  const allow = renderHook(() => useAgentHubQuickAnswer(thread))
+  const allow = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
   expect(allow.result.current.options.map((option) => option.deny ?? false)).toEqual([false, true])
   act(() => {
     allow.result.current.choose(0)
@@ -118,7 +118,7 @@ it('allows an approval once with the agent key and denies with Esc', () => {
   expect(send.sendRaw).toHaveBeenCalledWith('1')
 
   resetAgentHubAnsweredCardsForTest()
-  const deny = renderHook(() => useAgentHubQuickAnswer(thread))
+  const deny = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
   act(() => {
     deny.result.current.choose(1)
   })
@@ -134,6 +134,26 @@ it('offers no quick options for a prompt with several questions', () => {
       ]
     })
   )
-  const hook = renderHook(() => useAgentHubQuickAnswer(thread))
+  const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
   expect(hook.result.current.options).toEqual([])
+  expect(hook.result.current.reply).toBeNull()
+})
+
+it("sends a reply in the user's words for a single question", () => {
+  const thread = threadWith(
+    JSON.stringify({ questions: [{ question: 'Keep it?', options: [{ label: 'Yes' }] }] })
+  )
+  const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
+  expect(hook.result.current.question).toBe('Keep it?')
+  let sent = false
+  act(() => {
+    sent = hook.result.current.reply?.('Only on Fridays') ?? false
+  })
+  expect(sent).toBe(true)
+  expect(send.sendAnswer).toHaveBeenCalledWith(
+    expect.anything(),
+    [{ indices: [], other: 'Only on Fridays' }],
+    expect.any(Function)
+  )
+  expect(hook.result.current.chosen).toBe(-1)
 })
