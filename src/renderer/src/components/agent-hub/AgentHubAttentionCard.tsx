@@ -1,3 +1,4 @@
+import { AgentHubPeekChips } from './AgentHubPeekChips'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
@@ -376,6 +377,10 @@ export function AgentHubAttentionCard({
         </div>
       )}
 
+      <AgentHubPeekChips
+        text={[simpleQuestion?.question, lastMessage, waitingText].filter(Boolean).join('\n')}
+        worktree={thread.worktree}
+      />
       <div className="mt-2 -ml-1.5 flex gap-1">
         <CardAction
           icon={<ArrowUpRight className="size-3.5" />}

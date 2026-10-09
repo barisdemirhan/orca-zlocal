@@ -15,6 +15,7 @@ import { AgentHubAlertStack } from './AgentHubAlertStack'
 import { AgentHubCanvas } from './AgentHubCanvas'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubDimBackdrop } from './AgentHubDimToggle'
+import { AgentHubPeek } from './AgentHubPeek'
 import { AgentHubMirrors } from './AgentHubMirrors'
 import type { AgentHubOpenRequest } from './AgentHubPanel'
 import { AgentHubPopoverContent, type AgentHubPopoverRequest } from './AgentHubPopover'
@@ -397,6 +398,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         onReveal={(target, thread) => jump({ target, thread })}
         onOpenCard={(paneKey) => openHub('inbox', paneKey)}
       />
+      {inSettings ? null : <AgentHubPeek />}
     </>
   )
 }

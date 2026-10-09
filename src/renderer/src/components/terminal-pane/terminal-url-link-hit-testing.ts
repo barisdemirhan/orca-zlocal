@@ -22,6 +22,12 @@ import {
   type TerminalLinkActionContext
 } from './terminal-link-action-request'
 
+import {
+  agentHubPeekUrlAction,
+  peekTerminalUrlFromMirror,
+  type AgentHubPeekLinkSource
+} from '../agent-hub/agent-hub-peek-routing'
+
 export { extractTerminalHttpLinks } from '../../../../shared/terminal-http-url-extraction'
 export { TERMINAL_HTTP_URL_MAX_LENGTH } from '../../../../shared/terminal-http-link-limits'
 
@@ -70,7 +76,23 @@ export function handleTerminalHttpLink(
   event: MouseEvent | undefined,
   deps: UrlLinkHitTestDeps
 ): boolean {
+  const peekSource: AgentHubPeekLinkSource = {
+    worktreeId: deps.worktreeId,
+    local: (deps.sourceOwner?.kind ?? 'local') === 'local',
+    event,
+    openInWorkspace: () =>
+      openRoutedHttpLink(url, {
+        ...deps,
+        modifierHeld: false,
+        forceDestination: deps.actionDestinations?.primary
+      }),
+    openExternally: () =>
+      openRoutedHttpLink(url, { ...deps, modifierHeld: false, forceDestination: 'system' })
+  }
   if (isTerminalHttpLinkActivation(event)) {
+    if (!event?.shiftKey && peekTerminalUrlFromMirror(url, peekSource)) {
+      return true
+    }
     const forceDestination =
       deps.actionDestinations &&
       httpLinkDirectClickDestination(deps.actionDestinations, Boolean(event?.shiftKey))
@@ -82,6 +104,7 @@ export function handleTerminalHttpLink(
     return true
   }
 
+  const peek = agentHubPeekUrlAction(url, peekSource)
   return requestTerminalLinkAction(event, deps.linkActionContext, {
     destination: deps.actionDestination ?? url,
     kind: 'url',
@@ -95,7 +118,8 @@ export function handleTerminalHttpLink(
         openInSourceGroup: () =>
           openRoutedHttpLink(url, { ...deps, forceDestination: 'orca', openInSourceGroup: true })
       }
-    )
+    ),
+    ...(peek ? { secondaryActions: [peek] } : {})
   })
 }
 

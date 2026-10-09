@@ -22,6 +22,7 @@ import {
 import { createTerminalPathExistenceBatch } from './terminal-path-existence-batch'
 import { runtimeTargetEnvironmentId } from '@/runtime/runtime-client-target'
 import { getRuntimeEnvironmentRevision } from '@/runtime/runtime-environment-revision'
+import { peekTerminalFileFromMirror } from '../agent-hub/agent-hub-peek-routing'
 
 type FileLinkHitTestDeps = {
   startupCwd: string
@@ -36,6 +37,8 @@ type FileLinkHitTestDeps = {
   sourceTabId?: string | null
   /** Tells the user why a click opened nothing; skipped once a later click supersedes it. */
   onOpenFailure?: (absolutePath: string, failure: FileOpenFailure) => void
+  /** The click, so a link in an Agent Hub mirror can open in Peek instead. */
+  event?: MouseEvent
 }
 
 type ClickedFileLink = FileLinkTarget & {
@@ -102,6 +105,24 @@ export function openFilePathLinkAtBufferPosition(
       onOpenFailure && (verified || link.isKnownWorktreeRoot || /[\\/]/.test(link.pathText))
     const reportedPath =
       verified || link.isKnownWorktreeRoot || !shown ? link.absolutePath : shown.absolutePath
+    if (
+      deps.event &&
+      !deps.openWithSystemDefault &&
+      peekTerminalFileFromMirror(link.absolutePath, {
+        worktreeId: deps.worktreeId,
+        local: !deps.runtimeEnvironmentId,
+        event: deps.event,
+        openInWorkspace: () =>
+          openDetectedFilePath(link.absolutePath, link.line, link.column, deps),
+        openExternally: () =>
+          openDetectedFilePath(link.absolutePath, link.line, link.column, {
+            ...deps,
+            openWithSystemDefault: true
+          })
+      })
+    ) {
+      return
+    }
     openDetectedFilePath(link.absolutePath, link.line, link.column, {
       ...deps,
       openWithSystemDefault: deps.openWithSystemDefault === true,

@@ -21,6 +21,11 @@ import { getRevealInFileManagerLabel, revealInFileManager } from '@/lib/reveal-i
 import { useAppStore } from '@/store'
 import { getLocalPathOpenOwnerForRoute, isLocalPathOpenBlocked } from '@/lib/local-path-open-guard'
 import { canOpenLinkInSourceGroup } from '@/store/slices/editor/tabs/editor-open-target-group'
+import {
+  agentHubPeekFileAction,
+  peekTerminalFileFromMirror,
+  type AgentHubPeekLinkSource
+} from '../agent-hub/agent-hub-peek-routing'
 
 export type TerminalFileLinkActionDeps = {
   worktreeId: string
@@ -50,15 +55,38 @@ export function handleTerminalFileLink(
   actionContext?: TerminalLinkActionContext | null,
   actionDestination?: string
 ): boolean {
+  const peekSource: AgentHubPeekLinkSource = {
+    worktreeId: deps.worktreeId,
+    local: !deps.runtimeEnvironmentId,
+    event,
+    openInWorkspace: () => openDetectedFilePath(filePath, line, column, deps),
+    openExternally: () =>
+      openDetectedFilePath(filePath, line, column, { ...deps, openWithSystemDefault: true })
+  }
   if (isTerminalLinkDirectActivation(event)) {
     event?.preventDefault?.()
+    const mappedPath = mapTerminalFilePath(
+      filePath,
+      deps.worktreePath,
+      terminalLinkWslDistro(deps.wslDistro, deps.runtimeEnvironmentId)
+    )
+    if (!event?.shiftKey && peekTerminalFileFromMirror(mappedPath, peekSource)) {
+      return true
+    }
     openDetectedFilePath(filePath, line, column, {
       ...deps,
       openWithSystemDefault: Boolean(event?.shiftKey)
     })
     return true
   }
-  const actions = buildFileLinkActions(filePath, line, column, deps, actionContext?.sourceOwner)
+  const actions = buildFileLinkActions(
+    filePath,
+    line,
+    column,
+    deps,
+    actionContext?.sourceOwner,
+    peekSource
+  )
   return requestTerminalLinkAction(event, actionContext, {
     ...actions,
     destination: actionDestination ?? actions.destination,
@@ -66,13 +94,17 @@ export function handleTerminalFileLink(
   })
 }
 
-/** The file-link popover's rows (open in Orca, default app, reveal), shared by terminal and chat. */
+/**
+ * The file-link popover's rows (open in Orca, default app, reveal), shared by terminal and chat;
+ * a terminal link also offers Peek.
+ */
 export function buildFileLinkActions(
   filePath: string,
   line: number | null,
   column: number | null,
   deps: TerminalFileLinkActionDeps,
-  sourceOwner: HttpLinkSourceOwner | undefined
+  sourceOwner: HttpLinkSourceOwner | undefined,
+  peekSource?: AgentHubPeekLinkSource
 ): FileLinkActions {
   const mappedPath = mapTerminalFilePath(
     filePath,
@@ -169,7 +201,9 @@ export function buildFileLinkActions(
             })
         }
       : null
-  const secondaryActions = [openInGroupRow, revealRow].filter((row) => row !== null)
+  const peekRow =
+    worktreeRoot || !peekSource ? null : agentHubPeekFileAction(mappedPath, peekSource)
+  const secondaryActions = [peekRow, openInGroupRow, revealRow].filter((row) => row !== null)
   const rows =
     !worktreeRoot && canOpenWithSystemDefault && isHtmlFilePath(mappedPath)
       ? buildHttpLinkActions(localHtmlFileDestinations(), (browserDestination) =>
