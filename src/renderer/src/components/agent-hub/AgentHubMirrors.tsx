@@ -11,6 +11,8 @@ import {
   findAgentHubMirrorMembership
 } from './agent-hub-mirror-membership'
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
+import { agentHubMirrorPointerSelection } from './agent-hub-mirror-pointer-selection'
+import { agentHubMirrorShellLeafId } from './agent-hub-mirror-source'
 import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -152,7 +154,7 @@ export function AgentHubMirrors({
     useShallow((state) =>
       windows.map((window) => {
         const target = activeAgentHubMirrorTab(window).target
-        const leafId = state.terminalLayoutsByTabId[target.tab.id]?.activeLeafId
+        const leafId = agentHubMirrorShellLeafId(state.terminalLayoutsByTabId[target.tab.id])
         const paneKey = target.paneKey ?? (leafId ? makePaneKey(target.tab.id, leafId) : null)
         const onScreen =
           !borrowed.some(
@@ -338,25 +340,14 @@ export function AgentHubMirrors({
               onFocus={(event) => {
                 focusAgentHubMirror(key)
                 const element = event.target instanceof HTMLElement ? event.target : null
-                const inTerminal = element?.closest('.xterm') != null
-                // Why: the pane's own chrome (split, close, rename) renders only while the pane is
-                // active; re-selecting it without terminal focus unmounts the button mid-click.
-                if (!inTerminal && element?.closest('[data-agent-hub-mirror-slot]') != null) {
-                  const alreadyActive =
-                    selection.windowId === key &&
-                    selection.tabId === window.activeTabId &&
-                    selection.focusTerminal
-                  if (!alreadyActive) {
-                    requestAgentHubMirrorSelection(
-                      key,
-                      window.activeTabId,
-                      element.closest('input, textarea, [contenteditable="true"]') == null,
-                      false
-                    )
-                  }
-                  return
+                const alreadyActive =
+                  selection.windowId === key &&
+                  selection.tabId === window.activeTabId &&
+                  selection.focusTerminal
+                const next = agentHubMirrorPointerSelection(element, alreadyActive)
+                if (next) {
+                  requestAgentHubMirrorSelection(key, window.activeTabId, next.focusTerminal, false)
                 }
-                requestAgentHubMirrorSelection(key, window.activeTabId, inTerminal, false)
               }}
               onClose={() => closeAgentHubMirror(key)}
               onMinimize={() => minimizeAgentHubMirror(key)}

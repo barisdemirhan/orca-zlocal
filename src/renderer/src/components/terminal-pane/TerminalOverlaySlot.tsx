@@ -81,6 +81,7 @@ export const TerminalOverlaySlot = memo(function TerminalOverlaySlot({
       isolatedPaneKey={activityTerminalPortal?.paneKey ?? null}
       measureWhileHidden={prewarm !== null}
       warmRendererWhileHidden={prewarm === 'warm'}
+      hostedInMirror={stableHosting && activityTerminalPortal?.owner === 'agent-hub'}
       onPtyExit={(ptyId, exitCode) => {
         if (consumeSuppressedPtyExit(ptyId)) {
           return

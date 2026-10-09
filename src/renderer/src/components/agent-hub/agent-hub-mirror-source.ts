@@ -54,6 +54,20 @@ export function agentHubMirrorPaneExists(
   )
 }
 
+/** The leaf a shell mirror shows: the tab's active leaf, or an existing one if that leaf closed. */
+export function agentHubMirrorShellLeafId(
+  layout: SourceState['terminalLayoutsByTabId'][string] | undefined
+): string | null {
+  if (!layout) {
+    return null
+  }
+  const leafIds = collectLeafIdsInOrder(layout.root)
+  if (leafIds.length === 0 || (layout.activeLeafId && leafIds.includes(layout.activeLeafId))) {
+    return layout.activeLeafId
+  }
+  return leafIds[0] ?? null
+}
+
 /**
  * True only when the source's workspace is loaded and no longer holds its tab or split leaf.
  * An unknown workspace (not hydrated yet, a disconnected host) is not proof that it closed.

@@ -110,6 +110,7 @@ export function TerminalPaneSurface({
     setRenameValue,
     setSearchOpen,
     setSessionStateSaveFailureMessage,
+    hostedInMirror,
     showSplitButton,
     showSshReconnectOverlay,
     splitTerminalPaneFromHeader,
@@ -346,6 +347,7 @@ export function TerminalPaneSurface({
         cwd={cwd ?? ''}
         showAlwaysOnHeaders={isActive && terminalContentVisible}
         showSplitButton={showSplitButton}
+        hostedInMirror={hostedInMirror}
         isTabPinned={isTabPinned}
         paneCount={paneCount}
         activePaneId={activePane?.id}

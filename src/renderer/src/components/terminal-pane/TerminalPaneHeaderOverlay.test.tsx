@@ -72,6 +72,7 @@ function renderOverlay({
   paneCount = 2,
   showAlwaysOnHeaders = true,
   showSplitButton = true,
+  hostedInMirror = false,
   isTabPinned = false,
   onClosePane = vi.fn(),
   onRemoveTitle = vi.fn(),
@@ -88,6 +89,7 @@ function renderOverlay({
   paneCount?: number
   showAlwaysOnHeaders?: boolean
   showSplitButton?: boolean
+  hostedInMirror?: boolean
   isTabPinned?: boolean
   onClosePane?: ReturnType<typeof vi.fn>
   onRemoveTitle?: ReturnType<typeof vi.fn>
@@ -122,6 +124,7 @@ function renderOverlay({
         cwd={path.join(path.sep, 'tmp')}
         showAlwaysOnHeaders={showAlwaysOnHeaders}
         showSplitButton={showSplitButton}
+        hostedInMirror={hostedInMirror}
         isTabPinned={isTabPinned}
         paneCount={paneCount}
         activePaneId={1}
@@ -299,6 +302,17 @@ describe('TerminalPaneHeaderOverlay', () => {
 
     expect(container.querySelector('button[aria-label="Split Terminal Right"]')).toBeNull()
     expect(container.querySelector('button[aria-label="Close tab"]')).toBeNull()
+  })
+
+  it('hides split but keeps close for a single pane hosted in an Agent Hub mirror', () => {
+    const { container } = renderOverlay({
+      paneTitles: { 1: '' },
+      paneCount: 1,
+      hostedInMirror: true
+    })
+
+    expect(container.querySelector('button[aria-label="Split Terminal Right"]')).toBeNull()
+    expect(container.querySelector('button[aria-label="Close tab"]')).not.toBeNull()
   })
 
   it('ignores IME composition Enter before submitting a pane title rename', () => {

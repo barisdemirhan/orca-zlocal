@@ -25,6 +25,8 @@ type TerminalPaneHeaderOverlayProps = {
   showAlwaysOnHeaders: boolean
   /** Used by ephemeral one-off command terminals that omit the header affordance. */
   showSplitButton?: boolean
+  /** Hides split only; close keeps following `showSplitButton`. */
+  hostedInMirror?: boolean
   isTabPinned: boolean
   paneCount: number
   activePaneId: number | null | undefined
@@ -67,6 +69,7 @@ export default function TerminalPaneHeaderOverlay({
   cwd,
   showAlwaysOnHeaders,
   showSplitButton = true,
+  hostedInMirror = false,
   isTabPinned,
   paneCount,
   activePaneId,
@@ -265,7 +268,7 @@ export default function TerminalPaneHeaderOverlay({
                       paneKey={makePaneKey(tabId, pane.leafId)}
                     />
                   ) : null}
-                  {showAlwaysOnHeaders && showSplitButton ? (
+                  {showAlwaysOnHeaders && showSplitButton && !hostedInMirror ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button

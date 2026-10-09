@@ -6,7 +6,11 @@ import {
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
-import { findAgentHubMirrorSource, resolveAgentHubMirrorTarget } from './agent-hub-mirror-source'
+import {
+  agentHubMirrorShellLeafId,
+  findAgentHubMirrorSource,
+  resolveAgentHubMirrorTarget
+} from './agent-hub-mirror-source'
 import { useAppStore } from '@/store'
 import {
   openAgentHubMirror,
@@ -98,4 +102,22 @@ it('rejects a disappeared precise leaf and a pane key for another source tab', (
   expect(
     resolveAgentHubMirrorTarget({ ...target, paneKey: makePaneKey('different-tab', leafId) })
   ).toBeNull()
+})
+
+it('falls back to an existing leaf when the active leaf of a shell mirror was removed', () => {
+  const other = '22222222-2222-4222-8222-222222222222'
+  const layout = (
+    activeLeafId: string | null,
+    root = { type: 'leaf' as const, leafId: other }
+  ) => ({
+    root,
+    activeLeafId,
+    expandedLeafId: null
+  })
+  expect(agentHubMirrorShellLeafId(layout(leafId))).toBe(other)
+  expect(agentHubMirrorShellLeafId(layout(other))).toBe(other)
+  expect(
+    agentHubMirrorShellLeafId({ root: null, activeLeafId: leafId, expandedLeafId: null })
+  ).toBe(leafId)
+  expect(agentHubMirrorShellLeafId(undefined)).toBeNull()
 })
