@@ -201,7 +201,7 @@ describe('AgentHubPanel terminal sort', () => {
   const rowTitles = (): (string | null)[] =>
     [...container.querySelectorAll('[data-agent-hub-row]')].map((row) => row.textContent)
   const sortButton = (): HTMLButtonElement | null =>
-    container.querySelector('button[data-agent-hub-sort]')
+    container.querySelector('button[data-agent-hub-list-menu="sort"]')
 
   it('shows the order in use on the sort button, on both terminal tabs', () => {
     const { panel } = renderPanel({ sortBy: 'smart', workspaceRank: new Map(), now: 5_000 })
@@ -213,7 +213,7 @@ describe('AgentHubPanel terminal sort', () => {
     expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
       'Agents'
     )
-    expect(sortButton()?.dataset.agentHubSort).toBe('smart')
+    expect(sortButton()?.dataset.value).toBe('smart')
   })
 
   it('lists and selects rows in the chosen order', () => {

@@ -426,13 +426,13 @@ describe('sortAgentHubTerminalTree', () => {
   it('walks the arrow keys through the sorted order', () => {
     const { sort } = fixture()
     const visible = (sortBy: AgentHubTerminalSort): string[] =>
-      rowTabIds(visibleAgentHubTreeRows(sort(sortBy), new Map(), ''))
+      rowTabIds(visibleAgentHubTreeRows(sort(sortBy), new Map(), false))
 
     expect(visible('repo').slice(0, 3)).toEqual(['m-shell', 'm-idle', 'm-read'])
     expect(visible('smart').slice(0, 3)).toEqual(['a-ask', 'n-shell', 'm-ask'])
     // A collapsed group is skipped wherever the sort puts it.
     expect(
-      rowTabIds(visibleAgentHubTreeRows(sort('smart'), new Map([['g-alpha', true]]), '')).at(0)
+      rowTabIds(visibleAgentHubTreeRows(sort('smart'), new Map([['g-alpha', true]]), false)).at(0)
     ).toBe('m-ask')
   })
 

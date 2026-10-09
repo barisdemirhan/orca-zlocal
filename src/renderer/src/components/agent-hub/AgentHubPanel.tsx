@@ -41,7 +41,16 @@ import {
 } from './agent-hub-terminal-tree'
 import { useHeldAgentHubTree } from './use-held-agent-hub-tree'
 import { sortAgentHubTerminalTree, type AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
-import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
+import {
+  filterAgentHubTerminalTree,
+  filterAgentHubTerminalTreeRows,
+  isAgentHubTreeNarrowed,
+  visibleAgentHubTreeRows
+} from './agent-hub-terminal-tree-view'
+import {
+  useAgentHubWindowFilterRowTest,
+  type AgentHubWindowFilter
+} from './agent-hub-window-filter'
 
 export type AgentHubOpenRequest = {
   target: AgentHubPaneTarget
@@ -130,6 +139,8 @@ export function AgentHubPanel({
   }))
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [query, setQuery] = useState('')
+  const [windowFilter, setWindowFilter] = useState<AgentHubWindowFilter>('any')
+  const windowRowTest = useAgentHubWindowFilterRowTest(windowFilter)
   const [collapseOverrides, setCollapseOverrides] = useState<ReadonlyMap<string, boolean>>(
     () => new Map()
   )
@@ -156,17 +167,16 @@ export function AgentHubPanel({
   const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
   const listsTerminals = tab === 'agents' || tab === 'all'
   // Why sort after filtering: a group stands where its best listed workspace does.
-  const sortedTree = useMemo(
-    () =>
-      sortAgentHubTerminalTree(
-        filterAgentHubTerminalTree(tab === 'agents' ? agentTree : tree, query),
-        treeOrder
-      ),
-    [tab, agentTree, tree, query, treeOrder]
-  )
+  const sortedTree = useMemo(() => {
+    const matched = filterAgentHubTerminalTree(tab === 'agents' ? agentTree : tree, query)
+    return sortAgentHubTerminalTree(
+      windowRowTest ? filterAgentHubTerminalTreeRows(matched, windowRowTest) : matched,
+      treeOrder
+    )
+  }, [tab, agentTree, tree, query, treeOrder, windowRowTest])
   const filteredTree = useHeldAgentHubTree(
     sortedTree,
-    `${tab}\u0000${treeOrder.sortBy}\u0000${query}`
+    `${tab}\u0000${treeOrder.sortBy}\u0000${query}\u0000${windowFilter}`
   )
   const items = useMemo<HubItem[]>(() => {
     if (tab === 'inbox') {
@@ -175,10 +185,13 @@ export function AgentHubPanel({
     if (tab === 'running') {
       return visibleAgentHubRunningThreads(lists.working, lineage, expandedKeys).map(threadItem)
     }
-    return visibleAgentHubTreeRows(filteredTree, collapseOverrides, query, expandedKeys).map(
-      rowItem
-    )
-  }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, query])
+    return visibleAgentHubTreeRows(
+      filteredTree,
+      collapseOverrides,
+      isAgentHubTreeNarrowed(query, windowFilter),
+      expandedKeys
+    ).map(rowItem)
+  }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, query, windowFilter])
   const activeIndex = Math.min(selectedIndex, items.length - 1)
   const selectedKey = items[activeIndex]?.key ?? null
   const popoutTarget =
@@ -344,6 +357,13 @@ export function AgentHubPanel({
               setSelectedIndex(-1)
             }}
             searchRef={searchRef}
+            windowFilter={{
+              value: windowFilter,
+              onChange: (next) => {
+                setWindowFilter(next)
+                setSelectedIndex(-1)
+              }
+            }}
             sortBy={treeOrder.sortBy}
             onSortChange={(sortBy) => {
               onSortChange(sortBy)

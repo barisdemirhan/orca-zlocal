@@ -11,6 +11,8 @@ import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
 import { AgentHubTerminalSortMenu } from './AgentHubTerminalSortMenu'
+import { AgentHubWindowFilterMenu } from './AgentHubWindowFilterMenu'
+import { agentHubWindowFilterOption, type AgentHubWindowFilter } from './agent-hub-window-filter'
 import { agentHubStateWord } from './agent-hub-copy'
 import {
   agentHubIndicatorKind,
@@ -20,7 +22,11 @@ import {
 } from './agent-hub-lists'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import type { AgentHubGroupNode, AgentHubTerminalRow } from './agent-hub-terminal-tree'
-import { isAgentHubGroupCollapsed, isAgentHubRowExpanded } from './agent-hub-terminal-tree-view'
+import {
+  isAgentHubGroupCollapsed,
+  isAgentHubRowExpanded,
+  isAgentHubTreeNarrowed
+} from './agent-hub-terminal-tree-view'
 
 function rowKind(row: AgentHubTerminalRow): AgentHubIndicatorKind {
   return row.thread ? agentHubIndicatorKind(row.thread) : 'idle'
@@ -46,7 +52,8 @@ function GroupSummary({ group }: { group: AgentHubGroupNode }): React.JSX.Elemen
 type TreeRowContext = {
   lineage: AgentHubLineage
   expandedKeys: ReadonlySet<string>
-  query: string
+  /** A search or filter narrows the list, so every fold opens. */
+  narrowed: boolean
   selectedKey: string | null
   now: number
   selectionMode?: boolean
@@ -104,7 +111,7 @@ function TreeRow({
         onToggle={context.onToggleChildren ? () => context.onToggleChildren?.(row.key) : undefined}
         parentKey={row.key}
         childAgents={{ workers: row.children.flatMap((child) => child.thread ?? []), subagents }}
-        expanded={isAgentHubRowExpanded(row.key, context.expandedKeys, context.query)}
+        expanded={isAgentHubRowExpanded(row.key, context.expandedKeys, context.narrowed)}
         indent={!nested}
         now={now}
         focusable={context.selectionMode}
@@ -137,11 +144,14 @@ export function AgentHubTerminalTree({
   onJump,
   selectionMode = false,
   onToggleChildren,
-  emptyLabel
+  emptyLabel,
+  windowFilter
 }: {
   groups: readonly AgentHubGroupNode[]
   totalCount: number
   emptyLabel?: string
+  /** Shows the window filter beside the sort; the hub's lists have it, the picker does not. */
+  windowFilter?: { value: AgentHubWindowFilter; onChange: (filter: AgentHubWindowFilter) => void }
   query: string
   onQueryChange: (query: string) => void
   searchRef: React.RefObject<HTMLInputElement | null>
@@ -167,7 +177,7 @@ export function AgentHubTerminalTree({
     selectionListId: selectionMode ? listId : undefined,
     onToggleChildren,
     expandedKeys,
-    query,
+    narrowed: isAgentHubTreeNarrowed(query, windowFilter?.value),
     selectedKey,
     now,
     onOpen,
@@ -204,6 +214,13 @@ export function AgentHubTerminalTree({
           />
           <HubKeys keys={[String(totalCount)]} />
         </label>
+        {windowFilter ? (
+          <AgentHubWindowFilterMenu
+            filter={windowFilter.value}
+            onFilterChange={windowFilter.onChange}
+            onClosed={() => searchRef.current?.focus()}
+          />
+        ) : null}
         <AgentHubTerminalSortMenu
           focusable={selectionMode}
           sortBy={sortBy}
@@ -218,7 +235,9 @@ export function AgentHubTerminalTree({
               ? translate('agentHub.terminals.noMatch', 'No terminal matches “{{value0}}”', {
                   value0: trimmedQuery
                 })
-              : (emptyLabel ?? translate('agentHub.terminals.empty', 'No open terminals'))}
+              : ((windowFilter && agentHubWindowFilterOption(windowFilter.value).emptyLabel()) ??
+                emptyLabel ??
+                translate('agentHub.terminals.empty', 'No open terminals'))}
           </b>
           {trimmedQuery ? (
             <span>
@@ -238,7 +257,7 @@ export function AgentHubTerminalTree({
         }
       >
         {groups.map((group) => {
-          const collapsed = isAgentHubGroupCollapsed(group, collapseOverrides, query)
+          const collapsed = isAgentHubGroupCollapsed(group, collapseOverrides, rowContext.narrowed)
           return (
             <section key={group.key} className="mt-1">
               <button

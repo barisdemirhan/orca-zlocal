@@ -13,7 +13,11 @@ import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
 import { useAgentHubTreeOrder } from './use-agent-hub-tree-order'
 import { useHeldAgentHubTree } from './use-held-agent-hub-tree'
 import { agentOnlyAgentHubTree, type AgentHubTerminalRow } from './agent-hub-terminal-tree'
-import { filterAgentHubTerminalTree, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
+import {
+  filterAgentHubTerminalTree,
+  isAgentHubTreeNarrowed,
+  visibleAgentHubTreeRows
+} from './agent-hub-terminal-tree-view'
 import { sortAgentHubTerminalTree } from './agent-hub-terminal-tree-sort'
 import { moveAgentHubSelection } from './agent-hub-keys'
 import { AgentHubTerminalTree } from './AgentHubTerminalTree'
@@ -64,7 +68,7 @@ export function AgentHubMirrorPickerBody({
     [sectionTree, query, order]
   )
   const groups = useHeldAgentHubTree(sorted, `${section}\u0000${sortBy}\u0000${query}`)
-  const rows = visibleAgentHubTreeRows(groups, collapsed, query, expanded)
+  const rows = visibleAgentHubTreeRows(groups, collapsed, isAgentHubTreeNarrowed(query), expanded)
   const now = useNow(30_000)
   const totalCount = countRows(sectionTree)
   useEffect(() => {

@@ -13,13 +13,19 @@ import {
 import {
   agentOnlyAgentHubTree,
   buildAgentHubTerminalTree,
+  type AgentHubGroupNode,
   type AgentHubTerminalTreeInput
 } from './agent-hub-terminal-tree'
 import {
   filterAgentHubTerminalTree,
+  filterAgentHubTerminalTreeRows,
   isAgentHubGroupCollapsed,
+  isAgentHubTreeNarrowed,
   visibleAgentHubTreeRows
 } from './agent-hub-terminal-tree-view'
+import { createAgentHubMirrorWindow } from './agent-hub-mirror-membership'
+import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
+import { agentHubWindowFilterRowTest } from './agent-hub-window-filter'
 
 function group(id: string, name: string, tabOrder: number): ProjectGroup {
   return {
@@ -165,6 +171,64 @@ describe('agent hub tree filtering and collapse', () => {
     expect(filterAgentHubTerminalTree(groups, 'no-such-terminal')).toEqual([])
   })
 
+  it('narrows rows to those open in a window, minimized, or in neither', () => {
+    const groups = buildAgentHubTerminalTree(treeInput())
+    const allRows = (tree: readonly AgentHubGroupNode[]) =>
+      tree.flatMap((node) => node.workspaces.flatMap((workspace) => workspace.rows))
+    const rowOf = (tabId: string) => {
+      const row = allRows(groups).find((entry) => entry.tab.id === tabId)
+      if (!row) {
+        throw new Error(`No row ${tabId}`)
+      }
+      return row
+    }
+    const mirrors = {
+      windows: [createAgentHubMirrorWindow(paneTargetFromTerminalRow(rowOf('tab-serve')))],
+      chips: [
+        {
+          window: createAgentHubMirrorWindow(paneTargetFromTerminalRow(rowOf('tab-zsh'))),
+          minimizedAt: 1
+        }
+      ]
+    }
+    const filtered = (
+      tree: readonly AgentHubGroupNode[],
+      filter: 'open' | 'minimized' | 'none'
+    ): AgentHubGroupNode[] => {
+      const keep = agentHubWindowFilterRowTest(filter, mirrors)
+      if (!keep) {
+        throw new Error('A window filter always tests rows')
+      }
+      return filterAgentHubTerminalTreeRows(tree, keep)
+    }
+    const tabIds = (filter: 'open' | 'minimized' | 'none'): string[] =>
+      allRows(filtered(groups, filter)).map((row) => row.tab.id)
+
+    expect(tabIds('open')).toEqual(['tab-serve'])
+    expect(tabIds('minimized')).toEqual(['tab-zsh'])
+    expect(tabIds('none')).not.toContain('tab-serve')
+    expect(tabIds('none')).not.toContain('tab-zsh')
+    expect(tabIds('none')).toContain('tab-metro')
+
+    // A dispatcher outside any window stays only as the path to its windowed worker, unfolded.
+    const [first] = groups
+    const workspace = first?.workspaces[0]
+    if (!first || !workspace) {
+      throw new Error('expected a group with a workspace')
+    }
+    const dispatcher = { ...rowOf('tab-metro'), children: [rowOf('tab-serve'), rowOf('tab-zsh')] }
+    const family = [{ ...first, workspaces: [{ ...workspace, rows: [dispatcher] }] }]
+    const open = filtered(family, 'open')
+    expect(allRows(open).map((row) => row.children.map((child) => child.tab.id))).toEqual([
+      ['tab-serve']
+    ])
+    expect(
+      visibleAgentHubTreeRows(open, new Map(), isAgentHubTreeNarrowed('', 'open')).map(
+        (row) => row.tab.id
+      )
+    ).toEqual(['tab-metro', 'tab-serve'])
+  })
+
   it('starts shell-only groups collapsed, lets the user override, and expands while searching', () => {
     const groups = buildAgentHubTerminalTree(treeInput())
     const [northwind, ungrouped] = groups
@@ -172,11 +236,13 @@ describe('agent hub tree filtering and collapse', () => {
       throw new Error('expected Northwind and Ungrouped groups')
     }
 
-    expect(isAgentHubGroupCollapsed(northwind, new Map(), '')).toBe(false)
-    expect(isAgentHubGroupCollapsed(ungrouped, new Map(), '')).toBe(true)
-    expect(isAgentHubGroupCollapsed(ungrouped, new Map([[ungrouped.key, false]]), '')).toBe(false)
-    expect(isAgentHubGroupCollapsed(ungrouped, new Map(), 'zsh')).toBe(false)
-    expect(visibleAgentHubTreeRows(groups, new Map(), '').map((row) => row.tab.id)).toEqual([
+    expect(isAgentHubGroupCollapsed(northwind, new Map(), false)).toBe(false)
+    expect(isAgentHubGroupCollapsed(ungrouped, new Map(), false)).toBe(true)
+    expect(isAgentHubGroupCollapsed(ungrouped, new Map([[ungrouped.key, false]]), false)).toBe(
+      false
+    )
+    expect(isAgentHubGroupCollapsed(ungrouped, new Map(), true)).toBe(false)
+    expect(visibleAgentHubTreeRows(groups, new Map(), false).map((row) => row.tab.id)).toEqual([
       'tab-1',
       'tab-metro',
       'tab-serve'

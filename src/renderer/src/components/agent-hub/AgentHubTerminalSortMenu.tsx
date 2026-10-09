@@ -1,16 +1,10 @@
 import { Activity, ArrowDownAZ, Clock, FolderTree, GripVertical } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
+import { DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { SORT_OPTIONS } from '../sidebar/sidebar-workspace-option-items'
+import { AgentHubListMenu } from './AgentHubListMenu'
 
 function SortIcon({ sortBy }: { sortBy: AgentHubTerminalSort }): React.JSX.Element {
   switch (sortBy) {
@@ -59,66 +53,44 @@ export function AgentHubTerminalSortMenu({
     value0: current
   })
   return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              tabIndex={focusable ? 0 : -1}
-              aria-label={label}
-              data-agent-hub-sort={sortBy}
-              className="grid size-8.5 shrink-0 place-items-center rounded-lg border border-foreground/[0.08] bg-background text-muted-foreground hover:text-foreground data-[state=open]:border-foreground/20 data-[state=open]:text-foreground"
-            >
-              <SortIcon sortBy={sortBy} />
-            </button>
-          </DropdownMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={4}>
-          {label}
-        </TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent
-        align="end"
-        className="w-44"
-        // Why: the menu's arrows and Enter must not also drive the list behind it.
-        onKeyDown={(event) => event.stopPropagation()}
-        onCloseAutoFocus={(event) => {
-          event.preventDefault()
-          onClosed()
+    <AgentHubListMenu
+      menu="sort"
+      value={sortBy}
+      label={label}
+      icon={<SortIcon sortBy={sortBy} />}
+      title={translate('agentHub.terminals.sortBy', 'Sort by')}
+      focusable={focusable}
+      onClosed={onClosed}
+    >
+      <DropdownMenuRadioGroup
+        value={sortBy}
+        onValueChange={(value) => {
+          const next = SORT_OPTIONS.find((option) => option.id === value)?.id
+          if (next) {
+            onSortChange(next)
+          }
         }}
       >
-        <DropdownMenuLabel>{translate('agentHub.terminals.sortBy', 'Sort by')}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup
-          value={sortBy}
-          onValueChange={(value) => {
-            const next = SORT_OPTIONS.find((option) => option.id === value)?.id
-            if (next) {
-              onSortChange(next)
-            }
-          }}
-        >
-          {SORT_OPTIONS.map((option) => {
-            const hint = sortHint(option)
-            const item = (
-              <DropdownMenuRadioItem key={option.id} value={option.id}>
-                <SortIcon sortBy={option.id} />
-                {option.label}
-              </DropdownMenuRadioItem>
-            )
-            return hint ? (
-              <Tooltip key={option.id}>
-                <TooltipTrigger asChild>{item}</TooltipTrigger>
-                <TooltipContent side="left" sideOffset={6}>
-                  {hint}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              item
-            )
-          })}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        {SORT_OPTIONS.map((option) => {
+          const hint = sortHint(option)
+          const item = (
+            <DropdownMenuRadioItem key={option.id} value={option.id}>
+              <SortIcon sortBy={option.id} />
+              {option.label}
+            </DropdownMenuRadioItem>
+          )
+          return hint ? (
+            <Tooltip key={option.id}>
+              <TooltipTrigger asChild>{item}</TooltipTrigger>
+              <TooltipContent side="left" sideOffset={6}>
+                {hint}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            item
+          )
+        })}
+      </DropdownMenuRadioGroup>
+    </AgentHubListMenu>
   )
 }

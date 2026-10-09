@@ -97,7 +97,7 @@ it('filters source aliases in both open and parked windows before counting', () 
     chips: [{ window: createAgentHubMirrorWindow(paneTargetFromTerminalRow(b)), minimizedAt: 0 }]
   })
   expect(filtered[0]?.rowCount).toBe(1)
-  expect(visibleAgentHubTreeRows(filtered, new Map(), 'c').map((row) => row.tab.id)).toEqual(['c'])
+  expect(visibleAgentHubTreeRows(filtered, new Map(), true).map((row) => row.tab.id)).toEqual(['c'])
 })
 it('promotes eligible workers without retaining a reserved dispatcher row', () => {
   const { groups, rows } = fixture()

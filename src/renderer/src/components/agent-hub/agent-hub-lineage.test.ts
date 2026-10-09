@@ -123,12 +123,14 @@ describe('agent hub lineage', () => {
     expect(rows.map((row) => row.paneKey)).toEqual([PANE_KEY, PANE_KEY_3])
     expect(rows[0]?.children.map((row) => row.paneKey)).toEqual([PANE_KEY_2])
     expect(groups[0]?.rowCount).toBe(3)
-    expect(visibleAgentHubTreeRows(groups, new Map(), '').map((row) => row.paneKey)).toEqual([
+    expect(visibleAgentHubTreeRows(groups, new Map(), false).map((row) => row.paneKey)).toEqual([
       PANE_KEY,
       PANE_KEY_3
     ])
     expect(
-      visibleAgentHubTreeRows(groups, new Map(), '', new Set([PANE_KEY])).map((row) => row.paneKey)
+      visibleAgentHubTreeRows(groups, new Map(), false, new Set([PANE_KEY])).map(
+        (row) => row.paneKey
+      )
     ).toEqual([PANE_KEY, PANE_KEY_2, PANE_KEY_3])
   })
 })
