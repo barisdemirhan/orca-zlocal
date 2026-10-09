@@ -126,6 +126,66 @@ describe('terminal programmatic text paste', () => {
     expect(mocks.recordTerminalUserInputForLeaf).not.toHaveBeenCalled()
   })
 
+  it('returns whether the pane could take the paste', async () => {
+    const pane = makePane()
+    const transport = makeTransport()
+    const base = {
+      getManager: () => makeManager(pane) as never,
+      tabId: 'tab-1',
+      worktreeId: 'wt-1'
+    }
+
+    expect(
+      handleTerminalProgrammaticTextPaste({
+        ...base,
+        detail: { tabId: 'tab-1', text: 'ok' },
+        getPaneTransports: () => new Map([[pane.id, transport]]) as never
+      })
+    ).toBe(true)
+    expect(
+      handleTerminalProgrammaticTextPaste({
+        ...base,
+        detail: { tabId: 'tab-1', text: 'no transport' },
+        getPaneTransports: () => new Map()
+      })
+    ).toBe(false)
+    expect(
+      handleTerminalProgrammaticTextPaste({
+        ...base,
+        detail: { tabId: 'other-tab', text: 'wrong tab' },
+        getPaneTransports: () => new Map([[pane.id, transport]]) as never
+      })
+    ).toBe(false)
+    expect(
+      handleTerminalProgrammaticTextPaste({
+        ...base,
+        detail: { tabId: 'tab-1', text: 'missing pane', paneId: 99 },
+        getPaneTransports: () => new Map([[pane.id, transport]]) as never
+      })
+    ).toBe(false)
+    await flushPasteTasks()
+    mocks.pasteTerminalText.mockClear()
+    mocks.recordTerminalUserInputForLeaf.mockClear()
+  })
+
+  it('does not focus the pane when focusTerminal is false', async () => {
+    const pane = makePane()
+    const transport = makeTransport()
+    handleTerminalProgrammaticTextPaste({
+      detail: { tabId: 'tab-1', text: 'quiet' },
+      getManager: () => makeManager(pane) as never,
+      getPaneTransports: () => new Map([[pane.id, transport]]) as never,
+      tabId: 'tab-1',
+      worktreeId: 'wt-1',
+      focusTerminal: false
+    })
+    await flushPasteTasks()
+    expect(mocks.pasteTerminalText).toHaveBeenCalled()
+    expect(pane.terminal.focus).not.toHaveBeenCalled()
+    mocks.pasteTerminalText.mockClear()
+    mocks.recordTerminalUserInputForLeaf.mockClear()
+  })
+
   it('chunks large programmatic paste through the live PTY transport', async () => {
     const pane = makePane()
     const transport = makeTransport()

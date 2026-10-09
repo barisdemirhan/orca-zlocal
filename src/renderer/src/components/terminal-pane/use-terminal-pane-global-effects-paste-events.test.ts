@@ -181,6 +181,98 @@ describe('useTerminalPaneGlobalEffects', () => {
     }
   })
 
+  describe('dictation leaf addressing', () => {
+    function useDictationHarness(isActive: boolean) {
+      const documentEvents = new EventTarget()
+      vi.stubGlobal('document', documentEvents)
+      const terminal = { focus: vi.fn(), modes: { bracketedPasteMode: false } }
+      const other = { focus: vi.fn(), modes: { bracketedPasteMode: false } }
+      const pane = { id: 3, leafId: 'leaf-a', terminal }
+      const otherPane = { id: 4, leafId: 'leaf-b', terminal: other }
+      const manager = {
+        getPanes: () => [pane, otherPane],
+        getActivePane: () => otherPane,
+        resumeRendering: vi.fn(),
+        resetWebglTextureAtlases: vi.fn(),
+        scheduleRevealRepaint: vi.fn(),
+        scheduleRevealPresent: vi.fn(),
+        fitAllRevealedPanes: vi.fn(),
+        suspendRendering: vi.fn()
+      }
+      const transports = new Map(
+        [3, 4].map((id) => [id, { getPtyId: () => `pty-${id}`, isConnected: () => true }])
+      )
+      beginHookRender()
+      useTerminalPaneGlobalEffects({
+        tabId: 'tab-d',
+        worktreeId: 'wt-d',
+        isActive,
+        isVisible: isActive,
+        isSyncFitEnabled: false,
+        paneCount: 2,
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: dictation only uses the supplied manager methods.
+        managerRef: { current: manager as never },
+        containerRef: { current: null },
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: short dictation only reads transport identity and connection state.
+        paneTransportsRef: { current: transports as never },
+        isActiveRef: { current: isActive },
+        isVisibleRef: { current: isActive },
+        toggleExpandPane: vi.fn()
+      })
+      const dispatch = (detail: unknown): void => {
+        documentEvents.dispatchEvent(new CustomEvent('dictation:insertText', { detail }))
+      }
+      return { terminal, other, dispatch }
+    }
+
+    it('delivers a leaf-addressed insert to that pane, marks it accepted, and keeps focus', async () => {
+      const { terminal, other, dispatch } = useDictationHarness(false)
+      const detail: { text: string; tabId: string; leafId: string; accepted?: boolean } = {
+        text: 'hello',
+        tabId: 'tab-d',
+        leafId: 'leaf-a'
+      }
+      dispatch(detail)
+      await flushPasteTasks()
+      expect(mocks.pasteTerminalText).toHaveBeenCalledWith(terminal, 'hello', {
+        forceBracketedPaste: false
+      })
+      expect(other.focus).not.toHaveBeenCalled()
+      expect(terminal.focus).not.toHaveBeenCalled()
+      expect(detail.accepted).toBe(true)
+    })
+
+    it('ignores an unknown leaf id and leaves accepted unset', async () => {
+      const { dispatch } = useDictationHarness(true)
+      const detail: { text: string; tabId: string; leafId: string; accepted?: boolean } = {
+        text: 'lost',
+        tabId: 'tab-d',
+        leafId: 'gone'
+      }
+      dispatch(detail)
+      await flushPasteTasks()
+      expect(mocks.pasteTerminalText).not.toHaveBeenCalled()
+      expect(detail.accepted).toBeUndefined()
+    })
+
+    it('still pastes a bare string into the active tab, focusing it', async () => {
+      const { other, dispatch } = useDictationHarness(true)
+      dispatch('legacy text')
+      await flushPasteTasks()
+      expect(mocks.pasteTerminalText).toHaveBeenCalledWith(other, 'legacy text', {
+        forceBracketedPaste: false
+      })
+      expect(other.focus).toHaveBeenCalledOnce()
+    })
+
+    it('ignores a bare string in an inactive tab', async () => {
+      const { dispatch } = useDictationHarness(false)
+      dispatch('nope')
+      await flushPasteTasks()
+      expect(mocks.pasteTerminalText).not.toHaveBeenCalled()
+    })
+  })
+
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
