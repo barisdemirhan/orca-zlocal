@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
-import { X } from 'lucide-react'
+import { MessageSquareReply, SendHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { isPairedWebClientWindow } from '@/lib/desktop-window-chrome'
@@ -15,10 +15,11 @@ import { makePaneKey } from '../../../../shared/stable-pane-id'
 import { paneIsCoveredByNativeChat } from '../terminal-pane/native-chat-covered-pane'
 import { HubOptionList } from './AgentHubAnswerBody'
 import { HubAvatar } from './AgentHubStateMarks'
-import { HubKeys } from './AgentHubInlineLabels'
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import {
   agentHubCardKey,
   dismissAgentHubCard,
+  showAgentHubCardsAgain,
   useAgentHubCardDismissed
 } from './agent-hub-answered-cards'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
@@ -77,7 +78,31 @@ function PaneQuickReplyCard({
     }
   }, [shown, pane])
   if (!shown) {
-    return null
+    if (!dismissed || gone || quick.options.length === 0) {
+      return null
+    }
+    // Closed for this prompt: a small handle in the corner brings the card back while it stands.
+    const reopenLabel = translate('agentHub.quick.reopen', 'Show the quick reply card')
+    return createPortal(
+      <AgentHubActionTooltip label={reopenLabel}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-xs"
+          aria-label={reopenLabel}
+          data-agent-hub-pane-quick-reply-handle={target.paneKey}
+          className="absolute bottom-3 left-3 z-[45]"
+          onClick={() => {
+            // The terminal takes the keys first, so the returning card takes them from it.
+            focusPanePreservingOverlays(pane)
+            showAgentHubCardsAgain([quick.cardKey], 'pane')
+          }}
+        >
+          <MessageSquareReply />
+        </Button>
+      </AgentHubActionTooltip>,
+      pane.container
+    )
   }
   const close = (): void => {
     dismissAgentHubCard(quick.cardKey, 'pane')
@@ -150,32 +175,35 @@ function PaneQuickReplyCard({
             onChoose={(index) => answered(quick.choose(index))}
           />
         </div>
-        <div className="flex items-center gap-2 px-3 pt-2 pb-2.5 text-[11px] text-muted-foreground">
-          {quick.simpleQuestion && chosen === null ? (
-            <form
-              className="flex min-w-0 flex-1 items-center gap-1 rounded-lg border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-2.5 focus-within:border-foreground/20"
-              onSubmit={(event) => {
-                event.preventDefault()
-                answered(quick.reply(text))
-              }}
+        {quick.simpleQuestion && chosen === null ? (
+          <form
+            className="mx-3 mt-2 mb-2.5 flex min-w-0 items-center gap-1 rounded-lg border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-2.5 focus-within:border-foreground/20"
+            onSubmit={(event) => {
+              event.preventDefault()
+              answered(quick.reply(text))
+            }}
+          >
+            <input
+              value={text}
+              disabled={!quick.canAnswer}
+              onChange={(event) => setText(event.target.value)}
+              placeholder={translate('agentHub.quick.ownWords', 'Your own answer…')}
+              aria-label={translate('agentHub.quick.ownWords', 'Your own answer…')}
+              className="min-w-0 flex-1 bg-transparent py-1 text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
+            />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon-xs"
+              disabled={!quick.canAnswer || text.trim() === ''}
+              aria-label={translate('agentHub.quick.send', 'Send')}
             >
-              <input
-                value={text}
-                disabled={!quick.canAnswer}
-                onChange={(event) => setText(event.target.value)}
-                placeholder={translate('agentHub.quick.ownWords', 'Your own answer…')}
-                aria-label={translate('agentHub.quick.ownWords', 'Your own answer…')}
-                className="min-w-0 flex-1 bg-transparent py-1 text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
-              />
-            </form>
-          ) : (
-            <span className="flex-1" />
-          )}
-          <span className="flex shrink-0 items-center gap-1">
-            <HubKeys keys={['esc']} />
-            {translate('agentHub.quick.escHint', 'terminal')}
-          </span>
-        </div>
+              <SendHorizontal />
+            </Button>
+          </form>
+        ) : (
+          <div className="pb-2.5" />
+        )}
       </div>
     </>,
     pane.container
@@ -188,13 +216,16 @@ function PaneQuickReply({
   worktreeId,
   tabId,
   paneKey,
-  stateSince
+  stateSince,
+  cardKey
 }: {
   pane: PaneLike
   worktreeId: string
   tabId: string
   paneKey: string
   stateSince: number
+  /** The prompt's own key: a new question in the same turn starts a fresh card. */
+  cardKey: string
 }): React.JSX.Element | null {
   const agentType = useAppStore((s) => s.agentStatusByPaneKey[paneKey]?.agentType ?? null)
   // A chat view over this pane shows the agent's own card; the terminal below it is not in use.
@@ -203,7 +234,7 @@ function PaneQuickReply({
   }
   return (
     <PaneQuickReplyCard
-      key={agentHubCardKey(paneKey, stateSince)}
+      key={cardKey}
       pane={pane}
       target={{ worktreeId, tabId, paneKey, agentType, stateSince }}
     />
@@ -227,36 +258,42 @@ export function AgentHubPaneQuickReplyPortals({
   const enabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   const { paneQuickReply } = useAgentHubPreferences()
   const active = enabled && paneQuickReply && !isPairedWebClientWindow()
-  // Why only the start time: a pane's status changes often; only a prompt's arrival matters.
-  const sinceByPaneKey = useAppStore(
-    useShallow((s): Record<string, number> => {
+  // Why a key, not the entry: a pane's status changes often; only a prompt's arrival matters.
+  const promptByPaneKey = useAppStore(
+    useShallow((s): Record<string, string> => {
       if (!active) {
         return {}
       }
-      const since: Record<string, number> = {}
+      const prompts: Record<string, string> = {}
       for (const pane of panes) {
         const paneKey = makePaneKey(tabId, pane.leafId)
         const entry = s.agentStatusByPaneKey[paneKey]
         if (entry?.interactivePrompt && entry.agentType) {
-          since[paneKey] = entry.stateStartedAt
+          prompts[paneKey] =
+            `${entry.stateStartedAt}\u0000${agentHubCardKey(paneKey, entry.stateStartedAt, entry.interactivePrompt)}`
         }
       }
-      return since
+      return prompts
     })
   )
   return (
     <>
       {panes.map((pane) => {
         const paneKey = makePaneKey(tabId, pane.leafId)
-        const stateSince = sinceByPaneKey[paneKey]
-        return stateSince === undefined ? null : (
+        const prompt = promptByPaneKey[paneKey]
+        if (prompt === undefined) {
+          return null
+        }
+        const [stateSince, cardKey] = prompt.split('\u0000')
+        return (
           <PaneQuickReply
             key={paneKey}
             pane={pane}
             worktreeId={worktreeId}
             tabId={tabId}
             paneKey={paneKey}
-            stateSince={stateSince}
+            stateSince={Number(stateSince)}
+            cardKey={cardKey ?? paneKey}
           />
         )
       })}

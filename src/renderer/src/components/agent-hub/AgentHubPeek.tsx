@@ -28,6 +28,8 @@ import {
 import { agentHubPeekUrlItem } from './agent-hub-peek-routing'
 import { openRoutedHttpLink } from '@/lib/http-link-destinations'
 import { useViewportSize } from './use-viewport-size'
+import { useAppStore } from '@/store'
+import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
 
 function kindLabel(item: AgentHubPeekItem): string {
   switch (item.content.kind) {
@@ -87,13 +89,16 @@ function SourceButton({
 
 /**
  * A large, passing look at a page or file an agent pointed to: no minimizing, no restoring, one
- * at a time. It locks nothing, so the hub stays usable over it; Esc or ✕ closes it.
+ * at a time. The mirrors behind it sit in shadow and a click there closes it; the hub, its
+ * tray and alerts stay usable over it, as do Esc and ✕.
  */
 export function AgentHubPeek(): React.JSX.Element | null {
   const peek = useAgentHubPeek()
   const rootRef = useRef<HTMLDivElement>(null)
   // Recomputed on resize: the work area follows the window and the sidebars.
   useViewportSize()
+  // The status bar stays lit under the shade: the dock grows out of it.
+  const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
   const item = peek ? peek.history[peek.index] : null
   const open = item !== null
   const [fullScreen, setFullScreen] = useState(false)
@@ -151,124 +156,141 @@ export function AgentHubPeek(): React.JSX.Element | null {
     action()
   }
   return createPortal(
-    <div
-      ref={rootRef}
-      tabIndex={-1}
-      role="dialog"
-      aria-modal={false}
-      aria-label={item.title}
-      data-agent-hub-peek={item.content.kind}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape' && !event.defaultPrevented) {
-          event.preventDefault()
-          event.stopPropagation()
-          closeAgentHubPeek()
-        }
-      }}
-      // Why z-[46] and portaled last: over the mirrors, under the tray and alerts; the hub and
-      // its Inbox card (a dialog) stay usable over it.
-      className="fixed z-[46] flex flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none"
-      style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
-    >
-      <header className="flex h-10.5 shrink-0 items-center gap-2 border-b border-border pr-1.5 pl-2">
-        {peek.index > 0 ? (
-          <AgentHubActionTooltip label={translate('agentHub.peek.back', 'Previous peek')}>
+    <>
+      <div
+        aria-hidden
+        data-agent-hub-peek-shade
+        style={{ bottom: statusBarHeight }}
+        // Why preventDefault: a click on the shade must not pull focus off the terminal typed in.
+        onMouseDown={(event) => event.preventDefault()}
+        onPointerDown={closeAgentHubPeek}
+        // Why z-[46] before the box: over the mirrors, under Peek itself, the tray and the alerts.
+        className="fixed inset-x-0 top-0 z-[46] bg-black/45 animate-in duration-200 fade-in-0 motion-reduce:animate-none!"
+      />
+      <div
+        ref={rootRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal={false}
+        aria-label={item.title}
+        data-agent-hub-peek={item.content.kind}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && !event.defaultPrevented) {
+            event.preventDefault()
+            event.stopPropagation()
+            closeAgentHubPeek()
+          }
+        }}
+        // Why z-[46] and portaled last: over the mirrors, under the tray and alerts; the hub and
+        // its Inbox card (a dialog) stay usable over it.
+        className="fixed z-[46] flex flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none"
+        style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
+      >
+        <header className="flex h-10.5 shrink-0 items-center gap-2 border-b border-border pr-1.5 pl-2">
+          {peek.index > 0 ? (
+            <AgentHubActionTooltip label={translate('agentHub.peek.back', 'Previous peek')}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label={translate('agentHub.peek.back', 'Previous peek')}
+                onClick={goBackAgentHubPeek}
+              >
+                <ArrowLeft />
+              </Button>
+            </AgentHubActionTooltip>
+          ) : null}
+          <HubChip>{kindLabel(item)}</HubChip>
+          <div className="flex min-w-0 flex-1 flex-col leading-tight">
+            <span className="truncate text-[13px] font-semibold">{item.title}</span>
+            <span className="truncate font-mono text-[11px] text-muted-foreground">
+              {item.location}
+            </span>
+          </div>
+          {item.mirrorKey ? <SourceChip mirrorKey={item.mirrorKey} /> : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={() => leave(item.openInWorkspace)}
+          >
+            <PanelTop aria-hidden className="size-3.5" />
+            {openInLabel}
+          </Button>
+          {item.openExternally ? (
+            <AgentHubActionTooltip label={openOutLabel}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label={openOutLabel}
+                onClick={() => item.openExternally && leave(item.openExternally)}
+              >
+                <ExternalLink />
+              </Button>
+            </AgentHubActionTooltip>
+          ) : null}
+          <AgentHubActionTooltip label={fullScreenLabel}>
             <Button
               type="button"
               variant="ghost"
               size="icon-xs"
               className="text-muted-foreground hover:text-foreground"
-              aria-label={translate('agentHub.peek.back', 'Previous peek')}
-              onClick={goBackAgentHubPeek}
+              aria-label={fullScreenLabel}
+              aria-pressed={fullScreen}
+              onClick={() => setFullScreen(!fullScreen)}
             >
-              <ArrowLeft />
+              {fullScreen ? <Shrink /> : <Expand />}
             </Button>
           </AgentHubActionTooltip>
-        ) : null}
-        <HubChip>{kindLabel(item)}</HubChip>
-        <div className="flex min-w-0 flex-1 flex-col leading-tight">
-          <span className="truncate text-[13px] font-semibold">{item.title}</span>
-          <span className="truncate font-mono text-[11px] text-muted-foreground">
-            {item.location}
-          </span>
+          <AgentHubActionTooltip label={translate('agentHub.peek.close', 'Close (esc)')}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label={translate('agentHub.peek.close', 'Close (esc)')}
+              onClick={closeAgentHubPeek}
+            >
+              <X />
+            </Button>
+          </AgentHubActionTooltip>
+        </header>
+        <div className="relative flex min-h-0 flex-1 flex-col bg-background">
+          {item.content.kind === 'web' ? (
+            <AgentHubPeekBrowser
+              url={item.content.url}
+              hostId={item.content.hostId}
+              onOpenPage={(url) => {
+                const next = agentHubPeekUrlItem(url, {
+                  worktreeId: item.worktreeId,
+                  onPairedRuntime: false,
+                  event: undefined,
+                  openInWorkspace: () =>
+                    openRoutedHttpLink(url, { worktreeId: item.worktreeId, modifierHeld: false }),
+                  openExternally: () =>
+                    openRoutedHttpLink(url, {
+                      worktreeId: item.worktreeId,
+                      modifierHeld: false,
+                      forceDestination: 'system'
+                    })
+                })
+                if (next) {
+                  openAgentHubPeek({ ...next, mirrorKey: item.mirrorKey })
+                }
+              }}
+            />
+          ) : (
+            <AgentHubPeekFile
+              content={item.content}
+              onContentSize={(size) => setMeasured({ location: item.location, size })}
+            />
+          )}
         </div>
-        {item.mirrorKey ? <SourceChip mirrorKey={item.mirrorKey} /> : null}
-        <Button type="button" variant="ghost" size="xs" onClick={() => leave(item.openInWorkspace)}>
-          <PanelTop aria-hidden className="size-3.5" />
-          {openInLabel}
-        </Button>
-        {item.openExternally ? (
-          <AgentHubActionTooltip label={openOutLabel}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              className="text-muted-foreground hover:text-foreground"
-              aria-label={openOutLabel}
-              onClick={() => item.openExternally && leave(item.openExternally)}
-            >
-              <ExternalLink />
-            </Button>
-          </AgentHubActionTooltip>
-        ) : null}
-        <AgentHubActionTooltip label={fullScreenLabel}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            className="text-muted-foreground hover:text-foreground"
-            aria-label={fullScreenLabel}
-            aria-pressed={fullScreen}
-            onClick={() => setFullScreen(!fullScreen)}
-          >
-            {fullScreen ? <Shrink /> : <Expand />}
-          </Button>
-        </AgentHubActionTooltip>
-        <AgentHubActionTooltip label={translate('agentHub.peek.close', 'Close (esc)')}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            className="text-muted-foreground hover:text-foreground"
-            aria-label={translate('agentHub.peek.close', 'Close (esc)')}
-            onClick={closeAgentHubPeek}
-          >
-            <X />
-          </Button>
-        </AgentHubActionTooltip>
-      </header>
-      <div className="relative flex min-h-0 flex-1 flex-col bg-background">
-        {item.content.kind === 'web' ? (
-          <AgentHubPeekBrowser
-            url={item.content.url}
-            hostId={item.content.hostId}
-            onOpenPage={(url) => {
-              const next = agentHubPeekUrlItem(url, {
-                worktreeId: item.worktreeId,
-                onPairedRuntime: false,
-                event: undefined,
-                openInWorkspace: () =>
-                  openRoutedHttpLink(url, { worktreeId: item.worktreeId, modifierHeld: false }),
-                openExternally: () =>
-                  openRoutedHttpLink(url, {
-                    worktreeId: item.worktreeId,
-                    modifierHeld: false,
-                    forceDestination: 'system'
-                  })
-              })
-              if (next) {
-                openAgentHubPeek({ ...next, mirrorKey: item.mirrorKey })
-              }
-            }}
-          />
-        ) : (
-          <AgentHubPeekFile
-            content={item.content}
-            onContentSize={(size) => setMeasured({ location: item.location, size })}
-          />
-        )}
       </div>
-    </div>,
+    </>,
     document.body
   )
 }

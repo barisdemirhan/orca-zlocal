@@ -46,3 +46,12 @@ it('filters the waiting agents whose card was closed on that surface', () => {
   ])
   expect(withoutDismissedAgentHubCards(threads, 'pane')).toHaveLength(2)
 })
+
+it('keys each prompt of one turn on its own, so a second question is a fresh card', () => {
+  const first = agentHubCardKey(PANE_KEY, 1_000, '{"questions":[{"question":"A?"}]}')
+  const second = agentHubCardKey(PANE_KEY, 1_000, '{"questions":[{"question":"B?"}]}')
+  expect(first).not.toBe(second)
+  expect(agentHubCardKey(PANE_KEY, 1_000, '{"questions":[{"question":"A?"}]}')).toBe(first)
+  dismissAgentHubCard(first, 'pane')
+  expect(isAgentHubCardDismissed(second, 'pane')).toBe(false)
+})

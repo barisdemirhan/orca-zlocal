@@ -105,7 +105,7 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
   )
   // Why canSend: a mobile-owned PTY refuses desktop input, as in the chat composer.
   const canSend = useNativeChatCanSend(ptyId)
-  const cardKey = agentHubCardKey(paneKey, target.stateSince)
+  const cardKey = agentHubCardKey(paneKey, target.stateSince, interactivePrompt)
   const chosen = useAnsweredAgentHubCard(cardKey)
   // Why in an effect: the guard starts once the surface is on screen; until then no key is taken.
   const shownAt = useRef(Number.POSITIVE_INFINITY)

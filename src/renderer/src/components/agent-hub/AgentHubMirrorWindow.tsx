@@ -31,6 +31,8 @@ import { returnRetainedPaneDestinationHome } from '../tab-group/retained-pane-de
 
 // A tab that has not attached by then is not coming back on its own.
 const ATTACH_GIVE_UP_MS = 10_000
+// How long the still ring stays when the glow cannot move (reduced motion).
+const HIGHLIGHT_RING_MS = 1600
 
 /**
  * Non-modal, draggable window around one terminal pane. The real pane is moved in through the
@@ -128,20 +130,24 @@ export function AgentHubMirrorWindow({
     hubRef,
     onMinimize
   )
-  // Picked again from the hub while open: glow so the eye finds it.
+  // Picked again from the hub while open: glow so the eye finds it; with motion reduced, a
+  // still ring for the same while.
   const highlight = useAgentHubMirrorHighlight()
   const seenHighlight = useRef(highlight.seq)
+  const [highlighted, setHighlighted] = useState(false)
   useEffect(() => {
-    if (highlight.seq === seenHighlight.current) {
-      return
+    if (highlight.seq === seenHighlight.current || highlight.key !== mirrorKey) {
+      return undefined
     }
     seenHighlight.current = highlight.seq
-    if (highlight.key === mirrorKey && sectionRef.current) {
-      minimizing.current = false
-      if (!reducedMotion) {
-        pulseMirrorWindow(sectionRef.current)
-      }
+    minimizing.current = false
+    if (!reducedMotion && sectionRef.current) {
+      pulseMirrorWindow(sectionRef.current)
+      return undefined
     }
+    setHighlighted(true)
+    const timer = setTimeout(() => setHighlighted(false), HIGHLIGHT_RING_MS)
+    return () => clearTimeout(timer)
   }, [highlight, mirrorKey, sectionRef, minimizing, reducedMotion])
   // "Send all to the hub" reaches every open window, the front one first; a hub row asks one.
   const dockRequest = useAgentHubMirrorsDockRequest()
@@ -202,12 +208,13 @@ export function AgentHubMirrorWindow({
       data-agent-hub-mirror-key={mirrorKey}
       data-settling={settling}
       data-focus={focus ?? undefined}
+      data-highlighted={highlighted}
       data-leaving={leaving}
       data-restored={restored}
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none motion-reduce:animate-none!"
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[highlighted=true]:ring-2 data-[highlighted=true]:ring-ring data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none motion-reduce:animate-none!"
       style={{
         left: geometry.x,
         top: geometry.y,

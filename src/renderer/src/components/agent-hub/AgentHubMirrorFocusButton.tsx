@@ -1,12 +1,11 @@
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { Expand, Shrink } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
-import { useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { toggleAgentHubMirrorFocus } from './agent-hub-mirror-store'
 
 /**
- * A mirror header's focus switch, on the canvas only: brings this mirror forward, enlarged, with
- * the others in shadow; again returns it to its place.
+ * A mirror header's focus switch: brings this mirror forward over the whole work area, with the
+ * other mirrors and whatever is behind them in shadow; again returns it to its place.
  */
 export function AgentHubMirrorFocusButton({
   mirrorKey,
@@ -14,11 +13,7 @@ export function AgentHubMirrorFocusButton({
 }: {
   mirrorKey: string
   focused: boolean
-}): React.JSX.Element | null {
-  const onCanvas = useAgentHubCanvasOpen()
-  if (!onCanvas) {
-    return null
-  }
+}): React.JSX.Element {
   const label = focused
     ? translate('agentHub.mirror.endFocus', 'Return this mirror to its place')
     : translate('agentHub.mirror.focus', 'Focus this mirror')

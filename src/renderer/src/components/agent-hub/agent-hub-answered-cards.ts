@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { agentHubStateSince } from './agent-hub-lists'
+import { agentHubPromptText, agentHubStateSince } from './agent-hub-lists'
 
 /** How long a reopened card keeps showing an answer still on its way, before it can be retried. */
 export const AGENT_HUB_ANSWER_HOLD_MS = 10_000
@@ -41,12 +41,30 @@ function write(key: string, record: PromptRecord): void {
   listeners.forEach((listener) => listener())
 }
 
-export function agentHubCardKey(paneKey: string, stateSince: number): string {
-  return `${paneKey}:${stateSince}`
+// FNV-1a, short: two different questions in one turn must not share a record.
+function promptStamp(prompt: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < prompt.length; i++) {
+    hash = Math.imul(hash ^ prompt.charCodeAt(i), 0x01000193)
+  }
+  return (hash >>> 0).toString(36)
+}
+
+/**
+ * One key per prompt. Why the prompt itself: `stateStartedAt` stays pinned for a whole working
+ * run, so an agent asking twice in one turn would otherwise share a record, and a card closed
+ * for the first question would never show for the second.
+ */
+export function agentHubCardKey(
+  paneKey: string,
+  stateSince: number,
+  prompt: string | null = null
+): string {
+  return prompt ? `${paneKey}:${stateSince}:${promptStamp(prompt)}` : `${paneKey}:${stateSince}`
 }
 
 export function agentHubThreadCardKey(thread: AgentPaneThread): string {
-  return agentHubCardKey(thread.paneKey, agentHubStateSince(thread))
+  return agentHubCardKey(thread.paneKey, agentHubStateSince(thread), agentHubPromptText(thread))
 }
 
 // Why pure: it serves as a store snapshot; an expired hold reads as null and is evicted later.

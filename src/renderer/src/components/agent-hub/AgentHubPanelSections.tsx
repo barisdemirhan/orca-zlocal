@@ -9,6 +9,7 @@ import { HubSection } from './AgentHubSectionHeader'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
+import { agentHubThreadCardKey } from './agent-hub-answered-cards'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
 import {
   agentHubStateSince,
@@ -128,7 +129,7 @@ export function AgentHubInboxBody({
           />
           <AgentHubAttentionCard
             // Why the state stamp: a new prompt on the same pane must start unanswered.
-            key={`${cardThread.paneKey}:${agentHubStateSince(cardThread)}`}
+            key={agentHubThreadCardKey(cardThread)}
             thread={cardThread}
             location={actions.locationOf(cardThread)}
             now={now}

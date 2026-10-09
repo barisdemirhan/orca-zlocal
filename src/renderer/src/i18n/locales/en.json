@@ -22037,7 +22037,9 @@
       "close": "Close and answer in the terminal (esc)",
       "recommended": "Recommended",
       "ownWords": "Your own answer…",
-      "escHint": "terminal"
+      "escHint": "terminal",
+      "reopen": "Show the quick reply card",
+      "send": "Send"
     }
   },
   "workspace": {

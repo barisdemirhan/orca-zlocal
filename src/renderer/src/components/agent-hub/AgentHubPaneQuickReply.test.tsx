@@ -108,7 +108,7 @@ const openCard = (): HTMLElement => {
 beforeEach(() => {
   resetAgentHubAnsweredCardsForTest()
   quick.targets.length = 0
-  quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000)
+  quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000, asking.interactivePrompt ?? null)
   vi.mocked(quick.answer.choose).mockClear()
   vi.mocked(quick.answer.chooseByKey).mockClear()
   useAppStore.setState({
@@ -168,13 +168,37 @@ it('closes on Esc for this prompt, hands the keys to the terminal, and returns f
   expect(card()).toBeNull()
   expect(document.activeElement?.classList.contains('xterm-helper-textarea')).toBe(true)
 
-  quick.answer.cardKey = agentHubCardKey(PANE_KEY, 2_000)
+  // A handle stays in the corner while the prompt stands; it brings the card back.
+  const handle = pane.container.querySelector<HTMLButtonElement>(
+    '[data-agent-hub-pane-quick-reply-handle]'
+  )
+  expect(handle).not.toBeNull()
+  fireEvent.click(handle!)
+  expect(card()).not.toBeNull()
+  expect(document.activeElement).toBe(openCard())
+  fireEvent.keyDown(openCard(), { key: 'Escape' })
+  expect(card()).toBeNull()
+
+  // A second question in the same turn (same state start) is a fresh card too.
+  const secondPrompt = JSON.stringify({ questions: [{ question: 'Ship it?', options: [] }] })
+  quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000, secondPrompt)
+  act(() =>
+    useAppStore.setState({
+      agentStatusByPaneKey: { [PANE_KEY]: { ...asking, interactivePrompt: secondPrompt } }
+    })
+  )
+  expect(card()).not.toBeNull()
+  fireEvent.keyDown(openCard(), { key: 'Escape' })
+  expect(card()).toBeNull()
+
+  quick.answer.cardKey = agentHubCardKey(PANE_KEY, 2_000, asking.interactivePrompt ?? null)
   act(() =>
     useAppStore.setState({
       agentStatusByPaneKey: { [PANE_KEY]: { ...asking, stateStartedAt: 2_000, updatedAt: 2_000 } }
     })
   )
   expect(card()).not.toBeNull()
+  expect(pane.container.querySelector('[data-agent-hub-pane-quick-reply-handle]')).toBeNull()
 })
 
 it('stays away from a pane a chat view covers', () => {

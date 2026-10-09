@@ -1,3 +1,4 @@
+import { agentHubThreadCardKey } from './agent-hub-answered-cards'
 import type { NotificationSettings } from '../../../../shared/notification-settings-types'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { agentHubIsApproval, agentHubStateSince, type AgentHubLists } from './agent-hub-lists'
@@ -17,7 +18,7 @@ function alertStamps(lists: AgentHubLists): AgentHubAlert[] {
   const alerts: AgentHubAlert[] = []
   for (const thread of lists.needsYou) {
     const kind = agentHubIsApproval(thread) ? 'approval' : 'ask'
-    alerts.push({ id: `${thread.paneKey}:ask:${agentHubStateSince(thread)}`, kind, thread })
+    alerts.push({ id: `${agentHubThreadCardKey(thread)}:ask`, kind, thread })
   }
   for (const thread of lists.finished) {
     alerts.push({

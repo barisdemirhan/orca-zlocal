@@ -16,6 +16,7 @@ import { AgentHubCanvas } from './AgentHubCanvas'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubDimBackdrop } from './AgentHubDimToggle'
 import { AgentHubPeek } from './AgentHubPeek'
+import { AgentHubWorkspaceFocusShade } from './AgentHubMirrorFocusShade'
 import { AgentHubDictationPaneTag } from './AgentHubDictationPaneTag'
 import { useAgentHubFocusedPaneOutline } from './use-agent-hub-focused-pane-outline'
 import { AgentHubMirrors } from './AgentHubMirrors'
@@ -390,7 +391,11 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       ) : null}
       {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}
       <AgentHubDimBackdrop hidden={inSettings || canvasOpen} />
-      {canvasOpen ? <AgentHubCanvas empty={!mirrorsOpen} onLeave={closeAgentHubCanvas} /> : null}
+      {canvasOpen ? (
+        <AgentHubCanvas empty={!mirrorsOpen} onLeave={closeAgentHubCanvas} />
+      ) : inSettings ? null : (
+        <AgentHubWorkspaceFocusShade />
+      )}
       <AgentHubMirrors
         hubRef={anchorRef}
         trayRef={trayRef}

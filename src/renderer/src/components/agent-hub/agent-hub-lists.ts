@@ -55,6 +55,11 @@ export function agentHubStateSince(thread: AgentPaneThread): number {
   return threadStatusEntry(thread)?.stateStartedAt ?? thread.latestTimestamp
 }
 
+/** The structured prompt the agent is waiting on, if the status carries one. */
+export function agentHubPromptText(thread: AgentPaneThread): string | null {
+  return threadStatusEntry(thread)?.interactivePrompt ?? null
+}
+
 /** When the current turn began; a working row shows how long the agent has been at it. */
 export function agentHubTurnSince(thread: AgentPaneThread): number {
   const entry = threadStatusEntry(thread)
