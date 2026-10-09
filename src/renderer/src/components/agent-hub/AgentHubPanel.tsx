@@ -27,6 +27,12 @@ import {
 } from './agent-hub-keys'
 import { useAgentHubExpandedChildren } from './agent-hub-child-expansion'
 import { visibleAgentHubRunningThreads, type AgentHubLineage } from './agent-hub-lineage'
+import {
+  agentHubThreadCardKey,
+  showAgentHubCardsAgain,
+  useAgentHubCardRecordVersion,
+  withoutDismissedAgentHubCards
+} from './agent-hub-answered-cards'
 import type { AgentHubLists } from './agent-hub-lists'
 import {
   paneTargetFromTerminalRow,
@@ -150,7 +156,10 @@ export function AgentHubPanel({
   const now = useNow(30_000)
   const popoutKeys = agentHubPopoutKeys()
 
-  const needsYou = lists.needsYou
+  // Why: a card closed without an answer leaves the Inbox; its agent keeps waiting and counting.
+  useAgentHubCardRecordVersion()
+  const needsYou = withoutDismissedAgentHubCards(lists.needsYou, 'inbox')
+  const hiddenCards = lists.needsYou.length - needsYou.length
   const focusedCardIndex =
     cardFocus.paneKey === null
       ? -1
@@ -279,7 +288,7 @@ export function AgentHubPanel({
   }
 
   const counts: Record<AgentHubTab, number> = {
-    inbox: needsYou.length + lists.finished.length,
+    inbox: lists.needsYou.length + lists.finished.length,
     running: lists.working.length,
     agents: agentCount,
     all: terminalCount
@@ -298,7 +307,7 @@ export function AgentHubPanel({
           tabs={AGENT_HUB_TABS.map((value) => ({ value, label: tabLabel(value) }))}
           value={tab}
           onChange={switchTab}
-          askValue={needsYou.length > 0 ? 'inbox' : undefined}
+          askValue={lists.needsYou.length > 0 ? 'inbox' : undefined}
           counts={{
             inbox: counts.inbox,
             running: (
@@ -330,7 +339,11 @@ export function AgentHubPanel({
       >
         {tab === 'inbox' ? (
           <AgentHubInboxBody
-            lists={lists}
+            lists={{ ...lists, needsYou }}
+            hiddenCards={hiddenCards}
+            onShowHidden={() =>
+              showAgentHubCardsAgain(lists.needsYou.map(agentHubThreadCardKey), 'inbox')
+            }
             cardIndex={activeCardIndex}
             onPage={pageCard}
             now={now}

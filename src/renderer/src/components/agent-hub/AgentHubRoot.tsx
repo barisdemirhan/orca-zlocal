@@ -34,6 +34,7 @@ import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock
 import type { AgentHubTab } from './agent-hub-keys'
 import { agentHubInitialTab } from './agent-hub-initial-tab'
 import { buildAgentHubLineage } from './agent-hub-lineage'
+import { agentHubThreadCardKey, showAgentHubCardsAgain } from './agent-hub-answered-cards'
 import { agentHubCounts } from './agent-hub-lists'
 import { arrangeAgentHubFloatingWindowsByDefault } from './agent-hub-floating-arrangement'
 import {
@@ -136,6 +137,11 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         document.activeElement instanceof HTMLElement ? document.activeElement : null
     }
     clearAgentHubAlerts()
+    // Why: opened on a card from its alert, a card hidden earlier is wanted again.
+    const asked = paneKey ? needsYouRef.current.find((t) => t.paneKey === paneKey) : undefined
+    if (asked) {
+      showAgentHubCardsAgain([agentHubThreadCardKey(asked)], 'inbox')
+    }
     shownTabRef.current = tab ?? defaultTabRef.current
     setRequest((current) => ({ tab: tab ?? defaultTabRef.current, paneKey, seq: current.seq + 1 }))
     setOpen(true)

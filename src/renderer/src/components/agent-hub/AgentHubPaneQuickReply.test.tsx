@@ -4,23 +4,40 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
 import { getDefaultSettings } from '../../../../shared/constants'
+import { parsePaneKey } from '../../../../shared/stable-pane-id'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubPaneQuickReplyPortals } from './AgentHubPaneQuickReply'
-import { resetAgentHubPaneQuickReplyDismissalsForTest } from './agent-hub-pane-quick-reply-dismissal'
+import { agentHubCardKey, resetAgentHubAnsweredCardsForTest } from './agent-hub-answered-cards'
+import type * as QuickAnswerModule from './use-agent-hub-quick-answer'
 import type { AgentHubQuickAnswer } from './use-agent-hub-quick-answer'
 
+type QuickAnswerStub = Pick<
+  AgentHubQuickAnswer,
+  | 'question'
+  | 'simpleQuestion'
+  | 'options'
+  | 'chosen'
+  | 'canAnswer'
+  | 'cardKey'
+  | 'choose'
+  | 'chooseByKey'
+  | 'reply'
+>
 const quick = vi.hoisted(() => {
-  const state: { answer: AgentHubQuickAnswer; targets: unknown[] } = {
+  const state: { answer: QuickAnswerStub; targets: unknown[] } = {
     answer: {
       question: 'Keep it?',
+      simpleQuestion: null,
       options: [
         { id: 'a', label: 'Add delete', recommended: true },
         { id: 'b', label: 'Keep' }
       ],
       chosen: null,
       canAnswer: true,
+      cardKey: 'tab-1:leaf-1:1000',
       choose: vi.fn(() => true),
+      chooseByKey: vi.fn(() => true),
       reply: vi.fn(() => true)
     },
     targets: []
@@ -31,14 +48,19 @@ vi.mock('@/store', async () => {
   const { createTestStore } = await import('@/store/slices/store-test-helpers')
   return { useAppStore: createTestStore() }
 })
-vi.mock('./use-agent-hub-quick-answer', () => ({
-  useAgentHubQuickAnswer: (target: unknown) => {
+vi.mock('./use-agent-hub-quick-answer', async (original) => ({
+  ...(await original<typeof QuickAnswerModule>()),
+  useAgentHubQuickAnswer: (target: unknown): QuickAnswerStub => {
     quick.targets.push(target)
     return quick.answer
   }
 }))
 
-const [tabId, leafId] = PANE_KEY.split(':')
+const parsed = parsePaneKey(PANE_KEY)
+if (!parsed) {
+  throw new Error('expected a pane key')
+}
+const { tabId, leafId } = parsed
 const asking: AgentStatusEntry = {
   state: 'waiting',
   prompt: 'Decide',
@@ -51,20 +73,25 @@ const asking: AgentStatusEntry = {
   interactivePrompt: JSON.stringify({ questions: [{ question: 'Keep it?', options: [] }] })
 }
 
-function mountPane(): { id: number; leafId: string; container: HTMLElement } {
+function mountPane(): {
+  id: number
+  leafId: typeof leafId
+  container: HTMLElement
+  terminal: { focus: () => void }
+} {
   const container = document.createElement('div')
   container.className = 'pane'
   const input = document.createElement('textarea')
   input.className = 'xterm-helper-textarea'
   container.append(input)
   document.body.append(container)
-  return { id: 7, leafId: leafId ?? 'leaf', container }
+  return { id: 7, leafId, container, terminal: { focus: () => input.focus() } }
 }
 
 function renderPortals(pane: ReturnType<typeof mountPane>) {
   return render(
     <TooltipProvider>
-      <AgentHubPaneQuickReplyPortals panes={[pane]} tabId={tabId ?? 'tab'} worktreeId="wt-1" />
+      <AgentHubPaneQuickReplyPortals panes={[pane]} tabId={tabId} worktreeId="wt-1" />
     </TooltipProvider>
   )
 }
@@ -79,9 +106,11 @@ const openCard = (): HTMLElement => {
 }
 
 beforeEach(() => {
-  resetAgentHubPaneQuickReplyDismissalsForTest()
+  resetAgentHubAnsweredCardsForTest()
   quick.targets.length = 0
+  quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000)
   vi.mocked(quick.answer.choose).mockClear()
+  vi.mocked(quick.answer.chooseByKey).mockClear()
   useAppStore.setState({
     settings: { ...getDefaultSettings('/home/u'), experimentalAgentHub: true },
     agentStatusByPaneKey: {}
@@ -90,6 +119,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   document.body.replaceChildren()
+  vi.unstubAllGlobals()
 })
 
 it('opens in the asking pane with its options and answers by click or number key', () => {
@@ -112,7 +142,20 @@ it('opens in the asking pane with its options and answers by click or number key
   expect(quick.answer.choose).toHaveBeenCalledWith(1)
 
   fireEvent.keyDown(openCard(), { key: '1' })
-  expect(quick.answer.choose).toHaveBeenCalledWith(0)
+  expect(quick.answer.chooseByKey).toHaveBeenCalledWith(0)
+})
+
+it('takes the keys only from its own terminal, and hands them back when it leaves', () => {
+  const pane = mountPane()
+  pane.terminal.focus()
+  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } })
+  renderPortals(pane)
+  expect(document.activeElement).toBe(openCard())
+
+  // The prompt clears while the card has the keys: the terminal gets them back.
+  act(() => useAppStore.setState({ agentStatusByPaneKey: {} }))
+  expect(card()).toBeNull()
+  expect(document.activeElement?.classList.contains('xterm-helper-textarea')).toBe(true)
 })
 
 it('closes on Esc for this prompt, hands the keys to the terminal, and returns for the next', () => {
@@ -125,6 +168,7 @@ it('closes on Esc for this prompt, hands the keys to the terminal, and returns f
   expect(card()).toBeNull()
   expect(document.activeElement?.classList.contains('xterm-helper-textarea')).toBe(true)
 
+  quick.answer.cardKey = agentHubCardKey(PANE_KEY, 2_000)
   act(() =>
     useAppStore.setState({
       agentStatusByPaneKey: { [PANE_KEY]: { ...asking, stateStartedAt: 2_000, updatedAt: 2_000 } }
@@ -133,7 +177,17 @@ it('closes on Esc for this prompt, hands the keys to the terminal, and returns f
   expect(card()).not.toBeNull()
 })
 
-it('stays away while the setting or Agent Hub is off', () => {
+it('stays away from a pane a chat view covers', () => {
+  const pane = mountPane()
+  const shell = document.createElement('div')
+  shell.className = 'native-chat-pane-shell'
+  pane.container.append(shell)
+  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } })
+  renderPortals(pane)
+  expect(card()).toBeNull()
+})
+
+it('stays away while the setting or Agent Hub is off, and in a paired web-client window', () => {
   const pane = mountPane()
   useAppStore.setState({
     agentStatusByPaneKey: { [PANE_KEY]: asking },
@@ -143,6 +197,14 @@ it('stays away while the setting or Agent Hub is off', () => {
       agentHubPaneQuickReply: false
     }
   })
+  const off = renderPortals(pane)
+  expect(card()).toBeNull()
+  off.unmount()
+
+  useAppStore.setState({
+    settings: { ...getDefaultSettings('/home/u'), experimentalAgentHub: true }
+  })
+  vi.stubGlobal('__ORCA_WEB_CLIENT__', true)
   renderPortals(pane)
   expect(card()).toBeNull()
 })

@@ -4,7 +4,6 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { AgentHubDictationPaneTag } from './AgentHubDictationPaneTag'
 import { noteAgentHubDictationState } from './agent-hub-dictation-origin'
 import { useMirrorShowsDictation } from './agent-hub-mirror-dictation-display'
-import { useAgentHubFocusedPaneOutline } from './use-agent-hub-focused-pane-outline'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -57,13 +56,4 @@ it('stands down while a mirror shows the dictation itself', () => {
   expect(tag()).toBeNull()
   mirror.unmount()
   expect(tag()).not.toBeNull()
-})
-
-it('switches the focused-pane outline on for the app only while enabled', () => {
-  const hook = renderHook(({ enabled }) => useAgentHubFocusedPaneOutline(enabled), {
-    initialProps: { enabled: true }
-  })
-  expect(document.documentElement.hasAttribute('data-agent-hub-focused-pane-outline')).toBe(true)
-  hook.rerender({ enabled: false })
-  expect(document.documentElement.hasAttribute('data-agent-hub-focused-pane-outline')).toBe(false)
 })

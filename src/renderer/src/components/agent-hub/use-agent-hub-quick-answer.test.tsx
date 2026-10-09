@@ -12,14 +12,18 @@ import {
   PANE_KEY
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
+  agentHubThreadCardKey,
   readAnsweredAgentHubCard,
   resetAgentHubAnsweredCardsForTest
 } from './agent-hub-answered-cards'
-import { agentHubStateSince } from './agent-hub-lists'
-import { quickAnswerTargetOf, useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
+import {
+  AGENT_HUB_CARD_KEY_GUARD_MS,
+  quickAnswerTargetOf,
+  useAgentHubQuickAnswer
+} from './use-agent-hub-quick-answer'
 
 const send = vi.hoisted(() => ({
-  sendAnswer: vi.fn(() => ({ settleAfterMs: 0 })),
+  sendAnswer: vi.fn(() => ({ settleAfterMs: 800 })),
   sendRaw: vi.fn(),
   cancelPending: vi.fn(),
   cancelAsk: vi.fn(),
@@ -72,7 +76,10 @@ beforeEach(() => {
   Object.values(send).forEach((fn) => fn.mockClear())
   resetAgentHubAnsweredCardsForTest()
 })
-afterEach(() => resetAgentHubAnsweredCardsForTest())
+afterEach(() => {
+  resetAgentHubAnsweredCardsForTest()
+  vi.useRealTimers()
+})
 
 it('answers a single question with its option and shares the answer with the hub card', () => {
   const thread = threadWith(
@@ -103,9 +110,39 @@ it('answers a single question with its option and shares the answer with the hub
     expect.any(Function)
   )
   expect(hook.result.current.chosen).toBe(1)
-  expect(readAnsweredAgentHubCard(`${PANE_KEY}:${agentHubStateSince(thread)}`)).toBe(1)
+  expect(readAnsweredAgentHubCard(agentHubThreadCardKey(thread))).toBe(1)
   // A second answer is refused while the first stands.
   expect(hook.result.current.choose(0)).toBe(false)
+})
+
+it('hands the answer back when nothing could be sent', () => {
+  send.sendAnswer.mockReturnValueOnce({ settleAfterMs: 0 })
+  const thread = threadWith(
+    JSON.stringify({ questions: [{ question: 'Keep it?', options: [{ label: 'Yes' }] }] })
+  )
+  const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
+  let chosen = true
+  act(() => {
+    chosen = hook.result.current.choose(0)
+  })
+  expect(chosen).toBe(false)
+  expect(hook.result.current.chosen).toBeNull()
+})
+
+it('ignores a number key pressed as the surface appears, and takes it after the guard', () => {
+  vi.useFakeTimers({ toFake: ['performance', 'Date'] })
+  const thread = threadWith(
+    JSON.stringify({ questions: [{ question: 'Keep it?', options: [{ label: 'Yes' }] }] })
+  )
+  const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
+  expect(hook.result.current.chooseByKey(0)).toBe(false)
+  expect(send.sendAnswer).not.toHaveBeenCalled()
+  vi.advanceTimersByTime(AGENT_HUB_CARD_KEY_GUARD_MS)
+  let chosen = false
+  act(() => {
+    chosen = hook.result.current.chooseByKey(0)
+  })
+  expect(chosen).toBe(true)
 })
 
 it('allows an approval once with the agent key and denies with Esc', () => {
@@ -136,7 +173,7 @@ it('offers no quick options for a prompt with several questions', () => {
   )
   const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
   expect(hook.result.current.options).toEqual([])
-  expect(hook.result.current.reply).toBeNull()
+  expect(hook.result.current.reply('anything')).toBe(false)
 })
 
 it("sends a reply in the user's words for a single question", () => {
@@ -147,7 +184,7 @@ it("sends a reply in the user's words for a single question", () => {
   expect(hook.result.current.question).toBe('Keep it?')
   let sent = false
   act(() => {
-    sent = hook.result.current.reply?.('Only on Fridays') ?? false
+    sent = hook.result.current.reply('Only on Fridays')
   })
   expect(sent).toBe(true)
   expect(send.sendAnswer).toHaveBeenCalledWith(

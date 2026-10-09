@@ -6,15 +6,10 @@ import { useDictationShownInMirror } from './agent-hub-mirror-dictation-display'
 import type { AgentHubDictationPane } from './agent-hub-mirror-mic-state'
 
 function findPaneContainer(pane: AgentHubDictationPane): HTMLElement | null {
-  const tab = document.querySelector<HTMLElement>(
-    `[data-terminal-tab-id="${CSS.escape(pane.tabId)}"]`
+  const leaf = pane.leafId ? `.pane[data-leaf-id="${CSS.escape(pane.leafId)}"]` : '.pane'
+  return document.querySelector<HTMLElement>(
+    `[data-terminal-tab-id="${CSS.escape(pane.tabId)}"] ${leaf}`
   )
-  if (!tab) {
-    return null
-  }
-  return pane.leafId
-    ? tab.querySelector<HTMLElement>(`.pane[data-leaf-id="${CSS.escape(pane.leafId)}"]`)
-    : tab.querySelector<HTMLElement>('.pane')
 }
 
 /**
@@ -39,8 +34,7 @@ export function AgentHubDictationPaneTag(): React.JSX.Element | null {
     >
       <span
         aria-hidden
-        className="size-1.5 rounded-full animate-pulse motion-reduce:animate-none"
-        style={{ background: 'var(--terminal-pane-locate)' }}
+        className="size-1.5 rounded-full bg-[var(--terminal-pane-locate)] animate-pulse motion-reduce:animate-none"
       />
       {translate('agentHub.dictation.here', 'Dictating here')}
     </span>,

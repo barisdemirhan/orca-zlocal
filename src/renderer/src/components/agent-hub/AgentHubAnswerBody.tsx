@@ -3,17 +3,27 @@ import { useEffect, useRef, useState } from 'react'
 import { Mic, SendHorizontal, ShieldQuestion, X } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import type { AskQuestion } from '../../../../shared/native-chat-ask-types'
-import { splitRecommendedOptionLabel } from '../native-chat/native-chat-option-label'
+import type { AgentHubAnswerOption } from './agent-hub-answer-options'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
 import { HubChip } from './AgentHubInlineLabels'
 
-export type AgentHubAnswerOption = {
-  /** Stable React key; the option's position is what gets sent. */
-  id: string
-  label: React.ReactNode
-  /** Muted styling for the option that declines. */
-  deny?: boolean
+export type { AgentHubAnswerOption } from './agent-hub-answer-options'
+export { questionOptions } from './agent-hub-answer-options'
+
+/** How tightly an option list sits: the hub card, a pane's corner card, or a bubble's chips. */
+export type HubOptionDensity = 'card' | 'compact' | 'chip'
+
+const LIST_CLASS: Record<HubOptionDensity, string> = {
+  card: '',
+  compact: 'flex flex-col',
+  chip: 'flex flex-wrap gap-1'
+}
+
+const OPTION_CLASS: Record<HubOptionDensity, string> = {
+  card: 'group/opt mt-1.5 flex w-full items-center gap-2.5 rounded-lg border border-foreground/[0.06] bg-muted px-2.5 py-2.5 text-left text-[13px] text-foreground/85 transition-colors hover:border-foreground/15 hover:bg-accent/60 hover:text-foreground disabled:cursor-default data-[chosen=true]:border-agent-question/50 data-[chosen=true]:bg-agent-question/15 data-[chosen=true]:text-foreground data-[deny=true]:text-muted-foreground',
+  compact:
+    'group/opt mt-1.5 flex w-full items-center gap-2 rounded-lg border border-foreground/[0.06] bg-muted px-2 py-1.5 text-left text-[13px] text-foreground/85 transition-colors hover:border-foreground/15 hover:bg-accent/60 hover:text-foreground disabled:cursor-default data-[chosen=true]:border-agent-question/50 data-[chosen=true]:bg-agent-question/15 data-[chosen=true]:text-foreground data-[deny=true]:text-muted-foreground',
+  chip: 'group/opt flex max-w-full items-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] px-2 py-1 text-xs text-foreground transition-colors hover:border-foreground/15 hover:bg-foreground/[0.07] disabled:cursor-default disabled:opacity-60 data-[chosen=true]:border-agent-question/50 data-[chosen=true]:bg-agent-question/15 data-[chosen=true]:opacity-100 data-[deny=true]:text-muted-foreground data-[recommended=true]:border-ring/60'
 }
 
 /** A pick-list in the mock's style: numbered boxes, the agent's pick badged, one click answers. */
@@ -21,39 +31,41 @@ export function HubOptionList({
   options,
   chosen,
   disabled,
-  onChoose
+  onChoose,
+  density = 'card'
 }: {
-  options: (AgentHubAnswerOption & {
-    description?: string
-    recommended?: boolean
-  })[]
+  options: readonly AgentHubAnswerOption[]
   chosen: number | null
   disabled: boolean
   onChoose: (index: number) => void
+  density?: HubOptionDensity
 }): React.JSX.Element {
   return (
-    <div>
+    <div className={LIST_CLASS[density]}>
       {options.map((option, index) => (
         <button
           key={option.id}
           type="button"
           tabIndex={-1}
           disabled={disabled}
+          data-density={density}
           data-chosen={chosen === index}
           data-deny={option.deny === true}
+          data-recommended={option.recommended === true}
           onClick={() => onChoose(index)}
-          className="group/opt mt-1.5 flex w-full items-center gap-2.5 rounded-lg border border-foreground/[0.06] bg-muted px-2.5 py-2.5 text-left text-[13px] text-foreground/85 transition-colors hover:border-foreground/15 hover:bg-accent/60 hover:text-foreground disabled:cursor-default data-[chosen=true]:border-agent-question/50 data-[chosen=true]:bg-agent-question/15 data-[chosen=true]:text-foreground data-[deny=true]:text-muted-foreground"
+          className={OPTION_CLASS[density]}
         >
-          <span className="grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.12] font-mono text-[11px] text-foreground/85 group-data-[chosen=true]/opt:bg-agent-question group-data-[chosen=true]/opt:text-background">
+          <span className="grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.12] font-mono text-[11px] text-foreground/85 group-data-[chosen=true]/opt:bg-agent-question group-data-[chosen=true]/opt:text-background group-data-[density=chip]/opt:size-4 group-data-[density=chip]/opt:text-[10px]">
             {index + 1}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block">{option.label}</span>
-            {option.description ? (
+            <span className="block truncate">{option.label}</span>
+            {option.description && density === 'card' ? (
               <span className="block text-xs text-muted-foreground">{option.description}</span>
             ) : null}
           </span>
-          {option.recommended ? (
+          {/* A chip has no room for the badge: its border marks the agent's pick. */}
+          {option.recommended && density !== 'chip' ? (
             <span className="rounded-full bg-status-warning-background px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-status-warning">
               {translate('agentHub.card.recommended', 'Recommended')}
             </span>
@@ -62,20 +74,6 @@ export function HubOptionList({
       ))}
     </div>
   )
-}
-
-export function questionOptions(
-  question: AskQuestion
-): (AgentHubAnswerOption & { description?: string; recommended?: boolean })[] {
-  return question.options.map((option, index) => {
-    const { label, recommended } = splitRecommendedOptionLabel(option.label)
-    return {
-      id: `${index}:${option.label}`,
-      label,
-      recommended,
-      description: option.description
-    }
-  })
 }
 
 /** Free-text answer row; the mic hands the field to Orca's dictation when voice is on. */

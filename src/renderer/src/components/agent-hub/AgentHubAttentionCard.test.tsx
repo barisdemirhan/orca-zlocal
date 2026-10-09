@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
+import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import {
   makeRepo,
@@ -20,6 +21,8 @@ import {
 } from './AgentHubAttentionCard'
 import {
   AGENT_HUB_ANSWER_HOLD_MS,
+  agentHubThreadCardKey,
+  isAgentHubCardDismissed,
   resetAgentHubAnsweredCardsForTest
 } from './agent-hub-answered-cards'
 
@@ -43,6 +46,7 @@ vi.mock('../native-chat/use-native-chat-interactive-send', () => ({
 
 let container: HTMLDivElement
 let root: ReturnType<typeof createRoot>
+let lastThread: AgentPaneThread
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['performance', 'Date', 'setTimeout', 'requestAnimationFrame'] })
@@ -86,6 +90,10 @@ function renderApprovalCard(agentType: string) {
       now: 1_000
     })
   )
+  if (!thread) {
+    throw new Error('expected a thread')
+  }
+  lastThread = thread
   const control = createRef<AgentHubCardControl>()
   act(() => {
     root.render(
@@ -170,4 +178,14 @@ it('keeps a reopened card answered while its answer is on the way, then allows a
   afterGuard()
   expect(later.current?.chooseOption(0)).toBe(true)
   expect(send.sendRaw).toHaveBeenCalledTimes(2)
+})
+
+it('hides from the Inbox without answering, and keeps the agent waiting', () => {
+  renderApprovalCard('claude')
+  afterGuard()
+  const hide = container.querySelector<HTMLButtonElement>('[data-agent-hub-card-hide]')
+  act(() => hide?.click())
+  expect(isAgentHubCardDismissed(agentHubThreadCardKey(lastThread), 'inbox')).toBe(true)
+  expect(send.sendRaw).not.toHaveBeenCalled()
+  expect(send.cancelAsk).not.toHaveBeenCalled()
 })

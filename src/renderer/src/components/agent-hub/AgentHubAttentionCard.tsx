@@ -3,8 +3,8 @@ import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner
 import { AgentHubPeekChips } from './AgentHubPeekChips'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
-import { ArrowUpRight, PictureInPicture2 } from 'lucide-react'
+import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
+import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { formatAgentTypeLabel } from '@/lib/agent-status'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
@@ -18,9 +18,6 @@ import {
 } from '../native-chat/NativeChatInteractiveCard'
 import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agent-support'
 import { nativeChatCardDismissKey } from '../native-chat/native-chat-dismiss-key'
-import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
-import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
-import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubChip, HubCrumb, HubKeys } from './AgentHubInlineLabels'
 import {
@@ -32,20 +29,14 @@ import {
 } from './AgentHubAnswerBody'
 import { agentHubAlwaysAllowKey, readApprovalTool } from './agent-hub-approval'
 import { agentHubStateSince } from './agent-hub-lists'
-import {
-  agentHubCardKey,
-  readAnsweredAgentHubCard,
-  recordAgentHubCardAnswer
-} from './agent-hub-answered-cards'
+import { dismissAgentHubCard } from './agent-hub-answered-cards'
 import { resolveAgentHubPtyId, type AgentHubLocation } from './agent-hub-pane-target'
-import { useAgentHubLivePty } from './use-agent-hub-live-pty'
+import { quickAnswerTargetOf, useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
+
+export { AGENT_HUB_CARD_KEY_GUARD_MS } from './use-agent-hub-quick-answer'
 
 // Why a pause: the agent needs a beat to leave its approval prompt before the instruction lands.
 const DENY_THEN_INSTRUCT_DELAY_MS = 400
-// Why: paging or closing the hub must not cut an answer off halfway through its keystrokes.
-const FINISH_ANSWER_AFTER_UNMOUNT = { finishAnswerAfterUnmount: true }
-/** Number keys are ignored this long after a card appears. */
-export const AGENT_HUB_CARD_KEY_GUARD_MS = 400
 
 export type AgentHubCardControl = NativeChatInteractiveCardControl
 
@@ -97,23 +88,10 @@ export function AgentHubAttentionCard({
 }): React.JSX.Element {
   const { paneKey } = thread
   const tabId = thread.tab.id
+  const quick = useAgentHubQuickAnswer(quickAnswerTargetOf(thread))
+  const { card, send, ptyId, chosen, canAnswer, simpleQuestion, approval, cardKey } = quick
   const interactivePrompt = useAppStore(
     (s) => s.agentStatusByPaneKey[paneKey]?.interactivePrompt ?? null
-  )
-  const toolName = useAppStore((s) => {
-    const entry = s.agentStatusByPaneKey[paneKey]
-    return entry?.interactivePrompt ? (entry.toolName ?? null) : null
-  })
-  const card = useMemo(
-    () => parseInteractivePrompt(interactivePrompt, toolName ?? undefined, thread.agentType),
-    [interactivePrompt, toolName, thread.agentType]
-  )
-  const ptyId = useAgentHubLivePty(thread.worktree.id, tabId, paneKey, false)
-  const send = useNativeChatInteractiveSend(
-    paneKey,
-    ptyId,
-    thread.agentType,
-    FINISH_ANSWER_AFTER_UNMOUNT
   )
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
   // The native card no longer hides itself after an answer: hide it until a different prompt
@@ -124,27 +102,11 @@ export function AgentHubAttentionCard({
     setDismissedNativeKey(null)
   }
   const nativeCardDismissed = dismissedNativeKey !== null && dismissedNativeKey === nativeCardKey
-  const cardKey = agentHubCardKey(paneKey, agentHubStateSince(thread))
-  const [chosen, setChosenState] = useState(() => readAnsweredAgentHubCard(cardKey))
-  const setChosen = (choice: number | null): void => {
-    recordAgentHubCardAnswer(cardKey, choice)
-    setChosenState(choice)
-  }
   // The deny option first asks for an instruction; Enter on an empty field denies plainly.
   const [instructing, setInstructing] = useState(false)
   const replyRef = useRef<HTMLInputElement>(null)
   const copy = activityThreadRowCopy(thread)
   const agentLabel = formatAgentTypeLabel(thread.agentType)
-  // Why canSend: a mobile-owned PTY refuses desktop input, as in the chat composer.
-  const canSend = useNativeChatCanSend(ptyId)
-  const canAnswer = card !== null && ptyId !== null && canSend
-
-  const question =
-    card?.kind === 'question' && card.prompt.questions.length === 1
-      ? (card.prompt.questions[0] ?? null)
-      : null
-  const simpleQuestion = question && !question.multiSelect ? question : null
-  const approval = card?.kind === 'approval' ? card.approval : null
   const command = approval?.detail
   const alwaysAllowKey = approval ? agentHubAlwaysAllowKey(thread.agentType) : null
   const approvalOptions: (AgentHubAnswerOption & { send: string })[] = approval
@@ -184,39 +146,14 @@ export function AgentHubAttentionCard({
 
   const denyIndex = approvalOptions.length - 1
 
-  const submitAnswer = (
-    selections: Parameters<typeof send.sendAnswer>[1],
-    marker: number
-  ): void => {
-    if (card?.kind !== 'question') {
-      return
-    }
-    setChosen(marker)
-    // A refused or lost delivery hands the card back for another try.
-    const result = send.sendAnswer(card.prompt, selections, (delivered) => {
-      if (!delivered) {
-        setChosen(null)
-      }
-    })
-    if (result.settleAfterMs <= 0) {
-      setChosen(null)
-    }
-  }
-
   const choose = (index: number): boolean => {
-    if (!canAnswer || chosen !== null) {
-      return false
+    if (simpleQuestion) {
+      return quick.choose(index)
     }
-    if (simpleQuestion && card?.kind === 'question') {
-      if (!simpleQuestion.options[index]) {
-        return false
-      }
-      submitAnswer([{ indices: [index] }], index)
-      return true
-    }
-    const option = approvalOptions[index]
     if (approval) {
-      if (!option) {
+      // Why its own list: the card also offers "always allow" and a deny that asks what to do instead.
+      const option = approvalOptions[index]
+      if (!option || !canAnswer || chosen !== null) {
         return false
       }
       if (option.deny && !instructing) {
@@ -224,7 +161,7 @@ export function AgentHubAttentionCard({
         requestAnimationFrame(() => replyRef.current?.focus())
         return true
       }
-      setChosen(index)
+      quick.recordChoice(index)
       if (option.deny) {
         send.cancelAsk()
       } else {
@@ -234,14 +171,8 @@ export function AgentHubAttentionCard({
     }
     return nativeControlRef.current?.chooseOption(index) ?? false
   }
-  // Why: a key pressed as this card replaces an answered one was meant for the previous card.
-  const shownAtRef = useRef(Number.POSITIVE_INFINITY)
-  useEffect(() => {
-    shownAtRef.current = performance.now()
-  }, [])
   useImperativeHandle(controlRef, () => ({
-    chooseOption: (index) =>
-      performance.now() - shownAtRef.current >= AGENT_HUB_CARD_KEY_GUARD_MS && choose(index)
+    chooseOption: (index) => quick.keysArmed() && choose(index)
   }))
 
   // Why the agent's host: an SSH or paired-runtime agent reads the image from its own disk.
@@ -254,31 +185,30 @@ export function AgentHubAttentionCard({
   }
 
   const reply = (text: string): void => {
-    if (!ptyId || chosen !== null) {
+    if (simpleQuestion) {
+      quick.reply(text)
       return
     }
-    if (simpleQuestion && card?.kind === 'question') {
-      submitAnswer([{ indices: [], other: text }], -1)
+    if (!ptyId || !approval || chosen !== null) {
       return
     }
-    if (approval) {
-      setChosen(denyIndex)
-      send.cancelAsk()
-      if (!text) {
-        return
+    quick.recordChoice(denyIndex)
+    send.cancelAsk()
+    if (!text) {
+      return
+    }
+    setTimeout(() => {
+      // Why re-check: the pane may have closed, or the hub been turned off, during the delay.
+      const state = useAppStore.getState()
+      if (
+        state.settings?.experimentalAgentHub === true &&
+        resolveAgentHubPtyId(state, tabId, paneKey) === ptyId
+      ) {
+        void submitPromptToAgentPty({ tabId, ptyId, content: text })
       }
-      setTimeout(() => {
-        // Why re-check: the pane may have closed, or the hub been turned off, during the delay.
-        const state = useAppStore.getState()
-        if (
-          state.settings?.experimentalAgentHub === true &&
-          resolveAgentHubPtyId(state, tabId, paneKey) === ptyId
-        ) {
-          void submitPromptToAgentPty({ tabId, ptyId, content: text })
-        }
-      }, DENY_THEN_INSTRUCT_DELAY_MS)
-    }
+    }, DENY_THEN_INSTRUCT_DELAY_MS)
   }
+  const hideLabel = translate('agentHub.card.hide', 'Hide until it asks again')
 
   const lastMessage = thread.currentAgentEntry?.lastAssistantMessageIsToolOutput
     ? undefined
@@ -296,7 +226,24 @@ export function AgentHubAttentionCard({
       data-agent-hub-attention-card={paneKey}
       className="relative animate-in rounded-xl border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1"
     >
-      <div className="mb-2.5 truncate pr-5 text-sm font-semibold">{copy.taskTitle}</div>
+      <div className="mb-2.5 flex items-start gap-2">
+        <div className="min-w-0 flex-1 truncate text-sm font-semibold">{copy.taskTitle}</div>
+        <AgentHubActionTooltip label={hideLabel}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            tabIndex={-1}
+            aria-label={hideLabel}
+            data-agent-hub-card-hide
+            className="-mt-1 -mr-1.5"
+            // Why no answer: the agent keeps waiting and counting; the card returns when it asks again.
+            onClick={() => dismissAgentHubCard(cardKey, 'inbox')}
+          >
+            <X />
+          </Button>
+        </AgentHubActionTooltip>
+      </div>
       <div className="flex items-center gap-2.5">
         <HubAvatar agentType={thread.agentType} kind="ask" />
         <div className="min-w-0 text-[13px]">
@@ -363,7 +310,7 @@ export function AgentHubAttentionCard({
             onPasteImage={pasteImage}
           />
         </>
-      ) : canAnswer ? (
+      ) : canAnswer && card ? (
         <div className="mt-3">
           {nativeCardDismissed ? null : (
             <NativeChatInteractiveCard

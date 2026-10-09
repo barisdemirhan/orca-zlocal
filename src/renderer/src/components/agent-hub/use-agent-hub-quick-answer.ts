@@ -1,28 +1,32 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useAppStore } from '@/store'
-import { translate } from '@/i18n/i18n'
 import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agent-support'
 import type { AgentType } from '../../../../shared/agent-status-types'
+import type { AskQuestion } from '../../../../shared/native-chat-ask-types'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
 import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
-import { questionOptions } from './AgentHubAnswerBody'
+import {
+  approvalQuickOptions,
+  questionOptions,
+  type AgentHubAnswerOption
+} from './agent-hub-answer-options'
 import {
   agentHubCardKey,
   readAnsweredAgentHubCard,
-  recordAgentHubCardAnswer
+  recordAgentHubCardAnswer,
+  useAnsweredAgentHubCard
 } from './agent-hub-answered-cards'
 import { agentHubStateSince } from './agent-hub-lists'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 
-export type AgentHubQuickOption = {
-  id: string
-  label: React.ReactNode
-  recommended?: boolean
-  /** Declines the approval. */
-  deny?: boolean
-}
+/** A key pressed as a card appears was meant for whatever it replaced. */
+export const AGENT_HUB_CARD_KEY_GUARD_MS = 400
+/** How long an answered small surface stays, so what went out can be read. */
+export const AGENT_HUB_ANSWERED_VISIBLE_MS = 1000
+
+const FINISH_ANSWER_AFTER_UNMOUNT = { finishAnswerAfterUnmount: true }
 
 /** The pane an answer goes to, as a thread or a bare status entry describes it. */
 export type AgentHubQuickAnswerTarget = {
@@ -30,7 +34,7 @@ export type AgentHubQuickAnswerTarget = {
   tabId: string
   paneKey: string
   agentType: AgentType
-  /** When the prompt began; one answer per prompt is shared with the hub card by it. */
+  /** When the prompt began; one answer per prompt is shared across surfaces by it. */
   stateSince: number
 }
 
@@ -44,25 +48,40 @@ export function quickAnswerTargetOf(thread: AgentPaneThread): AgentHubQuickAnswe
   }
 }
 
+type ParsedCard = ReturnType<typeof parseInteractivePrompt>
+type Send = ReturnType<typeof useNativeChatInteractiveSend>
+
 export type AgentHubQuickAnswer = {
+  card: ParsedCard
+  /** A lone single-choice question; the one shape the small surfaces answer in full. */
+  simpleQuestion: AskQuestion | null
+  approval: Extract<NonNullable<ParsedCard>, { kind: 'approval' }>['approval'] | null
   /** What is being asked: the question, or the command awaiting approval. */
   question: string | null
   /** The one-keystroke answers; empty for a prompt that needs the full card (several questions). */
-  options: readonly AgentHubQuickOption[]
-  /** The answer already given, here or on the hub's card. */
+  options: readonly AgentHubAnswerOption[]
+  /** The answer on record for this prompt, from any surface. */
   chosen: number | null
   canAnswer: boolean
+  ptyId: string | null
+  send: Send
+  cardKey: string
   /** Sends option `index`; false when nothing was sent. */
   choose: (index: number) => boolean
-  /** Answers a question in the user's own words; null for an approval. */
-  reply: ((text: string) => boolean) | null
+  /** `choose` for a number key: refused while the surface has just appeared. */
+  chooseByKey: (index: number) => boolean
+  /** Whether a number key would be taken right now. */
+  keysArmed: () => boolean
+  /** Answers a single question in the user's own words; false for anything else. */
+  reply: (text: string) => boolean
+  /** Marks an answer a surface sent by itself (the card's approval path). */
+  recordChoice: (index: number | null) => void
 }
 
-const FINISH_ANSWER_AFTER_UNMOUNT = { finishAnswerAfterUnmount: true }
-
 /**
- * The hub card's answer path for a small surface (an alert bubble, a pane overlay): the same
- * keys reach the agent, and the answer is shared with the card so neither answers twice.
+ * The one answer path for a prompt, shared by the hub card, the alert bubble and the pane
+ * card: the same keys reach the agent, and the answer is on one record so no surface answers
+ * a prompt twice.
  */
 export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): AgentHubQuickAnswer {
   const { paneKey, tabId, agentType } = target
@@ -79,18 +98,20 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
   )
   const ptyId = useAgentHubLivePty(target.worktreeId, tabId, paneKey, false)
   const send = useNativeChatInteractiveSend(
-    tabId,
     paneKey,
     ptyId,
     agentType,
     FINISH_ANSWER_AFTER_UNMOUNT
   )
+  // Why canSend: a mobile-owned PTY refuses desktop input, as in the chat composer.
   const canSend = useNativeChatCanSend(ptyId)
   const cardKey = agentHubCardKey(paneKey, target.stateSince)
-  // Why two: the shared record clears once the agent moves on, while this surface keeps showing
-  // what it just sent until it goes away.
-  const [answered, setAnswered] = useState<{ key: string; index: number } | null>(null)
-  const chosen = answered?.key === cardKey ? answered.index : readAnsweredAgentHubCard(cardKey)
+  const chosen = useAnsweredAgentHubCard(cardKey)
+  // Why in an effect: the guard starts once the surface is on screen; until then no key is taken.
+  const shownAt = useRef(Number.POSITIVE_INFINITY)
+  useEffect(() => {
+    shownAt.current = performance.now()
+  }, [])
 
   const question =
     card?.kind === 'question' && card.prompt.questions.length === 1
@@ -98,49 +119,44 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
       : null
   const simpleQuestion = question && !question.multiSelect ? question : null
   const approval = card?.kind === 'approval' ? card.approval : null
-  const options = useMemo<AgentHubQuickOption[]>(() => {
-    if (simpleQuestion) {
-      return questionOptions(simpleQuestion)
-    }
-    if (approval) {
-      return [
-        { id: 'allow-once', label: translate('agentHub.card.allowOnce', 'Yes, run it once') },
-        { id: 'deny', label: translate('agentHub.quick.deny', 'No'), deny: true }
-      ]
-    }
-    return []
-  }, [simpleQuestion, approval])
-
+  const options = useMemo<AgentHubAnswerOption[]>(
+    () =>
+      simpleQuestion ? questionOptions(simpleQuestion) : approval ? approvalQuickOptions() : [],
+    [simpleQuestion, approval]
+  )
   const canAnswer = card !== null && ptyId !== null && canSend
-  const questionText = simpleQuestion?.question ?? approval?.detail ?? approval?.title ?? null
+  // Why re-read: another surface may have answered since this one rendered.
+  const open = (): boolean => canAnswer && readAnsweredAgentHubCard(cardKey) === null
+
   const answerQuestion = (
-    selections: Parameters<typeof send.sendAnswer>[1],
+    selections: Parameters<Send['sendAnswer']>[1],
     marker: number
   ): boolean => {
-    if (!simpleQuestion || card?.kind !== 'question' || !canAnswer || chosen !== null) {
+    if (!simpleQuestion || card?.kind !== 'question' || !open()) {
       return false
     }
     recordAgentHubCardAnswer(cardKey, marker)
-    setAnswered({ key: cardKey, index: marker })
     // A refused or lost delivery hands the answer back for another try.
-    send.sendAnswer(card.prompt, selections, (delivered) => {
+    const result = send.sendAnswer(card.prompt, selections, (delivered) => {
       if (!delivered) {
         recordAgentHubCardAnswer(cardKey, null)
-        setAnswered(null)
       }
     })
+    if (result.settleAfterMs <= 0) {
+      recordAgentHubCardAnswer(cardKey, null)
+      return false
+    }
     return true
   }
   const choose = (index: number): boolean => {
     const option = options[index]
-    if (!option || !canAnswer || chosen !== null) {
+    if (!option || !open()) {
       return false
     }
     if (simpleQuestion) {
       return answerQuestion([{ indices: [index] }], index)
     }
     recordAgentHubCardAnswer(cardKey, index)
-    setAnswered({ key: cardKey, index })
     if (option.deny) {
       send.cancelAsk()
     } else {
@@ -148,10 +164,24 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
     }
     return true
   }
-  // Why -1: the card marks a free-text answer the same way, so neither answers twice.
-  const reply = simpleQuestion
-    ? (text: string): boolean =>
-        text.trim() !== '' && answerQuestion([{ indices: [], other: text }], -1)
-    : null
-  return { question: questionText, options, chosen, canAnswer, choose, reply }
+  const keysArmed = (): boolean =>
+    performance.now() - shownAt.current >= AGENT_HUB_CARD_KEY_GUARD_MS
+  return {
+    card,
+    simpleQuestion,
+    approval,
+    question: simpleQuestion?.question ?? approval?.detail ?? approval?.title ?? null,
+    options,
+    chosen,
+    canAnswer,
+    ptyId,
+    send,
+    cardKey,
+    choose,
+    chooseByKey: (index) => keysArmed() && choose(index),
+    keysArmed,
+    // Why -1: the card marks a free-text answer the same way, so neither answers twice.
+    reply: (text) => text.trim() !== '' && answerQuestion([{ indices: [], other: text }], -1),
+    recordChoice: (index) => recordAgentHubCardAnswer(cardKey, index)
+  }
 }

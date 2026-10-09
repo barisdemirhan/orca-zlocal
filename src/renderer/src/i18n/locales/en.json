@@ -21808,7 +21808,8 @@
       "finished": "Finished",
       "emptyHint": "{{value0}} working · you'll get a ping when one asks",
       "oneAgent": "1 agent",
-      "agents": "{{value0}} agents"
+      "agents": "{{value0}} agents",
+      "hidden": "{{value0}} hidden · Show"
     },
     "running": {
       "empty": "No agent is working right now",
@@ -21860,7 +21861,8 @@
       "jump": "Jump to terminal",
       "insteadOrDeny": "Tell it what to do instead, or press Enter to just deny…",
       "pastedImage": "Image {{value0}}",
-      "removeImage": "Remove {{value0}}"
+      "removeImage": "Remove {{value0}}",
+      "hide": "Hide until it asks again"
     },
     "close": "Close (esc)",
     "state": {

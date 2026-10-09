@@ -66,6 +66,8 @@ function lastMessage(thread: AgentPaneThread): string | undefined {
 
 export function AgentHubInboxBody({
   lists,
+  hiddenCards,
+  onShowHidden,
   cardIndex,
   onPage,
   now,
@@ -75,6 +77,9 @@ export function AgentHubInboxBody({
   onMarkRead
 }: {
   lists: AgentHubLists
+  /** Cards closed without an answer; their agents are still waiting. */
+  hiddenCards: number
+  onShowHidden: () => void
   cardIndex: number
   onPage: (delta: 1 | -1) => void
   now: number
@@ -135,7 +140,7 @@ export function AgentHubInboxBody({
             onPopout={() => actions.onOpen(cardThread)}
           />
         </>
-      ) : (
+      ) : hiddenCards > 0 ? null : (
         <div className="flex flex-col items-center gap-1 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground">
           <CheckCheck className="mb-1 size-5 text-status-success" />
           <b className="text-[13px] font-medium text-foreground/85">
@@ -157,6 +162,17 @@ export function AgentHubInboxBody({
           </span>
         </div>
       )}
+      {hiddenCards > 0 ? (
+        <button
+          type="button"
+          tabIndex={-1}
+          data-agent-hub-hidden-cards
+          onClick={onShowHidden}
+          className="mt-1.5 w-full rounded-lg px-2.5 py-1.5 text-left text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+        >
+          {translate('agentHub.inbox.hidden', '{{value0}} hidden · Show', { value0: hiddenCards })}
+        </button>
+      ) : null}
       {finished.length > 0 ? (
         <>
           <HubSection
