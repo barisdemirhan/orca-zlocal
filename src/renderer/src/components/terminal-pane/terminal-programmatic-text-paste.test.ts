@@ -133,8 +133,7 @@ describe('terminal programmatic text paste', () => {
     const transports = new Map([[pane.id, transport]]) as never
     const base = {
       getManager: () => makeManager(pane) as never,
-      tabId: 'tab-1',
-      worktreeId: 'wt-1'
+      tabId: 'tab-1'
     }
 
     expect(
@@ -178,7 +177,6 @@ describe('terminal programmatic text paste', () => {
       getManager: () => makeManager(pane) as never,
       getPaneTransports: () => new Map([[pane.id, transport]]) as never,
       tabId: 'tab-1',
-      worktreeId: 'wt-1',
       focusTerminal: false
     })
     await flushPasteTasks()

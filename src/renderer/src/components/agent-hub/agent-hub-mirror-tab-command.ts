@@ -1,4 +1,5 @@
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
+import { agentHubMirrorWindowIdOf } from './agent-hub-mirror-element'
 import { activateAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import { agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
 
@@ -12,7 +13,7 @@ export function agentHubMirrorTabCommandAvailable(): boolean {
   ) {
     return false
   }
-  const key = active.closest<HTMLElement>('[data-agent-hub-mirror]')?.dataset.agentHubMirrorKey
+  const key = agentHubMirrorWindowIdOf(active)
   return readAgentHubMirrors().windows.some((window) => window.id === key && window.tabs.length > 1)
 }
 
@@ -21,10 +22,7 @@ export function cycleAgentHubMirrorTab(direction: 1 | -1): void {
     return
   }
   const active = document.activeElement
-  const key =
-    active instanceof HTMLElement
-      ? active.closest<HTMLElement>('[data-agent-hub-mirror]')?.dataset.agentHubMirrorKey
-      : null
+  const key = active instanceof HTMLElement ? agentHubMirrorWindowIdOf(active) : null
   const window = readAgentHubMirrors().windows.find((window) => window.id === key)
   if (!window) {
     return

@@ -66,12 +66,12 @@ function placementDescription(placement: AgentSessionContinuationPlacement): str
     case 'tab':
       return translate(
         'components.agentSessionContinuation.placementTabDescription',
-        'Adds a tab next to this one and keeps you here. In a mirror, it becomes a tab of that mirror.'
+        'Adds it as a tab of this mirror and keeps you here.'
       )
     case 'pane':
       return translate(
         'components.agentSessionContinuation.placementPaneDescription',
-        'Splits beside this pane. A mirror shows one pane, so it also gets a mirror tab for the new one.'
+        'Splits beside this pane in its workspace and adds a mirror tab for the new one.'
       )
     case 'jump':
       return translate(
@@ -196,8 +196,8 @@ export function AgentSessionContinuationDialog({
       launchChoice: selection.choice,
       launchSource: request.launchSource,
       signal: abortRef.current?.signal,
-      // Why: only a pane-started request has a view to stay in; sidebar launches keep jumping.
-      ...(request.sourceTabId ? { placement, sourceTabId: request.sourceTabId } : {})
+      // Why: only a request from a mirror pane offers a placement; everywhere else keeps jumping.
+      ...(request.mirrorSource ? { mirror: { ...request.mirrorSource, placement } } : {})
     })
     setStarting(false)
     if (launched) {
@@ -365,7 +365,7 @@ export function AgentSessionContinuationDialog({
             </p>
           </div>
 
-          {request?.sourceTabId ? (
+          {request?.mirrorSource ? (
             <div className="min-w-0 space-y-1.5">
               <label className="text-xs font-medium">
                 {translate('components.agentSessionContinuation.openIn', 'Open in')}

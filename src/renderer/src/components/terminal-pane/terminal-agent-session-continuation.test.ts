@@ -29,9 +29,15 @@ vi.mock('@/i18n/i18n', () => ({
 }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 
-function makePane(capturedText: string): ManagedPane {
+function makePane(capturedText: string, mirrorWindowId: string | null = null): ManagedPane {
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the request builder reads only leafId, container.closest, serializeAddon and terminal.focus.
   return {
     leafId: LEAF_ID,
+    container: {
+      closest: vi.fn(() =>
+        mirrorWindowId ? { dataset: { agentHubMirrorKey: mirrorWindowId } } : null
+      )
+    },
     serializeAddon: { serialize: vi.fn(() => capturedText) },
     terminal: { focus: vi.fn() }
   } as unknown as ManagedPane
@@ -137,6 +143,24 @@ describe('prepareAgentSessionContinuationFromPane', () => {
       }
     })
   })
+
+  it.each([
+    { mirrorWindowId: 'mirror-1', mirrorSource: { windowId: 'mirror-1', tabId: 'tab-1' } },
+    { mirrorWindowId: null, mirrorSource: undefined }
+  ])(
+    'names the mirror for a placement only from a mirror pane (mirror: $mirrorWindowId)',
+    ({ mirrorWindowId, mirrorSource }) => {
+      const request = prepareAgentSessionContinuationFromPane({
+        pane: makePane('unused scrollback', mirrorWindowId),
+        tabId: 'tab-1',
+        worktreeId: 'wt-1',
+        groupId: 'group-1',
+        workspacePath: '/repo',
+        initialCwd: '/repo'
+      })
+      expect(request?.mirrorSource).toEqual(mirrorSource)
+    }
+  )
 
   it.each(['opencode', 'opencode2'] as const)(
     'captures scrollback for a %s SQLite session',

@@ -17,12 +17,18 @@ export type AgentSessionContinuationSource = {
   lastAssistantMessage?: string | null
 }
 
+export type AgentSessionContinuationMirrorSource = {
+  windowId: string
+  /** The terminal tab whose pane the mirror shows. */
+  tabId: string
+}
+
 export type AgentSessionContinuationRequest = {
   source: AgentSessionContinuationSource
   worktreeId: string
   groupId?: string | null
-  /** The terminal tab the request came from; set only when started from a pane. */
-  sourceTabId?: string
+  /** Set only when started from a pane shown in an Agent Hub mirror window. */
+  mirrorSource?: AgentSessionContinuationMirrorSource
   workspacePath: string
   initialCwd?: string | null
   launchSource: LaunchSource

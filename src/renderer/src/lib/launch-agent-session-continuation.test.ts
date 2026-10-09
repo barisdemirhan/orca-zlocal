@@ -10,7 +10,6 @@ const toast = vi.hoisted(() => ({
   info: vi.fn()
 }))
 const mirror = vi.hoisted(() => ({
-  findWindowId: vi.fn((): string | null => null),
   addTab: vi.fn(() => ({ status: 'changed' }))
 }))
 const store = vi.hoisted(() => {
@@ -27,7 +26,6 @@ const store = vi.hoisted(() => {
 
 vi.mock('@/store', () => ({ useAppStore: { getState: () => store } }))
 vi.mock('@/components/agent-hub/agent-hub-mirror-continuation', () => ({
-  findAgentHubMirrorWindowIdForTab: mirror.findWindowId,
   addLaunchedSessionToAgentHubMirror: mirror.addTab
 }))
 vi.mock('@/lib/launch-agent-in-new-tab', () => ({ launchAgentInNewTab }))
@@ -62,7 +60,6 @@ vi.mock('@/i18n/i18n', () => ({
 describe('launchAgentSessionContinuation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mirror.findWindowId.mockReturnValue(null)
     mirror.addTab.mockReturnValue({ status: 'changed' })
     store.createEmptySplitGroup.mockReturnValue('group-split')
     store.settings.disabledTuiAgents = []
@@ -214,52 +211,46 @@ describe('launchAgentSessionContinuation', () => {
     expect(toast.warning).not.toHaveBeenCalled()
   })
 
-  describe('placement', () => {
+  describe('placement from a mirror pane', () => {
     const base = {
       agent: 'claude',
       prompt: 'continue',
       worktreeId: 'wt-1',
       groupId: 'group-1',
-      launchSource: 'terminal_context_menu',
-      sourceTabId: 'tab-src'
+      launchSource: 'terminal_context_menu'
     } as const
+    const fromMirror = (placement: 'tab' | 'pane' | 'jump') => ({
+      ...base,
+      mirror: { windowId: 'mirror-1', tabId: 'tab-src', placement }
+    })
 
-    it('keeps the legacy jump when no placement is given', async () => {
+    it('keeps the legacy jump outside a mirror', async () => {
       const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
-      await launchAgentSessionContinuation({ ...base, placement: undefined })
+      await launchAgentSessionContinuation(base)
 
       const args = launchAgentInNewTab.mock.calls[0]?.[0]
       expect(args).toMatchObject({ groupId: 'group-1' })
       expect(args).not.toHaveProperty('activate')
+      expect(store.createEmptySplitGroup).not.toHaveBeenCalled()
       expect(mirror.addTab).not.toHaveBeenCalled()
     })
 
-    it('opens "jump" in the source group and activates it, even from a mirror', async () => {
-      mirror.findWindowId.mockReturnValue('mirror-1')
+    it('opens "jump" in the source group and activates it', async () => {
       const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
-      await launchAgentSessionContinuation({ ...base, placement: 'jump' })
+      await launchAgentSessionContinuation(fromMirror('jump'))
 
       expect(launchAgentInNewTab.mock.calls[0]?.[0]).not.toHaveProperty('activate')
       expect(mirror.addTab).not.toHaveBeenCalled()
     })
 
-    it('adds a background tab in the workspace for "tab"', async () => {
+    it('adds the new session as a tab of the source mirror for "tab"', async () => {
       const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
-      await launchAgentSessionContinuation({ ...base, placement: 'tab' })
+      await launchAgentSessionContinuation(fromMirror('tab'))
 
       expect(launchAgentInNewTab).toHaveBeenCalledWith(
         expect.objectContaining({ groupId: 'group-1', activate: false })
       )
       expect(store.createEmptySplitGroup).not.toHaveBeenCalled()
-      expect(mirror.addTab).not.toHaveBeenCalled()
-    })
-
-    it('adds the new session as a tab of the source mirror for "tab"', async () => {
-      mirror.findWindowId.mockReturnValue('mirror-1')
-      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
-      await launchAgentSessionContinuation({ ...base, placement: 'tab' })
-
-      expect(launchAgentInNewTab).toHaveBeenCalledWith(expect.objectContaining({ activate: false }))
       expect(mirror.addTab).toHaveBeenCalledWith({
         windowId: 'mirror-1',
         worktreeId: 'wt-1',
@@ -269,22 +260,9 @@ describe('launchAgentSessionContinuation', () => {
       })
     })
 
-    it('splits beside the pane and focuses it for "pane" in the workspace', async () => {
+    it('splits quietly and mirrors the new pane for "pane"', async () => {
       const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
-      await launchAgentSessionContinuation({ ...base, placement: 'pane' })
-
-      expect(store.createEmptySplitGroup).toHaveBeenCalledWith('wt-1', 'group-1', 'right', {
-        activate: true
-      })
-      const args = launchAgentInNewTab.mock.calls[0]?.[0]
-      expect(args).toMatchObject({ groupId: 'group-split' })
-      expect(args).not.toHaveProperty('activate')
-    })
-
-    it('splits quietly and mirrors the new pane for "pane" from a mirror', async () => {
-      mirror.findWindowId.mockReturnValue('mirror-1')
-      const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
-      await launchAgentSessionContinuation({ ...base, placement: 'pane' })
+      await launchAgentSessionContinuation(fromMirror('pane'))
 
       expect(store.createEmptySplitGroup).toHaveBeenCalledWith('wt-1', 'group-1', 'right', {
         activate: false
@@ -299,20 +277,15 @@ describe('launchAgentSessionContinuation', () => {
       launchAgentInNewTab.mockReturnValue(null)
       const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
 
-      await expect(launchAgentSessionContinuation({ ...base, placement: 'pane' })).resolves.toBe(
-        false
-      )
+      await expect(launchAgentSessionContinuation(fromMirror('pane'))).resolves.toBe(false)
       expect(store.closeEmptyGroup).toHaveBeenCalledWith('wt-1', 'group-split')
     })
 
     it('tells the user when the mirror cannot take the tab', async () => {
-      mirror.findWindowId.mockReturnValue('mirror-1')
       mirror.addTab.mockReturnValue({ status: 'tab-cap' })
       const { launchAgentSessionContinuation } = await import('./launch-agent-session-continuation')
 
-      await expect(launchAgentSessionContinuation({ ...base, placement: 'tab' })).resolves.toBe(
-        true
-      )
+      await expect(launchAgentSessionContinuation(fromMirror('tab'))).resolves.toBe(true)
       expect(toast.info).toHaveBeenCalled()
     })
   })

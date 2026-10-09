@@ -10,11 +10,9 @@ import {
 } from './host-chat-program-acquisition'
 import { agentChoicePending } from './host-chat-program'
 import { worktreeLaunchWorkspace } from './agent-launch-route-input'
-import {
-  addLaunchedSessionToAgentHubMirror,
-  findAgentHubMirrorWindowIdForTab
-} from '@/components/agent-hub/agent-hub-mirror-continuation'
+import { addLaunchedSessionToAgentHubMirror } from '@/components/agent-hub/agent-hub-mirror-continuation'
 import type { AgentSessionContinuationPlacement } from '@/lib/agent-session-continuation-placement'
+import type { AgentSessionContinuationMirrorSource } from '@/lib/agent-session-continuation'
 import { isTuiAgentEnabled } from '../../../shared/tui-agent-selection'
 import type { LaunchSource } from '../../../shared/telemetry-events'
 import type { TuiAgent } from '../../../shared/tui-agent'
@@ -38,10 +36,8 @@ type LaunchAgentSessionContinuationArgs = {
   launchChoice?: AgentLaunchChoice
   launchSource: LaunchSource
   signal?: AbortSignal
-  /** Omitted keeps the legacy behavior: a new tab in the group that the workspace jumps to. */
-  placement?: AgentSessionContinuationPlacement
-  /** The terminal tab the user started from; decides whether that pane lives in a mirror. */
-  sourceTabId?: string
+  /** Started from a mirror pane; omitted keeps the legacy jump to a new tab in the group. */
+  mirror?: AgentSessionContinuationMirrorSource & { placement: AgentSessionContinuationPlacement }
 }
 
 /** Detected agents, then those that open as a chat on the workspace's host without their CLI. */
@@ -111,17 +107,12 @@ export async function launchAgentSessionContinuation({
   launchChoice,
   launchSource,
   signal,
-  placement,
-  sourceTabId
+  mirror
 }: LaunchAgentSessionContinuationArgs): Promise<boolean> {
   const label = getAgentLabel(agent)
-  // Why: a mirror shows one pane, so its sessions are added as mirror tabs, not workspace splits.
-  const mirrorWindowId =
-    placement && placement !== 'jump' && sourceTabId
-      ? findAgentHubMirrorWindowIdForTab(worktreeId, sourceTabId)
-      : null
-  // Why: a mirror user stays in the mirror; "New tab" elsewhere also keeps the current view.
-  const keepWorkspaceView = placement === 'tab' || mirrorWindowId !== null
+  // Why: a mirror shows one pane, so the new session joins it as a mirror tab and the user stays
+  // put; "jump" leaves the mirror for the workspace as before.
+  const mirrorWindowId = mirror && mirror.placement !== 'jump' ? mirror.windowId : null
   // Why: the paste helper writes blind when the agent's composer was never observed, so a
   // written prompt is not a delivered one. Claiming success there is how the whole handoff
   // could vanish silently (#22479).
@@ -130,7 +121,7 @@ export async function launchAgentSessionContinuation({
     agent,
     worktreeId,
     ...(groupId ? { groupId } : {}),
-    ...(keepWorkspaceView ? { activate: false, keepTabType: true } : {}),
+    ...(mirrorWindowId ? { activate: false, keepTabType: true } : {}),
     prompt,
     promptDelivery: agent === 'claude' ? ('draft' as const) : ('submit-after-ready' as const),
     launchSource,
@@ -182,11 +173,10 @@ export async function launchAgentSessionContinuation({
     (workspace && resolveWorktreeDisplayName(workspace)) || initialCwd || worktreeId
   // Why: the split opens only once the agent is confirmed, so a cancelled pick leaves no empty pane.
   const splitGroupId =
-    placement === 'pane' && groupId
-      ? (useAppStore
-          .getState()
-          .createEmptySplitGroup(worktreeId, groupId, 'right', { activate: !keepWorkspaceView }) ??
-        null)
+    mirror?.placement === 'pane' && groupId
+      ? (useAppStore.getState().createEmptySplitGroup(worktreeId, groupId, 'right', {
+          activate: false
+        }) ?? null)
       : null
   const result = launchAgentInNewTab({
     ...delivery,
@@ -200,11 +190,11 @@ export async function launchAgentSessionContinuation({
     notifyLaunchFailed(label)
     return false
   }
-  if (mirrorWindowId && sourceTabId && result.surface.kind === 'local-terminal') {
+  if (mirror && mirrorWindowId && result.surface.kind === 'local-terminal') {
     const mirrored = addLaunchedSessionToAgentHubMirror({
       windowId: mirrorWindowId,
       worktreeId,
-      sourceTabId,
+      sourceTabId: mirror.tabId,
       newTabId: result.surface.tabId,
       agent
     })

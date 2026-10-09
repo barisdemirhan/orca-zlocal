@@ -8,16 +8,6 @@ import {
   type AgentHubMirrorTabResult
 } from './agent-hub-mirror-tab-operations'
 
-/** The mirror window currently showing this workspace tab, window or minimized chip alike. */
-export function findAgentHubMirrorWindowIdForTab(worktreeId: string, tabId: string): string | null {
-  const window = agentHubMirrorWindows(readAgentHubMirrors()).find((candidate) =>
-    candidate.tabs.some(
-      (entry) => entry.target.tab.id === tabId && entry.target.worktree.id === worktreeId
-    )
-  )
-  return window?.id ?? null
-}
-
 /** Mirrors a freshly launched session as a tab of the mirror window its source pane lives in. */
 export function addLaunchedSessionToAgentHubMirror(args: {
   windowId: string

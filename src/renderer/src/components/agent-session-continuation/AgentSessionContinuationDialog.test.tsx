@@ -199,15 +199,17 @@ it('keeps the replacement chooser open when an earlier accepted launch completes
   expect(screen.queryByRole('dialog')).toBeNull()
 })
 
-it('starts from a pane in a new tab by default and hides the control otherwise', async () => {
-  const paneRequest = { ...request, sourceTabId: 'tab-1' }
+it('starts from a mirror pane in a new tab by default and hides the control otherwise', async () => {
+  const paneRequest = { ...request, mirrorSource: { windowId: 'mirror-1', tabId: 'tab-1' } }
   const view = render(
     <AgentSessionContinuationDialog open request={paneRequest} onOpenChange={vi.fn()} />,
     { wrapper: TooltipProvider }
   )
   expect(screen.getByText('Open in')).toBeTruthy()
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Start New Session' })))
-  expect(mocks.launch.mock.calls[0][0]).toMatchObject({ placement: 'tab', sourceTabId: 'tab-1' })
+  expect(mocks.launch.mock.calls[0][0]).toMatchObject({
+    mirror: { windowId: 'mirror-1', tabId: 'tab-1', placement: 'tab' }
+  })
   view.rerender(<AgentSessionContinuationDialog open request={request} onOpenChange={vi.fn()} />)
   expect(screen.queryByText('Open in')).toBeNull()
 })
