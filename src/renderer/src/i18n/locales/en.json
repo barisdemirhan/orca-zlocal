@@ -22014,7 +22014,9 @@
       "chips": "Links in this message",
       "chipLabel": "Peek at {{value0}}",
       "unreadable": "This file could not be shown here.",
-      "action": "Peek"
+      "action": "Peek",
+      "exitFullScreen": "Exit full screen",
+      "fullScreen": "Full screen"
     }
   },
   "workspace": {

@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowLeft, ExternalLink, PanelTop, X } from 'lucide-react'
+import { ArrowLeft, Expand, ExternalLink, Minus, PanelTop, Shrink, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { HubChip } from './AgentHubInlineLabels'
@@ -9,6 +9,7 @@ import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { AgentHubPeekBrowser, closeLeftoverAgentHubPeekPages } from './AgentHubPeekBrowser'
 import { AgentHubPeekFile } from './AgentHubPeekFile'
 import { agentHubWorkArea } from './agent-hub-floating-arrangement'
+import { agentHubPeekGeometry } from './agent-hub-peek-geometry'
 import { activeAgentHubMirrorTab, agentHubMirrorWindows } from './agent-hub-mirror-membership'
 import {
   focusAgentHubMirror,
@@ -27,9 +28,6 @@ import {
 import { agentHubPeekUrlItem } from './agent-hub-peek-routing'
 import { openRoutedHttpLink } from '@/lib/http-link-destinations'
 import { useViewportSize } from './use-viewport-size'
-
-// Why an inset: the work area's edges stay visible, so Peek reads as a window over the app.
-const PEEK_INSET = 16
 
 function kindLabel(item: AgentHubPeekItem): string {
   switch (item.content.kind) {
@@ -78,6 +76,8 @@ function SourceButton({
           focusAgentHubMirror(mirrorKey)
         }}
       >
+        {/* Why the minimize glyph: Peek folds away and the mirror comes back. */}
+        <Minus aria-hidden className="size-3.5" />
         <span className="max-w-40 truncate">{title}</span>
       </Button>
     </AgentHubActionTooltip>
@@ -95,6 +95,14 @@ export function AgentHubPeek(): React.JSX.Element | null {
   useViewportSize()
   const item = peek ? peek.history[peek.index] : null
   const open = item !== null
+  const [fullScreen, setFullScreen] = useState(false)
+  const [measured, setMeasured] = useState<{
+    location: string
+    size: { width: number; height: number } | null
+  } | null>(null)
+  if (!open && fullScreen) {
+    setFullScreen(false)
+  }
   useEffect(() => {
     // Why only when closed: an open Peek's page is live, and this host can remount under it.
     if (!readAgentHubPeek()) {
@@ -119,8 +127,18 @@ export function AgentHubPeek(): React.JSX.Element | null {
   if (!peek || !item) {
     return null
   }
-  const area = agentHubWorkArea()
   const web = item.content.kind === 'web'
+  // Pages and PDFs take the room; an image or video shrinks to its own size once measured.
+  const contentSize =
+    web || item.content.kind === 'pdf'
+      ? null
+      : measured?.location === item.location
+        ? measured.size
+        : { width: 0, height: 0 }
+  const box = agentHubPeekGeometry(agentHubWorkArea(), contentSize, fullScreen)
+  const fullScreenLabel = fullScreen
+    ? translate('agentHub.peek.exitFullScreen', 'Exit full screen')
+    : translate('agentHub.peek.fullScreen', 'Full screen')
   const openInLabel = web
     ? translate('agentHub.peek.openInTab', 'Open in tab')
     : translate('agentHub.peek.openInEditor', 'Open in editor')
@@ -149,12 +167,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
       // Why z-[46] and portaled last: over the mirrors, under the tray and alerts; the hub and
       // its Inbox card (a dialog) stay usable over it.
       className="fixed z-[46] flex flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none"
-      style={{
-        left: area.left + PEEK_INSET,
-        top: area.top + PEEK_INSET,
-        width: Math.max(320, area.width - PEEK_INSET * 2),
-        height: Math.max(240, area.height - PEEK_INSET * 2)
-      }}
+      style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
     >
       <header className="flex h-10.5 shrink-0 items-center gap-2 border-b border-border pr-1.5 pl-2">
         {peek.index > 0 ? (
@@ -183,16 +196,30 @@ export function AgentHubPeek(): React.JSX.Element | null {
           {openInLabel}
         </Button>
         {item.openExternally ? (
+          <AgentHubActionTooltip label={openOutLabel}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              aria-label={openOutLabel}
+              onClick={() => item.openExternally && leave(item.openExternally)}
+            >
+              <ExternalLink />
+            </Button>
+          </AgentHubActionTooltip>
+        ) : null}
+        <AgentHubActionTooltip label={fullScreenLabel}>
           <Button
             type="button"
             variant="ghost"
-            size="xs"
-            onClick={() => item.openExternally && leave(item.openExternally)}
+            size="icon-xs"
+            aria-label={fullScreenLabel}
+            aria-pressed={fullScreen}
+            onClick={() => setFullScreen(!fullScreen)}
           >
-            <ExternalLink aria-hidden className="size-3.5" />
-            {openOutLabel}
+            {fullScreen ? <Shrink /> : <Expand />}
           </Button>
-        ) : null}
+        </AgentHubActionTooltip>
         <AgentHubActionTooltip label={translate('agentHub.peek.close', 'Close (esc)')}>
           <Button
             type="button"
@@ -230,7 +257,10 @@ export function AgentHubPeek(): React.JSX.Element | null {
             }}
           />
         ) : (
-          <AgentHubPeekFile content={item.content} />
+          <AgentHubPeekFile
+            content={item.content}
+            onContentSize={(size) => setMeasured({ location: item.location, size })}
+          />
         )}
       </div>
     </div>,
