@@ -182,10 +182,11 @@
   border: 1.5px solid color-mix(in srgb, var(--terminal-pane-locate) 55%, transparent);
 }
 
-/* The title bar sits beside the panes, not inside them: colour the active pane's title while a
-   pane of its tab has the keyboard. */
+/* The title bars live in an overlay layer after the pane surface, not inside it: colour the
+   active pane's title while a pane of its tab has the keyboard. */
 :root[data-agent-hub-focused-pane-outline]
   [data-terminal-tab-id]:has(.pane:focus-within)
+  ~ .pane-title-overlay-layer
   .pane-title-bar[data-active-pane]
   .pane-title-text {
   color: var(--terminal-pane-locate);
