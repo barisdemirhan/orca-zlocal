@@ -137,6 +137,24 @@ it('uses only the frontmost exposed strip and excludes buttons, terminal bodies 
   hit.mockReturnValue(null)
   expect(mirrorStripDropAtPoint({ x: -1, y: -1 })).toBeNull()
 })
+it('appends to a window when the pointer is over its empty header but not its controls', () => {
+  const { window } = fixture()
+  document.body.innerHTML = `<header data-agent-hub-mirror-header="${window.id}"><div data-agent-hub-tab-strip="${window.id}"><div role="tablist"></div></div><div id="grip"></div><div id="controls"><button id="close"><svg /></button><button id="jump" data-agent-hub-no-tab-drop></button></div></header><div id="outside"></div>`
+  const hit = vi.spyOn(document, 'elementFromPoint')
+  hit.mockReturnValue(document.querySelector('#grip'))
+  expect(mirrorStripDropAtPoint({ x: 0, y: 0 })).toEqual({
+    kind: 'strip',
+    windowId: window.id,
+    entryId: null,
+    side: 'right'
+  })
+  for (const selector of ['#close svg', '#jump', '#outside']) {
+    hit.mockReturnValue(document.querySelector(selector))
+    expect(mirrorStripDropAtPoint({ x: 0, y: 0 })).toBeNull()
+  }
+  hit.mockReturnValue(document.querySelector('[role="tablist"]'))
+  expect(mirrorStripDropAtPoint({ x: 0, y: 0 })?.windowId).toBe(window.id)
+})
 it('excludes every tab part, picker/menu and button from window drag but keeps empty title chrome draggable', () => {
   document.body.innerHTML =
     '<header><span id="empty"></span><div data-agent-hub-tab-strip><button><span>label</span><svg><path /></svg></button><button><svg /></button></div><input /><div role="menu"><span /></div><div data-agent-hub-picker><span /></div></header>'

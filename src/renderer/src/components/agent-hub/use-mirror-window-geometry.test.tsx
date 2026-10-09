@@ -74,7 +74,13 @@ function renderMirrors(keys: readonly string[]): (key: string) => Shown {
   function Mirror({ mirrorKey }: { mirrorKey: string }): React.JSX.Element {
     const geometry = useMirrorWindowGeometry(mirrorKey, false)
     shown.set(mirrorKey, geometry)
-    return <section data-agent-hub-mirror data-agent-hub-mirror-key={mirrorKey} />
+    return (
+      <section
+        ref={geometry.sectionRef}
+        data-agent-hub-mirror
+        data-agent-hub-mirror-key={mirrorKey}
+      />
+    )
   }
   for (const key of keys) {
     openAgentHubMirror(target(key.replace(':leaf', '')))
@@ -123,6 +129,42 @@ describe('a focused mirror window', () => {
       settling: true
     })
     expect(shown('tab-b:leaf')).toMatchObject({ geometry: OWN_PLACE, focus: 'shadowed' })
+  })
+
+  it('glides by transform from the old box when focus starts or ends, not by resizing', () => {
+    const animate = vi.fn(() => ({ cancel: () => {} }) as unknown as Animation)
+    Object.defineProperty(HTMLElement.prototype, 'animate', { value: animate, configurable: true })
+    try {
+      renderMirrors(['tab-a:leaf'])
+      expect(animate).not.toHaveBeenCalled()
+      act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
+      expect(animate).toHaveBeenCalledTimes(1)
+      const [frames] = animate.mock.calls[0] as unknown as [Keyframe[]]
+      expect(frames[1]).toEqual({ transform: 'none' })
+      act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
+      expect(animate).toHaveBeenCalledTimes(2)
+    } finally {
+      Reflect.deleteProperty(HTMLElement.prototype, 'animate')
+    }
+  })
+
+  it('does not glide under reduced motion', () => {
+    const animate = vi.fn(() => ({ cancel: () => {} }) as unknown as Animation)
+    Object.defineProperty(HTMLElement.prototype, 'animate', { value: animate, configurable: true })
+    const matchMedia = vi.fn(() => ({
+      matches: true,
+      addEventListener: () => {},
+      removeEventListener: () => {}
+    }))
+    vi.stubGlobal('matchMedia', matchMedia)
+    try {
+      renderMirrors(['tab-a:leaf'])
+      act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
+      expect(animate).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllGlobals()
+      Reflect.deleteProperty(HTMLElement.prototype, 'animate')
+    }
   })
 
   it('keeps its own place stored while focused, and returns to exactly that box', () => {

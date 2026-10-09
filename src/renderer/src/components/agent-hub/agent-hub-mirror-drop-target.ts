@@ -69,10 +69,12 @@ export function mirrorStripDropAtPoint(point: { x: number; y: number }): MirrorS
     return null
   }
   const strip = element.closest<HTMLElement>('[data-agent-hub-tab-strip]')
+  if (!strip) {
+    return mirrorHeaderAppendDrop(element)
+  }
   const list = element.closest('[role="tablist"]')
-  const windowId = strip?.dataset.agentHubTabStrip
+  const windowId = strip.dataset.agentHubTabStrip
   if (
-    !strip ||
     !list ||
     !windowId ||
     !readAgentHubMirrors().windows.some((window) => window.id === windowId)
@@ -98,4 +100,18 @@ export function mirrorStripInsertionIndex(drop: MirrorStripDrop): number | null 
   }
   const index = window.tabs.findIndex((tab) => tab.id === drop.entryId)
   return index === -1 ? null : index + (drop.side === 'right' ? 1 : 0)
+}
+
+// Empty header chrome (outside the strip and controls) appends to that window's strip.
+function mirrorHeaderAppendDrop(element: Element): MirrorStripDrop | null {
+  const windowId = element.closest<HTMLElement>('[data-agent-hub-mirror-header]')?.dataset
+    .agentHubMirrorHeader
+  if (
+    !windowId ||
+    element.closest('button,input,textarea,select,[role="menu"]') ||
+    !readAgentHubMirrors().windows.some((window) => window.id === windowId)
+  ) {
+    return null
+  }
+  return { kind: 'strip', windowId, entryId: null, side: 'right' }
 }

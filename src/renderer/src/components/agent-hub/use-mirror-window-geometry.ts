@@ -19,6 +19,8 @@ import {
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
 import { useMirrorWindowFocus } from './use-mirror-window-focus'
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
+import { glideMirrorWindow } from './mirror-window-glide'
 import {
   claimAgentHubMirrorGesture,
   releaseAgentHubMirrorGesture,
@@ -170,6 +172,23 @@ export function useMirrorWindowGeometry(
     return () => clearTimeout(timer)
   }, [settling])
 
+  const shownGeometry = focus.box ?? geometry
+  const reducedMotion = usePrefersReducedMotion()
+  const shownBefore = useRef(shownGeometry)
+  const glide = useRef<Animation | null>(null)
+  // Why a transform and not a width/height transition: the final box is laid out once, so the
+  // live terminal inside refits once instead of reflowing on every frame. Drags never glide.
+  useLayoutEffect(() => {
+    const before = shownBefore.current
+    shownBefore.current = shownGeometry
+    if (!settling || reducedMotion || !sectionRef.current || before === shownGeometry) {
+      return
+    }
+    glide.current?.cancel()
+    glide.current = glideMirrorWindow(sectionRef.current, before, shownGeometry)
+  }, [shownGeometry, settling, reducedMotion])
+  useEffect(() => () => glide.current?.cancel(), [])
+
   // The committed spot replaces the slide in the same frame, so nothing jumps.
   useLayoutEffect(() => {
     if (sectionRef.current) {
@@ -287,7 +306,7 @@ export function useMirrorWindowGeometry(
   )
 
   return {
-    geometry: focus.box ?? geometry,
+    geometry: shownGeometry,
     focus: focus.state,
     settling,
     sectionRef,

@@ -207,7 +207,7 @@ export function AgentHubMirrorWindow({
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none data-[settling=true]:transition-[left,top,width,height] data-[settling=true]:duration-300 data-[settling=true]:ease-out motion-reduce:animate-none! motion-reduce:transition-none!"
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none motion-reduce:animate-none!"
       style={{
         left: geometry.x,
         top: geometry.y,
@@ -235,6 +235,7 @@ export function AgentHubMirrorWindow({
       }}
     >
       <header
+        data-agent-hub-mirror-header={windowId}
         // Why tinted: a mirror whose agent asks or just finished should read so at a glance.
         className="flex h-10.5 shrink-0 cursor-grab items-center gap-2.5 border-b border-border bg-popover pr-1.5 pl-3 transition-colors select-none active:cursor-grabbing group-data-[kind=ask]/mirror:border-agent-question/40 group-data-[kind=ask]/mirror:bg-agent-question/15 group-data-[kind=done]/mirror:border-status-success/35 group-data-[kind=done]/mirror:bg-status-success/12"
         onPointerDown={beginDrag('move')}
