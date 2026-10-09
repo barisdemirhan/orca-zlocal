@@ -22024,6 +22024,11 @@
     },
     "dictation": {
       "here": "Dictating here"
+    },
+    "quick": {
+      "answerWith": "Answer: {{value0}}",
+      "more": "↵ for all {{value0}}",
+      "deny": "No"
     }
   },
   "workspace": {

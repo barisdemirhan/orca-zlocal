@@ -32,6 +32,15 @@ vi.mock('@/store', async () => {
     }))
   }
 })
+// The chip's bubbles are not about answering; the answer path needs the live pane and PTY.
+vi.mock('./use-agent-hub-quick-answer', () => ({
+  useAgentHubQuickAnswer: () => ({
+    options: [],
+    chosen: null,
+    canAnswer: false,
+    choose: () => false
+  })
+}))
 vi.mock('./agent-hub-mirror-source', async (original) => ({
   ...(await original<typeof MirrorSource>()),
   resolveAgentHubMirrorTarget: (

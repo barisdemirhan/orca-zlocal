@@ -379,6 +379,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
           onPopout={(shown) => leaveAlertFor(shown, openMirror)}
           onJump={(shown) => leaveAlertFor(shown, jump)}
           onDismiss={dismissAgentHubAlert}
+          answerKeys
         />
       ) : null}
       {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}

@@ -18,9 +18,11 @@ vi.mock('@/attention/agent-attention-notification-delivery', () => ({
 vi.mock('../terminal-pane/terminal-notification-pane-visibility', () => ({
   isOrcaWindowForegroundFocused: () => false
 }))
+const view = vi.hoisted(() => ({ surfaceViewed: false, canvasOpen: false }))
 vi.mock('../terminal-pane/terminal-attention-surface', () => ({
-  createTerminalAttentionSurface: () => ({ isSurfaceViewed: () => false })
+  createTerminalAttentionSurface: () => ({ isSurfaceViewed: () => view.surfaceViewed })
 }))
+vi.mock('./agent-hub-canvas-store', () => ({ isAgentHubCanvasOpen: () => view.canvasOpen }))
 vi.mock('./agent-hub-alert-queue', () => ({ pushAgentHubAlerts: vi.fn() }))
 vi.mock('./agent-hub-chime', () => ({ playAgentHubAlertSound: vi.fn() }))
 vi.mock('./agent-hub-mirror-store', () => ({ readAgentHubMirrors: () => ({ chips: [] }) }))
@@ -50,6 +52,27 @@ const listsWith = (fixtures: Parameters<typeof agentHubThreadsFor>[0]) =>
 
 beforeEach(() => {
   vi.mocked(pushAgentHubAlerts).mockClear()
+  view.surfaceViewed = false
+  view.canvasOpen = false
+})
+
+it('still alerts for a pane counted as viewed while the canvas covers the workspace', () => {
+  view.surfaceViewed = true
+  const asking = [{ paneKey: PANE_KEY, state: 'waiting' as const, at: 1_000 }]
+  const { rerender } = renderHook(({ lists }) => useAgentHubAlerts(lists, preferences), {
+    initialProps: { lists: listsWith([]) }
+  })
+  rerender({ lists: listsWith(asking) })
+  expect(pushAgentHubAlerts).not.toHaveBeenCalled()
+
+  view.canvasOpen = true
+  // Why both: the fixture mints one tab per entry, so the second pane needs the first beside it.
+  rerender({
+    lists: listsWith([...asking, { paneKey: PANE_KEY_2, state: 'waiting' as const, at: 2_000 }])
+  })
+  expect(vi.mocked(pushAgentHubAlerts).mock.calls[0]?.[0]).toMatchObject([
+    { thread: { paneKey: PANE_KEY_2 }, kind: 'ask' }
+  ])
 })
 
 it('does not raise an alert again when a result drops out of the lists and comes back', () => {

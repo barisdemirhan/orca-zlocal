@@ -1,13 +1,15 @@
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
+import { ArrowUpRight, Check, PictureInPicture2, X } from 'lucide-react'
+import { isEditableTarget } from '@/lib/editable-target'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
 import { HubAvatar } from './AgentHubStateMarks'
-import { HubCrumb } from './AgentHubInlineLabels'
+import { HubCrumb, HubKeys } from './AgentHubInlineLabels'
+import { useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
@@ -16,6 +18,9 @@ import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 
 const ALERT_VISIBLE_MS = 7000
+// Long enough to read "answered", short enough that the bubble is gone before the next one.
+const ANSWERED_VISIBLE_MS = 1000
+const QUICK_OPTION_LIMIT = 4
 const GAP = 10
 
 export type AgentHubAlertSide = 'top' | 'bottom' | 'left' | 'right'
@@ -46,6 +51,16 @@ function alertText(alert: AgentHubAlert): string {
     ? null
     : entry?.lastAssistantMessage?.trim()
   return message ? agentHubMessageSummary(message) : activityThreadRowCopy(alert.thread).statusLine
+}
+
+/** The keys are free for an alert only while no field or terminal would take them. */
+export function agentHubAlertKeysAvailable(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return true
+  }
+  return (
+    !isEditableTarget(target) && target.closest('.xterm, [role="dialog"], [role="menu"]') === null
+  )
 }
 
 /** Places a floating element beside its anchor (the hub, the tray or a chip), kept on screen. */
@@ -79,6 +94,8 @@ function placeBesideAnchor(
     side === 'left' ? `${Math.max(8, rect.left - width - GAP)}px` : `${rect.right + GAP}px`
 }
 
+export type AgentHubAlertCardControl = { choose: (index: number) => boolean }
+
 /** One alert: who, what, where. Click opens it; it leaves on its own after a few seconds. */
 function AlertCard({
   alert,
@@ -86,7 +103,8 @@ function AlertCard({
   onOpen,
   onJump,
   onPopout,
-  onDismiss
+  onDismiss,
+  onControl
 }: {
   alert: AgentHubAlert
   location: AgentHubLocation
@@ -94,6 +112,8 @@ function AlertCard({
   onJump: (alert: AgentHubAlert) => void
   onPopout: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
+  /** Hands the stack this card's answer control, for the number keys. */
+  onControl?: (id: string, control: AgentHubAlertCardControl | null) => void
 }): React.JSX.Element {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startTimer = (): void => {
@@ -117,6 +137,28 @@ function AlertCard({
 
   const text = alertText(alert)
   const current = useAgentHubWorktreeCurrent(alert.thread.worktree.id)
+  const quick = useAgentHubQuickAnswer(alert.thread)
+  const options = alert.kind === 'done' ? [] : quick.options.slice(0, QUICK_OPTION_LIMIT)
+  const choose = (index: number): boolean => {
+    if (!quick.choose(index)) {
+      return false
+    }
+    // Answered: the bubble shows what went out, then leaves.
+    stopTimer()
+    timerRef.current = setTimeout(() => onDismiss(alert.id), ANSWERED_VISIBLE_MS)
+    return true
+  }
+  const chooseRef = useRef(choose)
+  useLayoutEffect(() => {
+    chooseRef.current = choose
+  })
+  useEffect(() => {
+    if (!onControl || options.length === 0) {
+      return undefined
+    }
+    onControl(alert.id, { choose: (index) => chooseRef.current(index) })
+    return () => onControl(alert.id, null)
+  }, [onControl, alert.id, options.length])
   return (
     <div
       role="status"
@@ -160,6 +202,38 @@ function AlertCard({
             </span>
           ) : null}
         </button>
+        {options.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1" data-agent-hub-alert-options>
+            {options.map((option, index) => (
+              <button
+                key={option.id}
+                type="button"
+                disabled={quick.chosen !== null || !quick.canAnswer}
+                data-chosen={quick.chosen === index}
+                data-recommended={option.recommended === true}
+                aria-label={translate('agentHub.quick.answerWith', 'Answer: {{value0}}', {
+                  value0: typeof option.label === 'string' ? option.label : String(index + 1)
+                })}
+                onClick={() => choose(index)}
+                className="flex max-w-full items-center gap-1.5 rounded-md border border-foreground/[0.1] bg-foreground/[0.03] px-2 py-1 text-xs text-foreground hover:bg-foreground/[0.07] disabled:cursor-default disabled:opacity-60 data-[chosen=true]:border-status-success/60 data-[chosen=true]:text-status-success data-[chosen=true]:opacity-100 data-[recommended=true]:border-ring/60"
+              >
+                {quick.chosen === index ? (
+                  <Check aria-hidden className="size-3" />
+                ) : (
+                  <HubKeys keys={[String(index + 1)]} />
+                )}
+                <span className="truncate">{option.label}</span>
+              </button>
+            ))}
+            {quick.chosen === null && quick.options.length > options.length ? (
+              <span className="self-center text-xs text-muted-foreground">
+                {translate('agentHub.quick.more', '↵ for all {{value0}}', {
+                  value0: quick.options.length
+                })}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
         <AgentHubActionTooltip
           label={translate('agentHub.hover.popout', 'Own window')}
           actionId="agentHub.popOut"
@@ -221,11 +295,14 @@ export function AgentHubAlertStack({
   onOpen,
   onJump,
   onPopout,
-  onDismiss
+  onDismiss,
+  answerKeys = false
 }: {
   alerts: readonly AgentHubAlert[]
   anchorRef: React.RefObject<HTMLElement | null>
   side: AgentHubAlertSide
+  /** 1–9 answers the newest question or approval and ↵ opens it, while no field has the keys. */
+  answerKeys?: boolean
   locationOf: (alert: AgentHubAlert) => AgentHubLocation
   onOpen: (alert: AgentHubAlert) => void
   /** Straight to the terminal in its workspace, past the mirror or card a click opens. */
@@ -235,6 +312,48 @@ export function AgentHubAlertStack({
   onDismiss: (id: string) => void
 }): React.JSX.Element {
   const stackRef = useRef<HTMLDivElement>(null)
+  const controls = useRef(new Map<string, AgentHubAlertCardControl>())
+  const onControl = useCallback((id: string, control: AgentHubAlertCardControl | null): void => {
+    if (control) {
+      controls.current.set(id, control)
+    } else {
+      controls.current.delete(id)
+    }
+  }, [])
+  // Why newest: a key answers the question that just arrived, the one the eye is on.
+  const front = alerts.findLast((alert) => alert.kind !== 'done') ?? null
+  const onOpenRef = useRef(onOpen)
+  useLayoutEffect(() => {
+    onOpenRef.current = onOpen
+  })
+  useEffect(() => {
+    if (!answerKeys || !front) {
+      return undefined
+    }
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.repeat ||
+        event.isComposing ||
+        !agentHubAlertKeysAvailable(event.target)
+      ) {
+        return
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        onOpenRef.current(front)
+        return
+      }
+      const index = /^[1-9]$/.test(event.key) ? Number(event.key) - 1 : -1
+      if (index >= 0 && controls.current.get(front.id)?.choose(index)) {
+        event.preventDefault()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [answerKeys, front])
 
   useLayoutEffect(() => {
     if (stackRef.current && anchorRef.current) {
@@ -271,6 +390,7 @@ export function AgentHubAlertStack({
           onJump={onJump}
           onPopout={onPopout}
           onDismiss={onDismiss}
+          onControl={answerKeys ? onControl : undefined}
         />
       ))}
     </div>,

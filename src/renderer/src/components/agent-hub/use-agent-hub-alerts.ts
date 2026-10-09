@@ -15,6 +15,7 @@ import {
   takeUnraisedAlerts
 } from './agent-hub-alerts'
 import { playAgentHubAlertSound } from './agent-hub-chime'
+import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubTargetShowsThread } from './agent-hub-pane-target'
 import type { AgentHubLists } from './agent-hub-lists'
@@ -48,15 +49,18 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
       return
     }
     const state = useAppStore.getState()
-    // The pane the user is looking at needs no alert: they are watching it happen.
+    // The pane the user is looking at needs no alert: they are watching it happen. The canvas
+    // covers the workspace, so nothing there is being looked at while it is open.
     const { chips } = readAgentHubMirrors()
     const surface = createTerminalAttentionSurface(state)
+    const canvasOpen = isAgentHubCanvasOpen()
     const unseen = fresh.filter(
       (alert) =>
-        !surface.isSurfaceViewed({
-          workspaceId: alert.thread.worktree.id,
-          surfaceKey: alert.thread.paneKey
-        }) &&
+        (canvasOpen ||
+          !surface.isSurfaceViewed({
+            workspaceId: alert.thread.worktree.id,
+            surfaceKey: alert.thread.paneKey
+          })) &&
         (!alert.mirrorOnly ||
           chips.some((chip) =>
             chip.window.tabs.some((tab) => agentHubTargetShowsThread(tab.target, alert.thread))
