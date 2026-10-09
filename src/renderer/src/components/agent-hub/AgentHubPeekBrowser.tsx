@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
+import type { ExecutionHostId } from '../../../../shared/execution-host'
 import BrowserPane from '../browser-pane/BrowserPane'
 import { DeferredBrowserContent } from '../browser-pane/assemble-chrome/DeferredBrowserContent'
 import { registerBrowserOverlaySlotViewport } from '../browser-pane/host-guest/browser-page-viewport'
@@ -32,9 +33,12 @@ function peekPageUrl(tabId: string): string | null {
 /** A page in Orca's own browser (its chrome, session and profiles), shown inside Peek. */
 export function AgentHubPeekBrowser({
   url,
+  hostId,
   onOpenPage
 }: {
   url: string
+  /** Loads through this machine, as the workspace's own browser tabs do (an SSH host's localhost). */
+  hostId: ExecutionHostId
   /** A link the page opened in a new tab or window; Peek shows it next. */
   onOpenPage: (url: string) => void
 }): React.JSX.Element | null {
@@ -48,7 +52,10 @@ export function AgentHubPeekBrowser({
     creating.current = true
     const tab = state.createBrowserTab(AGENT_HUB_PEEK_WORKTREE_ID, url, {
       activate: false,
-      browserRuntimeEnvironmentId: null
+      browserRuntimeEnvironmentId: null,
+      executionHostId: hostId,
+      sessionProfileId:
+        state.defaultBrowserSessionProfileIdByHostId[hostId] ?? state.defaultBrowserSessionProfileId
     })
     creating.current = false
     owned.add(tab.id)
@@ -57,7 +64,7 @@ export function AgentHubPeekBrowser({
       owned.delete(tab.id)
       useAppStore.getState().closeBrowserTab(tab.id, { reason: 'cleanup' })
     }
-  }, [url])
+  }, [url, hostId])
   const onOpenPageRef = useRef(onOpenPage)
   useLayoutEffect(() => {
     onOpenPageRef.current = onOpenPage

@@ -110,7 +110,7 @@ export function openFilePathLinkAtBufferPosition(
       !deps.openWithSystemDefault &&
       peekTerminalFileFromMirror(link.absolutePath, {
         worktreeId: deps.worktreeId,
-        local: !deps.runtimeEnvironmentId,
+        onPairedRuntime: Boolean(deps.runtimeEnvironmentId),
         event: deps.event,
         openInWorkspace: () =>
           openDetectedFilePath(link.absolutePath, link.line, link.column, deps),

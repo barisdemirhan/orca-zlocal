@@ -28,23 +28,26 @@ export function AgentHubPeekFile({ content }: { content: PeekFileContent }): Rea
     key: '',
     state: { status: 'loading' }
   })
-  const key = content.filePath
+  const { filePath, connectionId } = content
+  const key = `${connectionId ?? ''}\u0000${filePath}`
   useEffect(() => {
     let live = true
     void readRuntimeFileContent({
-      // Why: Peek only takes this machine's files, so the window's remote runtime never reads it.
+      // Why: Peek reads files of this Mac or an SSH host, never of the window's paired runtime.
       settings: { activeRuntimeEnvironmentId: null },
-      filePath: key,
-      // Why: an agent's artifact usually sits outside the workspace, where only a path the user
-      // picked themselves may be read.
-      access: userNamedFileAccess()
+      filePath,
+      ...(connectionId
+        ? { connectionId }
+        : // Why: an agent's artifact usually sits outside the workspace, where only a path the
+          // user picked themselves may be read.
+          { access: userNamedFileAccess() })
     })
       .then((file) => live && setLoad({ key, state: { status: 'ready', file } }))
       .catch(() => live && setLoad({ key, state: { status: 'failed' } }))
     return () => {
       live = false
     }
-  }, [key])
+  }, [key, filePath, connectionId])
 
   const state: LoadState = load.key === key ? load.state : { status: 'loading' }
   const loading = (
@@ -71,7 +74,7 @@ export function AgentHubPeekFile({ content }: { content: PeekFileContent }): Rea
           src={file.mediaUrl}
           mimeType={file.mimeType ?? ''}
           filePath={content.filePath}
-          canOpenLocally
+          canOpenLocally={!connectionId}
         />
       ) : (
         <ImageViewer content={file.content} filePath={content.filePath} mimeType={file.mimeType} />

@@ -78,7 +78,7 @@ export function handleTerminalHttpLink(
 ): boolean {
   const peekSource: AgentHubPeekLinkSource = {
     worktreeId: deps.worktreeId,
-    local: (deps.sourceOwner?.kind ?? 'local') === 'local',
+    onPairedRuntime: deps.sourceOwner?.kind === 'runtime' || deps.sourceOwner?.kind === 'unknown',
     event,
     openInWorkspace: () =>
       openRoutedHttpLink(url, {

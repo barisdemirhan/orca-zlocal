@@ -6,6 +6,12 @@ vi.mock('@/store', () => ({
   useAppStore: { getState: () => ({ settings: { experimentalAgentHub: true } }) }
 }))
 vi.mock('@/lib/connection-context', () => ({ getConnectionIdForFile: () => null }))
+vi.mock('@/lib/client-creation-action-policy', () => ({
+  getClientCreationActionPolicy: () => ({ 'managed-browser': { state: 'enabled' } })
+}))
+vi.mock('@/lib/worktree-operation-route', () => ({
+  resolveWorktreeOperationRoute: () => ({ executionHostId: 'local', runtimeEnvironmentId: null })
+}))
 
 import { agentHubPeekItemsInMessage } from './agent-hub-peek-message-links'
 

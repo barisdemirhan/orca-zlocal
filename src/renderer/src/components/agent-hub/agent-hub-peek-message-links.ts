@@ -13,7 +13,7 @@ const MAX_MESSAGE_PEEKS = 4
  * rules, so a card offers what a click in its terminal would.
  */
 export function agentHubPeekItemsInMessage(text: string, worktree: Worktree): AgentHubPeekItem[] {
-  const local = (worktree.hostId ?? 'local') === 'local'
+  const onPairedRuntime = (worktree.hostId ?? '').startsWith('runtime:')
   const items: AgentHubPeekItem[] = []
   const seen = new Set<string>()
   const add = (item: AgentHubPeekItem | null): void => {
@@ -26,7 +26,7 @@ export function agentHubPeekItemsInMessage(text: string, worktree: Worktree): Ag
     add(
       agentHubPeekUrlItem(link.url, {
         worktreeId: worktree.id,
-        local,
+        onPairedRuntime,
         event: undefined,
         openInWorkspace: () =>
           openRoutedHttpLink(link.url, { worktreeId: worktree.id, modifierHeld: false }),
@@ -52,7 +52,7 @@ export function agentHubPeekItemsInMessage(text: string, worktree: Worktree): Ag
       add(
         agentHubPeekFileItem(filePath, {
           worktreeId: worktree.id,
-          local,
+          onPairedRuntime,
           event: undefined,
           openInWorkspace: () => openDetectedFilePath(filePath, null, null, deps),
           openExternally: () =>

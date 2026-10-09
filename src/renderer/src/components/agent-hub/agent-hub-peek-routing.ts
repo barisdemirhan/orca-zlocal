@@ -2,7 +2,10 @@ import { translate } from '@/i18n/i18n'
 import type { LinkAction } from '@/components/link-actions/link-action-request'
 import { absolutePathToFileUri } from '@/components/editor/markdown-internal-links'
 import { getConnectionIdForFile } from '@/lib/connection-context'
+import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
+import { resolveWorktreeOperationRoute } from '@/lib/worktree-operation-route'
 import { useAppStore } from '@/store'
+import { parseExecutionHostId, type ExecutionHostId } from '../../../../shared/execution-host'
 import { agentHubMirrorWindowIdOf } from './agent-hub-mirror-element'
 import {
   isAgentHubPeekHostMounted,
@@ -13,8 +16,8 @@ import {
 /** Where a terminal link was clicked, and the ways out it already had before Peek. */
 export type AgentHubPeekLinkSource = {
   worktreeId: string
-  /** False for SSH and paired-runtime sources: Peek reads and browses on this machine only. */
-  local: boolean
+  /** A paired runtime's (or an unknown) terminal; Peek leaves its links to Orca's own routing. */
+  onPairedRuntime: boolean
   event: MouseEvent | undefined
   openInWorkspace: () => void
   openExternally: (() => void) | null
@@ -33,7 +36,7 @@ export function agentHubPeekFileKind(filePath: string): 'image' | 'pdf' | 'media
 
 function peekEnabled(source: AgentHubPeekLinkSource): boolean {
   return (
-    source.local &&
+    !source.onPairedRuntime &&
     useAppStore.getState().settings?.experimentalAgentHub === true &&
     isAgentHubPeekHostMounted()
   )
@@ -52,9 +55,34 @@ function urlTitle(url: string): string {
   }
 }
 
-export function agentHubPeekUrlItem(url: string, source: AgentHubPeekLinkSource): AgentHubPeekItem {
+/**
+ * The machine a workspace's browser tabs load through (this Mac, or its SSH host, where an agent's
+ * localhost lives), under the same rules a workspace browser tab follows; null where those rules
+ * offer no client tab (a paired runtime, or the browser turned off for it).
+ */
+export function agentHubPeekBrowserHost(worktreeId: string): ExecutionHostId | null {
+  const state = useAppStore.getState()
+  if (getClientCreationActionPolicy(state, worktreeId)['managed-browser'].state !== 'enabled') {
+    return null
+  }
+  const route = resolveWorktreeOperationRoute(state, worktreeId)
+  if (!route || route.runtimeEnvironmentId?.trim()) {
+    return null
+  }
+  const host = parseExecutionHostId(route.executionHostId)
+  return host && host.kind !== 'runtime' ? host.id : null
+}
+
+export function agentHubPeekUrlItem(
+  url: string,
+  source: AgentHubPeekLinkSource
+): AgentHubPeekItem | null {
+  const hostId = agentHubPeekBrowserHost(source.worktreeId)
+  if (!hostId) {
+    return null
+  }
   return {
-    content: { kind: 'web', url },
+    content: { kind: 'web', url, hostId },
     worktreeId: source.worktreeId,
     title: urlTitle(url),
     location: url,
@@ -72,13 +100,23 @@ export function agentHubPeekFileItem(
   if (!kind) {
     return null
   }
-  // Why null and not falsy: undefined means the owner has not loaded, which is not "local".
-  if (getConnectionIdForFile(source.worktreeId, filePath) !== null) {
+  const connectionId = getConnectionIdForFile(source.worktreeId, filePath)
+  // Why: undefined means the owner has not loaded yet, which is neither local nor a known host.
+  if (connectionId === undefined) {
     return null
   }
+  let content: AgentHubPeekItem['content']
+  if (kind === 'html') {
+    // Why local only: a file:// page loads from this disk, which a remote host's file is not on.
+    if (connectionId !== null) {
+      return null
+    }
+    content = { kind: 'web', url: absolutePathToFileUri(filePath), hostId: 'local' }
+  } else {
+    content = { kind, filePath, connectionId }
+  }
   return {
-    content:
-      kind === 'html' ? { kind: 'web', url: absolutePathToFileUri(filePath) } : { kind, filePath },
+    content,
     worktreeId: source.worktreeId,
     title: filePath.split(/[/\\]/).pop() || filePath,
     location: filePath,

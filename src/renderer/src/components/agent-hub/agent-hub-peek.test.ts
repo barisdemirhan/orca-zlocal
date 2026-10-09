@@ -5,15 +5,25 @@ const mocks = vi.hoisted(() => {
   const state: {
     settings: { experimentalAgentHub: boolean }
     connectionId: string | null | undefined
+    browser: 'enabled' | 'hidden'
+    route: { executionHostId: string; runtimeEnvironmentId: string | null }
   } = {
     settings: { experimentalAgentHub: true },
-    connectionId: null
+    connectionId: null,
+    browser: 'enabled',
+    route: { executionHostId: 'local', runtimeEnvironmentId: null }
   }
   return state
 })
 
 vi.mock('@/store', () => ({ useAppStore: { getState: () => ({ settings: mocks.settings }) } }))
 vi.mock('@/lib/connection-context', () => ({ getConnectionIdForFile: () => mocks.connectionId }))
+vi.mock('@/lib/client-creation-action-policy', () => ({
+  getClientCreationActionPolicy: () => ({ 'managed-browser': { state: mocks.browser } })
+}))
+vi.mock('@/lib/worktree-operation-route', () => ({
+  resolveWorktreeOperationRoute: () => mocks.route
+}))
 vi.mock('@/components/editor/markdown-internal-links', () => ({
   absolutePathToFileUri: (path: string) => `file://${path}`
 }))
@@ -50,8 +60,14 @@ function clickIn(mirrorKey: string | null): MouseEvent {
   return event
 }
 
-function source(event: MouseEvent | undefined, local = true): AgentHubPeekLinkSource {
-  return { worktreeId: 'wt-1', local, event, openInWorkspace: vi.fn(), openExternally: null }
+function source(event: MouseEvent | undefined, onPairedRuntime = false): AgentHubPeekLinkSource {
+  return {
+    worktreeId: 'wt-1',
+    onPairedRuntime,
+    event,
+    openInWorkspace: vi.fn(),
+    openExternally: null
+  }
 }
 
 const shown = () => {
@@ -62,6 +78,8 @@ const shown = () => {
 beforeEach(() => {
   mocks.settings = { experimentalAgentHub: true }
   mocks.connectionId = null
+  mocks.browser = 'enabled'
+  mocks.route = { executionHostId: 'local', runtimeEnvironmentId: null }
   unregisterHost = registerAgentHubPeekHost()
 })
 afterEach(() => {
@@ -74,14 +92,14 @@ describe('a direct click in a mirror', () => {
   it('peeks at a page and names the mirror it came from', () => {
     expect(peekTerminalUrlFromMirror('http://127.0.0.1:6007/', source(clickIn('m-1')))).toBe(true)
     expect(shown()).toMatchObject({
-      content: { kind: 'web', url: 'http://127.0.0.1:6007/' },
+      content: { kind: 'web', url: 'http://127.0.0.1:6007/', hostId: 'local' },
       title: '127.0.0.1:6007',
       mirrorKey: 'm-1'
     })
   })
 
   it.each([
-    ['/a/contact-tr.png', { kind: 'image', filePath: '/a/contact-tr.png' }],
+    ['/a/contact-tr.png', { kind: 'image', filePath: '/a/contact-tr.png', connectionId: null }],
     ['/a/store-review.PDF', { kind: 'pdf' }],
     ['/a/flow.mp4', { kind: 'media' }],
     ['/a/report.html', { kind: 'web', url: 'file:///a/report.html' }]
@@ -94,7 +112,7 @@ describe('a direct click in a mirror', () => {
     ['outside a mirror', () => clickIn(null), true, '/a/shot.png', null],
     ['with Agent Hub off', () => clickIn('m-1'), false, '/a/shot.png', null],
     ['for a file Peek cannot show', () => clickIn('m-1'), true, '/a/main.ts', null],
-    ['for a file on an SSH host', () => clickIn('m-1'), true, '/a/shot.png', 'ssh-1'],
+    ['for an HTML file on an SSH host', () => clickIn('m-1'), true, '/a/report.html', 'ssh-1'],
     ['before the file owner has loaded', () => clickIn('m-1'), true, '/a/shot.png', undefined]
   ])('leaves the click to Orca %s', (_, event, enabled, filePath, connectionId) => {
     mocks.settings = { experimentalAgentHub: enabled }
@@ -104,10 +122,38 @@ describe('a direct click in a mirror', () => {
   })
 })
 
-it('leaves a page from an SSH or paired-runtime terminal to Orca', () => {
-  expect(peekTerminalUrlFromMirror('http://localhost:5173/', source(clickIn('m-1'), false))).toBe(
-    false
-  )
+describe('an SSH workspace', () => {
+  it('loads its pages through the SSH host, where its localhost is', () => {
+    mocks.route = { executionHostId: 'ssh:workhost', runtimeEnvironmentId: null }
+    expect(peekTerminalUrlFromMirror('http://localhost:5173/', source(clickIn('m-1')))).toBe(true)
+    expect(shown()?.content).toEqual({
+      kind: 'web',
+      url: 'http://localhost:5173/',
+      hostId: 'ssh:workhost'
+    })
+  })
+
+  it('reads its images, PDFs and media over the SSH connection', () => {
+    mocks.connectionId = 'ssh-1'
+    expect(peekTerminalFileFromMirror('/home/dev/shot.png', source(clickIn('m-1')))).toBe(true)
+    expect(shown()?.content).toEqual({
+      kind: 'image',
+      filePath: '/home/dev/shot.png',
+      connectionId: 'ssh-1'
+    })
+  })
+})
+
+it.each([
+  ['a paired-runtime terminal', true, 'enabled', null],
+  ['a workspace whose browser is off', false, 'hidden', null],
+  ['a workspace routed to a paired runtime', false, 'enabled', 'env-1']
+] as const)('leaves a page from %s to Orca', (_, pairedRuntime, browser, runtimeEnvironmentId) => {
+  mocks.browser = browser
+  mocks.route = { executionHostId: 'local', runtimeEnvironmentId }
+  expect(
+    peekTerminalUrlFromMirror('http://localhost:5173/', source(clickIn('m-1'), pairedRuntime))
+  ).toBe(false)
   expect(readAgentHubPeek()).toBeNull()
 })
 

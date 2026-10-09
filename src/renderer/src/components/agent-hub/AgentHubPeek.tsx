@@ -209,24 +209,25 @@ export function AgentHubPeek(): React.JSX.Element | null {
         {item.content.kind === 'web' ? (
           <AgentHubPeekBrowser
             url={item.content.url}
-            onOpenPage={(url) =>
-              openAgentHubPeek({
-                ...agentHubPeekUrlItem(url, {
-                  worktreeId: item.worktreeId,
-                  local: true,
-                  event: undefined,
-                  openInWorkspace: () =>
-                    openRoutedHttpLink(url, { worktreeId: item.worktreeId, modifierHeld: false }),
-                  openExternally: () =>
-                    openRoutedHttpLink(url, {
-                      worktreeId: item.worktreeId,
-                      modifierHeld: false,
-                      forceDestination: 'system'
-                    })
-                }),
-                mirrorKey: item.mirrorKey
+            hostId={item.content.hostId}
+            onOpenPage={(url) => {
+              const next = agentHubPeekUrlItem(url, {
+                worktreeId: item.worktreeId,
+                onPairedRuntime: false,
+                event: undefined,
+                openInWorkspace: () =>
+                  openRoutedHttpLink(url, { worktreeId: item.worktreeId, modifierHeld: false }),
+                openExternally: () =>
+                  openRoutedHttpLink(url, {
+                    worktreeId: item.worktreeId,
+                    modifierHeld: false,
+                    forceDestination: 'system'
+                  })
               })
-            }
+              if (next) {
+                openAgentHubPeek({ ...next, mirrorKey: item.mirrorKey })
+              }
+            }}
           />
         ) : (
           <AgentHubPeekFile content={item.content} />

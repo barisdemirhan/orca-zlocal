@@ -57,7 +57,7 @@ export function handleTerminalFileLink(
 ): boolean {
   const peekSource: AgentHubPeekLinkSource = {
     worktreeId: deps.worktreeId,
-    local: !deps.runtimeEnvironmentId,
+    onPairedRuntime: Boolean(deps.runtimeEnvironmentId),
     event,
     openInWorkspace: () => openDetectedFilePath(filePath, line, column, deps),
     openExternally: () =>
