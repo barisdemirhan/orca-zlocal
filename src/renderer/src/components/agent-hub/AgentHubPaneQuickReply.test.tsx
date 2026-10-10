@@ -30,7 +30,7 @@ const quick = vi.hoisted(() => {
       question: 'Keep it?',
       simpleQuestion: null,
       options: [
-        { id: 'a', label: 'Add delete', recommended: true },
+        { id: 'a', label: 'Add delete', recommended: true, description: 'Adds a Delete action' },
         { id: 'b', label: 'Keep' }
       ],
       chosen: null,
@@ -137,6 +137,8 @@ it('opens in the asking pane with its options and answers by click or number key
     stateSince: 1_000
   })
   expect(screen.getByText('Keep it?')).toBeTruthy()
+  // The option's description is what tells the choices apart; the card keeps it.
+  expect(screen.getByText('Adds a Delete action')).toBeTruthy()
 
   fireEvent.click(screen.getByRole('button', { name: /Keep$/ }))
   expect(quick.answer.choose).toHaveBeenCalledWith(1)

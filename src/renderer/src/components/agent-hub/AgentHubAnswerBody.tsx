@@ -60,8 +60,11 @@ export function HubOptionList({
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate">{option.label}</span>
-            {option.description && density === 'card' ? (
-              <span className="block text-xs text-muted-foreground">{option.description}</span>
+            {/* Chips have no room for it; the pane card keeps it short. */}
+            {option.description && density !== 'chip' ? (
+              <span className="block text-xs text-muted-foreground group-data-[density=compact]/opt:line-clamp-2 group-data-[density=compact]/opt:text-[11px] group-data-[density=compact]/opt:leading-snug">
+                {option.description}
+              </span>
             ) : null}
           </span>
           {/* A chip has no room for the badge: its border marks the agent's pick. */}
