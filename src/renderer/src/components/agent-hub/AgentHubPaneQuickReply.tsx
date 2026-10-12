@@ -15,6 +15,8 @@ import { makePaneKey } from '../../../../shared/stable-pane-id'
 import { paneIsCoveredByNativeChat } from '../terminal-pane/native-chat-covered-pane'
 import { HubOptionList } from './AgentHubAnswerBody'
 import { HubAvatar } from './AgentHubStateMarks'
+import { HubDictateButton } from './AgentHubDictateButton'
+import { markAgentHubPaneQuickReplyOpen } from './agent-hub-pane-quick-reply-presence'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import {
   agentHubCardKey,
@@ -59,6 +61,11 @@ function PaneQuickReplyCard({
     return () => clearTimeout(timer)
   }, [chosen])
   const shown = quick.options.length > 0 && !dismissed && !gone
+  // While it is open, the mirror's mic leaves dictation to the card's own field.
+  useEffect(
+    () => (shown ? markAgentHubPaneQuickReplyOpen(target.paneKey) : undefined),
+    [shown, target.paneKey]
+  )
   // Why only from its own terminal: a card must not take the keys from the pane being typed in,
   // nor from a chat composer that covers this one. Layout-timed, so the cleanup still sees the
   // card in the document.
@@ -197,6 +204,7 @@ function PaneQuickReplyCard({
               aria-label={translate('agentHub.quick.ownWords', 'Your own answer…')}
               className="min-w-0 flex-1 bg-transparent py-1 text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
             />
+            <HubDictateButton compact />
             <Button
               type="submit"
               variant="ghost"

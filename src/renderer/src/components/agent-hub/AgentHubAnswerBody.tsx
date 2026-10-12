@@ -1,11 +1,10 @@
 import { Button } from '@/components/ui/button'
 import { useEffect, useRef, useState } from 'react'
-import { Mic, SendHorizontal, ShieldQuestion, X } from 'lucide-react'
-import { useAppStore } from '@/store'
+import { SendHorizontal, ShieldQuestion, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubAnswerOption } from './agent-hub-answer-options'
-import { dispatchDictationControl } from '../dictation/dictation-control-events'
 import { HubChip } from './AgentHubInlineLabels'
+import { HubDictateButton } from './AgentHubDictateButton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export type { AgentHubAnswerOption } from './agent-hub-answer-options'
@@ -160,7 +159,6 @@ export function HubReplyField({
 }): React.JSX.Element {
   const [value, setValue] = useState('')
   const [images, setImages] = useState<readonly { path: string; preview: string }[]>([])
-  const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
   const previews = useRef(new Set<string>())
   useEffect(() => {
     const owned = previews.current
@@ -255,23 +253,7 @@ export function HubReplyField({
           aria-label={placeholder}
           className="min-w-0 flex-1 bg-transparent py-1.5 text-[13px] outline-none placeholder:text-muted-foreground/70"
         />
-        {voiceEnabled ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            tabIndex={-1}
-            aria-label={translate('agentHub.card.dictate', 'Dictate')}
-            className="size-7"
-            onClick={(event) => {
-              // Why focus first: dictation inserts into whatever field holds focus when it starts.
-              event.currentTarget.form?.querySelector('input')?.focus()
-              dispatchDictationControl('toggle')
-            }}
-          >
-            <Mic className="size-4" />
-          </Button>
-        ) : null}
+        <HubDictateButton />
         <Button
           type="submit"
           variant="ghost"

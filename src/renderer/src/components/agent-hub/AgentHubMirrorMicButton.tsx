@@ -89,6 +89,7 @@ function MicIcon({
     case 'disabled':
     case 'no-model':
     case 'unsupported':
+    case 'answering':
       return <MicOff className="size-3.5" />
   }
 }
@@ -121,6 +122,11 @@ function micHint(
       return `${translate('agentHub.mic.disabled', 'Voice dictation is off.')} ${voiceOptions}`
     case 'no-model':
       return `${translate('agentHub.mic.noModel', 'No speech model is selected and downloaded.')} ${voiceOptions}`
+    case 'answering':
+      return translate(
+        'agentHub.mic.answering',
+        'The question card is open: dictate your answer with the mic in its field.'
+      )
     case 'unsupported':
       return translate(
         'agentHub.mic.unsupported',
@@ -205,7 +211,7 @@ export function AgentHubMirrorMicButton({
                 startDictationIn(input, available && (event.shiftKey ? !chosen : chosen))
               }
             }}
-            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground aria-disabled:cursor-default aria-disabled:hover:bg-transparent data-[agent-hub-mirror-mic=disabled]:text-muted-foreground/50 data-[agent-hub-mirror-mic=disabled]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=elsewhere]:text-status-warning data-[agent-hub-mirror-mic=elsewhere]:hover:text-status-warning data-[agent-hub-mirror-mic=finishing]:text-foreground data-[agent-hub-mirror-mic=listening]:bg-foreground data-[agent-hub-mirror-mic=listening]:text-background data-[agent-hub-mirror-mic=listening]:hover:bg-foreground/85 data-[agent-hub-mirror-mic=listening]:hover:text-background data-[agent-hub-mirror-mic=no-model]:text-muted-foreground/50 data-[agent-hub-mirror-mic=no-model]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=starting]:bg-foreground/15 data-[agent-hub-mirror-mic=starting]:text-foreground data-[agent-hub-mirror-mic=unsupported]:text-muted-foreground/50 data-[agent-hub-mirror-mic=unsupported]:hover:text-muted-foreground/50"
+            className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-foreground/[0.07] hover:text-foreground aria-disabled:cursor-default aria-disabled:hover:bg-transparent data-[agent-hub-mirror-mic=answering]:text-muted-foreground/50 data-[agent-hub-mirror-mic=answering]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=disabled]:text-muted-foreground/50 data-[agent-hub-mirror-mic=disabled]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=elsewhere]:text-status-warning data-[agent-hub-mirror-mic=elsewhere]:hover:text-status-warning data-[agent-hub-mirror-mic=finishing]:text-foreground data-[agent-hub-mirror-mic=listening]:bg-foreground data-[agent-hub-mirror-mic=listening]:text-background data-[agent-hub-mirror-mic=listening]:hover:bg-foreground/85 data-[agent-hub-mirror-mic=listening]:hover:text-background data-[agent-hub-mirror-mic=no-model]:text-muted-foreground/50 data-[agent-hub-mirror-mic=no-model]:hover:text-muted-foreground/50 data-[agent-hub-mirror-mic=starting]:bg-foreground/15 data-[agent-hub-mirror-mic=starting]:text-foreground data-[agent-hub-mirror-mic=unsupported]:text-muted-foreground/50 data-[agent-hub-mirror-mic=unsupported]:hover:text-muted-foreground/50"
           >
             <MicIcon state={state} improve={improveMode} />
           </button>

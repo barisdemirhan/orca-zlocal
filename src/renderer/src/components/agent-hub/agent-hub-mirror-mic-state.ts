@@ -26,6 +26,8 @@ export type AgentHubMirrorMicState =
   | 'no-model'
   /** This mirror shows a terminal that dictation cannot type into. */
   | 'unsupported'
+  /** The pane's quick-reply card is open; its own mic dictates the answer. */
+  | 'answering'
 
 export function isDictationRunning(state: DictationState): boolean {
   // Why not a list of running states: a state added later (transcript clean-up) is still a run.
@@ -70,7 +72,8 @@ export function agentHubMirrorMicState({
   ownsDictation,
   voiceEnabled,
   modelReady,
-  reachable
+  reachable,
+  answeringInCard = false
 }: {
   dictationState: DictationState
   ownsDictation: boolean
@@ -78,6 +81,8 @@ export function agentHubMirrorMicState({
   modelReady: boolean
   /** False when the mirror shows a terminal dictation cannot type into. */
   reachable: boolean
+  /** The pane's quick-reply card is open. */
+  answeringInCard?: boolean
 }): AgentHubMirrorMicState {
   if (isDictationRunning(dictationState)) {
     if (!ownsDictation) {
@@ -87,6 +92,9 @@ export function agentHubMirrorMicState({
       return dictationState
     }
     return 'finishing'
+  }
+  if (answeringInCard) {
+    return 'answering'
   }
   if (!reachable) {
     return 'unsupported'

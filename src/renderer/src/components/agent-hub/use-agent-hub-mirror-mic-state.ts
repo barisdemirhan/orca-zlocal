@@ -8,6 +8,7 @@ import {
   type AgentHubMirrorMicState
 } from './agent-hub-mirror-mic-state'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { useAgentHubPaneQuickReplyOpen } from './agent-hub-pane-quick-reply-presence'
 
 /** What a mirror's microphone shows: dictation for this pane, elsewhere, or why it cannot start. */
 export function useAgentHubMirrorMicState(
@@ -20,11 +21,13 @@ export function useAgentHubMirrorMicState(
     isSpeechModelReady(s.settings?.voice?.sttModel, s.modelStates)
   )
   const session = useAgentHubDictationSession()
+  const answeringInCard = useAgentHubPaneQuickReplyOpen(target.tab.id, target.paneKey)
   return agentHubMirrorMicState({
     dictationState,
     ownsDictation: mirrorOwnsDictation(session, agentHubMirrorDictationPane(target)),
     voiceEnabled,
     modelReady,
-    reachable
+    reachable,
+    answeringInCard
   })
 }

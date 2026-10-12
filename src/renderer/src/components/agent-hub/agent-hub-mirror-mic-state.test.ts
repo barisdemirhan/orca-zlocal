@@ -75,6 +75,18 @@ describe('agentHubMirrorMicState', () => {
     expect(agentHubMirrorMicState({ ...ready, reachable: false })).toBe('unsupported')
   })
 
+  it('leaves dictation to an open quick-reply card, but still owns a run it started', () => {
+    expect(agentHubMirrorMicState({ ...ready, answeringInCard: true })).toBe('answering')
+    expect(
+      agentHubMirrorMicState({
+        ...ready,
+        answeringInCard: true,
+        ownsDictation: true,
+        dictationState: 'listening'
+      })
+    ).toBe('listening')
+  })
+
   it('keeps showing a running dictation after voice is switched off mid-run', () => {
     expect(
       agentHubMirrorMicState({
