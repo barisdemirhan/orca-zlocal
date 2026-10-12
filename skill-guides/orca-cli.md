@@ -2,12 +2,12 @@
 name: orca-cli
 description: >-
   Operate Orca-managed worktrees, folder contexts, terminals, repos, automations, worktree
-  comments, and Orca's embedded browser through the `orca` CLI. Use when the user says
-  "$orca-cli", "Orca worktree", "child worktree", "spawn codex/claude in a worktree",
-  "read/wait/send Orca terminal", "handoff" / "handover" / "give this to another agent", or
-  "Orca browser". Prefer it over raw git worktree, ad hoc PTYs, or Computer Use when Orca
-  state is involved. Use Computer Use only when a visible window needs GUI control that a
-  CLI, filesystem, or API cannot do.
+  comments, Agent Hub, and Orca's embedded browser through the `orca` CLI. Use when the user
+  says "$orca-cli", "Orca worktree", "child worktree", "spawn codex/claude in a worktree",
+  "read/wait/send Orca terminal", "handoff" / "handover" / "give this to another agent",
+  "orca hub", or "Orca browser". Prefer it over raw git worktree, ad hoc PTYs, or Computer Use
+  when Orca state is involved. Use Computer Use only when a visible window needs GUI control
+  that a CLI, filesystem, or API cannot do.
 ---
 
 # Orca CLI
@@ -242,6 +242,16 @@ Terminal rules:
 - For long output, use cursor reads. After a limited tail preview, page from `oldestCursor`; after a cursor read, continue with `nextCursor` while `limited` is true and `nextCursor !== latestCursor`.
 - `--direction vertical` splits left/right. `--direction horizontal` splits top/bottom.
 
+## Agent Hub
+
+Agent Hub is the user's view of agents, questions, progress, and terminal mirrors. Use
+`hub` to show a result, ask a decision, or manage mirrors of agents you started. Prefer
+your native question tool when available. Before blocking, check `ORCA hub presence --json`.
+
+Load `references/agent-hub.md` before using these commands. **`hub ask` exit 2 means
+pending: resume the printed request ID with short `--wait` calls; do not ask again.**
+Do not spam the user or operate on unrelated panes without their request.
+
 <!-- host-capability: artifact-publishing -->
 
 ## Artifacts
@@ -322,4 +332,5 @@ This guide covers worktrees, terminals, and handoffs on its own. At a gate below
 | --------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | Driving Orca's embedded browser: navigation, snapshots, refs, tabs, concurrent pages, or `browser_*` recoveries | `references/browser.md`          |
 | Creating, editing, running, or inspecting scheduled automations                                                 | `references/automations.md`      |
+| Showing the user a result, asking a decision, publishing progress, or managing Agent Hub mirrors                | `references/agent-hub.md`        |
 | Mobile emulator taps, gestures, typing, buttons, camera, or permissions                                         | invoke the `orca-emulator` skill |
