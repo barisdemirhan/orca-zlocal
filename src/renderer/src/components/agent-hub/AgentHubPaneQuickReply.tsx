@@ -13,6 +13,10 @@ import type { ManagedPane } from '@/lib/pane-manager/pane-manager'
 import { useAppStore } from '@/store'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
 import { paneIsCoveredByNativeChat } from '../terminal-pane/native-chat-covered-pane'
+import {
+  NativeChatInteractiveCard,
+  type NativeChatInteractiveCardControl
+} from '../native-chat/NativeChatInteractiveCard'
 import { HubOptionList } from './AgentHubAnswerBody'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubDictateButton } from './AgentHubDictateButton'
@@ -60,7 +64,14 @@ function PaneQuickReplyCard({
     const timer = setTimeout(() => setGone(true), AGENT_HUB_ANSWERED_VISIBLE_MS)
     return () => clearTimeout(timer)
   }, [chosen])
-  const shown = quick.options.length > 0 && !dismissed && !gone
+  // Several questions, or one with several picks, take the agent's full question card.
+  const fullCard =
+    quick.options.length === 0 && quick.canAnswer && quick.card?.kind === 'question'
+      ? quick.card
+      : null
+  const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
+  const answerable = quick.options.length > 0 || fullCard !== null
+  const shown = answerable && !dismissed && !gone
   // While it is open, the mirror's mic leaves dictation to the card's own field.
   useEffect(
     () => (shown ? markAgentHubPaneQuickReplyOpen(target.paneKey) : undefined),
@@ -86,7 +97,7 @@ function PaneQuickReplyCard({
     }
   }, [shown, pane])
   if (!shown) {
-    if (!dismissed || gone || quick.options.length === 0) {
+    if (!dismissed || gone || !answerable) {
       return null
     }
     // Closed for this prompt: a small handle in the corner brings the card back while it stands.
@@ -139,24 +150,34 @@ function PaneQuickReplyCard({
             close()
             return
           }
-          // Digits answer unless typed into the reply field.
+          // Digits answer unless typed into a reply field.
           if (
-            /^[1-9]$/.test(event.key) &&
-            !(event.target instanceof HTMLInputElement) &&
-            quick.chooseByKey(Number(event.key) - 1)
+            !/^[1-9]$/.test(event.key) ||
+            event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLTextAreaElement
           ) {
+            return
+          }
+          const index = Number(event.key) - 1
+          // The full card moves on to its next question itself; it leaves once all are sent.
+          const taken = fullCard
+            ? quick.keysArmed() && (nativeControlRef.current?.chooseOption(index) ?? false)
+            : quick.chooseByKey(index)
+          if (taken) {
             event.preventDefault()
             event.stopPropagation()
-            answered(true)
+            if (!fullCard) {
+              answered(true)
+            }
           }
         }}
-        className="pointer-events-auto absolute bottom-3 left-3 z-[45] w-[min(26rem,calc(100%-1.5rem))] animate-in rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none duration-150 fade-in-0 slide-in-from-bottom-1 motion-reduce:animate-none! focus-visible:ring-2 focus-visible:ring-ring"
+        className="pointer-events-auto absolute bottom-3 left-3 z-[45] max-h-[calc(100%-1.5rem)] w-[min(26rem,calc(100%-1.5rem))] animate-in scrollbar-sleek overflow-y-auto rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none duration-150 fade-in-0 slide-in-from-bottom-1 motion-reduce:animate-none! focus-visible:ring-2 focus-visible:ring-ring"
       >
         <div className="flex items-center gap-2 px-3 pt-2.5">
           <HubAvatar agentType={target.agentType} kind="ask" />
           <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">@{target.agentType}</span>{' '}
-            {quick.simpleQuestion
+            {quick.card?.kind === 'question'
               ? translate('agentHub.alert.asking', 'is asking')
               : translate('agentHub.alert.needsApproval', 'needs approval')}
           </span>
@@ -170,20 +191,39 @@ function PaneQuickReplyCard({
             <X />
           </Button>
         </div>
-        {quick.question ? (
-          <p className="px-3 pt-1.5 text-[13px] leading-snug font-medium break-words">
-            {quick.question}
-          </p>
-        ) : null}
-        <div className="px-3 pt-0.5">
-          <HubOptionList
-            density="compact"
-            options={quick.options}
-            chosen={chosen}
-            disabled={chosen !== null || !quick.canAnswer}
-            onChoose={(index) => answered(quick.choose(index))}
-          />
-        </div>
+        {fullCard ? (
+          <div className="px-3 pt-2 pb-2.5">
+            <NativeChatInteractiveCard
+              card={fullCard}
+              send={quick.send}
+              // Delivered: the card leaves and the terminal takes the keys back.
+              onDismiss={() => {
+                setGone(true)
+                focusPanePreservingOverlays(pane)
+              }}
+              layout="embedded"
+              highlightRecommended
+              controlRef={nativeControlRef}
+            />
+          </div>
+        ) : (
+          <>
+            {quick.question ? (
+              <p className="px-3 pt-1.5 text-[13px] leading-snug font-medium break-words">
+                {quick.question}
+              </p>
+            ) : null}
+            <div className="px-3 pt-0.5">
+              <HubOptionList
+                density="compact"
+                options={quick.options}
+                chosen={chosen}
+                disabled={chosen !== null || !quick.canAnswer}
+                onChoose={(index) => answered(quick.choose(index))}
+              />
+            </div>
+          </>
+        )}
         {quick.simpleQuestion && chosen === null ? (
           <form
             className="mx-3 mt-2 mb-2.5 flex min-w-0 items-center gap-1 rounded-lg border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-2.5 focus-within:border-foreground/20"
@@ -228,7 +268,7 @@ function PaneQuickReplyCard({
             <span className="shrink-0">{translate('agentHub.quick.sending', 'Sending…')}</span>
             {sentText ? <span className="min-w-0 truncate text-foreground">{sentText}</span> : null}
           </div>
-        ) : (
+        ) : fullCard ? null : (
           <div className="pb-2.5" />
         )}
       </div>

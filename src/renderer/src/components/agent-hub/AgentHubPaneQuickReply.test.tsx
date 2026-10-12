@@ -23,6 +23,8 @@ type QuickAnswerStub = Pick<
   | 'choose'
   | 'chooseByKey'
   | 'reply'
+  | 'card'
+  | 'keysArmed'
 >
 const quick = vi.hoisted(() => {
   const state: { answer: QuickAnswerStub; targets: unknown[] } = {
@@ -38,11 +40,36 @@ const quick = vi.hoisted(() => {
       cardKey: 'tab-1:leaf-1:1000',
       choose: vi.fn(() => true),
       chooseByKey: vi.fn(() => true),
-      reply: vi.fn(() => true)
+      reply: vi.fn(() => true),
+      card: null,
+      keysArmed: () => true
     },
     targets: []
   }
   return state
+})
+const fullCard = vi.hoisted(() => ({ chooseOption: vi.fn(() => true), dismiss: () => {} }))
+vi.mock('../native-chat/NativeChatInteractiveCard', async () => {
+  const { useImperativeHandle } = await import('react')
+  return {
+    NativeChatInteractiveCard: ({
+      card,
+      onDismiss,
+      controlRef
+    }: {
+      card: { prompt: { questions: { question: string }[] } }
+      onDismiss: () => void
+      controlRef: React.Ref<{ chooseOption: (index: number) => boolean }>
+    }) => {
+      useImperativeHandle(controlRef, () => ({ chooseOption: fullCard.chooseOption }))
+      fullCard.dismiss = onDismiss
+      return (
+        <div data-testid="full-card">
+          {card.prompt.questions.map((question) => question.question).join(' / ')}
+        </div>
+      )
+    }
+  }
 })
 vi.mock('@/store', async () => {
   const { createTestStore } = await import('@/store/slices/store-test-helpers')
@@ -112,6 +139,12 @@ beforeEach(() => {
   quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000, asking.interactivePrompt ?? null)
   vi.mocked(quick.answer.choose).mockClear()
   vi.mocked(quick.answer.chooseByKey).mockClear()
+  fullCard.chooseOption.mockClear()
+  quick.answer.card = null
+  quick.answer.options = [
+    { id: 'a', label: 'Add delete', recommended: true, description: 'Adds a Delete action' },
+    { id: 'b', label: 'Keep' }
+  ]
   useAppStore.setState({
     settings: { ...getDefaultSettings('/home/u'), experimentalAgentHub: true },
     agentStatusByPaneKey: {}
@@ -146,6 +179,33 @@ it('opens in the asking pane with its options and answers by click or number key
 
   fireEvent.keyDown(openCard(), { key: '1' })
   expect(quick.answer.chooseByKey).toHaveBeenCalledWith(0)
+})
+
+it("takes several questions in the agent's full card, keeping the keys until all are sent", () => {
+  quick.answer.options = []
+  quick.answer.card = {
+    kind: 'question',
+    prompt: {
+      questions: [
+        { question: 'Plan?', multiSelect: false, options: [{ label: 'Yes' }] },
+        { question: 'Ship?', multiSelect: false, options: [{ label: 'Now' }] }
+      ]
+    }
+  }
+  const pane = mountPane()
+  renderPortals(pane)
+  act(() => useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } }))
+  expect(screen.getByTestId('full-card').textContent).toBe('Plan? / Ship?')
+  expect(openCard().textContent).toContain('is asking')
+
+  act(() => openCard().focus())
+  fireEvent.keyDown(openCard(), { key: '2' })
+  expect(fullCard.chooseOption).toHaveBeenCalledWith(1)
+  // The next question follows in the same card, so the terminal does not take the keys yet.
+  expect(openCard().contains(document.activeElement)).toBe(true)
+
+  act(() => fullCard.dismiss())
+  expect(card()).toBeNull()
 })
 
 it('shows the answer going out instead of standing still', () => {
