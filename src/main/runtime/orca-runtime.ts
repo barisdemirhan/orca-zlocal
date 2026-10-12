@@ -1,5 +1,7 @@
 import { conversationRecordReader } from './orchestration/structured-session-lineage'
 import type { RuntimeLinearCommandSurface } from './runtime-linear-command-surface'
+import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-decision-gates'
+import type { OrchestrationDb } from './orchestration/db'
 import { installRuntimeLinearCommandSurface } from './runtime-linear-command-surface'
 import { publishWorkspaceViewChanges } from './runtime-workspace-view-change-events'
 import {
@@ -58,7 +60,7 @@ const OrcaRuntimeSidebarBase: typeof OrcaRuntimeWithAgentTransitions = ORCA_SIDE
   ? OrcaRuntimeWithSidebarTemporal
   : OrcaRuntimeWithAgentTransitions
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
-import type { AgentHubCaller } from '../../shared/agent-hub-requests'
+import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
 
 // oxlint-disable-next-line typescript/no-unsafe-declaration-merging -- SAFETY: The existing Linear installer supplies the canonical prototype surface.
 class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
@@ -166,6 +168,33 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
   readonly agentHub = new AgentHubLedger((event) =>
     this.emitClientEvent({ type: 'agentHub', event })
   )
+
+  override getOrchestrationDb(): OrchestrationDb {
+    const db = super.getOrchestrationDb()
+    db.onDecisionGateChanged = (gate) => {
+      try {
+        this.emitClientEvent({
+          type: 'agentHub',
+          event: agentHubGateEvent(
+            gate,
+            projectAgentHubGate(db, gate, (handle) => this.getAgentHubCaller(handle))
+          )
+        })
+      } catch (error) {
+        console.warn('Could not publish decision gate', error)
+      }
+    }
+    return db
+  }
+
+  getAgentHubGateSnapshot(): AgentHubGate[] {
+    const db = this.getExistingOrchestrationDb()
+    return db
+      ? db
+          .listGates({ status: 'pending' })
+          .map((gate) => projectAgentHubGate(db, gate, (handle) => this.getAgentHubCaller(handle)))
+      : []
+  }
 
   isAgentHubEnabled(): boolean {
     const settings = this.store?.getSettings()

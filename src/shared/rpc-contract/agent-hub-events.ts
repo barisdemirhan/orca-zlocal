@@ -41,6 +41,18 @@ export const AgentHubEventSchema: z.ZodType<AgentHubEvent> = z.discriminatedUnio
     multi: z.boolean(),
     ifAway: z.literal('recommended').optional()
   }),
+  base.extend({
+    requestId: z.string().regex(/^gate_/),
+    kind: z.literal('gate'),
+    gateId: z.string(),
+    runId: z.string(),
+    taskId: z.string(),
+    runTitle: z.string(),
+    taskTitle: z.string(),
+    question: z.string(),
+    options: z.array(z.string()),
+    multi: z.literal(false)
+  }),
   base.extend({ kind: z.literal('presence') }),
   base.extend({ kind: z.literal('status') }),
   base.extend(peek.shape),
@@ -51,6 +63,8 @@ export const AgentHubEventSchema: z.ZodType<AgentHubEvent> = z.discriminatedUnio
   base.extend({ kind: z.literal('progress'), text: z.string().nullable() }),
   base.extend({
     kind: z.literal('closed'),
+    requestId: z.union([z.string().uuid(), z.string().regex(/^gate_/)]),
+    gateId: z.string().optional(),
     reason: z.enum([
       'responded',
       'rate_limited',

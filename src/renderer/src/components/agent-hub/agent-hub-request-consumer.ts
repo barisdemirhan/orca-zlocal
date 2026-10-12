@@ -1,5 +1,6 @@
 import type {
   AgentHubDelivery,
+  AgentHubGate,
   AgentHubRendererApi,
   AgentHubRequest,
   AgentHubResponse
@@ -103,7 +104,27 @@ export class AgentHubRequestConsumer {
     this.update(false, [])
   }
 
+  async resolveGate(host: string, gate: AgentHubGate, resolution: string): Promise<void> {
+    await this.sendCurrent(host, (client) => {
+      if (!client.resolveGate) {
+        throw Object.assign(new Error('Host cannot resolve decision gates'), {
+          code: 'unsupported_method'
+        })
+      }
+      return client.resolveGate(gate, resolution)
+    })
+  }
+
   async respond(host: string, requestId: string, result: AgentHubResponse): Promise<void> {
+    await this.sendCurrent(host, async (client) => {
+      await client.respond(requestId, result)
+    })
+  }
+
+  private async sendCurrent(
+    host: string,
+    send: (client: AgentHubRendererApi) => Promise<void>
+  ): Promise<void> {
     const subscription = this.subscriptions.get(host)
     if (!subscription?.active) {
       throw Object.assign(new Error('Agent Hub host disconnected'), { code: 'connection_lost' })
@@ -114,7 +135,7 @@ export class AgentHubRequestConsumer {
       }
     }
     try {
-      await subscription.client.respond(requestId, result)
+      await send(subscription.client)
     } catch (error) {
       ensureCurrent()
       throw error

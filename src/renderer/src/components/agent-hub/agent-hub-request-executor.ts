@@ -58,6 +58,7 @@ function readStatus(host: string, context: Context): AgentHubStatus {
     ).map((pane) => [pane.paneKey, pane])
   )
   for (const request of [
+    ...(stored?.pendingGates.values() ?? []),
     ...(stored?.pendingAsks.values() ?? []),
     ...(stored?.pendingConsents.values() ?? [])
   ]) {
@@ -143,6 +144,7 @@ export async function executeAgentHubRequest(
 ): Promise<AgentHubResponse | null> {
   try {
     switch (request.kind) {
+      case 'gate':
       case 'ask':
       case 'consent':
       case 'notify':

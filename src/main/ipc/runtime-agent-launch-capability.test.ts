@@ -2,7 +2,8 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RuntimeCapability } from '../../shared/protocol-version'
-import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../shared/agent-hub-capabilities'
+import { AGENT_HUB_REQUESTS_CAPABILITY, AGENT_HUB_GATES_CAPABILITY } from '../../shared/agent-hub-capabilities'
+import type { RpcCallerIdentity } from '../runtime/rpc/rpc-caller-identity'
 
 type AdvertisedClient = {
   clientKind?: 'mobile' | 'runtime'
@@ -15,10 +16,10 @@ type AdvertisedClient = {
 const { handlers, advertised } = vi.hoisted(
   (): {
     handlers: Map<string, (event: unknown, args?: unknown) => unknown>
-    advertised: { unary: AdvertisedClient[]; streaming: AdvertisedClient[] }
+    advertised: { unary: AdvertisedClient[]; streaming: AdvertisedClient[]; requests: unknown[] }
   } => ({
     handlers: new Map(),
-    advertised: { unary: [], streaming: [] }
+    advertised: { unary: [], streaming: [], requests: [] }
   })
 )
 
@@ -36,8 +37,9 @@ vi.mock('electron', () => ({
 
 vi.mock('../runtime/rpc/dispatcher', () => ({
   RpcDispatcher: class {
-    dispatch(_request: unknown, options: AdvertisedClient): Promise<unknown> {
+    dispatch(request: unknown, options: AdvertisedClient): Promise<unknown> {
       advertised.unary.push(options)
+      advertised.requests.push(request)
       return Promise.resolve({ ok: true, result: {} })
     }
 
@@ -92,6 +94,7 @@ function onlyAdvertisedClient(records: readonly AdvertisedClient[]): AdvertisedC
 describe('local Agent Hub capability admission', () => {
   beforeEach(() => {
     handlers.clear()
+    advertised.requests.length = 0
     advertised.unary.length = 0
     advertised.streaming.length = 0
     setTrustedUIRendererWebContentsId(1)
@@ -121,6 +124,7 @@ describe('local Agent Hub capability admission', () => {
         onlyAdvertisedClient(advertised.streaming)
       ]) {
         expect(client.clientCapabilities?.includes(AGENT_HUB_REQUESTS_CAPABILITY)).toBe(admitted)
+        expect(client.clientCapabilities?.includes(AGENT_HUB_GATES_CAPABILITY)).toBe(admitted)
         expect(agentHubDesktopId(client) !== null).toBe(admitted)
       }
     }
@@ -137,5 +141,22 @@ describe('local Agent Hub capability admission', () => {
       method: 'runtime.clientEvents.subscribe'
     })
     expect(agentHubDesktopId(onlyAdvertisedClient(advertised.streaming))).toBeNull()
+  })
+  it('preserves a desktop gate answer mutation envelope across local IPC', () => {
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: mocked dispatch only reads capability admission and sender cleanup from this runtime.
+    registerRuntimeHandlers({
+      cleanupSubscriptionsForConnection: vi.fn(),
+      isAgentHubEnabled: () => true
+    } as never)
+    const envelope = { orchestrationContractVersion: 1, orchestrationRequestId: 'gate-answer' }
+    invoke('runtime:call', {
+      method: 'orchestration.gateResolveByUser',
+      params: { id: 'gate_one', resolution: 'yes' },
+      envelope
+    })
+    expect(advertised.requests[0]).toMatchObject({
+      method: 'orchestration.gateResolveByUser',
+      ...envelope
+    })
   })
 })

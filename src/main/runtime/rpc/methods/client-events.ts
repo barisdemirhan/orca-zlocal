@@ -1,3 +1,4 @@
+import { AGENT_HUB_GATES_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import {
   getRegisteredSshState,
   listRegisteredSshTargets
@@ -20,13 +21,20 @@ export const CLIENT_EVENT_METHODS = [
     handler: async (_params, ctx, emit) => {
       const { runtime, connectionId, clientKind, signal } = ctx
       const desktop = _params?.agentHub === false ? null : agentHubDesktopId(ctx)
+      const gates = Boolean(desktop && ctx.clientCapabilities?.includes(AGENT_HUB_GATES_CAPABILITY))
       await new Promise<void>((resolve) => {
         const unregisterDesktop = desktop ? runtime.agentHub.registerDesktop(desktop) : () => {}
         // Why: mobile discards terminalSideEffects; excluding it stops the
         // per-OSC batch frames from crossing the relay.
         const unsubscribe = runtime.onClientEvent(
           (event) => {
-            if (event.type === 'agentHub' && !desktop) {
+            if (
+              event.type === 'agentHub' &&
+              (!desktop ||
+                (!gates &&
+                  (event.event.kind === 'gate' ||
+                    (event.event.kind === 'closed' && event.event.gateId))))
+            ) {
               return
             }
             emit(event)
@@ -69,10 +77,14 @@ export const CLIENT_EVENT_METHODS = [
           return state ? [{ targetId: target.id, state }] : []
         })
         // Why: attaching the listener before snapshotting closes the reload gap without exposing HUB-private target configuration.
+        const snapshot = desktop ? runtime.agentHub.snapshot() : null
+        if (snapshot && gates) {
+          snapshot.requests.push(...(runtime.getAgentHubGateSnapshot?.() ?? []))
+        }
         emit({
           type: 'ready',
           subscriptionId,
-          snapshot: { sshStates, ...(desktop ? { agentHub: runtime.agentHub.snapshot() } : {}) }
+          snapshot: { sshStates, ...(snapshot ? { agentHub: snapshot } : {}) }
         })
       })
     }

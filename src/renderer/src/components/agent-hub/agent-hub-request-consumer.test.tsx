@@ -6,6 +6,7 @@ import { createGlobalSettingsFixture } from '../../../../shared/global-settings-
 import type { RuntimeStatus } from '../../../../shared/runtime-types'
 import type {
   AgentHubDelivery,
+  AgentHubGate,
   AgentHubRendererApi,
   AgentHubRequest
 } from '../../../../shared/agent-hub-requests'
@@ -14,32 +15,24 @@ import { useAgentHubRequestConsumer } from './use-agent-hub-request-consumer'
 import { readAgentHubRequests } from './agent-hub-requests-store'
 import { answerAgentHubRequest } from './agent-hub-request-answer'
 import { buildAgentHubLists } from './agent-hub-lists'
-import { agentHubRequestBase } from './agent-hub-request-test-fixtures'
+import { agentHubRequestBase, agentHubGateRequest } from './agent-hub-request-test-fixtures'
 
-const clients = vi.hoisted(
-  () =>
-    new Map<
-      string,
-      {
-        receive?: (delivery: AgentHubDelivery) => void
-        stop: ReturnType<typeof vi.fn<() => void>>
-        respond: ReturnType<typeof vi.fn<AgentHubRendererApi['respond']>>
-      }
-    >()
-)
+type TestClient = {
+  receive?: (delivery: AgentHubDelivery) => void
+  stop: ReturnType<typeof vi.fn<() => void>>
+  resolveGate: ReturnType<typeof vi.fn<(gate: AgentHubGate, resolution: string) => Promise<void>>>
+  respond: ReturnType<typeof vi.fn<AgentHubRendererApi['respond']>>
+}
+const clients = vi.hoisted(() => new Map<string, TestClient>())
 vi.mock('@/runtime/agent-hub-client', () => ({
   createAgentHubClient: (environmentId: string | null): AgentHubRendererApi => {
-    const client: {
-      stop: ReturnType<typeof vi.fn<() => void>>
-      respond: ReturnType<typeof vi.fn<AgentHubRendererApi['respond']>>
-      receive?: (delivery: AgentHubDelivery) => void
-    } = {
+    const client: TestClient = {
       stop: vi.fn<() => void>(),
+      resolveGate: vi.fn(async () => {}),
       respond: vi.fn<AgentHubRendererApi['respond']>(async (requestId) => ({
         accepted: true as const,
         requestId
-      })),
-      receive: undefined
+      }))
     }
     clients.set(environmentId ?? 'local', client)
     return {
@@ -47,13 +40,14 @@ vi.mock('@/runtime/agent-hub-client', () => ({
         client.receive = handler
         return client.stop
       },
+      resolveGate: client.resolveGate,
       respond: client.respond
     }
   }
 }))
 vi.mock('./agent-hub-request-executor', () => ({
   executeAgentHubRequest: vi.fn(async (_host: string, request: AgentHubRequest) =>
-    ['ask', 'consent', 'notify'].includes(request.kind) ? null : { kind: 'ack' }
+    ['ask', 'gate', 'consent', 'notify'].includes(request.kind) ? null : { kind: 'ack' }
   )
 }))
 const initial = useAppStore.getState()
@@ -281,4 +275,14 @@ it('fences an in-flight answer when its host reconnects without marking the new 
   expect(readAgentHubRequests().get('workhost')?.pendingAsks.get(ask.requestId)).toEqual(ask)
   expect(readAgentHubRequests().get('workhost')?.answerStates.size).toBe(0)
   expect(current?.respond).not.toHaveBeenCalled()
+})
+
+it('routes gate answers through the current host gate method and never through ask responses', async () => {
+  render(<Harness />)
+  const gate = agentHubGateRequest()
+  act(() => clients.get('workhost')?.receive?.(gate))
+  await answerAgentHubRequest('workhost', gate.gateId, { kind: 'ask', answer: 'Custom', index: null })
+  expect(clients.get('workhost')?.resolveGate).toHaveBeenCalledExactlyOnceWith(gate, 'Custom')
+  expect(clients.get('workhost')?.respond).not.toHaveBeenCalled()
+  expect(clients.get('local')?.resolveGate).not.toHaveBeenCalled()
 })

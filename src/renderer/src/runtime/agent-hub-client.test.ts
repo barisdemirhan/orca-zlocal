@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RuntimeRpcResponse } from '../../../shared/runtime-rpc-envelope'
-import type { AgentHubDelivery, AgentHubRequest } from '../../../shared/agent-hub-requests'
+import type {
+  AgentHubDelivery,
+  AgentHubRequest,
+  AgentHubGate
+} from '../../../shared/agent-hub-requests'
 import { createAgentHubClient } from './agent-hub-client'
 
 const request: AgentHubRequest = {
@@ -65,7 +69,12 @@ describe('Agent Hub renderer API boundary', () => {
         expect(call).toHaveBeenCalledWith(
           expect.objectContaining({
             method: 'runtime.clientCapabilities.update',
-            params: { clientCapabilities: expect.arrayContaining(['agent-hub.requests.v1']) }
+            params: {
+              clientCapabilities: expect.arrayContaining([
+                'agent-hub.requests.v1',
+                'agent-hub.gates.v1'
+              ])
+            }
           })
         )
       }
@@ -221,4 +230,41 @@ describe('Agent Hub renderer API boundary', () => {
     await Promise.resolve()
     stop()
   })
+  it.each([null, 'paired-host'])(
+    'resolves a gate on its owning host with a durable mutation envelope (%s)',
+    async (host) => {
+      const gate: AgentHubGate = {
+        ...request,
+        kind: 'gate',
+        requestId: 'gate_one',
+        gateId: 'gate_one',
+        runId: 'run_one',
+        taskId: 'task_one',
+        runTitle: 'Run',
+        taskTitle: 'Task',
+        multi: false
+      }
+      const api = createAgentHubClient(host)
+      if (!api.resolveGate) {
+        throw new Error('Missing gate API')
+      }
+      await api.resolveGate(gate, 'custom answer')
+      expect(call).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          ...(host ? { selector: host } : {}),
+          method: 'orchestration.gateResolveByUser',
+          params: { id: 'gate_one', run: 'run_one', resolution: 'custom answer' },
+          envelope: { orchestrationContractVersion: 1, orchestrationRequestId: expect.any(String) }
+        })
+      )
+      call.mockResolvedValueOnce({
+        id: 'r',
+        ok: false,
+        error: { code: 'already_resolved', message: 'Closed' }
+      })
+      await expect(api.resolveGate(gate, 'late')).rejects.toMatchObject({
+        code: 'already_resolved'
+      })
+    }
+  )
 })

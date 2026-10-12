@@ -256,4 +256,23 @@ describe('orchestration gate commands carry caller identity', () => {
       ])
     })
   })
+  it('shows the resolver in human gate-list output when recorded', async () => {
+    queueFixtures(
+      callMock,
+      okFixture('gates', {
+        gates: [
+          {
+            id: 'gate_one',
+            task_id: 'task_one',
+            question: 'Proceed?',
+            status: 'resolved',
+            resolved_by: 'user'
+          }
+        ],
+        count: 1
+      })
+    )
+    await main(['orchestration', 'gate-list', '--run', 'run_one'], '/tmp/repo')
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('resolved_by=user'))
+  })
 })

@@ -19,7 +19,10 @@ import {
   connectThroughOwningService,
   removeThroughOwningService
 } from './runtime-environment-host-service-ops'
-import type { RuntimeRpcResponse } from '../../../shared/runtime-rpc-envelope'
+import type {
+  RuntimeOrchestrationEnvelope,
+  RuntimeRpcResponse
+} from '../../../shared/runtime-rpc-envelope'
 import type { RuntimeStatus } from '../../../shared/runtime-types'
 import type { Store } from '../../persistence'
 import { retireRemovedRuntimeEnvironment } from './runtime-environment-removal-cleanup'
@@ -221,6 +224,7 @@ function registerPassiveCallHandler(getUserDataPath: () => string): void {
     async (
       _event,
       args: {
+        envelope?: RuntimeOrchestrationEnvelope
         selector: string
         method: string
         params?: unknown
@@ -268,7 +272,7 @@ function registerPassiveCallHandler(getUserDataPath: () => string): void {
           accounts.params,
           args.timeoutMs,
           args.expectedEnvironmentPairingRevision,
-          undefined,
+          args.envelope,
           { expectedEnvironmentRuntimeId: args.expectedEnvironmentRuntimeId }
         )
       } catch (error) {

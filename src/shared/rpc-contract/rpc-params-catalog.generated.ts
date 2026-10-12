@@ -469,6 +469,7 @@ import { FederationAttachStartParams } from './orchestration-federation-start-pa
 import {
   GateCreateParams,
   GateListParams,
+  GateResolveByUserParams,
   GateResolveParams,
   RunParams,
   RunStopParams
@@ -1282,6 +1283,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'orchestration.gateCreate': GateCreateParams,
   'orchestration.gateList': GateListParams,
   'orchestration.gateResolve': GateResolveParams,
+  'orchestration.gateResolveByUser': GateResolveByUserParams,
   'orchestration.inbox': InboxParams,
   'orchestration.partyLocation': PartyLocationParams,
   'orchestration.reply': ReplyParams,

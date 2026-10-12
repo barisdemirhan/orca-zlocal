@@ -1,3 +1,7 @@
+import { Badge } from '@/components/ui/badge'
+import { useAppStore } from '@/store'
+import { agentHubCanResolveGate } from './agent-hub-gate-capability'
+import { splitRecommendedOptionLabel } from '../native-chat/native-chat-option-label'
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -41,13 +45,15 @@ export function AgentHubRequestCard({
   useEffect(() => {
     mountedAt.current = Date.now()
   }, [])
-  const busy = state !== undefined && state.phase !== 'error'
+  const canResolveGate = useAppStore((app) => agentHubCanResolveGate(app, host))
+  const busy =
+    (state !== undefined && state.phase !== 'error') || (request.kind === 'gate' && !canResolveGate)
   const agent = request.caller.agentType ?? 'agent'
   const send = (result: Parameters<typeof answerAgentHubRequest>[2]): void => {
     void answerAgentHubRequest(host, request.requestId, result)
   }
   const choose = (index: number): boolean => {
-    if (request.kind !== 'ask' || busy || !request.options[index]) {
+    if ((request.kind !== 'ask' && request.kind !== 'gate') || busy || !request.options[index]) {
       return false
     }
     if (request.multi && !compact) {
@@ -81,7 +87,7 @@ export function AgentHubRequestCard({
         ? (state.message ?? translate('agentHub.requests.answeredElsewhere', 'Answered elsewhere'))
         : state?.message
   const headline =
-    request.kind === 'ask'
+    request.kind === 'ask' || request.kind === 'gate'
       ? translate('agentHub.requests.asks', '@{{agent}} asks', { agent })
       : request.kind === 'consent'
         ? translate('agentHub.requests.wantsTo', '@{{agent}} wants to {{action}}', {
@@ -111,11 +117,21 @@ export function AgentHubRequestCard({
           >
             {headline}
           </div>
+          {request.kind === 'gate' ? (
+            <Badge variant="secondary">
+              {translate('agentHub.requests.decisionGate', 'Decision gate')}
+            </Badge>
+          ) : null}
           <div className="truncate text-xs text-muted-foreground">{presentation.title}</div>
+          {request.kind === 'gate' ? (
+            <div className="truncate text-xs text-muted-foreground">
+              {request.runTitle} · {request.taskTitle}
+            </div>
+          ) : null}
           <HubCrumb location={presentation.location} />
         </div>
       </div>
-      {compact && request.kind === 'ask' ? (
+      {compact && (request.kind === 'ask' || request.kind === 'gate') ? (
         <div className="mt-3 mb-2 text-sm leading-snug font-semibold">{request.question}</div>
       ) : null}
       {compact && request.kind === 'notify' ? (
@@ -132,7 +148,7 @@ export function AgentHubRequestCard({
       ) : (
         header
       )}
-      {request.kind === 'ask' ? (
+      {request.kind === 'ask' || request.kind === 'gate' ? (
         <>
           {!compact ? (
             <div className="mt-3 mb-2 text-sm leading-snug font-semibold">{request.question}</div>
@@ -141,8 +157,11 @@ export function AgentHubRequestCard({
             density={compact ? 'chip' : 'card'}
             options={request.options.slice(0, compact ? 4 : undefined).map((label, index) => ({
               id: String(index),
-              label,
-              recommended: request.recommended === index + 1
+              label: request.kind === 'gate' ? splitRecommendedOptionLabel(label).label : label,
+              recommended:
+                request.kind === 'ask'
+                  ? request.recommended === index + 1
+                  : splitRecommendedOptionLabel(label).recommended
             }))}
             chosen={null}
             selected={request.multi && !compact ? selected : undefined}
@@ -216,6 +235,14 @@ export function AgentHubRequestCard({
           />
         </>
       )}
+      {request.kind === 'gate' && !canResolveGate ? (
+        <div role="status" className="mt-2 text-xs text-muted-foreground">
+          {translate(
+            'agentHub.requests.gateUpdateRequired',
+            'Update this host to answer decision gates.'
+          )}
+        </div>
+      ) : null}
       {status ? (
         <div role="status" className="mt-2 text-xs text-muted-foreground">
           {status}

@@ -323,6 +323,7 @@ export type DecisionGateRow = {
   options: string
   status: GateStatus
   resolution: string | null
+  resolved_by: 'user' | 'coordinator' | null
   created_at: string
   resolved_at: string | null
 }

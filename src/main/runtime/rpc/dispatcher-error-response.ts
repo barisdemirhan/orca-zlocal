@@ -1,5 +1,6 @@
 import { InvalidArgumentError, ZodError, formatZodError } from './core'
 import { AgentHubError } from '../agent-hub/agent-hub-error'
+import { OrchestrationError } from '../orchestration/orchestration-error'
 import type { RpcEnvelopeMeta, RpcRequest, RpcResponse } from './core'
 import {
   computerErrorData,
@@ -28,7 +29,10 @@ export function mapDispatcherError(
   meta: RpcEnvelopeMeta,
   error: unknown
 ): RpcResponse {
-  if (error instanceof AgentHubError) {
+  if (
+    error instanceof AgentHubError ||
+    (error instanceof OrchestrationError && request.method.startsWith('orchestration.gate'))
+  ) {
     return errorResponse(request.id, meta, error.code, error.message, error.data)
   }
   if (error instanceof ZodError) {

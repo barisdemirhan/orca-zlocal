@@ -1,3 +1,4 @@
+import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import { defineMethod } from '../../../core'
 import type { GateStatus } from '../../../../orchestration/db'
 import { Coordinator } from '../../../../orchestration/coordinator'
@@ -7,6 +8,7 @@ import {
   GateCreateParams,
   GateListParams,
   GateResolveParams,
+  GateResolveByUserParams,
   RunParams,
   RunStopParams
 } from '../../../../../../shared/rpc-contract/orchestration-gates-params'
@@ -152,6 +154,36 @@ export const ORCHESTRATION_GATE_METHODS = [
       const gate = db.resolveGate(params.id, params.resolution)
       if (!gate) {
         throw new Error(`Gate not found: ${params.id}`)
+      }
+      return { gate }
+    }
+  }),
+
+  defineMethod({
+    name: 'orchestration.gateResolveByUser',
+    permission: 'workspace',
+    params: GateResolveByUserParams,
+    handler: (params, ctx) => {
+      if (
+        ctx.clientKind === 'mobile' ||
+        !(
+          ctx.caller?.kind === 'desktop' ||
+          (ctx.caller?.kind === 'paired-device' && ctx.clientKind === 'runtime')
+        )
+      ) {
+        throw new OrchestrationError(
+          'permission_denied',
+          'Only a desktop can answer a decision gate.'
+        )
+      }
+      const db = ctx.runtime.getOrchestrationDb()
+      const existing = db.getGate(params.id)
+      if (!existing || (params.run && existing.run_id !== params.run)) {
+        throw new OrchestrationError('request_not_found', 'Decision gate not found.')
+      }
+      const gate = db.resolveGate(params.id, params.resolution, 'user')
+      if (!gate) {
+        throw new OrchestrationError('request_not_found', 'Decision gate not found.')
       }
       return { gate }
     }

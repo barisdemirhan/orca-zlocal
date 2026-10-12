@@ -12,7 +12,11 @@ import { lastVerifiedRuntimeStatus } from '../../../../shared/runtime-host-statu
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubLists } from './agent-hub-lists'
 import { AgentHubRequestConsumer, type AgentHubConsumerHost } from './agent-hub-request-consumer'
-import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
+import {
+  applyAgentHubDelivery,
+  clearAgentHubRequestHost,
+  readAgentHubRequests
+} from './agent-hub-requests-store'
 import { executeAgentHubRequest } from './agent-hub-request-executor'
 import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
 
@@ -60,9 +64,12 @@ export function useAgentHubRequestConsumer(
       execute: (host, request) => executeAgentHubRequest(host, request, context.current),
       onError
     })
-    const unregisterResponder = registerAgentHubRequestResponder((host, requestId, result) =>
-      consumer.respond(host, requestId, result)
-    )
+    const unregisterResponder = registerAgentHubRequestResponder((host, requestId, result) => {
+      const gate = readAgentHubRequests().get(host)?.pendingGates.get(requestId)
+      return gate && result.kind === 'ask'
+        ? consumer.resolveGate(host, gate, result.answer)
+        : consumer.respond(host, requestId, result)
+    })
     const update = (state: AppState): void => {
       const enabled =
         state.settings?.experimentalAgentHub === true &&

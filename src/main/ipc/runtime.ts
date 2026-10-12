@@ -7,7 +7,10 @@ import type {
   RuntimeSyncWindowGraphResult,
   RuntimeTerminalDriverState
 } from '../../shared/runtime-types'
-import type { RuntimeRpcResponse } from '../../shared/runtime-rpc-envelope'
+import type {
+  RuntimeOrchestrationEnvelope,
+  RuntimeRpcResponse
+} from '../../shared/runtime-rpc-envelope'
 import type { ClientHostedBrowserRowsEvent } from '../../shared/client-hosted-browser-rows'
 import { TERMINAL_FIT_RESTORE_DEADLINE_MS } from '../../shared/terminal-fit-restore-deadline'
 import { DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES } from './desktop-renderer-runtime-capabilities'
@@ -16,7 +19,10 @@ import { DESKTOP_RPC_CALLER } from '../runtime/rpc/rpc-caller-identity'
 import { ALL_RPC_METHODS } from '../runtime/rpc/methods'
 import { DesktopRuntimeSenderLifecycle } from './desktop-runtime-sender-lifecycle'
 import { publishMobileProjectSections } from '../runtime/mobile-project-sections-snapshot'
-import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../shared/agent-hub-capabilities'
+import {
+  AGENT_HUB_REQUESTS_CAPABILITY,
+  AGENT_HUB_GATES_CAPABILITY
+} from '../../shared/agent-hub-capabilities'
 import { isTrustedUIRenderer } from './ui'
 
 function rendererCapabilities(
@@ -26,13 +32,18 @@ function rendererCapabilities(
 ): readonly string[] {
   const consumingHub =
     args.method === 'agentHub.respond' ||
+    args.method === 'orchestration.gateResolveByUser' ||
     (args.method === 'runtime.clientEvents.subscribe' &&
       typeof args.params === 'object' &&
       args.params !== null &&
       'agentHub' in args.params &&
       args.params.agentHub === true)
   return consumingHub && isTrustedUIRenderer(sender) && runtime.isAgentHubEnabled()
-    ? [...DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES, AGENT_HUB_REQUESTS_CAPABILITY]
+    ? [
+        ...DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES,
+        AGENT_HUB_REQUESTS_CAPABILITY,
+        AGENT_HUB_GATES_CAPABILITY
+      ]
     : DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES
 }
 
@@ -87,13 +98,14 @@ export function registerRuntimeHandlers(runtime: OrcaRuntimeService): void {
     'runtime:call',
     async (
       event,
-      args: { method: string; params?: unknown }
+      args: { method: string; params?: unknown; envelope?: RuntimeOrchestrationEnvelope }
     ): Promise<RuntimeRpcResponse<unknown>> => {
       if (event.senderFrame !== event.sender.mainFrame) {
         throw new Error('Runtime RPC call must originate from the current main frame')
       }
       return new RpcDispatcher({ runtime, methods: ALL_RPC_METHODS }).dispatch(
         {
+          ...args.envelope,
           id: 'desktop-ipc',
           authToken: 'desktop-ipc',
           method: args.method,

@@ -26,6 +26,12 @@ export const GateResolveParams = z.object({
   run: OptionalString
 })
 
+export const GateResolveByUserParams = z.object({
+  id: requiredString('Missing gate id'),
+  resolution: z.string().trim().min(1).max(100_000),
+  run: OptionalString
+})
+
 export const GateListParams = z.object({
   task: OptionalString,
   status: z.enum(['pending', 'resolved', 'timeout']).optional(),

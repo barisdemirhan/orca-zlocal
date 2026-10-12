@@ -32,6 +32,7 @@ export function agentHubRequestAlerts(state: AgentHubRequestsState): AgentHubReq
   return [...state]
     .flatMap(([host, view]) =>
       [
+        ...view.pendingGates.values(),
         ...view.pendingAsks.values(),
         ...view.pendingConsents.values(),
         ...view.notifications.values()
@@ -40,7 +41,7 @@ export function agentHubRequestAlerts(state: AgentHubRequestsState): AgentHubReq
         host,
         request,
         kind:
-          request.kind === 'ask'
+          request.kind === 'ask' || request.kind === 'gate'
             ? 'ask'
             : request.kind === 'consent'
               ? 'approval'

@@ -19,7 +19,11 @@ import {
   readAgentHubRequests,
   useAgentHubRequests
 } from './agent-hub-requests-store'
-import { agentHubAskRequest, agentHubNotifyRequest } from './agent-hub-request-test-fixtures'
+import {
+  agentHubAskRequest,
+  agentHubNotifyRequest,
+  agentHubGateRequest
+} from './agent-hub-request-test-fixtures'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 vi.mock('sonner', () => ({ toast: vi.fn() }))
 
@@ -286,4 +290,58 @@ it('arms the existing numeric card control after its guard delay', async () => {
     answer: 'Second',
     index: 2
   })
+})
+
+it('shows a decision gate with its run, task and recommended option and counts it in Needs you', async () => {
+  const gate = agentHubGateRequest()
+  act(() => applyAgentHubDelivery('local', gate))
+  render(<Inbox />)
+  expect(screen.getByText('Decision gate')).toBeTruthy()
+  expect(screen.getByText('Ship Orca · Choose strategy')).toBeTruthy()
+  expect(screen.getByText('@claude asks')).toBeTruthy()
+  expect(
+    agentHubCounts(buildAgentHubLists([]), agentHubInboxRequests(readAgentHubRequests()).length)
+      .needsYou
+  ).toBe(1)
+  await act(async () =>
+    fireEvent.click(screen.getByRole('button', { name: '1 Small Recommended' }))
+  )
+  expect(respond).toHaveBeenCalledExactlyOnceWith('local', gate.gateId, {
+    kind: 'ask',
+    answer: 'Small (Recommended)',
+    index: 1
+  })
+  act(() => applyAgentHubDelivery('local', { ...gate, kind: 'closed', reason: 'responded' }))
+  expect(agentHubInboxRequests(readAgentHubRequests())).toHaveLength(0)
+})
+
+it('accepts a free-text gate answer and shows Answered elsewhere for a racing resolver', async () => {
+  vi.useFakeTimers()
+  const gate = agentHubGateRequest()
+  respond.mockRejectedValue(Object.assign(new Error('resolved'), { code: 'already_resolved' }))
+  act(() => applyAgentHubDelivery('local', gate))
+  render(<Inbox />)
+  const input = screen.getByRole('textbox', { name: 'Reply to @claude…' })
+  fireEvent.change(input, { target: { value: 'A custom decision' } })
+  const form = input.closest('form')
+  if (!form) {
+    throw new Error('Missing reply form')
+  }
+  await act(async () => fireEvent.submit(form))
+  expect(respond).toHaveBeenCalledWith('local', gate.gateId, {
+    kind: 'ask',
+    answer: 'A custom decision',
+    index: null
+  })
+  expect(screen.getByText('Answered elsewhere')).toBeTruthy()
+  act(() => vi.advanceTimersByTime(1500))
+  expect(screen.queryByText('Decision gate')).toBeNull()
+})
+
+it('keeps gate actions disabled when its paired host lacks user-gate-resolve capability', () => {
+  receive(agentHubGateRequest())
+  render(<Inbox />)
+  expect(screen.getByText('Update this host to answer decision gates.')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '1 Small Recommended' }))
+  expect(respond).not.toHaveBeenCalled()
 })

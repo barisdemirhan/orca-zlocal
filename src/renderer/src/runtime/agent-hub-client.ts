@@ -1,3 +1,6 @@
+import { createBrowserUuid } from '@/lib/browser-uuid'
+import { ORCHESTRATION_CONTRACT_VERSION } from '../../../shared/protocol-version'
+import { GateResolveByUserParams } from '../../../shared/rpc-contract/orchestration-gates-params'
 import type { AgentHubRendererApi } from '../../../shared/agent-hub-requests'
 import {
   AgentHubRespondParams,
@@ -83,6 +86,28 @@ export function createAgentHubClient(
             onError(error)
           }
         })
+      }
+    },
+    async resolveGate(gate, resolution) {
+      const params = GateResolveByUserParams.parse({ id: gate.gateId, run: gate.runId, resolution })
+      const args = {
+        method: 'orchestration.gateResolveByUser',
+        params,
+        envelope: {
+          orchestrationContractVersion: ORCHESTRATION_CONTRACT_VERSION,
+          orchestrationRequestId: createBrowserUuid()
+        }
+      }
+      const response =
+        environmentId === null
+          ? await window.api.runtime.call(args)
+          : await window.api.runtimeEnvironments.call({
+              ...args,
+              selector: environmentId,
+              expectedEnvironmentPairingRevision: pairingRevision
+            })
+      if (!response.ok) {
+        throw response.error
       }
     },
     async respond(requestId, result) {

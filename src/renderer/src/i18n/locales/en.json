@@ -22059,6 +22059,8 @@
       "agentControlCopy": "Agents can show you things, ask questions and manage their mirrors."
     },
     "requests": {
+      "decisionGate": "Decision gate",
+      "gateUpdateRequired": "Update this host to answer decision gates.",
       "pairedPeekUnavailable": "Peek cannot open URLs or files from this paired host yet.",
       "peekUnavailable": "Peek is unavailable in the current view.",
       "peekUnsupported": "This URL or file cannot be opened in Peek on its host.",

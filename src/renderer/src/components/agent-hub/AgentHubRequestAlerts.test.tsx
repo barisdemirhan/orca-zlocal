@@ -28,7 +28,11 @@ import {
   readAgentHubRequests,
   agentHubRequestKey
 } from './agent-hub-requests-store'
-import { agentHubAskRequest, agentHubNotifyRequest } from './agent-hub-request-test-fixtures'
+import {
+  agentHubAskRequest,
+  agentHubNotifyRequest,
+  agentHubGateRequest
+} from './agent-hub-request-test-fixtures'
 import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
 import { playAgentHubAlertSound } from './agent-hub-chime'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
@@ -301,4 +305,30 @@ it('shows the newest request per pane from a replayed snapshot and bounds the bu
   expect(readAgentHubAlertQueue().map((alert) => alert.id)).toEqual(
     others.map((ask) => agentHubRequestKey('workhost', ask.requestId))
   )
+})
+
+it('raises a decision gate bubble that answers its host and closes on the host event', async () => {
+  const gate = agentHubGateRequest()
+  render(<Alerts />)
+  receive(gate, 'local')
+  expect(screen.getByText('Decision gate')).toBeTruthy()
+  expect(screen.getByText('Ship Orca · Choose strategy')).toBeTruthy()
+  fireEvent.click(screen.getByText('Which approach?'))
+  expect(opened).toHaveBeenCalledWith(expect.objectContaining({ host: 'local', request: gate }))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: '1 Small' })))
+  expect(respond).toHaveBeenCalledWith('local', gate.gateId, {
+    kind: 'ask',
+    answer: 'Small (Recommended)',
+    index: 1
+  })
+  expect(screen.getByText('Decision gate')).toBeTruthy()
+  act(() =>
+    applyAgentHubDelivery('local', {
+      ...gate,
+      kind: 'closed',
+      gateId: gate.gateId,
+      reason: 'responded'
+    })
+  )
+  expect(screen.queryByText('Decision gate')).toBeNull()
 })

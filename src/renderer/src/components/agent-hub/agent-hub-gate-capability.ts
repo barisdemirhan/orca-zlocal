@@ -1,0 +1,14 @@
+import type { AppState } from '@/store/types'
+import { lastVerifiedRuntimeStatus } from '../../../../shared/runtime-host-status'
+import { ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY } from '../../../../shared/protocol-version'
+
+export function agentHubCanResolveGate(state: AppState, host: string): boolean {
+  return (
+    host === 'local' ||
+    Boolean(
+      lastVerifiedRuntimeStatus(
+        state.runtimeStatusByEnvironmentId.get(host)
+      )?.capabilities?.includes(ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY)
+    )
+  )
+}

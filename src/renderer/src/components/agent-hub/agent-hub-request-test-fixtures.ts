@@ -37,3 +37,19 @@ export function agentHubNotifyRequest(
     ...overrides
   }
 }
+
+export function agentHubGateRequest(): Extract<AgentHubRequest, { kind: 'gate' }> {
+  return {
+    ...agentHubAskRequest(),
+    kind: 'gate',
+    requestId: 'gate_question',
+    gateId: 'gate_question',
+    runId: 'run_work',
+    taskId: 'task_strategy',
+    runTitle: 'Ship Orca',
+    taskTitle: 'Choose strategy',
+    options: ['Small (Recommended)', 'Large'],
+    multi: false,
+    expiresAt: Number.MAX_SAFE_INTEGER
+  }
+}

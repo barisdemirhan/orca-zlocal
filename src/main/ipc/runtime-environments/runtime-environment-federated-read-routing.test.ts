@@ -181,4 +181,34 @@ describe('federated read RPC transport routing', () => {
     )
     expect(sendRemoteRuntimeSharedControlRequestMock).not.toHaveBeenCalled()
   })
+  it('routes a user gate resolution over the durable mutation transport with its envelope intact', async () => {
+    const envelope = { orchestrationContractVersion: 1, orchestrationRequestId: 'gate-answer' }
+    sendRemoteRuntimeRequestMock.mockResolvedValue({
+      id: 'answer',
+      ok: true,
+      result: { gate: { resolved_by: 'user' } },
+      _meta: { runtimeId: 'runtime-worker' }
+    })
+    await expect(
+      callRuntimeEnvironment(
+        userDataPath,
+        environmentId,
+        'orchestration.gateResolveByUser',
+        { id: 'gate_one', resolution: 'yes' },
+        15_000,
+        undefined,
+        envelope
+      )
+    ).resolves.toMatchObject({ ok: true })
+    expect(sendRemoteRuntimeRequestMock).toHaveBeenCalledExactlyOnceWith(
+      expect.any(Object),
+      'orchestration.gateResolveByUser',
+      { id: 'gate_one', resolution: 'yes' },
+      15_000,
+      envelope,
+      undefined,
+      ELECTRON_REMOTE_RUNTIME_CLIENT_CAPABILITIES
+    )
+    expect(sendRemoteRuntimeSharedControlRequestMock).not.toHaveBeenCalled()
+  })
 })

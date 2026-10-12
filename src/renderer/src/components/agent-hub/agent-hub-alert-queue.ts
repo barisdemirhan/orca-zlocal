@@ -54,6 +54,7 @@ export function pruneAgentHubRequestAlerts(state: AgentHubRequestsState): void {
     }
     const view = state.get(alert.host)
     return Boolean(
+      view?.pendingGates.has(alert.request.requestId) ||
       view?.pendingAsks.has(alert.request.requestId) ||
       view?.pendingConsents.has(alert.request.requestId) ||
       view?.notifications.has(alert.request.requestId)

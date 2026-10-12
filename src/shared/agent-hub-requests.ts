@@ -25,6 +25,19 @@ export type AgentHubAskContent = {
   ifAway?: 'recommended'
 }
 
+export type AgentHubGateContent = {
+  kind: 'gate'
+  gateId: string
+  runId: string
+  taskId: string
+  runTitle: string
+  taskTitle: string
+  question: string
+  options: string[]
+  multi: false
+}
+export type AgentHubGate = AgentHubRequestBase & AgentHubGateContent
+
 export type AgentHubRequest = AgentHubRequestBase &
   (
     | {
@@ -35,6 +48,7 @@ export type AgentHubRequest = AgentHubRequestBase &
         links: string[]
       }
     | ({ kind: 'ask' } & AgentHubAskContent)
+    | AgentHubGateContent
     | { kind: 'presence' }
     | { kind: 'status' }
     | AgentHubOperation
@@ -82,6 +96,7 @@ export type AgentHubErrorCode =
 
 export type AgentHubClosed = AgentHubRequestBase & {
   kind: 'closed'
+  gateId?: string
   reason: 'responded' | AgentHubErrorCode
   result?: AgentHubAnswer
 }
@@ -92,5 +107,6 @@ export type AgentHubDelivery = AgentHubEvent | { kind: 'snapshot'; snapshot: Age
 export type AgentHubRespondResult = { accepted: true; requestId: string }
 export type AgentHubRendererApi = {
   subscribe(handler: (event: AgentHubDelivery) => void): () => void
+  resolveGate?(gate: AgentHubGate, resolution: string): Promise<void>
   respond(requestId: string, result: AgentHubResponse): Promise<AgentHubRespondResult>
 }

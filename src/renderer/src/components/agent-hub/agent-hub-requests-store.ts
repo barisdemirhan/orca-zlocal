@@ -10,7 +10,7 @@ import type {
 export type AgentHubRequestHost = string
 export type AgentHubInboxRequest = {
   host: string
-  request: Extract<AgentHubRequest, { kind: 'ask' | 'consent' | 'notify' }>
+  request: Extract<AgentHubRequest, { kind: 'ask' | 'gate' | 'consent' | 'notify' }>
 }
 export type AgentHubAwayAnswer = AgentHubClosed & { result: AgentHubAnswer }
 export type AgentHubRequestAnswerState = {
@@ -19,6 +19,7 @@ export type AgentHubRequestAnswerState = {
 }
 /** Each host owns its request IDs and pane keys; equal IDs on other hosts stay independent. */
 export type AgentHubHostRequests = {
+  pendingGates: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'gate' }>>
   pendingAsks: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'ask' }>>
   pendingConsents: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'consent' }>>
   notifications: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'notify' }>>
@@ -30,6 +31,7 @@ export type AgentHubRequestsState = ReadonlyMap<AgentHubRequestHost, AgentHubHos
 
 function emptyHost(): AgentHubHostRequests {
   return {
+    pendingGates: new Map(),
     pendingAsks: new Map(),
     pendingConsents: new Map(),
     notifications: new Map(),
@@ -59,7 +61,10 @@ export function reduceAgentHubRequests(
         answerStates: new Map(
           [...(state.get(host)?.answerStates ?? [])].filter(
             ([id]) =>
-              view.pendingAsks.has(id) || view.pendingConsents.has(id) || view.notifications.has(id)
+              view.pendingGates.has(id) ||
+              view.pendingAsks.has(id) ||
+              view.pendingConsents.has(id) ||
+              view.notifications.has(id)
           )
         )
       })
@@ -67,6 +72,7 @@ export function reduceAgentHubRequests(
     return next
   }
   const previous = state.get(host) ?? emptyHost()
+  const pendingGates = new Map(previous.pendingGates)
   const pendingAsks = new Map(previous.pendingAsks)
   const pendingConsents = new Map(previous.pendingConsents)
   const notifications = new Map(previous.notifications)
@@ -74,6 +80,9 @@ export function reduceAgentHubRequests(
   const awayAnswers = new Map(previous.awayAnswers)
   const answerStates = new Map(previous.answerStates)
   switch (event.kind) {
+    case 'gate':
+      pendingGates.set(event.requestId, event)
+      break
     case 'ask':
       pendingAsks.set(event.requestId, event)
       break
@@ -91,6 +100,7 @@ export function reduceAgentHubRequests(
       }
       break
     case 'closed':
+      pendingGates.delete(event.requestId)
       pendingAsks.delete(event.requestId)
       pendingConsents.delete(event.requestId)
       notifications.delete(event.requestId)
@@ -118,6 +128,7 @@ export function reduceAgentHubRequests(
       return state
   }
   return new Map(state).set(host, {
+    pendingGates,
     pendingAsks,
     pendingConsents,
     notifications,
@@ -160,6 +171,7 @@ export function agentHubInboxRequests(state: AgentHubRequestsState): AgentHubInb
   return [...state]
     .flatMap(([host, view]) =>
       [
+        ...view.pendingGates.values(),
         ...view.pendingAsks.values(),
         ...view.pendingConsents.values(),
         ...view.notifications.values()
@@ -183,6 +195,7 @@ export function setAgentHubRequestAnswerState(
   if (
     !view ||
     !(
+      view.pendingGates.has(requestId) ||
       view.pendingAsks.has(requestId) ||
       view.pendingConsents.has(requestId) ||
       view.notifications.has(requestId)
@@ -208,6 +221,7 @@ export function removeAgentHubResolvedRequest(
     return
   }
   const request =
+    state.get(host)?.pendingGates.get(requestId) ??
     state.get(host)?.pendingAsks.get(requestId) ??
     state.get(host)?.pendingConsents.get(requestId) ??
     state.get(host)?.notifications.get(requestId)
