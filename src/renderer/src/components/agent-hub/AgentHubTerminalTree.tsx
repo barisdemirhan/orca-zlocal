@@ -21,7 +21,11 @@ import {
   type AgentHubIndicatorKind
 } from './agent-hub-lists'
 import type { AgentHubLineage } from './agent-hub-lineage'
-import type { AgentHubGroupNode, AgentHubTerminalRow } from './agent-hub-terminal-tree'
+import type {
+  AgentHubGroupNode,
+  AgentHubTerminalRow,
+  AgentHubWorkspaceNode
+} from './agent-hub-terminal-tree'
 import {
   isAgentHubGroupCollapsed,
   isAgentHubRowExpanded,
@@ -145,9 +149,11 @@ export function AgentHubTerminalTree({
   selectionMode = false,
   onToggleChildren,
   emptyLabel,
-  windowFilter
+  windowFilter,
+  renderWorkspaceAction
 }: {
   groups: readonly AgentHubGroupNode[]
+  renderWorkspaceAction?: (workspace: AgentHubWorkspaceNode) => React.ReactNode
   totalCount: number
   emptyLabel?: string
   /** Shows the window filter beside the sort; the hub's lists have it, the picker does not. */
@@ -281,7 +287,7 @@ export function AgentHubTerminalTree({
               <HubCollapse open={!collapsed}>
                 {group.workspaces.map((workspace) => (
                   <div key={workspace.key}>
-                    <div className="flex items-center gap-1.5 pt-1.5 pr-2 pb-1 pl-7 text-xs text-muted-foreground/70">
+                    <div className="group/workspace flex flex-wrap items-center gap-1.5 pt-1.5 pr-2 pb-1 pl-7 text-xs text-muted-foreground/70">
                       <Folder className="size-3 shrink-0" />
                       <span className="truncate">{workspace.projectLabel}</span>
                       {workspace.workspaceLabel ? (
@@ -290,6 +296,9 @@ export function AgentHubTerminalTree({
                           <GitBranch className="size-3 shrink-0" />
                           <span className="truncate">{workspace.workspaceLabel}</span>
                         </>
+                      ) : null}
+                      {renderWorkspaceAction ? (
+                        <div className="ml-auto">{renderWorkspaceAction(workspace)}</div>
                       ) : null}
                     </div>
                     {workspace.rows.map((row) => (

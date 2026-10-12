@@ -21743,6 +21743,12 @@
       "closeShell": "Close terminal"
     },
     "mirror": {
+      "newAgent": "New agent",
+      "agent": "agent",
+      "addAgentInWorkspace": "Add agent in {{workspace}}",
+      "newAgentInWorkspace": "New {{agent}} agent in {{workspace}}",
+      "newAgentFailed": "Could not start {{agent}}.",
+      "newAgentUnavailable": "The new terminal is not available.",
       "backHome": "Back to {{value0}}",
       "returnAgain": "Click again to return to {{value0}}",
       "close": "Close mirror",

@@ -13,6 +13,7 @@ import {
 } from './agent-hub-mirror-tab-actions'
 import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
 import { AgentHubMirrorPickerBody } from './AgentHubMirrorPickerBody'
+import { startAgentInAgentHubMirror } from './agent-hub-mirror-new-agent'
 
 export function AgentHubMirrorAddButton({
   windowId,
@@ -29,6 +30,8 @@ export function AgentHubMirrorAddButton({
   const [query, setQuery] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
   const addedRef = useRef(false)
+  const launchingRef = useRef(false)
+  const [pending, setPending] = useState(false)
   const full = count >= AGENT_HUB_MIRROR_TAB_CAP
   const label = full
     ? agentHubMirrorTabCapReason()
@@ -92,6 +95,23 @@ export function AgentHubMirrorAddButton({
         className="w-132 max-w-[calc(100vw-2rem)]"
       >
         <AgentHubMirrorPickerBody
+          windowId={windowId}
+          pending={pending}
+          onStart={(worktree, agent) => {
+            if (launchingRef.current) {
+              return
+            }
+            launchingRef.current = true
+            setPending(true)
+            void startAgentInAgentHubMirror(windowId, worktree, agent).then((started) => {
+              launchingRef.current = false
+              setPending(false)
+              if (started) {
+                addedRef.current = true
+                setOpen(false)
+              }
+            })
+          }}
           threads={threads}
           lineage={lineage}
           query={query}

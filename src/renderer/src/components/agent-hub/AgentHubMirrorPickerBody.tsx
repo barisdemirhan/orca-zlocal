@@ -22,6 +22,14 @@ import { sortAgentHubTerminalTree } from './agent-hub-terminal-tree-sort'
 import { moveAgentHubSelection } from './agent-hub-keys'
 import { AgentHubTerminalTree } from './AgentHubTerminalTree'
 import { AgentHubTabSwitcher, agentHubTabSwitcherPanelProps } from './AgentHubTabSwitcher'
+import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { Worktree } from '../../../../shared/worktree/types'
+import {
+  activeAgentHubMirrorTab,
+  homeAgentHubMirrorTab,
+  agentHubMirrorWindows
+} from './agent-hub-mirror-membership'
+import { AgentHubMirrorNewAgent } from './AgentHubMirrorNewAgent'
 
 const PICKER_TAB_ID = 'agent-hub-picker'
 const PICKER_SECTIONS = ['agents', 'all'] as const
@@ -31,6 +39,9 @@ function countRows(tree: readonly { rowCount: number }[]): number {
 }
 
 export function AgentHubMirrorPickerBody({
+  windowId,
+  pending,
+  onStart,
   threads,
   lineage,
   onAdd,
@@ -39,6 +50,9 @@ export function AgentHubMirrorPickerBody({
   onQueryChange,
   searchRef
 }: {
+  windowId: string
+  pending: boolean
+  onStart: (worktree: Worktree, agent: TuiAgent) => void
   threads: readonly AgentPaneThread[]
   lineage: AgentHubLineage
   onAdd: (row: AgentHubTerminalRow) => void
@@ -54,6 +68,9 @@ export function AgentHubMirrorPickerBody({
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set())
   const rootRef = useRef<HTMLDivElement>(null)
   const mirrors = useAgentHubMirrors()
+  const mirror = agentHubMirrorWindows(mirrors).find((entry) => entry.id === windowId)
+  const homeWorktree =
+    mirror && homeAgentHubMirrorTab(activeAgentHubMirrorTab(mirror)).target.worktree
   const parentOf = useMemo(
     () => availableAgentHubPickerParents(lineage.parentOf, threads, mirrors),
     [lineage.parentOf, threads, mirrors]
@@ -122,6 +139,11 @@ export function AgentHubMirrorPickerBody({
         }
       }}
     >
+      {homeWorktree ? (
+        <div className="border-b border-border px-2.5 py-2">
+          <AgentHubMirrorNewAgent worktree={homeWorktree} pending={pending} onStart={onStart} />
+        </div>
+      ) : null}
       <div className="flex items-center px-2.5 pt-2.5 pb-2.5">
         <AgentHubTabSwitcher
           tabs={PICKER_SECTIONS.map((value) => ({
@@ -146,6 +168,14 @@ export function AgentHubMirrorPickerBody({
         className="max-h-[min(520px,calc(100vh-160px))] overflow-y-auto px-2.5 pb-2.5 scrollbar-sleek"
       >
         <AgentHubTerminalTree
+          renderWorkspaceAction={(workspace) => (
+            <AgentHubMirrorNewAgent
+              worktree={workspace.worktree}
+              workspaceHeader
+              pending={pending}
+              onStart={onStart}
+            />
+          )}
           groups={groups}
           totalCount={totalCount}
           query={query}
