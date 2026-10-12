@@ -211,6 +211,10 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
     this.paneSpawnLineage.close(target)
   }
 
+  restorePaneSpawnLineage(): void {
+    this.paneSpawnLineage.restore()
+  }
+
   getTerminalSpawnedBy(paneKey: string) {
     return this.paneSpawnLineage.get(paneKey)
   }

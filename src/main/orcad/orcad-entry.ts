@@ -223,6 +223,8 @@ async function startOrcadRuntime(
     }
   })
   paneGridsForShutdown = runtime
+  // Hands the hook server the persisted "started by" links now that it is wired.
+  runtime.restorePaneSpawnLineage()
 
   accountLaunch?.attachToRuntime(runtime)
   const { installOrcadEmulatorBridge } = await import('./orcad-emulator-bridge')

@@ -7,7 +7,8 @@ type SpawnedBy = NonNullable<AgentStatusEntry['spawnedBy']>
 type Lineage = Record<string, SpawnedBy>
 
 export class RuntimePaneSpawnLineage {
-  private links: Lineage
+  // Why lazy: tests and hot paths bound session reads; the host restores links once at startup.
+  private loaded: Lineage | null = null
 
   constructor(
     private readonly deps: {
@@ -16,10 +17,21 @@ export class RuntimePaneSpawnLineage {
       resolveLivePane: (handle: string) => string | null
       publish: (paneKey: string, spawnedBy: SpawnedBy | undefined) => void
     }
-  ) {
-    this.links = { ...deps.read()?.terminalSpawnedByPaneKey }
+  ) {}
+
+  private get links(): Lineage {
+    this.loaded ??= { ...this.deps.read()?.terminalSpawnedByPaneKey }
+    return this.loaded
+  }
+
+  private set links(next: Lineage) {
+    this.loaded = next
+  }
+
+  /** Publishes the persisted links once the host's status readers are wired. */
+  restore(): void {
     for (const [paneKey, spawnedBy] of Object.entries(this.links)) {
-      deps.publish(paneKey, spawnedBy)
+      this.deps.publish(paneKey, spawnedBy)
     }
   }
 
