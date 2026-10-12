@@ -253,7 +253,12 @@ export function AgentHubRequestCard({
           className="absolute top-2 right-2"
           aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
           disabled={busy}
-          onClick={() => (request.kind === 'notify' ? send({ kind: 'ack' }) : onDismiss?.())}
+          onClick={() =>
+            // A needs-you bubble only steps aside; its Inbox card is what closes the notice.
+            request.kind === 'notify' && !(compact && request.level === 'needs-you' && onDismiss)
+              ? send({ kind: 'ack' })
+              : onDismiss?.()
+          }
         >
           <X />
         </Button>

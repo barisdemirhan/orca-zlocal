@@ -19,6 +19,7 @@ import {
   useAgentHubAlertQueue,
   pruneAgentHubRequestAlerts,
   dismissAgentHubAlert,
+  clearAgentHubAlerts,
   readAgentHubAlertQueue
 } from './agent-hub-alert-queue'
 import {
@@ -169,7 +170,7 @@ it('does not take focus or number keys from a typing field or terminal', async (
   terminal.remove()
 })
 
-it.each(['info', 'done', 'needs-you'] as const)(
+it.each(['info', 'done'] as const)(
   'uses the %s visual tone and acknowledges explicit dismissal',
   async (level) => {
     const notify = agentHubNotifyRequest({
@@ -181,7 +182,7 @@ it.each(['info', 'done', 'needs-you'] as const)(
     receive(notify)
     expect(
       document.querySelector('[data-agent-hub-alert]')?.getAttribute('data-agent-hub-alert')
-    ).toBe(level === 'needs-you' ? 'ask' : level)
+    ).toBe(level)
     expect(screen.getAllByRole('button', { name: /^Peek at / })).toHaveLength(2)
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Dismiss' })))
     expect(respond).toHaveBeenCalledWith('workhost', notify.requestId, { kind: 'ack' })
@@ -216,9 +217,25 @@ it('applies needs-input preferences to asks and consent while info remains visib
   expect(readAgentHubAlertQueue()).toHaveLength(1)
 })
 
+it('keeps a needs-you notice for the Inbox when its bubble is dismissed or times out', async () => {
+  vi.useFakeTimers()
+  const notify = agentHubNotifyRequest({ requestId: id(), level: 'needs-you' })
+  render(<Alerts />)
+  receive(notify)
+  expect(
+    document.querySelector('[data-agent-hub-alert]')?.getAttribute('data-agent-hub-alert')
+  ).toBe('ask')
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Dismiss' })))
+  receive(agentHubNotifyRequest({ requestId: id(), level: 'needs-you' }))
+  await act(async () => vi.advanceTimersByTime(7000))
+  clearAgentHubAlerts()
+  expect(respond).not.toHaveBeenCalled()
+  expect(readAgentHubRequests().get('workhost')?.notifications.size).toBe(2)
+})
+
 it('acks when a notification bubble times out and removes expired requests on host closed', async () => {
   vi.useFakeTimers()
-  const notify = agentHubNotifyRequest({ requestId: id(), level: 'needs-you', expiresAt: 600_000 })
+  const notify = agentHubNotifyRequest({ requestId: id(), level: 'done', expiresAt: 600_000 })
   render(<Alerts />)
   receive(notify)
   await act(async () => vi.advanceTimersByTime(7000))

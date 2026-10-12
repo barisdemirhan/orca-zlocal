@@ -33,9 +33,14 @@ export function pushAgentHubAlerts(alerts: readonly AgentHubAlert[]): void {
   )
 }
 
+/** A notice that closes on every desktop once its bubble goes; needs-you ones wait in the Inbox. */
+function acknowledgesOnBubbleExit(alert: AgentHubAlert): boolean {
+  return alert.request?.kind === 'notify' && alert.request.level !== 'needs-you'
+}
+
 export function dismissAgentHubAlert(id: string): void {
   const alert = queue.find((entry) => entry.id === id)
-  if (alert?.request?.kind === 'notify' && alert.host !== undefined) {
+  if (alert && acknowledgesOnBubbleExit(alert) && alert.host !== undefined) {
     void answerAgentHubRequest(alert.host, alert.request.requestId, { kind: 'ack' })
     return
   }
@@ -62,11 +67,12 @@ export function pruneAgentHubRequestAlerts(state: AgentHubRequestsState): void {
 export function clearAgentHubAlerts(): void {
   if (queue.length > 0) {
     for (const alert of queue) {
-      if (alert.request?.kind === 'notify' && alert.host !== undefined) {
+      if (acknowledgesOnBubbleExit(alert) && alert.host !== undefined && alert.request) {
         void answerAgentHubRequest(alert.host, alert.request.requestId, { kind: 'ack' })
       }
     }
-    emit(queue.filter((alert) => alert.request?.kind === 'notify'))
+    // Acknowledged notices stay queued until the host closes them; the rest leave the bubble stack.
+    emit(queue.filter(acknowledgesOnBubbleExit))
   }
 }
 
