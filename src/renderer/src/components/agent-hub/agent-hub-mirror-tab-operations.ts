@@ -1,8 +1,10 @@
 import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import { createBrowserUuid } from '@/lib/browser-uuid'
-import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
+  clearAgentHubMirrorViewing,
   agentHubMirrorWindows,
+  agentHubMirrorSourceKey,
   findAgentHubMirrorMembership,
   replaceAgentHubMirrorWindow,
   removeAgentHubMirrorTab,
@@ -49,7 +51,7 @@ export function addAgentHubMirrorTab(
   if (!window) {
     return { status: 'missing-window' }
   }
-  if (findAgentHubMirrorMembership(state, target)) {
+  if (findAgentHubMirrorMembership(state, target)?.kind === 'tab') {
     return { status: 'already-owned' }
   }
   if (window.tabs.length >= AGENT_HUB_MIRROR_TAB_CAP) {
@@ -62,47 +64,20 @@ export function addAgentHubMirrorTab(
     return { status: 'entry-cap' }
   }
   const tab = { id: createBrowserUuid(), target, origin: 'manual' as const }
+  const released = clearAgentHubMirrorViewing(
+    state,
+    (entry) => agentHubMirrorSourceKey(entry) === agentHubMirrorSourceKey(target)
+  )
+  const homeWindow =
+    agentHubMirrorWindows(released).find((entry) => entry.id === window.id) ?? window
   const next = {
-    ...window,
-    tabs: [...window.tabs.map((item) => ({ ...item, origin: 'manual' as const })), tab],
+    ...homeWindow,
+    tabs: [...homeWindow.tabs.map((item) => ({ ...item, origin: 'manual' as const })), tab],
     activeTabId: tab.id
   }
-  commitAgentHubMirrorState(replaceAgentHubMirrorWindow(state, window.id, next), window.id)
+  commitAgentHubMirrorState(replaceAgentHubMirrorWindow(released, window.id, next), window.id)
   requestAgentHubMirrorSelection(next.id, tab.id)
   return changed(next, tab.id)
-}
-/** Points an existing tab at another agent (the family bar), unlike `add`, which opens a new tab. */
-export function retargetAgentHubMirrorTab(
-  windowId: string,
-  tabId: string,
-  request: AgentHubPaneTarget
-): AgentHubMirrorTabResult {
-  const window = findWindow(windowId)
-  if (!window) {
-    return { status: 'missing-window' }
-  }
-  if (!window.tabs.some((entry) => entry.id === tabId)) {
-    return { status: 'missing-entry' }
-  }
-  const target = resolveAgentHubMirrorTarget(request)
-  if (!target) {
-    return { status: 'missing-source' }
-  }
-  const state = readAgentHubMirrors()
-  const owner = findAgentHubMirrorMembership(state, target)
-  // Why same-tab is allowed through: split panes of one tab share a source, only the pane differs.
-  if (owner && owner.tab.id !== tabId) {
-    return { status: 'already-owned' }
-  }
-  if (owner && agentHubPaneTargetKey(owner.tab.target) === agentHubPaneTargetKey(target)) {
-    return { status: 'noop' }
-  }
-  commitAgentHubMirrorState(
-    replaceAgentHubMirrorWindow(state, windowId, selectAgentHubMirrorTarget(window, tabId, target)),
-    windowId
-  )
-  requestAgentHubMirrorSelection(windowId, tabId)
-  return changed(window, tabId)
 }
 export function activateAgentHubMirrorTab(
   windowId: string,
@@ -125,7 +100,13 @@ export function activateAgentHubMirrorTab(
     replaceAgentHubMirrorWindow(
       readAgentHubMirrors(),
       windowId,
-      selectAgentHubMirrorTarget(window, tabId, target)
+      selectAgentHubMirrorTarget(
+        {
+          ...window,
+          tabs: window.tabs.map((entry) => (entry.id === tabId ? { ...entry, target } : entry))
+        },
+        tabId
+      )
     ),
     windowId
   )

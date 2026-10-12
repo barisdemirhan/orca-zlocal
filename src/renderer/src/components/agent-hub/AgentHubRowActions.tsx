@@ -1,12 +1,13 @@
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { returnAgentHubMirrorTabHome } from './agent-hub-mirror-viewing'
 import { Maximize2, PictureInPicture2, Minimize2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
-import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
-import { readAgentHubMirrors, useAgentHubMirrorPresence } from './agent-hub-mirror-store'
+import { showAgentHubMirrorMember } from './agent-hub-mirror-member-navigation'
+import { useAgentHubMirrors } from './agent-hub-mirror-store'
 
 export function HubRowAction({
   label,
@@ -61,21 +62,26 @@ export function HubRowMirrorActions({
   target?: AgentHubPaneTarget
   onPopout: () => void
 }): React.JSX.Element {
-  const presence = useAgentHubMirrorPresence(target ?? mirrorKey)
-  const owner = findAgentHubMirrorMembership(readAgentHubMirrors(), target ?? mirrorKey)
+  const mirrors = useAgentHubMirrors()
+  const owner = findAgentHubMirrorMembership(mirrors, target ?? mirrorKey)
+  const presence = owner?.presence
   const grouped = (owner?.window.tabs.length ?? 0) > 1
   return (
     <>
       {presence ? (
         <HubRowAction
           label={
-            grouped
+            grouped || owner?.kind === 'viewing'
               ? translate('agentHub.mirror.returnToWorkspace', 'Return to workspace')
               : translate('agentHub.mirror.close', 'Close mirror')
           }
           onClick={() => {
             if (owner) {
-              closeAgentHubMirrorTab(owner.window.id, owner.tab.id)
+              if (owner.kind === 'viewing') {
+                returnAgentHubMirrorTabHome(owner.window.id, owner.tab.id)
+              } else {
+                closeAgentHubMirrorTab(owner.window.id, owner.tab.id)
+              }
             }
           }}
         >
@@ -94,7 +100,7 @@ export function HubRowMirrorActions({
         }
         onClick={() => {
           if (owner) {
-            openAgentHubMirrorInLayout(target ?? owner.tab.target)
+            showAgentHubMirrorMember(target ?? owner.tab.viewing ?? owner.tab.target)
           } else {
             onPopout()
           }

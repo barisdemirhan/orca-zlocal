@@ -4,7 +4,11 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { AgentTerminalPreview } from '../dashboard-popout/AgentTerminalPreview'
-import type { AgentHubMirrorWindowState, AgentHubMirrorTab } from './agent-hub-mirror-membership'
+import {
+  shownAgentHubMirrorTarget,
+  type AgentHubMirrorWindowState,
+  type AgentHubMirrorTab
+} from './agent-hub-mirror-membership'
 import { resolveAgentHubTerminalInput } from './agent-hub-pane-target'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 
@@ -19,7 +23,7 @@ function PreviewEntry({
   visible: boolean
   destination: HTMLElement | null
 }): React.JSX.Element {
-  const target = entry.target
+  const target = shownAgentHubMirrorTarget(entry)
   const ptyId = useAgentHubLivePty(target.worktree.id, target.tab.id, target.paneKey, false)
   const input = useAppStore(
     useShallow((state) => (ptyId ? resolveAgentHubTerminalInput(state, target, ptyId) : null))
@@ -78,7 +82,7 @@ export function AgentHubMirrorPreviews({
         .filter(
           ({ entry }) =>
             visited.current.has(entry.id) &&
-            entry.target.worktree.id === FLOATING_TERMINAL_WORKTREE_ID
+            shownAgentHubMirrorTarget(entry).worktree.id === FLOATING_TERMINAL_WORKTREE_ID
         )
         .toSorted((a, b) => a.entry.id.localeCompare(b.entry.id))
         .map(({ window, entry }) => (

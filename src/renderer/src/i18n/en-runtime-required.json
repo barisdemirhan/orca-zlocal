@@ -16,7 +16,16 @@
     },
     "mirror": {
       "tabCount_one": "{{value0}} tab",
-      "tabCount_other": "{{value0}} tabs"
+      "tabCount_other": "{{value0}} tabs",
+      "workerCount": "{{value0}} workers"
+    },
+    "peek": {
+      "showSource": "Bring this mirror to the front"
+    },
+    "quick": {
+      "answerWith": "Answer: {{value0}}",
+      "escHint": "terminal",
+      "recommended": "Recommended"
     },
     "row": {
       "sendToHub": "Send to the hub"

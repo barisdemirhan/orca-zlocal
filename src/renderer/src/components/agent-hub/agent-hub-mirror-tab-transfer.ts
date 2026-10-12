@@ -5,6 +5,7 @@ import {
   replaceAgentHubMirrorWindow,
   removeAgentHubMirrorTab,
   activeAgentHubMirrorTab,
+  homeAgentHubMirrorTab,
   type AgentHubMirrorWindowState
 } from './agent-hub-mirror-membership'
 import { commitAgentHubMirrorState, readAgentHubMirrors } from './agent-hub-mirror-store'
@@ -60,7 +61,7 @@ export function moveAgentHubMirrorTab(
     .filter((entry) => entry.id !== tabId)
     .map((entry) => ({ ...entry, origin: 'manual' as const }))
   tabs.splice(Math.max(0, Math.min(tabs.length, Math.trunc(index))), 0, {
-    ...tab,
+    ...homeAgentHubMirrorTab(tab),
     target,
     origin: 'manual'
   })
@@ -97,7 +98,7 @@ export function detachAgentHubMirrorTab(
   const single = source.tabs.length === 1
   const next = {
     id: single ? source.id : createBrowserUuid(),
-    tabs: [{ ...tab, target, origin: 'manual' as const }],
+    tabs: [{ ...homeAgentHubMirrorTab(tab), target, origin: 'manual' as const }],
     activeTabId: tab.id
   }
   const state = replaceAgentHubMirrorWindow(

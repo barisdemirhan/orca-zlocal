@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { ArrowUpRight, Crosshair, PictureInPicture2 } from 'lucide-react'
+import { ArrowUpRight, Crosshair, PictureInPicture2, Plus } from 'lucide-react'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
@@ -23,6 +23,7 @@ export type AgentHubThreadCardActions = {
   onJump?: () => void
   /** Present when the agent has no window of its own yet. */
   onPopout?: () => void
+  onOpenTab?: () => void
   /** Opens the sidebar on the agent's workspace. */
   onShowInSidebar?: () => void
   /** Names the jump-to-mirror shortcut on Jump; only the active mirror tab's Jump has it. */
@@ -139,8 +140,14 @@ function ThreadDetails({
           {copy.statusLine}
         </p>
       ) : null}
-      {actions?.onJump || actions?.onPopout || actions?.onShowInSidebar ? (
-        <div className="flex justify-end gap-1">
+      {actions?.onJump || actions?.onPopout || actions?.onOpenTab || actions?.onShowInSidebar ? (
+        <div className="flex flex-wrap justify-end gap-1">
+          {actions.onOpenTab ? (
+            <Button type="button" variant="ghost" size="xs" onClick={actions.onOpenTab}>
+              <Plus aria-hidden className="size-3.5" />
+              {translate('agentHub.hover.openTabHere', 'Open as a tab here')}
+            </Button>
+          ) : null}
           {actions.onShowInSidebar ? (
             <Button type="button" variant="ghost" size="xs" onClick={actions.onShowInSidebar}>
               <Crosshair aria-hidden className="size-3.5" />

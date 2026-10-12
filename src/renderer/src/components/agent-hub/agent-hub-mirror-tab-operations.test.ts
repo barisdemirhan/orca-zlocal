@@ -4,6 +4,7 @@ import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import {
+  removeAgentHubMirrorEntries,
   agentHubMirrorSourceKey,
   agentHubMirrorWindows,
   findAgentHubMirrorMembership
@@ -11,13 +12,13 @@ import {
 import {
   addAgentHubMirrorTab,
   activateAgentHubMirrorTab,
-  retargetAgentHubMirrorTab,
   closeAgentHubMirrorTab,
   reorderAgentHubMirrorTabs,
   moveAgentHubMirrorTab,
   detachAgentHubMirrorTab
 } from './agent-hub-mirror-tab-operations'
 import {
+  commitAgentHubMirrorState,
   openAgentHubMirror,
   openAgentHubMirrors,
   minimizeAgentHubMirror,
@@ -29,6 +30,7 @@ import {
   toggleAgentHubMirrorFocus,
   reopenAgentHubMirrors
 } from './agent-hub-mirror-store'
+import { toggleAgentHubMirrorViewing } from './agent-hub-mirror-viewing'
 import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { rememberAgentHubMirrorOrigin, readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import { captureAgentHubSession } from './agent-hub-session-restore'
@@ -79,40 +81,48 @@ beforeEach(() => {
   disappeared.clear()
 })
 
-describe('retargetAgentHubMirrorTab', () => {
-  it('replaces the tab target in place and keeps the tab count', () => {
+describe('toggleAgentHubMirrorViewing', () => {
+  it('shows a worker while keeping home and the tab count', () => {
     openAgentHubMirror(target('a'))
     const window = readAgentHubMirrors().windows[0]
     const tabId = window?.activeTabId ?? ''
-    expect(retargetAgentHubMirrorTab(window?.id ?? '', tabId, target('b')).status).toBe('changed')
+    expect(toggleAgentHubMirrorViewing(window?.id ?? '', tabId, target('b')).status).toBe('changed')
     const next = readAgentHubMirrors().windows[0]
     expect(next?.tabs.map((tab) => tab.id)).toEqual([tabId])
-    expect(next?.tabs[0]?.target.title).toBe('b')
+    expect(next?.tabs[0]?.target.title).toBe('a')
+    expect(next?.tabs[0]?.viewing?.title).toBe('b')
     expectInvariants()
   })
-  it('is a noop for the pane the tab already shows', () => {
+  it('stays at home when the home pane is selected', () => {
     openAgentHubMirror(target('a', 'pane-1'))
     const window = readAgentHubMirrors().windows[0]
     expect(
-      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('a', 'pane-1'))
-        .status
-    ).toBe('noop')
-  })
-  it('retargets to another pane of the same tab', () => {
-    openAgentHubMirror(target('a', 'pane-1'))
-    const window = readAgentHubMirrors().windows[0]
-    expect(
-      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('a', 'pane-2'))
-        .status
+      toggleAgentHubMirrorViewing(
+        window?.id ?? '',
+        window?.activeTabId ?? '',
+        target('a', 'pane-1')
+      ).status
     ).toBe('changed')
-    expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.paneKey).toBe('pane-2')
+  })
+  it('views another split pane without changing the home leaf', () => {
+    openAgentHubMirror(target('a', 'pane-1'))
+    const window = readAgentHubMirrors().windows[0]
+    expect(
+      toggleAgentHubMirrorViewing(
+        window?.id ?? '',
+        window?.activeTabId ?? '',
+        target('a', 'pane-2')
+      ).status
+    ).toBe('changed')
+    expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.paneKey).toBe('pane-1')
+    expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing?.paneKey).toBe('pane-2')
   })
   it('refuses a terminal another tab already owns', () => {
     openAgentHubMirror(target('a'))
     openAgentHubMirror(target('b'))
     const window = readAgentHubMirrors().windows[0]
     expect(
-      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('b')).status
+      toggleAgentHubMirrorViewing(window?.id ?? '', window?.activeTabId ?? '', target('b')).status
     ).toBe('already-owned')
     expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.title).toBe('a')
   })
@@ -121,7 +131,8 @@ describe('retargetAgentHubMirrorTab', () => {
     const window = readAgentHubMirrors().windows[0]
     disappeared.add('gone')
     expect(
-      retargetAgentHubMirrorTab(window?.id ?? '', window?.activeTabId ?? '', target('gone')).status
+      toggleAgentHubMirrorViewing(window?.id ?? '', window?.activeTabId ?? '', target('gone'))
+        .status
     ).toBe('missing-source')
     expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.title).toBe('a')
   })
@@ -354,5 +365,46 @@ describe('mirror container membership', () => {
     expect(findAgentHubMirrorMembership(readAgentHubMirrors(), target('b'))).toBeNull()
     expect(addAgentHubMirrorTab(owner('window-16').window.id, target('b')).status).toBe('changed')
     expectInvariants()
+  })
+})
+
+describe('temporary viewing lifecycle', () => {
+  it('falls back to home when a viewed pane closes, including a parked mirror', () => {
+    openAgentHubMirror(target('a'))
+    const a = owner('a')
+    toggleAgentHubMirrorViewing(a.window.id, a.tab.id, target('worker'))
+    minimizeAgentHubMirror(a.window.id)
+    commitAgentHubMirrorState(
+      removeAgentHubMirrorEntries(readAgentHubMirrors(), (entry) => entry.tab.id === 'worker')
+    )
+    expect(owner('a').presence).toBe('chip')
+    expect(owner('a').tab.viewing).toBeUndefined()
+    expect(findAgentHubMirrorMembership(readAgentHubMirrors(), target('worker'))).toBeNull()
+  })
+  it('does not save temporary viewing and drops it even from direct reopen input', () => {
+    openAgentHubMirror(target('a'))
+    const a = owner('a')
+    toggleAgentHubMirrorViewing(a.window.id, a.tab.id, target('worker'))
+    const window = owner('a').window
+    const saved = captureAgentHubSession()
+    expect(saved.windows[0]?.tabs[0]?.tabId).toBe('a')
+    expect(saved.windows[0]?.tabs[0]).not.toHaveProperty('viewing')
+    resetAgentHubMirrorsForTest()
+    reopenAgentHubMirrors([{ window, minimized: false, minimizedAt: 0, place: null }])
+    expect(owner('a').tab.viewing).toBeUndefined()
+    expect(findAgentHubMirrorMembership(readAgentHubMirrors(), target('worker'))).toBeNull()
+  })
+  it('releases viewing when its home tab is moved or detached', () => {
+    openAgentHubMirror(target('a'))
+    openAgentHubMirror(target('b'))
+    const a = owner('a'),
+      b = owner('b')
+    toggleAgentHubMirrorViewing(a.window.id, a.tab.id, target('worker'))
+    expect(moveAgentHubMirrorTab(a.window.id, a.tab.id, b.window.id, 0).status).toBe('changed')
+    expect(owner('a').tab.viewing).toBeUndefined()
+    toggleAgentHubMirrorViewing(b.window.id, a.tab.id, target('worker'))
+    expect(detachAgentHubMirrorTab(b.window.id, a.tab.id, { x: 50, y: 50 }).status).toBe('changed')
+    expect(owner('a').tab.viewing).toBeUndefined()
+    expect(findAgentHubMirrorMembership(readAgentHubMirrors(), target('worker'))).toBeNull()
   })
 })

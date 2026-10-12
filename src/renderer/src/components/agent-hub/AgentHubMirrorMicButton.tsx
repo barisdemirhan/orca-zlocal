@@ -1,5 +1,5 @@
 import { findAttachedAgentHubMirrorInput } from './agent-hub-mirror-input'
-import { agentHubMirrorWindows } from './agent-hub-mirror-membership'
+import { agentHubMirrorWindows, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
 import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
 import { AgentHubShortcut } from './AgentHubShortcut'
@@ -161,7 +161,7 @@ export function AgentHubMirrorMicButton({
   const elsewhereName =
     state === 'elsewhere'
       ? (agentHubMirrorWindows({ windows, chips })
-          .flatMap((window) => window.tabs.map((tab) => tab.target))
+          .flatMap((window) => window.tabs.map(shownAgentHubMirrorTarget))
           .find((other) => mirrorOwnsDictation(session, agentHubMirrorDictationPane(other)))
           ?.title ?? null)
       : null

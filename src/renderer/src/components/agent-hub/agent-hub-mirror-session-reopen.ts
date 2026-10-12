@@ -2,6 +2,7 @@ import { AGENT_HUB_MIRROR_CHIP_CAP } from './agent-hub-mirror-window-stack'
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import {
   agentHubMirrorWindows,
+  homeAgentHubMirrorTab,
   agentHubMirrorSourceKey,
   AGENT_HUB_MIRROR_ENTRY_CAP,
   type AgentHubMirrorChip,
@@ -26,7 +27,9 @@ export function reopenAgentHubMirrorState(
 ): AgentHubMirrorState | null {
   const present = new Set(
     agentHubMirrorWindows(state).flatMap((window) =>
-      window.tabs.map((tab) => agentHubMirrorSourceKey(tab.target))
+      window.tabs.flatMap((tab) =>
+        (tab.viewing ? [tab.target, tab.viewing] : [tab.target]).map(agentHubMirrorSourceKey)
+      )
     )
   )
   const ids = new Set(agentHubMirrorWindows(state).map((window) => window.id))
@@ -34,7 +37,7 @@ export function reopenAgentHubMirrorState(
     agentHubMirrorWindows(state).flatMap((window) => window.tabs.map((tab) => tab.id))
   )
   const fresh: AgentHubReopenedMirror[] = []
-  let entries = present.size
+  let entries = entryIds.size
   for (const mirror of saved.slice(0, 32)) {
     if (ids.has(mirror.window.id)) {
       continue
@@ -49,14 +52,15 @@ export function reopenAgentHubMirrorState(
       entries++
       return true
     })
-    const first = tabs[0]
+    const homeTabs = tabs.map(homeAgentHubMirrorTab)
+    const first = homeTabs[0]
     if (!first) {
       continue
     }
     ids.add(mirror.window.id)
     const window = {
       ...mirror.window,
-      tabs,
+      tabs: homeTabs,
       activeTabId: tabs.some((tab) => tab.id === mirror.window.activeTabId)
         ? mirror.window.activeTabId
         : first.id

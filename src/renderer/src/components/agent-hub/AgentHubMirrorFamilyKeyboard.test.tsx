@@ -1,5 +1,5 @@
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '../ui/tooltip'
@@ -10,9 +10,14 @@ import {
   makeTabWithIds,
   makeWorktree
 } from '../activity/ActivityPrototypePage-test-fixtures'
-import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { activeAgentHubMirrorTab, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
+import { selectAgentHubMirrorFamilyMember } from './agent-hub-mirror-tab-actions'
+import { returnAgentHubMirrorTabHome } from './agent-hub-mirror-viewing'
+import { agentHubMirrorFamilyActions } from './agent-hub-mirror-family-actions'
+import { paneTargetFromThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
+import { HubRowMirrorActions } from './AgentHubRowActions'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
@@ -64,27 +69,51 @@ function dispatcherTarget(): AgentHubPaneTarget {
   }
 }
 
-function Stage(): React.JSX.Element {
+function Stage({ source = threads }: { source?: typeof threads }): React.JSX.Element {
   const { windows } = useAgentHubMirrors()
-  const family = agentHubMirrorFamily(PANE_KEY, threads, lineage)
+  const family = agentHubMirrorFamily(PANE_KEY, source, buildAgentHubLineage(source, 1_000))
   return (
     <TooltipProvider>
       {windows.map((window) => (
         <div key={window.id} data-agent-hub-mirror>
           <AgentHubMirrorTabStrip
             window={window}
-            threads={threads}
-            lineage={lineage}
+            threads={source}
+            lineage={buildAgentHubLineage(source, 1_000)}
             locationOf={() => location}
             onReveal={vi.fn()}
           />
           {family ? (
             <AgentHubMirrorFamilyTabs
               family={family}
-              activeKey={PANE_KEY}
+              activeKey={
+                shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window)).paneKey ?? PANE_KEY
+              }
+              home={
+                activeAgentHubMirrorTab(window).viewing
+                  ? {
+                      title: 'Dispatcher',
+                      onSelect: () => returnAgentHubMirrorTabHome(window.id, window.activeTabId)
+                    }
+                  : undefined
+              }
               locationOf={() => location}
-              actionsFor={() => ({})}
-              onSelect={vi.fn()}
+              actionsFor={(member) =>
+                agentHubMirrorFamilyActions({
+                  member,
+                  state: readAgentHubMirrors(),
+                  windowId: window.id,
+                  onScreenTab: null,
+                  onReveal: vi.fn()
+                })
+              }
+              onSelect={(member) =>
+                selectAgentHubMirrorFamilyMember(
+                  window.id,
+                  window.activeTabId,
+                  paneTargetFromThread(member, member.tab.id)
+                )
+              }
             />
           ) : null}
         </div>
@@ -93,9 +122,9 @@ function Stage(): React.JSX.Element {
   )
 }
 
-function stage(): HTMLElement {
+function stage(source = threads): HTMLElement {
   openAgentHubMirror(dispatcherTarget())
-  render(<Stage />)
+  render(<Stage source={source} />)
   return screen.getByRole('tab')
 }
 
@@ -145,9 +174,9 @@ it('roves between rows, returns to the tab at the top and on Escape', async () =
   const rows = screen.getAllByRole('treeitem')
   expect(rows).toHaveLength(2)
   expect(document.activeElement).toBe(rows[0])
-  await user.keyboard('{ArrowDown}')
+  await user.keyboard('{ArrowRight}')
   expect(document.activeElement).toBe(rows[1])
-  await user.keyboard('{ArrowUp}{ArrowUp}')
+  await user.keyboard('{ArrowLeft}{ArrowUp}')
   expect(document.activeElement).toBe(tab)
   await user.keyboard('{ArrowDown}{Escape}')
   expect(document.activeElement).toBe(tab)
@@ -162,16 +191,18 @@ it('Enter on a row selects it', async () => {
   }
   const user = userEvent.setup()
   render(
-    <AgentHubMirrorFamilyTabs
-      family={family}
-      activeKey={PANE_KEY}
-      locationOf={() => location}
-      actionsFor={() => ({})}
-      onSelect={onSelect}
-    />
+    <TooltipProvider>
+      <AgentHubMirrorFamilyTabs
+        family={family}
+        activeKey={PANE_KEY}
+        locationOf={() => location}
+        actionsFor={() => ({})}
+        onSelect={onSelect}
+      />
+    </TooltipProvider>
   )
   screen.getAllByRole('treeitem')[0]?.focus()
-  await user.keyboard('{ArrowDown}{Enter}')
+  await user.keyboard('{ArrowRight}{Enter}')
   expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ paneKey: PANE_KEY_3 }))
 })
 
@@ -186,4 +217,117 @@ it('shows the agent card on hovering a tab, and closes it on press', async () =>
     await new Promise((resolve) => setTimeout(resolve, 200))
   })
   expect(screen.queryByText('Where')).toBeNull()
+})
+
+it('clicking a viewed worker again or its home row returns without changing the tab', async () => {
+  const tab = stage()
+  const beforeLabel = tab.getAttribute('aria-label')
+  const worker = screen.getAllByRole('treeitem')[0]
+  fireEvent.click(worker)
+  expect(screen.getByRole('tab')).toBe(tab)
+  expect(tab.getAttribute('aria-label')).toBe(beforeLabel)
+  expect(worker.getAttribute('aria-selected')).toBe('true')
+  expect(screen.getByRole('treeitem', { name: 'Dispatcher' })).toBeTruthy()
+  const user = userEvent.setup()
+  await user.hover(worker)
+  expect((await screen.findByRole('tooltip')).textContent).toContain(
+    'Click again to return to Dispatcher'
+  )
+  fireEvent.click(worker)
+  expect(screen.queryByRole('treeitem', { name: 'Dispatcher' })).toBeNull()
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
+  fireEvent.click(worker)
+  fireEvent.click(screen.getByRole('treeitem', { name: 'Dispatcher' }))
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
+})
+it('Enter and Space toggle the focused worker just like a click', async () => {
+  stage()
+  const worker = screen.getAllByRole('treeitem')[0]
+  const user = userEvent.setup()
+  worker.focus()
+  await user.keyboard('{Enter}')
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing?.paneKey).toBe(PANE_KEY_2)
+  worker.focus()
+  await user.keyboard(' ')
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
+})
+it('shows siblings together, counts hidden children, and navigates only the viewed branch', async () => {
+  const source = agentHubThreadsFor([
+    { paneKey: PANE_KEY, state: 'working', at: 1_000 },
+    { paneKey: PANE_KEY_2, state: 'working', at: 1_000, parentPaneKey: PANE_KEY },
+    { paneKey: PANE_KEY_3, state: 'done', at: 1_000, parentPaneKey: PANE_KEY_2 }
+  ])
+  stage(source)
+  const parent = screen.getByRole('treeitem')
+  expect(parent.getAttribute('aria-expanded')).toBe('false')
+  expect(within(parent).getByText('1')).toBeTruthy()
+  fireEvent.click(parent)
+  const groups = screen.getAllByRole('group')
+  expect(groups).toHaveLength(2)
+  expect(within(groups[0]).getAllByRole('treeitem')).toHaveLength(2)
+  expect(within(groups[1]).getAllByRole('treeitem')).toHaveLength(1)
+  expect(parent.getAttribute('aria-expanded')).toBe('true')
+  const child = within(groups[1]).getByRole('treeitem')
+  expect(child.getAttribute('aria-level')).toBe('2')
+  const user = userEvent.setup()
+  parent.focus()
+  await user.keyboard('{ArrowDown}')
+  expect(document.activeElement).toBe(child)
+  await user.keyboard('{ArrowUp}')
+  expect(document.activeElement).toBe(parent)
+  fireEvent.click(child)
+  expect(screen.getAllByRole('group')).toHaveLength(2)
+  expect(child.getAttribute('aria-selected')).toBe('true')
+  fireEvent.click(screen.getByRole('treeitem', { name: 'Dispatcher' }))
+  expect(screen.getAllByRole('group')).toHaveLength(1)
+})
+it('offers opening a viewed worker as a tab and activates it from the hover card', async () => {
+  stage()
+  const worker = screen.getAllByRole('treeitem')[0]
+  fireEvent.click(worker)
+  const user = userEvent.setup()
+  await user.hover(worker)
+  fireEvent.click(await screen.findByRole('button', { name: 'Open as a tab here' }))
+  expect(screen.getAllByRole('tab')).toHaveLength(2)
+  const window = readAgentHubMirrors().windows[0]
+  expect(window?.activeTabId).toBe(window?.tabs[1]?.id)
+  expect(window?.tabs[0]?.viewing).toBeUndefined()
+})
+
+it('shows a viewed member from the hub without creating a second window', () => {
+  stage()
+  fireEvent.click(screen.getAllByRole('treeitem')[0])
+  const member = threads.find((thread) => thread.paneKey === PANE_KEY_2)
+  if (!member) {
+    throw new Error('No worker')
+  }
+  const onPopout = vi.fn()
+  render(
+    <TooltipProvider>
+      <HubRowMirrorActions
+        mirrorKey={member.paneKey}
+        target={paneTargetFromThread(member, 'Worker')}
+        onPopout={onPopout}
+      />
+    </TooltipProvider>
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Show in mirror' }))
+  expect(onPopout).not.toHaveBeenCalled()
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing?.paneKey).toBe(PANE_KEY_2)
+})
+it('opens Own window from a viewed member and hides Open as a tab here once it has a real tab', async () => {
+  stage()
+  const worker = screen.getAllByRole('treeitem')[0]
+  fireEvent.click(worker)
+  const user = userEvent.setup()
+  await user.hover(worker)
+  fireEvent.click(await screen.findByRole('button', { name: 'Own window' }))
+  expect(readAgentHubMirrors().windows).toHaveLength(2)
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
+  expect(readAgentHubMirrors().windows[1]?.tabs[0]?.target.paneKey).toBe(PANE_KEY_2)
+  await user.unhover(worker)
+  await user.hover(worker)
+  expect(await screen.findByText('Where')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Open as a tab here' })).toBeNull()
 })

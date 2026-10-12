@@ -171,7 +171,8 @@ export function rearrangeAgentHubMirrorsByDefault(): void {
 export function openAgentHubMirrorInLayout(
   target: AgentHubPaneTarget
 ): ReturnType<typeof openAgentHubMirror> {
-  const shownBefore = findAgentHubMirrorMembership(readAgentHubMirrors(), target)?.presence
+  const owner = findAgentHubMirrorMembership(readAgentHubMirrors(), target)
+  const shownBefore = owner?.kind === 'tab' ? owner.presence : null
   const result = openAgentHubMirror(target)
   if (result === 'opened' && shownBefore !== 'window') {
     rearrangeAgentHubMirrorsByDefault()

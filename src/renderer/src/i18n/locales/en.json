@@ -21743,6 +21743,8 @@
       "closeShell": "Close terminal"
     },
     "mirror": {
+      "backHome": "Back to {{value0}}",
+      "returnAgain": "Click again to return to {{value0}}",
       "close": "Close mirror",
       "noTerminal": "This pane has no live terminal right now.",
       "connecting": "Connecting to the terminal…",
@@ -21918,6 +21920,7 @@
       "nested": "{{value0}} more under them"
     },
     "hover": {
+      "openTabHere": "Open as a tab here",
       "state": "State",
       "where": "Where",
       "popout": "Own window"

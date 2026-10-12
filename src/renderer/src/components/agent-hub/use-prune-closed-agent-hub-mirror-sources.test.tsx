@@ -4,13 +4,19 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
 import type * as MirrorSource from './agent-hub-mirror-source'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import {
+  PANE_KEY,
+  makeTabWithIds,
+  makeWorktree
+} from '../activity/ActivityPrototypePage-test-fixtures'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
-import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { agentHubThreadsFor } from './agent-hub-test-fixtures'
+import { paneTargetFromThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
+import { toggleAgentHubMirrorViewing } from './agent-hub-mirror-viewing'
 import { usePruneClosedAgentHubMirrorSources } from './use-prune-closed-agent-hub-mirror-sources'
 
 vi.mock('@/store', async () => {
@@ -124,4 +130,59 @@ it('keeps an agent mirror while its tab layout is unknown', () => {
   renderHook(() => usePruneClosedAgentHubMirrorSources())
   act(() => useAppStore.setState({ tabsByWorktree: { [worktree.id]: [target.tab] } }))
   expect(readAgentHubMirrors().windows).toHaveLength(1)
+})
+
+it('returns to the home pane when the viewed split closes through a live layout update', () => {
+  const home = { ...target, paneKey: makePaneKey(target.tab.id, leafA) }
+  resetAgentHubMirrorsForTest()
+  useAppStore.setState({
+    workspaceSessionReady: true,
+    hydrationSucceeded: true,
+    terminalStartupRestorationReady: true,
+    tabsByWorktree: { [worktree.id]: [target.tab] },
+    terminalLayoutsByTabId: {
+      [target.tab.id]: { root: splitRoot, activeLeafId: leafA, expandedLeafId: null }
+    }
+  })
+  openAgentHubMirror(home)
+  const window = readAgentHubMirrors().windows[0]
+  if (!window) {
+    throw new Error('No home window')
+  }
+  toggleAgentHubMirrorViewing(window.id, window.activeTabId, {
+    ...home,
+    paneKey: makePaneKey(target.tab.id, leafB)
+  })
+  renderHook(() => usePruneClosedAgentHubMirrorSources())
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeTruthy()
+  act(() =>
+    useAppStore.setState({
+      terminalLayoutsByTabId: {
+        [target.tab.id]: {
+          root: { type: 'leaf', leafId: leafA },
+          activeLeafId: leafA,
+          expandedLeafId: null
+        }
+      }
+    })
+  )
+  expect(readAgentHubMirrors().windows[0]?.id).toBe(window.id)
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.paneKey).toBe(home.paneKey)
+})
+
+it('returns to home when its viewed thread disappears from the live thread list', () => {
+  const worker = agentHubThreadsFor([{ paneKey: PANE_KEY, state: 'working', at: 1_000 }])[0]
+  const window = readAgentHubMirrors().windows[0]
+  if (!worker || !window) {
+    throw new Error('Missing source')
+  }
+  toggleAgentHubMirrorViewing(window.id, window.activeTabId, paneTargetFromThread(worker, 'Worker'))
+  const hook = renderHook(({ threads }) => usePruneClosedAgentHubMirrorSources(threads), {
+    initialProps: { threads: [worker] }
+  })
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeTruthy()
+  hook.rerender({ threads: [] })
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.title).toBe('a')
 })

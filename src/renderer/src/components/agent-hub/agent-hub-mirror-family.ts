@@ -20,6 +20,31 @@ export type AgentHubMirrorFamily = {
   tree: readonly AgentHubFamilyNode[]
 }
 
+/** Only the viewed branch unfolds; siblings always share one row. */
+export function agentHubMirrorFamilyRows(
+  family: AgentHubMirrorFamily,
+  activeKey: string
+): { nodes: readonly AgentHubFamilyNode[]; parentKey: string | null }[] {
+  const pathTo = (nodes: readonly AgentHubFamilyNode[]): AgentHubFamilyNode[] | null => {
+    for (const node of nodes) {
+      if (node.thread.paneKey === activeKey) {
+        return [node]
+      }
+      const path = pathTo(node.children)
+      if (path) {
+        return [node, ...path]
+      }
+    }
+    return null
+  }
+  return [
+    { nodes: family.tree, parentKey: null },
+    ...(pathTo(family.tree) ?? []).flatMap((node) =>
+      node.children.length ? [{ nodes: node.children, parentKey: node.thread.paneKey }] : []
+    )
+  ]
+}
+
 export function agentHubMirrorFamily(
   paneKey: string,
   threads: readonly AgentPaneThread[],

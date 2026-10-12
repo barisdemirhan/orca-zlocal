@@ -43,7 +43,10 @@ import {
 import { resetAgentHubMirrorPlacesForTest } from './agent-hub-mirror-places'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
+  clearAgentHubMirrorViewing,
   agentHubMirrorWindows,
+  agentHubMirrorSourceKey,
+  homeAgentHubMirrorTab,
   findAgentHubMirrorMembership,
   selectAgentHubMirrorTarget,
   replaceAgentHubMirrorWindow,
@@ -113,14 +116,28 @@ export function openAgentHubMirror(
     return 'missing-source'
   }
   const owner = findAgentHubMirrorMembership(state, target)
-  if (!owner && !hasAgentHubMirrorEntryRoom(state)) {
+  if (owner?.kind !== 'tab' && !hasAgentHubMirrorEntryRoom(state)) {
     return 'entry-cap'
   }
-  const window = owner
-    ? selectAgentHubMirrorTarget(owner.window, owner.tab.id, target)
-    : createAgentHubMirrorWindow(target)
+  const current = clearAgentHubMirrorViewing(
+    state,
+    (entry) => agentHubMirrorSourceKey(entry) === agentHubMirrorSourceKey(target)
+  )
+  const window =
+    owner?.kind === 'tab'
+      ? selectAgentHubMirrorTarget(
+          {
+            ...owner.window,
+            tabs: owner.window.tabs.map((tab) =>
+              tab.id === owner.tab.id ? homeAgentHubMirrorTab(tab) : tab
+            )
+          },
+          owner.tab.id,
+          target
+        )
+      : createAgentHubMirrorWindow(target)
   quiet = false
-  emit(showWindow(state, window))
+  emit(showWindow(current, window))
   if (owner?.presence === 'window') {
     highlightAgentHubMirror(window.id)
   }

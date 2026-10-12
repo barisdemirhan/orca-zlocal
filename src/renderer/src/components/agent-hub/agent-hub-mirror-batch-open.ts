@@ -1,6 +1,7 @@
 import { resolveAgentHubMirrorTarget } from './agent-hub-mirror-source'
 import { createAgentHubMirrorWindowAtPreferredPlace as createAgentHubMirrorWindow } from './agent-hub-mirror-source-places'
 import {
+  clearAgentHubMirrorViewing,
   agentHubMirrorSourceKey,
   hasAgentHubMirrorEntryRoom,
   findAgentHubMirrorMembership,
@@ -34,12 +35,16 @@ export function prepareAgentHubMirrorBatch(
       continue
     }
     sources.add(source)
-    const owner = findAgentHubMirrorMembership(next, target)
+    const membership = findAgentHubMirrorMembership(next, target)
+    const owner = membership?.kind === 'tab' ? membership : null
     if (owner && seen.has(owner.window.id)) {
       continue
     }
     if (!owner && !hasAgentHubMirrorEntryRoom(next)) {
       break
+    }
+    if (membership?.kind === 'viewing') {
+      next = clearAgentHubMirrorViewing(next, (entry) => agentHubMirrorSourceKey(entry) === source)
     }
     const window = owner
       ? selectAgentHubMirrorTarget(owner.window, owner.tab.id, target)

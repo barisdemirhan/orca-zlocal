@@ -1,4 +1,7 @@
-import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import {
+  agentHubMirrorTabContainsThread,
+  agentHubMirrorWindowShowsThread
+} from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
@@ -45,7 +48,6 @@ import { openAgentHubMirrors, useAgentHubMirrors } from './agent-hub-mirror-stor
 import { agentHubTargetKind, toggleAgentHubMirrors } from './agent-hub-mirror-tray'
 import {
   agentHubLocation,
-  agentHubTargetShowsThread,
   threadOpenRequest,
   type AgentHubLocation,
   type AgentHubPaneTarget
@@ -265,11 +267,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const hubAlerts = alerts.filter(
     (candidate) =>
       !chips.some((chip) =>
-        chip.window.tabs.some((tab) => agentHubTargetShowsThread(tab.target, candidate.thread))
-      ) &&
-      !windows.some((window) =>
-        agentHubTargetShowsThread(activeAgentHubMirrorTab(window).target, candidate.thread)
-      )
+        chip.window.tabs.some((tab) => agentHubMirrorTabContainsThread(tab, candidate.thread))
+      ) && !windows.some((window) => agentHubMirrorWindowShowsThread(window, candidate.thread))
   )
   // Settings is its own page; the hub and its floating windows stay out of it.
   const dockHidden =

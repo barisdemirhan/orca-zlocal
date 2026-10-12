@@ -9,12 +9,17 @@ import {
   addAgentHubMirrorTabWithFeedback,
   agentHubMirrorTabCapReason
 } from './agent-hub-mirror-tab-actions'
+import {
+  findAgentHubMirrorMembership,
+  shownAgentHubMirrorTarget
+} from './agent-hub-mirror-membership'
 import { addAgentHubMirrorTab, closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,
   minimizeAgentHubMirror,
   closeAgentHubMirror,
+  subscribeAgentHubMirrors,
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 const { closeTab, kill } = vi.hoisted(() => ({ closeTab: vi.fn(), kill: vi.fn() }))
@@ -47,12 +52,18 @@ function open(id: string): string {
   }
   return windowId
 }
-it('retargets the active tab to a worker without adding a tab', () => {
+it('views and toggles a worker without changing the home tab identity', () => {
   const id = open('dispatcher')
   const tabId = readAgentHubMirrors().windows.at(-1)?.activeTabId ?? ''
   selectAgentHubMirrorFamilyMember(id, tabId, target('worker'))
   const window = readAgentHubMirrors().windows.at(-1)
-  expect(window?.tabs.map((tab) => tab.target.title)).toEqual(['worker'])
+  expect(window?.tabs.map((tab) => tab.target.title)).toEqual(['dispatcher'])
+  expect(window?.tabs[0]?.viewing?.title).toBe('worker')
+  expect(findAgentHubMirrorMembership(readAgentHubMirrors(), target('worker'))?.kind).toBe(
+    'viewing'
+  )
+  selectAgentHubMirrorFamilyMember(id, tabId, target('worker'))
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
   expect(window?.activeTabId).toBe(tabId)
 })
 it('raises the existing owner, including a parked owner, instead of creating a duplicate', () => {
@@ -71,7 +82,7 @@ it('raises the existing owner, including a parked owner, instead of creating a d
   expect(readAgentHubMirrors().chips).toHaveLength(0)
   expect(readAgentHubMirrors().windows).toHaveLength(2)
 })
-it('reports the cap reason for picker additions only; a full window can still retarget', () => {
+it('reports the cap reason for picker additions only; a full window can still view a worker', () => {
   const id = open('a')
   for (let i = 1; i < 10; i++) {
     addAgentHubMirrorTab(id, target(String(i)))
@@ -84,7 +95,11 @@ it('reports the cap reason for picker additions only; a full window can still re
   expect(toast.error).not.toHaveBeenCalled()
   const window = readAgentHubMirrors().windows[0]
   expect(window?.tabs).toHaveLength(10)
-  expect(window?.tabs.find((tab) => tab.id === tabId)?.target.title).toBe('twelve')
+  expect(window?.tabs.find((tab) => tab.id === tabId)?.viewing?.title).toBe('twelve')
+  expect(addAgentHubMirrorTabWithFeedback(id, target('twelve')).status).toBe('tab-cap')
+  expect(
+    readAgentHubMirrors().windows[0]?.tabs.find((tab) => tab.id === tabId)?.viewing?.title
+  ).toBe('twelve')
 })
 it('rejects a stale picker reservation with truthful feedback without raising its owner', () => {
   const owner = open('owned')
@@ -109,4 +124,40 @@ it('tab and window closes release memberships without calling terminal close or 
   expect(readAgentHubMirrors().windows).toHaveLength(0)
   expect(closeTab).not.toHaveBeenCalled()
   expect(kill).not.toHaveBeenCalled()
+})
+
+it('turns the viewed member into an active real tab with one PTY reservation', () => {
+  const id = open('dispatcher')
+  const tabId = readAgentHubMirrors().windows[0]?.activeTabId ?? ''
+  selectAgentHubMirrorFamilyMember(id, tabId, target('worker'))
+  expect(addAgentHubMirrorTabWithFeedback(id, target('worker')).status).toBe('changed')
+  const window = readAgentHubMirrors().windows[0]
+  expect(window?.tabs.map((tab) => tab.target.title)).toEqual(['dispatcher', 'worker'])
+  expect(window?.tabs[0]?.viewing).toBeUndefined()
+  expect(window?.activeTabId).toBe(window?.tabs[1]?.id)
+  expect(findAgentHubMirrorMembership(readAgentHubMirrors(), target('worker'))?.kind).toBe('tab')
+})
+it('pops a viewed member out atomically while retaining its home window', () => {
+  const id = open('dispatcher')
+  const tabId = readAgentHubMirrors().windows[0]?.activeTabId ?? ''
+  selectAgentHubMirrorFamilyMember(id, tabId, target('worker'))
+  const stop = subscribeAgentHubMirrors(() => {
+    const shown = readAgentHubMirrors().windows.map((window) => {
+      const active = window.tabs.find((tab) => tab.id === window.activeTabId)
+      if (!active) {
+        throw new Error('Missing active tab')
+      }
+      return shownAgentHubMirrorTarget(active).tab.id
+    })
+    expect(new Set(shown).size).toBe(shown.length)
+  })
+  openAgentHubMirror(target('worker'))
+  stop()
+  const windows = readAgentHubMirrors().windows
+  expect(windows).toHaveLength(2)
+  expect(windows[0]?.id).toBe(id)
+  expect(windows[0]?.tabs[0]?.viewing).toBeUndefined()
+  expect(windows[0]?.tabs[0]?.target.title).toBe('dispatcher')
+  const shown = windows.flatMap((window) => window.tabs.map(shownAgentHubMirrorTarget))
+  expect(shown.filter((entry) => entry.tab.id === 'worker')).toHaveLength(1)
 })

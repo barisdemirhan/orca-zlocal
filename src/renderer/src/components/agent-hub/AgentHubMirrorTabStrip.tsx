@@ -6,9 +6,10 @@ import { useMirrorTabStripScroll } from './use-mirror-tab-strip-scroll'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
-import type {
-  AgentHubMirrorWindowState,
-  AgentHubMirrorTab as MirrorTabEntry
+import {
+  shownAgentHubMirrorTarget,
+  type AgentHubMirrorWindowState,
+  type AgentHubMirrorTab as MirrorTabEntry
 } from './agent-hub-mirror-membership'
 import {
   activateAgentHubMirrorTab,
@@ -186,7 +187,10 @@ export function AgentHubMirrorTabStrip({
             location={locationOf(tab.target)}
             familyRoot={familyRootOf(tab)}
             closable={window.tabs.length > 1}
-            inputOwner={mirrorOwnsDictation(session, agentHubMirrorDictationPane(tab.target))}
+            inputOwner={mirrorOwnsDictation(
+              session,
+              agentHubMirrorDictationPane(shownAgentHubMirrorTarget(tab))
+            )}
             onSelect={(focusTerminal) => select(tab.id, focusTerminal)}
             onReveal={() => {
               closeAgentHubMirrorTab(window.id, tab.id)

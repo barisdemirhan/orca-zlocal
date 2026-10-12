@@ -1,4 +1,7 @@
-import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
+import {
+  homeAgentHubMirrorTab,
+  type AgentHubMirrorWindowState
+} from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { parsePaneKey } from '../../../../shared/stable-pane-id'
@@ -110,7 +113,17 @@ export function resolveAgentHubMirrorWindow(
 ): AgentHubMirrorWindowState | null {
   const tabs = window.tabs.flatMap((tab) => {
     const target = resolveTarget(tab.target)
-    return target ? [{ ...tab, target, origin: 'manual' as const }] : []
+    const viewing = tab.viewing ? resolveTarget(tab.viewing) : null
+    return target
+      ? [
+          {
+            ...homeAgentHubMirrorTab(tab),
+            target,
+            ...(viewing ? { viewing } : {}),
+            origin: 'manual' as const
+          }
+        ]
+      : []
   })
   const first = tabs[0]
   return first

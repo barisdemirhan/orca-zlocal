@@ -7,7 +7,11 @@ import {
   PANE_KEY_3
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { buildAgentHubLineage } from './agent-hub-lineage'
-import { agentHubMirrorFamily, type AgentHubFamilyNode } from './agent-hub-mirror-family'
+import {
+  agentHubMirrorFamily,
+  agentHubMirrorFamilyRows,
+  type AgentHubFamilyNode
+} from './agent-hub-mirror-family'
 import { agentHubThreadsFor as threadsFor } from './agent-hub-test-fixtures'
 
 // tab-4 matches the fourth fixture's tab.
@@ -94,4 +98,22 @@ describe('agentHubMirrorFamily', () => {
     const lone = threadsFor([{ paneKey: PANE_KEY, state: 'working', at: 1_000 }])
     expect(agentHubMirrorFamily(PANE_KEY, lone, buildAgentHubLineage(lone, 1_000))).toBeNull()
   })
+})
+
+it('keeps sibling levels together and unfolds only the path to the viewed member', () => {
+  const family = agentHubMirrorFamily(PANE_KEY, threads, lineage)
+  if (!family) {
+    throw new Error('No family')
+  }
+  const levels = (key: string) =>
+    agentHubMirrorFamilyRows(family, key).map((row) => ({
+      parent: row.parentKey,
+      keys: row.nodes.map((node) => node.thread.paneKey)
+    }))
+  expect(levels(PANE_KEY)).toEqual([{ parent: null, keys: [PANE_KEY_2, PANE_KEY_4] }])
+  expect(levels(PANE_KEY_4)).toEqual([{ parent: null, keys: [PANE_KEY_2, PANE_KEY_4] }])
+  expect(levels(PANE_KEY_3)).toEqual([
+    { parent: null, keys: [PANE_KEY_2, PANE_KEY_4] },
+    { parent: PANE_KEY_2, keys: [PANE_KEY_3] }
+  ])
 })

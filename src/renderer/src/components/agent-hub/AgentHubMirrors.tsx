@@ -7,13 +7,13 @@ import {
   useAgentHubMirrorSelection
 } from './agent-hub-mirror-selection'
 import {
+  agentHubMirrorTabContainsThread,
   activeAgentHubMirrorTab,
-  findAgentHubMirrorMembership
+  shownAgentHubMirrorTarget
 } from './agent-hub-mirror-membership'
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
 import { agentHubMirrorPointerSelection } from './agent-hub-mirror-pointer-selection'
 import { agentHubMirrorShellLeafId } from './agent-hub-mirror-source'
-import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -31,7 +31,11 @@ import {
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubAlertSide } from './AgentHubAlertStack'
-import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
+import { agentHubMirrorFamilyActions } from './agent-hub-mirror-family-actions'
+import {
+  releaseAgentHubMirrorShownTarget,
+  returnAgentHubMirrorTabHome
+} from './agent-hub-mirror-viewing'
 import { AgentHubMirrorTray, type AgentHubTrayItem } from './AgentHubMirrorTray'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
@@ -156,7 +160,7 @@ export function AgentHubMirrors({
   const placement = useAppStore(
     useShallow((state) =>
       windows.map((window) => {
-        const target = activeAgentHubMirrorTab(window).target
+        const target = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
         const leafId = agentHubMirrorShellLeafId(state.terminalLayoutsByTabId[target.tab.id])
         const paneKey = target.paneKey ?? (leafId ? makePaneKey(target.tab.id, leafId) : null)
         const onScreen =
@@ -170,7 +174,7 @@ export function AgentHubMirrors({
   const surfaces = useMemo(
     () =>
       windows.map((window, index): { surface: MirrorSurface; paneKey: string | null } => {
-        const target = activeAgentHubMirrorTab(window).target
+        const target = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
         const [paneKey = '', onScreen] = (placement[index] ?? '').split('\u0000')
         if (target.worktree.id === FLOATING_TERMINAL_WORKTREE_ID) {
           // The floating panel draws its own terminals; the dashboard preview stands in.
@@ -183,7 +187,7 @@ export function AgentHubMirrors({
   const portals = useMemo(
     () =>
       windows.flatMap((window, index): ActivityTerminalPortalTarget[] => {
-        const target = activeAgentHubMirrorTab(window).target
+        const target = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
         const key = window.id
         const slot = slots.get(key)
         const { surface, paneKey } = surfaces[index] ?? { surface: 'portal', paneKey: null }
@@ -223,7 +227,9 @@ export function AgentHubMirrors({
     setTerminalMirrorMountLeases(
       windows
         .flatMap((window) =>
-          window.tabs.filter((tab) => visited.current.has(tab.id)).map((tab) => tab.target)
+          window.tabs
+            .filter((tab) => visited.current.has(tab.id))
+            .flatMap((tab) => (tab.viewing ? [tab.target, tab.viewing] : [tab.target]))
         )
         .filter((target) => target.worktree.id !== FLOATING_TERMINAL_WORKTREE_ID)
         .map((target) => ({ worktreeId: target.worktree.id, tabId: target.tab.id }))
@@ -232,23 +238,13 @@ export function AgentHubMirrors({
   useLayoutEffect(() => () => setTerminalMirrorMountLeases([]), [])
   // Each mirror's microphone needs to know which pane a dictation started in.
   useEffect(trackAgentHubDictationOrigin, [])
-  usePruneClosedAgentHubMirrorSources()
+  usePruneClosedAgentHubMirrorSources(threads)
 
   if (windows.length === 0 && chips.length === 0) {
     return null
   }
   const threadFor = (target: AgentHubPaneTarget): AgentPaneThread | null =>
     threads.find((thread) => agentHubTargetShowsThread(target, thread)) ?? null
-  const familyActionsFor = (member: AgentPaneThread): AgentHubThreadCardActions => {
-    const target = paneTargetFromThread(member, activityThreadRowCopy(member).taskTitle)
-    const inWindow = findAgentHubMirrorMembership({ windows, chips }, target) !== null
-    const onScreen = onScreenTab === `${member.worktree.id}\u0000${member.tab.id}`
-    return {
-      ...(inWindow || onScreen ? {} : { onJump: () => onReveal(target, member) }),
-      // Already in a window (or parked in the tray): no second one.
-      ...(inWindow ? {} : { onPopout: () => openAgentHubMirrorInLayout(target) })
-    }
-  }
   const trayItems = orderAgentHubTray(
     chips.map((chip): AgentHubTrayItem => {
       const target = activeAgentHubMirrorTab(chip.window).target
@@ -265,9 +261,7 @@ export function AgentHubMirrors({
         alert: hidden
           ? null
           : (alerts.findLast((candidate) =>
-              chip.window.tabs.some((tab) =>
-                agentHubTargetShowsThread(tab.target, candidate.thread)
-              )
+              chip.window.tabs.some((tab) => agentHubMirrorTabContainsThread(tab, candidate.thread))
             ) ?? null)
       }
     })
@@ -287,7 +281,9 @@ export function AgentHubMirrors({
         className="pointer-events-none fixed inset-0 z-[46] data-[behind=true]:z-[44] data-[hidden=true]:invisible"
       >
         {stableWindows.map((window) => {
-          const target = activeAgentHubMirrorTab(window).target
+          const tab = activeAgentHubMirrorTab(window)
+          const target = tab.target
+          const shownTarget = shownAgentHubMirrorTarget(tab)
           const key = window.id
           const index = stackIndexOf.get(key) ?? 0
           const thread = threadFor(target)
@@ -311,6 +307,7 @@ export function AgentHubMirrors({
                 return live ? agentHubIndicatorKind(live) : 'idle'
               })}
               target={target}
+              shownTarget={shownTarget}
               thread={thread}
               stackIndex={index + 1}
               besideHubPanel={hubOpen}
@@ -322,7 +319,7 @@ export function AgentHubMirrors({
                 hidden
                   ? null
                   : (alerts.findLast((candidate) =>
-                      agentHubTargetShowsThread(target, candidate.thread)
+                      agentHubTargetShowsThread(shownTarget, candidate.thread)
                     ) ?? null)
               }
               onNudged={dismissAgentHubAlert}
@@ -331,7 +328,18 @@ export function AgentHubMirrors({
               family={familyKey ? agentHubMirrorFamily(familyKey, threads, lineage) : null}
               hubRef={hubRef}
               locationOf={locationOf}
-              familyActionsFor={familyActionsFor}
+              familyActionsFor={(member) =>
+                agentHubMirrorFamilyActions({
+                  member,
+                  state: { windows, chips },
+                  windowId: key,
+                  onScreenTab,
+                  onReveal
+                })
+              }
+              onReturnHome={
+                tab.viewing ? () => returnAgentHubMirrorTabHome(key, tab.id) : undefined
+              }
               onRetarget={(member) =>
                 selectAgentHubMirrorFamilyMember(
                   key,
@@ -363,8 +371,8 @@ export function AgentHubMirrors({
                 }
               }}
               onReveal={() => {
-                closeAgentHubMirrorTab(key, window.activeTabId)
-                onReveal(target, thread)
+                releaseAgentHubMirrorShownTarget(key, tab.id)
+                onReveal(shownTarget, threadFor(shownTarget))
               }}
             />
           )
@@ -386,17 +394,17 @@ export function AgentHubMirrors({
           onReveal={(item, alert) => {
             const tab = alert
               ? item.chip.window.tabs.find((tab) =>
-                  agentHubTargetShowsThread(tab.target, alert.thread)
+                  agentHubMirrorTabContainsThread(tab, alert.thread)
                 )
               : activeAgentHubMirrorTab(item.chip.window)
             if (!tab) {
               return
             }
-            closeAgentHubMirrorTab(item.key, tab.id)
+            releaseAgentHubMirrorShownTarget(item.key, tab.id)
             onReveal(
               alert
                 ? paneTargetFromThread(alert.thread, activityThreadRowCopy(alert.thread).taskTitle)
-                : tab.target,
+                : shownAgentHubMirrorTarget(tab),
               alert?.thread ?? item.thread
             )
           }}

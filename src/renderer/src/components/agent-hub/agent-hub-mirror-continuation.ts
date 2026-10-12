@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store'
 import { getAgentLabel } from '@/lib/agent-catalog'
 import type { TuiAgent } from '../../../../shared/tui-agent'
-import { agentHubMirrorWindows } from './agent-hub-mirror-membership'
+import { agentHubMirrorWindows, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import {
   addAgentHubMirrorTab,
@@ -19,7 +19,9 @@ export function addLaunchedSessionToAgentHubMirror(args: {
   const window = agentHubMirrorWindows(readAgentHubMirrors()).find(
     (candidate) => candidate.id === args.windowId
   )
-  const source = window?.tabs.find((entry) => entry.target.tab.id === args.sourceTabId)?.target
+  const source = window?.tabs
+    .map(shownAgentHubMirrorTarget)
+    .find((entry) => entry.tab.id === args.sourceTabId)
   const tab = useAppStore
     .getState()
     .tabsByWorktree[args.worktreeId]?.find((entry) => entry.id === args.newTabId)

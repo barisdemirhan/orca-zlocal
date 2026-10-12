@@ -1,3 +1,4 @@
+import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { Button } from '@/components/ui/button'
 import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selection-focus'
 import { agentHubMirrorPanelId, agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
@@ -44,6 +45,7 @@ export function AgentHubMirrorWindow({
   windowState,
   tabStrip,
   target,
+  shownTarget = target,
   windowKind,
   thread,
   stackIndex,
@@ -56,6 +58,7 @@ export function AgentHubMirrorWindow({
   locationOf,
   familyActionsFor,
   onRetarget,
+  onReturnHome,
   hubRef,
   onSlot,
   onFocus,
@@ -68,6 +71,7 @@ export function AgentHubMirrorWindow({
   tabStrip: React.ReactNode
   windowKind?: AgentHubIndicatorKind
   target: AgentHubPaneTarget
+  shownTarget?: AgentHubPaneTarget
   /** Live thread for an agent pane, for its state glyph; null for a shell. */
   thread: AgentPaneThread | null
   /** Its place in the stack of open mirrors (higher is in front). */
@@ -89,6 +93,7 @@ export function AgentHubMirrorWindow({
   locationOf: (thread: AgentPaneThread) => AgentHubLocation
   familyActionsFor: (thread: AgentPaneThread) => AgentHubThreadCardActions
   onRetarget: (thread: AgentPaneThread) => void
+  onReturnHome?: () => void
   /** The hub the window flies into when minimized. */
   hubRef: React.RefObject<HTMLElement | null>
   /** Registers the box the real pane is moved into. */
@@ -116,9 +121,9 @@ export function AgentHubMirrorWindow({
     [onSlot, mirrorKey]
   )
   const ptyId = useAgentHubLivePty(
-    target.worktree.id,
-    target.tab.id,
-    target.paneKey,
+    shownTarget.worktree.id,
+    shownTarget.tab.id,
+    shownTarget.paneKey,
     surface === 'portal'
   )
   const [gaveUp, setGaveUp] = useState(false)
@@ -172,12 +177,13 @@ export function AgentHubMirrorWindow({
       dockWhenAsked()
     }
   }, [dockRequest])
+  const homeTitle = useAgentHubTargetTitle(target)
   const activeKind = thread ? agentHubIndicatorKind(thread) : 'idle'
   const kind = windowKind ?? activeKind
   useAgentHubMirrorSelectionFocus({
     windowId,
     tabId: windowState?.activeTabId ?? '',
-    target,
+    target: shownTarget,
     rootRef: sectionRef,
     allowed: previewFocus && surface !== 'in-workspace',
     preview: surface === 'preview'
@@ -204,7 +210,7 @@ export function AgentHubMirrorWindow({
     }
     const timer = setTimeout(() => setGaveUp(true), ATTACH_GIVE_UP_MS)
     return () => clearTimeout(timer)
-  }, [ptyId, target.tab.id, target.paneKey])
+  }, [ptyId, shownTarget.tab.id, shownTarget.paneKey])
 
   return (
     <section
@@ -261,7 +267,7 @@ export function AgentHubMirrorWindow({
         {tabStrip}
         <div aria-hidden className="min-w-4 flex-1 self-stretch" />
         <AgentHubMirrorHeaderControls
-          target={target}
+          target={shownTarget}
           reachable={surface !== 'preview'}
           mirrorKey={mirrorKey}
           focused={focus === 'focused'}
@@ -280,7 +286,8 @@ export function AgentHubMirrorWindow({
         {family && familyBarShown ? (
           <AgentHubMirrorFamilyTabs
             family={family}
-            activeKey={target.paneKey ?? thread?.paneKey ?? mirrorKey}
+            activeKey={shownTarget.paneKey ?? thread?.paneKey ?? mirrorKey}
+            home={onReturnHome ? { title: homeTitle, onSelect: onReturnHome } : undefined}
             locationOf={locationOf}
             actionsFor={familyActionsFor}
             onSelect={onRetarget}
@@ -311,7 +318,7 @@ export function AgentHubMirrorWindow({
         ) : surface !== 'preview' ? (
           // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
           <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">
-            <AgentHubMirrorDictationOverlay target={target} showsTerminal />
+            <AgentHubMirrorDictationOverlay target={shownTarget} showsTerminal />
             {ptyId ? null : (
               <div className="absolute inset-0 flex items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
                 {gaveUp ? (

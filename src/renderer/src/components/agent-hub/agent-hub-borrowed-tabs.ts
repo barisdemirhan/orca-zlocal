@@ -1,4 +1,4 @@
-import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { shownAgentHubMirrorTarget, activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
 import { readAgentHubMirrors, subscribeAgentHubMirrors } from './agent-hub-mirror-store'
@@ -32,7 +32,7 @@ export function borrowAgentHubTab(tab: BorrowedTab): void {
         (item) =>
           state.settings?.experimentalAgentHub === true &&
           windows.some((window) => {
-            const target = activeAgentHubMirrorTab(window).target
+            const target = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
             return (
               window.id === item.mirrorKey &&
               target.tab.id === item.tabId &&

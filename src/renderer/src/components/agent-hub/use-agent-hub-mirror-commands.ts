@@ -1,6 +1,6 @@
 import { cycleAgentHubMirrorTab } from './agent-hub-mirror-tab-command'
-import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
-import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { shownAgentHubMirrorTarget, activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { releaseAgentHubMirrorShownTarget } from './agent-hub-mirror-viewing'
 import { useEffect } from 'react'
 import { useAppStore } from '@/store'
 import { agentHubActiveTarget } from './agent-hub-active-target'
@@ -41,8 +41,8 @@ export function useAgentHubMirrorCommands(
               const front = readAgentHubMirrors().windows.at(-1)
               if (front) {
                 const tab = activeAgentHubMirrorTab(front)
-                closeAgentHubMirrorTab(front.id, tab.id)
-                jump(tab.target)
+                releaseAgentHubMirrorShownTarget(front.id, tab.id)
+                jump(shownAgentHubMirrorTarget(tab))
               }
             }
           : null

@@ -13,7 +13,11 @@ import {
   rearrangeAgentHubMirrorsByDefault
 } from './agent-hub-floating-arrangement'
 import { agentHubPeekGeometry } from './agent-hub-peek-geometry'
-import { activeAgentHubMirrorTab, agentHubMirrorWindows } from './agent-hub-mirror-membership'
+import {
+  shownAgentHubMirrorTarget,
+  activeAgentHubMirrorTab,
+  agentHubMirrorWindows
+} from './agent-hub-mirror-membership'
 import {
   focusAgentHubMirror,
   readAgentHubMirrors,
@@ -55,7 +59,12 @@ function SourceChip({ mirrorKey }: { mirrorKey: string }): React.JSX.Element | n
   if (!window) {
     return null
   }
-  return <SourceButton mirrorKey={mirrorKey} target={activeAgentHubMirrorTab(window).target} />
+  return (
+    <SourceButton
+      mirrorKey={mirrorKey}
+      target={shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))}
+    />
+  )
 }
 
 function SourceButton({

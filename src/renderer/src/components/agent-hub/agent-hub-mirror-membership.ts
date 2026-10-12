@@ -1,12 +1,18 @@
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
-import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane-target'
+import type { AgentPaneThread } from '../activity/activity-thread-types'
+import {
+  agentHubTargetShowsThread,
+  agentHubPaneTargetKey,
+  type AgentHubPaneTarget
+} from './agent-hub-pane-target'
 
 export const AGENT_HUB_MIRROR_TAB_CAP = 10
 export const AGENT_HUB_MIRROR_ENTRY_CAP = 256
 export type AgentHubMirrorTab = {
   id: string
   target: AgentHubPaneTarget
+  viewing?: AgentHubPaneTarget
   origin: 'manual' | 'auto'
 }
 export type AgentHubMirrorWindowState = {
@@ -26,6 +32,26 @@ export type AgentHubMirrorMembership = {
   window: AgentHubMirrorWindowState
   tab: AgentHubMirrorTab
   presence: 'window' | 'chip'
+  kind: 'tab' | 'viewing'
+}
+
+export function shownAgentHubMirrorTarget(tab: AgentHubMirrorTab): AgentHubPaneTarget {
+  return tab.viewing ?? tab.target
+}
+
+export function agentHubMirrorTabContainsThread(
+  tab: AgentHubMirrorTab,
+  thread: AgentPaneThread
+): boolean {
+  return (
+    agentHubTargetShowsThread(tab.target, thread) ||
+    agentHubTargetShowsThread(shownAgentHubMirrorTarget(tab), thread)
+  )
+}
+
+export function homeAgentHubMirrorTab(tab: AgentHubMirrorTab): AgentHubMirrorTab {
+  const { viewing: _viewing, ...home } = tab
+  return home
 }
 
 export function agentHubMirrorSourceKey(target: AgentHubPaneTarget): string {
@@ -44,18 +70,34 @@ export function activeAgentHubMirrorTab(window: AgentHubMirrorWindowState): Agen
   return tab
 }
 
+export function agentHubMirrorWindowShowsThread(
+  window: AgentHubMirrorWindowState,
+  thread: AgentPaneThread
+): boolean {
+  return agentHubTargetShowsThread(
+    shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window)),
+    thread
+  )
+}
+
 export function findAgentHubMirrorMembership(
   state: AgentHubMirrorState,
   target: AgentHubPaneTarget | string
 ): AgentHubMirrorMembership | null {
-  const matches = (entry: AgentHubMirrorTab): boolean =>
+  const matches = (entry: AgentHubPaneTarget): boolean =>
     typeof target === 'string'
-      ? entry.id === target || agentHubPaneTargetKey(entry.target) === target
-      : agentHubMirrorSourceKey(entry.target) === agentHubMirrorSourceKey(target)
-  for (const window of agentHubMirrorWindows(state)) {
-    const tab = window.tabs.find(matches)
-    if (tab) {
-      return { window, tab, presence: state.windows.includes(window) ? 'window' : 'chip' }
+      ? agentHubPaneTargetKey(entry) === target
+      : agentHubMirrorSourceKey(entry) === agentHubMirrorSourceKey(target)
+  for (const kind of ['tab', 'viewing'] as const) {
+    for (const window of agentHubMirrorWindows(state)) {
+      const tab = window.tabs.find((entry) =>
+        kind === 'tab'
+          ? entry.id === target || matches(entry.target)
+          : Boolean(entry.viewing && matches(entry.viewing))
+      )
+      if (tab) {
+        return { window, tab, kind, presence: state.windows.includes(window) ? 'window' : 'chip' }
+      }
     }
   }
   return null
@@ -75,7 +117,13 @@ export function selectAgentHubMirrorTarget(
     ...window,
     activeTabId: tabId,
     tabs: window.tabs.map((tab) =>
-      tab.id === tabId ? { ...tab, target: target ?? tab.target, origin: 'manual' } : tab
+      tab.id === tabId
+        ? {
+            ...(target ? homeAgentHubMirrorTab(tab) : tab),
+            target: target ?? tab.target,
+            origin: 'manual'
+          }
+        : tab
     )
   }
 }
@@ -117,12 +165,28 @@ export function hasAgentHubMirrorEntryRoom(current: AgentHubMirrorState): boolea
   )
 }
 
+export function clearAgentHubMirrorViewing(
+  state: AgentHubMirrorState,
+  isGone: (target: AgentHubPaneTarget) => boolean
+): AgentHubMirrorState {
+  let next = state
+  for (const window of agentHubMirrorWindows(state)) {
+    const tabs = window.tabs.map((tab) =>
+      tab.viewing && isGone(tab.viewing) ? homeAgentHubMirrorTab(tab) : tab
+    )
+    if (tabs.some((tab, index) => tab !== window.tabs[index])) {
+      next = replaceAgentHubMirrorWindow(next, window.id, { ...window, tabs })
+    }
+  }
+  return next
+}
+
 /** Drops entries whose source is gone, from open windows and chips alike. */
 export function removeAgentHubMirrorEntries(
   state: AgentHubMirrorState,
   isGone: (target: AgentHubPaneTarget) => boolean
 ): AgentHubMirrorState {
-  let next = state
+  let next = clearAgentHubMirrorViewing(state, isGone)
   for (const window of agentHubMirrorWindows(state)) {
     for (const tab of window.tabs.filter((entry) => isGone(entry.target))) {
       const current = agentHubMirrorWindows(next).find((item) => item.id === window.id)

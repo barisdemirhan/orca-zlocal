@@ -1,5 +1,5 @@
 import type * as MirrorSource from './agent-hub-mirror-source'
-import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { shownAgentHubMirrorTarget, activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -11,12 +11,14 @@ import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { addAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 import {
+  readAgentHubMirrors,
   minimizeAgentHubMirror,
   closeAgentHubMirror,
   openAgentHubMirror,
   resetAgentHubMirrorsForTest,
   useAgentHubMirrors
 } from './agent-hub-mirror-store'
+import { toggleAgentHubMirrorViewing } from './agent-hub-mirror-viewing'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-signals'
 import { flyMirrorWindowToHub } from './mirror-window-flight'
 
@@ -39,7 +41,11 @@ vi.mock('./use-mirror-window-geometry', async () => {
     })
   }
 })
-vi.mock('./AgentHubMirrorMicButton', () => ({ AgentHubMirrorMicButton: () => null }))
+vi.mock('./AgentHubMirrorMicButton', () => ({
+  AgentHubMirrorMicButton: ({ target }: { target: AgentHubPaneTarget }) => (
+    <output data-mic-tab={target.tab.id} />
+  )
+}))
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimToggle: () => null }))
 vi.mock('./AgentHubMirrorFocusButton', () => ({ AgentHubMirrorFocusButton: () => null }))
 vi.mock('./AgentHubMirrorFocusShade', () => ({ AgentHubMirrorFocusShade: () => null }))
@@ -76,6 +82,7 @@ function renderMinimizeStage(alones: boolean[]): void {
             windowId={entry.id}
             tabStrip={<span />}
             target={activeAgentHubMirrorTab(entry).target}
+            shownTarget={shownAgentHubMirrorTarget(activeAgentHubMirrorTab(entry))}
             thread={null}
             stackIndex={1}
             besideHubPanel={false}
@@ -249,3 +256,16 @@ vi.mock('./agent-hub-mirror-source', async (original) => ({
     target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
   ) => target
 }))
+
+it('keeps the home header while its microphone routes to the temporarily viewed terminal', () => {
+  openAgentHubMirror(target('dispatcher'))
+  const window = readAgentHubMirrors().windows[0]
+  if (!window) {
+    throw new Error('No window')
+  }
+  toggleAgentHubMirrorViewing(window.id, window.activeTabId, target('worker'))
+  renderMinimizeStage([])
+  expect(screen.getByRole('dialog', { name: 'dispatcher' })).toBeTruthy()
+  expect(document.querySelector('[data-mic-tab="worker"]')).toBeTruthy()
+  expect(document.querySelector('[data-mic-tab="dispatcher"]')).toBeNull()
+})
