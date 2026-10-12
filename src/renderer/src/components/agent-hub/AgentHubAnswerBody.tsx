@@ -6,6 +6,7 @@ import { translate } from '@/i18n/i18n'
 import type { AgentHubAnswerOption } from './agent-hub-answer-options'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
 import { HubChip } from './AgentHubInlineLabels'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export type { AgentHubAnswerOption } from './agent-hub-answer-options'
 export { questionOptions } from './agent-hub-answer-options'
@@ -26,6 +27,88 @@ const OPTION_CLASS: Record<HubOptionDensity, string> = {
   chip: 'group/opt flex max-w-full items-center gap-1.5 rounded-md border border-foreground/[0.08] bg-foreground/[0.03] px-2 py-1 text-xs text-foreground transition-colors hover:border-foreground/15 hover:bg-foreground/[0.07] disabled:cursor-default disabled:opacity-60 data-[chosen=true]:border-agent-question/50 data-[chosen=true]:bg-agent-question/15 data-[chosen=true]:opacity-100 data-[deny=true]:text-muted-foreground data-[recommended=true]:border-ring/60'
 }
 
+/** Whether the option's text is cut short here: a clipped line, or a description left out. */
+function optionTextIsCut(text: HTMLElement | null, describedOnlyInTooltip: boolean): boolean {
+  if (describedOnlyInTooltip) {
+    return true
+  }
+  return Array.from(text?.children ?? []).some(
+    (line) => line.scrollWidth > line.clientWidth + 1 || line.scrollHeight > line.clientHeight + 1
+  )
+}
+
+function HubOption({
+  option,
+  index,
+  density,
+  chosen,
+  disabled,
+  onChoose
+}: {
+  option: AgentHubAnswerOption
+  index: number
+  density: HubOptionDensity
+  chosen: boolean
+  disabled: boolean
+  onChoose: (index: number) => void
+}): React.JSX.Element {
+  const textRef = useRef<HTMLSpanElement>(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  // Chips have no room for it; the pane card keeps it short.
+  const showsDescription = Boolean(option.description) && density !== 'chip'
+  return (
+    <Tooltip
+      open={detailsOpen}
+      onOpenChange={(next) =>
+        setDetailsOpen(
+          next && optionTextIsCut(textRef.current, Boolean(option.description) && !showsDescription)
+        )
+      }
+    >
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          tabIndex={-1}
+          disabled={disabled}
+          data-density={density}
+          data-chosen={chosen}
+          data-deny={option.deny === true}
+          data-recommended={option.recommended === true}
+          onClick={() => onChoose(index)}
+          className={OPTION_CLASS[density]}
+        >
+          <span className="grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.12] font-mono text-[11px] text-foreground/85 group-data-[chosen=true]/opt:bg-agent-question group-data-[chosen=true]/opt:text-background group-data-[density=chip]/opt:size-4 group-data-[density=chip]/opt:text-[10px]">
+            {index + 1}
+          </span>
+          <span ref={textRef} className="min-w-0 flex-1">
+            <span className="block truncate">{option.label}</span>
+            {showsDescription ? (
+              <span className="block text-xs text-muted-foreground group-data-[density=compact]/opt:line-clamp-2 group-data-[density=compact]/opt:text-[11px] group-data-[density=compact]/opt:leading-snug">
+                {option.description}
+              </span>
+            ) : null}
+          </span>
+          {/* A chip has no room for the badge: its border marks the agent's pick. */}
+          {option.recommended && density !== 'chip' ? (
+            <span className="rounded-full bg-status-warning-background px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-status-warning">
+              {translate('agentHub.card.recommended', 'Recommended')}
+            </span>
+          ) : null}
+        </button>
+      </TooltipTrigger>
+      {/* Why only when cut: the whole text is already on screen otherwise. */}
+      <TooltipContent variant="tab-preview" side="right" sideOffset={8} showArrow={false}>
+        <span className="block font-medium break-words">{option.label}</span>
+        {option.description ? (
+          <span className="mt-1 block leading-snug break-words text-muted-foreground">
+            {option.description}
+          </span>
+        ) : null}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 /** A pick-list in the mock's style: numbered boxes, the agent's pick badged, one click answers. */
 export function HubOptionList({
   options,
@@ -43,37 +126,15 @@ export function HubOptionList({
   return (
     <div className={LIST_CLASS[density]}>
       {options.map((option, index) => (
-        <button
+        <HubOption
           key={option.id}
-          type="button"
-          tabIndex={-1}
+          option={option}
+          index={index}
+          density={density}
+          chosen={chosen === index}
           disabled={disabled}
-          data-density={density}
-          data-chosen={chosen === index}
-          data-deny={option.deny === true}
-          data-recommended={option.recommended === true}
-          onClick={() => onChoose(index)}
-          className={OPTION_CLASS[density]}
-        >
-          <span className="grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.12] font-mono text-[11px] text-foreground/85 group-data-[chosen=true]/opt:bg-agent-question group-data-[chosen=true]/opt:text-background group-data-[density=chip]/opt:size-4 group-data-[density=chip]/opt:text-[10px]">
-            {index + 1}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate">{option.label}</span>
-            {/* Chips have no room for it; the pane card keeps it short. */}
-            {option.description && density !== 'chip' ? (
-              <span className="block text-xs text-muted-foreground group-data-[density=compact]/opt:line-clamp-2 group-data-[density=compact]/opt:text-[11px] group-data-[density=compact]/opt:leading-snug">
-                {option.description}
-              </span>
-            ) : null}
-          </span>
-          {/* A chip has no room for the badge: its border marks the agent's pick. */}
-          {option.recommended && density !== 'chip' ? (
-            <span className="rounded-full bg-status-warning-background px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-status-warning">
-              {translate('agentHub.card.recommended', 'Recommended')}
-            </span>
-          ) : null}
-        </button>
+          onChoose={onChoose}
+        />
       ))}
     </div>
   )
