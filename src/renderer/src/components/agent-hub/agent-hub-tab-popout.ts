@@ -3,7 +3,8 @@ import { useAppStore } from '@/store'
 import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
 import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { borrowAgentHubTab } from './agent-hub-borrowed-tabs'
-import { openAgentHubMirror, readAgentHubMirrors } from './agent-hub-mirror-store'
+import { readAgentHubMirrors } from './agent-hub-mirror-store'
+import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 export function popOutAgentHubTab(target: AgentHubPaneTarget): void {
@@ -13,7 +14,7 @@ export function popOutAgentHubTab(target: AgentHubPaneTarget): void {
   }
   const existing = findAgentHubMirrorMembership(readAgentHubMirrors(), target)
   if (existing) {
-    openAgentHubMirror(target)
+    openAgentHubMirrorInLayout(target)
     return
   }
   const worktreeId = target.worktree.id
@@ -29,7 +30,7 @@ export function popOutAgentHubTab(target: AgentHubPaneTarget): void {
       state.activateTab(neighbor, { worktreeId })
       state.focusGroup(worktreeId, group.id)
     } else {
-      openAgentHubMirror(target)
+      openAgentHubMirrorInLayout(target)
       borrowAgentHubTab({
         worktreeId,
         tabId: target.tab.id,
@@ -41,5 +42,5 @@ export function popOutAgentHubTab(target: AgentHubPaneTarget): void {
       return
     }
   }
-  openAgentHubMirror(target)
+  openAgentHubMirrorInLayout(target)
 }

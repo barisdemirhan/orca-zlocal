@@ -40,7 +40,10 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { orderAgentHubTray } from './agent-hub-mirror-tray'
-import { rearrangeAgentHubMirrorsByDefault } from './agent-hub-floating-arrangement'
+import {
+  openAgentHubMirrorInLayout,
+  rearrangeAgentHubMirrorsByDefault
+} from './agent-hub-floating-arrangement'
 import { useFloatingPanelInFront } from './use-floating-panel-in-front'
 import { usePruneClosedAgentHubMirrorSources } from './use-prune-closed-agent-hub-mirror-sources'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
@@ -49,7 +52,6 @@ import {
   closeAgentHubMirrorChip,
   focusAgentHubMirror,
   minimizeAgentHubMirror,
-  openAgentHubMirror,
   restoreAgentHubMirror,
   setAgentHubMirrorWindowCap,
   useAgentHubMirrors,
@@ -244,7 +246,7 @@ export function AgentHubMirrors({
     return {
       ...(inWindow || onScreen ? {} : { onJump: () => onReveal(target, member) }),
       // Already in a window (or parked in the tray): no second one.
-      ...(inWindow ? {} : { onPopout: () => openAgentHubMirror(target) })
+      ...(inWindow ? {} : { onPopout: () => openAgentHubMirrorInLayout(target) })
     }
   }
   const trayItems = orderAgentHubTray(
@@ -403,7 +405,7 @@ export function AgentHubMirrors({
             dismissAgentHubAlert(opened.id)
             // A question is answered on its card; a result is read in the terminal.
             if (opened.kind === 'done') {
-              openAgentHubMirror(
+              openAgentHubMirrorInLayout(
                 paneTargetFromThread(opened.thread, activityThreadRowCopy(opened.thread).taskTitle)
               )
             } else {

@@ -5,7 +5,7 @@ import { translate } from '@/i18n/i18n'
 import { Button } from '../ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import type { DashboardAgentRow } from '../dashboard/useDashboardData'
-import { openAgentHubMirror } from './agent-hub-mirror-store'
+import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
 import {
   agentHubSidebarPopoutTarget,
   canPopOutAgentHubSidebarRow
@@ -54,7 +54,7 @@ function SidebarPopout({ agent }: { agent: DashboardAgentRow }): React.JSX.Eleme
               if (!target) {
                 return
               }
-              openAgentHubMirror(target)
+              openAgentHubMirrorInLayout(target)
               state.acknowledgeAgents([agent.paneKey])
             }}
           >

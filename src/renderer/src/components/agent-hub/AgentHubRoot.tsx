@@ -37,12 +37,11 @@ import { agentHubInitialTab } from './agent-hub-initial-tab'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { agentHubThreadCardKey, showAgentHubCardsAgain } from './agent-hub-answered-cards'
 import { agentHubCounts } from './agent-hub-lists'
-import { arrangeAgentHubFloatingWindowsByDefault } from './agent-hub-floating-arrangement'
 import {
-  openAgentHubMirror,
-  openAgentHubMirrors,
-  useAgentHubMirrors
-} from './agent-hub-mirror-store'
+  arrangeAgentHubFloatingWindowsByDefault,
+  openAgentHubMirrorInLayout
+} from './agent-hub-floating-arrangement'
+import { openAgentHubMirrors, useAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubTargetKind, toggleAgentHubMirrors } from './agent-hub-mirror-tray'
 import {
   agentHubLocation,
@@ -192,7 +191,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const popout = useCallback(
     ({ target, thread }: AgentHubOpenRequest) => {
       restoreFocusRef.current = null
-      openAgentHubMirror(target)
+      openAgentHubMirrorInLayout(target)
       if (thread) {
         acknowledgeAgents([thread.paneKey])
       }

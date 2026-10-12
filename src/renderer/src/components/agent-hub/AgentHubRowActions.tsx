@@ -5,11 +5,8 @@ import { Maximize2, PictureInPicture2, Minimize2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
-import {
-  readAgentHubMirrors,
-  openAgentHubMirror,
-  useAgentHubMirrorPresence
-} from './agent-hub-mirror-store'
+import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
+import { readAgentHubMirrors, useAgentHubMirrorPresence } from './agent-hub-mirror-store'
 
 export function HubRowAction({
   label,
@@ -97,7 +94,7 @@ export function HubRowMirrorActions({
         }
         onClick={() => {
           if (owner) {
-            openAgentHubMirror(target ?? owner.tab.target)
+            openAgentHubMirrorInLayout(target ?? owner.tab.target)
           } else {
             onPopout()
           }

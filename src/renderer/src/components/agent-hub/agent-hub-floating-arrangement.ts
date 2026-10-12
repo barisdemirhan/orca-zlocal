@@ -15,6 +15,9 @@ import {
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { endAgentHubMirrorFocus, readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { keepAgentHubMirrorPlace, readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
+import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
+import { openAgentHubMirror, readAgentHubMirrors } from './agent-hub-mirror-store'
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 // Rows of windows this close (px) read as one row when keeping their order.
 const ROW_BAND = 120
@@ -159,4 +162,19 @@ export function rearrangeAgentHubMirrorsByDefault(): void {
       arrangeInDefaultLayout()
     }
   })
+}
+
+/**
+ * Opens (or raises) the pane's mirror; when that puts a window on screen that was not there, the
+ * open ones take the default layout again, as after closing or bringing one back.
+ */
+export function openAgentHubMirrorInLayout(
+  target: AgentHubPaneTarget
+): ReturnType<typeof openAgentHubMirror> {
+  const shownBefore = findAgentHubMirrorMembership(readAgentHubMirrors(), target)?.presence
+  const result = openAgentHubMirror(target)
+  if (result === 'opened' && shownBefore !== 'window') {
+    rearrangeAgentHubMirrorsByDefault()
+  }
+  return result
 }

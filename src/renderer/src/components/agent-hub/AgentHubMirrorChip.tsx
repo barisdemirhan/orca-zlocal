@@ -1,4 +1,5 @@
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
+import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
 import { useRef, useState } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
@@ -12,7 +13,6 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import {
   isAgentHubMirrorStageQuiet,
-  openAgentHubMirror,
   type AgentHubMirrorChip as ChipState
 } from './agent-hub-mirror-store'
 import { paneTargetFromThread, type AgentHubLocation } from './agent-hub-pane-target'
@@ -147,7 +147,7 @@ export function AgentHubMirrorChip({
           onOpen={onOpenAlert}
           onPopout={(shown) => {
             onDismissAlert(shown.id)
-            openAgentHubMirror(
+            openAgentHubMirrorInLayout(
               paneTargetFromThread(shown.thread, activityThreadRowCopy(shown.thread).taskTitle)
             )
           }}
