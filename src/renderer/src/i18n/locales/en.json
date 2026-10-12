@@ -22039,7 +22039,8 @@
       "ownWords": "Your own answer…",
       "escHint": "terminal",
       "reopen": "Show the quick reply card",
-      "send": "Send"
+      "send": "Send",
+      "sending": "Sending…"
     }
   },
   "workspace": {

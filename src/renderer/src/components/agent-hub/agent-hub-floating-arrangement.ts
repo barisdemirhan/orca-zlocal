@@ -135,14 +135,28 @@ export function arrangeAgentHubFloatingWindowsOnScreen(layout: AgentHubFloatingL
   listeners.forEach((listener) => listener())
 }
 
+function arrangeInDefaultLayout(): void {
+  arrangeAgentHubFloatingWindowsOnScreen(
+    normalizeAgentHubFloatingLayout(useAppStore.getState().settings?.agentHubFloatingLayout)
+  )
+}
+
 /**
  * Lays the floating windows out in the user's default layout once the ones just opened have
  * mounted (the arrangement reads their boxes).
  */
 export function arrangeAgentHubFloatingWindowsByDefault(): void {
-  requestAnimationFrame(() =>
-    arrangeAgentHubFloatingWindowsOnScreen(
-      normalizeAgentHubFloatingLayout(useAppStore.getState().settings?.agentHubFloatingLayout)
-    )
-  )
+  requestAnimationFrame(arrangeInDefaultLayout)
+}
+
+/**
+ * After one mirror is closed, minimized or brought back, the open ones take the default layout
+ * again so Arrange need not be pressed each time; with no mirror left nothing moves.
+ */
+export function rearrangeAgentHubMirrorsByDefault(): void {
+  requestAnimationFrame(() => {
+    if (document.querySelector('[data-agent-hub-mirror-key]')) {
+      arrangeInDefaultLayout()
+    }
+  })
 }

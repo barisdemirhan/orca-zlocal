@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useShallow } from 'zustand/react/shallow'
-import { MessageSquareReply, SendHorizontal, X } from 'lucide-react'
+import { Loader2, MessageSquareReply, SendHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { isPairedWebClientWindow } from '@/lib/desktop-window-chrome'
@@ -47,6 +47,7 @@ function PaneQuickReplyCard({
   const dismissed = useAgentHubCardDismissed(quick.cardKey, 'pane')
   const rootRef = useRef<HTMLDivElement>(null)
   const [text, setText] = useState('')
+  const [sentText, setSentText] = useState<string | null>(null)
   const [gone, setGone] = useState(false)
   const chosen = quick.chosen
   // Answered here or elsewhere: show it briefly, then leave.
@@ -123,6 +124,7 @@ function PaneQuickReplyCard({
         role="group"
         aria-label={quick.question ?? translate('agentHub.quick.title', 'Quick reply')}
         data-agent-hub-pane-quick-reply={target.paneKey}
+        aria-busy={chosen !== null}
         onKeyDown={(event) => {
           if (event.key === 'Escape') {
             event.preventDefault()
@@ -180,7 +182,11 @@ function PaneQuickReplyCard({
             className="mx-3 mt-2 mb-2.5 flex min-w-0 items-center gap-1 rounded-lg border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-2.5 focus-within:border-foreground/20"
             onSubmit={(event) => {
               event.preventDefault()
-              answered(quick.reply(text))
+              const reply = text.trim()
+              if (quick.reply(reply)) {
+                setSentText(reply)
+                answered(true)
+              }
             }}
           >
             <input
@@ -201,6 +207,19 @@ function PaneQuickReplyCard({
               <SendHorizontal />
             </Button>
           </form>
+        ) : chosen !== null ? (
+          // Why: the keys take a moment to reach the agent; a still card reads as frozen.
+          <div
+            role="status"
+            className="mx-3 mt-2 mb-2.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"
+          >
+            <Loader2
+              aria-hidden
+              className="size-3.5 shrink-0 animate-spin motion-reduce:animate-none"
+            />
+            <span className="shrink-0">{translate('agentHub.quick.sending', 'Sending…')}</span>
+            {sentText ? <span className="min-w-0 truncate text-foreground">{sentText}</span> : null}
+          </div>
         ) : (
           <div className="pb-2.5" />
         )}

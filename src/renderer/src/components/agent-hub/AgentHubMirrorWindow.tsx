@@ -95,8 +95,9 @@ export function AgentHubMirrorWindow({
   onSlot: (key: string, element: HTMLDivElement | null) => void
   onFocus: (event: React.PointerEvent<HTMLElement>) => void
   onClose: () => void
-  /** Parks the window as a chip beside the hub; the mirror keeps running. */
-  onMinimize: () => void
+  /** Parks the window as a chip beside the hub; the mirror keeps running. `alone` is false while
+   * every window goes at once, when nothing is left to lay out again. */
+  onMinimize: (alone: boolean) => void
   onReveal: () => void
 }): React.JSX.Element {
   const mirrorKey = windowId
@@ -123,13 +124,18 @@ export function AgentHubMirrorWindow({
   const [gaveUp, setGaveUp] = useState(false)
   // Put back at launch: it is simply there, without the opening animation.
   const [restored] = useState(isAgentHubMirrorStageQuiet)
+  const dockingAll = useRef(false)
   const { leaving, minimizing, leave, minimize } = useMirrorWindowDeparture(
     mirrorKey,
     windowState,
     sectionRef,
     hubRef,
-    onMinimize
+    () => onMinimize(!dockingAll.current)
   )
+  const minimizeAlone = (): void => {
+    dockingAll.current = false
+    minimize()
+  }
   // Picked again from the hub while open: glow so the eye finds it; with motion reduced, a
   // still ring for the same while.
   const highlight = useAgentHubMirrorHighlight()
@@ -154,9 +160,10 @@ export function AgentHubMirrorWindow({
   const seenDockRequest = useRef(dockRequest.seq)
   const dockWhenAsked = useEffectEvent(() => {
     if (dockRequest.key === null) {
+      dockingAll.current = true
       minimize(Math.max(0, 4 - stackIndex) * 45)
     } else if (dockRequest.key === mirrorKey) {
-      minimize()
+      minimizeAlone()
     }
   })
   useEffect(() => {
@@ -260,7 +267,7 @@ export function AgentHubMirrorWindow({
           focused={focus === 'focused'}
           showJump={(windowState?.tabs.length ?? 1) === 1}
           onReveal={onReveal}
-          onMinimize={() => minimize()}
+          onMinimize={minimizeAlone}
           onClose={() => leave(onClose)}
         />
       </header>
@@ -295,7 +302,7 @@ export function AgentHubMirrorWindow({
               type="button"
               variant="ghost"
               size="xs"
-              onClick={() => minimize()}
+              onClick={minimizeAlone}
               className="mt-1"
             >
               {translate('agentHub.mirror.minimize', 'Minimize')}

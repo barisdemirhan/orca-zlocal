@@ -40,6 +40,7 @@ import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { orderAgentHubTray } from './agent-hub-mirror-tray'
+import { rearrangeAgentHubMirrorsByDefault } from './agent-hub-floating-arrangement'
 import { useFloatingPanelInFront } from './use-floating-panel-in-front'
 import { usePruneClosedAgentHubMirrorSources } from './use-prune-closed-agent-hub-mirror-sources'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
@@ -349,8 +350,16 @@ export function AgentHubMirrors({
                   requestAgentHubMirrorSelection(key, window.activeTabId, next.focusTerminal, false)
                 }
               }}
-              onClose={() => closeAgentHubMirror(key)}
-              onMinimize={() => minimizeAgentHubMirror(key)}
+              onClose={() => {
+                closeAgentHubMirror(key)
+                rearrangeAgentHubMirrorsByDefault()
+              }}
+              onMinimize={(alone) => {
+                minimizeAgentHubMirror(key)
+                if (alone) {
+                  rearrangeAgentHubMirrorsByDefault()
+                }
+              }}
               onReveal={() => {
                 closeAgentHubMirrorTab(key, window.activeTabId)
                 onReveal(target, thread)
@@ -367,7 +376,10 @@ export function AgentHubMirrors({
           alertSide={trayAlertSide}
           hidden={trayHidden || hidden}
           peekMs={trayPeekMs}
-          onRestore={restoreAgentHubMirror}
+          onRestore={(id) => {
+            restoreAgentHubMirror(id)
+            rearrangeAgentHubMirrorsByDefault()
+          }}
           locationOfAlert={(alert) => locationOf(alert.thread)}
           onReveal={(item, alert) => {
             const tab = alert

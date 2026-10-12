@@ -17,6 +17,7 @@ import {
   resetAgentHubMirrorsForTest,
   useAgentHubMirrors
 } from './agent-hub-mirror-store'
+import { requestAgentHubMirrorsDock } from './agent-hub-mirror-signals'
 import { flyMirrorWindowToHub } from './mirror-window-flight'
 
 vi.mock('@/store', async () => {
@@ -64,12 +65,7 @@ function target(id: string): AgentHubPaneTarget {
   }
 }
 
-it('clicks each real header minimize button into its own chip when animation cannot run', () => {
-  vi.spyOn(HTMLElement.prototype, 'animate').mockImplementation(() => {
-    throw new TypeError('Animation unavailable')
-  })
-  openAgentHubMirror(target('first'))
-  openAgentHubMirror(target('second'))
+function renderMinimizeStage(alones: boolean[]): void {
   function Stage(): React.JSX.Element {
     const { windows, chips } = useAgentHubMirrors()
     return (
@@ -94,7 +90,10 @@ it('clicks each real header minimize button into its own chip when animation can
             onSlot={vi.fn()}
             onFocus={vi.fn()}
             onClose={vi.fn()}
-            onMinimize={() => minimizeAgentHubMirror(entry.id)}
+            onMinimize={(alone) => {
+              alones.push(alone)
+              minimizeAgentHubMirror(entry.id)
+            }}
             onReveal={vi.fn()}
           />
         ))}
@@ -107,11 +106,35 @@ it('clicks each real header minimize button into its own chip when animation can
     )
   }
   render(<Stage />)
+}
+
+it('clicks each real header minimize button into its own chip when animation cannot run', () => {
+  vi.spyOn(HTMLElement.prototype, 'animate').mockImplementation(() => {
+    throw new TypeError('Animation unavailable')
+  })
+  openAgentHubMirror(target('first'))
+  openAgentHubMirror(target('second'))
+  const alones: boolean[] = []
+  renderMinimizeStage(alones)
   fireEvent.click(screen.getAllByRole('button', { name: 'Minimize' })[0])
   expect(screen.getByText('first chip')).toBeDefined()
   fireEvent.click(screen.getAllByRole('button', { name: 'Minimize' })[0])
   expect(screen.getByText('second chip')).toBeDefined()
   expect(screen.queryAllByRole('dialog')).toHaveLength(0)
+  // One window at a time: the ones left open are laid out again.
+  expect(alones).toEqual([true, true])
+})
+
+it('tells sending every window to the hub apart from a lone minimize', async () => {
+  vi.spyOn(HTMLElement.prototype, 'animate').mockImplementation(() => {
+    throw new TypeError('Animation unavailable')
+  })
+  openAgentHubMirror(target('first'))
+  openAgentHubMirror(target('second'))
+  const alones: boolean[] = []
+  renderMinimizeStage(alones)
+  act(() => requestAgentHubMirrorsDock())
+  await waitFor(() => expect(alones).toEqual([false, false]))
 })
 
 it('normalizes non-finite delay and lands exactly once on finish/cancel', () => {

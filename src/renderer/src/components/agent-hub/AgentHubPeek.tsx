@@ -8,11 +8,15 @@ import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { AgentHubPeekBrowser, closeLeftoverAgentHubPeekPages } from './AgentHubPeekBrowser'
 import { AgentHubPeekFile } from './AgentHubPeekFile'
-import { agentHubWorkArea } from './agent-hub-floating-arrangement'
+import {
+  agentHubWorkArea,
+  rearrangeAgentHubMirrorsByDefault
+} from './agent-hub-floating-arrangement'
 import { agentHubPeekGeometry } from './agent-hub-peek-geometry'
 import { activeAgentHubMirrorTab, agentHubMirrorWindows } from './agent-hub-mirror-membership'
 import {
   focusAgentHubMirror,
+  readAgentHubMirrors,
   restoreAgentHubMirror,
   useAgentHubMirrors
 } from './agent-hub-mirror-store'
@@ -75,8 +79,12 @@ function SourceButton({
         aria-label={label}
         onClick={() => {
           closeAgentHubPeek()
+          const parked = readAgentHubMirrors().chips.some((chip) => chip.window.id === mirrorKey)
           restoreAgentHubMirror(mirrorKey)
           focusAgentHubMirror(mirrorKey)
+          if (parked) {
+            rearrangeAgentHubMirrorsByDefault()
+          }
         }}
       >
         {/* Why the minimize glyph: Peek folds away and the mirror comes back. */}

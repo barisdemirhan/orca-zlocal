@@ -108,6 +108,7 @@ const openCard = (): HTMLElement => {
 beforeEach(() => {
   resetAgentHubAnsweredCardsForTest()
   quick.targets.length = 0
+  quick.answer.chosen = null
   quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000, asking.interactivePrompt ?? null)
   vi.mocked(quick.answer.choose).mockClear()
   vi.mocked(quick.answer.chooseByKey).mockClear()
@@ -145,6 +146,16 @@ it('opens in the asking pane with its options and answers by click or number key
 
   fireEvent.keyDown(openCard(), { key: '1' })
   expect(quick.answer.chooseByKey).toHaveBeenCalledWith(0)
+})
+
+it('shows the answer going out instead of standing still', () => {
+  quick.answer.chosen = 1
+  renderPortals(mountPane())
+  act(() => useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } }))
+  expect(openCard().getAttribute('aria-busy')).toBe('true')
+  expect(screen.getByRole('status').textContent).toContain('Sending…')
+  // A second click on any option cannot send again.
+  expect(screen.getByRole('button', { name: /Keep$/ }).hasAttribute('disabled')).toBe(true)
 })
 
 it('takes the keys only from its own terminal, and hands them back when it leaves', () => {
