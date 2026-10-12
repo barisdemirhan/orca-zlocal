@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { showOpenInGroupRefusedToast } from '@/components/terminal-pane/terminal-file-open-in-group-toast'
 import { beginLinkOpenRequest } from './link-open-request'
 import { translate } from '@/i18n/i18n'
@@ -19,6 +20,8 @@ export type HttpLinkActionDestinations = {
 
 export type HttpLinkAction = {
   external?: boolean
+  /** A row's own glyph, for an action that is neither browser. */
+  icon?: ComponentType<{ className?: string }>
   label: string
   run: () => void | Promise<void>
 }

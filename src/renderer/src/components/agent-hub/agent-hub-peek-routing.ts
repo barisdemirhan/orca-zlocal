@@ -1,5 +1,6 @@
 import { translate } from '@/i18n/i18n'
 import type { LinkAction } from '@/components/link-actions/link-action-request'
+import { PictureInPicture2 } from 'lucide-react'
 import { absolutePathToFileUri } from '@/components/editor/markdown-internal-links'
 import { getConnectionIdForFile } from '@/lib/connection-context'
 import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
@@ -136,7 +137,11 @@ function openIfPeekable(item: AgentHubPeekItem | null): boolean {
 
 function peekAction(item: AgentHubPeekItem | null): LinkAction | null {
   return item
-    ? { label: translate('agentHub.peek.action', 'Peek'), run: () => openAgentHubPeek(item) }
+    ? {
+        icon: PictureInPicture2,
+        label: translate('agentHub.peek.action', 'Peek'),
+        run: () => openAgentHubPeek(item)
+      }
     : null
 }
 
