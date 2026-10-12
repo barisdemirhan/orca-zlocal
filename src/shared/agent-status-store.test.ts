@@ -436,3 +436,16 @@ describe('AgentStatusStore', () => {
     })
   })
 })
+
+it('preserves optional host creator identity through status store serialization', () => {
+  const store = createAgentStatusStore({ epoch: 'epoch-lineage', mode: 'authority' })
+  const parent = subject()
+  const spawnedBy = { paneKey: 'caller-pane' }
+  expect(
+    store.applyMutation({ parent: { subject: parent, status: status(parent, { spawnedBy }) } })
+  ).not.toBeNull()
+  const snapshot = deserializeAgentStatusStoreSnapshot(
+    serializeAgentStatusStoreSnapshot(store.getSnapshot())
+  )
+  expect(snapshot?.parents[0]?.status?.spawnedBy).toEqual(spawnedBy)
+})

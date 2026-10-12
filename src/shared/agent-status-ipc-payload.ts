@@ -58,6 +58,7 @@ export type AgentStatusIpcPayload = ParsedAgentStatusPayload & {
   /** How the host identified that end; absent from old hosts (legacy). */
   turnEndDisposition?: TurnEndDisposition
   orchestration?: AgentStatusOrchestrationContext
+  spawnedBy?: { paneKey: string }
   providerSession?: AgentProviderSessionMetadata
   /** Resume identity update only; the status-shaped fields are transport placeholders. */
   providerSessionOnly?: boolean

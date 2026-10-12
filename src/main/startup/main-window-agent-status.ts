@@ -36,7 +36,8 @@ export function installMainWindowAgentStatusListeners(options: MainWindowAgentSt
       structuredHost,
       programStatus,
       programStatusOnly,
-      agentPresence
+      agentPresence,
+      spawnedBy
     }) => {
       if (state.mainWindow?.isDestroyed()) {
         return
@@ -84,6 +85,7 @@ export function installMainWindowAgentStatusListeners(options: MainWindowAgentSt
         ...(promptInteractionKey ? { promptInteractionKey } : {}),
         ...(restoredUnconfirmed ? { restoredUnconfirmed: true } : {}),
         ...(observation ? { observation } : {}),
+        spawnedBy,
         ...(orchestration ? { orchestration } : {}),
         ...(programStatus ? { programStatus } : {}),
         ...(programStatusOnly === true ? { programStatusOnly: true } : {}),

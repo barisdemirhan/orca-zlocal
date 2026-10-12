@@ -34,6 +34,7 @@ export abstract class OrcaRuntimeWithSplitTerminal extends OrcaRuntimeWithStopEx
   async splitTerminal(
     handle: string,
     opts: {
+      callerTerminalHandle?: string
       direction?: 'horizontal' | 'vertical'
       command?: string
       env?: Record<string, string>

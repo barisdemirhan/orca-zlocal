@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { RuntimeClient } from '../runtime-client'
 import type { CliStatusResult } from '../../shared/runtime-types'
 import { TERMINAL_SPLIT_RETRY_RUNTIME_CAPABILITY } from '../../shared/protocol-version'
@@ -37,7 +37,13 @@ function retrySplit(client: RuntimeClient, splitId = 'leaf-1') {
 }
 
 describe('terminal split --retry-split', () => {
+  // Why: run inside an Orca terminal, the caller handle would join every split request.
+  beforeEach(() => {
+    vi.stubEnv('ORCA_TERMINAL_HANDLE', '')
+  })
+
   afterEach(() => {
+    vi.unstubAllEnvs()
     vi.restoreAllMocks()
   })
 

@@ -36,6 +36,39 @@ afterEach(() => {
 })
 
 describe('AgentHookServer listener replay', () => {
+  it('publishes and clears spawn lineage to renderer and snapshot subscribers', () => {
+    const server = new AgentHookServer()
+    const renderer = vi.fn()
+    const snapshots = vi.fn()
+    server.setListener(renderer)
+    server.subscribeStatusChanges(() => snapshots(server.getStatusSnapshot()))
+    server.ingestRemote(
+      { paneKey: PANE, payload: { state: 'working', agentType: 'claude' } },
+      'conn-1'
+    )
+    const before = server.getStatusSnapshot()[0]
+
+    server.setPaneSpawnedBy(PANE, { paneKey: GOOD_PANE })
+    expect(renderer).toHaveBeenLastCalledWith(
+      expect.objectContaining({ spawnedBy: { paneKey: GOOD_PANE } })
+    )
+    expect(snapshots).toHaveBeenLastCalledWith([
+      expect.objectContaining({ spawnedBy: { paneKey: GOOD_PANE }, receivedAt: before.receivedAt })
+    ])
+    const replay = vi.fn()
+    server.setListener(replay)
+    expect(replay).toHaveBeenCalledWith(
+      expect.objectContaining({ isReplay: true, spawnedBy: { paneKey: GOOD_PANE } })
+    )
+
+    server.setPaneSpawnedBy(PANE, undefined)
+    expect(replay).toHaveBeenLastCalledWith(expect.objectContaining({ spawnedBy: undefined }))
+    expect(snapshots).toHaveBeenLastCalledWith([
+      expect.objectContaining({ spawnedBy: undefined, receivedAt: before.receivedAt })
+    ])
+    expect(server.getStatusSnapshotForPane(PANE)[0]?.spawnedBy).toBeUndefined()
+  })
+
   it('allows multiple status-change subscribers to observe the same update', () => {
     const server = new AgentHookServer()
     const first = vi.fn()

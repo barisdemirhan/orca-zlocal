@@ -46,12 +46,18 @@ export function remapHostAgentStatus(
     launchAgent: retainedSurface?.launchAgent ?? surface.launchAgent,
     hookAgent: surface.agentStatus.agentType
   })
+  const spawnedParent = parsePaneKey(surface.agentStatus.spawnedBy?.paneKey ?? '')
   return {
     ...normalizeCompatibleAgentStatusEntryForOwner(surface.agentStatus, ownerRecord?.agent, {
       ownerIsLaunch: ownerRecord?.ownerIsLaunch === true
     }),
     paneKey,
-    tabId: toWebTerminalSurfaceTabId(surface.parentTabId)
+    tabId: toWebTerminalSurfaceTabId(surface.parentTabId),
+    spawnedBy: spawnedParent
+      ? {
+          paneKey: makePaneKey(toWebTerminalSurfaceTabId(spawnedParent.tabId), spawnedParent.leafId)
+        }
+      : undefined
   }
 }
 

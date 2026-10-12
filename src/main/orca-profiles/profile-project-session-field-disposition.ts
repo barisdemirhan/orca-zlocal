@@ -21,22 +21,36 @@ type SessionFieldDisposition = {
   onTransfer: SessionFieldTransferDisposition
 }
 
-/** Classify every persisted field so owner-keyed pruning/transfer cannot omit additions.
- * Transferable additions still require manual updates to mergeWorkspaceSessions. */
+/**
+ * Every persisted session field, and what the repo-removal and project-transfer paths owe it.
+ *
+ * Why this exists: `clientHostedBrowserPagesByWorktree` was added to the session type and then
+ * missed by three separate prune paths, because nothing made handling it mandatory. Classification
+ * is now a compile error to skip, and the two owner-keyed lists below are what those paths
+ * actually iterate -- so a field marked `prunedByOwnerKey` is pruned by construction.
+ *
+ * Not covered: `mergeWorkspaceSessions`, the apply side of a transfer, is still a hand-written
+ * field list. It is safe for this field only because `extractSessionForTransfer` never emits it --
+ * classify a new field as transferable and that merge has to be edited by hand.
+ */
 export const WORKSPACE_SESSION_FIELD_DISPOSITION = {
-  // Residue: renderer reads validate this ID against live repos, so dead IDs resolve to none.
+  // Residue: it can name the repo being removed, and no main-side path clears it. Harmless only
+  // because every renderer read resolves it against the live repo list, so a dead id reads as none.
+  terminalSpawnedByPaneKey: { onRepoRemoval: 'prunedByBespokeRule', onTransfer: 'notTransferred' },
   activeRepoId: { onRepoRemoval: 'notRepoScoped', onTransfer: 'notTransferred' },
   activeWorkspaceKey: { onRepoRemoval: 'prunedByBespokeRule', onTransfer: 'copiedByBespokeRule' },
   activeWorkspaceExecutionHostId: { onRepoRemoval: 'notRepoScoped', onTransfer: 'notTransferred' },
   activeWorktreeId: { onRepoRemoval: 'prunedByBespokeRule', onTransfer: 'copiedByBespokeRule' },
-  // Owner removal clears this when its tab dies; repo removal can leave it stale.
+  // Residue here specifically: the owner-removal path nulls this when it deletes the tab it names,
+  // but repo removal does not, so it can outlive the tab.
   activeTabId: { onRepoRemoval: 'notRepoScoped', onTransfer: 'notTransferred' },
   tabsByWorktree: { onRepoRemoval: 'prunedByBespokeRule', onTransfer: 'copiedByBespokeRule' },
-  // Follow tab IDs removed or carried by terminal maps.
+  // Keyed by tab id, so both paths follow the tab ids the terminal maps gave up or carried over.
   terminalLayoutsByTabId: {
     onRepoRemoval: 'prunedByBespokeRule',
     onTransfer: 'copiedByBespokeRule'
   },
+  // Same tab-id keying as the layouts it shadows, so park scrollback follows the same tab ids.
   localOnlyScrollbackByTabId: {
     onRepoRemoval: 'prunedByBespokeRule',
     onTransfer: 'copiedByBespokeRule'

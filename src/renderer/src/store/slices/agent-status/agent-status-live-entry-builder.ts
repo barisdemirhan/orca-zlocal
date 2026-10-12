@@ -252,6 +252,7 @@ export function buildAgentStatusLiveEntry(
     lastAssistantMessageIsToolOutput: payload.lastAssistantMessageIsToolOutput,
     ...(lastCompletedAssistantMessage ? { lastCompletedAssistantMessage } : {}),
     orchestration,
+    spawnedBy: Object.hasOwn(payload, 'spawnedBy') ? payload.spawnedBy : existing?.spawnedBy,
     ...(payload.subagentObservation ? { subagentObservation: payload.subagentObservation } : {}),
     ...liveEntryChildFields(existing, payload),
     ...(mainAgent ? { mainAgent } : {}),

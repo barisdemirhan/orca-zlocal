@@ -19,6 +19,7 @@ export type IncomingAgentHookEvent = AgentHookEventPayload & {
 
 export type EnrichedAgentHookEventPayload = AgentHookEventPayload & {
   /** Live acknowledgement of the matching renderer retirement; never cached. */
+  spawnedBy?: { paneKey: string }
   authorityRestartId?: string
   receivedAt: number
   /** Persisted evidence age survives replay; absent values fall back to receivedAt, which tracks delivery order. */

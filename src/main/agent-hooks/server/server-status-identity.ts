@@ -74,7 +74,8 @@ export function toAgentStatusIpcPayload(
     ...(entry.structuredHost ? { structuredHost: entry.structuredHost } : {}),
     ...(entry.terminalHandle ? { terminalHandle: entry.terminalHandle } : {}),
     ...(entry.programStatus ? { programStatus: entry.programStatus } : {}),
-    ...entry.payload
+    ...entry.payload,
+    ...(entry.spawnedBy ? { spawnedBy: entry.spawnedBy } : {})
   }
 }
 

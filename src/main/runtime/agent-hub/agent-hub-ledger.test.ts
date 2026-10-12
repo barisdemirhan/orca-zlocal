@@ -317,3 +317,44 @@ describe('Agent Hub ledger', () => {
     expect(events.at(-1)).toMatchObject({ kind: 'progress', text: 'Two' })
   })
 })
+
+it('manages a descendant without consent, but requests consent again once its parent link is pruned', async () => {
+  ledger.dispose()
+  const parents = new Map([
+    ['pane-2', 'pane-middle'],
+    ['pane-middle', caller.paneKey]
+  ])
+  ledger = new AgentHubLedger(
+    (event) => events.push(event),
+    Date.now,
+    (pane) => parents.get(pane)
+  )
+  ledger.registerDesktop('A')
+  const action = ledger.operate(caller, other, { kind: 'mirror', action: 'add' })
+  expect(events.some((event) => event.kind === 'consent')).toBe(false)
+  ledger.respond(latest('mirror').requestId, { kind: 'ack' }, 'A')
+  await expect(action).resolves.toHaveProperty('requestId')
+  parents.delete('pane-middle')
+  const pending = ledger.operate(caller, other, { kind: 'mirror', action: 'add' })
+  expect(latest('consent')).toMatchObject({ target: other })
+  ledger.respond(latest('consent').requestId, { kind: 'consent', decision: 'deny' }, 'A')
+  await expect(pending).rejects.toMatchObject({ code: 'denied_by_user' })
+})
+
+it('does not grant consent authority through a lineage cycle or from a child to its parent', async () => {
+  ledger.dispose()
+  const parents = new Map([
+    ['pane-2', 'loop'],
+    ['loop', 'pane-2'],
+    [caller.paneKey, 'pane-2']
+  ])
+  ledger = new AgentHubLedger(
+    (event) => events.push(event),
+    Date.now,
+    (pane) => parents.get(pane)
+  )
+  ledger.registerDesktop('A')
+  const pending = ledger.operate(caller, other, { kind: 'mirror', action: 'add' })
+  ledger.respond(latest('consent').requestId, { kind: 'consent', decision: 'deny' }, 'A')
+  await expect(pending).rejects.toMatchObject({ code: 'denied_by_user' })
+})

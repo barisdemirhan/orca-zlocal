@@ -19,9 +19,22 @@ import { AgentHubRateLimits } from './agent-hub-rate-limits'
 import { AgentHubPendingRequests } from './agent-hub-pending-requests'
 import { AgentHubProgressLines } from './agent-hub-progress'
 
-/** Descendant authority is added here when the host owns pane lineage. */
-export function agentHubTargetNeedsConsent(caller: AgentHubCaller, target: AgentHubPane): boolean {
-  return caller.paneKey !== target.paneKey
+export function agentHubTargetNeedsConsent(
+  caller: AgentHubCaller,
+  target: AgentHubPane,
+  parentOf: (paneKey: string) => string | undefined = () => undefined
+): boolean {
+  const seen = new Set<string>()
+  for (let pane: string | undefined = target.paneKey; pane; pane = parentOf(pane)) {
+    if (pane === caller.paneKey) {
+      return false
+    }
+    if (seen.has(pane)) {
+      break
+    }
+    seen.add(pane)
+  }
+  return true
 }
 
 export class AgentHubLedger {
@@ -33,7 +46,8 @@ export class AgentHubLedger {
 
   constructor(
     publish: (event: AgentHubEvent) => void,
-    private readonly now: () => number = Date.now
+    private readonly now: () => number = Date.now,
+    private readonly parentOf: (paneKey: string) => string | undefined = () => undefined
   ) {
     this.rates = new AgentHubRateLimits(now)
     this.requests = new AgentHubPendingRequests(now, publish)
@@ -182,7 +196,10 @@ export class AgentHubLedger {
     this.requireDesktop()
     this.rates.consume(caller.paneKey, operation.kind === 'peek' ? 'peek' : 'mirror')
     const grantKey = JSON.stringify([caller.paneKey, target.paneKey])
-    if (agentHubTargetNeedsConsent(caller, target) && !this.sessionGrants.has(grantKey)) {
+    if (
+      agentHubTargetNeedsConsent(caller, target, this.parentOf) &&
+      !this.sessionGrants.has(grantKey)
+    ) {
       const consent: AgentHubRequest = {
         ...this.base(caller, target, AGENT_HUB_UI_TIMEOUT_MS),
         kind: 'consent',

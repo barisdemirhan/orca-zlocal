@@ -41,6 +41,28 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
   /** Coalesce facet-only ticks that arrive at PTY chunk rate. */
   protected readonly programStatusFacetRepublishes = new PaneTimers()
 
+  private readonly paneSpawnedBy = new Map<string, { paneKey: string }>()
+
+  setPaneSpawnedBy(paneKey: string, spawnedBy: { paneKey: string } | undefined): void {
+    if (spawnedBy) {
+      this.paneSpawnedBy.set(paneKey, spawnedBy)
+    } else {
+      this.paneSpawnedBy.delete(paneKey)
+    }
+    for (const entry of this.combinedStatusEntries()) {
+      if (entry.paneKey === paneKey) {
+        this.emitEnrichedStatus(entry)
+      }
+    }
+    this.notifyStatusChangeListeners()
+  }
+
+  private withSpawnedBy<T extends { paneKey: string }>(
+    entry: T
+  ): T & { spawnedBy?: { paneKey: string } } {
+    return { ...entry, spawnedBy: this.paneSpawnedBy.get(entry.paneKey) }
+  }
+
   setStartupPromptClaimListener(
     listener: (body: unknown) => boolean | 'pending',
     clear: () => void
@@ -50,7 +72,7 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
   }
 
   protected emitEnrichedStatus(row: EnrichedAgentHookEventPayload): void {
-    const enriched = this.programStatusFacets.stitch(row)
+    const enriched = this.withSpawnedBy(this.programStatusFacets.stitch(row))
     this.onAgentStatus?.(enriched)
     for (const listener of this.enrichedStatusListeners) {
       try {
@@ -106,7 +128,7 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
     // One failing replay subscriber must not starve other panes.
     for (const payload of this.combinedStatusEntries()) {
       try {
-        listener({ ...payload, isReplay: true })
+        listener(this.withSpawnedBy({ ...payload, isReplay: true }))
       } catch (err) {
         console.error('[agent-hooks] replay listener threw', err)
       }
@@ -214,7 +236,9 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
   }
 
   getStatusSnapshot(): AgentStatusIpcPayload[] {
-    return this.combinedStatusEntries().map(toAgentStatusIpcPayload)
+    return this.combinedStatusEntries().map((entry) =>
+      this.withSpawnedBy(toAgentStatusIpcPayload(entry))
+    )
   }
 
   /** Include metadata-only provider identities. */
@@ -227,13 +251,13 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
     if (legacy) {
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Main admits enriched legacy rows; the shared view declares their base event type.
       const row = legacy as EnrichedAgentHookEventPayload
-      return [toAgentStatusIpcPayload(this.programStatusFacets.stitch(row))]
+      return [this.withSpawnedBy(toAgentStatusIpcPayload(this.programStatusFacets.stitch(row)))]
     }
     const rows: AgentStatusIpcPayload[] = []
     for (const subject of this.canonicalSubjectsByPane.get(paneKey)?.values() ?? []) {
       const status = this.canonicalStatusStore.getParent(subject)?.status
       if (status) {
-        rows.push(status)
+        rows.push(this.withSpawnedBy(status))
       }
     }
     return rows

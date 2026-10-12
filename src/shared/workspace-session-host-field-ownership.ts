@@ -13,6 +13,7 @@ export type WorkspaceSessionFieldOwnership =
   | 'surfaceTombstoneKeyed'
 
 export const WORKSPACE_SESSION_FIELD_OWNERSHIP = {
+  terminalSpawnedByPaneKey: 'hostPrivate',
   activeRepoId: 'global',
   activeWorktreeId: 'global',
   activeWorkspaceExecutionHostId: 'global',

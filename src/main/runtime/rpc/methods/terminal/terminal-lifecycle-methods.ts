@@ -90,6 +90,7 @@ export const TERMINAL_LIFECYCLE_METHODS = [
             wslUserAct: true,
             command: params.command,
             terminalImageViewerSupported: terminalImageViewerSupported(context),
+            callerTerminalHandle: params.callerTerminalHandle,
             ...(params.shell ? { shellOverride: params.shell } : {}),
             startupCommandDelivery: params.startupCommandDelivery,
             env: params.env,
@@ -158,6 +159,7 @@ export const TERMINAL_LIFECYCLE_METHODS = [
           : // The schema requires a handle when no pane is named.
             await runtime.splitTerminal(params.terminal ?? '', {
               direction: params.direction,
+              callerTerminalHandle: params.callerTerminalHandle,
               command: params.command,
               env: params.env,
               telemetrySource: params.telemetrySource,

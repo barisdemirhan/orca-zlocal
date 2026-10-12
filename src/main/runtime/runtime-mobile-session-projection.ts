@@ -269,8 +269,7 @@ export function projectRuntimeMobileSessionTabs(
     const projectedStatusEntry = projectedAgentStatus.agentStatus as
       | (AgentStatusEntry & { turnCompletedAt?: number })
       | undefined
-    const { turnCompletedAt: projectedTurnCompletedAt, ...clientStatusFields } =
-      projectedStatusEntry ?? {}
+    const { turnCompletedAt: projectedTurnCompletedAt } = projectedStatusEntry ?? {}
     const rawTurnCompletedAt =
       hookAgentStatus?.live?.payload.turnCompletedAt ??
       selectRuntimeHookAgentRowForPane(getHookRowsForPane(paneKey)).live?.payload.turnCompletedAt ??
@@ -279,9 +278,11 @@ export function projectRuntimeMobileSessionTabs(
       typeof rawTurnCompletedAt === 'number' && Number.isFinite(rawTurnCompletedAt)
         ? rawTurnCompletedAt
         : undefined
-    const clientAgentStatus: { agentStatus?: AgentStatusEntry } = projectedStatusEntry
-      ? { agentStatus: clientStatusFields as AgentStatusEntry }
-      : {}
+    const clientAgentStatus: { agentStatus?: AgentStatusEntry } = {}
+    if (projectedStatusEntry) {
+      const { turnCompletedAt: _turnCompletedAt, ...status } = projectedStatusEntry
+      clientAgentStatus.agentStatus = { ...status, spawnedBy: host.getSpawnedBy?.(paneKey) }
+    }
     tabs.push({
       type: 'terminal',
       id: tab.id,

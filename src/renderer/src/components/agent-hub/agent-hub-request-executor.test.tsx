@@ -404,3 +404,44 @@ describe('Agent Hub non-card actions', () => {
     expect(screen.queryByText('Building now')).toBeNull()
   })
 })
+
+it('adds a newly reported spawned child to the already open caller mirror', async () => {
+  const beforeSpawn = useAppStore.getState()
+  useAppStore.setState({
+    tabsByWorktree: { [threads[0].worktree.id]: [threads[0].tab] },
+    terminalLayoutsByTabId: { 'tab-1': beforeSpawn.terminalLayoutsByTabId['tab-1'] }
+  })
+  const initialContext = { threads: [threads[0]], lists: buildAgentHubLists([threads[0]]) }
+  await executeAgentHubRequest('local', { ...base, kind: 'mirror', action: 'open' }, initialContext)
+  const windowId = readAgentHubMirrors().windows[0]?.id
+  const childEntry = threads[1].currentAgentEntry
+  if (!childEntry) {
+    throw new Error('Missing child status')
+  }
+  const child = {
+    ...threads[1],
+    currentAgentEntry: { ...childEntry, spawnedBy: { paneKey: PANE_KEY } },
+    paneEntry: { ...childEntry, spawnedBy: { paneKey: PANE_KEY } }
+  }
+  useAppStore.setState({
+    tabsByWorktree: beforeSpawn.tabsByWorktree,
+    terminalLayoutsByTabId: beforeSpawn.terminalLayoutsByTabId
+  })
+  const freshContext = {
+    threads: [threads[0], child],
+    lists: buildAgentHubLists([threads[0], child])
+  }
+  expect(
+    await executeAgentHubRequest(
+      'local',
+      { ...base, target, kind: 'mirror', action: 'add' },
+      freshContext
+    )
+  ).toEqual({ kind: 'ack' })
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
+  expect(readAgentHubMirrors().windows[0]?.id).toBe(windowId)
+  expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.paneKey)).toEqual([
+    PANE_KEY,
+    PANE_KEY_2
+  ])
+})

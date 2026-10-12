@@ -16,6 +16,7 @@ export type AgentHubThreadFixture = {
   interactivePrompt?: string
   /** Makes this pane an orchestration worker of that pane. */
   parentPaneKey?: string
+  spawnedByPaneKey?: string
   subagents?: AgentSubagentSnapshot[]
 }
 
@@ -48,6 +49,9 @@ export function agentHubThreadsFor(fixtures: AgentHubThreadFixture[]): AgentPane
                     parentPaneKey: fixture.parentPaneKey
                   }
                 }
+              : {}),
+            ...(fixture.spawnedByPaneKey
+              ? { spawnedBy: { paneKey: fixture.spawnedByPaneKey } }
               : {}),
             ...(fixture.subagents ? { subagents: fixture.subagents } : {})
           } satisfies AgentStatusEntry

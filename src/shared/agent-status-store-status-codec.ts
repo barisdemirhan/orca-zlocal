@@ -217,6 +217,18 @@ export function parseAgentStatusIpcPayloadCopy(value: unknown): AgentStatusIpcPa
     }
     parsed.providerSession = providerSession
   }
+  if (copied.spawnedBy !== undefined) {
+    if (
+      typeof copied.spawnedBy !== 'object' ||
+      copied.spawnedBy === null ||
+      !('paneKey' in copied.spawnedBy) ||
+      typeof copied.spawnedBy.paneKey !== 'string' ||
+      !copied.spawnedBy.paneKey
+    ) {
+      return null
+    }
+    parsed.spawnedBy = { paneKey: copied.spawnedBy.paneKey }
+  }
   if (copied.orchestration !== undefined) {
     const orchestration = parseOrchestration(copied.orchestration)
     if (!orchestration) {

@@ -56,19 +56,22 @@ import { requireSwitchedOn } from './sidebar-inputs/require-switched-on'
 import { HEADLESS_RUNTIME_WINDOW_ID } from '../../shared/runtime-session-contracts'
 import { getHostDisplayLabelOverrides } from '../../shared/host-setting-overrides'
 
+// Switch point: a window-fed build keeps no sidebar facts layer.
 const OrcaRuntimeSidebarBase: typeof OrcaRuntimeWithAgentTransitions = ORCA_SIDEBAR_INPUTS_IS_MAIN
   ? OrcaRuntimeWithSidebarTemporal
   : OrcaRuntimeWithAgentTransitions
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
 import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
+import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
+import type { TerminalSurfaceCloseTarget } from '../../shared/terminal-surface-close-target'
 
 // oxlint-disable-next-line typescript/no-unsafe-declaration-merging -- SAFETY: The existing Linear installer supplies the canonical prototype surface.
 class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
-  /** Sidebar facts are absent unless ORCA_SIDEBAR_INPUTS=main. */
+  /** This runtime as its sidebar facts layer; null unless built with ORCA_SIDEBAR_INPUTS=main. */
   get sidebarFacts() {
     return sidebarFactsRuntime(this)
   }
-  // Idle without relay hosts; refresh only while a window or phone consumes sidebar state.
+  // Switch point. Idle until relay hosts attach; the fallback refresh runs while a window shows the sidebar or a phone reads the feed.
   readonly pairedServerRows = ORCA_SIDEBAR_INPUTS_IS_MAIN
     ? new PairedServerRowsProducer({
         hasDemand: () =>
@@ -165,9 +168,69 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
     })
   }
 
-  readonly agentHub = new AgentHubLedger((event) =>
-    this.emitClientEvent({ type: 'agentHub', event })
+  private readonly paneSpawnLineage: RuntimePaneSpawnLineage
+
+  readonly agentHub = new AgentHubLedger(
+    (event) => this.emitClientEvent({ type: 'agentHub', event }),
+    Date.now,
+    (paneKey) => this.getAgentHubParentPaneKey(paneKey)
   )
+
+  override async createTerminal(
+    ...args: Parameters<OrcaRuntimeWithMigrationCatalog['createTerminal']>
+  ) {
+    const terminal = await super.createTerminal(...args)
+    if (!terminal.isReattach) {
+      this.paneSpawnLineage.record(terminal.handle, args[1]?.callerTerminalHandle)
+    }
+    return terminal
+  }
+
+  override async splitTerminal(
+    ...args: Parameters<OrcaRuntimeWithMigrationCatalog['splitTerminal']>
+  ) {
+    const split = await super.splitTerminal(...args)
+    this.paneSpawnLineage.record(split.handle, args[1]?.callerTerminalHandle)
+    return split
+  }
+
+  override async createManagedWorktree(
+    ...args: Parameters<OrcaRuntimeWithMigrationCatalog['createManagedWorktree']>
+  ) {
+    const result = await super.createManagedWorktree(...args)
+    if (result.startupTerminal?.handle) {
+      this.paneSpawnLineage.record(
+        result.startupTerminal.handle,
+        args[0].lineage?.callerTerminalHandle
+      )
+    }
+    return result
+  }
+
+  pruneTerminalSpawnLineage(target: TerminalSurfaceCloseTarget): void {
+    this.paneSpawnLineage.close(target)
+  }
+
+  getTerminalSpawnedBy(paneKey: string) {
+    return this.paneSpawnLineage.get(paneKey)
+  }
+
+  getAgentHubParentPaneKey(paneKey: string): string | undefined {
+    const orchestration = this.getAgentStatusOrchestrationContextForPaneKey(paneKey)
+    if (orchestration) {
+      if (orchestration.parentPaneKey) {
+        return orchestration.parentPaneKey
+      }
+      for (const handle of [orchestration.parentTerminalHandle, orchestration.coordinatorHandle]) {
+        const parent = handle ? this.getLiveTerminalPaneKey(handle) : null
+        if (parent && parent !== paneKey) {
+          return parent
+        }
+      }
+      return undefined
+    }
+    return this.paneSpawnLineage.get(paneKey)?.paneKey
+  }
 
   override getOrchestrationDb(): OrchestrationDb {
     const db = super.getOrchestrationDb()
@@ -219,7 +282,15 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
 
   constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithAgentTransitions>) {
     super(...args)
-    // Headless hosts must register both invalidators themselves; they never load desktop IPC.
+    this.paneSpawnLineage = new RuntimePaneSpawnLineage({
+      read: () => this.store?.getWorkspaceSession?.(),
+      write: (session) => this.store?.setWorkspaceSession?.(session),
+      resolveLivePane: (handle) => this.getLiveTerminalPaneKey(handle),
+      publish: (paneKey, spawnedBy) => args[2]?.onPaneSpawnedByChanged?.(paneKey, spawnedBy)
+    })
+    // Why: the runtime listing re-runs a scan the worktree-change generation overtook and re-lists
+    // through this runtime's scan cache, so a worktree change must reach both. The desktop IPC
+    // module registers the generation bump at load; a headless host never loads it.
     registerDetectedWorktreeScanInvalidation()
     registerWorktreeChangeInvalidator((repoId) => this.invalidateWorktreeCatalog(repoId))
     publishWorkspaceViewChanges(this.store, (event) => this.emitClientEvent(event))

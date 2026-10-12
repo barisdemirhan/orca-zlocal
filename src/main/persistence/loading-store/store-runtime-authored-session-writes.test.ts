@@ -197,3 +197,26 @@ describe('a host partition written from a per-host renderer snapshot', () => {
     }
   })
 })
+
+it('retains host creator links through desktop saves, quit staging and disk reload, and persists an explicit prune', () => {
+  const store = createStore()
+  const child = 'tab-child:11111111-1111-4111-8111-111111111111'
+  const parent = 'tab-parent:22222222-2222-4222-8222-222222222222'
+  const links = { [child]: { paneKey: parent } }
+  store.setWorkspaceSession({ ...rendererSession('seed'), terminalSpawnedByPaneKey: links })
+  store.setWorkspaceSession(rendererSession('desktop'))
+  store.stageWorkspaceSessionBeforeUnload(rendererSession('quit'))
+  store.flush()
+  const reloaded = createSqliteTestStore(Store, {
+    dataFile: join(store.getProfileStorageDirectory(), 'orca-data.json')
+  })
+  stores.push(reloaded)
+  expect(reloaded.getWorkspaceSession().terminalSpawnedByPaneKey).toEqual(links)
+  reloaded.setWorkspaceSession({ ...reloaded.getWorkspaceSession(), terminalSpawnedByPaneKey: {} })
+  reloaded.flush()
+  const pruned = createSqliteTestStore(Store, {
+    dataFile: join(store.getProfileStorageDirectory(), 'orca-data.json')
+  })
+  stores.push(pruned)
+  expect(pruned.getWorkspaceSession().terminalSpawnedByPaneKey).toEqual({})
+})

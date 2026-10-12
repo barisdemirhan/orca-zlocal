@@ -5,6 +5,7 @@ import {
   expectWorktreeRouting,
   FUTURE_LEAF_ID,
   FUTURE_PANE_KEY,
+  ORPHAN_PANE_KEY,
   type AgentStatusSetData,
   type StoreLike,
   type StoreSubscribeListener
@@ -231,6 +232,7 @@ describe('useIpcEvents agent status snapshot integration', () => {
       state: 'working',
       prompt: 'p',
       agentType: 'claude',
+      spawnedBy: { paneKey: ORPHAN_PANE_KEY },
       receivedAt: 1_700_000_000_100,
       stateStartedAt: 1_699_999_999_100
     })
@@ -251,6 +253,9 @@ describe('useIpcEvents agent status snapshot integration', () => {
 
     expect(() => notify(beforeHydration)).not.toThrow()
     expect(setAgentStatusCalls).toBe(1)
+    expect(storeState.agentStatusByPaneKey).toEqual({
+      [FUTURE_PANE_KEY]: expect.objectContaining({ spawnedBy: { paneKey: ORPHAN_PANE_KEY } })
+    })
   })
 
   // Requeue spliced events when folding throws, preserving the pre-batch retry behavior.

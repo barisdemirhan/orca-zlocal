@@ -6,11 +6,15 @@ import {
   type AgentRowLineageTree
 } from '../dashboard/agent-row-lineage-model'
 
-type ChildAgentLineageEntry = Pick<AgentStatusEntry, 'terminalHandle' | 'orchestration'>
+type ChildAgentLineageEntry = Pick<
+  AgentStatusEntry,
+  'terminalHandle' | 'orchestration' | 'spawnedBy'
+>
 
 /** Accept full threads or synthetic structural rows without casts; classifier tests pin compatibility. */
 export type ChildAgentClassifiableThread = {
   paneKey: string
+  paneEntry?: ChildAgentLineageEntry
   currentAgentEntry?: ChildAgentLineageEntry | null
   latestEvent?: { entry: ChildAgentLineageEntry } | null
   events?: readonly { entry: ChildAgentLineageEntry }[]
@@ -49,11 +53,22 @@ export function collectChildAgentPaneKeys(
 
 /** The lineage tree behind `collectChildAgentPaneKeys`, for surfaces that nest children under their parent. */
 export function buildChildAgentLineageTree(
-  threads: readonly ChildAgentClassifiableThread[]
+  threads: readonly ChildAgentClassifiableThread[],
+  includeSpawnedBy = false
 ): AgentRowLineageTree<AgentLineageSourceRow> {
   const baseRows: AgentLineageSourceRow[] = threads.map((thread) => ({
     paneKey: thread.paneKey,
-    entry: { terminalHandle: firstReportedTerminalHandle(thread) }
+    entry: {
+      terminalHandle: firstReportedTerminalHandle(thread),
+      ...(includeSpawnedBy
+        ? {
+            spawnedBy: (thread.paneEntry ?? thread.currentAgentEntry ?? thread.latestEvent?.entry)
+              ?.spawnedBy,
+            orchestration: candidateEntries(thread).find((entry) => entry.orchestration)
+              ?.orchestration
+          }
+        : {})
+    }
   }))
   const rowsByPaneKey = new Map<string, AgentLineageSourceRow>()
   for (const row of baseRows) {
@@ -85,5 +100,5 @@ export function buildChildAgentLineageTree(
     return base
   })
 
-  return buildAgentRowLineageTree(rows)
+  return buildAgentRowLineageTree(rows, includeSpawnedBy)
 }

@@ -225,6 +225,7 @@ export const ResumeProviderSessionParam = z.object({
 })
 
 export const TerminalCreateParams = z.object({
+  callerTerminalHandle: OptionalString,
   worktree: OptionalString,
   clientMutationId: z.string().min(1).max(128).optional(),
   reconcileExisting: z.boolean().optional(),
@@ -273,6 +274,7 @@ export const TerminalSplit = z
     // Required unless `pane` names the source; the refinement keeps the handle's message.
     terminal: OptionalString,
     expectedIncarnationId: TerminalHandle.shape.expectedIncarnationId,
+    callerTerminalHandle: OptionalString,
     direction: z
       .unknown()
       .transform((v) => (v === 'vertical' || v === 'horizontal' ? v : undefined))

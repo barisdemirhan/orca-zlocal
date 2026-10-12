@@ -541,3 +541,19 @@ import { resolveAttention } from '../../../../../shared/sidebar-list/smart-atten
     })
   })
 }
+
+it('keeps host creator metadata across byte-derived updates and clears it on a host prune without changing the turn', () => {
+  const store = createTestStore()
+  const child = 'tab-child:11111111-1111-4111-8111-111111111111'
+  const parent = 'tab-parent:22222222-2222-4222-8222-222222222222'
+  const payload = { state: 'working' as const, prompt: 'child', agentType: 'codex' }
+  store.getState().setAgentStatus(child, { ...payload, spawnedBy: { paneKey: parent } })
+  const startedAt = store.getState().agentStatusByPaneKey[child].stateStartedAt
+  store.getState().setAgentStatus(child, payload)
+  expect(store.getState().agentStatusByPaneKey[child].spawnedBy).toEqual({ paneKey: parent })
+  const epoch = store.getState().agentStatusEpoch
+  store.getState().setAgentStatus(child, { ...payload, spawnedBy: undefined })
+  expect(store.getState().agentStatusByPaneKey[child].spawnedBy).toBeUndefined()
+  expect(store.getState().agentStatusByPaneKey[child].stateStartedAt).toBe(startedAt)
+  expect(store.getState().agentStatusEpoch).toBe(epoch + 1)
+})

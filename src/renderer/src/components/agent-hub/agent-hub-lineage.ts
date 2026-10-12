@@ -47,12 +47,12 @@ function subagentRows(thread: AgentPaneThread, now: number): AgentChildRowModel[
   return flattenAgentChildRowModels(rows).filter((row) => row.kind === 'agent')
 }
 
-/** Orchestration lineage (the Agents view's own rules) plus each agent's in-process subagents. */
+/** Orchestration parents win; CLI-created panes fold only in Hub. */
 export function buildAgentHubLineage(
   threads: readonly AgentPaneThread[],
   now: number
 ): AgentHubLineage {
-  const tree = buildChildAgentLineageTree(threads)
+  const tree = buildChildAgentLineageTree(threads, true)
   const threadByPaneKey = new Map(threads.map((thread) => [thread.paneKey, thread]))
   const parentOf = new Map<string, string>()
   const workersOf = new Map<string, AgentPaneThread[]>()

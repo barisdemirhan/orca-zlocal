@@ -663,3 +663,67 @@ it.each([false, true])(
     expect(state.agentStatusByPaneKey[before[0]!].firstStateStartedAt).toBe(NOW + 4)
   }
 )
+
+it('remaps host creator pane identity and applies a prune even when the child status clock is unchanged', () => {
+  resetWebSessionTabsSyncTestState()
+  const hostPaneKey = makePaneKey('host-tab-1', LEAF_ID)
+  const snapshot = makeSnapshot([
+    {
+      type: 'terminal',
+      id: HOST_SURFACE_ID,
+      title: 'codex [working]',
+      parentTabId: 'host-tab-1',
+      leafId: LEAF_ID,
+      isActive: true,
+      status: 'ready',
+      terminal: 'terminal-1',
+      agentStatus: {
+        state: 'working',
+        prompt: 'child',
+        updatedAt: NOW - 100,
+        stateStartedAt: NOW - 1000,
+        paneKey: hostPaneKey,
+        worktreeId: WT,
+        tabId: 'host-tab-1',
+        agentType: 'codex',
+        stateHistory: [],
+        spawnedBy: { paneKey: makePaneKey('host-parent', LEAF_ID) }
+      }
+    }
+  ])
+  const first = applyWebSessionTabsSnapshot(makeState(), snapshot, ENV, NOW)
+  const mirroredPane = Object.keys(first.agentStatusByPaneKey ?? {})[0]
+  if (!mirroredPane) {
+    throw new Error('Missing mirrored child')
+  }
+  expect(first.agentStatusByPaneKey?.[mirroredPane]?.spawnedBy).toEqual({
+    paneKey: makePaneKey('web-terminal-host-parent', LEAF_ID)
+  })
+  const firstEntry = first.agentStatusByPaneKey?.[mirroredPane]
+  if (!firstEntry) {
+    throw new Error('Missing child entry')
+  }
+  const pruned = applyWebSessionTabsSnapshot(
+    makeState({
+      ...first,
+      agentStatusByPaneKey: {
+        [mirroredPane]: { ...firstEntry, updatedAt: NOW + 100, prompt: 'fresh client work' }
+      }
+    }),
+    {
+      ...snapshot,
+      snapshotVersion: 2,
+      tabs: snapshot.tabs.map((tab) =>
+        tab.type === 'terminal' && tab.agentStatus
+          ? { ...tab, agentStatus: { ...tab.agentStatus, spawnedBy: undefined } }
+          : tab
+      )
+    },
+    ENV,
+    NOW
+  )
+  expect(pruned.agentStatusByPaneKey?.[mirroredPane]?.spawnedBy).toBeUndefined()
+  expect(pruned.agentStatusByPaneKey?.[mirroredPane]?.stateStartedAt).toBe(NOW - 1000)
+  expect(pruned.agentStatusByPaneKey?.[mirroredPane]?.prompt).toBe('fresh client work')
+  expect(pruned.agentStatusEpoch).toBe((first.agentStatusEpoch ?? 0) + 1)
+})

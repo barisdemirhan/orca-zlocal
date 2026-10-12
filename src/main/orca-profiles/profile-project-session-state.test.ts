@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getDefaultWorkspaceSession } from '../../shared/constants'
 import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
+import { makePaneKey } from '../../shared/stable-pane-id'
 import {
   mergeWorkspaceSessions,
   removeRepoFromWorkspaceSession
@@ -11,6 +12,10 @@ const REMOVED_WORKTREE_ID = 'repo-a::/removed'
 const RETAINED_WORKTREE_ID = 'repo-b::/retained'
 const REMOVED_REPO_ID = 'repo-a'
 const RETAINED_REPO_ID = 'repo-b'
+const LINEAGE_LEAF = '11111111-1111-4111-8111-111111111111'
+const REMOVED_PANE = makePaneKey('removed-tab', LINEAGE_LEAF)
+const RETAINED_PANE = makePaneKey('retained-tab', LINEAGE_LEAF)
+const OTHER_PANE = makePaneKey('other-tab', LINEAGE_LEAF)
 
 describe('profile project session state', () => {
   it('keeps topology revisions monotonic while merging session authority records', () => {
@@ -190,6 +195,11 @@ describe('profile project session state', () => {
       terminalPtyIncarnationsByPaneKey: {
         'removed-tab:removed-leaf': 'removed-incarnation',
         'retained-tab:retained-leaf': 'retained-incarnation'
+      },
+      terminalSpawnedByPaneKey: {
+        [REMOVED_PANE]: { paneKey: RETAINED_PANE },
+        [RETAINED_PANE]: { paneKey: REMOVED_PANE },
+        [OTHER_PANE]: { paneKey: RETAINED_PANE }
       }
     }
 
@@ -204,6 +214,9 @@ describe('profile project session state', () => {
     })
     expect(result.terminalPtyIncarnationsByPaneKey).toEqual({
       'retained-tab:retained-leaf': 'retained-incarnation'
+    })
+    expect(result.terminalSpawnedByPaneKey).toEqual({
+      [OTHER_PANE]: { paneKey: RETAINED_PANE }
     })
   })
 })

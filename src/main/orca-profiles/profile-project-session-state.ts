@@ -1,3 +1,4 @@
+import { parsePaneKey } from '../../shared/stable-pane-id'
 import { getDefaultWorkspaceSession } from '../../shared/constants'
 import type { ExecutionHostId } from '../../shared/execution-host'
 import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
@@ -171,6 +172,15 @@ export function removeRepoFromWorkspaceSession(
   for (const tabId of removedTerminalTabIds) {
     delete next.terminalLayoutsByTabId[tabId]
     delete next.localOnlyScrollbackByTabId?.[tabId]
+  }
+  if (next.terminalSpawnedByPaneKey) {
+    next.terminalSpawnedByPaneKey = Object.fromEntries(
+      Object.entries(next.terminalSpawnedByPaneKey).filter(
+        ([child, parent]) =>
+          !removedTerminalTabIds.has(parsePaneKey(child)?.tabId ?? '') &&
+          !removedTerminalTabIds.has(parsePaneKey(parent.paneKey)?.tabId ?? '')
+      )
+    )
   }
   const removedBrowserWorkspaceIds = new Set<string>()
   for (const [ownerKey, workspaces] of Object.entries(next.browserTabsByWorktree ?? {})) {
