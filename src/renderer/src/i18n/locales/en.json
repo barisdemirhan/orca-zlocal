@@ -22044,6 +22044,22 @@
       "reopen": "Show the quick reply card",
       "send": "Send",
       "sending": "Sending…"
+    },
+    "settings": {
+      "agentControl": "Let agents control Agent Hub",
+      "agentControlCopy": "Agents can show you things, ask questions and manage their mirrors."
+    },
+    "requests": {
+      "pairedPeekUnavailable": "Peek cannot open URLs or files from this paired host yet.",
+      "peekUnavailable": "Peek is unavailable in the current view.",
+      "peekUnsupported": "This URL or file cannot be opened in Peek on its host.",
+      "targetUnavailable": "This terminal is no longer available on its host.",
+      "mirrorAddFailed": "The terminal could not be added to the caller’s mirror ({{reason}}).",
+      "mirrorOpenFailed": "The mirror could not be opened ({{reason}}).",
+      "mirrorUnavailable": "This terminal has no mirror.",
+      "invalidLayout": "Choose the grid, columns or rows layout.",
+      "canvasDisabled": "Enable the Agent Hub canvas in Settings to open it.",
+      "presenceUnavailable": "Desktop presence is unavailable."
     }
   },
   "workspace": {

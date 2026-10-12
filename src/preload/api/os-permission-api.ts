@@ -20,9 +20,11 @@ import type {
   StructuredNotificationRead
 } from '../../shared/notification-settings-types'
 import type { AgentSessionExecutionLocation } from '../../shared/agent-session-record'
+import type { AgentHubPresence } from '../../shared/agent-hub-requests'
 
 export type NotificationsApi = {
   getDesktopAwayState: () => Promise<boolean | undefined>
+  getDesktopPresence: () => Promise<AgentHubPresence | undefined>
   dispatch: (args: NotificationDispatchRequest) => Promise<NotificationDispatchResult>
   /** `paneKeys` also retires every id main announced for those subjects. */
   dismiss: (

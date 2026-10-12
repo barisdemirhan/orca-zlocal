@@ -168,7 +168,8 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
   )
 
   isAgentHubEnabled(): boolean {
-    return this.store?.getSettings().experimentalAgentHub === true
+    const settings = this.store?.getSettings()
+    return settings?.experimentalAgentHub === true && settings.agentHubAgentControl !== false
   }
 
   getAgentHubCaller(handle: string): AgentHubCaller | null {

@@ -1,3 +1,5 @@
+import { homedir } from 'node:os'
+import { resolve } from 'node:path'
 import type { CommandHandler, HandlerContext } from '../dispatch'
 import { getOptionalStringFlag, getRepeatedStringFlag } from '../flags'
 import {
@@ -12,6 +14,18 @@ import {
 } from '../../shared/rpc-contract/agent-hub-params'
 import { agentHubCallerFlags, parseAgentHubParams, printAgentHubCommand } from './agent-hub-command'
 import { agentHubAsk } from './agent-hub-ask'
+
+function agentHubPeekLink({ flags, cwd }: HandlerContext): string | undefined {
+  const link = getOptionalStringFlag(flags, 'link')
+  if (!link || /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(link)) {
+    return link
+  }
+  if (link === '~' || /^~[/\\]/.test(link)) {
+    return resolve(homedir(), link.slice(2))
+  }
+  // Why: the agent's current directory can differ from the pane's startup directory.
+  return resolve(cwd, link)
+}
 
 function operation(
   method: string,
@@ -34,8 +48,8 @@ export const AGENT_HUB_HANDLERS: Record<string, CommandHandler> = {
     sound: flags.get('sound') === true,
     links: getRepeatedStringFlag(flags, 'link')
   })),
-  'hub peek': operation('agentHub.peek', AgentHubPeekParams, ({ flags }) => ({
-    link: getOptionalStringFlag(flags, 'link')
+  'hub peek': operation('agentHub.peek', AgentHubPeekParams, (ctx) => ({
+    link: agentHubPeekLink(ctx)
   })),
   'hub progress': operation('agentHub.progress', AgentHubProgressParams, ({ flags }) => ({
     text: getOptionalStringFlag(flags, 'text'),

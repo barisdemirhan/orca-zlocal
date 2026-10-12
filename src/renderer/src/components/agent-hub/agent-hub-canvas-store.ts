@@ -84,7 +84,7 @@ function bringParkedMirrorsBack(): void {
   }
 }
 
-export function openAgentHubCanvas(): void {
+export function openAgentHubCanvas(preserveKeyboardFocus = false): void {
   if (open) {
     return
   }
@@ -98,7 +98,11 @@ export function openAgentHubCanvas(): void {
   bringParkedMirrorsBack()
   // Why: keys must not reach a terminal or editor the canvas now hides.
   const focused = document.activeElement
-  if (focused instanceof HTMLElement && !focused.closest(OVER_THE_CANVAS)) {
+  if (
+    !preserveKeyboardFocus &&
+    focused instanceof HTMLElement &&
+    !focused.closest(OVER_THE_CANVAS)
+  ) {
     focused.blur()
   }
   emit()

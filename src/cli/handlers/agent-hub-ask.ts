@@ -6,11 +6,9 @@ import {
   getRepeatedStringFlag
 } from '../flags'
 import { printResult } from '../format'
+import { quoteCliCommandArgument } from '../shell-command-quote'
 import { RuntimeClientError } from '../runtime-client'
-import {
-  AgentHubAskParams,
-  AGENT_HUB_MAX_ASK_TIMEOUT_MS
-} from '../../shared/rpc-contract/agent-hub-params'
+import { AgentHubAskParams } from '../../shared/rpc-contract/agent-hub-params'
 import type { AgentHubAnswer } from '../../shared/agent-hub-requests'
 import {
   agentHubCallerFlags,
@@ -35,30 +33,57 @@ export const agentHubAsk: CommandHandler = async (ctx) => {
     requestId,
     resume
   })
-  try {
-    const response = await callAgentHub<AgentHubAnswer & { requestId: string }>(
-      ctx,
-      'agentHub.ask',
-      params,
-      // A resumed question retains its host deadline, which may exceed this invocation's default.
-      (resume ? AGENT_HUB_MAX_ASK_TIMEOUT_MS : params.timeoutMs) + 15_000
+  const rawWait = getOptionalStringFlag(flags, 'wait')
+  const waitMs =
+    rawWait === undefined ? Math.min(100_000, params.timeoutMs) : agentHubTimeout(rawWait, 'wait')
+  if (waitMs > params.timeoutMs) {
+    throw new RuntimeClientError('invalid_argument', '--wait cannot exceed --timeout')
+  }
+  const id = resume ?? requestId ?? ''
+  const resumeArgv = ['orca', 'hub', 'ask', '--resume', id]
+  for (const flag of ['environment', 'host', 'pairing-code']) {
+    const value = getOptionalStringFlag(flags, flag)
+    if (value) {
+      resumeArgv.push(`--${flag}`, value)
+    }
+  }
+  const resumeCommand = resumeArgv.map(quoteCliCommandArgument).join(' ')
+  const printPending = (): void => {
+    const pending = { status: 'pending', requestId: id, resume: resumeArgv }
+    console.log(
+      ctx.json
+        ? JSON.stringify(pending, null, 2)
+        : `Still waiting (${id}). Resume the same question with: ${resumeCommand}`
     )
-    printResult(response, ctx.json, (answer) => answer.answer)
+    process.exitCode = 2
+  }
+  try {
+    const response = await callAgentHub<
+      (AgentHubAnswer & { requestId: string }) | { status: 'pending'; requestId: string }
+    >(ctx, 'agentHub.ask', { ...params, waitMs }, waitMs + 5_000)
+    if ('status' in response.result && response.result.status === 'pending') {
+      printPending()
+    } else {
+      printResult(response, ctx.json, (answer) => ('answer' in answer ? answer.answer : ''))
+    }
   } catch (error) {
+    if (error instanceof RuntimeClientError && error.code === 'runtime_timeout') {
+      // Older hosts ignore waitMs; reconnect with the same ID instead of creating a duplicate.
+      printPending()
+      return
+    }
     if (
       error instanceof RuntimeClientError &&
       [
         'connection_lost',
         'runtime_unavailable',
         'remote_runtime_unavailable',
-        'runtime_timeout',
         'reconnecting'
       ].includes(error.code)
     ) {
-      const id = resume ?? requestId
       throw new RuntimeClientError(
         error.code,
-        `${error.message}. Resume the same question with: orca hub ask --resume ${id}`,
+        `${error.message}. Resume the same question with: ${resumeCommand}`,
         { requestId: id }
       )
     }

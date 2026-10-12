@@ -14,9 +14,10 @@ export function agentHubMirrorTabCapReason(): string {
 
 export function addAgentHubMirrorTabWithFeedback(
   windowId: string,
-  target: AgentHubPaneTarget
+  target: AgentHubPaneTarget,
+  focusTerminal = true
 ): AgentHubMirrorTabResult {
-  const result = addAgentHubMirrorTab(windowId, target)
+  const result = addAgentHubMirrorTab(windowId, target, focusTerminal)
   if (result.status === 'tab-cap') {
     toast.error(agentHubMirrorTabCapReason())
   } else if (result.status === 'already-owned') {

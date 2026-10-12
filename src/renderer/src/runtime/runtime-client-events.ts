@@ -23,6 +23,7 @@ export async function subscribeRuntimeClientEvents(
     {
       selector: environmentId,
       method: 'runtime.clientEvents.subscribe',
+      params: { agentHub: false },
       timeoutMs: 15_000,
       expectedEnvironmentPairingRevision: getRuntimeEnvironmentRevision(environmentId)
     },

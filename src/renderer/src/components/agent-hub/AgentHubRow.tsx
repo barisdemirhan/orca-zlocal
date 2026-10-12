@@ -6,6 +6,7 @@ import type { AgentType } from '../../../../shared/agent-status-types'
 import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import { HubRowAction, HubRowCloseAgent, HubRowMirrorActions } from './AgentHubRowActions'
+import { useAgentHubProgress } from './use-agent-hub-progress'
 
 /** One agent or shell row: click opens the live mirror, ↵ jumps to the pane. */
 export function AgentHubRow({
@@ -54,6 +55,7 @@ export function AgentHubRow({
   onClose?: () => void
   selectionMode?: boolean
 }): React.JSX.Element {
+  const progress = useAgentHubProgress(mirrorTarget)
   const current = useAppStore(
     (s) =>
       worktreeId !== undefined && s.activeView === 'terminal' && s.activeWorktreeId === worktreeId
@@ -81,8 +83,10 @@ export function AgentHubRow({
       <HubAvatar agentType={agentType} kind={agentType ? kind : null} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-medium">{title}</span>
-        {subtitle ? (
-          <span className="block truncate text-xs text-muted-foreground">{subtitle}</span>
+        {progress || subtitle ? (
+          <span className="block truncate text-xs text-muted-foreground">
+            {progress ?? subtitle}
+          </span>
         ) : null}
         {snippet ? (
           <span className="block truncate text-xs text-muted-foreground/70">“{snippet}”</span>

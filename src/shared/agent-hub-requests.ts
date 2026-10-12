@@ -62,7 +62,11 @@ export type AgentHubResponse =
   | ({ kind: 'presence' } & AgentHubPresence)
   | ({ kind: 'status' } & AgentHubStatus)
   | { kind: 'consent'; decision: 'once' | 'session' | 'deny' }
-  | { kind: 'error'; code: 'disabled_by_user' | 'denied_by_user'; message: string }
+  | {
+      kind: 'error'
+      code: 'disabled_by_user' | 'denied_by_user' | 'invalid_argument'
+      message: string
+    }
 
 export type AgentHubErrorCode =
   | 'rate_limited'

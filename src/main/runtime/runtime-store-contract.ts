@@ -151,6 +151,7 @@ export type RuntimeStore = {
     nativeChatProviders?: GlobalSettings['nativeChatProviders']
     // Read by Agent Hub requests: hub events go only to desktops that run the hub.
     experimentalAgentHub?: GlobalSettings['experimentalAgentHub']
+    agentHubAgentControl?: GlobalSettings['agentHubAgentControl']
     defaultTaskSource?: GlobalSettings['defaultTaskSource']
     defaultTaskViewPreset?: GlobalSettings['defaultTaskViewPreset']
     visibleTaskProviders?: GlobalSettings['visibleTaskProviders']

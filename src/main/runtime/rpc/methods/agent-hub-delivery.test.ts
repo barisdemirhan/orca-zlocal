@@ -146,6 +146,28 @@ describe('Agent Hub runtime boundary', () => {
     )
   })
 
+  it('does not keep desktop authority alive through a generic stream after the hub consumer stops', async () => {
+    const generic = subscribe('desktop', true, false, { agentHub: false })
+    expect(generic.received[0]).not.toHaveProperty('snapshot.agentHub')
+    const consumer = subscribe('desktop', true, false, { agentHub: true })
+    const notified = ledger.notify(caller, caller, {
+      text: 'Ready',
+      level: 'info',
+      sound: false,
+      links: []
+    })
+    expect(consumer.received).toContainEqual(expect.objectContaining({ type: 'agentHub' }))
+    expect(generic.received).not.toContainEqual(expect.objectContaining({ type: 'agentHub' }))
+    consumer.controller.abort()
+    await consumer.done
+    expect(() =>
+      ledger.notify(caller, caller, { text: 'Ready', level: 'info', sound: false, links: [] })
+    ).toThrow(expect.objectContaining({ code: 'no_desktop' }))
+    expect(() => ledger.respond(notified.requestId, { kind: 'ack' }, 'device:desktop')).toThrow(
+      expect.objectContaining({ code: 'no_desktop' })
+    )
+  })
+
   it('does not let CLI callers or phones claim desktop responder authority', () => {
     subscribe('desktop')
     const { requestId } = ledger.notify(caller, caller, {

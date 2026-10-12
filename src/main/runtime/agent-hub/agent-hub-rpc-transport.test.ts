@@ -83,6 +83,68 @@ async function host() {
 }
 
 describe('Agent Hub ask over the local runtime socket', () => {
+  it('returns CLI pending before the question deadline and resumes the same host question after an answer', async () => {
+    const fixture = await host()
+    const originalExitCode = process.exitCode
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const previousHandle = process.env.ORCA_TERMINAL_HANDLE
+    process.env.ORCA_TERMINAL_HANDLE = caller.terminalHandle
+    try {
+      await fixture.handlers['hub ask']({
+        client: fixture.client,
+        cwd: '/workspace',
+        json: true,
+        flags: new Map([
+          ['question', 'Go?'],
+          ['option', 'Yes'],
+          ['timeout', '5s'],
+          ['wait', '50ms']
+        ])
+      })
+      const pending: unknown = JSON.parse(String(log.mock.calls[0][0]))
+      if (
+        typeof pending !== 'object' ||
+        pending === null ||
+        !('requestId' in pending) ||
+        typeof pending.requestId !== 'string'
+      ) {
+        throw new Error('Missing pending question')
+      }
+      expect(pending).toMatchObject({
+        status: 'pending',
+        resume: ['orca', 'hub', 'ask', '--resume', pending.requestId]
+      })
+      expect(process.exitCode).toBe(2)
+      expect(fixture.runtime.agentHub.snapshot().requests).toMatchObject([
+        { kind: 'ask', requestId: pending.requestId }
+      ])
+      fixture.runtime.agentHub.respond(
+        pending.requestId,
+        { kind: 'ask', answer: 'Yes', index: 1 },
+        'fixture-desktop'
+      )
+      await fixture.handlers['hub ask']({
+        client: fixture.client,
+        cwd: '/workspace',
+        json: false,
+        flags: new Map([
+          ['resume', pending.requestId],
+          ['wait', '50ms']
+        ])
+      })
+      expect(log).toHaveBeenLastCalledWith('Yes')
+      expect(fixture.runtime.agentHub.snapshot().requests).toEqual([])
+    } finally {
+      process.exitCode = originalExitCode
+      if (previousHandle === undefined) {
+        delete process.env.ORCA_TERMINAL_HANDLE
+      } else {
+        process.env.ORCA_TERMINAL_HANDLE = previousHandle
+      }
+      log.mockRestore()
+      await fixture.stop()
+    }
+  })
   it('runs the CLI handler through its real runtime client and prints the human answer', async () => {
     const fixture = await host()
     const output = vi.spyOn(console, 'log').mockImplementation(() => {})

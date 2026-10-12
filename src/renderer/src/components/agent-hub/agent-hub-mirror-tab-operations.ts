@@ -40,7 +40,8 @@ const changed = (window: AgentHubMirrorWindowState, tabId: string): AgentHubMirr
 
 export function addAgentHubMirrorTab(
   windowId: string,
-  request: AgentHubPaneTarget
+  request: AgentHubPaneTarget,
+  focusTerminal = true
 ): AgentHubMirrorTabResult {
   const target = resolveAgentHubMirrorTarget(request)
   if (!target) {
@@ -76,7 +77,7 @@ export function addAgentHubMirrorTab(
     activeTabId: tab.id
   }
   commitAgentHubMirrorState(replaceAgentHubMirrorWindow(released, window.id, next), window.id)
-  requestAgentHubMirrorSelection(next.id, tab.id)
+  requestAgentHubMirrorSelection(next.id, tab.id, focusTerminal)
   return changed(next, tab.id)
 }
 export function activateAgentHubMirrorTab(

@@ -31,6 +31,8 @@ export type AgentHubTerminalSort = PersistedUIState['sortBy']
 export type AgentHubSettings = {
   /** Experimental: Agent Hub — every agent and terminal in one popover, with inline answers. */
   experimentalAgentHub?: boolean
+  /** Agent requests are consumed only while this permission and the experiment are enabled. */
+  agentHubAgentControl?: boolean
   /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */
   agentHubMicMode?: AgentHubMicMode
   /** Agent Hub: a draggable dock on a window edge (default) or a status-bar item. */

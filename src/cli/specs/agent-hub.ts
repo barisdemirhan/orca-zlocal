@@ -33,14 +33,17 @@ export const AGENT_HUB_COMMAND_SPECS: CommandSpec[] = [
     ...hubSpec(
       ['ask'],
       'Ask the person a question and wait for the answer',
-      'ask <question> --option <text>... [--recommended <n>] [--multi] [--timeout <duration>] [--if-away recommended]',
-      ['question', 'option', 'recommended', 'multi', 'timeout', 'if-away', 'resume'],
+      'ask [<question> --option <text>... | --resume <requestId>] [--recommended <n>] [--multi] [--timeout <duration>] [--wait <duration>] [--if-away recommended]',
+      ['question', 'option', 'recommended', 'multi', 'timeout', 'wait', 'if-away', 'resume'],
       ['question'],
       ['option']
     ),
+    valueFlags: ['wait'],
     notes: [
       'Indices are one-based. The default timeout is 30m; durations accept ms, s, m, or h (maximum 24h).',
-      'After a lost connection, use hub ask --resume <requestId> to wait for the same question. The original deadline is retained.'
+      '--timeout is the question lifetime on the host (default 30m). --wait is how long this command blocks (default 100s, capped at --timeout).',
+      'Exit 2 means still pending: resume with orca hub ask --resume <requestId>. JSON returns status, requestId and resume argv. Exit 1 means the host timeout expired or another error occurred.',
+      'After a lost connection or a pending result, use hub ask --resume <requestId> to wait for the same question. The original deadline is retained.'
     ]
   },
   hubSpec(

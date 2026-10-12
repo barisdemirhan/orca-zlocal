@@ -38,7 +38,7 @@ export function parseAgentHubParams<T>(schema: { parse(value: unknown): T }, val
   }
 }
 
-export function agentHubTimeout(raw?: string): number {
+export function agentHubTimeout(raw?: string, flag = 'timeout'): number {
   if (raw === undefined) {
     return AGENT_HUB_DEFAULT_ASK_TIMEOUT_MS
   }
@@ -46,13 +46,13 @@ export function agentHubTimeout(raw?: string): number {
   if (!match) {
     throw new RuntimeClientError(
       'invalid_argument',
-      'Use a duration such as 30m, 10s, 500ms, or 1h for --timeout'
+      `Use a duration such as 30m, 10s, 500ms, or 1h for --${flag}`
     )
   }
   const units: Record<string, number> = { ms: 1, s: 1_000, m: 60_000, h: 3_600_000 }
   const timeoutMs = Number(match[1]) * units[match[2]]
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > AGENT_HUB_MAX_ASK_TIMEOUT_MS) {
-    throw new RuntimeClientError('invalid_argument', '--timeout must be between 1ms and 24h')
+    throw new RuntimeClientError('invalid_argument', `--${flag} must be between 1ms and 24h`)
   }
   return timeoutMs
 }

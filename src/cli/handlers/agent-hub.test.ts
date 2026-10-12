@@ -3,11 +3,15 @@ import { RuntimeClient, RuntimeClientError } from '../runtime-client'
 import { normalizeCommandPositionals, parseArgs, specPaths } from '../args'
 import { AGENT_HUB_COMMAND_SPECS } from '../specs/agent-hub'
 import { AGENT_HUB_HANDLERS } from './agent-hub'
+import { formatCommandHelp } from '../help'
+import { quoteCliCommandArgument } from '../shell-command-quote'
 
 let client: RuntimeClient
 let call: MockInstance<RuntimeClient['call']>
+const initialExitCode = process.exitCode
 let log: ReturnType<typeof vi.spyOn>
 beforeEach(() => {
+  process.exitCode = undefined
   vi.stubEnv('ORCA_TERMINAL_HANDLE', 'term-self')
   vi.stubEnv('ORCA_PANE_KEY', 'pane-fallback')
   client = new RuntimeClient('/agent-hub-cli-fixture', 60_000, null, null)
@@ -20,6 +24,7 @@ beforeEach(() => {
   log = vi.spyOn(console, 'log').mockImplementation(() => {})
 })
 afterEach(() => {
+  process.exitCode = initialExitCode
   vi.unstubAllEnvs()
   vi.restoreAllMocks()
 })
@@ -97,7 +102,7 @@ describe('hub CLI', () => {
     expect(call).toHaveBeenCalledTimes(calls)
   })
 
-  it('blocks for the host answer and extends the transport timeout beyond the requested deadline', async () => {
+  it('keeps the question lifetime separate from the default CLI wait', async () => {
     await run([
       'hub',
       'ask',
@@ -122,12 +127,28 @@ describe('hub CLI', () => {
         recommended: 2,
         multi: true,
         timeoutMs: 120_000,
+        waitMs: 100_000,
         ifAway: 'recommended',
         requestId: expect.any(String)
       }),
-      { timeoutMs: 135_000 }
+      { timeoutMs: 105_000 }
     )
     expect(log).toHaveBeenCalledWith('Yes')
+  })
+
+  it('resolves Peek files in the calling CLI directory while preserving URLs', async () => {
+    await run(['hub', 'peek', 'screens/image.png'])
+    expect(call).toHaveBeenLastCalledWith(
+      'agentHub.peek',
+      expect.objectContaining({ link: '/workspace/screens/image.png' }),
+      expect.anything()
+    )
+    await run(['hub', 'peek', 'https://example.com/image.png'])
+    expect(call).toHaveBeenLastCalledWith(
+      'agentHub.peek',
+      expect.objectContaining({ link: 'https://example.com/image.png' }),
+      expect.anything()
+    )
   })
 
   it('resumes the same ID without creating another question', async () => {
@@ -136,8 +157,68 @@ describe('hub CLI', () => {
     expect(call).toHaveBeenCalledWith(
       'agentHub.ask',
       expect.objectContaining({ resume, requestId: undefined, question: undefined }),
-      { timeoutMs: 86_415_000 }
+      { timeoutMs: 105_000 }
     )
+  })
+
+  it('returns pending JSON with a same-host resume command and exit 2', async () => {
+    const requestId = '93b0c108-34c6-4e45-9d13-d8f4170d7456'
+    call.mockResolvedValueOnce({
+      id: 'r',
+      ok: true,
+      result: { status: 'pending', requestId },
+      _meta: { runtimeId: 'host-1' }
+    })
+    await run(['hub', 'ask', '--resume', requestId, '--wait', '2s', '--environment', 'workhost'], true)
+    expect(call).toHaveBeenCalledWith(
+      'agentHub.ask',
+      expect.objectContaining({ resume: requestId, waitMs: 2_000 }),
+      { timeoutMs: 7_000 }
+    )
+    expect(JSON.parse(String(log.mock.calls[0][0]))).toEqual({
+      status: 'pending',
+      requestId,
+      resume: ['orca', 'hub', 'ask', '--resume', requestId, '--environment', 'workhost']
+    })
+    expect(process.exitCode).toBe(2)
+  })
+
+  it('caps the default wait to a short question lifetime and keeps host timeout distinct from pending', async () => {
+    await run(['hub', 'ask', 'Go?', '--option', 'Yes', '--timeout', '3s'])
+    expect(call).toHaveBeenCalledWith(
+      'agentHub.ask',
+      expect.objectContaining({ timeoutMs: 3_000, waitMs: 3_000 }),
+      { timeoutMs: 8_000 }
+    )
+    call.mockRejectedValueOnce(new RuntimeClientError('timeout', 'Hub question timed out'))
+    await expect(run(['hub', 'ask', 'Go?', '--option', 'Yes'])).rejects.toMatchObject({
+      code: 'timeout'
+    })
+    expect(process.exitCode).toBeUndefined()
+  })
+
+  it('prints a recovery command when an older host ignores the bounded wait', async () => {
+    call.mockRejectedValueOnce(new RuntimeClientError('runtime_timeout', 'Transport wait ended'))
+    await run(['hub', 'ask', 'Go?', '--option', 'Yes', '--wait', '1s'])
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Still waiting'))
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('orca hub ask --resume'))
+    expect(process.exitCode).toBe(2)
+  })
+
+  it('prints a shell-safe same-host resume command and documents both exit codes', async () => {
+    call.mockRejectedValueOnce(new RuntimeClientError('runtime_timeout', 'Transport wait ended'))
+    await run(['hub', 'ask', 'Go?', '--option', 'Yes', '--environment', 'Host with spaces'])
+    expect(log).toHaveBeenCalledWith(
+      expect.stringContaining(`--environment ${quoteCliCommandArgument('Host with spaces')}`)
+    )
+    const spec = AGENT_HUB_COMMAND_SPECS.find((entry) => entry.path.join(' ') === 'hub ask')
+    if (!spec) {
+      throw new Error('Missing ask spec')
+    }
+    const help = formatCommandHelp(spec)
+    expect(help).toContain('--wait <duration>')
+    expect(help).toContain('Exit 2 means still pending')
+    expect(help).toContain('Exit 1 means the host timeout expired')
   })
 
   it('returns recovery information if the transport disconnects during an ask', async () => {
@@ -152,6 +233,8 @@ describe('hub CLI', () => {
   it.each([
     ['hub', 'ask', 'Go?', '--option', 'Yes', '--recommended', '2'],
     ['hub', 'ask', 'Go?', '--option', 'Yes', '--timeout', 'forever'],
+    ['hub', 'ask', 'Go?', '--option', 'Yes', '--wait', 'forever'],
+    ['hub', 'ask', 'Go?', '--option', 'Yes', '--timeout', '2s', '--wait', '3s'],
     ['hub', 'ask', 'Go?', '--option', 'Yes', '--if-away', 'recommended'],
     ['hub', 'progress', 'x'.repeat(81)],
     ['hub', 'progress', 'Building', '--clear']

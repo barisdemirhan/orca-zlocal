@@ -13,7 +13,7 @@ import {
 // Electron clients can decode client-hosted page placement; becoming a page
 // host still requires the separate authenticated browser-client lease.
 export const ELECTRON_REMOTE_RUNTIME_CLIENT_CAPABILITIES = [
-  // Phase 2 enables agent-hub.requests.v1 in the authenticated transport when its consumer and experimentalAgentHub are active.
+  // Agent Hub adds its capability on the live connection only while its renderer consumer is subscribed.
   ...NATIVE_REMOTE_RUNTIME_CLIENT_CAPABILITIES,
   TERMINAL_IMAGE_VIEWER_CAPABILITY,
   // The renderer that reads a paired host's structured chats is the one that reads its own.

@@ -32,7 +32,9 @@ const remoteSubscribe = vi.fn(
     return Promise.resolve({ unsubscribe, sendBinary: () => {} })
   }
 )
-const call = vi.fn(async () => envelope({ accepted: true, requestId: request.requestId }))
+const call = vi.fn(async (_args?: { method: string; params?: unknown }) =>
+  envelope({ accepted: true, requestId: request.requestId })
+)
 beforeEach(() => {
   localReceive = undefined
   remoteReceive = undefined
@@ -45,6 +47,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   vi.unstubAllGlobals()
+  call.mockImplementation(async () => envelope({ accepted: true, requestId: request.requestId }))
   vi.clearAllMocks()
 })
 
@@ -55,6 +58,17 @@ describe('Agent Hub renderer API boundary', () => {
       const received: AgentHubDelivery[] = []
       const api = createAgentHubClient(environmentId)
       const stop = api.subscribe((event) => received.push(event))
+      if (environmentId) {
+        await vi.waitFor(() => expect(remoteReceive).toBeDefined())
+      }
+      if (environmentId) {
+        expect(call).toHaveBeenCalledWith(
+          expect.objectContaining({
+            method: 'runtime.clientCapabilities.update',
+            params: { clientCapabilities: expect.arrayContaining(['agent-hub.requests.v1']) }
+          })
+        )
+      }
       const receive = environmentId === null ? localReceive : remoteReceive
       if (!receive) {
         throw new Error('Missing callback')
@@ -84,7 +98,38 @@ describe('Agent Hub renderer API boundary', () => {
           ...(environmentId ? { selector: environmentId } : {})
         })
       )
+      if (environmentId) {
+        await api.respond(request.requestId, {
+          kind: 'error',
+          code: 'invalid_argument',
+          message: 'Peek cannot open URLs or files from this paired host yet.'
+        })
+        expect(call).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            method: 'agentHub.respond',
+            params: {
+              requestId: request.requestId,
+              result: {
+                kind: 'error',
+                code: 'disabled_by_user',
+                message: 'Peek cannot open URLs or files from this paired host yet.'
+              }
+            }
+          })
+        )
+      }
       stop()
+      if (environmentId) {
+        await vi.waitFor(() =>
+          expect(
+            call.mock.calls.some(
+              ([args]) =>
+                args?.method === 'runtime.clientCapabilities.update' &&
+                JSON.stringify(args.params).includes('agent-hub.requests.v1') === false
+            )
+          ).toBe(true)
+        )
+      }
       receive(envelope({ type: 'agentHub', event: request }))
       expect(received).toHaveLength(2)
       expect(unsubscribe).toHaveBeenCalledOnce()
@@ -111,6 +156,49 @@ describe('Agent Hub renderer API boundary', () => {
     localReceive?.(envelope({ type: 'agentHub', event: request }))
     expect(unsubscribe).toHaveBeenCalledOnce()
     expect(received).toEqual([])
+  })
+
+  it('does not advertise or subscribe after a paired consumer is stopped during admission', async () => {
+    let resolveUpdate: ((value: RuntimeRpcResponse<unknown>) => void) | undefined
+    call.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveUpdate = resolve
+        })
+    )
+    const onError = vi.fn()
+    const stop = createAgentHubClient('delayed-host', onError).subscribe(() => {})
+    await vi.waitFor(() => expect(resolveUpdate).toBeDefined())
+    stop()
+    resolveUpdate?.(envelope({ clientCapabilities: ['agent-hub.requests.v1'] }))
+    await vi.waitFor(() => expect(call).toHaveBeenCalledTimes(2))
+    expect(remoteSubscribe).not.toHaveBeenCalled()
+    expect(call).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        method: 'runtime.clientCapabilities.update',
+        params: { clientCapabilities: expect.not.arrayContaining(['agent-hub.requests.v1']) }
+      })
+    )
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { code: 'method_not_found', message: 'Unknown method' },
+    { code: 'internal_error', message: 'client_capabilities_update_unsupported' }
+  ])('silently ignores paired hosts without capability update support (%j)', async (error) => {
+    call.mockResolvedValue({
+      id: 'r',
+      ok: false,
+      error,
+      _meta: { runtimeId: 'old' }
+    })
+    const onError = vi.fn()
+    const stop = createAgentHubClient('legacy-host', onError).subscribe(() => {})
+    await vi.waitFor(() => expect(call).toHaveBeenCalledOnce())
+    stop()
+    await vi.waitFor(() => expect(call).toHaveBeenCalledTimes(2))
+    expect(remoteSubscribe).not.toHaveBeenCalled()
+    expect(onError).not.toHaveBeenCalled()
   })
 
   it('reports malformed events and host failures without inventing an accepted response', async () => {

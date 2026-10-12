@@ -41,12 +41,16 @@ export const AgentHubAskParams = caller.and(
         .max(AGENT_HUB_MAX_ASK_TIMEOUT_MS)
         .default(AGENT_HUB_DEFAULT_ASK_TIMEOUT_MS),
       ifAway: z.literal('recommended').optional(),
+      waitMs: z.number().int().min(1).max(AGENT_HUB_MAX_ASK_TIMEOUT_MS).optional(),
       requestId: z.string().uuid().optional(),
       resume: z.string().uuid().optional()
     })
     .superRefine((value, ctx) => {
       const invalid = (message: string): void => {
         ctx.addIssue({ code: 'custom', message })
+      }
+      if (value.waitMs !== undefined && value.waitMs > value.timeoutMs) {
+        invalid('--wait cannot exceed --timeout')
       }
       if (value.resume) {
         if (
@@ -57,7 +61,7 @@ export const AgentHubAskParams = caller.and(
           value.ifAway ||
           value.multi
         ) {
-          invalid('Resume only accepts the question ID and timeout')
+          invalid('Resume only accepts the question ID, timeout and wait')
         }
       } else {
         if (!value.question || !value.options) {
@@ -113,7 +117,7 @@ export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('consent'), decision: z.enum(['once', 'session', 'deny']) }),
   z.object({
     kind: z.literal('error'),
-    code: z.enum(['disabled_by_user', 'denied_by_user']),
+    code: z.enum(['disabled_by_user', 'denied_by_user', 'invalid_argument']),
     message: z.string().max(1_000)
   })
 ])

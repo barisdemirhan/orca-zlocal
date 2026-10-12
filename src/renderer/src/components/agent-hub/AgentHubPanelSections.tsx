@@ -203,6 +203,7 @@ export function AgentHubInboxBody({
               selected={actions.isSelected(thread)}
               worktreeId={thread.worktree.id}
               mirrorKey={thread.paneKey}
+              mirrorTarget={closeTarget(thread)}
               onOpen={() => actions.onOpen(thread)}
               onPopout={() => actions.onPopout(thread)}
               onJump={() => actions.onJump(thread)}
@@ -248,6 +249,7 @@ function RunningRow({
         selected={actions.isSelected(thread)}
         worktreeId={thread.worktree.id}
         mirrorKey={thread.paneKey}
+        mirrorTarget={closeTarget(thread)}
         onOpen={() => actions.onOpen(thread)}
         onPopout={() => actions.onPopout(thread)}
         onJump={() => actions.onJump(thread)}

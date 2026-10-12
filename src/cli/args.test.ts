@@ -12,6 +12,14 @@ import {
 } from './args'
 
 describe('parseArgs', () => {
+  it('reads the Hub wait duration without changing orchestration’s boolean wait', () => {
+    const hub = parseArgs(['hub', 'ask', 'Go?', '--wait', '2s'], undefined, COMMAND_SPECS)
+    expect(hub.commandPath).toEqual(['hub', 'ask', 'Go?'])
+    expect(hub.flags.get('wait')).toBe('2s')
+    const orchestration = parseArgs(['orchestration', 'check', '--wait'], undefined, COMMAND_SPECS)
+    expect(orchestration.commandPath).toEqual(['orchestration', 'check'])
+    expect(orchestration.flags.get('wait')).toBe(true)
+  })
   it('keeps an empty string as a flag value', () => {
     const parsed = parseArgs(['computer', 'set-value', '--value', '', '--json'])
 

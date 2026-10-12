@@ -13,6 +13,8 @@ import {
 } from '../../../../shared/rpc-contract/agent-hub-params'
 import { agentHubDesktopId, resolveAgentHubPanes } from './agent-hub-caller'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
+import { waitForAgentHubAnswer } from '../../agent-hub/agent-hub-answer-wait'
+import { randomUUID } from 'node:crypto'
 
 export const AGENT_HUB_METHODS = [
   defineMethod({
@@ -50,24 +52,31 @@ export const AGENT_HUB_METHODS = [
     handler: (params, ctx) => {
       const { caller, target } = resolveAgentHubPanes(params, ctx)
       if (params.resume) {
-        return ctx.runtime.agentHub.resume(caller, params.resume, ctx.signal)
+        const requestId = params.resume
+        return waitForAgentHubAnswer(requestId, params.waitMs, ctx.signal, (signal) =>
+          ctx.runtime.agentHub.resume(caller, requestId, signal)
+        )
       }
       if (!params.question || !params.options) {
         throw new AgentHubError('invalid_argument', 'Question and options are required')
       }
-      return ctx.runtime.agentHub.ask(
-        caller,
-        target,
-        {
-          question: params.question,
-          options: params.options,
-          recommended: params.recommended,
-          multi: params.multi,
-          ifAway: params.ifAway
-        },
-        params.timeoutMs,
-        params.requestId,
-        ctx.signal
+      const { question, options } = params
+      const requestId = params.requestId ?? randomUUID()
+      return waitForAgentHubAnswer(requestId, params.waitMs, ctx.signal, (signal) =>
+        ctx.runtime.agentHub.ask(
+          caller,
+          target,
+          {
+            question,
+            options,
+            recommended: params.recommended,
+            multi: params.multi,
+            ifAway: params.ifAway
+          },
+          params.timeoutMs,
+          requestId,
+          signal
+        )
       )
     }
   }),

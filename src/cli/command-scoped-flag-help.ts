@@ -21,6 +21,11 @@ const COMMAND_SCOPED_FLAG_HELP: Record<string, Record<string, string>> = {
     'include-archived': '--include-archived     Include archived workspaces',
     limit: '--limit <n>            Maximum matching workspaces (default 50)'
   },
+  'hub ask': {
+    timeout: '--timeout <duration>   Question lifetime on the host (default 30m)',
+    wait: '--wait <duration>      CLI blocking time (default 100s, maximum --timeout)',
+    resume: '--resume <requestId>   Wait again for the same question and its original deadline'
+  },
   'worktree create': {
     branch: '--branch <name>        Git branch name to use instead of the prefixed default',
     reference:

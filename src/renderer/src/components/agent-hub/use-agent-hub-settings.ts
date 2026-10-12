@@ -16,6 +16,7 @@ import {
 } from '../../../../shared/agent-hub-settings'
 
 export type AgentHubPreferences = {
+  agentControl: boolean
   placement: AgentHubPlacement
   dockPosition: AgentHubDockPosition
   dockSize: AgentHubDockSize
@@ -40,6 +41,7 @@ export type AgentHubPreferences = {
 export function useAgentHubPreferences(): AgentHubPreferences {
   const raw = useAppStore(
     useShallow((s) => ({
+      agentControl: s.settings?.agentHubAgentControl,
       placement: s.settings?.agentHubPlacement,
       dockPosition: s.settings?.agentHubDockPosition,
       dockSize: s.settings?.agentHubDockSize,
@@ -62,6 +64,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
   )
   return useMemo(
     () => ({
+      agentControl: raw.agentControl !== false,
       placement: normalizeAgentHubPlacement(raw.placement),
       dockPosition: normalizeAgentHubDockPosition(raw.dockPosition),
       dockSize: normalizeAgentHubDockSize(raw.dockSize),

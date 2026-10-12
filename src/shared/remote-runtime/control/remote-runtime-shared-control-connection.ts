@@ -24,6 +24,7 @@ import type * as SharedControlTypes from './remote-runtime-shared-control-types'
 import type { SharedControlSocketClosed } from './remote-runtime-shared-control-types'
 import { sendSharedControlSubscription } from './remote-runtime-shared-control-send'
 import { closeSharedControlConnectionSubscription } from '../requests/remote-runtime-shared-control-subscription-close'
+import { retainRemoteRuntimeClientCapabilityUpdate } from './remote-runtime-client-capability-update'
 type PendingRequest = SharedControlTypes.SharedControlPendingRequest<unknown>
 type LogicalSubscription = SharedControlTypes.SharedControlLogicalSubscription<unknown>
 
@@ -80,7 +81,9 @@ export class RemoteRuntimeSharedControlConnection {
         }),
       retireRequestId: (requestId) => this.retiredRequestIds.retire(requestId),
       signal
-    })
+    }).then((response) =>
+      retainRemoteRuntimeClientCapabilityUpdate(this.options, method, params, response)
+    )
   }
   async subscribe<TResult>(
     method: string,

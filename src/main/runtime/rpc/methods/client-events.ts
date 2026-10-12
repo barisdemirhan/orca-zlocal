@@ -19,7 +19,7 @@ export const CLIENT_EVENT_METHODS = [
     params: ClientEventsSubscribeParams,
     handler: async (_params, ctx, emit) => {
       const { runtime, connectionId, clientKind, signal } = ctx
-      const desktop = agentHubDesktopId(ctx)
+      const desktop = _params?.agentHub === false ? null : agentHubDesktopId(ctx)
       await new Promise<void>((resolve) => {
         const unregisterDesktop = desktop ? runtime.agentHub.registerDesktop(desktop) : () => {}
         // Why: mobile discards terminalSideEffects; excluding it stops the

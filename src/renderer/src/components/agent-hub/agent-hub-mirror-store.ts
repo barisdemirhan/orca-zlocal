@@ -109,7 +109,8 @@ function showWindow(
 }
 /** Pop-out always selects the requested source tab, including a different split leaf. */
 export function openAgentHubMirror(
-  request: AgentHubPaneTarget
+  request: AgentHubPaneTarget,
+  focusTerminal = true
 ): 'opened' | 'missing-source' | 'entry-cap' {
   const target = resolveAgentHubMirrorTarget(request)
   if (!target) {
@@ -141,7 +142,7 @@ export function openAgentHubMirror(
   if (owner?.presence === 'window') {
     highlightAgentHubMirror(window.id)
   }
-  requestAgentHubMirrorSelection(window.id, window.activeTabId)
+  requestAgentHubMirrorSelection(window.id, window.activeTabId, focusTerminal)
   return 'opened'
 }
 
@@ -197,14 +198,14 @@ export function minimizeAllAgentHubMirrors(): void {
     emit({ windows: [], chips: state.windows.reduce(parkChip, state.chips) })
   }
 }
-export function restoreAgentHubMirror(id: string): void {
+export function restoreAgentHubMirror(id: string, focusTerminal = true): void {
   const chip = state.chips.find((item) => item.window.id === id)
   if (chip) {
     const window = resolveAgentHubMirrorWindow(chip.window, resolveAgentHubMirrorTarget)
     if (window) {
       quiet = false
       emit(showWindow(state, window))
-      requestAgentHubMirrorSelection(window.id, window.activeTabId)
+      requestAgentHubMirrorSelection(window.id, window.activeTabId, focusTerminal)
     } else {
       emit(replaceAgentHubMirrorWindow(state, id, null))
     }

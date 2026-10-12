@@ -46,6 +46,15 @@ function AgentHubOptions({
   const preferences = useAgentHubPreferences()
   return (
     <div className="ml-4 space-y-3 border-l border-border pl-4">
+      <SettingsSwitchRow
+        label={translate('agentHub.settings.agentControl', 'Let agents control Agent Hub')}
+        description={translate(
+          'agentHub.settings.agentControlCopy',
+          'Agents can show you things, ask questions and manage their mirrors.'
+        )}
+        checked={preferences.agentControl}
+        onChange={() => updateSettings({ agentHubAgentControl: !preferences.agentControl })}
+      />
       <SettingsRow
         label={translate(
           'auto.components.settings.ExperimentalPane.agentHub.placement',

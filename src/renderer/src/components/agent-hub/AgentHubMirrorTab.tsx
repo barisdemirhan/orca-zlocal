@@ -22,6 +22,7 @@ import { mirrorTabDragData } from './agent-hub-mirror-drag-data'
 import { claimAgentHubMirrorGesture } from './agent-hub-mirror-gesture'
 import { AgentHubMirrorTabMenu } from './AgentHubMirrorTabMenu'
 import { AgentHubThreadHoverCard } from './AgentHubThreadHoverCard'
+import { useAgentHubProgress } from './use-agent-hub-progress'
 import {
   showAgentHubFamilyBar,
   toggleAgentHubFamilyBar,
@@ -57,6 +58,7 @@ export function AgentHubMirrorTab({
   onClose: () => void
 }): React.JSX.Element {
   const title = useAgentHubTargetTitle(tab.target)
+  const progress = useAgentHubProgress(tab.viewing ?? tab.target)
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
   const drag = useAgentHubMirrorDrag()
   const familyBarShown = useAgentHubFamilyBarShown(familyRoot)
@@ -135,8 +137,12 @@ export function AgentHubMirrorTab({
         onDoubleClick={() => onSelect(false)}
       >
         <AgentHubMirrorTitle target={tab.target} onEditingChange={setEditing} />
-        <div className="flex items-center [&>span]:text-[11px]">
-          <HubCrumb location={location} />
+        <div className="flex min-w-0 items-center [&>span]:text-[11px]">
+          {progress ? (
+            <span className="truncate text-muted-foreground">{progress}</span>
+          ) : (
+            <HubCrumb location={location} />
+          )}
         </div>
       </div>
       {inputOwner ? (

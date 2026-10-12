@@ -264,6 +264,7 @@ export function buildDefaultSettings(args: {
     experimentalActivityDefaultedOffForAllUsers: true,
     experimentalTerminalAttention: false,
     experimentalAgentHub: false,
+    agentHubAgentControl: true,
     agentHubPlacement: 'dock',
     agentHubDockPosition: DEFAULT_AGENT_HUB_DOCK_POSITION,
     agentHubDockSize: 'medium',

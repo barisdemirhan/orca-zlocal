@@ -134,19 +134,24 @@ export function AgentHubPeek(): React.JSX.Element | null {
     return registerAgentHubPeekHost()
   }, [])
   useEffect(() => {
-    if (!open) {
+    if (!open || item?.preserveKeyboardFocus) {
       return undefined
     }
     const opener = document.activeElement
+    const root = rootRef.current
     // Why: Esc must close Peek, not reach the agent in the terminal that was clicked.
     rootRef.current?.focus({ preventScroll: true })
     return () => {
       // Typing goes back where it was, usually the terminal the link was clicked in.
-      if (opener instanceof HTMLElement && opener.isConnected) {
+      if (
+        opener instanceof HTMLElement &&
+        opener.isConnected &&
+        (root?.contains(document.activeElement) || document.activeElement === document.body)
+      ) {
         opener.focus({ preventScroll: true })
       }
     }
-  }, [open])
+  }, [open, item?.preserveKeyboardFocus])
   if (!peek || !item) {
     return null
   }

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Only the local IPC bridge uses this opt-in; remote admission uses authenticated capabilities.
+// Remote opt-in still requires the authenticated capability; ordinary streams opt out.
 export const ClientEventsSubscribeParams = z
   .object({ agentHub: z.boolean().optional() })
   .nullable()

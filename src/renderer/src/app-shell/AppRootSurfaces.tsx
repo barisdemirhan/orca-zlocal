@@ -39,6 +39,11 @@ const AgentHubShortcutInitialization = lazy(() =>
     default: module.AgentHubShortcutInitialization
   }))
 )
+const AgentHubRequestConsumerSurface = lazy(() =>
+  import('../components/agent-hub/AgentHubRequestConsumerSurface').then((module) => ({
+    default: module.AgentHubRequestConsumerSurface
+  }))
+)
 
 const QuickOpen = lazy(() => import('../components/QuickOpen'))
 const WorkspaceCleanupDialog = lazy(
@@ -152,6 +157,7 @@ export const AppRootSurfaces = memo(function AppRootSurfaces(props: {
       {agentHubEnabled ? (
         <Suspense fallback={null}>
           <AgentHubShortcutInitialization />
+          <AgentHubRequestConsumerSurface />
         </Suspense>
       ) : null}
       {floatingWorkspace.shouldMountPanel ? (

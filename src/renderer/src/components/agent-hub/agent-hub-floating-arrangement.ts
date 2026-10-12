@@ -169,11 +169,12 @@ export function rearrangeAgentHubMirrorsByDefault(): void {
  * open ones take the default layout again, as after closing or bringing one back.
  */
 export function openAgentHubMirrorInLayout(
-  target: AgentHubPaneTarget
+  target: AgentHubPaneTarget,
+  focusTerminal = true
 ): ReturnType<typeof openAgentHubMirror> {
   const owner = findAgentHubMirrorMembership(readAgentHubMirrors(), target)
   const shownBefore = owner?.kind === 'tab' ? owner.presence : null
-  const result = openAgentHubMirror(target)
+  const result = openAgentHubMirror(target, focusTerminal)
   if (result === 'opened' && shownBefore !== 'window') {
     rearrangeAgentHubMirrorsByDefault()
   }
