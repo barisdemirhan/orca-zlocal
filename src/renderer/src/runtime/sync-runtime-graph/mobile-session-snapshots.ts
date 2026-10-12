@@ -35,6 +35,7 @@ import type { MobileSessionPublicationInputs } from './types'
 import { canReuseMobileSessionSnapshot } from './mobile-session-capture'
 import { selectFolderWorkspaces } from '@/store/workspace-record-selectors'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../shared/layout-owner-switch'
+import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
 
 export function buildMobileSessionTabSnapshots(
   state: AppState,
@@ -67,6 +68,8 @@ export function buildMobileSessionTabSnapshots(
     ...state.openFiles.map((file) => file.worktreeId)
   ])
   const snapshots: RuntimeMobileSessionTabsSnapshot[] = []
+  // WHY: Peek is a private viewport, not an execution workspace that peers can select.
+  worktreeIds.delete(AGENT_HUB_PEEK_WORKTREE_ID)
 
   for (const worktreeId of worktreeIds) {
     const workspaceScope = parseWorkspaceKey(worktreeId)

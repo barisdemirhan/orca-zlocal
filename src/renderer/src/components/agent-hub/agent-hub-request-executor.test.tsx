@@ -32,11 +32,19 @@ import { AgentHubRow } from './AgentHubRow'
 import { AgentHubMirrorTab } from './AgentHubMirrorTab'
 import { AgentHubPeek } from './AgentHubPeek'
 import { useRef } from 'react'
+import { openWorkspaceBrowserTab } from '@/lib/workspace-browser-tab-open'
+
+vi.mock('@/lib/workspace-browser-tab-open', () => ({
+  openWorkspaceBrowserTab: vi.fn(async () => {})
+}))
 
 vi.mock('@/lib/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: 'enabled' } })
 }))
-vi.mock('@/lib/connection-context', () => ({ getConnectionIdForFile: () => null }))
+vi.mock('@/lib/connection-context', () => ({
+  getConnectionIdForFile: () => null,
+  getConnectionId: () => null
+}))
 vi.mock('./AgentHubPeekFile', () => ({ AgentHubPeekFile: () => <div /> }))
 vi.mock('./AgentHubPeekBrowser', () => ({
   AgentHubPeekBrowser: () => <div />,
@@ -205,7 +213,7 @@ describe('Agent Hub non-card actions', () => {
     typing.remove()
   })
 
-  it('routes local URLs and relative files through Peek and rejects paired links before opening', async () => {
+  it('routes CLI Peek requests through the local or paired source and falls back for unforwarded loopback', async () => {
     expect(await run({ ...base, kind: 'peek', link: 'http://localhost:3000' })).toEqual({
       kind: 'ack'
     })
@@ -234,8 +242,47 @@ describe('Agent Hub non-card actions', () => {
       { ...base, kind: 'peek', link: 'http://localhost:3000' },
       { threads: [remote], lists: buildAgentHubLists([remote]) }
     )
-    expect(result).toMatchObject({ kind: 'error', message: expect.stringContaining('paired host') })
+    expect(result).toEqual({ kind: 'ack' })
+    expect(openWorkspaceBrowserTab).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedRuntimeEnvironmentId: 'workhost', url: 'http://localhost:3000' })
+    )
     expect(readAgentHubPeek()?.history).toHaveLength(2)
+    const pairedContext = { threads: [remote], lists: buildAgentHubLists([remote]) }
+    expect(
+      await executeAgentHubRequest(
+        'workhost',
+        { ...base, kind: 'peek', link: 'https://site.dev.test' },
+        pairedContext
+      )
+    ).toEqual({ kind: 'ack' })
+    expect(readAgentHubPeek()?.history.at(-1)).toMatchObject({
+      content: { hostId: 'local', url: 'https://site.dev.test' },
+      preserveKeyboardFocus: true
+    })
+    expect(
+      await executeAgentHubRequest(
+        'workhost',
+        { ...base, kind: 'peek', link: 'image.png' },
+        pairedContext
+      )
+    ).toEqual({ kind: 'ack' })
+    expect(readAgentHubPeek()?.history.at(-1)?.content).toMatchObject({
+      kind: 'image',
+      filePath: '/repo/wt-1/image.png',
+      readContext: {
+        worktreeId: remote.worktree.id,
+        relativePath: 'image.png',
+        target: { kind: 'environment', environmentId: 'workhost' }
+      }
+    })
+    vi.mocked(openWorkspaceBrowserTab).mockRejectedValueOnce(new Error('Host disconnected'))
+    expect(
+      await executeAgentHubRequest(
+        'workhost',
+        { ...base, kind: 'peek', link: 'http://localhost:3000' },
+        pairedContext
+      )
+    ).toMatchObject({ kind: 'error', message: 'Host disconnected' })
     expect(await run({ ...base, kind: 'peek', link: 'code.ts' })).toMatchObject({ kind: 'error' })
   })
 

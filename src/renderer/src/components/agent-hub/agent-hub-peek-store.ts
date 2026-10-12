@@ -1,11 +1,15 @@
 import { useSyncExternalStore } from 'react'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
+import type { RuntimeFileReadArgs } from '@/runtime/runtime-file-client-types'
 
 export type AgentHubPeekContent =
-  /** `hostId`: the machine the page loads through (this Mac or the workspace's SSH host). */
-  | { kind: 'web'; url: string; hostId: ExecutionHostId }
-  /** `connectionId`: the SSH connection that owns the file; null for this Mac. */
-  | { kind: 'image' | 'pdf' | 'media'; filePath: string; connectionId: string | null }
+  | { kind: 'web'; url: string; hostId: ExecutionHostId; routingWorktreeId?: string }
+  | {
+      kind: 'image' | 'pdf' | 'media'
+      filePath: string
+      connectionId: string | null
+      readContext?: RuntimeFileReadArgs
+    }
 
 /** One thing to look at, with the ways out the place it was found offers. */
 export type AgentHubPeekItem = {

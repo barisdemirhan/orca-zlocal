@@ -21134,6 +21134,13 @@
   "projectField": {
     "updateFailed": "프로젝트 필드를 업데이트하지 못했습니다"
   },
+  "agentHub": {
+    "peek": {
+      "hostAddress": "이 주소는 해당 호스트에서만 사용할 수 있습니다. 작업 공간 브라우저에서 엽니다.",
+      "workspaceFallback": "여기서는 미리 보기를 표시할 수 없습니다. 작업 공간에서 엽니다.",
+      "unavailable": "이 링크를 열 수 없습니다."
+    }
+  },
   "workspaceDeletion": {
     "preferenceSaveFailed": "삭제 환경설정을 저장하지 못했습니다",
     "alwaysForceDelete": "항상 강제 삭제",

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowLeft, Expand, ExternalLink, Minus, PanelTop, Shrink, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -33,8 +33,8 @@ import {
   useAgentHubPeek,
   type AgentHubPeekItem
 } from './agent-hub-peek-store'
-import { agentHubPeekUrlItem } from './agent-hub-peek-routing'
-import { openRoutedHttpLink } from '@/lib/http-link-destinations'
+import { fallbackAgentHubPeek } from './agent-hub-peek-routing'
+import { agentHubPeekPageItem } from './agent-hub-peek-page-navigation'
 import { useViewportSize } from './use-viewport-size'
 import { useAppStore } from '@/store'
 import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
@@ -117,6 +117,12 @@ export function AgentHubPeek(): React.JSX.Element | null {
   // The status bar stays lit under the shade: the dock grows out of it.
   const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
   const item = peek ? peek.history[peek.index] : null
+  const onUnavailable = useCallback(() => {
+    const current = readAgentHubPeek()
+    if (item && current?.history[current.index] === item) {
+      fallbackAgentHubPeek(item)
+    }
+  }, [item])
   const open = item !== null
   const [fullScreen, setFullScreen] = useState(false)
   const [measured, setMeasured] = useState<{
@@ -285,20 +291,10 @@ export function AgentHubPeek(): React.JSX.Element | null {
             <AgentHubPeekBrowser
               url={item.content.url}
               hostId={item.content.hostId}
+              routingWorktreeId={item.content.routingWorktreeId}
+              onUnavailable={onUnavailable}
               onOpenPage={(url) => {
-                const next = agentHubPeekUrlItem(url, {
-                  worktreeId: item.worktreeId,
-                  onPairedRuntime: false,
-                  event: undefined,
-                  openInWorkspace: () =>
-                    openRoutedHttpLink(url, { worktreeId: item.worktreeId, modifierHeld: false }),
-                  openExternally: () =>
-                    openRoutedHttpLink(url, {
-                      worktreeId: item.worktreeId,
-                      modifierHeld: false,
-                      forceDestination: 'system'
-                    })
-                })
+                const next = agentHubPeekPageItem(item, url)
                 if (next) {
                   openAgentHubPeek({ ...next, mirrorKey: item.mirrorKey })
                 }
@@ -307,6 +303,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
           ) : (
             <AgentHubPeekFile
               content={item.content}
+              onUnavailable={onUnavailable}
               onContentSize={(size) => setMeasured({ location: item.location, size })}
             />
           )}

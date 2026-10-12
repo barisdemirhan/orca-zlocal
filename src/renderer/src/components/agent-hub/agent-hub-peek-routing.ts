@@ -3,13 +3,25 @@ import type { LinkAction } from '@/components/link-actions/link-action-request'
 import { PictureInPicture2 } from 'lucide-react'
 import { absolutePathToFileUri } from '@/components/editor/markdown-internal-links'
 import { getConnectionIdForFile } from '@/lib/connection-context'
-import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
-import { resolveWorktreeOperationRoute } from '@/lib/worktree-operation-route'
+import { resolveWorkspaceDirectory } from '@/lib/workspace-directory'
+import { getTerminalFileContext } from '../terminal-pane/terminal-file-path-mapping'
+import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
+import { userNamedFileAccess } from '@/lib/local-file-access'
+import type { HttpLinkSourceOwner } from '@/lib/http-link-routing'
+import { openWorkspaceBrowserTab } from '@/lib/workspace-browser-tab-open'
+import { toast } from 'sonner'
 import { useAppStore } from '@/store'
-import { parseExecutionHostId, type ExecutionHostId } from '../../../../shared/execution-host'
+import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
+import {
+  agentHubPeekBrowserRoute,
+  agentHubPeekSourceRoute,
+  isAgentHubPeekHostAddress
+} from './agent-hub-peek-browser-route'
 import { agentHubMirrorWindowIdOf } from './agent-hub-mirror-element'
+import { agentHubPeekPageTitle } from './agent-hub-peek-page-navigation'
 import {
   isAgentHubPeekHostMounted,
+  closeAgentHubPeek,
   openAgentHubPeek,
   type AgentHubPeekItem
 } from './agent-hub-peek-store'
@@ -17,8 +29,9 @@ import {
 /** Where a terminal link was clicked, and the ways out it already had before Peek. */
 export type AgentHubPeekLinkSource = {
   worktreeId: string
-  /** A paired runtime's (or an unknown) terminal; Peek leaves its links to Orca's own routing. */
   onPairedRuntime: boolean
+  sourceOwner?: HttpLinkSourceOwner
+  worktreePath?: string
   event: MouseEvent | undefined
   openInWorkspace: () => void
   openExternally: (() => void) | null
@@ -37,7 +50,7 @@ export function agentHubPeekFileKind(filePath: string): 'image' | 'pdf' | 'media
 
 function peekEnabled(source: AgentHubPeekLinkSource): boolean {
   return (
-    !source.onPairedRuntime &&
+    source.sourceOwner?.kind !== 'unknown' &&
     useAppStore.getState().settings?.experimentalAgentHub === true &&
     isAgentHubPeekHostMounted()
   )
@@ -47,45 +60,18 @@ function mirrorKeyOf(event: MouseEvent | undefined): string | null {
   return event?.target instanceof Element ? agentHubMirrorWindowIdOf(event.target) : null
 }
 
-function urlTitle(url: string): string {
-  try {
-    const parsed = new URL(url)
-    return `${parsed.host}${parsed.pathname === '/' ? '' : parsed.pathname}` || url
-  } catch {
-    return url
-  }
-}
-
-/**
- * The machine a workspace's browser tabs load through (this Mac, or its SSH host, where an agent's
- * localhost lives), under the same rules a workspace browser tab follows; null where those rules
- * offer no client tab (a paired runtime, or the browser turned off for it).
- */
-export function agentHubPeekBrowserHost(worktreeId: string): ExecutionHostId | null {
-  const state = useAppStore.getState()
-  if (getClientCreationActionPolicy(state, worktreeId)['managed-browser'].state !== 'enabled') {
-    return null
-  }
-  const route = resolveWorktreeOperationRoute(state, worktreeId)
-  if (!route || route.runtimeEnvironmentId?.trim()) {
-    return null
-  }
-  const host = parseExecutionHostId(route.executionHostId)
-  return host && host.kind !== 'runtime' ? host.id : null
-}
-
 export function agentHubPeekUrlItem(
   url: string,
   source: AgentHubPeekLinkSource
 ): AgentHubPeekItem | null {
-  const hostId = agentHubPeekBrowserHost(source.worktreeId)
-  if (!hostId) {
+  const content = agentHubPeekBrowserRoute(url, source)
+  if (!content) {
     return null
   }
   return {
-    content: { kind: 'web', url, hostId },
+    content,
     worktreeId: source.worktreeId,
-    title: urlTitle(url),
+    title: agentHubPeekPageTitle(url),
     location: url,
     mirrorKey: mirrorKeyOf(source.event),
     openInWorkspace: source.openInWorkspace,
@@ -101,20 +87,61 @@ export function agentHubPeekFileItem(
   if (!kind) {
     return null
   }
+  const route = agentHubPeekSourceRoute(source)
+  if (!route) {
+    return null
+  }
   const connectionId = getConnectionIdForFile(source.worktreeId, filePath)
   // Why: undefined means the owner has not loaded yet, which is neither local nor a known host.
-  if (connectionId === undefined) {
+  if (connectionId === undefined && !route.runtimeEnvironmentId) {
     return null
   }
   let content: AgentHubPeekItem['content']
   if (kind === 'html') {
     // Why local only: a file:// page loads from this disk, which a remote host's file is not on.
-    if (connectionId !== null) {
+    if (connectionId !== null || route.runtimeEnvironmentId) {
       return null
     }
     content = { kind: 'web', url: absolutePathToFileUri(filePath), hostId: 'local' }
   } else {
-    content = { kind, filePath, connectionId }
+    const worktreePath =
+      source.worktreePath ??
+      resolveWorkspaceDirectory(useAppStore.getState(), source.worktreeId, route.executionHostId)
+    if (!worktreePath) {
+      return null
+    }
+    const context = getTerminalFileContext(
+      source.worktreeId,
+      worktreePath,
+      route.runtimeEnvironmentId
+    )
+    if (!context.sourceHostResolved) {
+      return null
+    }
+    const relativePath = getRelativePathInsideWorktree(worktreePath, filePath)
+    if (route.runtimeEnvironmentId && !relativePath) {
+      return null
+    }
+    const sshConnectionId = route.runtimeEnvironmentId
+      ? null
+      : (connectionId ?? context.connectionId ?? null)
+    content = {
+      kind,
+      filePath,
+      connectionId: sshConnectionId,
+      readContext: {
+        target: context.target,
+        worktreeId: source.worktreeId,
+        filePath,
+        ...(relativePath ? { relativePath } : {}),
+        ...(sshConnectionId
+          ? { connectionId: sshConnectionId, expectedExternalSshTargetId: sshConnectionId }
+          : {}),
+        ...(!route.runtimeEnvironmentId && !sshConnectionId
+          ? { access: userNamedFileAccess() }
+          : {})
+      }
+    }
   }
   return {
     content,
@@ -127,29 +154,113 @@ export function agentHubPeekFileItem(
   }
 }
 
-function openIfPeekable(item: AgentHubPeekItem | null): boolean {
-  if (!item) {
-    return false
+/** Uses the source's normal browser when a host-only address has no client forward. */
+export async function openAgentHubPeekUrl(
+  url: string,
+  source: AgentHubPeekLinkSource,
+  preserveKeyboardFocus = false
+): Promise<void> {
+  const item = agentHubPeekUrlItem(url, source)
+  if (item) {
+    openAgentHubPeek({ ...item, preserveKeyboardFocus })
+    return
   }
-  openAgentHubPeek(item)
-  return true
+  const route = agentHubPeekSourceRoute(source)
+  if (!route) {
+    throw new Error(
+      translate(
+        'agentHub.requests.peekUnsupported',
+        'This URL or file cannot be opened in Peek on its host.'
+      )
+    )
+  }
+  toast.info(
+    route.runtimeEnvironmentId && isAgentHubPeekHostAddress(url)
+      ? translate(
+          'agentHub.peek.hostAddress',
+          'This address is only available on its host. Opening in the workspace browser.'
+        )
+      : translate(
+          'agentHub.peek.workspaceFallback',
+          'This preview is unavailable here. Opening in the workspace.'
+        )
+  )
+  await openWorkspaceBrowserTab({
+    workspaceId: source.worktreeId,
+    url,
+    intent: { kind: 'url' },
+    ...(route?.runtimeEnvironmentId
+      ? { expectedRuntimeEnvironmentId: route.runtimeEnvironmentId }
+      : {})
+  })
 }
 
-function peekAction(item: AgentHubPeekItem | null): LinkAction | null {
-  return item
-    ? {
-        icon: PictureInPicture2,
-        label: translate('agentHub.peek.action', 'Peek'),
-        run: () => openAgentHubPeek(item)
-      }
-    : null
+function openPeekUrlWithFeedback(url: string, source: AgentHubPeekLinkSource): void {
+  void openAgentHubPeekUrl(url, source).catch((error) =>
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : translate('agentHub.peek.unavailable', 'This link could not be opened.')
+    )
+  )
+}
+
+export function fallbackAgentHubPeek(item: AgentHubPeekItem): void {
+  closeAgentHubPeek()
+  toast.info(
+    translate(
+      'agentHub.peek.workspaceFallback',
+      'This preview is unavailable here. Opening in the workspace.'
+    )
+  )
+  item.openInWorkspace()
+}
+
+export function openAgentHubPeekFile(
+  filePath: string,
+  source: AgentHubPeekLinkSource,
+  preserveKeyboardFocus = false
+): boolean {
+  const item = agentHubPeekFileItem(filePath, source)
+  if (item) {
+    openAgentHubPeek({ ...item, preserveKeyboardFocus })
+    return true
+  }
+  const route = agentHubPeekSourceRoute(source)
+  if (
+    !agentHubPeekFileKind(filePath) ||
+    !route ||
+    (getConnectionIdForFile(source.worktreeId, filePath) === undefined &&
+      !route.runtimeEnvironmentId)
+  ) {
+    return false
+  }
+  toast.info(
+    translate(
+      'agentHub.peek.workspaceFallback',
+      'This preview is unavailable here. Opening in the workspace.'
+    )
+  )
+  source.openInWorkspace()
+  return true
 }
 
 /** A direct click in a mirror peeks instead of leaving the mirror for the workspace. */
 export function peekTerminalUrlFromMirror(url: string, source: AgentHubPeekLinkSource): boolean {
-  return peekEnabled(source) && mirrorKeyOf(source.event) !== null
-    ? openIfPeekable(agentHubPeekUrlItem(url, source))
-    : false
+  if (!peekEnabled(source) || mirrorKeyOf(source.event) === null) {
+    return false
+  }
+  if (
+    getClientCreationActionPolicy(useAppStore.getState(), source.worktreeId)['managed-browser']
+      .state !== 'enabled'
+  ) {
+    return false
+  }
+  if (!agentHubPeekSourceRoute(source)) {
+    return false
+  }
+  openPeekUrlWithFeedback(url, source)
+  return true
 }
 
 export function peekTerminalFileFromMirror(
@@ -157,7 +268,7 @@ export function peekTerminalFileFromMirror(
   source: AgentHubPeekLinkSource
 ): boolean {
   return peekEnabled(source) && mirrorKeyOf(source.event) !== null
-    ? openIfPeekable(agentHubPeekFileItem(filePath, source))
+    ? openAgentHubPeekFile(filePath, source)
     : false
 }
 
@@ -166,12 +277,29 @@ export function agentHubPeekUrlAction(
   url: string,
   source: AgentHubPeekLinkSource
 ): LinkAction | null {
-  return peekEnabled(source) ? peekAction(agentHubPeekUrlItem(url, source)) : null
+  return peekEnabled(source) &&
+    getClientCreationActionPolicy(useAppStore.getState(), source.worktreeId)['managed-browser']
+      .state === 'enabled' &&
+    agentHubPeekSourceRoute(source)
+    ? {
+        icon: PictureInPicture2,
+        label: translate('agentHub.peek.action', 'Peek'),
+        run: () => openPeekUrlWithFeedback(url, source)
+      }
+    : null
 }
 
 export function agentHubPeekFileAction(
   filePath: string,
   source: AgentHubPeekLinkSource
 ): LinkAction | null {
-  return peekEnabled(source) ? peekAction(agentHubPeekFileItem(filePath, source)) : null
+  return peekEnabled(source) && agentHubPeekFileKind(filePath) && agentHubPeekSourceRoute(source)
+    ? {
+        icon: PictureInPicture2,
+        label: translate('agentHub.peek.action', 'Peek'),
+        run: () => {
+          openAgentHubPeekFile(filePath, source)
+        }
+      }
+    : null
 }

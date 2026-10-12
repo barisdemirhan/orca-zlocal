@@ -2,11 +2,18 @@ import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { userNamedFileAccess } from '@/lib/local-file-access'
-import { readRuntimeFileContent } from '@/runtime/runtime-file-client'
-import type { RuntimeReadableFileContent } from '@/runtime/runtime-file-client-types'
+import { readRuntimeFileContent } from '@/runtime/runtime-file-read-client'
+import type {
+  RuntimeFileReadArgs,
+  RuntimeReadableFileContent
+} from '@/runtime/runtime-file-client-types'
 import { ImageViewer, MediaViewer } from '../editor/editor-lazy-views'
 import { buildImageDataUri } from '../../../../shared/image-data-uri'
 import type { AgentHubPeekContent } from './agent-hub-peek-store'
+
+function runtimeReadTargetKey(target: RuntimeFileReadArgs['target'] | undefined): string {
+  return target?.kind === 'environment' ? target.environmentId : ''
+}
 
 type PeekFileContent = Extract<AgentHubPeekContent, { filePath: string }>
 
@@ -67,46 +74,50 @@ function measureNaturalSize(
 /** An image, PDF or video through the editor's own viewers, read the way the editor reads it. */
 export function AgentHubPeekFile({
   content,
-  onContentSize
+  onContentSize,
+  onUnavailable
 }: {
   content: PeekFileContent
   /** The image's or video's own size, so Peek can shrink to it; null for a PDF or a failure. */
   onContentSize: (size: ContentSize | null) => void
+  onUnavailable: () => void
 }): React.JSX.Element {
   const [load, setLoad] = useState<{ key: string; state: LoadState }>({
     key: '',
     state: { status: 'loading' }
   })
   const { filePath, connectionId } = content
-  const key = `${connectionId ?? ''}\u0000${filePath}`
+  const key = `${runtimeReadTargetKey(content.readContext?.target)}\u0000${content.readContext?.worktreeId ?? ''}\u0000${connectionId ?? ''}\u0000${filePath}`
   useEffect(() => {
     let live = true
-    void readRuntimeFileContent({
-      // Why: Peek reads files of this Mac or an SSH host, never of the window's paired runtime.
-      settings: { activeRuntimeEnvironmentId: null },
-      filePath,
-      ...(connectionId
-        ? { connectionId }
-        : // Why: an agent's artifact usually sits outside the workspace, where only a path the
-          // user picked themselves may be read.
-          { access: userNamedFileAccess() })
-    })
+    void readRuntimeFileContent(
+      content.readContext ?? {
+        target: { kind: 'local' },
+        filePath,
+        ...(connectionId ? { connectionId } : { access: userNamedFileAccess() })
+      }
+    )
       .then((file) => live && setLoad({ key, state: { status: 'ready', file } }))
       .catch(() => live && setLoad({ key, state: { status: 'failed' } }))
     return () => {
       live = false
     }
-  }, [key, filePath, connectionId])
+  }, [key, filePath, connectionId, content.readContext])
 
   const state: LoadState = load.key === key ? load.state : { status: 'loading' }
   const readyFile = state.status === 'ready' ? state.file : null
+  const onUnavailableRef = useRef(onUnavailable)
   const onContentSizeRef = useRef(onContentSize)
   useLayoutEffect(() => {
     onContentSizeRef.current = onContentSize
+    onUnavailableRef.current = onUnavailable
   })
   useEffect(() => {
     if (state.status === 'failed') {
       onContentSizeRef.current(null)
+      onUnavailableRef.current()
+    } else if (readyFile && (!readyFile.isBinary || (!readyFile.mediaUrl && !readyFile.isImage))) {
+      onUnavailableRef.current()
     }
     return readyFile
       ? measureNaturalSize(readyFile, (size) => onContentSizeRef.current(size))
@@ -136,7 +147,7 @@ export function AgentHubPeekFile({
           src={file.mediaUrl}
           mimeType={file.mimeType ?? ''}
           filePath={content.filePath}
-          canOpenLocally={!connectionId}
+          canOpenLocally={!connectionId && content.readContext?.target.kind !== 'environment'}
         />
       ) : (
         <ImageViewer content={file.content} filePath={content.filePath} mimeType={file.mimeType} />

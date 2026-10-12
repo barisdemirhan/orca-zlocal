@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Globe } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { Button } from '@/components/ui/button'
+import type { ExecutionHostId } from '../../../../../shared/execution-host'
 import { destroyPersistentWebview } from '../host-guest/webview-registry'
 import {
   useSshWorkspaceBrowserRoute,
@@ -13,17 +14,20 @@ export function SshRoutedBrowserPageGate({
   worktreeId,
   sessionProfileId,
   pageIds,
+  sourceExecutionHostId,
   children
 }: {
   worktreeId: string
   sessionProfileId: string | null
   /** Pages this gate guards; their guests are destroyed whenever mounting is not allowed. */
   pageIds: readonly string[]
+  sourceExecutionHostId?: ExecutionHostId
   children: (routedPartition: string | null) => React.JSX.Element
 }): React.JSX.Element {
   const { state, retry, tryWithoutProbe, browseFromThisDevice } = useSshWorkspaceBrowserRoute(
     worktreeId,
-    sessionProfileId
+    sessionProfileId,
+    sourceExecutionHostId
   )
   const mountable = state.kind === 'unrouted' || state.kind === 'ready'
   useEffect(() => {

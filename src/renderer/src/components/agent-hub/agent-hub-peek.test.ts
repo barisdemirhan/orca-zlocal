@@ -1,5 +1,8 @@
 /** @vitest-environment happy-dom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { PortForwardEntry } from '../../../../shared/ssh-types'
+import { openWorkspaceBrowserTab } from '@/lib/workspace-browser-tab-open'
+import { toast } from 'sonner'
 
 const mocks = vi.hoisted(() => {
   const state: {
@@ -7,23 +10,41 @@ const mocks = vi.hoisted(() => {
     connectionId: string | null | undefined
     browser: 'enabled' | 'hidden'
     route: { executionHostId: string; runtimeEnvironmentId: string | null }
+    portForwardsByConnection: Record<string, PortForwardEntry[]>
+    runtimeEnvironments: { id: string; sshAccess: { sshTargetId: string } }[]
   } = {
     settings: { experimentalAgentHub: true },
     connectionId: null,
     browser: 'enabled',
-    route: { executionHostId: 'local', runtimeEnvironmentId: null }
+    route: { executionHostId: 'local', runtimeEnvironmentId: null },
+    portForwardsByConnection: {},
+    runtimeEnvironments: []
   }
   return state
 })
 
-vi.mock('@/store', () => ({ useAppStore: { getState: () => ({ settings: mocks.settings }) } }))
+vi.mock('@/store', () => ({ useAppStore: { getState: () => mocks } }))
 vi.mock('@/lib/connection-context', () => ({ getConnectionIdForFile: () => mocks.connectionId }))
 vi.mock('@/lib/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: mocks.browser } })
 }))
 vi.mock('@/lib/worktree-operation-route', () => ({
-  resolveWorktreeOperationRoute: () => mocks.route
+  resolveWorktreeOperationRoute: () => mocks.route,
+  resolveWorktreeOperationRouteForHost: () => mocks.route
 }))
+vi.mock('../terminal-pane/terminal-file-path-mapping', () => ({
+  getTerminalFileContext: () => ({
+    target: mocks.route.runtimeEnvironmentId
+      ? { kind: 'environment', environmentId: mocks.route.runtimeEnvironmentId }
+      : { kind: 'local' },
+    sourceHostResolved: true
+  })
+}))
+vi.mock('@/lib/workspace-directory', () => ({ resolveWorkspaceDirectory: () => '/a' }))
+vi.mock('@/lib/workspace-browser-tab-open', () => ({
+  openWorkspaceBrowserTab: vi.fn(async () => {})
+}))
+vi.mock('sonner', () => ({ toast: { info: vi.fn(), error: vi.fn() } }))
 vi.mock('@/components/editor/markdown-internal-links', () => ({
   absolutePathToFileUri: (path: string) => `file://${path}`
 }))
@@ -35,6 +56,7 @@ import {
   peekTerminalUrlFromMirror,
   type AgentHubPeekLinkSource
 } from './agent-hub-peek-routing'
+import { agentHubPeekPageItem } from './agent-hub-peek-page-navigation'
 import {
   closeAgentHubPeek,
   goBackAgentHubPeek,
@@ -80,6 +102,9 @@ beforeEach(() => {
   mocks.connectionId = null
   mocks.browser = 'enabled'
   mocks.route = { executionHostId: 'local', runtimeEnvironmentId: null }
+  mocks.portForwardsByConnection = {}
+  mocks.runtimeEnvironments = []
+  vi.clearAllMocks()
   unregisterHost = registerAgentHubPeekHost()
 })
 afterEach(() => {
@@ -112,7 +137,6 @@ describe('a direct click in a mirror', () => {
     ['outside a mirror', () => clickIn(null), true, '/a/shot.png', null],
     ['with Agent Hub off', () => clickIn('m-1'), false, '/a/shot.png', null],
     ['for a file Peek cannot show', () => clickIn('m-1'), true, '/a/main.ts', null],
-    ['for an HTML file on an SSH host', () => clickIn('m-1'), true, '/a/report.html', 'ssh-1'],
     ['before the file owner has loaded', () => clickIn('m-1'), true, '/a/shot.png', undefined]
   ])('leaves the click to Orca %s', (_, event, enabled, filePath, connectionId) => {
     mocks.settings = { experimentalAgentHub: enabled }
@@ -123,10 +147,21 @@ describe('a direct click in a mirror', () => {
 })
 
 describe('an SSH workspace', () => {
+  it('opens remote HTML through its workspace document preview with a reason', () => {
+    mocks.route = { executionHostId: 'ssh:workhost', runtimeEnvironmentId: null }
+    mocks.connectionId = 'workhost'
+    const linkSource = source(clickIn('m-1'))
+    expect(peekTerminalFileFromMirror('/a/report.html', linkSource)).toBe(true)
+    expect(linkSource.openInWorkspace).toHaveBeenCalledOnce()
+    expect(readAgentHubPeek()).toBeNull()
+    expect(toast.info).toHaveBeenCalledWith(
+      'This preview is unavailable here. Opening in the workspace.'
+    )
+  })
   it('loads its pages through the SSH host, where its localhost is', () => {
     mocks.route = { executionHostId: 'ssh:workhost', runtimeEnvironmentId: null }
     expect(peekTerminalUrlFromMirror('http://localhost:5173/', source(clickIn('m-1')))).toBe(true)
-    expect(shown()?.content).toEqual({
+    expect(shown()?.content).toMatchObject({
       kind: 'web',
       url: 'http://localhost:5173/',
       hostId: 'ssh:workhost'
@@ -136,7 +171,7 @@ describe('an SSH workspace', () => {
   it('reads its images, PDFs and media over the SSH connection', () => {
     mocks.connectionId = 'ssh-1'
     expect(peekTerminalFileFromMirror('/home/dev/shot.png', source(clickIn('m-1')))).toBe(true)
-    expect(shown()?.content).toEqual({
+    expect(shown()?.content).toMatchObject({
       kind: 'image',
       filePath: '/home/dev/shot.png',
       connectionId: 'ssh-1'
@@ -144,17 +179,129 @@ describe('an SSH workspace', () => {
   })
 })
 
-it.each([
-  ['a paired-runtime terminal', true, 'enabled', null],
-  ['a workspace whose browser is off', false, 'hidden', null],
-  ['a workspace routed to a paired runtime', false, 'enabled', 'env-1']
-] as const)('leaves a page from %s to Orca', (_, pairedRuntime, browser, runtimeEnvironmentId) => {
-  mocks.browser = browser
-  mocks.route = { executionHostId: 'local', runtimeEnvironmentId }
-  expect(
-    peekTerminalUrlFromMirror('http://localhost:5173/', source(clickIn('m-1'), pairedRuntime))
-  ).toBe(false)
-  expect(readAgentHubPeek()).toBeNull()
+it.each([['a workspace whose browser is off', false, 'hidden', null]] as const)(
+  'leaves a page from %s to Orca',
+  (_, pairedRuntime, browser, runtimeEnvironmentId) => {
+    mocks.browser = browser
+    mocks.route = { executionHostId: 'local', runtimeEnvironmentId }
+    expect(
+      peekTerminalUrlFromMirror('http://localhost:5173/', source(clickIn('m-1'), pairedRuntime))
+    ).toBe(false)
+    expect(readAgentHubPeek()).toBeNull()
+  }
+)
+
+describe('a paired workspace', () => {
+  const pairedSource = (): AgentHubPeekLinkSource => ({
+    ...source(clickIn('m-1'), true),
+    sourceOwner: { kind: 'runtime', runtimeEnvironmentId: 'workhost' }
+  })
+
+  beforeEach(() => {
+    mocks.route = { executionHostId: 'runtime:workhost', runtimeEnvironmentId: 'workhost' }
+    mocks.runtimeEnvironments = [{ id: 'workhost', sshAccess: { sshTargetId: 'workhost-ssh' } }]
+  })
+
+  it('embeds a directly reachable domain without creating a host browser tab', () => {
+    expect(peekTerminalUrlFromMirror('https://site.dev.test/path', pairedSource())).toBe(true)
+    expect(shown()?.content).toMatchObject({
+      kind: 'web',
+      url: 'https://site.dev.test/path',
+      hostId: 'local'
+    })
+  })
+
+  it.each(['localhost', '127.0.0.1', '[::1]', '0.0.0.0'])(
+    'uses an existing host-specific forward for %s',
+    (host) => {
+      mocks.portForwardsByConnection = {
+        other: [
+          {
+            id: 'wrong',
+            connectionId: 'other',
+            remoteHost: '127.0.0.1',
+            remotePort: 5173,
+            localPort: 45111
+          }
+        ],
+        'workhost-ssh': [
+          {
+            id: 'workhost',
+            connectionId: 'workhost-ssh',
+            remoteHost: '127.0.0.1',
+            remotePort: 5173,
+            localPort: 45173
+          }
+        ]
+      }
+      expect(
+        peekTerminalUrlFromMirror(`http://${host}:5173/path?q=1#section`, pairedSource())
+      ).toBe(true)
+      expect(shown()?.content).toMatchObject({
+        hostId: 'local',
+        url: 'http://127.0.0.1:45173/path?q=1#section'
+      })
+    }
+  )
+
+  it('opens an unforwarded host address through the normal paired workspace browser with a reason', () => {
+    const linkSource = pairedSource()
+    expect(peekTerminalUrlFromMirror('http://localhost:5173/path', linkSource)).toBe(true)
+    expect(readAgentHubPeek()).toBeNull()
+    expect(openWorkspaceBrowserTab).toHaveBeenCalledWith({
+      workspaceId: 'wt-1',
+      url: 'http://localhost:5173/path',
+      intent: { kind: 'url' },
+      expectedRuntimeEnvironmentId: 'workhost'
+    })
+    expect(toast.info).toHaveBeenCalledWith(
+      'This address is only available on its host. Opening in the workspace browser.'
+    )
+    expect(linkSource.openInWorkspace).not.toHaveBeenCalled()
+  })
+
+  it('cannot use another host’s same-port forward', () => {
+    mocks.portForwardsByConnection = {
+      other: [
+        {
+          id: 'wrong',
+          connectionId: 'other',
+          remoteHost: '127.0.0.1',
+          remotePort: 5173,
+          localPort: 45111
+        }
+      ]
+    }
+    expect(peekTerminalUrlFromMirror('http://127.0.0.1:5173/', pairedSource())).toBe(true)
+    expect(shown()).toBeNull()
+    expect(openWorkspaceBrowserTab).toHaveBeenCalledWith(
+      expect.objectContaining({ expectedRuntimeEnvironmentId: 'workhost' })
+    )
+  })
+
+  it('keeps a page popup on the forwarded origin already hosting Peek', () => {
+    mocks.portForwardsByConnection = {
+      'workhost-ssh': [
+        {
+          id: 'workhost',
+          connectionId: 'workhost-ssh',
+          remoteHost: '127.0.0.1',
+          remotePort: 5173,
+          localPort: 45173
+        }
+      ]
+    }
+    peekTerminalUrlFromMirror('http://localhost:5173/', pairedSource())
+    const item = shown()
+    if (!item) {
+      throw new Error('Missing forwarded Peek')
+    }
+    expect(agentHubPeekPageItem(item, 'http://127.0.0.1:45173/next')?.content).toMatchObject({
+      hostId: 'local',
+      url: 'http://127.0.0.1:45173/next'
+    })
+    expect(openWorkspaceBrowserTab).not.toHaveBeenCalled()
+  })
 })
 
 describe('the link menu row', () => {

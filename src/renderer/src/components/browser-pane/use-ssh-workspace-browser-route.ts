@@ -4,6 +4,7 @@ import { getExecutionHostIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { useWorktreeHostConnection } from '@/lib/worktree-host-connection-phase'
 import { resolveSshWorkspaceBrowserRouteEligibility } from '@/lib/ssh-workspace-browser-route-eligibility'
 import type { BrowserLoadFailureRoute } from '../../../../shared/browser-load-failure'
+import type { ExecutionHostId } from '../../../../shared/execution-host'
 
 export type SshWorkspaceBrowserRouteErrorKind = 'forwarding-blocked' | 'ssh-unavailable' | 'unknown'
 
@@ -31,7 +32,8 @@ export function classifySshWorkspaceBrowserRouteError(
 /** Mount only a proxy-verified partition; preparing/failed routes must never fall back to local egress. Unrouted access requires an explicit opt-out. */
 export function useSshWorkspaceBrowserRoute(
   worktreeId: string,
-  sessionProfileId: string | null
+  sessionProfileId: string | null,
+  sourceExecutionHostId?: ExecutionHostId
 ): {
   state: SshWorkspaceBrowserRouteState
   targetId: string | null
@@ -47,7 +49,7 @@ export function useSshWorkspaceBrowserRoute(
   )
   const updateSettings = useAppStore((s) => s.updateSettings)
   const routeEligibility = resolveSshWorkspaceBrowserRouteEligibility(
-    executionHostId,
+    sourceExecutionHostId ?? executionHostId,
     browserRoutingSettings,
     environments
   )

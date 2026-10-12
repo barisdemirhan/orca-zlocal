@@ -4,6 +4,17 @@ import { makeState } from './sync-runtime-graph-test-harness'
 import type { AppState } from '../store/types'
 
 describe('buildMobileSessionTabSnapshots', () => {
+  it('keeps the private Peek workspace out of mobile and paired session publication', () => {
+    const state = makeState({
+      groupsByWorktree: { 'agent-hub-peek': [], 'visible-workspace': [] },
+      unifiedTabsByWorktree: { 'agent-hub-peek': [] },
+      browserTabsByWorktree: { 'agent-hub-peek': [] }
+    })
+    expect(buildMobileSessionTabSnapshots(state).map((snapshot) => snapshot.worktree)).toEqual([
+      'visible-workspace'
+    ])
+  })
+
   it('does not publish state for a removed folder workspace', () => {
     const staleFolderKey = 'folder:removed-folder'
     const state = makeState({

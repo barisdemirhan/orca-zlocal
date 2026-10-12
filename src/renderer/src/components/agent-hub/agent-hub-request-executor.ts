@@ -194,7 +194,7 @@ export async function executeAgentHubRequest(
             )
           )
         }
-        executeAgentHubPeek(host, request.link, target)
+        await executeAgentHubPeek(host, request.link, target)
         break
       }
       case 'status':

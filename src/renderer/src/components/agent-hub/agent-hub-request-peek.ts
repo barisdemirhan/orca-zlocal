@@ -1,4 +1,3 @@
-import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import {
   joinAbsolutePath,
@@ -7,23 +6,20 @@ import {
 } from '@/lib/terminal-path-normalization'
 import { resolveTerminalFileLinkText } from '@/lib/terminal-links'
 import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
+import { openRoutedHttpLink } from '@/lib/http-link-destinations'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
-  agentHubPeekFileItem,
-  agentHubPeekUrlItem,
+  openAgentHubPeekFile,
+  openAgentHubPeekUrl,
   type AgentHubPeekLinkSource
 } from './agent-hub-peek-routing'
-import { isAgentHubPeekHostMounted, openAgentHubPeek } from './agent-hub-peek-store'
+import { isAgentHubPeekHostMounted } from './agent-hub-peek-store'
 
-export function executeAgentHubPeek(host: string, link: string, target: AgentHubPaneTarget): void {
-  if (host !== 'local') {
-    throw new Error(
-      translate(
-        'agentHub.requests.pairedPeekUnavailable',
-        'Peek cannot open URLs or files from this paired host yet.'
-      )
-    )
-  }
+export async function executeAgentHubPeek(
+  host: string,
+  link: string,
+  target: AgentHubPaneTarget
+): Promise<void> {
   if (!isAgentHubPeekHostMounted()) {
     throw new Error(
       translate('agentHub.requests.peekUnavailable', 'Peek is unavailable in the current view.')
@@ -52,15 +48,24 @@ export function executeAgentHubPeek(host: string, link: string, target: AgentHub
       joinAbsolutePath(cwd, link))
   const source: AgentHubPeekLinkSource = {
     worktreeId: target.worktree.id,
-    onPairedRuntime: false,
+    worktreePath: target.worktree.path,
+    onPairedRuntime: host !== 'local',
+    ...(host !== 'local'
+      ? { sourceOwner: { kind: 'runtime' as const, runtimeEnvironmentId: host } }
+      : {}),
     event: undefined,
     openInWorkspace: () => {
       if (url) {
-        useAppStore.getState().createBrowserTab(target.worktree.id, link, { activate: true })
+        openRoutedHttpLink(link, {
+          worktreeId: target.worktree.id,
+          sourceOwner: source.sourceOwner,
+          forceDestination: 'orca'
+        })
       } else if (filePath) {
         openDetectedFilePath(filePath, null, null, {
           worktreeId: target.worktree.id,
-          worktreePath: target.worktree.path
+          worktreePath: target.worktree.path,
+          runtimeEnvironmentId: host !== 'local' ? host : null
         })
       }
     },
@@ -70,12 +75,11 @@ export function executeAgentHubPeek(host: string, link: string, target: AgentHub
         }
       : null
   }
-  const item = url
-    ? agentHubPeekUrlItem(link, source)
-    : filePath
-      ? agentHubPeekFileItem(filePath, source)
-      : null
-  if (!item) {
+  if (url) {
+    await openAgentHubPeekUrl(link, source, true)
+    return
+  }
+  if (!filePath || !openAgentHubPeekFile(filePath, source, true)) {
     throw new Error(
       translate(
         'agentHub.requests.peekUnsupported',
@@ -83,5 +87,4 @@ export function executeAgentHubPeek(host: string, link: string, target: AgentHub
       )
     )
   }
-  openAgentHubPeek({ ...item, preserveKeyboardFocus: true })
 }

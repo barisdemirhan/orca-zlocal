@@ -21857,6 +21857,13 @@
   "projectField": {
     "updateFailed": "Échec de la mise à jour du champ du projet"
   },
+  "agentHub": {
+    "peek": {
+      "hostAddress": "Cette adresse est uniquement disponible sur son hôte. Ouverture dans le navigateur de l’espace de travail.",
+      "workspaceFallback": "Cet aperçu n’est pas disponible ici. Ouverture dans l’espace de travail.",
+      "unavailable": "Impossible d’ouvrir ce lien."
+    }
+  },
   "workspaceDeletion": {
     "preferenceSaveFailed": "Impossible d'enregistrer la préférence de suppression",
     "alwaysForceDelete": "Toujours forcer la suppression",

@@ -4,20 +4,12 @@ import type { ExecutionHostId } from '../../../../shared/execution-host'
 import BrowserPane from '../browser-pane/BrowserPane'
 import { DeferredBrowserContent } from '../browser-pane/assemble-chrome/DeferredBrowserContent'
 import { registerBrowserOverlaySlotViewport } from '../browser-pane/host-guest/browser-page-viewport'
+import { createWorkspaceClientBrowserTab } from '@/lib/workspace-client-browser-tab'
+import { resolveLocalhostHttpLinkDisplayUrl } from '@/lib/http-link-routing'
+import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
+import { closeAgentHubPeekBrowserTab } from './agent-hub-peek-pages'
 
-/**
- * Peek's pages are browser tabs of a workspace no layout renders, so no tab strip lists them and
- * no overlay mounts them a second time; Peek is their only surface.
- */
-export const AGENT_HUB_PEEK_WORKTREE_ID = 'agent-hub-peek'
-
-/** Closes pages a previous Peek left behind, e.g. when Orca quit with one open. */
-export function closeLeftoverAgentHubPeekPages(): void {
-  const state = useAppStore.getState()
-  for (const tab of state.browserTabsByWorktree[AGENT_HUB_PEEK_WORKTREE_ID] ?? []) {
-    state.closeBrowserTab(tab.id, { reason: 'cleanup' })
-  }
-}
+export { closeLeftoverAgentHubPeekPages } from './agent-hub-peek-pages'
 
 function peekPageUrl(tabId: string): string | null {
   const state = useAppStore.getState()
@@ -34,11 +26,15 @@ function peekPageUrl(tabId: string): string | null {
 export function AgentHubPeekBrowser({
   url,
   hostId,
+  routingWorktreeId,
+  onUnavailable,
   onOpenPage
 }: {
   url: string
   /** Loads through this machine, as the workspace's own browser tabs do (an SSH host's localhost). */
   hostId: ExecutionHostId
+  routingWorktreeId?: string
+  onUnavailable: () => void
   /** A link the page opened in a new tab or window; Peek shows it next. */
   onOpenPage: (url: string) => void
 }): React.JSX.Element | null {
@@ -47,24 +43,45 @@ export function AgentHubPeekBrowser({
   const creating = useRef(false)
   useEffect(() => {
     const owned = ownTabs.current
-    const state = useAppStore.getState()
-    // Why: the store notifies subscribers inside createBrowserTab, before its id is known here.
-    creating.current = true
-    const tab = state.createBrowserTab(AGENT_HUB_PEEK_WORKTREE_ID, url, {
-      activate: false,
-      browserRuntimeEnvironmentId: null,
-      executionHostId: hostId,
-      sessionProfileId:
-        state.defaultBrowserSessionProfileIdByHostId[hostId] ?? state.defaultBrowserSessionProfileId
+    let live = true
+    let createdTabId: string | null = null
+    void (async () => {
+      const displayUrl =
+        hostId === 'local' ? await resolveLocalhostHttpLinkDisplayUrl(url, { kind: 'local' }) : null
+      if (!live) {
+        return
+      }
+      // WHY: creation notifies subscribers before this component knows its own tab id.
+      creating.current = true
+      try {
+        const tab = createWorkspaceClientBrowserTab(
+          useAppStore.getState(),
+          {
+            workspaceId: AGENT_HUB_PEEK_WORKTREE_ID,
+            url: displayUrl ?? url,
+            focusOnCreate: false
+          },
+          hostId
+        )
+        createdTabId = tab.id
+        owned.add(tab.id)
+        setTabId(tab.id)
+      } finally {
+        creating.current = false
+      }
+    })().catch(() => {
+      if (live) {
+        onUnavailable()
+      }
     })
-    creating.current = false
-    owned.add(tab.id)
-    setTabId(tab.id)
     return () => {
-      owned.delete(tab.id)
-      useAppStore.getState().closeBrowserTab(tab.id, { reason: 'cleanup' })
+      live = false
+      if (createdTabId) {
+        owned.delete(createdTabId)
+        closeAgentHubPeekBrowserTab(createdTabId)
+      }
     }
-  }, [url, hostId])
+  }, [url, hostId, onUnavailable])
   const onOpenPageRef = useRef(onOpenPage)
   useLayoutEffect(() => {
     onOpenPageRef.current = onOpenPage
@@ -85,7 +102,7 @@ export function AgentHubPeekBrowser({
             continue
           }
           const opened = peekPageUrl(tab.id)
-          state.closeBrowserTab(tab.id, { reason: 'cleanup' })
+          closeAgentHubPeekBrowserTab(tab.id)
           if (opened && opened !== 'about:blank') {
             onOpenPageRef.current(opened)
           }
@@ -125,6 +142,8 @@ export function AgentHubPeekBrowser({
           isActive
           isWorktreeActive
           chromeShortcutScope="owned-target"
+          routingWorktreeId={routingWorktreeId}
+          sourceExecutionHostId={hostId}
         />
       </DeferredBrowserContent>
     </div>

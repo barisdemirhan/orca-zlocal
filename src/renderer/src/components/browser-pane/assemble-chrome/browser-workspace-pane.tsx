@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useAppStore } from '@/store'
+import type { ExecutionHostId } from '../../../../../shared/execution-host'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { isClientHostedBrowserPageHandle } from '@/store/slices/browser'
 import type { BrowserWorkspace as BrowserWorkspaceState } from '../../../../../shared/browser-workspace-types'
@@ -36,12 +37,17 @@ export default function BrowserPane({
   browserTab,
   isActive,
   isWorktreeActive = true,
-  chromeShortcutScope
+  chromeShortcutScope,
+  routingWorktreeId = browserTab.worktreeId,
+  sourceExecutionHostId
 }: {
   browserTab: BrowserWorkspaceState
   isActive: boolean
   isWorktreeActive?: boolean
   chromeShortcutScope?: BrowserChromeShortcutScope
+  /** Private client surfaces retain their source workspace's SSH route. */
+  routingWorktreeId?: string
+  sourceExecutionHostId?: ExecutionHostId
 }): React.JSX.Element {
   const resolvedChromeShortcutScope = chromeShortcutScope ?? (isActive ? 'focused' : 'inactive')
   const activeRuntimeEnvironmentId = useAppStore((s) =>
@@ -165,7 +171,8 @@ export default function BrowserPane({
     <div className="relative flex h-full min-h-0 flex-1 flex-col">
       {localBrowserPages.length > 0 ? (
         <SshRoutedBrowserPageGate
-          worktreeId={browserTab.worktreeId}
+          worktreeId={routingWorktreeId}
+          sourceExecutionHostId={sourceExecutionHostId}
           sessionProfileId={browserTab.sessionProfileId ?? null}
           pageIds={localBrowserPageIds}
         >

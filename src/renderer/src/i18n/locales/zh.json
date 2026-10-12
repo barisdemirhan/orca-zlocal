@@ -21135,6 +21135,13 @@
   "projectField": {
     "updateFailed": "无法更新项目字段"
   },
+  "agentHub": {
+    "peek": {
+      "hostAddress": "此地址仅在所属主机上可用。正在工作区浏览器中打开。",
+      "workspaceFallback": "此处无法显示预览。正在工作区中打开。",
+      "unavailable": "无法打开此链接。"
+    }
+  },
   "workspaceDeletion": {
     "preferenceSaveFailed": "无法保存删除偏好设置",
     "alwaysForceDelete": "始终强制删除",

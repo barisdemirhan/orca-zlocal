@@ -79,6 +79,7 @@ export function handleTerminalHttpLink(
   const peekSource: AgentHubPeekLinkSource = {
     worktreeId: deps.worktreeId,
     onPairedRuntime: deps.sourceOwner?.kind === 'runtime' || deps.sourceOwner?.kind === 'unknown',
+    sourceOwner: deps.sourceOwner,
     event,
     openInWorkspace: () =>
       openRoutedHttpLink(url, {

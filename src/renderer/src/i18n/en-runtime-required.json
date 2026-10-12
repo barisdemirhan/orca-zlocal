@@ -27,6 +27,9 @@
       "escHint": "terminal",
       "recommended": "Recommended"
     },
+    "requests": {
+      "pairedPeekUnavailable": "Peek cannot open URLs or files from this paired host yet."
+    },
     "row": {
       "sendToHub": "Send to the hub"
     },

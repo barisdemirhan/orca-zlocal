@@ -84,6 +84,24 @@ describe('useSshWorkspaceBrowserRoute under a reconnecting SSH host', () => {
     })
   })
 
+  it('keeps a private surface on its captured SSH host when workspace ownership is unresolved', async () => {
+    mocks.executionHostId = null
+    setHost('connected', 1)
+    mocks.prepare.mockResolvedValue({ partition: READY_PARTITION })
+    const { result } = renderHook(() =>
+      useSshWorkspaceBrowserRoute('wt-1', 'profile', 'ssh:target-a')
+    )
+    await settle()
+    expect(mocks.prepare).toHaveBeenCalledWith(
+      expect.objectContaining({ targetId: 'target-a', browserProfileId: 'profile' })
+    )
+    expect(result.current.state).toMatchObject({
+      kind: 'ready',
+      targetId: 'target-a',
+      partition: READY_PARTITION
+    })
+  })
+
   it('re-derives an ssh-unavailable error without Retry once the host connects', async () => {
     setHost('unavailable')
     mocks.prepare.mockRejectedValueOnce(new Error('browser_local_route_ssh_unavailable'))
