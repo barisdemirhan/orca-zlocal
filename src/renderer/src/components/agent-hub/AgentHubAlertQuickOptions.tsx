@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent } from 'react'
 import { translate } from '@/i18n/i18n'
 import { isEditableTarget } from '@/lib/editable-target'
 import { HubOptionList } from './AgentHubAnswerBody'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubThreadAlert } from './agent-hub-alerts'
 import { quickAnswerTargetOf, useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
 
 const QUICK_OPTION_LIMIT = 4
@@ -11,7 +11,7 @@ const QUICK_OPTION_LIMIT = 4
  * The keys are free for a bubble only while nothing else would take them: the page body, or
  * the bubble itself. A field, a terminal, a focused control or an overlay keeps its own keys.
  */
-function alertKeysAvailable(target: EventTarget | null): boolean {
+export function alertKeysAvailable(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) {
     return true
   }
@@ -35,7 +35,7 @@ export function AgentHubAlertQuickOptions({
   onOpen,
   onAnswered
 }: {
-  alert: AgentHubAlert
+  alert: AgentHubThreadAlert
   answerKeys: boolean
   onOpen: () => void
   onAnswered: () => void

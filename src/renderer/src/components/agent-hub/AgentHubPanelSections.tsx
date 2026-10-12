@@ -7,6 +7,11 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubChip, HubCrumb } from './AgentHubInlineLabels'
 import { HubSection } from './AgentHubSectionHeader'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
+import { AgentHubRequestCard } from './AgentHubRequestCard'
+import { AgentHubAwayAnswers } from './AgentHubAwayAnswers'
+import { agentHubInboxCards, type AgentHubInboxCard } from './agent-hub-inbox-cards'
+import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
 import { agentHubThreadCardKey } from './agent-hub-answered-cards'
@@ -75,7 +80,9 @@ export function AgentHubInboxBody({
   popoutKeys,
   cardControlRef,
   actions,
-  onMarkRead
+  onMarkRead,
+  cards = agentHubInboxCards(lists.needsYou, []),
+  requestPresentationOf
 }: {
   lists: AgentHubLists
   /** Cards closed without an answer; their agents are still waiting. */
@@ -88,19 +95,22 @@ export function AgentHubInboxBody({
   cardControlRef: Ref<AgentHubCardControl>
   actions: AgentHubThreadActions
   onMarkRead: (paneKeys: string[]) => void
+  cards?: readonly AgentHubInboxCard[]
+  requestPresentationOf: (host: string, request: AgentHubRequestBase) => AgentHubRequestPresentation
 }): React.JSX.Element {
-  const { needsYou, finished, working } = lists
-  const cardThread = needsYou[cardIndex] ?? null
+  const { finished, working } = lists
+  const card = cards[cardIndex] ?? null
+  const cardThread = card?.thread ?? null
   return (
     <>
-      {cardThread ? (
+      {card ? (
         <>
           <HubSection
             label={translate('agentHub.inbox.needsYou', 'Needs you')}
-            count={needsYou.length}
+            count={cards.length}
             tone="ask"
             action={
-              needsYou.length > 1 ? (
+              cards.length > 1 ? (
                 <>
                   <PagerButton
                     label={translate('agentHub.inbox.previous', 'Previous')}
@@ -109,9 +119,9 @@ export function AgentHubInboxBody({
                     <ChevronLeft className="size-3.5" />
                   </PagerButton>
                   <span className="flex items-center gap-1 px-0.5">
-                    {needsYou.map((thread, index) => (
+                    {cards.map((card, index) => (
                       <i
-                        key={thread.paneKey}
+                        key={card.key}
                         data-active={index === cardIndex}
                         className="h-1.5 w-1.5 rounded-sm bg-foreground/20 transition-[width,background-color] data-[active=true]:w-4 data-[active=true]:bg-foreground/80"
                       />
@@ -127,19 +137,28 @@ export function AgentHubInboxBody({
               ) : null
             }
           />
-          <AgentHubAttentionCard
-            // Why the state stamp: a new prompt on the same pane must start unanswered.
-            key={agentHubThreadCardKey(cardThread)}
-            thread={cardThread}
-            location={actions.locationOf(cardThread)}
-            now={now}
-            popoutKeys={popoutKeys}
-            controlRef={cardControlRef}
-            onJump={() => actions.onJump(cardThread)}
-            // Why open, not pop out: the card answers one agent, so its mirror takes over and the
-            // hub steps aside; an open mirror comes forward and glows.
-            onPopout={() => actions.onOpen(cardThread)}
-          />
+          {card.item ? (
+            <AgentHubRequestCard
+              key={card.key}
+              item={card.item}
+              presentation={requestPresentationOf(card.item.host, card.item.request)}
+              controlRef={cardControlRef}
+            />
+          ) : cardThread ? (
+            <AgentHubAttentionCard
+              // Why the state stamp: a new prompt on the same pane must start unanswered.
+              key={agentHubThreadCardKey(cardThread)}
+              thread={cardThread}
+              location={actions.locationOf(cardThread)}
+              now={now}
+              popoutKeys={popoutKeys}
+              controlRef={cardControlRef}
+              onJump={() => actions.onJump(cardThread)}
+              // Why open, not pop out: the card answers one agent, so its mirror takes over and the
+              // hub steps aside; an open mirror comes forward and glows.
+              onPopout={() => actions.onOpen(cardThread)}
+            />
+          ) : null}
         </>
       ) : hiddenCards > 0 ? null : (
         <div className="flex flex-col items-center gap-1 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground">
@@ -163,6 +182,7 @@ export function AgentHubInboxBody({
           </span>
         </div>
       )}
+      <AgentHubAwayAnswers presentationOf={requestPresentationOf} />
       {hiddenCards > 0 ? (
         <button
           type="button"

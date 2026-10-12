@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import { agentHubAlertPaneKey, type AgentHubAlert } from './agent-hub-alerts'
+import { answerAgentHubRequest } from './agent-hub-request-answer'
+import type { AgentHubRequestsState } from './agent-hub-requests-store'
 
 // A burst (several agents finishing together) shows the newest few, not a backlog.
 const MAX_QUEUED_ALERTS = 5
@@ -16,22 +18,60 @@ function emit(next: readonly AgentHubAlert[]): void {
 
 /** Newer alerts for the same pane replace older ones; the oldest drop past the cap. */
 export function pushAgentHubAlerts(alerts: readonly AgentHubAlert[]): void {
-  const panes = new Set(alerts.map((alert) => alert.thread.paneKey))
+  const newestByPane = new Map<string, AgentHubAlert>()
+  for (const alert of alerts) {
+    const pane = agentHubAlertPaneKey(alert)
+    newestByPane.delete(pane)
+    newestByPane.set(pane, alert)
+  }
+  const fresh = [...newestByPane.values()]
+  const panes = new Set(fresh.map(agentHubAlertPaneKey))
   emit(
-    [...queue.filter((alert) => !panes.has(alert.thread.paneKey)), ...alerts].slice(
+    [...queue.filter((alert) => !panes.has(agentHubAlertPaneKey(alert))), ...fresh].slice(
       -MAX_QUEUED_ALERTS
     )
   )
 }
 
 export function dismissAgentHubAlert(id: string): void {
+  const alert = queue.find((entry) => entry.id === id)
+  if (alert?.request?.kind === 'notify' && alert.host !== undefined) {
+    void answerAgentHubRequest(alert.host, alert.request.requestId, { kind: 'ack' })
+    return
+  }
   emit(queue.filter((alert) => alert.id !== id))
+}
+
+export function pruneAgentHubRequestAlerts(state: AgentHubRequestsState): void {
+  const next = queue.filter((alert) => {
+    if (!alert.request) {
+      return true
+    }
+    const view = state.get(alert.host)
+    return Boolean(
+      view?.pendingAsks.has(alert.request.requestId) ||
+      view?.pendingConsents.has(alert.request.requestId) ||
+      view?.notifications.has(alert.request.requestId)
+    )
+  })
+  if (next.length !== queue.length) {
+    emit(next)
+  }
 }
 
 export function clearAgentHubAlerts(): void {
   if (queue.length > 0) {
-    emit([])
+    for (const alert of queue) {
+      if (alert.request?.kind === 'notify' && alert.host !== undefined) {
+        void answerAgentHubRequest(alert.host, alert.request.requestId, { kind: 'ack' })
+      }
+    }
+    emit(queue.filter((alert) => alert.request?.kind === 'notify'))
   }
+}
+
+export function readAgentHubAlertQueue(): readonly AgentHubAlert[] {
+  return queue
 }
 
 function subscribe(listener: () => void): () => void {
@@ -40,5 +80,5 @@ function subscribe(listener: () => void): () => void {
 }
 
 export function useAgentHubAlertQueue(): readonly AgentHubAlert[] {
-  return useSyncExternalStore(subscribe, () => queue)
+  return useSyncExternalStore(subscribe, readAgentHubAlertQueue)
 }

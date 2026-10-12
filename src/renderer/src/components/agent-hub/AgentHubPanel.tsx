@@ -1,5 +1,18 @@
 import { registerAgentHubSelectedTarget } from './agent-hub-active-target'
 import { AgentHubShortcutsButton } from './AgentHubShortcutsDialog'
+import {
+  agentHubInboxRequests,
+  agentHubAwayAnswerCount,
+  useAgentHubRequests
+} from './agent-hub-requests-store'
+import { agentHubTabLabel } from './agent-hub-copy'
+import { agentHubInboxCards } from './agent-hub-inbox-cards'
+import {
+  agentHubRequestPresentation,
+  type AgentHubRequestPresentation
+} from './agent-hub-request-presentation'
+import { useAppStore } from '@/store'
+import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'
 import { useNow } from '@/hooks/use-now'
@@ -77,19 +90,6 @@ function rowItem(row: AgentHubTerminalRow): HubItem {
   return { key: row.key, thread: row.thread, target: paneTargetFromTerminalRow(row) }
 }
 
-function tabLabel(tab: AgentHubTab): string {
-  switch (tab) {
-    case 'inbox':
-      return translate('agentHub.tab.inbox', 'Inbox')
-    case 'running':
-      return translate('agentHub.tab.running', 'Running')
-    case 'agents':
-      return translate('agentHub.tab.agents', 'Agents')
-    case 'all':
-      return translate('agentHub.tab.all', 'All terminals')
-  }
-}
-
 export function AgentHubPanel({
   lists,
   lineage,
@@ -107,7 +107,8 @@ export function AgentHubPanel({
   onClose,
   initialTab = 'inbox',
   onTabChange,
-  initialPaneKey = null
+  initialPaneKey = null,
+  requestPresentationOf
 }: {
   lists: AgentHubLists
   lineage: AgentHubLineage
@@ -132,8 +133,16 @@ export function AgentHubPanel({
   onTabChange?: (tab: AgentHubTab) => void
   /** Opens the Inbox on this waiting agent's card (an alert was clicked). */
   initialPaneKey?: string | null
+  requestPresentationOf?: (
+    host: string,
+    request: AgentHubRequestBase
+  ) => AgentHubRequestPresentation
 }): React.JSX.Element {
   const [tab, setTab] = useState<AgentHubTab>(initialTab)
+  const presentationOf =
+    requestPresentationOf ??
+    ((host: string, request: AgentHubRequestBase) =>
+      agentHubRequestPresentation(useAppStore.getState(), [], host, request, locationOf))
   // Why a pane key: a card can sort in ahead of the one being read (an approval's grace ending),
   // and a number key must still answer the card on screen. The index only places a replacement.
   const [cardFocus, setCardFocus] = useState(() => ({
@@ -159,18 +168,21 @@ export function AgentHubPanel({
   // Why: a card closed without an answer leaves the Inbox; its agent keeps waiting and counting.
   useAgentHubCardRecordVersion()
   const needsYou = withoutDismissedAgentHubCards(lists.needsYou, 'inbox')
+  const requests = useAgentHubRequests()
+  const requestCards = agentHubInboxRequests(requests)
+  const cards = agentHubInboxCards(needsYou, requestCards)
+  const awayCount = agentHubAwayAnswerCount(requests)
   const hiddenCards = lists.needsYou.length - needsYou.length
   const focusedCardIndex =
-    cardFocus.paneKey === null
-      ? -1
-      : needsYou.findIndex((thread) => thread.paneKey === cardFocus.paneKey)
+    cardFocus.paneKey === null ? -1 : cards.findIndex((card) => card.key === cardFocus.paneKey)
   const activeCardIndex =
     focusedCardIndex >= 0
       ? focusedCardIndex
-      : Math.min(cardFocus.index, Math.max(0, needsYou.length - 1))
-  const cardThread = needsYou[activeCardIndex] ?? null
-  if (cardThread && cardThread.paneKey !== cardFocus.paneKey) {
-    setCardFocus({ paneKey: cardThread.paneKey, index: activeCardIndex })
+      : Math.min(cardFocus.index, Math.max(0, cards.length - 1))
+  const card = cards[activeCardIndex] ?? null
+  const cardThread = card?.thread ?? null
+  if (card && card.key !== cardFocus.paneKey) {
+    setCardFocus({ paneKey: card.key, index: activeCardIndex })
   }
   const agentTree = useMemo(() => agentOnlyAgentHubTree(tree), [tree])
   const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
@@ -226,9 +238,9 @@ export function AgentHubPanel({
   }
 
   const pageCard = (delta: 1 | -1): void => {
-    if (needsYou.length > 0) {
-      const index = (activeCardIndex + delta + needsYou.length) % needsYou.length
-      setCardFocus({ paneKey: needsYou[index]?.paneKey ?? null, index })
+    if (cards.length > 0) {
+      const index = (activeCardIndex + delta + cards.length) % cards.length
+      setCardFocus({ paneKey: cards[index]?.key ?? null, index })
     }
   }
 
@@ -253,7 +265,7 @@ export function AgentHubPanel({
       inSearch: target !== null && target === searchRef.current,
       onButton:
         target !== null && target !== event.currentTarget && target.closest('button') !== null,
-      hasCard: cardThread !== null
+      hasCard: card !== null
     })
     if (!action) {
       return
@@ -288,7 +300,7 @@ export function AgentHubPanel({
   }
 
   const counts: Record<AgentHubTab, number> = {
-    inbox: lists.needsYou.length + lists.finished.length,
+    inbox: lists.needsYou.length + requestCards.length + lists.finished.length + awayCount,
     running: lists.working.length,
     agents: agentCount,
     all: terminalCount
@@ -304,10 +316,10 @@ export function AgentHubPanel({
       <div className="flex shrink-0 items-center gap-3 pt-3.5 pr-3.5 pb-2.5 pl-4.5">
         <h2 className="shrink-0 text-sm font-semibold">{translate('agentHub.title', 'Agents')}</h2>
         <AgentHubTabSwitcher
-          tabs={AGENT_HUB_TABS.map((value) => ({ value, label: tabLabel(value) }))}
+          tabs={AGENT_HUB_TABS.map((value) => ({ value, label: agentHubTabLabel(value) }))}
           value={tab}
           onChange={switchTab}
-          askValue={lists.needsYou.length > 0 ? 'inbox' : undefined}
+          askValue={lists.needsYou.length + requestCards.length > 0 ? 'inbox' : undefined}
           counts={{
             inbox: counts.inbox,
             running: (
@@ -345,6 +357,8 @@ export function AgentHubPanel({
               showAgentHubCardsAgain(lists.needsYou.map(agentHubThreadCardKey), 'inbox')
             }
             cardIndex={activeCardIndex}
+            cards={cards}
+            requestPresentationOf={presentationOf}
             onPage={pageCard}
             now={now}
             popoutKeys={popoutKeys}

@@ -1,4 +1,5 @@
 import { translate } from '@/i18n/i18n'
+import type { AgentHubTab } from './agent-hub-keys'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import {
   activityThreadStatusId,
@@ -34,5 +35,18 @@ export function agentHubStateWord(thread: AgentPaneThread | null): string {
       return translate('agentHub.state.done', 'done')
     case 'idle':
       return translate('agentHub.state.idle', 'idle')
+  }
+}
+
+export function agentHubTabLabel(tab: AgentHubTab): string {
+  switch (tab) {
+    case 'inbox':
+      return translate('agentHub.tab.inbox', 'Inbox')
+    case 'running':
+      return translate('agentHub.tab.running', 'Running')
+    case 'agents':
+      return translate('agentHub.tab.agents', 'Agents')
+    case 'all':
+      return translate('agentHub.tab.all', 'All terminals')
   }
 }

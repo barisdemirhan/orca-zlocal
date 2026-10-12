@@ -6,9 +6,10 @@ import {
 } from '@/attention/agent-attention-notification-delivery'
 import { isOrcaWindowForegroundFocused } from '../terminal-pane/terminal-notification-pane-visibility'
 import { createTerminalAttentionSurface } from '../terminal-pane/terminal-attention-surface'
-import { pushAgentHubAlerts } from './agent-hub-alert-queue'
+import { pushAgentHubAlerts, pruneAgentHubRequestAlerts } from './agent-hub-alert-queue'
 import {
   agentHubAlertBaseline,
+  agentHubRequestAlerts,
   diffAgentHubAlerts,
   orcaNotificationWillSound,
   rememberRaisedAlertIds,
@@ -20,6 +21,7 @@ import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubTargetShowsThread } from './agent-hub-pane-target'
 import type { AgentHubLists } from './agent-hub-lists'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
+import { useAgentHubRequests } from './agent-hub-requests-store'
 
 /** Module-level so a remount of the hub does not forget what was already announced. */
 const raisedAlertIds = new Set<string>()
@@ -30,6 +32,7 @@ const raisedAlertIds = new Set<string>()
  */
 export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPreferences): void {
   const baselineRef = useRef<Set<string> | null>(null)
+  const requests = useAgentHubRequests()
   const { alertOnNeedsInput, alertOnFinished, alertSound, alertsMutedUntil } = preferences
 
   useEffect(() => {
@@ -85,4 +88,24 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
       playAgentHubAlertSound(readAgentAttentionNotificationSound(state.settings ?? {}))
     }
   }, [lists, alertOnNeedsInput, alertOnFinished, alertSound, alertsMutedUntil])
+
+  useEffect(() => {
+    pruneAgentHubRequestAlerts(requests)
+    const fresh = takeUnraisedAlerts(raisedAlertIds, agentHubRequestAlerts(requests)).filter(
+      (alert) =>
+        alert.kind === 'done' ? alertOnFinished : alert.kind === 'info' || alertOnNeedsInput
+    )
+    if (fresh.length === 0 || (alertsMutedUntil ?? 0) > Date.now()) {
+      return
+    }
+    pushAgentHubAlerts(fresh)
+    if (
+      alertSound &&
+      fresh.some((alert) => alert.request.kind !== 'notify' || alert.request.sound)
+    ) {
+      playAgentHubAlertSound(
+        readAgentAttentionNotificationSound(useAppStore.getState().settings ?? {})
+      )
+    }
+  }, [requests, alertOnNeedsInput, alertOnFinished, alertSound, alertsMutedUntil])
 }

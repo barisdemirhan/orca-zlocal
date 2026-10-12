@@ -1,7 +1,4 @@
-import {
-  agentHubMirrorTabContainsThread,
-  agentHubMirrorWindowShowsThread
-} from './agent-hub-mirror-membership'
+import { agentHubMirrorWindowShowsThread } from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
@@ -14,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/activity-thread-actions'
-import { AgentHubAlertStack } from './AgentHubAlertStack'
+import { AgentHubRootAlerts } from './AgentHubRootAlerts'
 import { AgentHubCanvas } from './AgentHubCanvas'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubDimBackdrop } from './AgentHubDimToggle'
@@ -26,12 +23,17 @@ import { AgentHubMirrors } from './AgentHubMirrors'
 import type { AgentHubOpenRequest } from './AgentHubPanel'
 import { AgentHubPopoverContent, type AgentHubPopoverRequest } from './AgentHubPopover'
 import { AgentHubStatusTrigger } from './AgentHubStatusTrigger'
+import { clearAgentHubAlerts, useAgentHubAlertQueue } from './agent-hub-alert-queue'
+import { agentHubAlertMatchesMirrorTab } from './agent-hub-alert-target'
 import {
-  clearAgentHubAlerts,
-  dismissAgentHubAlert,
-  useAgentHubAlertQueue
-} from './agent-hub-alert-queue'
-import type { AgentHubAlert } from './agent-hub-alerts'
+  agentHubInboxRequests,
+  agentHubAwayAnswerCount,
+  agentHubRequestKey,
+  readAgentHubRequests,
+  useAgentHubRequests
+} from './agent-hub-requests-store'
+import { agentHubRequestPresentation } from './agent-hub-request-presentation'
+import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import { closeAgentHubCanvas, toggleAgentHubCanvas } from './agent-hub-canvas-store'
 import { useAgentHubMirrorCommands } from './use-agent-hub-mirror-commands'
 import { agentHubDockPopoverSide, agentHubTrayAlertSide } from './agent-hub-dock-geometry'
@@ -83,7 +85,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const lineage = useMemo(() => buildAgentHubLineage(threads, now), [threads, now])
   const finishedMaxAgeMs = preferences.finishedClearMinutes * 60_000
   const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
-  const counts = agentHubCounts(lists)
+  const requests = useAgentHubRequests()
+  const requestCards = agentHubInboxRequests(requests)
+  const counts = agentHubCounts(lists, requestCards.length, agentHubAwayAnswerCount(requests))
   useAgentHubAlerts(lists, preferences)
   useAgentHubSessionRestore(preferences.restoreOnLaunch, preferences.canvas)
   const alerts = useAgentHubAlertQueue()
@@ -95,6 +99,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const hostLabels = useAgentHubHostLabels()
   const locationOf = (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>): AgentHubLocation =>
     agentHubLocation(target, groupNameById, hostLabels)
+  const requestPresentationOf = (host: string, request: AgentHubRequestBase) =>
+    agentHubRequestPresentation(useAppStore.getState(), threads, host, request, locationOf)
   const [open, setOpen] = useState(false)
   const [request, setRequest] = useState<AgentHubPopoverRequest>({
     tab: 'inbox',
@@ -124,14 +130,14 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   }, [open])
 
   const defaultTabRef = useRef<AgentHubTab>(
-    agentHubInitialTab(preferences.defaultTab, lists.needsYou.length)
+    agentHubInitialTab(preferences.defaultTab, counts.needsYou)
   )
   const shownTabRef = useRef<AgentHubTab>('inbox')
   const needsYouRef = useRef(lists.needsYou)
   useEffect(() => {
     needsYouRef.current = lists.needsYou
-    defaultTabRef.current = agentHubInitialTab(preferences.defaultTab, lists.needsYou.length)
-  }, [lists.needsYou, preferences.defaultTab])
+    defaultTabRef.current = agentHubInitialTab(preferences.defaultTab, counts.needsYou)
+  }, [lists.needsYou, counts.needsYou, preferences.defaultTab])
 
   const openHub = useCallback((tab?: AgentHubTab, paneKey: string | null = null) => {
     if (!openRef.current) {
@@ -216,18 +222,19 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     },
     [closeForNavigation]
   )
-  const leaveAlertFor = (shown: AgentHubAlert, open: typeof jump): void => {
-    dismissAgentHubAlert(shown.id)
-    open(threadOpenRequest(shown.thread))
-  }
   const jumpToNextWaiting = useCallback(() => {
     const next = needsYouRef.current[0]
     if (!next) {
+      const request = agentHubInboxRequests(readAgentHubRequests())[0]
+      if (request) {
+        openHub('inbox', agentHubRequestKey(request.host, request.request.requestId))
+        return
+      }
       toast(translate('agentHub.toast.nobodyWaiting', 'Nobody is waiting on you'))
       return
     }
     jump(threadOpenRequest(next))
-  }, [jump])
+  }, [jump, openHub])
 
   // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
   const { windows, chips } = useAgentHubMirrors()
@@ -267,8 +274,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const hubAlerts = alerts.filter(
     (candidate) =>
       !chips.some((chip) =>
-        chip.window.tabs.some((tab) => agentHubMirrorTabContainsThread(tab, candidate.thread))
-      ) && !windows.some((window) => agentHubMirrorWindowShowsThread(window, candidate.thread))
+        chip.window.tabs.some((tab) => agentHubAlertMatchesMirrorTab(candidate, tab))
+      ) &&
+      (candidate.request ||
+        !windows.some((window) => agentHubMirrorWindowShowsThread(window, candidate.thread)))
   )
   // Settings is its own page; the hub and its floating windows stay out of it.
   const dockHidden =
@@ -294,6 +303,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       request={request}
       rootRef={panelRootRef}
       locationOf={locationOf}
+      requestPresentationOf={requestPresentationOf}
       onTabChange={(tab) => {
         shownTabRef.current = tab
       }}
@@ -367,24 +377,15 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         {content}
       </Popover>
       {hubAlerts.length > 0 && !open && !inSettings ? (
-        <AgentHubAlertStack
+        <AgentHubRootAlerts
           alerts={hubAlerts}
-          // With mirrors parked beside the hub, its alerts stack beyond them.
           anchorRef={chips.length > 0 ? trayRef : anchorRef}
           side={side}
-          locationOf={(shown) => locationOf(shown.thread)}
-          // A result is read in its terminal, so it opens the mirror; a question opens its card.
-          onOpen={(opened) => {
-            if (opened.kind !== 'done') {
-              openHub('inbox', opened.thread.paneKey)
-              return
-            }
-            leaveAlertFor(opened, openMirror)
-          }}
-          onPopout={(shown) => leaveAlertFor(shown, openMirror)}
-          onJump={(shown) => leaveAlertFor(shown, jump)}
-          onDismiss={dismissAgentHubAlert}
-          answerKeys
+          locationOf={locationOf}
+          requestPresentationOf={requestPresentationOf}
+          onOpenCard={(key) => openHub('inbox', key)}
+          onOpenMirror={openMirror}
+          onJump={jump}
         />
       ) : null}
       {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}
@@ -408,6 +409,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         lineage={lineage}
         alerts={alerts}
         locationOf={locationOf}
+        requestPresentationOf={requestPresentationOf}
         onReveal={(target, thread) => jump({ target, thread })}
         onOpenCard={(paneKey) => openHub('inbox', paneKey)}
       />

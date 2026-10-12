@@ -5,7 +5,8 @@ import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubAlertSide } from './AgentHubAlertStack'
 import { AgentHubMirrorChip } from './AgentHubMirrorChip'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubAlert, AgentHubRequestAlert } from './agent-hub-alerts'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
 import { AGENT_HUB_TRAY_VISIBLE, foldAgentHubTray } from './agent-hub-mirror-tray'
@@ -128,7 +129,8 @@ export function AgentHubMirrorTray({
   onClose,
   onOpenAlert,
   locationOfAlert,
-  onDismissAlert
+  onDismissAlert,
+  requestPresentationOf
 }: {
   /** Already ordered, most urgent first. */
   items: readonly AgentHubTrayItem[]
@@ -149,6 +151,7 @@ export function AgentHubMirrorTray({
   onClose: (key: string) => void
   onOpenAlert: (key: string, alert: AgentHubAlert) => void
   onDismissAlert: (id: string) => void
+  requestPresentationOf?: (alert: AgentHubRequestAlert) => AgentHubRequestPresentation
 }): React.JSX.Element | null {
   const [expanded, setExpanded] = useState(false)
   const [pointed, setPointed] = useState(false)
@@ -256,6 +259,7 @@ export function AgentHubMirrorTray({
             alert={item.alert}
             alertSide={alertSide}
             locationOfAlert={locationOfAlert}
+            requestPresentationOf={requestPresentationOf}
             onRestore={() => onRestore(item.key)}
             onReveal={(alert) => onReveal(item, alert)}
             onClose={() => onClose(item.key)}

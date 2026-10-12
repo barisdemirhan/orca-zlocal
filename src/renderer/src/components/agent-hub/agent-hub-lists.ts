@@ -136,11 +136,15 @@ export function buildAgentHubLists(
   return lists
 }
 
-export function agentHubCounts(lists: AgentHubLists): AgentHubCounts {
+export function agentHubCounts(
+  lists: AgentHubLists,
+  requestNeedsYou = 0,
+  requestFinished = 0
+): AgentHubCounts {
   return {
-    needsYou: lists.needsYou.length,
+    needsYou: lists.needsYou.length + requestNeedsYou,
     working: lists.working.length,
-    finished: lists.finished.length,
+    finished: lists.finished.length + requestFinished,
     nestedWorking: lists.nestedWorking
   }
 }

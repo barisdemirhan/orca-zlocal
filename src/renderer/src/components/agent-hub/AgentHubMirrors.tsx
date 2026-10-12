@@ -6,11 +6,7 @@ import {
   requestAgentHubMirrorSelection,
   useAgentHubMirrorSelection
 } from './agent-hub-mirror-selection'
-import {
-  agentHubMirrorTabContainsThread,
-  activeAgentHubMirrorTab,
-  shownAgentHubMirrorTarget
-} from './agent-hub-mirror-membership'
+import { activeAgentHubMirrorTab, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
 import { agentHubMirrorPointerSelection } from './agent-hub-mirror-pointer-selection'
 import { agentHubMirrorShellLeafId } from './agent-hub-mirror-source'
@@ -40,14 +36,15 @@ import { AgentHubMirrorTray, type AgentHubTrayItem } from './AgentHubMirrorTray'
 import { AgentHubMirrorWindow } from './AgentHubMirrorWindow'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
 import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubAlert, AgentHubThreadAlert } from './agent-hub-alerts'
+import { agentHubAlertMatchesMirrorTab } from './agent-hub-alert-target'
+import { agentHubMirrorAlertTrayActions } from './agent-hub-mirror-alert-actions'
+import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { orderAgentHubTray } from './agent-hub-mirror-tray'
-import {
-  openAgentHubMirrorInLayout,
-  rearrangeAgentHubMirrorsByDefault
-} from './agent-hub-floating-arrangement'
+import { rearrangeAgentHubMirrorsByDefault } from './agent-hub-floating-arrangement'
 import { useFloatingPanelInFront } from './use-floating-panel-in-front'
 import { usePruneClosedAgentHubMirrorSources } from './use-prune-closed-agent-hub-mirror-sources'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
@@ -89,6 +86,7 @@ export function AgentHubMirrors({
   lineage,
   alerts,
   locationOf,
+  requestPresentationOf,
   onReveal,
   onOpenCard
 }: {
@@ -110,6 +108,7 @@ export function AgentHubMirrors({
   lineage: AgentHubLineage
   alerts: readonly AgentHubAlert[]
   locationOf: (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>) => AgentHubLocation
+  requestPresentationOf: (host: string, request: AgentHubRequestBase) => AgentHubRequestPresentation
   onReveal: (target: AgentHubPaneTarget, thread: AgentPaneThread | null) => void
   /** Opens the hub on this waiting agent's card. */
   onOpenCard: (paneKey: string) => void
@@ -261,7 +260,7 @@ export function AgentHubMirrors({
         alert: hidden
           ? null
           : (alerts.findLast((candidate) =>
-              chip.window.tabs.some((tab) => agentHubMirrorTabContainsThread(tab, candidate.thread))
+              chip.window.tabs.some((tab) => agentHubAlertMatchesMirrorTab(candidate, tab))
             ) ?? null)
       }
     })
@@ -318,8 +317,10 @@ export function AgentHubMirrors({
               nudge={
                 hidden
                   ? null
-                  : (alerts.findLast((candidate) =>
-                      agentHubTargetShowsThread(shownTarget, candidate.thread)
+                  : (alerts.findLast(
+                      (candidate): candidate is AgentHubThreadAlert =>
+                        !candidate.request &&
+                        agentHubTargetShowsThread(shownTarget, candidate.thread)
                     ) ?? null)
               }
               onNudged={dismissAgentHubAlert}
@@ -390,36 +391,13 @@ export function AgentHubMirrors({
             restoreAgentHubMirror(id)
             rearrangeAgentHubMirrorsByDefault()
           }}
-          locationOfAlert={(alert) => locationOf(alert.thread)}
-          onReveal={(item, alert) => {
-            const tab = alert
-              ? item.chip.window.tabs.find((tab) =>
-                  agentHubMirrorTabContainsThread(tab, alert.thread)
-                )
-              : activeAgentHubMirrorTab(item.chip.window)
-            if (!tab) {
-              return
-            }
-            releaseAgentHubMirrorShownTarget(item.key, tab.id)
-            onReveal(
-              alert
-                ? paneTargetFromThread(alert.thread, activityThreadRowCopy(alert.thread).taskTitle)
-                : shownAgentHubMirrorTarget(tab),
-              alert?.thread ?? item.thread
-            )
-          }}
+          {...agentHubMirrorAlertTrayActions({
+            locationOf,
+            requestPresentationOf,
+            onReveal,
+            onOpenCard
+          })}
           onClose={closeAgentHubMirrorChip}
-          onOpenAlert={(_key, opened) => {
-            dismissAgentHubAlert(opened.id)
-            // A question is answered on its card; a result is read in the terminal.
-            if (opened.kind === 'done') {
-              openAgentHubMirrorInLayout(
-                paneTargetFromThread(opened.thread, activityThreadRowCopy(opened.thread).taskTitle)
-              )
-            } else {
-              onOpenCard(opened.thread.paneKey)
-            }
-          }}
           onDismissAlert={dismissAgentHubAlert}
         />
       </div>

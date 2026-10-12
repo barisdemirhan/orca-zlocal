@@ -9,7 +9,8 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubAlertStack, type AgentHubAlertSide } from './AgentHubAlertStack'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubAlert, AgentHubRequestAlert } from './agent-hub-alerts'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import {
   isAgentHubMirrorStageQuiet,
@@ -32,7 +33,8 @@ export function AgentHubMirrorChip({
   onReveal,
   onClose,
   onOpenAlert,
-  onDismissAlert
+  onDismissAlert,
+  requestPresentationOf
 }: {
   chip: ChipState
   thread: AgentPaneThread | null
@@ -48,6 +50,7 @@ export function AgentHubMirrorChip({
   onClose: () => void
   onOpenAlert: (alert: AgentHubAlert) => void
   onDismissAlert: (id: string) => void
+  requestPresentationOf?: (alert: AgentHubRequestAlert) => AgentHubRequestPresentation
 }): React.JSX.Element {
   const chipRef = useRef<HTMLDivElement>(null)
   // Put back at launch: it is simply there, without the arriving animation.
@@ -144,8 +147,13 @@ export function AgentHubMirrorChip({
           anchorRef={chipRef}
           side={alertSide}
           locationOf={locationOfAlert ?? (() => location)}
+          requestPresentationOf={requestPresentationOf}
           onOpen={onOpenAlert}
           onPopout={(shown) => {
+            if (!shown.thread) {
+              onOpenAlert(shown)
+              return
+            }
             onDismissAlert(shown.id)
             openAgentHubMirrorInLayout(
               paneTargetFromThread(shown.thread, activityThreadRowCopy(shown.thread).taskTitle)

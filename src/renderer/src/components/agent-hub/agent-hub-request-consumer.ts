@@ -11,7 +11,13 @@ export type AgentHubConsumerHost = {
   /** A changed pairing, socket generation or contact epoch fences callbacks from the previous subscription. */
   revision: string
 }
-type Subscription = { revision: string; stop: () => void; active: boolean; handled: Set<string> }
+type Subscription = {
+  revision: string
+  client: AgentHubRendererApi
+  stop: () => void
+  active: boolean
+  handled: Set<string>
+}
 type ConsumerDependencies = {
   client: (host: string) => AgentHubRendererApi
   apply: (host: string, delivery: AgentHubDelivery) => void
@@ -41,6 +47,7 @@ export class AgentHubRequestConsumer {
       const client = this.dependencies.client(host)
       const subscription: Subscription = {
         revision,
+        client,
         stop: () => {},
         active: true,
         handled: new Set()
@@ -94,5 +101,24 @@ export class AgentHubRequestConsumer {
 
   dispose(): void {
     this.update(false, [])
+  }
+
+  async respond(host: string, requestId: string, result: AgentHubResponse): Promise<void> {
+    const subscription = this.subscriptions.get(host)
+    if (!subscription?.active) {
+      throw Object.assign(new Error('Agent Hub host disconnected'), { code: 'connection_lost' })
+    }
+    const ensureCurrent = (): void => {
+      if (!subscription.active || this.subscriptions.get(host) !== subscription) {
+        throw Object.assign(new Error('Agent Hub host changed'), { code: 'connection_lost' })
+      }
+    }
+    try {
+      await subscription.client.respond(requestId, result)
+    } catch (error) {
+      ensureCurrent()
+      throw error
+    }
+    ensureCurrent()
   }
 }

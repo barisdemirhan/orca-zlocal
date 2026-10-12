@@ -5,6 +5,7 @@ import { translate } from '@/i18n/i18n'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { agentHubPeekItemsInMessage } from './agent-hub-peek-message-links'
 import { openAgentHubPeek, type AgentHubPeekItem } from './agent-hub-peek-store'
+const NO_LINKS: readonly string[] = []
 
 function PeekIcon({ item }: { item: AgentHubPeekItem }): React.JSX.Element {
   switch (item.content.kind) {
@@ -22,13 +23,25 @@ function PeekIcon({ item }: { item: AgentHubPeekItem }): React.JSX.Element {
 /** The pages and files an agent's message points to, each a click away from a Peek. */
 export function AgentHubPeekChips({
   text,
-  worktree
+  worktree,
+  links = NO_LINKS
 }: {
   text: string
-  worktree: Worktree
+  worktree?: Worktree | null
+  links?: readonly string[]
 }): React.JSX.Element | null {
-  const items = useMemo(() => agentHubPeekItemsInMessage(text, worktree), [text, worktree])
-  if (items.length === 0) {
+  const items = useMemo(() => {
+    if (!worktree) {
+      return []
+    }
+    const linked = links.flatMap((link) => agentHubPeekItemsInMessage(link, worktree))
+    const found = [...linked, ...agentHubPeekItemsInMessage(text, worktree)]
+    return [...new Map(found.map((item) => [item.location, item])).values()]
+  }, [text, links, worktree])
+  const unavailable = [...new Set(links)].filter(
+    (link) => !worktree || agentHubPeekItemsInMessage(link, worktree).length === 0
+  )
+  if (items.length === 0 && unavailable.length === 0) {
     return null
   }
   return (
@@ -50,6 +63,27 @@ export function AgentHubPeekChips({
         >
           <PeekIcon item={item} />
           <span className="max-w-48 truncate">{item.title}</span>
+        </Button>
+      ))}
+      {unavailable.map((link) => (
+        <Button
+          key={link}
+          type="button"
+          variant="outline"
+          size="xs"
+          disabled
+          title={translate(
+            'agentHub.requests.peekUnsupported',
+            'This URL or file cannot be opened in Peek on its host.'
+          )}
+          aria-label={translate('agentHub.peek.chipLabel', 'Peek at {{value0}}', { value0: link })}
+        >
+          {/^https?:\/\//i.test(link) ? (
+            <Globe aria-hidden className="size-3.5" />
+          ) : (
+            <FileText aria-hidden className="size-3.5" />
+          )}
+          <span className="max-w-48 truncate">{link}</span>
         </Button>
       ))}
     </div>

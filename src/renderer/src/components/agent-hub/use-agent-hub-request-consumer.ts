@@ -14,6 +14,7 @@ import type { AgentHubLists } from './agent-hub-lists'
 import { AgentHubRequestConsumer, type AgentHubConsumerHost } from './agent-hub-request-consumer'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
 import { executeAgentHubRequest } from './agent-hub-request-executor'
+import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
 
 export function agentHubConsumerHosts(state: AppState): AgentHubConsumerHost[] {
   const hosts: AgentHubConsumerHost[] = [{ host: 'local', revision: 'local' }]
@@ -59,6 +60,9 @@ export function useAgentHubRequestConsumer(
       execute: (host, request) => executeAgentHubRequest(host, request, context.current),
       onError
     })
+    const unregisterResponder = registerAgentHubRequestResponder((host, requestId, result) =>
+      consumer.respond(host, requestId, result)
+    )
     const update = (state: AppState): void => {
       const enabled =
         state.settings?.experimentalAgentHub === true &&
@@ -77,6 +81,7 @@ export function useAgentHubRequestConsumer(
     })
     return () => {
       unsubscribe()
+      unregisterResponder()
       consumer.dispose()
     }
   }, [])

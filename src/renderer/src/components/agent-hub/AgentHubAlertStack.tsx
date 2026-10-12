@@ -10,7 +10,13 @@ import { HubAvatar } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubAlertQuickOptions } from './AgentHubAlertQuickOptions'
 import { AGENT_HUB_ANSWERED_VISIBLE_MS } from './use-agent-hub-quick-answer'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import type {
+  AgentHubAlert,
+  AgentHubThreadAlert,
+  AgentHubRequestAlert as RequestAlert
+} from './agent-hub-alerts'
+import { AgentHubRequestAlert } from './AgentHubRequestAlert'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAnchorBinding } from './use-anchor-binding'
@@ -22,7 +28,7 @@ const GAP = 10
 
 export type AgentHubAlertSide = 'top' | 'bottom' | 'left' | 'right'
 
-function alertHeadline(alert: AgentHubAlert): string {
+function alertHeadline(alert: AgentHubThreadAlert): string {
   switch (alert.kind) {
     case 'ask':
       return translate('agentHub.alert.asking', 'is asking')
@@ -33,7 +39,7 @@ function alertHeadline(alert: AgentHubAlert): string {
   }
 }
 
-function alertText(alert: AgentHubAlert): string {
+function alertText(alert: AgentHubThreadAlert): string {
   const entry = alert.thread.currentAgentEntry ?? alert.thread.paneEntry
   if (alert.kind !== 'done') {
     const card = parseInteractivePrompt(entry?.interactivePrompt, entry?.toolName)
@@ -91,7 +97,7 @@ function AlertCard({
   onDismiss,
   answerKeys
 }: {
-  alert: AgentHubAlert
+  alert: AgentHubThreadAlert
   location: AgentHubLocation
   onOpen: (alert: AgentHubAlert) => void
   onJump: (alert: AgentHubAlert) => void
@@ -240,7 +246,8 @@ export function AgentHubAlertStack({
   onJump,
   onPopout,
   onDismiss,
-  answerKeys = false
+  answerKeys = false,
+  requestPresentationOf
 }: {
   alerts: readonly AgentHubAlert[]
   anchorRef: React.RefObject<HTMLElement | null>
@@ -254,10 +261,12 @@ export function AgentHubAlertStack({
   /** The terminal in a floating mirror, whatever a click on the alert opens. */
   onPopout: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
+  requestPresentationOf?: (alert: RequestAlert) => AgentHubRequestPresentation
 }): React.JSX.Element {
   const stackRef = useRef<HTMLDivElement>(null)
   // Why newest: a key answers the question that just arrived, the one the eye is on.
-  const front = alerts.findLast((alert) => alert.kind !== 'done') ?? null
+  const front =
+    alerts.findLast((alert) => alert.kind === 'ask' || alert.kind === 'approval') ?? null
   useLayoutEffect(() => {
     if (stackRef.current && anchorRef.current) {
       placeBesideAnchor(stackRef.current, anchorRef.current, side)
@@ -284,18 +293,36 @@ export function AgentHubAlertStack({
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       className="fixed z-[48] flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto p-0.5 scrollbar-sleek"
     >
-      {ordered.map((alert) => (
-        <AlertCard
-          key={alert.id}
-          alert={alert}
-          location={locationOf(alert)}
-          onOpen={onOpen}
-          onJump={onJump}
-          onPopout={onPopout}
-          onDismiss={onDismiss}
-          answerKeys={answerKeys && alert.id === front?.id}
-        />
-      ))}
+      {ordered.map((alert) =>
+        alert.request ? (
+          <AgentHubRequestAlert
+            key={alert.id}
+            alert={alert}
+            presentation={
+              requestPresentationOf?.(alert) ?? {
+                title: alert.request.caller.title ?? alert.request.caller.terminalHandle,
+                targetTitle: alert.request.target.terminalHandle,
+                target: null,
+                location: locationOf(alert)
+              }
+            }
+            onOpen={() => onOpen(alert)}
+            onDismiss={onDismiss}
+            answerKeys={answerKeys && alert.id === front?.id}
+          />
+        ) : (
+          <AlertCard
+            key={alert.id}
+            alert={alert}
+            location={locationOf(alert)}
+            onOpen={onOpen}
+            onJump={onJump}
+            onPopout={onPopout}
+            onDismiss={onDismiss}
+            answerKeys={answerKeys && alert.id === front?.id}
+          />
+        )
+      )}
     </div>,
     document.body
   )

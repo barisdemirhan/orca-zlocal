@@ -22065,7 +22065,26 @@
       "mirrorUnavailable": "This terminal has no mirror.",
       "invalidLayout": "Choose the grid, columns or rows layout.",
       "canvasDisabled": "Enable the Agent Hub canvas in Settings to open it.",
-      "presenceUnavailable": "Desktop presence is unavailable."
+      "presenceUnavailable": "Desktop presence is unavailable.",
+      "disconnected": "This host is disconnected.",
+      "unavailable": "This request is no longer available.",
+      "sendFailed": "Could not send your answer. Try again.",
+      "sending": "Sending…",
+      "answeredElsewhere": "Answered elsewhere",
+      "asks": "@{{agent}} asks",
+      "wantsTo": "@{{agent}} wants to {{action}}",
+      "allowOnce": "Allow once",
+      "allowSession": "Allow for this session",
+      "deny": "Deny",
+      "awayAnswer": "@{{agent}} chose {{answer}} while you were away",
+      "openMirror": "open the mirror of {{title}}",
+      "minimizeMirror": "minimize the mirror of {{title}}",
+      "restoreMirror": "restore the mirror of {{title}}",
+      "closeMirror": "close the mirror of {{title}}",
+      "peekLink": "peek at {{link}}",
+      "arrangeMirrors": "arrange mirrors",
+      "openCanvas": "open the canvas",
+      "closeCanvas": "close the canvas"
     }
   },
   "workspace": {

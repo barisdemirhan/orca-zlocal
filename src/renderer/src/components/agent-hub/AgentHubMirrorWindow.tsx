@@ -23,7 +23,7 @@ import {
 import { useMirrorWindowDeparture } from './use-mirror-window-departure'
 import { nudgeMirrorWindow, pulseMirrorWindow } from './mirror-window-nudge'
 import { useMirrorWindowGeometry } from './use-mirror-window-geometry'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubThreadAlert } from './agent-hub-alerts'
 import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
 import { useAgentHubFamilyBarShown } from './agent-hub-family-bar'
 import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
@@ -85,7 +85,7 @@ export function AgentHubMirrorWindow({
    */
   surface: 'portal' | 'in-workspace' | 'preview'
   /** An alert for this pane, shown by the window itself rather than by the hub. */
-  nudge: AgentHubAlert | null
+  nudge: AgentHubThreadAlert | null
   onNudged: (id: string) => void
   /** Where this pane sits among dispatchers and workers; null outside orchestration. */
   family: AgentHubMirrorFamily | null

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { useEffect, useRef, useState } from 'react'
-import { SendHorizontal, ShieldQuestion, X } from 'lucide-react'
+import { SendHorizontal, ShieldQuestion, Square, SquareCheck, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubAnswerOption } from './agent-hub-answer-options'
 import { HubChip } from './AgentHubInlineLabels'
@@ -42,6 +42,7 @@ function HubOption({
   density,
   chosen,
   disabled,
+  multi = false,
   onChoose
 }: {
   option: AgentHubAnswerOption
@@ -49,6 +50,7 @@ function HubOption({
   density: HubOptionDensity
   chosen: boolean
   disabled: boolean
+  multi?: boolean
   onChoose: (index: number) => void
 }): React.JSX.Element {
   const textRef = useRef<HTMLSpanElement>(null)
@@ -67,7 +69,9 @@ function HubOption({
       <TooltipTrigger asChild>
         <button
           type="button"
-          tabIndex={-1}
+          tabIndex={multi ? 0 : -1}
+          role={multi ? 'checkbox' : undefined}
+          aria-checked={multi ? chosen : undefined}
           disabled={disabled}
           data-density={density}
           data-chosen={chosen}
@@ -79,6 +83,13 @@ function HubOption({
           <span className="grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.12] font-mono text-[11px] text-foreground/85 group-data-[chosen=true]/opt:bg-agent-question group-data-[chosen=true]/opt:text-background group-data-[density=chip]/opt:size-4 group-data-[density=chip]/opt:text-[10px]">
             {index + 1}
           </span>
+          {multi ? (
+            chosen ? (
+              <SquareCheck aria-hidden className="size-3.5" />
+            ) : (
+              <Square aria-hidden className="size-3.5" />
+            )
+          ) : null}
           <span ref={textRef} className="min-w-0 flex-1">
             <span className="block truncate">{option.label}</span>
             {showsDescription ? (
@@ -114,23 +125,28 @@ export function HubOptionList({
   chosen,
   disabled,
   onChoose,
-  density = 'card'
+  density = 'card',
+  selected,
+  label
 }: {
   options: readonly AgentHubAnswerOption[]
   chosen: number | null
   disabled: boolean
   onChoose: (index: number) => void
   density?: HubOptionDensity
+  selected?: ReadonlySet<number>
+  label?: string
 }): React.JSX.Element {
   return (
-    <div className={LIST_CLASS[density]}>
+    <div className={LIST_CLASS[density]} role={selected ? 'group' : undefined} aria-label={label}>
       {options.map((option, index) => (
         <HubOption
           key={option.id}
           option={option}
           index={index}
           density={density}
-          chosen={chosen === index}
+          chosen={selected ? selected.has(index) : chosen === index}
+          multi={selected !== undefined}
           disabled={disabled}
           onChoose={onChoose}
         />
@@ -253,7 +269,7 @@ export function HubReplyField({
           aria-label={placeholder}
           className="min-w-0 flex-1 bg-transparent py-1.5 text-[13px] outline-none placeholder:text-muted-foreground/70"
         />
-        <HubDictateButton />
+        <HubDictateButton disabled={disabled} />
         <Button
           type="submit"
           variant="ghost"

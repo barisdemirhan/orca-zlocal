@@ -11,9 +11,11 @@ import { isDictationRunning } from './agent-hub-mirror-mic-state'
  * while voice is off; inert while a dictation runs somewhere else.
  */
 export function HubDictateButton({
-  compact = false
+  compact = false,
+  disabled = false
 }: {
   compact?: boolean
+  disabled?: boolean
 }): React.JSX.Element | null {
   const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
   const running = useAppStore((s) => isDictationRunning(s.dictationState))
@@ -44,6 +46,7 @@ export function HubDictateButton({
       variant="ghost"
       size={compact ? 'icon-xs' : 'icon-sm'}
       tabIndex={-1}
+      disabled={disabled}
       aria-label={label}
       title={label}
       aria-pressed={listening}

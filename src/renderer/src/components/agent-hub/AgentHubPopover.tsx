@@ -11,6 +11,8 @@ import type { AgentHubLists } from './agent-hub-lists'
 import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
 import { useAgentHubTreeOrder } from './use-agent-hub-tree-order'
+import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 
 export type AgentHubPopoverRequest = { tab: AgentHubTab; paneKey: string | null; seq: number }
 
@@ -28,6 +30,7 @@ type AgentHubPopoverBodyProps = {
   onPopout: (request: AgentHubOpenRequest) => void
   onPopoutAll: (requests: AgentHubOpenRequest[]) => void
   onClose: () => void
+  requestPresentationOf: (host: string, request: AgentHubRequestBase) => AgentHubRequestPresentation
 }
 
 /** Mounted only while the popover is open: the tree subscribes to every tab write. */
@@ -44,7 +47,8 @@ function AgentHubPopoverBody({
   onOpen,
   onPopout,
   onPopoutAll,
-  onClose
+  onClose,
+  requestPresentationOf
 }: AgentHubPopoverBodyProps): React.JSX.Element {
   const tree = useAgentHubTerminalTree(threads, includeShells, lineage.parentOf)
   const sortBy = useAppStore((s) => normalizeAgentHubTerminalSort(s.settings?.agentHubTerminalSort))
@@ -73,6 +77,7 @@ function AgentHubPopoverBody({
       initialTab={request.tab}
       onTabChange={onTabChange}
       initialPaneKey={request.paneKey}
+      requestPresentationOf={requestPresentationOf}
     />
   )
 }

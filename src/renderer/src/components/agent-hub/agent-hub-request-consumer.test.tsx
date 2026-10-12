@@ -12,6 +12,7 @@ import type {
 import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import { useAgentHubRequestConsumer } from './use-agent-hub-request-consumer'
 import { readAgentHubRequests } from './agent-hub-requests-store'
+import { answerAgentHubRequest } from './agent-hub-request-answer'
 import { buildAgentHubLists } from './agent-hub-lists'
 import { agentHubRequestBase } from './agent-hub-request-test-fixtures'
 
@@ -121,6 +122,22 @@ it('consumes local and every capable paired host, fences old generations and wit
   })
   expect(local?.respond).not.toHaveBeenCalled()
   expect(remote?.respond).not.toHaveBeenCalled()
+  await act(async () =>
+    answerAgentHubRequest('workhost', base.requestId, {
+      kind: 'ask',
+      answer: 'Yes',
+      index: 1
+    })
+  )
+  expect(remote?.respond).toHaveBeenCalledExactlyOnceWith(base.requestId, {
+    kind: 'ask',
+    answer: 'Yes',
+    index: 1
+  })
+  expect(local?.respond).not.toHaveBeenCalled()
+  act(() => remote?.receive?.({ ...base, kind: 'closed', reason: 'responded' }))
+  expect(readAgentHubRequests().get('workhost')?.pendingAsks.size).toBe(0)
+  expect(readAgentHubRequests().get('local')?.pendingAsks.size).toBe(1)
   act(() =>
     useAppStore.setState({
       runtimeStatusByEnvironmentId: new Map([
@@ -222,4 +239,46 @@ it('unsubscribes a disconnected pairing, reinstalls on a contact epoch and stays
     useAppStore.setState({ settings: createGlobalSettingsFixture({ experimentalAgentHub: false }) })
   )
   expect(clients.get('local')?.stop).toHaveBeenCalledOnce()
+})
+
+it('fences an in-flight answer when its host reconnects without marking the new request resolved', async () => {
+  render(<Harness />)
+  const previous = clients.get('workhost')
+  const ask = {
+    ...agentHubRequestBase(),
+    kind: 'ask' as const,
+    question: 'Go?',
+    options: ['Yes'],
+    multi: false
+  }
+  let rejectPrevious: ((error: Error) => void) | undefined
+  previous?.respond.mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        rejectPrevious = reject
+      })
+  )
+  act(() => previous?.receive?.(ask))
+  let answer: Promise<void> | undefined
+  act(() => {
+    answer = answerAgentHubRequest('workhost', ask.requestId, { kind: 'ask', answer: 'Yes', index: 1 })
+    useAppStore.setState({
+      runtimeStatusByEnvironmentId: new Map([
+        [
+          'workhost',
+          { status: status([AGENT_HUB_REQUESTS_CAPABILITY]), checkedAt: 2, connectionGeneration: 2 }
+        ]
+      ])
+    })
+  })
+  const current = clients.get('workhost')
+  expect(current).not.toBe(previous)
+  act(() => current?.receive?.(ask))
+  await act(async () => {
+    rejectPrevious?.(Object.assign(new Error('old answer'), { code: 'already_resolved' }))
+    await answer
+  })
+  expect(readAgentHubRequests().get('workhost')?.pendingAsks.get(ask.requestId)).toEqual(ask)
+  expect(readAgentHubRequests().get('workhost')?.answerStates.size).toBe(0)
+  expect(current?.respond).not.toHaveBeenCalled()
 })

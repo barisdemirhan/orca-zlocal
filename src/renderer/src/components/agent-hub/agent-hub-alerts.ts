@@ -1,21 +1,72 @@
 import { agentHubThreadCardKey } from './agent-hub-answered-cards'
 import type { NotificationSettings } from '../../../../shared/notification-settings-types'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { parseExecutionHostId } from '../../../../shared/execution-host'
 import { agentHubIsApproval, agentHubStateSince, type AgentHubLists } from './agent-hub-lists'
+import {
+  agentHubRequestKey,
+  type AgentHubInboxRequest,
+  type AgentHubRequestsState
+} from './agent-hub-requests-store'
 
 export type AgentHubAlertKind = 'ask' | 'approval' | 'done'
 
-export type AgentHubAlert = {
+export type AgentHubThreadAlert = {
   id: string
   kind: AgentHubAlertKind
   thread: AgentPaneThread
+  request?: never
+  host?: never
   /** A worker's result: shown only by that worker's minimized mirror, never by the hub. */
   mirrorOnly?: true
 }
+export type AgentHubRequestAlert = AgentHubInboxRequest & {
+  id: string
+  kind: AgentHubAlertKind | 'info'
+  thread?: never
+  mirrorOnly?: never
+}
+export type AgentHubAlert = AgentHubThreadAlert | AgentHubRequestAlert
+
+export function agentHubRequestAlerts(state: AgentHubRequestsState): AgentHubRequestAlert[] {
+  return [...state]
+    .flatMap(([host, view]) =>
+      [
+        ...view.pendingAsks.values(),
+        ...view.pendingConsents.values(),
+        ...view.notifications.values()
+      ].map((request): AgentHubRequestAlert => ({
+        id: agentHubRequestKey(host, request.requestId),
+        host,
+        request,
+        kind:
+          request.kind === 'ask'
+            ? 'ask'
+            : request.kind === 'consent'
+              ? 'approval'
+              : request.level === 'needs-you'
+                ? 'ask'
+                : request.level
+      }))
+    )
+    .sort((a, b) => a.request.createdAt - b.request.createdAt)
+}
+
+export function agentHubAlertPaneKey(alert: AgentHubAlert): string {
+  if (alert.request) {
+    return JSON.stringify([alert.host, alert.request.caller.paneKey])
+  }
+  const host = parseExecutionHostId(alert.thread.worktree.hostId)
+  return JSON.stringify([
+    alert.thread.worktree.runtimeOwnerEnvironmentId ??
+      (host?.kind === 'runtime' ? host.environmentId : 'local'),
+    alert.thread.paneKey
+  ])
+}
 
 /** One stamp per alertable state entry, so an agent that asks again alerts again. */
-function alertStamps(lists: AgentHubLists): AgentHubAlert[] {
-  const alerts: AgentHubAlert[] = []
+function alertStamps(lists: AgentHubLists): AgentHubThreadAlert[] {
+  const alerts: AgentHubThreadAlert[] = []
   for (const thread of lists.needsYou) {
     const kind = agentHubIsApproval(thread) ? 'approval' : 'ask'
     alerts.push({ id: `${agentHubThreadCardKey(thread)}:ask`, kind, thread })
@@ -48,7 +99,7 @@ export function diffAgentHubAlerts(
   baseline: ReadonlySet<string>,
   lists: AgentHubLists,
   options: { onNeedsInput: boolean; onFinished: boolean }
-): { baseline: Set<string>; fresh: AgentHubAlert[] } {
+): { baseline: Set<string>; fresh: AgentHubThreadAlert[] } {
   const current = alertStamps(lists)
   const fresh = current.filter(
     (alert) =>
@@ -72,10 +123,10 @@ export function rememberRaisedAlertIds(raised: Set<string>, ids: Iterable<string
 }
 
 /** Alerts not raised yet, recorded as raised. Why: a result re-entering the lists must not re-alert. */
-export function takeUnraisedAlerts(
+export function takeUnraisedAlerts<T extends AgentHubAlert>(
   raised: Set<string>,
-  alerts: readonly AgentHubAlert[]
-): AgentHubAlert[] {
+  alerts: readonly T[]
+): T[] {
   const unraised = alerts.filter((alert) => !raised.has(alert.id))
   rememberRaisedAlertIds(
     raised,
