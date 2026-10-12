@@ -10,8 +10,10 @@ import type { RuntimeNativeChatLaunchDraftResolution } from './runtime-types'
 import type { RuntimeNavigationTarget } from './runtime-navigation'
 import type { WorktreeSortOrderUpdate } from './worktree/sort-order-update'
 import type { SidebarInputsChangedEvent } from './sidebar-list/sidebar-inputs-feed-contract'
+import type { AgentHubEvent, AgentHubSnapshot } from './agent-hub-requests'
 
 export type RuntimeClientEvent =
+  | { type: 'agentHub'; event: AgentHubEvent }
   | { type: 'reposChanged' }
   /** The Workspace options UI state changed; a mirroring phone re-reads it. */
   | { type: 'workspaceViewChanged' }
@@ -67,6 +69,7 @@ export type RuntimeClientEventStreamMessage =
       snapshot?: {
         repos?: unknown[]
         sshStates?: { targetId: string; state: SshConnectionState }[]
+        agentHub?: AgentHubSnapshot
       }
     })
   | RuntimeClientEvent

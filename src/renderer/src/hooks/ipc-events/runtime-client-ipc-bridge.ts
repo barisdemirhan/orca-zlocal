@@ -177,6 +177,10 @@ export function registerRuntimeClientIpcBridge(
     if (event.type === 'sidebarInputsChanged') {
       return
     }
+    // Agent Hub requests have their own consumer (agent-hub-client); this bridge only navigates.
+    if (event.type === 'agentHub') {
+      return
+    }
     // Older hosts broadcast local/CLI activation without an address; that is not this viewer's intent.
     if (!event.navigation || !navigationTargetsClients(event.navigation)) {
       return

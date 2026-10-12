@@ -17,6 +17,26 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
   LINEAR_HANDLER_GROUP,
   REFERENCE_HANDLER_GROUP,
   {
+    name: 'agent-hub',
+    keys: [
+      'hub notify',
+      'hub peek',
+      'hub ask',
+      'hub progress',
+      'hub presence',
+      'hub status',
+      'hub mirror open',
+      'hub mirror add',
+      'hub mirror minimize',
+      'hub mirror restore',
+      'hub mirror close',
+      'hub arrange',
+      'hub canvas open',
+      'hub canvas close'
+    ],
+    load: async () => (await import('./handlers/agent-hub.js')).AGENT_HUB_HANDLERS
+  },
+  {
     name: 'core',
     keys: ['claude-teams', 'open', 'serve', 'status'],
     load: async () => (await import('./handlers/core.js')).CORE_HANDLERS

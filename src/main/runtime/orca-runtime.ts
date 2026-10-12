@@ -57,6 +57,8 @@ import { getHostDisplayLabelOverrides } from '../../shared/host-setting-override
 const OrcaRuntimeSidebarBase: typeof OrcaRuntimeWithAgentTransitions = ORCA_SIDEBAR_INPUTS_IS_MAIN
   ? OrcaRuntimeWithSidebarTemporal
   : OrcaRuntimeWithAgentTransitions
+import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
+import type { AgentHubCaller } from '../../shared/agent-hub-requests'
 
 // oxlint-disable-next-line typescript/no-unsafe-declaration-merging -- SAFETY: The existing Linear installer supplies the canonical prototype surface.
 class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
@@ -159,6 +161,30 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
           referenceConnectionHosts(this.listRepos())
         )
     })
+  }
+
+  readonly agentHub = new AgentHubLedger((event) =>
+    this.emitClientEvent({ type: 'agentHub', event })
+  )
+
+  isAgentHubEnabled(): boolean {
+    return this.store?.getSettings().experimentalAgentHub === true
+  }
+
+  getAgentHubCaller(handle: string): AgentHubCaller | null {
+    const paneKey = this.getTerminalPaneKey(handle)
+    if (!paneKey) {
+      return null
+    }
+    const pty = this.getPtyRecordForPaneKey(paneKey)
+    const agentType = pty?.foregroundAgent ?? pty?.launchAgent
+    const title = pty?.title ?? (pty?.tabId ? this.tabs.get(pty.tabId)?.title : undefined)
+    return {
+      paneKey,
+      terminalHandle: handle,
+      ...(agentType ? { agentType } : {}),
+      ...(title ? { title } : {})
+    }
   }
 
   constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithAgentTransitions>) {

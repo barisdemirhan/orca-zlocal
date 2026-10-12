@@ -4,7 +4,11 @@ import {
 } from '../../../ssh/targets/ssh-target-registry'
 import { getPublicSshState } from '../../public-ssh-state'
 import { defineMethod, defineStreamingMethod } from '../core'
-import { ClientEventsUnsubscribeParams } from '../../../../shared/rpc-contract/client-events-params'
+import {
+  ClientEventsSubscribeParams,
+  ClientEventsUnsubscribeParams
+} from '../../../../shared/rpc-contract/client-events-params'
+import { agentHubDesktopId } from './agent-hub-caller'
 
 let clientEventSubscriptionSeq = 0
 
@@ -12,12 +16,19 @@ export const CLIENT_EVENT_METHODS = [
   defineStreamingMethod({
     name: 'runtime.clientEvents.subscribe',
     permission: 'workspace',
-    params: null,
-    handler: async (_params, { runtime, connectionId, clientKind }, emit) => {
+    params: ClientEventsSubscribeParams,
+    handler: async (_params, ctx, emit) => {
+      const { runtime, connectionId, clientKind, signal } = ctx
+      const desktop = agentHubDesktopId(ctx)
       await new Promise<void>((resolve) => {
-        // Mobile discards terminalSideEffects; filter per-OSC batch frames before they cross the relay.
+        const unregisterDesktop = desktop ? runtime.agentHub.registerDesktop(desktop) : () => {}
+        // Why: mobile discards terminalSideEffects; excluding it stops the
+        // per-OSC batch frames from crossing the relay.
         const unsubscribe = runtime.onClientEvent(
           (event) => {
+            if (event.type === 'agentHub' && !desktop) {
+              return
+            }
             emit(event)
           },
           { consumesTerminalSideEffects: clientKind !== 'mobile' }
@@ -25,17 +36,27 @@ export const CLIENT_EVENT_METHODS = [
 
         const seq = ++clientEventSubscriptionSeq
         const subscriptionId = `runtime-client-events-${connectionId ?? 'inproc'}-${seq}`
-        runtime.registerSubscriptionCleanup(
-          subscriptionId,
-          () => {
-            unsubscribe()
-            emit({ type: 'end' })
-            resolve()
-          },
-          connectionId
-        )
+        let cleaned = false
+        const cleanup = (): void => {
+          if (cleaned) {
+            return
+          }
+          cleaned = true
+          signal?.removeEventListener('abort', onAbort)
+          unsubscribe()
+          unregisterDesktop()
+          emit({ type: 'end' })
+          resolve()
+        }
+        const onAbort = (): void => runtime.cleanupSubscription(subscriptionId)
+        runtime.registerSubscriptionCleanup(subscriptionId, cleanup, connectionId)
+        signal?.addEventListener('abort', onAbort, { once: true })
+        if (signal?.aborted) {
+          onAbort()
+          return
+        }
 
-        // Listen before snapshotting to close the subscribe race and replay sleep state missed during disconnect.
+        // Why: listener-first snapshotting closes the subscribe race while restoring state missed during disconnects.
         for (const event of runtime.getTerminalSleepClientEventSnapshot?.() ?? []) {
           emit(event)
         }
@@ -47,8 +68,12 @@ export const CLIENT_EVENT_METHODS = [
           const state = getPublicSshState(getRegisteredSshState(target.id) ?? null)
           return state ? [{ targetId: target.id, state }] : []
         })
-        // Listen before snapshotting to close reload gaps without exposing HUB-private target configuration.
-        emit({ type: 'ready', subscriptionId, snapshot: { sshStates } })
+        // Why: attaching the listener before snapshotting closes the reload gap without exposing HUB-private target configuration.
+        emit({
+          type: 'ready',
+          subscriptionId,
+          snapshot: { sshStates, ...(desktop ? { agentHub: runtime.agentHub.snapshot() } : {}) }
+        })
       })
     }
   }),
@@ -65,4 +90,4 @@ export const CLIENT_EVENT_METHODS = [
       return { unsubscribed: true }
     }
   })
-]
+] as const

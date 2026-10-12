@@ -1,0 +1,92 @@
+export type AgentHubPane = { paneKey: string; terminalHandle: string }
+export type AgentHubCaller = AgentHubPane & { agentType?: string; title?: string }
+
+export type AgentHubRequestBase = {
+  requestId: string
+  caller: AgentHubCaller
+  target: AgentHubPane
+  createdAt: number
+  expiresAt: number
+}
+
+export type AgentHubMirrorAction = 'open' | 'add' | 'minimize' | 'restore' | 'close'
+export type AgentHubOperation =
+  | { kind: 'peek'; link: string }
+  | { kind: 'mirror'; action: AgentHubMirrorAction }
+  | { kind: 'arrange'; layout?: string }
+  | { kind: 'canvas'; action: 'open' | 'close' }
+
+export type AgentHubAskContent = {
+  question: string
+  options: string[]
+  /** One-based, matching the CLI and answer indices. */
+  recommended?: number
+  multi: boolean
+  ifAway?: 'recommended'
+}
+
+export type AgentHubRequest = AgentHubRequestBase &
+  (
+    | {
+        kind: 'notify'
+        text: string
+        level: 'info' | 'done' | 'needs-you'
+        sound: boolean
+        links: string[]
+      }
+    | ({ kind: 'ask' } & AgentHubAskContent)
+    | { kind: 'presence' }
+    | { kind: 'status' }
+    | AgentHubOperation
+    | { kind: 'consent'; operation: AgentHubOperation }
+  )
+
+export type AgentHubProgress = AgentHubRequestBase & { kind: 'progress'; text: string | null }
+export type AgentHubAnswer = {
+  answer: string
+  index: number | null
+  indices?: number[]
+  by: 'human' | 'timeout' | 'away-default'
+  desktop: string
+}
+export type AgentHubPresence = { present: boolean; idleMinutes: number }
+export type AgentHubStatus = {
+  mirrors: AgentHubPane[]
+  parked: AgentHubPane[]
+  waiting: AgentHubPane[]
+}
+
+export type AgentHubResponse =
+  | { kind: 'ack' }
+  | ({ kind: 'ask' } & Pick<AgentHubAnswer, 'answer' | 'index' | 'indices'>)
+  | ({ kind: 'presence' } & AgentHubPresence)
+  | ({ kind: 'status' } & AgentHubStatus)
+  | { kind: 'consent'; decision: 'once' | 'session' | 'deny' }
+  | { kind: 'error'; code: 'disabled_by_user' | 'denied_by_user'; message: string }
+
+export type AgentHubErrorCode =
+  | 'rate_limited'
+  | 'no_desktop'
+  | 'no_response'
+  | 'denied_by_user'
+  | 'disabled_by_user'
+  | 'timeout'
+  | 'already_resolved'
+  | 'request_not_found'
+  | 'invalid_argument'
+  | 'connection_lost'
+
+export type AgentHubClosed = AgentHubRequestBase & {
+  kind: 'closed'
+  reason: 'responded' | AgentHubErrorCode
+  result?: AgentHubAnswer
+}
+export type AgentHubSnapshot = { requests: AgentHubRequest[]; progress: AgentHubProgress[] }
+export type AgentHubEvent = AgentHubRequest | AgentHubProgress | AgentHubClosed
+export type AgentHubDelivery = AgentHubEvent | { kind: 'snapshot'; snapshot: AgentHubSnapshot }
+
+export type AgentHubRespondResult = { accepted: true; requestId: string }
+export type AgentHubRendererApi = {
+  subscribe(handler: (event: AgentHubDelivery) => void): () => void
+  respond(requestId: string, result: AgentHubResponse): Promise<AgentHubRespondResult>
+}

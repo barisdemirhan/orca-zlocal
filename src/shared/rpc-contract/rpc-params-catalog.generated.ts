@@ -63,6 +63,17 @@ import {
   SelectDataAccountParams
 } from './accounts-params'
 import { PrepareCodexForWslPaneParams } from './agent-hooks-params'
+import {
+  AgentHubArrangeParams,
+  AgentHubAskParams,
+  AgentHubCanvasParams,
+  AgentHubMirrorParams,
+  AgentHubNotifyParams,
+  AgentHubPeekParams,
+  AgentHubPresenceParams,
+  AgentHubProgressParams,
+  AgentHubRespondParams
+} from './agent-hub-params'
 import { AgentLaunch, AgentLaunchReplay } from './agent-launch-params'
 import { AgentLaunchSettingsMutation } from './agent-launch-settings-params'
 import {
@@ -152,7 +163,7 @@ import {
 } from './browser-params'
 import { ScreencastUnsubscribe } from './browser-screencast-params'
 import { BrowserOpenUrlParams, BrowserTabCreateParams } from './browser-tab-create-params'
-import { ClientEventsUnsubscribeParams } from './client-events-params'
+import { ClientEventsSubscribeParams, ClientEventsUnsubscribeParams } from './client-events-params'
 import {
   NativeChatSessionOptionsMutation,
   PRBotAuthorOverrideUpdate,
@@ -747,6 +758,16 @@ export const RPC_PARAMS_BY_METHOD = {
   'agent.launch': AgentLaunch,
   'agent.launchReplay': AgentLaunchReplay,
   'agentHooks.prepareCodexForWslPane': PrepareCodexForWslPaneParams,
+  'agentHub.arrange': AgentHubArrangeParams,
+  'agentHub.ask': AgentHubAskParams,
+  'agentHub.canvas': AgentHubCanvasParams,
+  'agentHub.mirror': AgentHubMirrorParams,
+  'agentHub.notify': AgentHubNotifyParams,
+  'agentHub.peek': AgentHubPeekParams,
+  'agentHub.presence': AgentHubPresenceParams,
+  'agentHub.progress': AgentHubProgressParams,
+  'agentHub.respond': AgentHubRespondParams,
+  'agentHub.status': AgentHubPresenceParams,
   'agentSession.acknowledgeAttention': AcknowledgeAttentionParams,
   'agentSession.agents': AgentsParams,
   'agentSession.cancel': CancelParams,
@@ -1341,7 +1362,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'runtime.automaticWork.resume': null,
   'runtime.automaticWork.status': null,
   'runtime.clientCapabilities.update': ClientCapabilitiesUpdate,
-  'runtime.clientEvents.subscribe': null,
+  'runtime.clientEvents.subscribe': ClientEventsSubscribeParams,
   'runtime.clientEvents.unsubscribe': ClientEventsUnsubscribeParams,
   'session.readTerminalScrollback': SessionReadTerminalScrollbackParams,
   'session.tabs.activate': ActivateTab,

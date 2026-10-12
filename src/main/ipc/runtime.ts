@@ -16,6 +16,25 @@ import { DESKTOP_RPC_CALLER } from '../runtime/rpc/rpc-caller-identity'
 import { ALL_RPC_METHODS } from '../runtime/rpc/methods'
 import { DesktopRuntimeSenderLifecycle } from './desktop-runtime-sender-lifecycle'
 import { publishMobileProjectSections } from '../runtime/mobile-project-sections-snapshot'
+import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../shared/agent-hub-capabilities'
+import { isTrustedUIRenderer } from './ui'
+
+function rendererCapabilities(
+  runtime: OrcaRuntimeService,
+  sender: Electron.WebContents,
+  args: { method: string; params?: unknown }
+): readonly string[] {
+  const consumingHub =
+    args.method === 'agentHub.respond' ||
+    (args.method === 'runtime.clientEvents.subscribe' &&
+      typeof args.params === 'object' &&
+      args.params !== null &&
+      'agentHub' in args.params &&
+      args.params.agentHub === true)
+  return consumingHub && isTrustedUIRenderer(sender) && runtime.isAgentHubEnabled()
+    ? [...DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES, AGENT_HUB_REQUESTS_CAPABILITY]
+    : DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES
+}
 
 function boundTerminalFitRestore(pending: Promise<boolean>): Promise<boolean> {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -85,7 +104,7 @@ export function registerRuntimeHandlers(runtime: OrcaRuntimeService): void {
           caller: DESKTOP_RPC_CALLER,
           clientKind: 'runtime',
           connectionId: desktopSenders.connectionIdFor(event.sender),
-          clientCapabilities: DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES
+          clientCapabilities: rendererCapabilities(runtime, event.sender, args)
         }
       )
     }
@@ -126,7 +145,7 @@ export function registerRuntimeHandlers(runtime: OrcaRuntimeService): void {
           caller: DESKTOP_RPC_CALLER,
           clientKind: 'runtime',
           connectionId,
-          clientCapabilities: DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES
+          clientCapabilities: rendererCapabilities(runtime, event.sender, args)
         }
       )
       return { subscribed: true }

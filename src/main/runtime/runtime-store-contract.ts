@@ -149,6 +149,8 @@ export type RuntimeStore = {
     terminalCopyTrimsGutter?: GlobalSettings['terminalCopyTrimsGutter']
     experimentalNativeChat?: GlobalSettings['experimentalNativeChat']
     nativeChatProviders?: GlobalSettings['nativeChatProviders']
+    // Read by Agent Hub requests: hub events go only to desktops that run the hub.
+    experimentalAgentHub?: GlobalSettings['experimentalAgentHub']
     defaultTaskSource?: GlobalSettings['defaultTaskSource']
     defaultTaskViewPreset?: GlobalSettings['defaultTaskViewPreset']
     visibleTaskProviders?: GlobalSettings['visibleTaskProviders']
