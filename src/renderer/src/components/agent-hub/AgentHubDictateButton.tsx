@@ -1,36 +1,12 @@
 import { useEffect, useState, type RefObject } from 'react'
-import { Mic, Square } from 'lucide-react'
+import { Mic } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
-import { useDictationMeter } from '../dictation/dictation-meter-store'
-import { DictationGrapes } from '../dictation/DictationGrapes'
+import { AgentHubDictationPill } from './AgentHubDictationPill'
 import { useMirrorShowsDictation } from './agent-hub-mirror-dictation-display'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
-
-// Why a child: only the field that is listening re-renders on every meter tick.
-function HubDictateListening({
-  dictationState
-}: {
-  dictationState: ReturnType<typeof useAppStore.getState>['dictationState']
-}): React.JSX.Element {
-  const meter = useDictationMeter()
-  return (
-    <span aria-hidden="true" className="flex size-6 flex-col items-center justify-center">
-      <span className="flex h-3 w-6 items-center justify-center">
-        <span className="shrink-0 scale-50">
-          <DictationGrapes
-            level={meter.level}
-            active={dictationState !== 'stopping'}
-            transitioning={dictationState !== 'listening'}
-          />
-        </span>
-      </span>
-      <Square className="size-3 fill-current" />
-    </span>
-  )
-}
 
 /**
  * A reply field's mic: dictates into the field in the same form, and stops that dictation. Hidden
@@ -67,9 +43,23 @@ export function HubDictateButton({
   if (!voiceEnabled) {
     return null
   }
-  const label = listening
-    ? translate('agentHub.mic.stop', 'Stop dictation')
-    : translate('agentHub.card.dictate', 'Dictate')
+  if (listening) {
+    // Only the active field mounts the meter subscriber.
+    return (
+      <AgentHubDictationPill
+        compact
+        disabled={disabled}
+        phase={
+          dictationState === 'stopping'
+            ? 'finishing'
+            : dictationState === 'starting'
+              ? 'starting'
+              : 'listening'
+        }
+      />
+    )
+  }
+  const label = translate('agentHub.card.dictate', 'Dictate')
   return (
     <Button
       type="button"
@@ -79,15 +69,11 @@ export function HubDictateButton({
       disabled={disabled}
       aria-label={label}
       title={label}
-      aria-pressed={listening}
-      aria-disabled={running && !listening}
-      data-agent-hub-dictate={listening ? 'listening' : running ? 'elsewhere' : 'idle'}
+      aria-pressed={false}
+      aria-disabled={running}
+      data-agent-hub-dictate={running ? 'elsewhere' : 'idle'}
       className={compact ? undefined : 'size-7'}
       onClick={(event) => {
-        if (listening) {
-          dispatchDictationControl('stop')
-          return
-        }
         if (running) {
           return
         }
@@ -107,11 +93,7 @@ export function HubDictateButton({
         dispatchDictationControl('toggle')
       }}
     >
-      {listening ? (
-        <HubDictateListening dictationState={dictationState} />
-      ) : (
-        <Mic className={compact ? undefined : 'size-4'} />
-      )}
+      <Mic className={compact ? undefined : 'size-4'} />
     </Button>
   )
 }

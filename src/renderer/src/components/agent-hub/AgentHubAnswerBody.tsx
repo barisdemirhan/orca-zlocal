@@ -253,7 +253,7 @@ export function HubReplyField({
         </div>
       ) : null}
       <form
-        className="mt-2.5 flex items-center gap-0.5 rounded-lg border border-foreground/[0.08] bg-background/60 py-1 pr-1 pl-3 focus-within:border-foreground/20"
+        className="@container/hub-reply mt-2.5 flex items-center gap-0.5 rounded-lg border border-foreground/[0.08] bg-background/60 py-1 pr-1 pl-3 focus-within:border-foreground/20"
         onSubmit={(event) => {
           event.preventDefault()
           submit()

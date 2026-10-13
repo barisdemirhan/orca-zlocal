@@ -207,7 +207,7 @@ function PaneQuickReplyCard({
               controlRef={nativeControlRef}
               answerInputRef={nativeAnswerInputRef}
             />
-            <div className="mt-1 flex justify-end">
+            <div className="@container/hub-reply mt-1 flex justify-end">
               <HubDictateButton compact targetInputRef={nativeAnswerInputRef} />
             </div>
           </div>
@@ -231,7 +231,7 @@ function PaneQuickReplyCard({
         )}
         {quick.simpleQuestion && chosen === null ? (
           <form
-            className="mx-3 mt-2 mb-2.5 flex min-w-0 items-center gap-1 rounded-lg border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-2.5 focus-within:border-foreground/20"
+            className="@container/hub-reply mx-3 mt-2 mb-2.5 flex min-w-0 items-center gap-1 rounded-lg border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-2.5 focus-within:border-foreground/20"
             onSubmit={(event) => {
               event.preventDefault()
               const reply = text.trim()
