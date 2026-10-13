@@ -21959,6 +21959,7 @@
       "onlyOne": "Only one can run at a time.",
       "disabled": "Voice dictation is off.",
       "noModel": "No speech model is selected and downloaded.",
+      "answering": "The question card is open: dictate your answer with the mic in its field.",
       "unsupported": "Dictation cannot type into a floating workspace terminal from this window.",
       "enable": "Voice dictation",
       "model": "Speech model",

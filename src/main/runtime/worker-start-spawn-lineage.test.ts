@@ -39,11 +39,8 @@ describe('worker-start spawn lineage', () => {
       )
       const wiring = makeAgentStatusStoreWiring()
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the shared runtime-store fixture implements RuntimeStore.
-      const runtime = new OrcaRuntimeService(
-        fixture.runtimeStore as RuntimeStore,
-        undefined,
-        wiring.deps
-      )
+      const store = fixture.runtimeStore as RuntimeStore
+      const runtime = new OrcaRuntimeService(store, undefined, wiring.deps)
       runtime.setPtyController({
         spawn: async () => ({ id: 'parent-pty' }),
         write: () => true,
