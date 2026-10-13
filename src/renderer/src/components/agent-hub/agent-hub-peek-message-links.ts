@@ -52,6 +52,7 @@ export function agentHubPeekItemsInMessage(text: string, worktree: Worktree): Ag
       add(
         agentHubPeekFileItem(filePath, {
           worktreeId: worktree.id,
+          worktreePath: worktree.path,
           onPairedRuntime,
           event: undefined,
           openInWorkspace: () => openDetectedFilePath(filePath, null, null, deps),

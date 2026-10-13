@@ -1,22 +1,30 @@
 /** @vitest-environment happy-dom */
 import { expect, it, vi } from 'vitest'
-import { makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { useAppStore } from '@/store'
+import type { Worktree } from '../../../../shared/worktree/types'
+import { makeRepo, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 
-vi.mock('@/store', () => ({
-  useAppStore: { getState: () => ({ settings: { experimentalAgentHub: true } }) }
-}))
-vi.mock('@/lib/connection-context', () => ({ getConnectionIdForFile: () => null }))
+vi.mock('@/store', async () => {
+  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  return { useAppStore: createTestStore() }
+})
 vi.mock('@/lib/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: 'enabled' } })
-}))
-vi.mock('@/lib/worktree-operation-route', () => ({
-  resolveWorktreeOperationRoute: () => ({ executionHostId: 'local', runtimeEnvironmentId: null })
 }))
 
 import { agentHubPeekItemsInMessage } from './agent-hub-peek-message-links'
 
 it('offers the pages and peekable files an agent message points to, once each', () => {
-  const worktree = { ...makeWorktree(), path: '/Users/dev/projects/northwind' }
+  const worktree: Worktree = {
+    ...makeWorktree(),
+    id: 'repo-1::/Users/dev/projects/northwind',
+    path: '/Users/dev/projects/northwind',
+    hostId: 'local'
+  }
+  useAppStore.setState({
+    repos: [makeRepo()],
+    worktreesByRepo: { [worktree.repoId]: [worktree] }
+  })
   const message = [
     'Storybook: http://127.0.0.1:6007, and again http://127.0.0.1:6007.',
     'Contact sheet: ~/Documents/Agents/Artifacts/northwind/contact-tr.png',
