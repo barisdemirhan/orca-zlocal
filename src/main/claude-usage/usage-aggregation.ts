@@ -7,6 +7,28 @@ import type {
 import { addLongContext } from './claude-billable-tokens'
 import { longContextTurnTokens } from './claude-model-pricing'
 
+function mergeSessionModel(
+  target: ClaudeUsageSession,
+  source: Pick<
+    ClaudeUsageSession,
+    'model' | 'modelTimestamp' | 'modelIsSidechain' | 'lastTimestamp'
+  >
+): void {
+  const targetSidechain = target.modelIsSidechain === true
+  const sourceSidechain = source.modelIsSidechain === true
+  const newer =
+    (source.modelTimestamp ?? source.lastTimestamp) >=
+    (target.modelTimestamp ?? target.lastTimestamp)
+  if (
+    (targetSidechain && !sourceSidechain) ||
+    (targetSidechain === sourceSidechain && newer && source.model !== null)
+  ) {
+    target.model = source.model
+    target.modelTimestamp = source.modelTimestamp ?? source.lastTimestamp
+    target.modelIsSidechain = sourceSidechain
+  }
+}
+
 export function mergeClaudeSessions(
   target: Map<string, ClaudeUsageSession>,
   sessions: ClaudeUsageSession[]
@@ -18,6 +40,7 @@ export function mergeClaudeSessions(
       continue
     }
 
+    mergeSessionModel(existing, session)
     if (session.firstTimestamp < existing.firstTimestamp) {
       existing.firstTimestamp = session.firstTimestamp
     }
@@ -26,7 +49,6 @@ export function mergeClaudeSessions(
       existing.lastCwd = session.lastCwd
       existing.lastGitBranch = session.lastGitBranch
     }
-    existing.model = session.model ?? existing.model
     existing.turnCount += session.turnCount
     existing.totalInputTokens += session.totalInputTokens
     existing.totalOutputTokens += session.totalOutputTokens
@@ -111,6 +133,8 @@ export function aggregateClaudeUsage(turns: ClaudeUsageAttributedTurn[]): {
         firstTimestamp: turn.timestamp,
         lastTimestamp: turn.timestamp,
         model: turn.model,
+        modelTimestamp: turn.timestamp,
+        modelIsSidechain: turn.isSidechain === true,
         lastCwd: turn.cwd,
         lastGitBranch: turn.gitBranch,
         primaryWorktreeId: turn.worktreeId,
@@ -127,6 +151,12 @@ export function aggregateClaudeUsage(turns: ClaudeUsageAttributedTurn[]): {
 
     const session = sessionsById.get(turn.sessionId)!
     const longContext = longContextTurnTokens(turn.model, turn)
+    mergeSessionModel(session, {
+      model: turn.model,
+      modelTimestamp: turn.timestamp,
+      modelIsSidechain: turn.isSidechain === true,
+      lastTimestamp: turn.timestamp
+    })
     if (turn.timestamp < session.firstTimestamp) {
       session.firstTimestamp = turn.timestamp
     }
@@ -135,7 +165,6 @@ export function aggregateClaudeUsage(turns: ClaudeUsageAttributedTurn[]): {
       session.lastCwd = turn.cwd
       session.lastGitBranch = turn.gitBranch
     }
-    session.model = turn.model ?? session.model
     session.turnCount++
     session.totalInputTokens += turn.inputTokens
     session.totalOutputTokens += turn.outputTokens

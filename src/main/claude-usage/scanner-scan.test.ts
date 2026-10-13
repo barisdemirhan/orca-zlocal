@@ -23,6 +23,43 @@ afterEach(async () => {
 })
 
 describe('scanClaudeUsageFiles', () => {
+  it('reparses old per-file caches to recover the main model while keeping sidechain usage', async () => {
+    const root = await makeClaudeProjectsRoot()
+    const projectDir = join(root, '.claude', 'projects', 'project-a')
+    const sideDir = join(projectDir, 'parent', 'subagents')
+    await mkdir(sideDir, { recursive: true })
+    const record = (model: string, hour: number, isSidechain: boolean) =>
+      JSON.stringify({
+        type: 'assistant',
+        sessionId: 'parent',
+        timestamp: `2026-10-13T${hour}:00:00.000Z`,
+        isSidechain,
+        message: { model, usage: { input_tokens: 100, output_tokens: 20 } }
+      })
+    await writeFile(join(projectDir, 'parent.jsonl'), record('claude-opus-5-5', 12, false))
+    await writeFile(join(sideDir, 'agent-1.jsonl'), record('claude-haiku-5-5', 14, true))
+    vi.doMock('os', async () => ({
+      ...(await vi.importActual<typeof Os>('os')),
+      homedir: () => root
+    }))
+    const { scanClaudeUsageFiles } = await import('./scanner')
+    const first = await scanClaudeUsageFiles([])
+    const legacy = first.processedFiles.map((file) => ({
+      ...file,
+      sessions: file.sessions.map((session) => {
+        const { modelIsSidechain: _chain, modelTimestamp: _timestamp, ...old } = session
+        return { ...old, model: 'claude-haiku-5-5' }
+      })
+    }))
+    const refreshed = await scanClaudeUsageFiles([], legacy)
+    expect(refreshed.sessions[0]?.model).toBe('claude-opus-5-5')
+    expect(refreshed.sessions[0]?.turnCount).toBe(2)
+    expect(refreshed.sessions[0]?.totalInputTokens).toBe(200)
+    expect(refreshed.dailyAggregates).toEqual(first.dailyAggregates)
+    const cached = await scanClaudeUsageFiles([], refreshed.processedFiles)
+    expect(cached.sessions).toEqual(refreshed.sessions)
+  })
+
   it('scans transcript files from the configured Claude projects directory', async () => {
     const root = await makeClaudeProjectsRoot()
     const projectDir = join(root, '.claude', 'projects', 'project-a')

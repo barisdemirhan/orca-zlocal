@@ -210,6 +210,7 @@ export function buildAgentStatusLiveEntry(
   const mainAgent = resolveAgentStatusLiveEntryMainAgent(existing, payload, identity.agentType)
   const programStatus =
     payload.programStatus === undefined ? existing?.programStatus : payload.programStatus
+  const modelSource = identity.inheritedFromActivePane ? existing : payload
   const entry: AgentStatusEntry = {
     state: payload.state,
     workingMode: payload.workingMode,
@@ -226,8 +227,11 @@ export function buildAgentStatusLiveEntry(
     ...turnEnd,
     agentType: identity.agentType,
     model:
-      payload.model ?? (existing?.agentType === identity.agentType ? existing.model : undefined),
-    ...(payload.modelSwitchCommand ? { modelSwitchCommand: payload.modelSwitchCommand } : {}),
+      modelSource?.model ??
+      (existing?.agentType === identity.agentType ? existing.model : undefined),
+    ...(modelSource?.modelSwitchCommand
+      ? { modelSwitchCommand: modelSource.modelSwitchCommand }
+      : {}),
     paneKey,
     terminalHandle: statusTerminalHandle,
     worktreeId:

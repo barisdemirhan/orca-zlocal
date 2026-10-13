@@ -201,7 +201,17 @@ export abstract class AgentHookServerStatusUpdate extends AgentHookServerStatusA
         ? rootContextPreservingPayload
         : {
             ...rootContextPreservingPayload,
-            payload: { ...rootContextPreservingPayload.payload, agentType: identity.agentType }
+            payload: {
+              ...rootContextPreservingPayload.payload,
+              agentType: identity.agentType,
+              // A nested agent's model belongs to that agent, not the pane's active owner.
+              ...(identity.inheritedFromActivePane
+                ? {
+                    model: previous?.payload.model,
+                    modelSwitchCommand: previous?.payload.modelSwitchCommand
+                  }
+                : {})
+            }
           }
     const attachedPayload = attachClaudePermissionToolUseId(previous, identityResolvedPayload)
     // Resolve cancellation before permission holds adopt a replayed main-agent observation.

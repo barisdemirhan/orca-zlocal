@@ -27,6 +27,9 @@ export type ClaudeUsageSession = {
   firstTimestamp: string
   lastTimestamp: string
   model: string | null
+  /** Optional for caches written before main-chain model ownership was recorded. */
+  modelTimestamp?: string
+  modelIsSidechain?: boolean
   lastCwd: string | null
   lastGitBranch: string | null
   primaryWorktreeId: string | null
@@ -89,6 +92,7 @@ export type ClaudeUsageParsedTurn = {
   sessionId: string
   timestamp: string
   model: string | null
+  isSidechain?: boolean
   cwd: string | null
   gitBranch: string | null
   inputTokens: number
