@@ -45,7 +45,6 @@ import type { AgentHubLineage } from './agent-hub-lineage'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { orderAgentHubTray } from './agent-hub-mirror-tray'
 import { rearrangeAgentHubMirrorsByDefault } from './agent-hub-floating-arrangement'
-import { useFloatingPanelInFront } from './use-floating-panel-in-front'
 import { usePruneClosedAgentHubMirrorSources } from './use-prune-closed-agent-hub-mirror-sources'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
 import {
@@ -68,8 +67,8 @@ import {
 type MirrorSurface = 'portal' | 'in-workspace' | 'preview'
 
 /**
- * Every open mirror window and minimized chip, in one layer: above the floating workspace
- * panel (z-45) and below modal layers (z-50). Inside it, the window clicked last is in front.
+ * Mirror windows stay below the floating workspace (z-45); the tray portals above it (z-47).
+ * Inside the mirrors' layer, the window clicked last is in front.
  * Windows borrow the real terminal pane through the portal Activity uses.
  */
 export function AgentHubMirrors({
@@ -133,7 +132,6 @@ export function AgentHubMirrors({
   )
   useLayoutEffect(() => setAgentHubMirrorWindowCap(windowCap), [windowCap])
   const [slots, setSlots] = useState<ReadonlyMap<string, HTMLElement>>(() => new Map())
-  const panelInFront = useFloatingPanelInFront(windows.length)
   // The tab on screen in the workspace, so a family member already there offers no jump.
   const onScreenTab = useAppStore((state) =>
     !onCanvas && state.activeView === 'terminal' && state.activeWorktreeId && state.activeTabId
@@ -274,10 +272,9 @@ export function AgentHubMirrors({
     <AgentHubMirrorTabDragLayer enabled={!hidden}>
       <div
         data-agent-hub-mirrors
-        data-behind={panelInFront}
         data-hidden={hidden}
-        // Why z-[44] behind: under the floating workspace (45), still over the dim (43).
-        className="pointer-events-none fixed inset-0 z-[46] data-[behind=true]:z-[44] data-[hidden=true]:invisible"
+        // Why z-[44]: always under the floating workspace (45), still over the dim (43).
+        className="pointer-events-none fixed inset-0 z-[44] data-[hidden=true]:invisible"
       >
         {stableWindows.map((window) => {
           const tab = activeAgentHubMirrorTab(window)

@@ -223,8 +223,7 @@ export function AgentHubMirrorTray({
     return null
   }
   const piled = !fanned && shown.length > 1
-  // Why a portal: the tray is one of the hub's controls, so it stays above every floating
-  // window (the mirrors' own layer drops behind the floating workspace when that is in front).
+  // Why a portal: the hub's tray stays above the mirrors (44) and floating workspace (45).
   return createPortal(
     <div
       ref={trayRef}

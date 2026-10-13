@@ -192,7 +192,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
         // Why preventDefault: a click on the shade must not pull focus off the terminal typed in.
         onMouseDown={(event) => event.preventDefault()}
         onPointerDown={closeAgentHubPeek}
-        // Why z-[46] before the box: over the mirrors, under Peek itself, the tray and the alerts.
+        // Why z-[46] before the box: over mirrors (44) and floating workspace (45), under Peek.
         className="fixed inset-x-0 top-0 z-[46] bg-black/45 animate-in duration-200 fade-in-0 motion-reduce:animate-none!"
       />
       <div
@@ -209,8 +209,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
             closeAgentHubPeek()
           }
         }}
-        // Why z-[46] and portaled last: over the mirrors, under the tray and alerts; the hub and
-        // its Inbox card (a dialog) stay usable over it.
+        // Why z-[46]: over mirrors (44) and floating workspace (45), under the tray (47) and alerts (48).
         className="fixed z-[46] flex flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none"
         style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
       >

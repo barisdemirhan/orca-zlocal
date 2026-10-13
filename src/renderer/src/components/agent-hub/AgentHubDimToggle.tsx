@@ -176,7 +176,7 @@ export function AgentHubDimBackdrop({ hidden }: { hidden: boolean }): React.JSX.
           }
         }
       }}
-      // Why z-[43]: below the floating workspace (45), the mirrors (46) and the hub's dock and tray (47).
+      // Why z-[43]: below the mirrors (44), floating workspace (45), and hub dock and tray (47).
       className="pointer-events-none fixed inset-x-0 top-0 z-[43] bg-black/45 opacity-0 transition-opacity duration-200 data-[visible=true]:pointer-events-auto data-[visible=true]:opacity-100"
     />,
     document.body

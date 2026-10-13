@@ -34,8 +34,8 @@ export function AgentHubMirrorFocusShade({
       // Why preventDefault: a click on the shadow must not pull focus off the terminal typed in.
       onMouseDown={(event) => event.preventDefault()}
       onPointerDown={endAgentHubMirrorFocus}
-      // Why z-[44] for the workspace: over the dim (43), under the mirrors (46) and the dock (47).
-      className="pointer-events-none absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-200 data-[agent-hub-focus-shade=mirror]:z-30 data-[agent-hub-focus-shade=workspace]:fixed data-[agent-hub-focus-shade=workspace]:z-[44] data-[shown=true]:pointer-events-auto data-[shown=true]:opacity-100"
+      // Why z-[43] for the workspace: painted after the dim (43), always under the mirrors (44).
+      className="pointer-events-none absolute inset-0 bg-black/45 opacity-0 transition-opacity duration-200 data-[agent-hub-focus-shade=mirror]:z-30 data-[agent-hub-focus-shade=workspace]:fixed data-[agent-hub-focus-shade=workspace]:z-[43] data-[shown=true]:pointer-events-auto data-[shown=true]:opacity-100"
     />
   )
 }
