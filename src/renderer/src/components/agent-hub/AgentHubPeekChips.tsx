@@ -15,6 +15,7 @@ function PeekIcon({ item }: { item: AgentHubPeekItem }): React.JSX.Element {
     case 'image':
       return <Image aria-hidden className="size-3.5" />
     case 'pdf':
+    case 'markdown':
       return <FileText aria-hidden className="size-3.5" />
     case 'media':
       return <Film aria-hidden className="size-3.5" />

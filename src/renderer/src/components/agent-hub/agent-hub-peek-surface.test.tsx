@@ -1,7 +1,8 @@
 /** @vitest-environment happy-dom */
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
@@ -16,8 +17,16 @@ import type * as HttpLinkRouting from '@/lib/http-link-routing'
 import { agentHubPeekFileItem } from './agent-hub-peek-routing'
 import { AgentHubPeekBrowser } from './AgentHubPeekBrowser'
 import { AgentHubPeekFile } from './AgentHubPeekFile'
+import { AgentHubPeek } from './AgentHubPeek'
+import { agentHubWorkArea } from './agent-hub-floating-arrangement'
+import { agentHubPeekGeometry } from './agent-hub-peek-geometry'
+import { closeAgentHubPeek, openAgentHubPeek, readAgentHubPeek } from './agent-hub-peek-store'
+import type { MarkdownPreviewProps } from '../editor/markdown-preview-types'
+import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
 import { closeLeftoverAgentHubPeekPages } from './agent-hub-peek-pages'
 
+const markdownPreview = vi.hoisted(() => vi.fn())
+vi.mock('../terminal-pane/terminal-file-open-routing', () => ({ openDetectedFilePath: vi.fn() }))
 vi.mock('@/runtime/runtime-file-read-client', async (importOriginal) => {
   const actual = await importOriginal<typeof RuntimeFileClient>()
   return { ...actual, readRuntimeFileContent: vi.fn() }
@@ -35,6 +44,20 @@ vi.mock('../browser-pane/assemble-chrome/DeferredBrowserContent', () => ({
   DeferredBrowserContent: ({ children }: { children: React.ReactNode }) => children
 }))
 vi.mock('../editor/editor-lazy-views', () => ({
+  MarkdownPreview: (props: MarkdownPreviewProps) => {
+    markdownPreview(props)
+    return (
+      <article>
+        <output>{props.content}</output>
+        <a href="nested/next%20report.md#summary">
+          <strong>Next report</strong>
+        </a>
+        <a href="https://example.com/report">External report</a>
+        <a href="../source.ts#L12">Source file</a>
+        <a href="#summary">Same-page heading</a>
+      </article>
+    )
+  },
   ImageViewer: () => <output>file preview</output>,
   MediaViewer: ({ canOpenLocally }: { canOpenLocally: boolean }) => (
     <output>{String(canOpenLocally)}</output>
@@ -95,9 +118,145 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  closeAgentHubPeek()
   closeLeftoverAgentHubPeekPages()
   useAppStore.setState(initial)
   vi.clearAllMocks()
+})
+
+describe('Peek Markdown', () => {
+  it.each([
+    ['local', false, null],
+    ['ssh:workhost-ssh', false, null],
+    ['runtime:workhost', false, 'workhost'],
+    ['local', true, null],
+    ['ssh:workhost-ssh', true, null],
+    ['runtime:workhost', true, 'workhost']
+  ] as const)(
+    'renders text from %s, folder=%s, in the Markdown viewer',
+    async (hostId, folder, runtimeId) => {
+      const worktreeId = seedOwner(hostId, folder)
+      readFile.mockResolvedValue({ content: '# Agent report', isBinary: false })
+      const item = agentHubPeekFileItem('/workspace/report.md', {
+        worktreeId,
+        onPairedRuntime: runtimeId !== null,
+        event: undefined,
+        openInWorkspace: vi.fn(),
+        openExternally: null
+      })
+      if (!item || item.content.kind === 'web') {
+        throw new Error('Missing Markdown preview')
+      }
+      const onUnavailable = vi.fn()
+      const onContentSize = vi.fn()
+      render(
+        <AgentHubPeekFile
+          content={item.content}
+          onContentSize={onContentSize}
+          onUnavailable={onUnavailable}
+        />
+      )
+      await screen.findByText('# Agent report')
+      expect(markdownPreview).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          content: '# Agent report',
+          filePath: '/workspace/report.md',
+          sourceWorktreeId: worktreeId,
+          sourceRuntimeEnvironmentId: runtimeId,
+          showTableOfContents: false,
+          markdownAnnotationsEnabled: false
+        })
+      )
+      expect(readFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target: runtimeId ? { kind: 'environment', environmentId: runtimeId } : { kind: 'local' },
+          worktreeId,
+          filePath: '/workspace/report.md',
+          ...(hostId === 'ssh:workhost-ssh' ? { connectionId: 'workhost-ssh' } : {})
+        })
+      )
+      expect(onContentSize).toHaveBeenCalledWith(null)
+      expect(onUnavailable).not.toHaveBeenCalled()
+    }
+  )
+
+  it('labels and sizes Markdown, follows links in Peek history, and opens other files in the workspace', async () => {
+    seedOwner('runtime:workhost')
+    readFile.mockResolvedValue({ content: '# Agent report', isBinary: false })
+    const item = agentHubPeekFileItem('/workspace/docs/report.md', {
+      worktreeId: WORKSPACE_ID,
+      onPairedRuntime: true,
+      event: undefined,
+      openInWorkspace: vi.fn(),
+      openExternally: null
+    })
+    if (!item) {
+      throw new Error('Missing Markdown Peek')
+    }
+    openAgentHubPeek({ ...item, mirrorKey: 'source-mirror' })
+    render(
+      <TooltipProvider>
+        <AgentHubPeek />
+      </TooltipProvider>
+    )
+    await screen.findByText('# Agent report')
+    expect(screen.getByText('Markdown')).toBeTruthy()
+    const dialog = screen.getByRole('dialog', { name: 'report.md' })
+    expect(dialog.style.height).toBe(
+      `${agentHubPeekGeometry(agentHubWorkArea(), null, false).height}px`
+    )
+    fireEvent.click(screen.getByText('Same-page heading'))
+    expect(readAgentHubPeek()?.history).toHaveLength(1)
+    fireEvent.click(screen.getByText('Next report'))
+    await waitFor(() => expect(readAgentHubPeek()?.history).toHaveLength(2))
+    expect(readAgentHubPeek()?.history[1]).toMatchObject({
+      location: '/workspace/docs/nested/next report.md',
+      mirrorKey: 'source-mirror',
+      content: {
+        kind: 'markdown',
+        initialAnchor: 'summary',
+        readContext: { target: { kind: 'environment', environmentId: 'workhost' } }
+      }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Previous peek' }))
+    await screen.findByText('# Agent report')
+    fireEvent.click(screen.getByText('External report'))
+    await waitFor(() =>
+      expect(readAgentHubPeek()?.history[1]?.content).toMatchObject({
+        kind: 'web',
+        url: 'https://example.com/report',
+        hostId: 'local'
+      })
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Previous peek' }))
+    await screen.findByText('# Agent report')
+    fireEvent.click(screen.getByText('Source file'))
+    expect(readAgentHubPeek()).toBeNull()
+    expect(openDetectedFilePath).toHaveBeenCalledWith(
+      '/workspace/source.ts',
+      12,
+      null,
+      expect.objectContaining({
+        worktreeId: WORKSPACE_ID,
+        worktreePath: '/workspace',
+        runtimeEnvironmentId: 'workhost'
+      })
+    )
+    expect(item.openInWorkspace).not.toHaveBeenCalled()
+  })
+
+  it('falls back once when a Markdown path returns binary content', async () => {
+    const onUnavailable = vi.fn()
+    render(
+      <AgentHubPeekFile
+        content={{ kind: 'markdown', filePath: '/workspace/report.md', connectionId: null }}
+        onContentSize={vi.fn()}
+        onUnavailable={onUnavailable}
+      />
+    )
+    await waitFor(() => expect(onUnavailable).toHaveBeenCalledTimes(1))
+    expect(markdownPreview).not.toHaveBeenCalled()
+  })
 })
 
 describe('Peek file ownership', () => {

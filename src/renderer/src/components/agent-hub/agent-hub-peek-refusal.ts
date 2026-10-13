@@ -10,7 +10,7 @@ export function agentHubPeekRefusalReason(link: string): string {
   return file && !agentHubPeekFileKind(link)
     ? translate(
         'agentHub.requests.peekUnsupportedFile',
-        'Peek opens web pages, images, PDF, audio, video and HTML files. This file type is not supported.'
+        'Peek opens web pages, images, PDF, audio, video, HTML and Markdown files. This file type is not supported.'
       )
     : translate(
         'agentHub.requests.peekUnsupported',

@@ -35,6 +35,7 @@ import {
 } from './agent-hub-peek-store'
 import { fallbackAgentHubPeek } from './agent-hub-peek-routing'
 import { agentHubPeekPageItem } from './agent-hub-peek-page-navigation'
+import { openAgentHubPeekMarkdownLink } from './agent-hub-peek-markdown-links'
 import { useViewportSize } from './use-viewport-size'
 import { useAppStore } from '@/store'
 import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
@@ -49,6 +50,8 @@ function kindLabel(item: AgentHubPeekItem): string {
       return translate('agentHub.peek.kindPdf', 'PDF')
     case 'media':
       return translate('agentHub.peek.kindMedia', 'Media')
+    case 'markdown':
+      return translate('agentHub.peek.kindMarkdown', 'Markdown')
   }
 }
 
@@ -162,9 +165,9 @@ export function AgentHubPeek(): React.JSX.Element | null {
     return null
   }
   const web = item.content.kind === 'web'
-  // Pages and PDFs take the room; an image or video shrinks to its own size once measured.
+  // Pages, PDFs and Markdown take the room; images and video shrink to their own size.
   const contentSize =
-    web || item.content.kind === 'pdf'
+    web || item.content.kind === 'pdf' || item.content.kind === 'markdown'
       ? null
       : measured?.location === item.location
         ? measured.size
@@ -302,6 +305,8 @@ export function AgentHubPeek(): React.JSX.Element | null {
           ) : (
             <AgentHubPeekFile
               content={item.content}
+              worktreeId={item.worktreeId}
+              onOpenLink={(href) => openAgentHubPeekMarkdownLink(item, href)}
               onUnavailable={onUnavailable}
               onContentSize={(size) => setMeasured({ location: item.location, size })}
             />

@@ -5,10 +5,11 @@ import type { RuntimeFileReadArgs } from '@/runtime/runtime-file-client-types'
 export type AgentHubPeekContent =
   | { kind: 'web'; url: string; hostId: ExecutionHostId; routingWorktreeId?: string }
   | {
-      kind: 'image' | 'pdf' | 'media'
+      kind: 'image' | 'pdf' | 'media' | 'markdown'
       filePath: string
       connectionId: string | null
       readContext?: RuntimeFileReadArgs
+      initialAnchor?: string | null
     }
 
 /** One thing to look at, with the ways out the place it was found offers. */

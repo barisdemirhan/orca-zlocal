@@ -37,14 +37,17 @@ export type AgentHubPeekLinkSource = {
   openExternally: (() => void) | null
 }
 
-const FILE_KINDS: readonly [RegExp, 'image' | 'pdf' | 'media' | 'html'][] = [
+const FILE_KINDS: readonly [RegExp, 'image' | 'pdf' | 'media' | 'html' | 'markdown'][] = [
   [/\.(png|jpe?g|gif|webp|svg|bmp|ico|avif)$/i, 'image'],
   [/\.pdf$/i, 'pdf'],
   [/\.(mp4|mov|m4v|webm|mp3|wav|m4a|aac|ogg|oga|flac|opus)$/i, 'media'],
-  [/\.html?$/i, 'html']
+  [/\.html?$/i, 'html'],
+  [/\.(md|markdown|mdx)$/i, 'markdown']
 ]
 
-export function agentHubPeekFileKind(filePath: string): 'image' | 'pdf' | 'media' | 'html' | null {
+export function agentHubPeekFileKind(
+  filePath: string
+): 'image' | 'pdf' | 'media' | 'html' | 'markdown' | null {
   return FILE_KINDS.find(([pattern]) => pattern.test(filePath))?.[1] ?? null
 }
 

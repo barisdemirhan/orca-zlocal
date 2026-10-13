@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 import { afterEach, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createElement } from 'react'
 import { useAppStore } from '@/store'
 import type { Worktree } from '../../../../shared/worktree/types'
@@ -16,8 +16,12 @@ vi.mock('@/lib/client-creation-action-policy', () => ({
 
 import { agentHubPeekItemsInMessage } from './agent-hub-peek-message-links'
 import { AgentHubPeekChips } from './AgentHubPeekChips'
+import { closeAgentHubPeek, readAgentHubPeek } from './agent-hub-peek-store'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  closeAgentHubPeek()
+})
 
 it('explains unsupported file chips and keeps URL refusals unchanged', () => {
   const worktree = { ...makeWorktree(), hostId: 'local' as const }
@@ -26,11 +30,11 @@ it('explains unsupported file chips and keeps URL refusals unchanged', () => {
     createElement(AgentHubPeekChips, {
       text: '',
       worktree,
-      links: ['./notes.md', 'ftp://example.com']
+      links: ['./notes.txt', 'ftp://example.com']
     })
   )
-  expect(screen.getByRole('button', { name: 'Peek at ./notes.md' }).title).toBe(
-    'Peek opens web pages, images, PDF, audio, video and HTML files. This file type is not supported.'
+  expect(screen.getByRole('button', { name: 'Peek at ./notes.txt' }).title).toBe(
+    'Peek opens web pages, images, PDF, audio, video, HTML and Markdown files. This file type is not supported.'
   )
   expect(screen.getByRole('button', { name: 'Peek at ftp://example.com' }).title).toBe(
     'This URL or file cannot be opened in Peek on its host.'
@@ -51,7 +55,8 @@ it('offers the pages and peekable files an agent message points to, once each', 
   const message = [
     'Storybook: http://127.0.0.1:6007, and again http://127.0.0.1:6007.',
     'Contact sheet: ~/Documents/Agents/Artifacts/northwind/contact-tr.png',
-    'Changed src/app/main.ts and docs/review.pdf; see docs/review.pdf'
+    'Changed src/app/main.ts and docs/review.pdf; see docs/review.pdf',
+    'Read docs/report.md'
   ].join('\n')
 
   const items = agentHubPeekItemsInMessage(message, worktree)
@@ -59,6 +64,20 @@ it('offers the pages and peekable files an agent message points to, once each', 
   expect(items.map((item) => [item.content.kind, item.location])).toEqual([
     ['web', 'http://127.0.0.1:6007/'],
     ['image', '/Users/dev/Documents/Agents/Artifacts/northwind/contact-tr.png'],
-    ['pdf', '/Users/dev/projects/northwind/docs/review.pdf']
+    ['pdf', '/Users/dev/projects/northwind/docs/review.pdf'],
+    ['markdown', '/Users/dev/projects/northwind/docs/report.md']
   ])
+})
+
+it('opens an enabled Markdown chip from an explicit report link', () => {
+  const worktree = { ...makeWorktree(), hostId: 'local' as const }
+  useAppStore.setState({
+    repos: [makeRepo()],
+    worktreesByRepo: { [worktree.repoId]: [worktree] }
+  })
+  render(createElement(AgentHubPeekChips, { text: '', worktree, links: ['./notes.md'] }))
+  const chip = screen.getByRole('button', { name: 'Peek at notes.md' })
+  expect(chip).not.toHaveProperty('disabled', true)
+  fireEvent.click(chip)
+  expect(readAgentHubPeek()?.history[0]?.content).toMatchObject({ kind: 'markdown' })
 })

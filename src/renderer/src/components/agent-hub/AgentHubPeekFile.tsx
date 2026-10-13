@@ -7,7 +7,8 @@ import type {
   RuntimeFileReadArgs,
   RuntimeReadableFileContent
 } from '@/runtime/runtime-file-client-types'
-import { ImageViewer, MediaViewer } from '../editor/editor-lazy-views'
+import { ImageViewer, MarkdownPreview, MediaViewer } from '../editor/editor-lazy-views'
+import { absolutePathToFileUri } from '../editor/markdown-internal-links'
 import { buildImageDataUri } from '../../../../shared/image-data-uri'
 import type { AgentHubPeekContent } from './agent-hub-peek-store'
 
@@ -71,14 +72,18 @@ function measureNaturalSize(
   }
 }
 
-/** An image, PDF or video through the editor's own viewers, read the way the editor reads it. */
+/** Files through the editor's own viewers and runtime reader. */
 export function AgentHubPeekFile({
   content,
+  worktreeId = content.readContext?.worktreeId,
+  onOpenLink,
   onContentSize,
   onUnavailable
 }: {
   content: PeekFileContent
-  /** The image's or video's own size, so Peek can shrink to it; null for a PDF or a failure. */
+  worktreeId?: string
+  onOpenLink?: (href: string) => boolean
+  /** Image/video size for shrinking Peek; null for documents or a failure. */
   onContentSize: (size: ContentSize | null) => void
   onUnavailable: () => void
 }): React.JSX.Element {
@@ -106,6 +111,11 @@ export function AgentHubPeekFile({
 
   const state: LoadState = load.key === key ? load.state : { status: 'loading' }
   const readyFile = state.status === 'ready' ? state.file : null
+  const unreadable =
+    readyFile !== null &&
+    (content.kind === 'markdown'
+      ? readyFile.isBinary
+      : !readyFile.isBinary || (!readyFile.mediaUrl && !readyFile.isImage))
   const onUnavailableRef = useRef(onUnavailable)
   const onContentSizeRef = useRef(onContentSize)
   useLayoutEffect(() => {
@@ -113,16 +123,19 @@ export function AgentHubPeekFile({
     onUnavailableRef.current = onUnavailable
   })
   useEffect(() => {
-    if (state.status === 'failed') {
+    if (state.status === 'failed' || unreadable) {
       onContentSizeRef.current(null)
       onUnavailableRef.current()
-    } else if (readyFile && (!readyFile.isBinary || (!readyFile.mediaUrl && !readyFile.isImage))) {
-      onUnavailableRef.current()
+      return undefined
+    }
+    if (content.kind === 'markdown') {
+      onContentSizeRef.current(null)
+      return undefined
     }
     return readyFile
       ? measureNaturalSize(readyFile, (size) => onContentSizeRef.current(size))
       : undefined
-  }, [readyFile, state.status])
+  }, [readyFile, state.status, unreadable, content.kind])
   const loading = (
     <Centered>
       <Loader2 aria-hidden className="size-4 animate-spin motion-reduce:animate-none" />
@@ -132,7 +145,7 @@ export function AgentHubPeekFile({
     return loading
   }
   const file = state.status === 'ready' ? state.file : null
-  if (!file || !file.isBinary || (!file.mediaUrl && !file.isImage)) {
+  if (!file || unreadable) {
     return (
       <Centered>
         {translate('agentHub.peek.unreadable', 'This file could not be shown here.')}
@@ -141,7 +154,36 @@ export function AgentHubPeekFile({
   }
   return (
     <Suspense fallback={loading}>
-      {file.mediaUrl ? (
+      {content.kind === 'markdown' ? (
+        <div
+          className="mx-auto h-full min-h-0 w-full max-w-prose"
+          // WHY: ordinary Markdown links bypass onOpenDocument in the shared editor viewer.
+          onClickCapture={(event) => {
+            const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
+            const href = anchor?.getAttribute('href')
+            if (href && onOpenLink?.(href)) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+          }}
+        >
+          <MarkdownPreview
+            key={key}
+            content={file.content}
+            filePath={filePath}
+            sourceWorktreeId={worktreeId}
+            sourceRuntimeEnvironmentId={runtimeReadTargetKey(content.readContext?.target) || null}
+            scrollCacheKey={`agent-hub-peek:${key}`}
+            initialAnchor={content.initialAnchor}
+            showTableOfContents={false}
+            markdownAnnotationsEnabled={false}
+            onOpenDocument={(document, options) => {
+              const uri = absolutePathToFileUri(document.filePath)
+              onOpenLink?.(options?.anchor ? `${uri}#${options.anchor}` : uri)
+            }}
+          />
+        </div>
+      ) : file.mediaUrl ? (
         <MediaViewer
           key={file.mediaUrl}
           src={file.mediaUrl}

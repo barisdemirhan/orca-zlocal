@@ -127,6 +127,9 @@ describe('a direct click in a mirror', () => {
     ['/a/contact-tr.png', { kind: 'image', filePath: '/a/contact-tr.png', connectionId: null }],
     ['/a/store-review.PDF', { kind: 'pdf' }],
     ['/a/flow.mp4', { kind: 'media' }],
+    ['/a/README.md', { kind: 'markdown', filePath: '/a/README.md', connectionId: null }],
+    ['/a/report.MARKDOWN', { kind: 'markdown' }],
+    ['/a/docs.mdx', { kind: 'markdown' }],
     ['/a/report.html', { kind: 'web', url: 'file:///a/report.html' }]
   ])('peeks at %s', (filePath, content) => {
     expect(peekTerminalFileFromMirror(filePath, source(clickIn('m-1')))).toBe(true)
@@ -147,6 +150,18 @@ describe('a direct click in a mirror', () => {
 })
 
 describe('an SSH workspace', () => {
+  it('allows Markdown and retains its SSH read context', () => {
+    mocks.route = { executionHostId: 'ssh:workhost', runtimeEnvironmentId: null }
+    mocks.connectionId = 'workhost'
+    const linkSource = source(clickIn('m-1'))
+    expect(peekTerminalFileFromMirror('/a/report.md', linkSource)).toBe(true)
+    expect(shown()?.content).toMatchObject({
+      kind: 'markdown',
+      connectionId: 'workhost',
+      readContext: { filePath: '/a/report.md', relativePath: 'report.md', connectionId: 'workhost' }
+    })
+    expect(linkSource.openInWorkspace).not.toHaveBeenCalled()
+  })
   it('opens remote HTML through its workspace document preview with a reason', () => {
     mocks.route = { executionHostId: 'ssh:workhost', runtimeEnvironmentId: null }
     mocks.connectionId = 'workhost'
@@ -200,6 +215,23 @@ describe('a paired workspace', () => {
   beforeEach(() => {
     mocks.route = { executionHostId: 'runtime:workhost', runtimeEnvironmentId: 'workhost' }
     mocks.runtimeEnvironments = [{ id: 'workhost', sshAccess: { sshTargetId: 'workhost-ssh' } }]
+  })
+
+  it('allows Markdown through its runtime owner without a local file grant', () => {
+    const linkSource = pairedSource()
+    expect(peekTerminalFileFromMirror('/a/report.md', linkSource)).toBe(true)
+    expect(shown()?.content).toMatchObject({
+      kind: 'markdown',
+      connectionId: null,
+      readContext: {
+        target: { kind: 'environment', environmentId: 'workhost' },
+        worktreeId: 'wt-1',
+        relativePath: 'report.md'
+      }
+    })
+    const content = shown()?.content
+    expect(content && content.kind !== 'web' ? content.readContext?.access : null).toBeUndefined()
+    expect(linkSource.openInWorkspace).not.toHaveBeenCalled()
   })
 
   it('embeds a directly reachable domain without creating a host browser tab', () => {

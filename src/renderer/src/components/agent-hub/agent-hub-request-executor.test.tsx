@@ -284,15 +284,20 @@ describe('Agent Hub non-card actions', () => {
         pairedContext
       )
     ).toMatchObject({ kind: 'error', message: 'Host disconnected' })
+    expect(await run({ ...base, kind: 'peek', link: 'notes.md' })).toEqual({ kind: 'ack' })
+    expect(readAgentHubPeek()?.history.at(-1)).toMatchObject({
+      content: { kind: 'markdown', filePath: '/repo/wt-1/notes.md' },
+      preserveKeyboardFocus: true
+    })
     const toastError = vi.spyOn(toast, 'error').mockImplementation(() => 0)
-    expect(await run({ ...base, kind: 'peek', link: 'notes.md' })).toEqual({
+    expect(await run({ ...base, kind: 'peek', link: 'notes.txt' })).toEqual({
       kind: 'error',
       code: 'invalid_argument',
       message:
-        'Peek opens web pages, images, PDF, audio, video and HTML files. This file type is not supported.'
+        'Peek opens web pages, images, PDF, audio, video, HTML and Markdown files. This file type is not supported.'
     })
     expect(toastError).toHaveBeenCalledWith(
-      'Peek opens web pages, images, PDF, audio, video and HTML files. This file type is not supported.'
+      'Peek opens web pages, images, PDF, audio, video, HTML and Markdown files. This file type is not supported.'
     )
     toastError.mockRestore()
   })
