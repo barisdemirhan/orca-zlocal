@@ -54,12 +54,14 @@ export function AgentHubThreadHoverCard({
   thread,
   location,
   actions,
+  hint,
   suppressed = false,
   children
 }: {
   thread: AgentPaneThread
   location: AgentHubLocation
   actions?: AgentHubThreadCardActions
+  hint?: string
   /** Keeps the card shut while the trigger is busy (a drag, a rename). */
   suppressed?: boolean
   children: React.ReactElement
@@ -73,6 +75,7 @@ export function AgentHubThreadHoverCard({
       </HoverCardTrigger>
       <HoverCardContent side="bottom" align="start" className="w-72">
         <ThreadDetails thread={thread} location={location} actions={actions} />
+        {hint ? <p className="mt-2.5 text-xs text-muted-foreground">{hint}</p> : null}
       </HoverCardContent>
     </HoverCard>
   )

@@ -1,6 +1,5 @@
 import { Fragment } from 'react'
 import { ArrowUpRight, ChevronRight, CornerUpLeft, Workflow } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import { AgentIcon } from '@/lib/agent-catalog'
@@ -62,45 +61,45 @@ function FamilyButton({
 }): React.JSX.Element {
   const title = activityThreadRowCopy(thread).taskTitle
   const agent = agentTypeToIconAgent(thread.agentType)
+  const returnHint = returnTitle
+    ? translate('agentHub.mirror.returnAgain', 'Click again to return to {{value0}}', {
+        value0: returnTitle
+      })
+    : undefined
   return (
     <span className="flex shrink-0 items-center">
-      <Tooltip>
-        <AgentHubThreadHoverCard thread={thread} location={location} actions={actions}>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              role={level === 'worker' ? 'treeitem' : undefined}
-              aria-level={level === 'worker' ? depth + 1 : undefined}
-              aria-selected={level === 'worker' ? active : undefined}
-              aria-expanded={childCount ? expanded : undefined}
-              aria-current={level === 'dispatcher' && active ? 'page' : undefined}
-              tabIndex={level === 'worker' && !tabStop ? -1 : undefined}
-              data-pane-key={thread.paneKey}
-              data-level={level}
-              data-active={active}
-              data-current={active || undefined}
-              onClick={() => onSelect(thread)}
-              className="flex h-6 max-w-55 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground data-[active=true]:bg-foreground/[0.1] data-[active=true]:text-foreground data-[level=dispatcher]:font-semibold data-[level=dispatcher]:text-foreground"
-            >
-              {children}
-              <span className="grid shrink-0 place-items-center">
-                <HubStateIndicator kind={agentHubIndicatorKind(thread)} />
-              </span>
-              {/* Which agent it is, like the window header's avatar. */}
-              {agent ? <AgentIcon agent={agent} size={12} /> : null}
-              <span className="truncate">{title}</span>
-              {childCount ? <HubChip>{childCount}</HubChip> : null}
-            </button>
-          </TooltipTrigger>
-        </AgentHubThreadHoverCard>
-        {returnTitle ? (
-          <TooltipContent side="top" sideOffset={4}>
-            {translate('agentHub.mirror.returnAgain', 'Click again to return to {{value0}}', {
-              value0: returnTitle
-            })}
-          </TooltipContent>
-        ) : null}
-      </Tooltip>
+      <AgentHubThreadHoverCard
+        thread={thread}
+        location={location}
+        actions={actions}
+        hint={returnHint}
+      >
+        <button
+          type="button"
+          aria-description={returnHint}
+          role={level === 'worker' ? 'treeitem' : undefined}
+          aria-level={level === 'worker' ? depth + 1 : undefined}
+          aria-selected={level === 'worker' ? active : undefined}
+          aria-expanded={childCount ? expanded : undefined}
+          aria-current={level === 'dispatcher' && active ? 'page' : undefined}
+          tabIndex={level === 'worker' && !tabStop ? -1 : undefined}
+          data-pane-key={thread.paneKey}
+          data-level={level}
+          data-active={active}
+          data-current={active || undefined}
+          onClick={() => onSelect(thread)}
+          className="flex h-6 max-w-55 shrink-0 items-center gap-1.5 rounded-md px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground data-[active=true]:bg-foreground/[0.1] data-[active=true]:text-foreground data-[level=dispatcher]:font-semibold data-[level=dispatcher]:text-foreground"
+        >
+          {children}
+          <span className="grid shrink-0 place-items-center">
+            <HubStateIndicator kind={agentHubIndicatorKind(thread)} />
+          </span>
+          {/* Which agent it is, like the window header's avatar. */}
+          {agent ? <AgentIcon agent={agent} size={12} /> : null}
+          <span className="truncate">{title}</span>
+          {childCount ? <HubChip>{childCount}</HubChip> : null}
+        </button>
+      </AgentHubThreadHoverCard>
       {actions.onJump ? (
         <button
           type="button"

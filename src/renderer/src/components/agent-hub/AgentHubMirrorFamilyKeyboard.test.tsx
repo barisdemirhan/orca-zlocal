@@ -230,9 +230,10 @@ it('clicking a viewed worker again or its home row returns without changing the 
   expect(screen.getByRole('treeitem', { name: 'Dispatcher' })).toBeTruthy()
   const user = userEvent.setup()
   await user.hover(worker)
-  expect((await screen.findByRole('tooltip')).textContent).toContain(
-    'Click again to return to Dispatcher'
-  )
+  expect(await screen.findByText('Click again to return to Dispatcher')).toBeTruthy()
+  expect(await screen.findByText('Where')).toBeTruthy()
+  expect(screen.queryByRole('tooltip')).toBeNull()
+  expect(worker.getAttribute('aria-description')).toBe('Click again to return to Dispatcher')
   fireEvent.click(worker)
   expect(screen.queryByRole('treeitem', { name: 'Dispatcher' })).toBeNull()
   expect(readAgentHubMirrors().windows[0]?.tabs[0]?.viewing).toBeUndefined()
