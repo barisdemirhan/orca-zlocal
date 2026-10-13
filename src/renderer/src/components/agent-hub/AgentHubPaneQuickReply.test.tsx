@@ -3,10 +3,11 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
-import { getDefaultSettings } from '../../../../shared/constants'
+import { getDefaultSettings, getDefaultVoiceSettings } from '../../../../shared/constants'
 import { parsePaneKey } from '../../../../shared/stable-pane-id'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
 import { TooltipProvider } from '../ui/tooltip'
+import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 import { AgentHubPaneQuickReplyPortals } from './AgentHubPaneQuickReply'
 import { agentHubCardKey, resetAgentHubAnsweredCardsForTest } from './agent-hub-answered-cards'
 import type * as QuickAnswerModule from './use-agent-hub-quick-answer'
@@ -55,17 +56,20 @@ vi.mock('../native-chat/NativeChatInteractiveCard', async () => {
     NativeChatInteractiveCard: ({
       card,
       onDismiss,
-      controlRef
+      controlRef,
+      answerInputRef
     }: {
       card: { prompt: { questions: { question: string }[] } }
       onDismiss: () => void
       controlRef: React.Ref<{ chooseOption: (index: number) => boolean }>
+      answerInputRef?: React.RefObject<HTMLInputElement | null>
     }) => {
       useImperativeHandle(controlRef, () => ({ chooseOption: fullCard.chooseOption }))
       fullCard.dismiss = onDismiss
       return (
         <div data-testid="full-card">
           {card.prompt.questions.map((question) => question.question).join(' / ')}
+          <input ref={answerInputRef} aria-label="Full card answer" />
         </div>
       )
     }
@@ -206,6 +210,46 @@ it("takes several questions in the agent's full card, keeping the keys until all
 
   act(() => fullCard.dismiss())
   expect(card()).toBeNull()
+})
+
+it('dictates only into the full card answer, and refuses while that field is disabled', () => {
+  quick.answer.options = []
+  quick.answer.card = {
+    kind: 'question',
+    prompt: {
+      questions: [
+        { question: 'Plan?', multiSelect: false, options: [{ label: 'Yes' }] },
+        { question: 'Ship?', multiSelect: false, options: [{ label: 'Now' }] }
+      ]
+    }
+  }
+  const settings = getDefaultSettings('/home/u')
+  useAppStore.setState({
+    settings: {
+      ...settings,
+      experimentalAgentHub: true,
+      voice: { ...getDefaultVoiceSettings(), enabled: true }
+    },
+    agentStatusByPaneKey: { [PANE_KEY]: asking },
+    dictationState: 'idle'
+  })
+  const pane = mountPane()
+  pane.terminal.focus()
+  renderPortals(pane)
+  const input = screen.getByRole<HTMLInputElement>('textbox', { name: 'Full card answer' })
+  const onControl = vi.fn(() => expect(document.activeElement).toBe(input))
+  document.addEventListener(DICTATION_CONTROL_EVENT, onControl)
+  try {
+    input.disabled = true
+    fireEvent.click(screen.getByRole('button', { name: 'Dictate' }))
+    expect(onControl).not.toHaveBeenCalled()
+    input.disabled = false
+    fireEvent.click(screen.getByRole('button', { name: 'Dictate' }))
+    expect(onControl).toHaveBeenCalledOnce()
+    expect(document.activeElement).toBe(input)
+  } finally {
+    document.removeEventListener(DICTATION_CONTROL_EVENT, onControl)
+  }
 })
 
 it('shows the answer going out instead of standing still', () => {

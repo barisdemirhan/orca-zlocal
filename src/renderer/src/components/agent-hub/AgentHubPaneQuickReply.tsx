@@ -70,6 +70,7 @@ function PaneQuickReplyCard({
       ? quick.card
       : null
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
+  const nativeAnswerInputRef = useRef<HTMLInputElement>(null)
   const answerable = quick.options.length > 0 || fullCard !== null
   const shown = answerable && !dismissed && !gone
   // While it is open, the mirror's mic leaves dictation to the card's own field.
@@ -204,7 +205,11 @@ function PaneQuickReplyCard({
               layout="embedded"
               highlightRecommended
               controlRef={nativeControlRef}
+              answerInputRef={nativeAnswerInputRef}
             />
+            <div className="mt-1 flex justify-end">
+              <HubDictateButton compact targetInputRef={nativeAnswerInputRef} />
+            </div>
           </div>
         ) : (
           <>

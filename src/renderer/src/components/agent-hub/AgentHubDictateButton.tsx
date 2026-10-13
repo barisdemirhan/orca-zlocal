@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 import { Mic } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store'
@@ -12,10 +12,12 @@ import { isDictationRunning } from './agent-hub-mirror-mic-state'
  */
 export function HubDictateButton({
   compact = false,
-  disabled = false
+  disabled = false,
+  targetInputRef
 }: {
   compact?: boolean
   disabled?: boolean
+  targetInputRef?: RefObject<HTMLInputElement | null>
 }): React.JSX.Element | null {
   const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
   const running = useAppStore((s) => isDictationRunning(s.dictationState))
@@ -61,8 +63,17 @@ export function HubDictateButton({
         if (running) {
           return
         }
-        // Why focus first: dictation inserts into whatever field holds focus when it starts.
-        event.currentTarget.form?.querySelector('input')?.focus()
+        const input = targetInputRef
+          ? targetInputRef.current
+          : event.currentTarget.form?.querySelector('input')
+        if (!input || input.disabled) {
+          return
+        }
+        // Dictation inserts into the focused field; a missing target must not reach another pane.
+        input.focus()
+        if (document.activeElement !== input) {
+          return
+        }
         setStarted(true)
         // Why toggle: 'start' only leaves idle, and a failed run waits in 'error'.
         dispatchDictationControl('toggle')
