@@ -21146,14 +21146,14 @@
       "sendToHub": "Agent Hub に移す",
       "bringBack": "戻す",
       "showInMirror": "ミラーで表示",
-      "closeAgent": "エージェントを閉じる",
+      "closeAgent": "Agent を閉じる",
       "closeShell": "ターミナルを閉じる"
     },
     "mirror": {
-      "newAgent": "新しいエージェント",
-      "agent": "エージェント",
-      "addAgentInWorkspace": "{{workspace}} にエージェントを追加",
-      "newAgentInWorkspace": "{{workspace}} の新しい {{agent}} エージェント",
+      "newAgent": "新規 Agent",
+      "agent": "Agent",
+      "addAgentInWorkspace": "{{workspace}} に Agent を追加",
+      "newAgentInWorkspace": "{{workspace}} の新規 {{agent}} Agent",
       "newAgentFailed": "{{agent}} を起動できませんでした。",
       "newAgentUnavailable": "新しいターミナルを利用できません。",
       "backHome": "{{value0}} に戻る",
@@ -21205,12 +21205,12 @@
       "tabLabel": "{{value0}}、{{value1}}",
       "dictationStopKey": "で停止"
     },
-    "title": "エージェント",
+    "title": "Agent",
     "tab": {
       "inbox": "受信トレイ",
       "running": "実行中",
       "all": "すべてのターミナル",
-      "agents": "エージェント",
+      "agents": "Agent",
       "shownInMirror": "ミラーに表示中",
       "bringBack": "戻す"
     },
@@ -21222,12 +21222,12 @@
       "markAllRead": "すべて既読にする",
       "finished": "完了",
       "emptyHint": "{{value0}} 実行中 · 質問があれば通知します",
-      "oneAgent": "1 エージェント",
-      "agents": "{{value0}} エージェント",
+      "oneAgent": "1 Agent",
+      "agents": "{{value0}} Agent",
       "hidden": "{{value0}} 件非表示 · 表示"
     },
     "running": {
-      "empty": "現在作業中のエージェントはいません",
+      "empty": "現在作業中の Agent はいません",
       "working": "作業中",
       "longestFirst": "経過時間が長い順",
       "popOutAll": "すべて別ウィンドウで開く"
@@ -21248,7 +21248,7 @@
       "needsYouOther": "{{value0}} 件の対応が必要"
     },
     "terminals": {
-      "searchPlaceholder": "ターミナル、プロジェクト、グループ、エージェントで絞り込み",
+      "searchPlaceholder": "ターミナル、プロジェクト、グループ、Agent で絞り込み",
       "searchLabel": "ターミナルを絞り込む",
       "noMatch": "「{{value0}}」に一致するターミナルはありません",
       "empty": "開いているターミナルはありません",
@@ -21256,7 +21256,7 @@
       "ungrouped": "グループなし",
       "unknownProject": "不明",
       "termCount": "{{value0}} ターミナル",
-      "noMatchHint": "プロジェクト、グループ、ブランチ、エージェントの名前で検索",
+      "noMatchHint": "プロジェクト、グループ、ブランチ、Agent の名前で検索",
       "sortManualHint": "サイドバーで並べた順にワークスペースを表示します。",
       "sortLabel": "並び順: {{value0}}",
       "sortBy": "並び替え"
@@ -21293,7 +21293,7 @@
       "dismiss": "閉じる"
     },
     "dock": {
-      "nextWaiting": "次の回答待ちエージェントへ移動",
+      "nextWaiting": "次の回答待ち Agent へ移動",
       "edgeBottom": "ステータスバーの上",
       "edgeLeft": "左端",
       "edgeRight": "右端",
@@ -21316,10 +21316,10 @@
       "arrange": "ミラーを整列"
     },
     "children": {
-      "agentOne": "1 エージェント",
-      "agentMany": "{{value0}} エージェント",
-      "subagentOne": "1 サブエージェント",
-      "subagentMany": "{{value0}} サブエージェント"
+      "agentOne": "1 Agent",
+      "agentMany": "{{value0}} Agent",
+      "subagentOne": "1 サブ Agent",
+      "subagentMany": "{{value0}} サブ Agent"
     },
     "statusBarMenuItem": "Agent Hub",
     "dim": {
@@ -21379,7 +21379,7 @@
       "modeCopy": "ミラーのマイクをクリックすると、このモードで開始します。Shift を押しながらクリックすると、利用可能なもう一方のモードで開始します。",
       "startImproveHint": "このターミナルにディクテーションして改善。Shift を押しながらクリックすると、入力のみ行います。",
       "improve": "ディクテーションして改善",
-      "improveWithAgent": "エージェントで改善",
+      "improveWithAgent": "Agent で改善",
       "improveSettings": "文字起こし改善の設定",
       "modeSwitchCopy": "有効時はミラーのマイクがディクテーションして改善します。Shift を押しながらクリックすると、逆の動作になります。",
       "improveRequired": "文字起こしの改善機能が必要です。",
@@ -21395,9 +21395,9 @@
     "shortcuts": {
       "title": "キーボードショートカット",
       "toggle": "Agent Hub を開く／閉じる",
-      "nextWaiting": "次の回答待ちエージェントへ移動",
+      "nextWaiting": "次の回答待ち Agent へ移動",
       "dockMirrors": "ミラーを最小化／復元",
-      "popOut": "アクティブなエージェントを別ウィンドウで開く",
+      "popOut": "アクティブな Agent を別ウィンドウで開く",
       "jumpToMirror": "アクティブなミラーのワークスペースへ移動",
       "arrangeMirrors": "ミラーを整列",
       "toggleCanvas": "キャンバスを開く／離れる",
@@ -21439,8 +21439,8 @@
       "sending": "送信中…"
     },
     "settings": {
-      "agentControl": "エージェントによる Agent Hub の操作を許可",
-      "agentControlCopy": "エージェントが内容の表示、質問、ミラーの管理を行えます。"
+      "agentControl": "Agent による Agent Hub の操作を許可",
+      "agentControlCopy": "Agent が内容の表示、質問、ミラーの管理を行えます。"
     },
     "requests": {
       "decisionGate": "判断待ち",
