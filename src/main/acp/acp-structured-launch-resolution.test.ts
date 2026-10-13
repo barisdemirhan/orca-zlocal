@@ -78,6 +78,13 @@ function resolver(record: AgentSessionRecord, readJournal: () => JournalLoad | n
 }
 
 describe('ACP launch resolution', () => {
+  it('uses the chosen Orb directory instead of resolving the floating workspace setting', async () => {
+    const record = grokRecord()
+    record.location.workspaceId = FLOATING_TERMINAL_WORKTREE_ID
+    record.launchDirectory = tmpdir()
+    const launch = await resolver(record).resolve({ identity })
+    expect(launch.cwd).toBe(record.launchDirectory)
+  })
   it('pins the record account home and searches the agent install dir', async () => {
     const { resolve, searched } = resolver(grokRecord())
     const launch = await resolve({ identity })

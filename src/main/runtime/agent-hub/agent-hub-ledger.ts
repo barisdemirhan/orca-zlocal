@@ -15,7 +15,7 @@ import type {
 } from '../../../shared/agent-hub-requests'
 import { AGENT_HUB_UI_TIMEOUT_MS } from '../../../shared/rpc-contract/agent-hub-params'
 import { AgentHubError } from './agent-hub-error'
-import { AgentHubRateLimits } from './agent-hub-rate-limits'
+import { AgentHubRateLimits, agentHubCallerRateKey } from './agent-hub-rate-limits'
 import { AgentHubPendingRequests } from './agent-hub-pending-requests'
 import { AgentHubProgressLines } from './agent-hub-progress'
 
@@ -81,7 +81,7 @@ export class AgentHubLedger {
     content: { text: string; level: 'info' | 'done' | 'needs-you'; sound: boolean; links: string[] }
   ): { requestId: string } {
     this.requireDesktop()
-    this.rates.consume(caller.paneKey, 'notify')
+    this.rates.consume(caller, 'notify')
     const request: AgentHubRequest = {
       ...this.base(caller, target, 600_000),
       kind: 'notify',
@@ -103,7 +103,7 @@ export class AgentHubLedger {
     if (this.requests.get(requestId)) {
       throw new AgentHubError('invalid_argument', 'Question ID already exists; use --resume')
     }
-    const pending = this.requests.pendingAsks(caller.paneKey)
+    const pending = this.requests.pendingAsks(agentHubCallerRateKey(caller))
     if (pending.length >= 3) {
       throw new AgentHubError(
         'rate_limited',
@@ -136,7 +136,11 @@ export class AgentHubLedger {
   ): Promise<AgentHubAnswer & { requestId: string }> {
     this.requireDesktop()
     const request = this.requests.get(requestId)
-    if (!request || request.kind !== 'ask' || request.caller.paneKey !== caller.paneKey) {
+    if (
+      !request ||
+      request.kind !== 'ask' ||
+      agentHubCallerRateKey(request.caller) !== agentHubCallerRateKey(caller)
+    ) {
       throw new AgentHubError(
         'request_not_found',
         'Question does not belong to this pane or the host has restarted'
@@ -198,8 +202,8 @@ export class AgentHubLedger {
     signal?: AbortSignal
   ): Promise<{ requestId: string }> {
     this.requireDesktop()
-    this.rates.consume(caller.paneKey, operation.kind === 'peek' ? 'peek' : 'mirror')
-    const grantKey = JSON.stringify([caller.paneKey, target.paneKey])
+    this.rates.consume(caller, operation.kind === 'peek' ? 'peek' : 'mirror')
+    const grantKey = JSON.stringify([agentHubCallerRateKey(caller), target.paneKey])
     if (
       agentHubTargetNeedsConsent(caller, target, this.parentOf) &&
       !this.sessionGrants.has(grantKey)

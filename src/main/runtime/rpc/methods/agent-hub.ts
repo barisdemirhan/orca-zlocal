@@ -36,7 +36,7 @@ export const AGENT_HUB_METHODS = [
     permission: 'workspace',
     params: AgentHubPeekParams,
     handler: (params, ctx) => {
-      const { caller, target } = resolveAgentHubPanes(params, ctx)
+      const { caller, target } = resolveAgentHubPanes(params, ctx, 'peek')
       return ctx.runtime.agentHub.operate(
         caller,
         target,
@@ -116,7 +116,7 @@ export const AGENT_HUB_METHODS = [
     permission: 'workspace',
     params: AgentHubMirrorParams,
     handler: (params, ctx) => {
-      const { caller, target } = resolveAgentHubPanes(params, ctx)
+      const { caller, target } = resolveAgentHubPanes(params, ctx, 'mirror')
       return ctx.runtime.agentHub.operate(
         caller,
         target,
@@ -130,7 +130,7 @@ export const AGENT_HUB_METHODS = [
     permission: 'workspace',
     params: AgentHubArrangeParams,
     handler: (params, ctx) => {
-      const { caller, target } = resolveAgentHubPanes(params, ctx)
+      const { caller, target } = resolveAgentHubPanes(params, ctx, 'arrange')
       return ctx.runtime.agentHub.operate(
         caller,
         target,
@@ -144,7 +144,7 @@ export const AGENT_HUB_METHODS = [
     permission: 'workspace',
     params: AgentHubCanvasParams,
     handler: (params, ctx) => {
-      const { caller, target } = resolveAgentHubPanes(params, ctx)
+      const { caller, target } = resolveAgentHubPanes(params, ctx, 'canvas')
       return ctx.runtime.agentHub.operate(
         caller,
         target,

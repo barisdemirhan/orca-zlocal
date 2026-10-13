@@ -22,15 +22,40 @@ export function agentHubDesktopId(
 }
 
 export function resolveAgentHubPanes(
-  params: { callerTerminalHandle?: string; callerPaneKey?: string; terminal?: string },
-  { runtime }: RpcContext
+  params: {
+    callerTerminalHandle?: string
+    callerPaneKey?: string
+    callerSessionId?: string
+    terminal?: string
+  },
+  { runtime, caller: rpcCaller }: RpcContext,
+  operation?: 'mirror' | 'peek' | 'arrange' | 'canvas'
 ): { caller: AgentHubCaller; target: AgentHubPane } {
   const handle =
     params.callerTerminalHandle ??
     (params.callerPaneKey ? runtime.getTerminalHandleForPaneKey(params.callerPaneKey) : null)
-  const caller = handle ? runtime.getAgentHubCaller(handle) : null
+  let caller = handle ? runtime.getAgentHubCaller(handle) : null
+  if (!handle && params.callerSessionId && rpcCaller?.kind === 'local-cli') {
+    const current = runtime.agentHubOrb.current()
+    if (current?.sessionId === params.callerSessionId) {
+      caller = {
+        kind: 'orb',
+        sessionId: current.sessionId,
+        title: 'Orb',
+        // Retained for older request readers; these keys never resolve to a terminal pane.
+        paneKey: `orb:${current.sessionId}`,
+        terminalHandle: `orb:${current.sessionId}`
+      }
+    }
+  }
   if (!caller || (params.callerPaneKey && params.callerPaneKey !== caller.paneKey)) {
     throw new AgentHubError('invalid_argument', 'Caller does not identify a pane on this host')
+  }
+  if (caller.kind === 'orb' && operation && !params.terminal) {
+    throw new AgentHubError(
+      'invalid_argument',
+      `Orb cannot ${operation} without a target; pass --terminal`
+    )
   }
   const target = params.terminal ? runtime.getAgentHubCaller(params.terminal) : caller
   if (!target) {

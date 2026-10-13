@@ -13,6 +13,7 @@ export type AgentSessionRecordIdentity = Pick<
   | 'sessionId'
   | 'location'
   | 'provider'
+  | 'origin'
   | 'accountHome'
   | 'options'
   | 'launchArgs'
@@ -31,6 +32,7 @@ export function agentSessionRecordIdentityFields(
     sessionId: identity.sessionId,
     location: identity.location,
     provider: identity.provider,
+    ...(identity.origin ? { origin: identity.origin } : {}),
     accountHome: identity.accountHome,
     ...(Object.keys(options).length > 0 ? { options } : {}),
     ...(permissionMode ? { permissionMode } : {}),

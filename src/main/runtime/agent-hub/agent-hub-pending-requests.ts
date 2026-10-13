@@ -6,6 +6,7 @@ import type {
   AgentHubResponse
 } from '../../../shared/agent-hub-requests'
 import { AgentHubError } from './agent-hub-error'
+import { agentHubCallerRateKey } from './agent-hub-rate-limits'
 
 export type AgentHubSettlement = {
   response: AgentHubResponse
@@ -34,7 +35,7 @@ export class AgentHubPendingRequests {
   }
   pendingAsks(paneKey: string): AgentHubRequest[] {
     return this.snapshot().filter(
-      (request) => request.kind === 'ask' && request.caller.paneKey === paneKey
+      (request) => request.kind === 'ask' && agentHubCallerRateKey(request.caller) === paneKey
     )
   }
   snapshot(): AgentHubRequest[] {

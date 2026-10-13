@@ -1,4 +1,5 @@
 import type { PreloadApi } from '../../../preload/api-types'
+import { createDisabledAgentHubOrbApi } from '../../../shared/agent-hub-orb-client'
 import type { StatsSummary } from '../../../shared/process-stats-types'
 import { createWebE2EApi } from './preload-api/web-e2e-api'
 import {
@@ -82,6 +83,7 @@ function createWebPreloadApi(): Partial<PreloadApi> {
     ...createWebOnboardingApi(),
     ...createWebGithubCacheApi(),
     runtime: createWebRuntimeApi(),
+    agentHub: { orb: createDisabledAgentHubOrbApi() },
     nativeChat: createWebNativeChatApi(),
     runtimeEnvironments: createRuntimeEnvironmentsApi(),
     repos: createReposApi(),

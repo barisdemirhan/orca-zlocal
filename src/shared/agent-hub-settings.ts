@@ -1,4 +1,5 @@
 import type { PersistedUIState } from './persisted-ui-state-types'
+import type { StructuredAgentId } from './agent-session-provider-handle'
 
 /** Where the Agent Hub lives: a draggable dock on a window edge, or a status-bar item. */
 export type AgentHubPlacement = 'dock' | 'status-bar'
@@ -33,6 +34,12 @@ export type AgentHubSettings = {
   experimentalAgentHub?: boolean
   /** Agent requests are consumed only while this permission and the experiment are enabled. */
   agentHubAgentControl?: boolean
+  agentHubOrbAgent?: StructuredAgentId
+  agentHubOrbModel?: string | null
+  agentHubOrbPermission?: 'ask' | 'free'
+  agentHubOrbCwd?: string | null
+  agentHubOrbPlacement?: 'dock' | 'statusBar' | 'hidden'
+  agentHubOrbSpeakReplies?: boolean
   /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */
   agentHubMicMode?: AgentHubMicMode
   /** Agent Hub: a draggable dock on a window edge (default) or a status-bar item. */

@@ -11,6 +11,8 @@ import { mapDispatcherError } from '../dispatcher-error-response'
 import { AGENT_HUB_METHODS } from './agent-hub'
 import { CLIENT_EVENT_METHODS } from './client-events'
 import { ClientEventsSubscribeParams } from '../../../../shared/rpc-contract/client-events-params'
+import { resolveAgentHubPanes } from './agent-hub-caller'
+import { readAgentHubDelivery } from '../../../../shared/rpc-contract/agent-hub-events'
 
 vi.mock('../../../ssh/ssh-target-registry', () => ({
   listRegisteredSshTargets: () => [],
@@ -23,8 +25,10 @@ let bus: RuntimeClientEventBus
 let ledger: AgentHubLedger
 let registry: RuntimeSubscriptionRegistry
 let runtime: OrcaRuntimeService
+const orbCurrent = vi.fn(() => ({ sessionId: 'codex_orb', resumed: false }))
 const active: { controller: AbortController; done: Promise<void> }[] = []
 beforeEach(() => {
+  orbCurrent.mockReset().mockReturnValue({ sessionId: 'codex_orb', resumed: false })
   bus = new RuntimeClientEventBus({
     makeTitleGateKey: () => '',
     onConsumerAvailabilityChanged: () => {}
@@ -34,6 +38,7 @@ beforeEach(() => {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: these RPC handlers use only the supplied pane lookup, ledger, event bus and subscription registry.
   runtime = {
     agentHub: ledger,
+    agentHubOrb: { current: orbCurrent },
     onClientEvent: bus.on.bind(bus),
     registerSubscriptionCleanup: registry.register.bind(registry),
     cleanupSubscription: registry.cleanup.bind(registry),
@@ -73,6 +78,70 @@ function subscribe(desktop: string, capable = true, local = false, params?: unkn
 }
 
 describe('Agent Hub runtime boundary', () => {
+  it('delivers an Orb question to the desktop Inbox and sends the human answer back over the waiting CLI request', async () => {
+    const desktop = subscribe('local', true, true)
+    const ask = AGENT_HUB_METHODS.find((method) => method.name === 'agentHub.ask')
+    const respond = AGENT_HUB_METHODS.find((method) => method.name === 'agentHub.respond')
+    if (!ask || !respond) {
+      throw new Error('Missing methods')
+    }
+    const answer = ask.handler(
+      ask.params.parse({
+        callerSessionId: 'codex_orb',
+        question: 'Proceed?',
+        options: ['Yes', 'No']
+      }),
+      { runtime, caller: { kind: 'local-cli' } }
+    )
+    const event = readAgentHubDelivery(desktop.received.at(-1))
+    expect(event).toMatchObject({
+      kind: 'ask',
+      caller: { kind: 'orb', sessionId: 'codex_orb', title: 'Orb' }
+    })
+    if (!event || event.kind !== 'ask') {
+      throw new Error('No Orb question')
+    }
+    respond.handler(
+      { requestId: event.requestId, result: { kind: 'ask', answer: 'Yes', index: 1 } },
+      desktop.ctx
+    )
+    await expect(answer).resolves.toMatchObject({ answer: 'Yes', index: 1 })
+  })
+
+  it.each(['peek', 'mirror', 'arrange', 'canvas'] as const)(
+    'requires an explicit pane target for Orb %s and retains existing cross-pane consent',
+    (operation) => {
+      const ctx: RpcContext = { runtime, caller: { kind: 'local-cli' } }
+      expect(() => resolveAgentHubPanes({ callerSessionId: 'codex_orb' }, ctx, operation)).toThrow(
+        `Orb cannot ${operation} without a target; pass --terminal`
+      )
+      expect(
+        resolveAgentHubPanes(
+          { callerSessionId: 'codex_orb', terminal: caller.terminalHandle },
+          ctx,
+          operation
+        )
+      ).toMatchObject({
+        caller: { kind: 'orb', sessionId: 'codex_orb' },
+        target: { paneKey: caller.paneKey }
+      })
+    }
+  )
+
+  it('refuses ordinary structured sessions and cross-host Orb identity claims', () => {
+    expect(() =>
+      resolveAgentHubPanes(
+        { callerSessionId: 'ordinary_session' },
+        { runtime, caller: { kind: 'local-cli' } }
+      )
+    ).toThrow('Caller does not identify a pane on this host')
+    expect(() =>
+      resolveAgentHubPanes(
+        { callerSessionId: 'codex_orb' },
+        { runtime, caller: { kind: 'paired-device', deviceId: 'remote' } }
+      )
+    ).toThrow('Caller does not identify a pane on this host')
+  })
   it('delivers requests and responses over the same stream for local and paired desktops, filtering older peers', async () => {
     const local = subscribe('local', true, true)
     const remote = subscribe('remote')

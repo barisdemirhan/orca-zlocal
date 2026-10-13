@@ -1,5 +1,10 @@
 export type AgentHubPane = { paneKey: string; terminalHandle: string }
-export type AgentHubCaller = AgentHubPane & { agentType?: string; title?: string }
+export type AgentHubCaller = AgentHubPane & {
+  kind?: 'pane' | 'orb'
+  sessionId?: string
+  agentType?: string
+  title?: string
+}
 
 export type AgentHubRequestBase = {
   requestId: string
@@ -83,6 +88,8 @@ export type AgentHubResponse =
     }
 
 export type AgentHubErrorCode =
+  | 'disabled'
+  | 'not_found'
   | 'rate_limited'
   | 'no_desktop'
   | 'no_response'

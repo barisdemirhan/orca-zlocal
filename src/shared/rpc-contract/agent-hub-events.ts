@@ -4,7 +4,12 @@ import type { AgentHubDelivery, AgentHubEvent, AgentHubSnapshot } from '../agent
 const pane = z.object({ paneKey: z.string(), terminalHandle: z.string() })
 const base = z.object({
   requestId: z.string().uuid(),
-  caller: pane.extend({ agentType: z.string().optional(), title: z.string().optional() }),
+  caller: pane.extend({
+    kind: z.enum(['pane', 'orb']).optional(),
+    sessionId: z.string().optional(),
+    agentType: z.string().optional(),
+    title: z.string().optional()
+  }),
   target: pane,
   createdAt: z.number().finite(),
   expiresAt: z.number().finite()
@@ -67,6 +72,8 @@ export const AgentHubEventSchema: z.ZodType<AgentHubEvent> = z.discriminatedUnio
     gateId: z.string().optional(),
     reason: z.enum([
       'responded',
+      'disabled',
+      'not_found',
       'rate_limited',
       'no_desktop',
       'no_response',

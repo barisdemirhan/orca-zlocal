@@ -18,6 +18,7 @@ import type {
   RateLimitsApi
 } from './api/agent-usage-api'
 import type { AiVaultApi } from './api/ai-vault-api'
+import type { AgentHubOrbApi } from '../shared/agent-hub-orb'
 import type { AppApi, E2EApi, PlatformApi } from './api/app-api'
 import type { AutomationsApi } from './api/automation-api'
 import type { BrowserApi } from './api/browser-api'
@@ -146,6 +147,7 @@ export type PreloadApi = {
   git: Merged<GitInspectionApi & GitOperationApi>
   ui: Merged<UiCommandEventApi & UiWindowApi>
   runtime: RuntimeApi['runtime']
+  agentHub: { orb: AgentHubOrbApi }
   runtimeEnvironments: RuntimeApi['runtimeEnvironments']
   rateLimits: RateLimitsApi
   opencodeGoCredentials: {

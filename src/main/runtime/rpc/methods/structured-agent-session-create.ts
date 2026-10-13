@@ -72,7 +72,12 @@ export function structuredAgentSessionCreateIntentFingerprint(params: {
 
 /** Run throwing pre-commit work inside resolveUncommittedStructuredCreate so clients receive a no-effects refusal. */
 export async function prepareStructuredAgentSessionCreateForWorktree(args: {
-  runtime: OrcaRuntimeService
+  runtime: Pick<
+    OrcaRuntimeService,
+    | 'resolveStructuredAgentSessionCreateIntent'
+    | 'getAgentProviderSessionRows'
+    | 'resolveStructuredAgentSessionLocalWorkspacePath'
+  >
   /** Installs the host lazily; called at the same point the RPC handler always installed it. */
   ensureHost: () => Promise<StructuredAgentSessionHost>
   envelope: AgentSessionMutationEnvelope
@@ -84,6 +89,8 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
   /** Explicit picks override seed keys at rest; acquired in-process launches replace the seed. */
   optionsMode?: 'replace-model-selection'
   options?: Readonly<Record<string, string>>
+  origin?: 'agent-hub-orb'
+  hostLaunchDirectory?: string
   /** Use the caller-reserved tab id at publication; absent, derive the legacy id. Keep it outside launch fingerprints. */
   tabId?: string
   firstMessage?: StructuredAgentSessionFirstMessage
@@ -102,12 +109,13 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
     agent: args.agent,
     callerKey: args.caller.callerKey,
     structuredAgentCliSourceEvidence,
+    ...(args.hostLaunchDirectory ? { hostLaunchDirectory: args.hostLaunchDirectory } : {}),
     ...(args.resumeFrom ? { resumeFrom: args.resumeFrom } : {})
   })
   const attachFingerprint = computeAgentSessionPayloadFingerprint({
     method: 'agentSession.attach',
     sessionId: args.envelope.sessionId,
-    fields: attachFingerprintFields({ ...resolved, envelope: args.envelope })
+    fields: attachFingerprintFields({ ...resolved, origin: args.origin, envelope: args.envelope })
   })
   host ??= await args.ensureHost()
   const priorOperation =
@@ -150,6 +158,7 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
     attachParams: {
       ...resolvedAttach,
       ...(picked ? { options: picked } : {}),
+      ...(args.origin ? { origin: args.origin } : {}),
       ...(args.tabId ? { surfaceTabId: args.tabId } : {}),
       provider: resolved.provider,
       agent: resolved.agent,
@@ -165,7 +174,7 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
 
 /** The commit half. Past `attach`, a failure no longer proves the session does not exist. */
 export async function commitStructuredAgentSessionCreate(args: {
-  runtime: OrcaRuntimeService
+  runtime: Pick<OrcaRuntimeService, 'publishStructuredAgentSessionTab'>
   caller: StructuredAgentSessionCaller
   prepared: PreparedStructuredAgentSessionCreate
   activate: boolean

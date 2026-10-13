@@ -48,16 +48,31 @@ function createCodexIntentRuntime(
     })),
     resolveRuntimeFileTarget: vi.fn(async () => ({ worktree: { path: workspacePath } }))
   })
-  const createIntent = () =>
+  const createIntent = (hostLaunchDirectory?: string) =>
     runtime.resolveStructuredAgentSessionCreateIntent({
       envelope: { sessionId: 'session-1', clientOperationId: 'operation-1' },
       worktree: `id:${workspaceId}`,
-      agent: 'codex'
+      agent: 'codex',
+      ...(hostLaunchDirectory ? { hostLaunchDirectory } : {})
     })
   return { prepareCodexStructuredLaunch, createIntent }
 }
 
 describe('structured Codex folder trust', () => {
+  it('prepares and trusts the chosen Orb folder independently of the floating workspace directory', async () => {
+    const { createIntent } = createCodexIntentRuntime(
+      {},
+      FLOATING_TERMINAL_WORKTREE_ID,
+      '/host/floating'
+    )
+    const intent = await createIntent('/host/chosen-orb')
+    expect(intent.hostLaunchDirectory).toBe('/host/chosen-orb')
+    expect(applyAgentWorkspaceTrust).toHaveBeenCalledWith(
+      'codex',
+      '/host/chosen-orb',
+      expect.any(Object)
+    )
+  })
   it('takes a floating chat directory from the host-resolved workspace', async () => {
     const { createIntent } = createCodexIntentRuntime(
       {},

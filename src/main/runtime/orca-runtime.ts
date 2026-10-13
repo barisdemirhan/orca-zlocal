@@ -1,6 +1,7 @@
 import { conversationRecordReader } from './orchestration/structured-session-lineage'
 import type { RuntimeLinearCommandSurface } from './runtime-linear-command-surface'
 import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-decision-gates'
+import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import type { OrchestrationDb } from './orchestration/db'
 import { installRuntimeLinearCommandSurface } from './runtime-linear-command-surface'
 import { publishWorkspaceViewChanges } from './runtime-workspace-view-change-events'
@@ -174,6 +175,7 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
   }
 
   private readonly paneSpawnLineage: RuntimePaneSpawnLineage
+  readonly agentHubOrb = createAgentHubOrbSessionManager(this, this.store)
 
   readonly agentHub = new AgentHubLedger(
     (event) => this.emitClientEvent({ type: 'agentHub', event }),

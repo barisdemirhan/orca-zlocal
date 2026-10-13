@@ -36,6 +36,7 @@ export type StructuredAgentSessionCreateIntentInput = {
   callerKey?: string
   resumeFrom?: StructuredAgentSessionResumeSource
   structuredAgentCliSourceEvidence?: StructuredAgentCliSourceEvidence
+  hostLaunchDirectory?: string
 }
 
 export function resolveCommittedStructuredAgentSessionAdoptionIntent(input: {

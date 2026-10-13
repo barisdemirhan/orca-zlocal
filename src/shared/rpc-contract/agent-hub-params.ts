@@ -9,10 +9,11 @@ const caller = z
   .object({
     callerTerminalHandle: identity.optional(),
     callerPaneKey: identity.optional(),
+    callerSessionId: identity.optional(),
     terminal: identity.optional()
   })
   .refine(
-    (value) => Boolean(value.callerTerminalHandle || value.callerPaneKey),
+    (value) => Boolean(value.callerTerminalHandle || value.callerPaneKey || value.callerSessionId),
     'Run hub commands inside an Orca terminal'
   )
 const text = z.string().trim().min(1).max(8_000)

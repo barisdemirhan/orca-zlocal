@@ -75,6 +75,7 @@ import { museUsageApi } from './api/muse-usage-bridge'
 import { aiVaultApi } from './api/ai-vault-bridge'
 import { nativeChatApi } from './api/native-chat-bridge'
 import { runtimeApi } from './api/runtime-bridge'
+import { createAgentHubOrbApi } from '../shared/agent-hub-orb-client'
 import { runtimeEnvironmentsApi } from './api/runtime-environments-bridge'
 import { rateLimitsApi } from './api/rate-limits-bridge'
 import { opencodeGoCredentialsApi } from './api/opencode-go-credentials-bridge'
@@ -179,6 +180,7 @@ const api = {
   aiVault: aiVaultApi,
   nativeChat: nativeChatApi,
   runtime: runtimeApi,
+  agentHub: { orb: createAgentHubOrbApi(runtimeApi.call) },
   runtimeEnvironments: runtimeEnvironmentsApi,
   rateLimits: rateLimitsApi,
   opencodeGoCredentials: opencodeGoCredentialsApi,

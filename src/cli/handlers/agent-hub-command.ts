@@ -4,6 +4,7 @@ import { getOptionalStringFlag } from '../flags'
 import { RuntimeClientError } from '../runtime-client'
 import { printResult } from '../format'
 import { formatAgentHubResult } from './agent-hub-output'
+import { getCallerAgentSessionId, getCallerTerminalHandle } from '../caller-terminal-handle'
 import {
   AGENT_HUB_DEFAULT_ASK_TIMEOUT_MS,
   AGENT_HUB_MAX_ASK_TIMEOUT_MS
@@ -12,16 +13,25 @@ import {
 export function agentHubCallerFlags(flags: Map<string, string | boolean>): {
   callerTerminalHandle?: string
   callerPaneKey?: string
+  callerSessionId?: string
   terminal?: string
 } {
-  const callerTerminalHandle = process.env.ORCA_TERMINAL_HANDLE?.trim() || undefined
+  const callerTerminalHandle = getCallerTerminalHandle()?.trim() || undefined
+  const callerSessionId = callerTerminalHandle ? undefined : getCallerAgentSessionId()
   const callerPaneKey = callerTerminalHandle
     ? undefined
-    : process.env.ORCA_PANE_KEY?.trim() || undefined
-  if (!callerTerminalHandle && !callerPaneKey) {
+    : callerSessionId
+      ? undefined
+      : process.env.ORCA_PANE_KEY?.trim() || undefined
+  if (!callerTerminalHandle && !callerPaneKey && !callerSessionId) {
     throw new RuntimeClientError('invalid_argument', 'Run hub commands inside an Orca terminal')
   }
-  return { callerTerminalHandle, callerPaneKey, terminal: getOptionalStringFlag(flags, 'terminal') }
+  return {
+    callerTerminalHandle,
+    callerPaneKey,
+    callerSessionId,
+    terminal: getOptionalStringFlag(flags, 'terminal')
+  }
 }
 
 export function parseAgentHubParams<T>(schema: { parse(value: unknown): T }, value: unknown): T {

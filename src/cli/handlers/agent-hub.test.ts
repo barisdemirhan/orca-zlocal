@@ -14,6 +14,7 @@ beforeEach(() => {
   process.exitCode = undefined
   vi.stubEnv('ORCA_TERMINAL_HANDLE', 'term-self')
   vi.stubEnv('ORCA_PANE_KEY', 'pane-fallback')
+  vi.stubEnv('ORCA_AGENT_SESSION_ID', '')
   client = new RuntimeClient('/agent-hub-cli-fixture', 60_000, null, null)
   call = vi.spyOn(client, 'call').mockResolvedValue({
     id: 'req-1',
@@ -42,6 +43,31 @@ async function run(argv: string[], json = false): Promise<void> {
 }
 
 describe('hub CLI', () => {
+  it('uses a pane-less Orb session identity for Hub commands and returns its answer to the calling agent', async () => {
+    vi.stubEnv('ORCA_TERMINAL_HANDLE', '')
+    vi.stubEnv('ORCA_AGENT_SESSION_ID', 'codex_orb')
+    await run(['hub', 'ask', 'Proceed?', '--option', 'Yes', '--option', 'No'])
+    expect(call).toHaveBeenLastCalledWith(
+      'agentHub.ask',
+      expect.objectContaining({
+        callerSessionId: 'codex_orb',
+        callerTerminalHandle: undefined,
+        callerPaneKey: undefined
+      }),
+      expect.anything()
+    )
+    expect(log).toHaveBeenCalledWith('Yes')
+    vi.stubEnv('ORCA_TERMINAL_HANDLE', 'term-self')
+    await run(['hub', 'status'])
+    expect(call).toHaveBeenLastCalledWith(
+      'agentHub.status',
+      expect.objectContaining({
+        callerTerminalHandle: 'term-self',
+        callerSessionId: undefined
+      }),
+      expect.anything()
+    )
+  })
   it('reports missing Peek input as a usage error before contacting the host', async () => {
     await expect(run(['hub', 'peek'])).rejects.toMatchObject({
       code: 'invalid_argument',

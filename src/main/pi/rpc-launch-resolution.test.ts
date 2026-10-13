@@ -94,6 +94,17 @@ async function setup() {
 }
 
 describe('Pi host launch resolution', () => {
+  it('honors the chosen Orb directory', async () => {
+    const h = await setup()
+    vi.spyOn(h.store, 'getRecord').mockReturnValue({
+      ...h.record,
+      origin: 'agent-hub-orb',
+      launchDirectory: h.workspace,
+      location: { ...h.record.location, workspaceId: FLOATING_TERMINAL_WORKTREE_ID }
+    })
+    const launch = await h.resolver(identity)
+    expect(launch).toMatchObject({ cwd: h.workspace })
+  })
   it('refuses acquisition if the selected binary was replaced by a too-old version', async () => {
     const h = await setup()
     probeVersion.mockResolvedValue({ version: '0.83.9' })

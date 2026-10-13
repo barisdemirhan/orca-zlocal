@@ -41,12 +41,14 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
   async getStructuredAgentSessionCreateSupport(
     worktreeSelector: string,
     agent: StructuredAgentId,
-    options?: { requireInstalledChatProgram?: boolean }
+    options?: { requireInstalledChatProgram?: boolean; cwd?: string }
   ): Promise<{ supported: boolean; reason?: 'agent' | 'remote' | 'wsl' | 'chat-program' }> {
+    const cwd = options?.cwd
     const support = await resolveHostStructuredAgentCreateSupport({
       agent,
       worktreeSelector,
-      location: await this.resolveStructuredAgentSessionLocation(worktreeSelector),
+      location: await this.resolveStructuredAgentSessionLocation(worktreeSelector, cwd),
+      hostLaunchDirectory: cwd,
       runtime: this
     })
     if (
@@ -105,7 +107,8 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
         ? captureStructuredAgentCliSource(() => this.getAgentProviderSessionRows())
         : undefined)
     const hostLaunchDirectory = isFloatingWorkspaceSelector(input.worktree)
-      ? (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path
+      ? (input.hostLaunchDirectory ??
+        (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path)
       : undefined
     const resolveAccountHome = this.structuredAgentAccountHomeResolver(
       input.agent,
@@ -153,7 +156,9 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
       }
     }) => AgentSessionAccountHome | Promise<AgentSessionAccountHome>
   ): Promise<AgentSessionAttachParams> {
-    const support = await this.getStructuredAgentSessionCreateSupport(input.worktree, input.agent)
+    const support = await this.getStructuredAgentSessionCreateSupport(input.worktree, input.agent, {
+      cwd: input.hostLaunchDirectory
+    })
     // Adopting a conversation reads the agent's own transcript, so only an agent registered with an
     // importer adopts.
     const transcriptImport = structuredAgentRuntimeMetadata(input.agent)?.transcriptImport
@@ -166,7 +171,10 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
     const settings = this.requireStore().getSettings()
     const launchEnv = this.structuredAgentLaunchEnv(input.agent, settings)
     const options = this.structuredAgentSessionLaunchSeedOptions(input.agent)
-    const location = await this.resolveStructuredAgentSessionLocation(input.worktree)
+    const location = await this.resolveStructuredAgentSessionLocation(
+      input.worktree,
+      input.hostLaunchDirectory
+    )
     const definition = this.requireRegisteredStructuredAgent(input.agent)
     const host = getStructuredAgentSessionHost()
     const committedReplay = resolveCommittedStructuredAgentSessionAdoptionIntent({

@@ -6,6 +6,7 @@ import { eraseRpcMethods } from '../core'
 import { ORCHESTRATION_GATE_METHODS } from './orchestration/gates/gates'
 import { createOrchestrationRpcHarness } from './orchestration/rpc-test-harness'
 import { CLIENT_EVENT_METHODS } from './client-events'
+import { AGENT_HUB_ORB_METHODS } from './agent-hub-orb'
 import { ClientEventsSubscribeParams } from '../../../../shared/rpc-contract/client-events-params'
 import { readAgentHubDelivery } from '../../../../shared/rpc-contract/agent-hub-events'
 import {
@@ -60,6 +61,32 @@ function createGate() {
     options: ['Small (Recommended)', 'Large']
   })
 }
+
+it('refuses Orb methods on disabled hosts and paired desktops before session creation or history reads', async () => {
+  const dispatcher = new RpcDispatcher({
+    runtime: state.runtime,
+    methods: eraseRpcMethods(AGENT_HUB_ORB_METHODS)
+  })
+  for (const enabled of [false, true]) {
+    vi.spyOn(state.runtime, 'isAgentHubEnabled').mockReturnValue(enabled)
+    const ctx: RpcContext = {
+      runtime: state.runtime,
+      caller: enabled ? { kind: 'paired-device', deviceId: 'remote-desktop' } : { kind: 'desktop' },
+      clientKind: 'runtime'
+    }
+    for (const method of AGENT_HUB_ORB_METHODS) {
+      expect(
+        await dispatcher.dispatch(
+          { id: 'orb', authToken: 'desktop', method: method.name, params: {} },
+          {
+            caller: ctx.caller,
+            clientKind: ctx.clientKind
+          }
+        )
+      ).toMatchObject({ ok: false, error: { code: 'disabled' } })
+    }
+  }
+})
 
 it('publishes persisted create, resolve and timeout changes, restoring only pending gates to capable desktops', () => {
   const capable = subscribe(true)

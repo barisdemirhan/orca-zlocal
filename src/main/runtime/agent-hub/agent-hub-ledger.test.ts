@@ -31,6 +31,40 @@ afterEach(() => {
 })
 
 describe('Agent Hub ledger', () => {
+  it('limits Orb notifications by session identity while keeping pane buckets separate', () => {
+    const orb = { ...caller, kind: 'orb' as const, sessionId: 'codex_orb' }
+    for (let index = 0; index < 6; index += 1) {
+      ledger.notify(orb, caller, notification)
+    }
+    expect(() =>
+      ledger.notify({ ...orb, paneKey: 'different-routing-key' }, caller, notification)
+    ).toThrow(expect.objectContaining({ code: 'rate_limited' }))
+    expect(() =>
+      ledger.notify({ ...orb, sessionId: 'codex_other' }, caller, notification)
+    ).not.toThrow()
+    expect(() => ledger.notify(caller, caller, notification)).not.toThrow()
+  })
+
+  it('binds pending and resumed Orb questions to the session even when the routing key changes', async () => {
+    const orb = { ...caller, kind: 'orb' as const, sessionId: 'codex_orb' }
+    const pending = Array.from({ length: 3 }, () => {
+      const answer = ledger.ask(orb, caller, question, 60_000)
+      return { answer, requestId: latest('ask').requestId }
+    })
+    await expect(
+      ledger.ask({ ...orb, paneKey: 'changed' }, caller, question, 60_000)
+    ).rejects.toMatchObject({ code: 'rate_limited' })
+    await expect(
+      ledger.resume({ ...orb, sessionId: 'codex_other' }, pending[0].requestId)
+    ).rejects.toMatchObject({ code: 'request_not_found' })
+    for (const entry of pending) {
+      ledger.respond(entry.requestId, { kind: 'ask', answer: 'Yes', index: 1 }, 'A')
+    }
+    await Promise.all(pending.map((entry) => entry.answer))
+    await expect(
+      ledger.resume({ ...orb, paneKey: 'changed' }, pending[0].requestId)
+    ).resolves.toMatchObject({ answer: 'Yes' })
+  })
   it('lets the first desktop answer and tells the others to close the card', async () => {
     ledger.registerDesktop('B')
     const answer = ledger.ask(caller, caller, question, 60_000)

@@ -152,6 +152,12 @@ export type RuntimeStore = {
     // Read by Agent Hub requests: hub events go only to desktops that run the hub.
     experimentalAgentHub?: GlobalSettings['experimentalAgentHub']
     agentHubAgentControl?: GlobalSettings['agentHubAgentControl']
+    agentHubOrbAgent?: GlobalSettings['agentHubOrbAgent']
+    agentHubOrbModel?: GlobalSettings['agentHubOrbModel']
+    agentHubOrbPermission?: GlobalSettings['agentHubOrbPermission']
+    agentHubOrbCwd?: GlobalSettings['agentHubOrbCwd']
+    agentHubOrbPlacement?: GlobalSettings['agentHubOrbPlacement']
+    agentHubOrbSpeakReplies?: GlobalSettings['agentHubOrbSpeakReplies']
     defaultTaskSource?: GlobalSettings['defaultTaskSource']
     defaultTaskViewPreset?: GlobalSettings['defaultTaskViewPreset']
     visibleTaskProviders?: GlobalSettings['visibleTaskProviders']

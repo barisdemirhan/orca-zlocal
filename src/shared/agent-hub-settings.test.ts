@@ -17,4 +17,12 @@ it('lets agents control Agent Hub by default while keeping the experiment opt-in
   const settings = createGlobalSettingsFixture()
   expect(settings.agentHubAgentControl).toBe(true)
   expect(settings.experimentalAgentHub).toBe(false)
+  expect(settings).toMatchObject({
+    agentHubOrbAgent: 'claude',
+    agentHubOrbModel: null,
+    agentHubOrbPermission: 'ask',
+    agentHubOrbCwd: null,
+    agentHubOrbPlacement: 'dock',
+    agentHubOrbSpeakReplies: false
+  })
 })
