@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentHookServer } from './server'
 import { installHookStatusSessionTabsRepublish } from './hook-status-session-tabs-republish'
 import { AGENT_STATUS_STALE_AFTER_MS } from '../../shared/agent-status-types'
+import { AgentHubLedger } from '../runtime/agent-hub/agent-hub-ledger'
 import {
   createMobileSessionTabsAgentStatusHeartbeat,
   SESSION_TABS_AGENT_STATUS_HEARTBEAT_INTERVAL_MS
@@ -27,6 +28,94 @@ describe('hook status session-tabs republish', () => {
   afterEach(() => {
     vi.useRealTimers()
   })
+
+  it.each(['blocked', 'waiting'] as const)(
+    'keeps the progress line while the agent is %s mid-turn',
+    (state) => {
+      const server = new AgentHookServer()
+      const agentHub = new AgentHubLedger(() => {})
+      agentHub.registerDesktop('desktop')
+      const uninstall = installHookStatusSessionTabsRepublish(server, () => ({
+        agentHub,
+        getTerminalWorktreeIdForHandle: () => null,
+        getTerminalWorktreeIdForPaneKey: () => null,
+        scheduleMobileSessionTabsAgentStatusHeartbeatForWorktree: vi.fn(),
+        touchMobileSessionTabsForWorktree: vi.fn()
+      }))
+      const report = (status: 'working' | typeof state): void =>
+        server.ingestTerminalStatus({
+          paneKey: PANE,
+          tabId: 'tab-provider',
+          worktreeId: 'repo::/worktree',
+          payload: { state: status, prompt: 'Building', agentType: 'codex' }
+        })
+      try {
+        report('working')
+        const caller = { paneKey: PANE, terminalHandle: 'term-worker' }
+        agentHub.updateProgress(caller, caller, 'Building')
+        report(state)
+        expect(agentHub.snapshot().progress).toHaveLength(1)
+      } finally {
+        uninstall()
+        agentHub.dispose()
+        server.stop()
+      }
+    }
+  )
+
+  it.each(['done'] as const)(
+    'clears only the pane progress when its turn ends (%s)',
+    async (state) => {
+      vi.useFakeTimers()
+      vi.setSystemTime(1_000)
+      const server = new AgentHookServer()
+      const events: unknown[] = []
+      const agentHub = new AgentHubLedger((event) => events.push(event))
+      agentHub.registerDesktop('desktop')
+      const runtime = {
+        agentHub,
+        getTerminalWorktreeIdForHandle: () => null,
+        getTerminalWorktreeIdForPaneKey: () => null,
+        scheduleMobileSessionTabsAgentStatusHeartbeatForWorktree: vi.fn(),
+        touchMobileSessionTabsForWorktree: vi.fn()
+      }
+      const uninstall = installHookStatusSessionTabsRepublish(server, () => runtime)
+      const caller = { paneKey: PANE, terminalHandle: 'term-worker' }
+      const other = { paneKey: 'other-pane', terminalHandle: 'term-other' }
+      const report = (status: 'working' | typeof state, prompt: string): void =>
+        server.ingestTerminalStatus({
+          paneKey: PANE,
+          tabId: 'tab-provider',
+          worktreeId: 'repo::/worktree',
+          payload: { state: status, prompt, agentType: 'codex' }
+        })
+      try {
+        report('working', 'Building')
+        agentHub.updateProgress(caller, caller, 'Building')
+        agentHub.updateProgress(other, other, 'Other work')
+        report('working', 'Testing')
+        expect(agentHub.snapshot().progress).toHaveLength(2)
+        report(state, '')
+        expect(agentHub.snapshot().progress.map((line) => line.target.paneKey)).toEqual([
+          other.paneKey
+        ])
+        await vi.advanceTimersByTimeAsync(1_000)
+        expect(events.at(-1)).toMatchObject({ kind: 'progress', target: caller, text: null })
+        report('working', 'Next turn')
+        agentHub.updateProgress(caller, caller, 'Next turn')
+        server.retirePaneAuthority(PANE)
+        expect(agentHub.snapshot().progress).toHaveLength(2)
+        report('working', 'Still working')
+        uninstall()
+        report(state, '')
+        expect(agentHub.snapshot().progress).toHaveLength(2)
+      } finally {
+        uninstall()
+        agentHub.dispose()
+        server.stop()
+      }
+    }
+  )
 
   it('delivers provider-only changes and authority retirement from the owner mutation stream', () => {
     const server = new AgentHookServer()

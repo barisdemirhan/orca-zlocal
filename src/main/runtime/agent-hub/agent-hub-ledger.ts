@@ -175,6 +175,10 @@ export class AgentHubLedger {
     return { present: response.present, idleMinutes: response.idleMinutes }
   }
 
+  clearProgress(paneKey: string): void {
+    this.progress.clear(paneKey)
+  }
+
   async status(
     caller: AgentHubCaller,
     target: AgentHubPane,

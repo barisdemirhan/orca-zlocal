@@ -76,7 +76,7 @@ export class AgentHubProgressLines {
     this.publish(line.event)
   }
 
-  private clear(paneKey: string): void {
+  clear(paneKey: string): void {
     const line = this.lines.get(paneKey)
     if (!line) {
       return
