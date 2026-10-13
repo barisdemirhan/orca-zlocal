@@ -46,6 +46,7 @@ export function buildSettingsNavigationMetadata({
   nativeChatEnabled = false,
   hostQueuesMessages = false,
   typedChatPermissions = false,
+  agentHubEnabled = false,
   managedBrowserCreationEnabled = !isWebClient,
   mobileEmulatorCreationEnabled = !isWebClient,
   isDev = import.meta.env.DEV,
@@ -61,6 +62,7 @@ export function buildSettingsNavigationMetadata({
   nativeChatEnabled?: boolean
   hostQueuesMessages?: boolean
   typedChatPermissions?: boolean
+  agentHubEnabled?: boolean
   managedBrowserCreationEnabled?: boolean
   mobileEmulatorCreationEnabled?: boolean
   isDev?: boolean
@@ -91,6 +93,7 @@ export function buildSettingsNavigationMetadata({
     nativeChatEnabled,
     hostQueuesMessages,
     typedChatPermissions,
+    agentHubEnabled,
     managedBrowserCreationEnabled,
     mobileEmulatorCreationEnabled,
     isDev,
@@ -127,6 +130,7 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
   const nativeChatEnabled = settings?.experimentalNativeChat === true
   const typedChatPermissions = useChatSettingsOwnPermissions()
   const hostQueuesMessages = useStructuredAgentSessionHostQueuesMessages({ kind: 'local' })
+  const agentHubEnabled = settings?.experimentalAgentHub === true
   const isMac = isMacUserAgent()
   const isWindows = isWindowsUserAgent()
   const isWebClient = isWebClientLocation()
@@ -170,6 +174,7 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
         nativeChatEnabled,
         hostQueuesMessages,
         typedChatPermissions,
+        agentHubEnabled,
         managedBrowserCreationEnabled,
         mobileEmulatorCreationEnabled,
         isDev: import.meta.env.DEV,
@@ -190,6 +195,7 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
       nativeChatEnabled,
       hostQueuesMessages,
       typedChatPermissions,
+      agentHubEnabled,
       managedBrowserCreationEnabled,
       mobileEmulatorCreationEnabled,
       isLinearConnected,

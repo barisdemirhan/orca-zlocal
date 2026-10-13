@@ -38,6 +38,7 @@ const preferences: AgentHubPreferences = {
   dockAutoHide: false,
   alertOnNeedsInput: true,
   alertOnFinished: true,
+  alertOnInfo: true,
   alertSound: false,
   focusedPaneOutline: true,
   paneQuickReply: true,

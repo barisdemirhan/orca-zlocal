@@ -57,7 +57,20 @@ export function getAgentHubSearchEntry(): SettingsSearchEntry {
       ...translateSearchKeyword(
         'auto.components.settings.experimental.search.agentHub.questions',
         'questions'
-      )
+      ),
+      ...translateSearchKeyword('auto.agentHub.search.mirror', 'mirror'),
+      ...translateSearchKeyword('auto.agentHub.search.canvas', 'canvas'),
+      ...translateSearchKeyword('auto.agentHub.search.dim', 'dim'),
+      ...translateSearchKeyword('auto.agentHub.search.quickreply', 'quick reply'),
+      ...translateSearchKeyword('auto.agentHub.search.outline', 'outline'),
+      ...translateSearchKeyword('auto.agentHub.search.tray', 'tray'),
+      ...translateSearchKeyword('auto.agentHub.search.popout', 'pop out'),
+      ...translateSearchKeyword('auto.agentHub.search.microphone', 'microphone'),
+      ...translateSearchKeyword('auto.agentHub.search.shortcut', 'shortcut'),
+      ...translateSearchKeyword('auto.agentHub.search.restore', 'restore'),
+      ...translateSearchKeyword('auto.agentHub.search.shells', 'shells'),
+      ...translateSearchKeyword('auto.agentHub.search.orb', 'orb'),
+      ...translateSearchKeyword('auto.agentHub.search.voice', 'voice')
     ]
   }
 }

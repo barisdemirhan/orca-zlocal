@@ -73,6 +73,31 @@ function setDictationState(dictationState: DictationState): void {
   act(() => useAppStore.setState({ dictationState }))
 }
 
+it.each([false, true])(
+  'uses the hub microphone default with improvement capability=%s',
+  (available) => {
+    const settings = useAppStore.getState().settings
+    if (!settings) {
+      throw new Error('Missing test settings')
+    }
+    useAppStore.setState({ settings: { ...settings, agentHubMicMode: 'improve' } })
+    const capabilities = (event: Event): void => {
+      if (event instanceof CustomEvent) {
+        event.detail.improve = available
+      }
+    }
+    document.addEventListener('dictation:capabilities', capabilities)
+    try {
+      render(<ReplySurface />)
+      fireEvent.click(screen.getByRole('button', { name: /^Dictate/ }))
+      expect(actions).toEqual(available ? [{ action: 'start', improve: true }] : ['toggle'])
+      expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Reply' }))
+    } finally {
+      document.removeEventListener('dictation:capabilities', capabilities)
+    }
+  }
+)
+
 it.each([false, true])('keeps field-started dictation inline with compact=%s', (compact) => {
   render(<ReplySurface compact={compact} />)
   const mic = screen.getByRole('button', { name: 'Dictate' })

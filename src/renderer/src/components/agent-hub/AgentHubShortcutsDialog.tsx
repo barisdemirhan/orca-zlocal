@@ -33,6 +33,8 @@ export function AgentHubShortcutsButton(): React.JSX.Element {
 
 function actionLabel(id: string, fallback: string): string {
   switch (id) {
+    case 'agentHub.toggleOrb':
+      return translate('auto.agentHub.orb.toggle', 'Toggle Agent Hub Orb')
     case 'agentHub.toggle':
       return translate('agentHub.shortcuts.toggle', 'Open or close the hub')
     case 'agentHub.nextWaiting':
@@ -90,7 +92,7 @@ export function AgentHubShortcutsDialog(): React.JSX.Element {
   )
   const configure = (): void => {
     setAgentHubShortcutsOpen(false)
-    openSettingsTarget({ pane: 'experimental', repoId: null, sectionId: 'experimental-agent-hub' })
+    openSettingsTarget({ pane: 'agentHub', repoId: null })
     openSettingsPage()
   }
   return (

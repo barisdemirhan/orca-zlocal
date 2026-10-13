@@ -2,6 +2,8 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
 import { Button } from '../ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu'
+import { AgentHubAlertMuteItems } from './AgentHubAlertMuteItems'
 import {
   SettingsRow,
   SettingsSubsectionHeader,
@@ -49,6 +51,11 @@ export function AgentHubAlertSettings({
         onChange={() => updateSettings({ agentHubAlertOnFinished: !preferences.alertOnFinished })}
       />
       <SettingsSwitchRow
+        label={translate('auto.agentHub.alerts.info', 'When an agent shares information')}
+        checked={preferences.alertOnInfo}
+        onChange={() => updateSettings({ agentHubAlertOnInfo: !preferences.alertOnInfo })}
+      />
+      <SettingsSwitchRow
         label={translate(
           'auto.components.settings.ExperimentalPane.agentHub.sound',
           'Play a sound'
@@ -87,6 +94,21 @@ export function AgentHubAlertSettings({
           }
         />
       ) : null}
+      <SettingsRow
+        label={translate('auto.agentHub.alerts.mute', 'Mute alerts')}
+        control={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="xs">
+                {translate('auto.agentHub.alerts.duration', 'Choose duration…')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <AgentHubAlertMuteItems updateSettings={updateSettings} />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
     </>
   )
 }

@@ -116,3 +116,5 @@ export function useAgentHubShortcutEditor() {
     }
   }
 }
+
+export type AgentHubShortcutEditor = ReturnType<typeof useAgentHubShortcutEditor>

@@ -221,6 +221,17 @@ it('applies needs-input preferences to asks and consent while info remains visib
   expect(readAgentHubAlertQueue()).toHaveLength(1)
 })
 
+it('silences info independently while keeping questions and finished alerts enabled', () => {
+  render(<Alerts changes={{ alertOnInfo: false }} />)
+  receive(agentHubNotifyRequest({ requestId: id(), level: 'info', sound: true }))
+  expect(readAgentHubAlertQueue()).toHaveLength(0)
+  expect(playAgentHubAlertSound).not.toHaveBeenCalled()
+  receive(agentHubAskRequest({ requestId: id() }))
+  expect(readAgentHubAlertQueue()).toHaveLength(1)
+  receive(agentHubNotifyRequest({ requestId: id(), level: 'done' }))
+  expect(readAgentHubAlertQueue()[0]?.kind).toBe('done')
+})
+
 it('keeps a needs-you notice for the Inbox when its bubble is dismissed or times out', async () => {
   vi.useFakeTimers()
   const notify = agentHubNotifyRequest({ requestId: id(), level: 'needs-you' })

@@ -18661,6 +18661,65 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "Espejos y lienzo",
+        "voice": "Voz",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Preferencias del dock, alertas, espejos, voz y Orb.",
+        "open": "Abrir ajustes de Agent Hub"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Alternar Orb de Agent Hub",
+        "talkShortcut": "Atajo para hablar",
+        "notSet": "Sin asignar",
+        "agent": "Agente",
+        "model": "Modelo",
+        "agentDefault": "Predeterminado del agente",
+        "approvals": "Aprobaciones",
+        "placement": "Ubicación",
+        "freeWarning": "Orb ejecuta comandos sin preguntar. Úsalo con cuidado.",
+        "ask": "Preguntar",
+        "free": "Actuar libremente",
+        "workingFolder": "Carpeta de trabajo",
+        "folderRequired": "Sin elegir — Orb no puede iniciarse hasta que elijas una carpeta",
+        "choose": "Elegir…",
+        "hidden": "Oculto",
+        "speakReplies": "Leer respuestas",
+        "comingLater": "Disponible más adelante"
+      },
+      "alerts": {
+        "info": "Cuando un agente comparte información",
+        "mute": "Silenciar alertas",
+        "duration": "Elegir duración…",
+        "muteHour": "1 h",
+        "muteTwoHours": "2 h",
+        "muteTomorrow": "Hasta mañana a las 09:00"
+      },
+      "voice": {
+        "dictateImprove": "Dictar y mejorar"
+      },
+      "search": {
+        "mirror": "espejo",
+        "canvas": "lienzo",
+        "dim": "atenuar",
+        "quickreply": "respuesta rápida",
+        "outline": "contorno",
+        "tray": "bandeja",
+        "popout": "abrir aparte",
+        "microphone": "micrófono",
+        "shortcut": "atajo",
+        "restore": "restaurar",
+        "shells": "shells",
+        "orb": "Orb",
+        "voice": "voz"
+      }
+    },
     "startup": {
       "webHostUnreachable": {
         "title": "No se pudo contactar con tu host de Orca",

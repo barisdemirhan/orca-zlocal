@@ -21,6 +21,7 @@ vi.mock('@/store', async () => {
   }))
   return { useAppStore }
 })
+vi.mock('@/lib/shortcut-platform', () => ({ getShortcutPlatform: () => 'darwin' }))
 vi.mock('@/store/plugin-panels', () => ({ useEditablePluginCommands: () => [] }))
 
 beforeEach(() => {
@@ -51,7 +52,12 @@ it('waits for keybindings hydration before filling actions at an enabled launch'
     diagnostics: []
   }
   act(() => useAppStore.setState({ keybindingSnapshot: snapshot }))
-  await waitFor(() => expect(useAppStore.getState().setKeybindingOverride).toHaveBeenCalledTimes(8))
+  await waitFor(() =>
+    expect(useAppStore.getState().keybindings['agentHub.previousMirrorTab']).toEqual([
+      'Mod+Alt+Shift+BracketLeft'
+    ])
+  )
+  expect(useAppStore.getState().keybindings['agentHub.toggleOrb']).toBeUndefined()
   expect(useAppStore.getState().settings?.agentHubShortcutsInitialized).toBe(true)
 })
 
@@ -73,12 +79,18 @@ it('initializes after enabling and preserves a removal across a remount', async 
       settings: s.settings ? { ...s.settings, experimentalAgentHub: true } : null
     }))
   )
-  await waitFor(() => expect(useAppStore.getState().setKeybindingOverride).toHaveBeenCalledTimes(8))
+  await waitFor(() =>
+    expect(useAppStore.getState().keybindings['agentHub.previousMirrorTab']).toEqual([
+      'Mod+Alt+Shift+BracketLeft'
+    ])
+  )
+  expect(useAppStore.getState().keybindings['agentHub.toggleOrb']).toBeUndefined()
+  vi.mocked(useAppStore.getState().setKeybindingOverride).mockClear()
   act(() =>
     useAppStore.setState((s) => ({ keybindings: { ...s.keybindings, 'agentHub.popOut': [] } }))
   )
   view.unmount()
   renderHook(useAgentHubShortcutInitialization)
   expect(useAppStore.getState().keybindings['agentHub.popOut']).toEqual([])
-  expect(useAppStore.getState().setKeybindingOverride).toHaveBeenCalledTimes(8)
+  expect(useAppStore.getState().setKeybindingOverride).not.toHaveBeenCalled()
 })

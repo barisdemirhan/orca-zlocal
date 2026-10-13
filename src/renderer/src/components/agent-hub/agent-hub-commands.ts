@@ -1,4 +1,5 @@
 export type AgentHubCommands = {
+  toggleOrb?: (() => void) | null
   nextMirrorTab?: (() => void) | null
   previousMirrorTab?: (() => void) | null
   focusMirror: (() => void) | null

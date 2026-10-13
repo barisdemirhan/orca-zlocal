@@ -482,3 +482,33 @@ describe('settings navigation metadata', () => {
     expect(ids({ isMac: true })).toContain('developer-permissions')
   })
 })
+
+it('adds the opted-in Agent Hub before Experimental and routes its audited search terms there', () => {
+  const base = { isMac: false, isWindows: false, isWebClient: false, repos: [] }
+  expect(buildSettingsNavigationMetadata(base).some((section) => section.id === 'agentHub')).toBe(
+    false
+  )
+  const sections = buildSettingsNavigationMetadata({ ...base, agentHubEnabled: true })
+  const index = sections.findIndex((section) => section.id === 'agentHub')
+  expect(sections[index + 1]?.id).toBe('experimental')
+  for (const query of [
+    'mirror',
+    'canvas',
+    'dim',
+    'quick reply',
+    'outline',
+    'tray',
+    'pop out',
+    'microphone',
+    'shortcut',
+    'restore',
+    'shells',
+    'orb',
+    'voice'
+  ]) {
+    expect(matchesSettingsSearch(query, sections[index].searchEntries), query).toBe(true)
+  }
+  expect(buildCmdJSettingsResults(sections).some((result) => result.sectionId === 'agentHub')).toBe(
+    true
+  )
+})

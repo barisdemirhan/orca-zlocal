@@ -18881,6 +18881,65 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "Miroirs et canevas",
+        "voice": "Voix",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Préférences du dock, des alertes, des miroirs, de la voix et de l’Orb.",
+        "open": "Ouvrir les paramètres d’Agent Hub"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Afficher ou masquer l’Orb d’Agent Hub",
+        "talkShortcut": "Raccourci de conversation",
+        "notSet": "Non défini",
+        "agent": "Agent",
+        "model": "Modèle",
+        "agentDefault": "Valeur par défaut de l’agent",
+        "approvals": "Approbations",
+        "placement": "Emplacement",
+        "freeWarning": "L’Orb exécute des commandes sans demander. Utilisez-le avec prudence.",
+        "ask": "Demander",
+        "free": "Agir librement",
+        "workingFolder": "Dossier de travail",
+        "folderRequired": "Non choisi — l’Orb ne peut pas démarrer avant le choix d’un dossier",
+        "choose": "Choisir…",
+        "hidden": "Masqué",
+        "speakReplies": "Lire les réponses",
+        "comingLater": "Disponible ultérieurement"
+      },
+      "alerts": {
+        "info": "Lorsqu’un agent partage des informations",
+        "mute": "Couper les alertes",
+        "duration": "Choisir la durée…",
+        "muteHour": "1 h",
+        "muteTwoHours": "2 h",
+        "muteTomorrow": "Jusqu’à demain à 09:00"
+      },
+      "voice": {
+        "dictateImprove": "Dicter et améliorer"
+      },
+      "search": {
+        "mirror": "miroir",
+        "canvas": "canevas",
+        "dim": "assombrir",
+        "quickreply": "réponse rapide",
+        "outline": "contour",
+        "tray": "plateau",
+        "popout": "détacher",
+        "microphone": "microphone",
+        "shortcut": "raccourci",
+        "restore": "restaurer",
+        "shells": "shells",
+        "orb": "Orb",
+        "voice": "voix"
+      }
+    },
     "startup": {
       "webHostUnreachable": {
         "title": "Impossible de joindre votre hôte Orca",

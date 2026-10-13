@@ -1,3 +1,4 @@
+import { getAgentHubSearchEntry } from '@/components/agent-hub/agent-hub-search-entry'
 import { getAdvancedPaneSearchEntries } from '@/components/settings/advanced-search'
 import { getDeveloperPermissionsPaneSearchEntries } from '@/components/settings/developer-permissions-search'
 import { getExperimentalPaneSearchEntries } from '@/components/settings/experimental-search'
@@ -14,6 +15,7 @@ import type { SettingsNavSection } from '@/lib/settings-navigation-types'
 import { getRepoKindLabel } from '../../../shared/repo-kind'
 import type { Repo } from '../../../shared/repo-types'
 import {
+  Bot,
   Blocks,
   Bug,
   Cable,
@@ -32,6 +34,7 @@ export function buildRemoteSettingsSections(
     isWindowsTerminalHost,
     isWebClient,
     isDev,
+    agentHubEnabled,
     repos,
     projectGrouping
   }: SettingsNavigationBuildOptions,
@@ -130,6 +133,21 @@ export function buildRemoteSettingsSections(
             searchEntries: getDevToolsPaneSearchEntries(),
             group: 'advanced',
             badge: translate('auto.hooks.useSettingsNavigationMetadata.devBadge', 'Dev')
+          }
+        ]
+      : []),
+    ...(agentHubEnabled
+      ? [
+          {
+            id: 'agentHub',
+            title: translate('auto.agentHub.settings.title', 'Agent Hub'),
+            description: translate(
+              'auto.agentHub.settings.description',
+              'Dock, alerts, mirrors, voice and Orb preferences.'
+            ),
+            icon: Bot,
+            searchEntries: [getAgentHubSearchEntry()],
+            group: 'experimental'
           }
         ]
       : []),

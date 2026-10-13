@@ -3,6 +3,9 @@ import { Mic } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
+import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
+import { readAgentHubDictationCapabilities } from './agent-hub-dictation-capabilities'
+import { startAgentHubDictation } from './agent-hub-dictation-improve'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
 import { AgentHubDictationPill } from './AgentHubDictationPill'
 import { useMirrorShowsDictation } from './agent-hub-mirror-dictation-display'
@@ -22,6 +25,7 @@ export function HubDictateButton({
   targetInputRef?: RefObject<HTMLInputElement | null>
 }): React.JSX.Element | null {
   const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
+  const micMode = useAppStore((s) => normalizeAgentHubMicMode(s.settings?.agentHubMicMode))
   const dictationState = useAppStore((s) => s.dictationState)
   const running = isDictationRunning(dictationState)
   const [started, setStarted] = useState(false)
@@ -59,7 +63,10 @@ export function HubDictateButton({
       />
     )
   }
-  const label = translate('agentHub.card.dictate', 'Dictate')
+  const improve = micMode === 'improve' && readAgentHubDictationCapabilities().improve
+  const label = improve
+    ? translate('auto.agentHub.voice.dictateImprove', 'Dictate and improve')
+    : translate('agentHub.card.dictate', 'Dictate')
   return (
     <Button
       type="button"
@@ -90,7 +97,11 @@ export function HubDictateButton({
         }
         setStarted(true)
         // Why toggle: 'start' only leaves idle, and a failed run waits in 'error'.
-        dispatchDictationControl('toggle')
+        if (micMode === 'improve' && readAgentHubDictationCapabilities().improve) {
+          startAgentHubDictation(true)
+        } else {
+          dispatchDictationControl('toggle')
+        }
       }}
     >
       <Mic className={compact ? undefined : 'size-4'} />

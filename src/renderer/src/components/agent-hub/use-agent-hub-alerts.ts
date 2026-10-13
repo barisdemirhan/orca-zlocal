@@ -33,7 +33,8 @@ const raisedAlertIds = new Set<string>()
 export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPreferences): void {
   const baselineRef = useRef<Set<string> | null>(null)
   const requests = useAgentHubRequests()
-  const { alertOnNeedsInput, alertOnFinished, alertSound, alertsMutedUntil } = preferences
+  const { alertOnNeedsInput, alertOnFinished, alertOnInfo, alertSound, alertsMutedUntil } =
+    preferences
 
   useEffect(() => {
     // Why a baseline first: whatever is already waiting at mount was seen elsewhere.
@@ -93,7 +94,11 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
     pruneAgentHubRequestAlerts(requests)
     const fresh = takeUnraisedAlerts(raisedAlertIds, agentHubRequestAlerts(requests)).filter(
       (alert) =>
-        alert.kind === 'done' ? alertOnFinished : alert.kind === 'info' || alertOnNeedsInput
+        alert.kind === 'done'
+          ? alertOnFinished
+          : alert.kind === 'info'
+            ? alertOnInfo
+            : alertOnNeedsInput
     )
     if (fresh.length === 0 || (alertsMutedUntil ?? 0) > Date.now()) {
       return
@@ -107,5 +112,5 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
         readAgentAttentionNotificationSound(useAppStore.getState().settings ?? {})
       )
     }
-  }, [requests, alertOnNeedsInput, alertOnFinished, alertSound, alertsMutedUntil])
+  }, [requests, alertOnNeedsInput, alertOnFinished, alertOnInfo, alertSound, alertsMutedUntil])
 }

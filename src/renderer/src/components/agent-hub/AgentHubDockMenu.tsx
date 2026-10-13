@@ -11,15 +11,14 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
-import {
-  AGENT_HUB_MUTE_DURATION_MS,
-  type AgentHubDockEdge,
-  type AgentHubDockSize
-} from '../../../../shared/agent-hub-settings'
-import { clearAgentHubAlerts } from './agent-hub-alert-queue'
+import type { AgentHubDockEdge, AgentHubDockSize } from '../../../../shared/agent-hub-settings'
+import { AgentHubAlertMuteItems } from './AgentHubAlertMuteItems'
 import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
 
 const EDGES: readonly AgentHubDockEdge[] = ['bottom', 'top', 'left', 'right']
@@ -81,21 +80,23 @@ export function AgentHubDockMenu({
         </DropdownMenuTrigger>
       </AgentHubActionTooltip>
       <DropdownMenuContent side={side} align="center" sideOffset={10} className="min-w-56">
-        <DropdownMenuItem
-          onSelect={() => {
-            if (!muted) {
-              clearAgentHubAlerts()
-            }
-            void updateSettings({
-              agentHubAlertsMutedUntil: muted ? null : Date.now() + AGENT_HUB_MUTE_DURATION_MS
-            })
-          }}
-        >
-          {muted ? <Bell /> : <BellOff />}
-          {muted
-            ? translate('agentHub.dock.unmute', 'Turn alerts back on')
-            : translate('agentHub.dock.mute', 'Mute alerts for 2 hours')}
-        </DropdownMenuItem>
+        {muted ? (
+          <DropdownMenuItem
+            onSelect={() => void updateSettings({ agentHubAlertsMutedUntil: null })}
+          >
+            <Bell />
+            {translate('agentHub.dock.unmute', 'Turn alerts back on')}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <BellOff />
+            {translate('auto.agentHub.alerts.mute', 'Mute alerts')}
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            <AgentHubAlertMuteItems updateSettings={updateSettings} />
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>{translate('agentHub.dock.position', 'Position')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
@@ -143,9 +144,8 @@ export function AgentHubDockMenu({
         <DropdownMenuItem
           onSelect={() => {
             openSettingsTarget({
-              pane: 'experimental',
-              repoId: null,
-              sectionId: 'experimental-agent-hub'
+              pane: 'agentHub',
+              repoId: null
             })
             openSettingsPage()
           }}

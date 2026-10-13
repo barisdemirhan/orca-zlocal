@@ -277,6 +277,7 @@ export function buildDefaultSettings(args: {
     agentHubDockAutoHide: false,
     agentHubAlertOnNeedsInput: true,
     agentHubAlertOnFinished: true,
+    agentHubAlertOnInfo: true,
     agentHubAlertSound: true,
     agentHubFocusedPaneOutline: true,
     agentHubPaneQuickReply: true,

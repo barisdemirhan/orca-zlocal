@@ -51,14 +51,19 @@ it('runs on first enable or an already-enabled launch, then never re-applies rem
     initializeAgentHubShortcutsOnce(() => state, KEYBINDING_DEFINITIONS, 'darwin')
   ])
   expect(state.updateSettingsOrThrow).toHaveBeenCalledTimes(1)
-  expect(state.setKeybindingOverride).toHaveBeenCalledTimes(8)
+  expect(state.keybindings['agentHub.nextMirrorTab']).toHaveLength(1)
+  expect(state.keybindings['agentHub.previousMirrorTab']).toHaveLength(1)
+  expect(state.keybindings['agentHub.toggleOrb']).toBeUndefined()
+  vi.mocked(state.setKeybindingOverride).mockClear()
   state.keybindings['agentHub.popOut'] = []
   await initializeAgentHubShortcutsOnce(() => state, KEYBINDING_DEFINITIONS, 'darwin')
   expect(state.keybindings['agentHub.popOut']).toEqual([])
-  expect(state.setKeybindingOverride).toHaveBeenCalledTimes(8)
+  expect(state.setKeybindingOverride).not.toHaveBeenCalled()
   const launch = fixture()
   await initializeAgentHubShortcutsOnce(() => launch, KEYBINDING_DEFINITIONS, 'darwin')
-  expect(launch.setKeybindingOverride).toHaveBeenCalledTimes(8)
+  expect(launch.keybindings['agentHub.nextMirrorTab']).toHaveLength(1)
+  expect(launch.keybindings['agentHub.previousMirrorTab']).toHaveLength(1)
+  expect(launch.keybindings['agentHub.toggleOrb']).toBeUndefined()
 })
 
 it('rechecks current bindings after each persisted write', async () => {

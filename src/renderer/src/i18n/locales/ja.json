@@ -18189,6 +18189,65 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "ドック",
+        "mirrors": "ミラーとキャンバス",
+        "voice": "音声",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "ドック、通知、ミラー、音声、Orb の設定。",
+        "open": "Agent Hub 設定を開く"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Agent Hub Orb を切り替える",
+        "talkShortcut": "会話ショートカット",
+        "notSet": "未設定",
+        "agent": "Agent",
+        "model": "モデル",
+        "agentDefault": "Agent の既定",
+        "approvals": "承認",
+        "placement": "配置",
+        "freeWarning": "Orb は確認せずにコマンドを実行します。慎重に使用してください。",
+        "ask": "確認する",
+        "free": "自由に実行",
+        "workingFolder": "作業フォルダー",
+        "folderRequired": "未選択 — フォルダーを選択するまで Orb は開始できません",
+        "choose": "選択…",
+        "hidden": "非表示",
+        "speakReplies": "応答を読み上げる",
+        "comingLater": "後日対応予定"
+      },
+      "alerts": {
+        "info": "Agent が情報を共有したとき",
+        "mute": "通知をミュート",
+        "duration": "期間を選択…",
+        "muteHour": "1 時間",
+        "muteTwoHours": "2 時間",
+        "muteTomorrow": "明日の 09:00 まで"
+      },
+      "voice": {
+        "dictateImprove": "音声入力して改善"
+      },
+      "search": {
+        "mirror": "ミラー",
+        "canvas": "キャンバス",
+        "dim": "暗くする",
+        "quickreply": "クイック返信",
+        "outline": "輪郭",
+        "tray": "トレイ",
+        "popout": "ポップアウト",
+        "microphone": "マイク",
+        "shortcut": "ショートカット",
+        "restore": "復元",
+        "shells": "シェル",
+        "orb": "Orb",
+        "voice": "音声"
+      }
+    },
     "startup": {
       "webHostUnreachable": {
         "title": "Orca ホストに接続できませんでした",

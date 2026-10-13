@@ -17,6 +17,7 @@ import {
 } from './ShortcutFilterRail'
 
 const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
+  'agentHub.toggleOrb',
   'agentHub.toggle',
   'agentHub.nextWaiting',
   'agentHub.dockMirrors',
@@ -39,6 +40,7 @@ export function buildShortcutRowVisibility(options: {
   mobileEmulatorCreationEnabled: boolean
   agentDashboardEnabled: boolean
   agentHubEnabled: boolean
+  agentHubCanvasEnabled: boolean
   settingsSearchQuery: string
   shortcutQuery: string
   shortcutFilter: ShortcutFilter
@@ -58,6 +60,7 @@ export function buildShortcutRowVisibility(options: {
           (options.mobileEmulatorCreationEnabled || item.id !== 'tab.newSimulator') &&
           // Why: the toggle is inert while the experiment is off, so binding it here would silently do nothing.
           (options.agentDashboardEnabled || item.id !== 'dashboard.toggle') &&
+          (options.agentHubCanvasEnabled || item.id !== 'agentHub.toggleCanvas') &&
           (options.agentHubEnabled || !AGENT_HUB_ACTION_IDS.has(item.id))
       )
       .map((item) => {

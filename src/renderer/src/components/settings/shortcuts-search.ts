@@ -39,7 +39,10 @@ const getShortcutDefinitionSearchEntries = createLocalizedCatalog(() =>
   KEYBINDING_DEFINITIONS.map(localizeKeybindingDefinition).map((item) => ({
     actionId: item.id,
     searchEntry: {
-      title: item.title,
+      title:
+        item.id === 'agentHub.toggleOrb'
+          ? translate('auto.agentHub.orb.toggle', 'Toggle Agent Hub Orb')
+          : item.title,
       description: translate(
         'auto.components.settings.shortcuts.search.groupShortcut',
         '{{value0}} shortcut',

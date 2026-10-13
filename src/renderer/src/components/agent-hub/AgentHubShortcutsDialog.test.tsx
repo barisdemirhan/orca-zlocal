@@ -80,9 +80,8 @@ describe('Agent Hub shortcuts help', () => {
       screen.getByRole('button', { name: 'Set shortcut for Pop out the active agent' })
     )
     expect(navigation.target).toHaveBeenCalledWith({
-      pane: 'experimental',
-      repoId: null,
-      sectionId: 'experimental-agent-hub'
+      pane: 'agentHub',
+      repoId: null
     })
     expect(navigation.page).toHaveBeenCalledOnce()
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())

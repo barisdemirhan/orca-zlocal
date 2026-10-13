@@ -19089,6 +19089,65 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "Mirrors & canvas",
+        "voice": "Voice",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Dock, alerts, mirrors, voice and Orb preferences.",
+        "open": "Open Agent Hub settings"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Toggle Agent Hub Orb",
+        "talkShortcut": "Talk shortcut",
+        "notSet": "Not set",
+        "agent": "Agent",
+        "model": "Model",
+        "agentDefault": "Agent default",
+        "approvals": "Approvals",
+        "placement": "Placement",
+        "freeWarning": "The Orb runs commands without asking. Use with care.",
+        "ask": "Ask",
+        "free": "Act freely",
+        "workingFolder": "Working folder",
+        "folderRequired": "Not chosen — the Orb cannot start until you pick a folder",
+        "choose": "Choose…",
+        "hidden": "Hidden",
+        "speakReplies": "Speak replies",
+        "comingLater": "Coming later"
+      },
+      "alerts": {
+        "info": "When an agent shares information",
+        "mute": "Mute alerts",
+        "duration": "Choose duration…",
+        "muteHour": "1 h",
+        "muteTwoHours": "2 h",
+        "muteTomorrow": "Until tomorrow at 09:00"
+      },
+      "voice": {
+        "dictateImprove": "Dictate and improve"
+      },
+      "search": {
+        "mirror": "mirror",
+        "canvas": "canvas",
+        "dim": "dim",
+        "quickreply": "quick reply",
+        "outline": "outline",
+        "tray": "tray",
+        "popout": "pop out",
+        "microphone": "microphone",
+        "shortcut": "shortcut",
+        "restore": "restore",
+        "shells": "shells",
+        "orb": "orb",
+        "voice": "voice"
+      }
+    },
     "startup": {
       "webHostUnreachable": {
         "title": "Couldn't reach your Orca host",

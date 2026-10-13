@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getKeybindingDefinition } from '../../../../shared/keybindings'
-import type { ShortcutGroup } from './shortcut-groups'
+import { getKeybindingDefinition, keybindingMatchesAction } from '../../../../shared/keybindings'
+import { groupDefinitions, type ShortcutGroup } from './shortcut-groups'
 import { buildShortcutRowVisibility } from './shortcut-row-visibility'
 
 function globalGroup(): ShortcutGroup {
@@ -8,6 +8,7 @@ function globalGroup(): ShortcutGroup {
     [
       'workspace.openBoard',
       'dashboard.toggle',
+      'agentHub.toggleOrb',
       'agentHub.toggle',
       'agentHub.nextWaiting',
       'agentHub.dockMirrors',
@@ -38,6 +39,7 @@ const baseOptions = {
   mobileEmulatorCreationEnabled: false,
   agentDashboardEnabled: false,
   agentHubEnabled: false,
+  agentHubCanvasEnabled: true,
   settingsSearchQuery: '',
   shortcutQuery: '',
   shortcutFilter: 'all'
@@ -59,6 +61,16 @@ describe('buildShortcutRowVisibility', () => {
     expect(result.filterCounts.unassigned).toBe(1)
   })
 
+  it('hides the canvas shortcut when canvas is disabled without hiding other hub commands', () => {
+    const result = buildShortcutRowVisibility({
+      ...baseOptions,
+      groups: [globalGroup()],
+      agentHubEnabled: true,
+      agentHubCanvasEnabled: false
+    })
+    expect(result.shortcutRows.some((row) => row.item.id === 'agentHub.toggleCanvas')).toBe(false)
+    expect(result.shortcutRows.some((row) => row.item.id === 'agentHub.toggle')).toBe(true)
+  })
   it('hides the agent hub shortcuts while its experiment is off', () => {
     const hidden = buildShortcutRowVisibility({ ...baseOptions, groups: [globalGroup()] })
     expect(hidden.shortcutRows.map((row) => row.item.id)).toEqual(['workspace.openBoard'])
@@ -70,6 +82,7 @@ describe('buildShortcutRowVisibility', () => {
     })
     expect(shown.shortcutRows.map((row) => row.item.id)).toEqual([
       'workspace.openBoard',
+      'agentHub.toggleOrb',
       'agentHub.toggle',
       'agentHub.nextWaiting',
       'agentHub.dockMirrors',
@@ -82,4 +95,27 @@ describe('buildShortcutRowVisibility', () => {
       'agentHub.previousMirrorTab'
     ])
   })
+})
+
+it('lists the unassigned Orb under Agent Hub and lets assigned mirror tabs run in terminals', () => {
+  const groups = groupDefinitions([])
+  const result = buildShortcutRowVisibility({ ...baseOptions, groups, agentHubEnabled: true })
+  const orb = result.shortcutRows.find((row) => row.item.id === 'agentHub.toggleOrb')
+  expect(orb?.groupTitle).toBe('Agent Hub')
+  expect(orb?.effective).toEqual([])
+  for (const id of [
+    'agentHub.toggleOrb',
+    'agentHub.nextMirrorTab',
+    'agentHub.previousMirrorTab'
+  ] as const) {
+    expect(
+      keybindingMatchesAction(
+        id,
+        { key: 'F8', code: 'F8', meta: true },
+        'darwin',
+        { [id]: ['Mod+F8'] },
+        { context: 'terminal', terminalShortcutPolicy: 'terminal-first' }
+      )
+    ).toBe(true)
+  }
 })

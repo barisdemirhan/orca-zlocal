@@ -33,11 +33,10 @@ function target(id: string): AgentHubPaneTarget {
     agentType: null
   }
 }
-it('ships both commands unbound and preserves terminal-owned keys', () => {
+it('ships both commands unbound and does not cycle an ordinary terminal outside mirrors', () => {
   for (const id of ['agentHub.nextMirrorTab', 'agentHub.previousMirrorTab']) {
     const definition = KEYBINDING_DEFINITION_CORE_4.find((item) => item.id === id)
     expect(definition?.defaultBindings).toEqual({ darwin: [], linux: [], win32: [] })
-    expect(definition?.allowInTerminal).not.toBe(true)
   }
   const input = document.createElement('textarea')
   input.className = 'xterm-helper-textarea'

@@ -18189,6 +18189,65 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "독",
+        "mirrors": "미러 및 캔버스",
+        "voice": "음성",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "독, 알림, 미러, 음성 및 Orb 환경설정.",
+        "open": "Agent Hub 설정 열기"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Agent Hub Orb 전환",
+        "talkShortcut": "대화 단축키",
+        "notSet": "설정되지 않음",
+        "agent": "에이전트",
+        "model": "모델",
+        "agentDefault": "에이전트 기본값",
+        "approvals": "승인",
+        "placement": "위치",
+        "freeWarning": "Orb가 확인 없이 명령을 실행합니다. 주의해서 사용하세요.",
+        "ask": "확인 요청",
+        "free": "자유롭게 실행",
+        "workingFolder": "작업 폴더",
+        "folderRequired": "선택되지 않음 — 폴더를 선택해야 Orb를 시작할 수 있습니다",
+        "choose": "선택…",
+        "hidden": "숨김",
+        "speakReplies": "응답 읽어주기",
+        "comingLater": "추후 제공"
+      },
+      "alerts": {
+        "info": "에이전트가 정보를 공유할 때",
+        "mute": "알림 음소거",
+        "duration": "기간 선택…",
+        "muteHour": "1시간",
+        "muteTwoHours": "2시간",
+        "muteTomorrow": "내일 09:00까지"
+      },
+      "voice": {
+        "dictateImprove": "받아쓰기 및 개선"
+      },
+      "search": {
+        "mirror": "미러",
+        "canvas": "캔버스",
+        "dim": "어둡게",
+        "quickreply": "빠른 답장",
+        "outline": "윤곽선",
+        "tray": "트레이",
+        "popout": "팝아웃",
+        "microphone": "마이크",
+        "shortcut": "단축키",
+        "restore": "복원",
+        "shells": "셸",
+        "orb": "Orb",
+        "voice": "음성"
+      }
+    },
     "startup": {
       "webHostUnreachable": {
         "title": "Orca 호스트에 연결할 수 없습니다",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeAgentHubMicMode } from './agent-hub-settings'
+import { normalizeAgentHubMicMode, normalizeAgentHubAlertOnInfo } from './agent-hub-settings'
 import { createGlobalSettingsFixture } from './global-settings-test-fixture'
 describe('mirror microphone default mode', () => {
   it.each([undefined, null, '', 'unknown', true, 1, {}, 'dictate'])(
@@ -25,4 +25,11 @@ it('lets agents control Agent Hub by default while keeping the experiment opt-in
     agentHubOrbPlacement: 'dock',
     agentHubOrbSpeakReplies: false
   })
+})
+
+it('keeps info alerts on for older profiles and preserves an explicit opt-out', () => {
+  expect(createGlobalSettingsFixture().agentHubAlertOnInfo).toBe(true)
+  expect(normalizeAgentHubAlertOnInfo(undefined)).toBe(true)
+  expect(normalizeAgentHubAlertOnInfo(true)).toBe(true)
+  expect(normalizeAgentHubAlertOnInfo(false)).toBe(false)
 })

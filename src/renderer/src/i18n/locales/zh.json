@@ -18189,6 +18189,65 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "镜像与画布",
+        "voice": "语音",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Dock、提醒、镜像、语音和 Orb 偏好设置。",
+        "open": "打开 Agent Hub 设置"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "切换 Agent Hub Orb",
+        "talkShortcut": "对话快捷键",
+        "notSet": "未设置",
+        "agent": "智能体",
+        "model": "模型",
+        "agentDefault": "智能体默认值",
+        "approvals": "审批",
+        "placement": "位置",
+        "freeWarning": "Orb 执行命令时不会询问。请谨慎使用。",
+        "ask": "询问",
+        "free": "自由执行",
+        "workingFolder": "工作文件夹",
+        "folderRequired": "未选择 — 选择文件夹后才能启动 Orb",
+        "choose": "选择…",
+        "hidden": "隐藏",
+        "speakReplies": "朗读回复",
+        "comingLater": "稍后推出"
+      },
+      "alerts": {
+        "info": "智能体分享信息时",
+        "mute": "静音提醒",
+        "duration": "选择时长…",
+        "muteHour": "1 小时",
+        "muteTwoHours": "2 小时",
+        "muteTomorrow": "直到明天 09:00"
+      },
+      "voice": {
+        "dictateImprove": "听写并优化"
+      },
+      "search": {
+        "mirror": "镜像",
+        "canvas": "画布",
+        "dim": "调暗",
+        "quickreply": "快速回复",
+        "outline": "轮廓",
+        "tray": "托盘",
+        "popout": "弹出",
+        "microphone": "麦克风",
+        "shortcut": "快捷键",
+        "restore": "恢复",
+        "shells": "shell",
+        "orb": "Orb",
+        "voice": "语音"
+      }
+    },
     "startup": {
       "webHostUnreachable": {
         "title": "无法连接到你的 Orca 主机",

@@ -1,3 +1,4 @@
+import { translate } from '@/i18n/i18n'
 import {
   KEYBINDING_DEFINITIONS,
   agentTabActionId,
@@ -35,7 +36,14 @@ export function groupDefinitions(
       continue
     }
     const localized = localizeKeybindingDefinition(definition)
-    groups.set(localized.group, [...(groups.get(localized.group) ?? []), localized])
+    const item =
+      localized.id === 'agentHub.toggleOrb'
+        ? { ...localized, title: translate('auto.agentHub.orb.toggle', 'Toggle Agent Hub Orb') }
+        : localized
+    groups.set(localized.group, [...(groups.get(localized.group) ?? []), item])
   }
-  return Array.from(groups.entries()).map(([title, items]) => ({ title, items }))
+  return Array.from(groups.entries()).map(([title, items]) => ({
+    title: title === 'Agent Hub' ? translate('auto.agentHub.shortcuts.group', 'Agent Hub') : title,
+    items
+  }))
 }

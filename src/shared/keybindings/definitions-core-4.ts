@@ -43,9 +43,18 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     defaultBindings: platformBindings([])
   },
   {
+    id: 'agentHub.toggleOrb',
+    title: 'Toggle Agent Hub Orb',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'hub', 'orb', 'voice', 'talk'],
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
+  },
+  {
     id: 'agentHub.toggle',
     title: 'Toggle Agent Hub',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'agents', 'hub', 'inbox', 'status bar', 'toggle'],
     // Unbound until opted in: experiments must not claim users' existing chords.
@@ -55,7 +64,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.nextWaiting',
     title: 'Jump to Next Agent Waiting for You',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'agents', 'hub', 'waiting', 'next', 'jump', 'question'],
     defaultBindings: platformBindings([]),
@@ -64,7 +73,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.dockMirrors',
     title: 'Send Agent Hub Mirrors to the Hub or Bring Them Back',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'minimize', 'restore', 'floating'],
     defaultBindings: platformBindings([]),
@@ -73,7 +82,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.toggleCanvas',
     title: 'Open or Leave the Agent Hub Canvas',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'canvas', 'mirror', 'toggle'],
     defaultBindings: platformBindings([]),
@@ -82,7 +91,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.arrangeMirrors',
     title: 'Arrange Agent Hub Mirrors in the Default Layout',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'arrange', 'layout', 'grid', 'tile'],
     defaultBindings: platformBindings([]),
@@ -91,7 +100,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.focusMirror',
     title: 'Focus or Unfocus the Active Agent Hub Canvas Mirror',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'mirror'],
     defaultBindings: platformBindings([]),
@@ -100,7 +109,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.popOut',
     title: 'Pop Out the Active Agent Hub Terminal',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'mirror'],
     defaultBindings: platformBindings([]),
@@ -109,7 +118,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.jumpToMirror',
     title: 'Jump to the Active Agent Hub Mirror in Its Workspace',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'mirror'],
     defaultBindings: platformBindings([]),
@@ -118,18 +127,20 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
     id: 'agentHub.nextMirrorTab',
     title: 'Next Agent Hub Mirror Tab',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'tab', 'next'],
-    defaultBindings: platformBindings([])
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
   },
   {
     id: 'agentHub.previousMirrorTab',
     title: 'Previous Agent Hub Mirror Tab',
-    group: 'Global',
+    group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'mirror', 'tab', 'previous'],
-    defaultBindings: platformBindings([])
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
   },
   {
     id: 'terminal.clearPaneTitle',

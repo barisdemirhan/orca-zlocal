@@ -42,6 +42,7 @@ export type KeybindingActionId =
   | 'view.tasks'
   | 'view.plugins'
   | 'dashboard.toggle'
+  | 'agentHub.toggleOrb'
   | 'agentHub.toggle'
   | 'agentHub.nextWaiting'
   | 'agentHub.dockMirrors'

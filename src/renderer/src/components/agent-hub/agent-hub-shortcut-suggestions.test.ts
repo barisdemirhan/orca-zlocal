@@ -53,18 +53,20 @@ describe('agent hub shortcut suggestions', () => {
     }
   })
   it.each(PLATFORMS)(
-    'offers hub actions except opt-in tab cycling with mnemonic keys on %s',
+    'offers hub actions including mirror tabs while keeping Orb unassigned on %s',
     (platform) => {
       expect(agentHubSuggestedBindings(platform).map(([id]) => id)).toEqual(
         KEYBINDING_DEFINITIONS.filter(
-          (item) =>
-            item.id.startsWith('agentHub.') &&
-            !['agentHub.nextMirrorTab', 'agentHub.previousMirrorTab'].includes(item.id)
+          (item) => item.id.startsWith('agentHub.') && item.id !== 'agentHub.toggleOrb'
         ).map((item) => item.id)
       )
       for (const [id, binding] of agentHubSuggestedBindings(platform)) {
-        expect(binding.split('+')).toHaveLength(3)
-        expect(binding).toMatch(platform === 'darwin' ? /^Mod\+Alt\+[A-Z]$/ : /^Alt\+Shift\+[A-Z]$/)
+        if (!id.endsWith('MirrorTab')) {
+          expect(binding.split('+')).toHaveLength(3)
+          expect(binding).toMatch(
+            platform === 'darwin' ? /^Mod\+Alt\+[A-Z]$/ : /^Alt\+Shift\+[A-Z]$/
+          )
+        }
         expect(normalizeKeybindingListForAction(id, binding)).toEqual([binding])
       }
     }

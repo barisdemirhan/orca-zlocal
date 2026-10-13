@@ -1,3 +1,4 @@
+import { AGENT_HUB_COMMAND_ACTION_IDS } from '@/components/agent-hub/agent-hub-command-handlers'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
@@ -222,18 +223,7 @@ export function useGlobalKeybindings(args: {
       if (matchShortcut('view.plugins') && handlers.get('view.plugins')?.()) {
         return
       }
-      for (const actionId of [
-        'agentHub.toggle',
-        'agentHub.nextWaiting',
-        'agentHub.dockMirrors',
-        'agentHub.toggleCanvas',
-        'agentHub.arrangeMirrors',
-        'agentHub.focusMirror',
-        'agentHub.popOut',
-        'agentHub.jumpToMirror',
-        'agentHub.nextMirrorTab',
-        'agentHub.previousMirrorTab'
-      ] as const) {
+      for (const actionId of AGENT_HUB_COMMAND_ACTION_IDS) {
         if (matchShortcut(actionId) && handlers.get(actionId)?.()) {
           return
         }

@@ -14,7 +14,9 @@ export function agentHubSuggestedBindings(
         ['agentHub.arrangeMirrors', 'Mod+Alt+G'],
         ['agentHub.focusMirror', 'Mod+Alt+O'],
         ['agentHub.popOut', 'Mod+Alt+P'],
-        ['agentHub.jumpToMirror', 'Mod+Alt+J']
+        ['agentHub.jumpToMirror', 'Mod+Alt+J'],
+        ['agentHub.nextMirrorTab', 'Mod+Alt+Shift+BracketRight'],
+        ['agentHub.previousMirrorTab', 'Mod+Alt+Shift+BracketLeft']
       ]
     : [
         ['agentHub.toggle', 'Alt+Shift+H'],
@@ -24,7 +26,9 @@ export function agentHubSuggestedBindings(
         ['agentHub.arrangeMirrors', 'Alt+Shift+G'],
         ['agentHub.focusMirror', 'Alt+Shift+U'],
         ['agentHub.popOut', 'Alt+Shift+P'],
-        ['agentHub.jumpToMirror', 'Alt+Shift+J']
+        ['agentHub.jumpToMirror', 'Alt+Shift+J'],
+        ['agentHub.nextMirrorTab', 'Alt+Shift+BracketRight'],
+        ['agentHub.previousMirrorTab', 'Alt+Shift+BracketLeft']
       ]
 }
 

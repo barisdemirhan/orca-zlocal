@@ -3,6 +3,7 @@ import type { KeybindingActionId } from '../../../../shared/keybindings'
 import { getAgentHubCommands, type AgentHubCommands } from './agent-hub-commands'
 
 const ACTIONS = [
+  ['agentHub.toggleOrb', 'toggleOrb'],
   ['agentHub.toggle', 'toggle'],
   ['agentHub.nextWaiting', 'jumpToNextWaiting'],
   ['agentHub.dockMirrors', 'toggleMirrors'],
@@ -14,6 +15,8 @@ const ACTIONS = [
   ['agentHub.nextMirrorTab', 'nextMirrorTab'],
   ['agentHub.previousMirrorTab', 'previousMirrorTab']
 ] as const satisfies readonly (readonly [KeybindingActionId, keyof AgentHubCommands])[]
+
+export const AGENT_HUB_COMMAND_ACTION_IDS = ACTIONS.map(([actionId]) => actionId)
 
 export function agentHubCommandHandlers(
   claim: (actionId: KeybindingActionId, run: () => void) => boolean

@@ -56,6 +56,7 @@ export type AgentHubSettings = {
   agentHubAlertOnNeedsInput?: boolean
   /** Agent Hub alert when an agent finishes. */
   agentHubAlertOnFinished?: boolean
+  agentHubAlertOnInfo?: boolean
   /** Agent Hub alerts play Orca's notification sound. */
   agentHubAlertSound?: boolean
   /** Agent Hub alerts stay silent until this time (ms since epoch); null when not muted. */
@@ -181,4 +182,8 @@ export function normalizeAgentHubMirrorWindowCap(value: unknown): number {
 
 export function normalizeAgentHubMicMode(value: unknown): AgentHubMicMode {
   return value === 'improve' ? 'improve' : 'dictate'
+}
+
+export function normalizeAgentHubAlertOnInfo(value: unknown): boolean {
+  return value !== false
 }

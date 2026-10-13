@@ -1,322 +1,11 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
-import {
-  AGENT_HUB_FINISHED_CLEAR_MINUTES,
-  AGENT_HUB_MIRROR_WINDOW_CAPS,
-  AGENT_HUB_TRAY_PEEK_SECONDS,
-  type AgentHubDefaultTab,
-  type AgentHubDockSize,
-  type AgentHubPlacement
-} from '../../../../shared/agent-hub-settings'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
+import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { SearchableSetting } from '../settings/SearchableSetting'
-import {
-  SettingsRow,
-  SettingsSegmentedControl,
-  SettingsSubsectionHeader,
-  SettingsSwitch,
-  SettingsSwitchRow
-} from '../settings/SettingsFormControls'
+import { SettingsSwitch } from '../settings/SettingsFormControls'
 import { getExperimentalSearchEntry } from '../settings/experimental-search'
-import { AGENT_HUB_DOCK_SIZES, agentHubDockSizeLabel } from './AgentHubDockMenu'
-import { AgentHubMicModeSetting } from './AgentHubMicModeControl'
-import { AgentHubShortcutSetting } from './AgentHubShortcutSetting'
-import { AgentHubAlertSettings } from './AgentHubAlertSettings'
-import { useAgentHubPreferences } from './use-agent-hub-settings'
-
-function clearAfterLabel(minutes: number): string {
-  return minutes === 0
-    ? translate('auto.components.settings.ExperimentalPane.agentHub.clearNever', 'Never')
-    : minutes === 60
-      ? translate('auto.components.settings.ExperimentalPane.agentHub.clearHour', '1 h')
-      : translate(
-          'auto.components.settings.ExperimentalPane.agentHub.clearMinutes',
-          '{{value0}} min',
-          {
-            value0: minutes
-          }
-        )
-}
-
-function AgentHubOptions({
-  updateSettings
-}: {
-  updateSettings: (updates: Partial<GlobalSettings>) => void
-}): React.JSX.Element {
-  const preferences = useAgentHubPreferences()
-  return (
-    <div className="ml-4 space-y-3 border-l border-border pl-4">
-      <SettingsSwitchRow
-        label={translate('agentHub.settings.agentControl', 'Let agents control Agent Hub')}
-        description={translate(
-          'agentHub.settings.agentControlCopy',
-          'Agents can show you things, ask questions and manage their mirrors.'
-        )}
-        checked={preferences.agentControl}
-        onChange={() => updateSettings({ agentHubAgentControl: !preferences.agentControl })}
-      />
-      <SettingsRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.placement',
-          'Show the hub as'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.placementCopy',
-          'A dock you can drag onto the status bar or a window edge, or an item in the status bar.'
-        )}
-        control={
-          <SettingsSegmentedControl<AgentHubPlacement>
-            value={preferences.placement}
-            onChange={(value) => updateSettings({ agentHubPlacement: value })}
-            ariaLabel={translate(
-              'auto.components.settings.ExperimentalPane.agentHub.placement',
-              'Show the hub as'
-            )}
-            options={[
-              {
-                value: 'dock',
-                label: translate('auto.components.settings.ExperimentalPane.agentHub.dock', 'Dock')
-              },
-              {
-                value: 'status-bar',
-                label: translate(
-                  'auto.components.settings.ExperimentalPane.agentHub.statusBar',
-                  'Status bar'
-                )
-              }
-            ]}
-          />
-        }
-      />
-      <AgentHubShortcutSetting />
-      <AgentHubMicModeSetting />
-      {preferences.placement === 'dock' ? (
-        <SettingsRow
-          label={translate(
-            'auto.components.settings.ExperimentalPane.agentHub.dockSize',
-            'Dock size'
-          )}
-          control={
-            <SettingsSegmentedControl<AgentHubDockSize>
-              value={preferences.dockSize}
-              size="sm"
-              onChange={(value) => updateSettings({ agentHubDockSize: value })}
-              ariaLabel={translate(
-                'auto.components.settings.ExperimentalPane.agentHub.dockSize',
-                'Dock size'
-              )}
-              options={AGENT_HUB_DOCK_SIZES.map((value) => ({
-                value,
-                label: agentHubDockSizeLabel(value)
-              }))}
-            />
-          }
-        />
-      ) : null}
-      {preferences.placement === 'dock' ? (
-        <SettingsSwitchRow
-          label={translate(
-            'auto.components.settings.ExperimentalPane.agentHub.autoHide',
-            'Hide the dock while no agent is active'
-          )}
-          description={translate(
-            'auto.components.settings.ExperimentalPane.agentHub.autoHideCopy',
-            'It comes back as soon as an agent starts working, asks something, or finishes.'
-          )}
-          checked={preferences.dockAutoHide}
-          onChange={() => updateSettings({ agentHubDockAutoHide: !preferences.dockAutoHide })}
-        />
-      ) : null}
-
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.focusedPaneOutline',
-          'Outline the focused terminal'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.focusedPaneOutlineCopy',
-          'A thin blue frame on the pane that has the keyboard, in the workspace and in mirrors: where typing and dictation go.'
-        )}
-        checked={preferences.focusedPaneOutline}
-        onChange={() =>
-          updateSettings({ agentHubFocusedPaneOutline: !preferences.focusedPaneOutline })
-        }
-      />
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.paneQuickReply',
-          'Quick reply in the terminal'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.paneQuickReplyCopy',
-          "When a terminal agent asks or needs approval, a card with its options opens over the pane's corner. Esc closes it; the terminal still takes the answer."
-        )}
-        checked={preferences.paneQuickReply}
-        onChange={() => updateSettings({ agentHubPaneQuickReply: !preferences.paneQuickReply })}
-      />
-
-      <AgentHubAlertSettings preferences={preferences} updateSettings={updateSettings} />
-
-      <SettingsSubsectionHeader
-        className="pt-2"
-        title={translate('auto.components.settings.ExperimentalPane.agentHub.popover', 'Popover')}
-      />
-      <SettingsRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.defaultTab',
-          'Open on'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.defaultTabCopy',
-          'When nobody is waiting; a waiting agent always opens the Inbox.'
-        )}
-        control={
-          <SettingsSegmentedControl<AgentHubDefaultTab>
-            value={preferences.defaultTab}
-            size="sm"
-            onChange={(value) => updateSettings({ agentHubDefaultTab: value })}
-            ariaLabel={translate(
-              'auto.components.settings.ExperimentalPane.agentHub.defaultTab',
-              'Open on'
-            )}
-            options={[
-              { value: 'inbox', label: translate('agentHub.tab.inbox', 'Inbox') },
-              { value: 'running', label: translate('agentHub.tab.running', 'Running') },
-              { value: 'agents', label: translate('agentHub.tab.agents', 'Agents') },
-              { value: 'all', label: translate('agentHub.tab.all', 'All terminals') }
-            ]}
-          />
-        }
-      />
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.showShells',
-          'List plain shells in All terminals'
-        )}
-        checked={preferences.showShells}
-        onChange={() => updateSettings({ agentHubShowShells: !preferences.showShells })}
-      />
-      <SettingsRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.clearFinished',
-          'Clear finished agents from the Inbox after'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.clearFinishedCopy',
-          'They stay unread in the Agents view; Never keeps them in the hub until you read them.'
-        )}
-        control={
-          <SettingsSegmentedControl<number>
-            value={preferences.finishedClearMinutes}
-            size="sm"
-            onChange={(value) => updateSettings({ agentHubFinishedAutoClearMinutes: value })}
-            ariaLabel={translate(
-              'auto.components.settings.ExperimentalPane.agentHub.clearFinished',
-              'Clear finished agents from the Inbox after'
-            )}
-            options={AGENT_HUB_FINISHED_CLEAR_MINUTES.map((minutes) => ({
-              value: minutes,
-              label: clearAfterLabel(minutes)
-            }))}
-          />
-        }
-      />
-      <SettingsRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.mirrorCap',
-          'Mirror windows open at once'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.mirrorCapCopy',
-          'Opening more than this parks the oldest one beside the hub.'
-        )}
-        control={
-          <SettingsSegmentedControl<number>
-            value={preferences.mirrorWindowCap}
-            size="sm"
-            onChange={(value) => updateSettings({ agentHubMirrorWindowCap: value })}
-            ariaLabel={translate(
-              'auto.components.settings.ExperimentalPane.agentHub.mirrorCap',
-              'Mirror windows open at once'
-            )}
-            options={AGENT_HUB_MIRROR_WINDOW_CAPS.map((cap) => ({
-              value: cap,
-              label: String(cap)
-            }))}
-          />
-        }
-      />
-      <SettingsRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.trayPeek',
-          'Fan out parked mirrors on news for'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.trayPeekCopy',
-          'When a parked mirror asks or finishes, the pile beside the hub opens this long, then folds again.'
-        )}
-        control={
-          <SettingsSegmentedControl<number>
-            value={preferences.trayPeekSeconds}
-            size="sm"
-            onChange={(value) => updateSettings({ agentHubTrayPeekSeconds: value })}
-            ariaLabel={translate(
-              'auto.components.settings.ExperimentalPane.agentHub.trayPeek',
-              'Fan out parked mirrors on news for'
-            )}
-            options={AGENT_HUB_TRAY_PEEK_SECONDS.map((seconds) => ({
-              value: seconds,
-              label:
-                seconds === 0
-                  ? translate('auto.components.settings.ExperimentalPane.agentHub.never', 'Never')
-                  : translate(
-                      'auto.components.settings.ExperimentalPane.agentHub.seconds',
-                      '{{value0}} s',
-                      { value0: seconds }
-                    )
-            }))}
-          />
-        }
-      />
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.tabAutoPopout',
-          'Show a pop-out button on terminal tabs'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.tabAutoPopoutCopy',
-          'Open a terminal in a mirror directly from its tab.'
-        )}
-        checked={preferences.tabAutoPopout}
-        onChange={() => updateSettings({ agentHubTabAutoPopout: !preferences.tabAutoPopout })}
-      />
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.canvas',
-          'Enable the mirrors canvas'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.canvasCopy',
-          'Open the canvas with its button or shortcut to lay out your mirrors. Pop out keeps your current view. Leaving the canvas parks its mirrors; coming back restores them.'
-        )}
-        checked={preferences.canvas}
-        onChange={() => updateSettings({ agentHubCanvas: !preferences.canvas })}
-      />
-      <SettingsSwitchRow
-        label={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.restoreOnLaunch',
-          'Restore mirrors and the canvas on launch'
-        )}
-        description={translate(
-          'auto.components.settings.ExperimentalPane.agentHub.restoreOnLaunchCopy',
-          'Mirrors, the tray and the canvas come back as you left them when Orca restarts. A mirror whose terminal was closed is left out.'
-        )}
-        checked={preferences.restoreOnLaunch}
-        onChange={() => updateSettings({ agentHubRestoreOnLaunch: !preferences.restoreOnLaunch })}
-      />
-    </div>
-  )
-}
 
 export function AgentHubExperimentalSetting({
   settings,
@@ -325,6 +14,7 @@ export function AgentHubExperimentalSetting({
   settings: GlobalSettings
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }): React.JSX.Element {
+  const openSettingsTarget = useAppStore((state) => state.openSettingsTarget)
   const enabled = settings.experimentalAgentHub === true
 
   return (
@@ -359,7 +49,16 @@ export function AgentHubExperimentalSetting({
           onChange={() => updateSettings({ experimentalAgentHub: !enabled })}
         />
       </div>
-      {enabled ? <AgentHubOptions updateSettings={updateSettings} /> : null}
+      {enabled ? (
+        <Button
+          type="button"
+          variant="link"
+          size="xs"
+          onClick={() => openSettingsTarget({ pane: 'agentHub', repoId: null })}
+        >
+          {translate('auto.agentHub.settings.open', 'Open Agent Hub settings')}
+        </Button>
+      ) : null}
     </SearchableSetting>
   )
 }

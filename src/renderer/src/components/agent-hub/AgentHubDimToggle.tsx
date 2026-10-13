@@ -1,3 +1,4 @@
+import { AGENT_HUB_DIM_MODES, agentHubDimModeLabel } from './agent-hub-dim-mode-options'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -29,24 +30,6 @@ import { useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 
 const FLOATING_WINDOW = '[data-agent-hub-mirror], [data-floating-terminal-panel]'
-const DIM_MODES: readonly AgentHubFloatingDimMode[] = ['off', 'on', 'untilClick', 'minimizeOnClick']
-
-function dimModeLabel(mode: AgentHubFloatingDimMode): string {
-  switch (mode) {
-    case 'off':
-      return translate('agentHub.dim.modeOff', "Don't dim")
-    case 'on':
-      return translate('agentHub.dim.modeOn', 'Dim behind floating windows')
-    case 'untilClick':
-      return translate('agentHub.dim.modeUntilClick', 'Dim until I click behind them')
-    case 'minimizeOnClick':
-      return translate(
-        'agentHub.dim.modeMinimizeOnClick',
-        'Dim, and a click behind tucks them away'
-      )
-  }
-}
-
 function useDimMode(): AgentHubFloatingDimMode {
   return useAppStore((s) => agentHubFloatingDimMode(s.settings))
 }
@@ -73,7 +56,7 @@ export function AgentHubDimToggle({
   if (!hubEnabled || onCanvas) {
     return null
   }
-  const label = `${translate('agentHub.dim.title', 'Dim behind floating windows')}: ${dimModeLabel(mode)}`
+  const label = `${translate('agentHub.dim.title', 'Dim behind floating windows')}: ${agentHubDimModeLabel(mode)}`
   const icon =
     mode === 'off' ? <Lightbulb className="size-3.5" /> : <LightbulbOff className="size-3.5" />
   return (
@@ -104,15 +87,15 @@ export function AgentHubDimToggle({
         <DropdownMenuRadioGroup
           value={mode}
           onValueChange={(value) => {
-            const next = DIM_MODES.find((candidate) => candidate === value)
+            const next = AGENT_HUB_DIM_MODES.find((candidate) => candidate === value)
             if (next) {
               void updateSettings({ agentHubFloatingDimMode: next })
             }
           }}
         >
-          {DIM_MODES.map((option) => (
+          {AGENT_HUB_DIM_MODES.map((option) => (
             <DropdownMenuRadioItem key={option} value={option}>
-              {dimModeLabel(option)}
+              {agentHubDimModeLabel(option)}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

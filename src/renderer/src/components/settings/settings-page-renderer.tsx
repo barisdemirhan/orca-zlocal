@@ -49,6 +49,7 @@ import {
   renderSshSettingsSection
 } from './settings-remote-security-section-renderers'
 import {
+  renderAgentHubSettingsSection,
   renderAdvancedSettingsSection,
   renderDevSettingsSection,
   renderExperimentalSettingsSection,
@@ -165,6 +166,7 @@ export function renderSettingsPage(context: SettingsRenderContext): React.JSX.El
                   {renderPrivacySettingsSection(context)}
                   {renderAdvancedSettingsSection(context)}
                   {renderDevSettingsSection(context)}
+                  {renderAgentHubSettingsSection(context)}
                   {renderExperimentalSettingsSection(context)}
                   {renderPluginsSettingsSection(context)}
                   {renderProjectSettingsSections(context)}

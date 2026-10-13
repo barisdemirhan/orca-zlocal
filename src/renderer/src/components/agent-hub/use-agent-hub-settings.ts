@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import {
+  normalizeAgentHubAlertOnInfo,
   normalizeAgentHubDefaultTab,
   normalizeAgentHubDockPosition,
   normalizeAgentHubDockSize,
@@ -23,6 +24,7 @@ export type AgentHubPreferences = {
   dockAutoHide: boolean
   alertOnNeedsInput: boolean
   alertOnFinished: boolean
+  alertOnInfo: boolean
   alertSound: boolean
   focusedPaneOutline: boolean
   paneQuickReply: boolean
@@ -48,6 +50,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       dockAutoHide: s.settings?.agentHubDockAutoHide,
       alertOnNeedsInput: s.settings?.agentHubAlertOnNeedsInput,
       alertOnFinished: s.settings?.agentHubAlertOnFinished,
+      alertOnInfo: s.settings?.agentHubAlertOnInfo,
       alertSound: s.settings?.agentHubAlertSound,
       focusedPaneOutline: s.settings?.agentHubFocusedPaneOutline,
       paneQuickReply: s.settings?.agentHubPaneQuickReply,
@@ -71,6 +74,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
       dockAutoHide: raw.dockAutoHide === true,
       alertOnNeedsInput: raw.alertOnNeedsInput !== false,
       alertOnFinished: raw.alertOnFinished !== false,
+      alertOnInfo: normalizeAgentHubAlertOnInfo(raw.alertOnInfo),
       alertSound: raw.alertSound !== false,
       focusedPaneOutline: raw.focusedPaneOutline !== false,
       paneQuickReply: raw.paneQuickReply !== false,

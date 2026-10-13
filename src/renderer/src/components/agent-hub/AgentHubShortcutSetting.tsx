@@ -5,11 +5,22 @@ import { Label } from '../ui/label'
 import { ShortcutRecorderButton } from '../settings/ShortcutRecorderButton'
 import { ShortcutRemoveButton } from '../settings/ShortcutRemoveButton'
 import { AGENT_HUB_SUGGESTED_BINDINGS } from './agent-hub-shortcut-suggestions'
-import { useAgentHubShortcutEditor } from './use-agent-hub-shortcut-editor'
+import {
+  useAgentHubShortcutEditor,
+  type AgentHubShortcutEditor
+} from './use-agent-hub-shortcut-editor'
 
 /** Edits the same bindings as Keyboard Shortcuts, without leaving the hub's settings. */
 export function AgentHubShortcutSetting(): React.JSX.Element {
   const editor = useAgentHubShortcutEditor()
+  return <AgentHubShortcutEditorRows editor={editor} />
+}
+
+export function AgentHubShortcutEditorRows({
+  editor
+}: {
+  editor: AgentHubShortcutEditor
+}): React.JSX.Element {
   const missing = AGENT_HUB_SUGGESTED_BINDINGS.filter(
     ([actionId]) => editor.bindingsFor(actionId).length === 0
   )
