@@ -10,6 +10,7 @@ import { isDevCliInvocation } from './runtime-compatibility'
 import { resolveCoordinatorTerminalHandle } from './terminal-identity'
 import { formatWorkerStart } from './worker-output'
 import { renderResolvedOrchestrationCommand } from '../../orchestration-mutation-recovery'
+import { getCallerTerminalHandle } from '../../caller-terminal-handle'
 
 export const ORCHESTRATION_WORKER_LAUNCH_HANDLER: Record<string, CommandHandler> = {
   'orchestration worker-start': async ({ flags, client, cwd, json }) => {
@@ -68,6 +69,7 @@ export const ORCHESTRATION_WORKER_LAUNCH_HANDLER: Record<string, CommandHandler>
       timeoutMs: getOptionalPositiveIntegerValueFlag(flags, 'timeout-ms'),
       run: getOptionalStringFlag(flags, 'run'),
       from: await resolveCoordinatorTerminalHandle(flags, cwd, client),
+      callerTerminalHandle: getCallerTerminalHandle(),
       devMode: isDevCliInvocation()
     })
     if (result.result.state !== 'ready') {

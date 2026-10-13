@@ -64,6 +64,11 @@ import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
 import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
 import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
 import type { TerminalSurfaceCloseTarget } from '../../shared/terminal-surface-close-target'
+import { resolveStructuredWorkerAuthority } from './structured-worker-authority'
+import {
+  structuredAgentSessionPaneKey,
+  structuredAgentSessionTabId
+} from '../../shared/structured-agent-session-projection'
 
 // oxlint-disable-next-line typescript/no-unsafe-declaration-merging -- SAFETY: The existing Linear installer supplies the canonical prototype surface.
 class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
@@ -219,6 +224,24 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
     return this.paneSpawnLineage.get(paneKey)
   }
 
+  recordWorkerSpawnLineage(
+    childHandle: string,
+    callerTerminalHandle: string | undefined,
+    structuredSessionId?: string
+  ): void {
+    if (structuredSessionId) {
+      this.paneSpawnLineage.recordPane(
+        structuredAgentSessionPaneKey(
+          structuredAgentSessionTabId(structuredSessionId),
+          structuredSessionId
+        ),
+        callerTerminalHandle
+      )
+    } else {
+      this.paneSpawnLineage.record(childHandle, callerTerminalHandle)
+    }
+  }
+
   getAgentHubParentPaneKey(paneKey: string): string | undefined {
     const orchestration = this.getAgentStatusOrchestrationContextForPaneKey(paneKey)
     if (orchestration) {
@@ -289,7 +312,19 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
     this.paneSpawnLineage = new RuntimePaneSpawnLineage({
       read: () => this.store?.getWorkspaceSession?.(),
       write: (session) => this.store?.setWorkspaceSession?.(session),
-      resolveLivePane: (handle) => this.getLiveTerminalPaneKey(handle),
+      resolveLivePane: (handle) => {
+        const livePane = this.getLiveTerminalPaneKey(handle)
+        const structured = livePane
+          ? resolveStructuredWorkerAuthority(handle, this.getOrchestrationDbIfAvailable?.())
+          : null
+        // Status readers use the public session pane, not the worker's private authority leaf.
+        return structured
+          ? structuredAgentSessionPaneKey(
+              structuredAgentSessionTabId(structured.running.sessionId),
+              structured.running.sessionId
+            )
+          : livePane
+      },
       publish: (paneKey, spawnedBy) => args[2]?.onPaneSpawnedByChanged?.(paneKey, spawnedBy)
     })
     // Why: the runtime listing re-runs a scan the worktree-change generation overtook and re-lists

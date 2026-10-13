@@ -52,8 +52,10 @@ export function resolveAgentRowParentPaneKey<T extends AgentLineageSourceRow>(
     }
   }
 
+  const hasOrchestrationParent =
+    Boolean(explicitParentPaneKey) || parentTerminalHandles.some(Boolean)
   const spawnedParent =
-    includeSpawnedBy && !row.entry.orchestration ? row.entry.spawnedBy?.paneKey : undefined
+    includeSpawnedBy && !hasOrchestrationParent ? row.entry.spawnedBy?.paneKey : undefined
   return spawnedParent && spawnedParent !== row.paneKey && rowsByPaneKey.has(spawnedParent)
     ? spawnedParent
     : undefined

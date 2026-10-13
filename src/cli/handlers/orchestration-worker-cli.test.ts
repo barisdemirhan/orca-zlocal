@@ -68,6 +68,28 @@ describe('orchestration worker-start CLI contract', () => {
     })
   }
 
+  it.each(['term_coord', undefined])(
+    'sends only the injected caller as spawn parent (%s)',
+    async (handle) => {
+      vi.stubEnv('ORCA_TERMINAL_HANDLE', handle)
+      callMock.mockResolvedValue({ result: { state: 'ready', effects: [], residualResources: [] } })
+      try {
+        await invokeWorkerStart(
+          new Map([
+            ['task', 'task_1'],
+            ['from', 'term_coord']
+          ])
+        )
+        expect(callMock).toHaveBeenCalledWith(
+          'orchestration.workerStart',
+          expect.objectContaining({ from: 'term_coord', callerTerminalHandle: handle })
+        )
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    }
+  )
+
   it('passes the complete supported creation contract and retry receipt', async () => {
     callMock.mockResolvedValue({
       result: {
@@ -116,6 +138,7 @@ describe('orchestration worker-start CLI contract', () => {
         retryOf: undefined,
         timeoutMs: 90_000,
         run: 'run_1',
+        callerTerminalHandle: 'term_coord',
         from: 'term_coord',
         devMode: false
       },

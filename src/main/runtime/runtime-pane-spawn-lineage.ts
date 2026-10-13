@@ -44,8 +44,18 @@ export class RuntimePaneSpawnLineage {
       return
     }
     const child = this.deps.resolveLivePane(childHandle)
+    if (child) {
+      this.recordPane(child, callerHandle)
+    }
+  }
+
+  /** A host-created structured session has a status pane, but no PTY handle. */
+  recordPane(child: string, callerHandle: string | undefined): void {
+    if (!callerHandle) {
+      return
+    }
     const parent = this.deps.resolveLivePane(callerHandle)
-    if (!child || !parent || child === parent || this.links[child]) {
+    if (!parent || child === parent || this.links[child]) {
       return
     }
     const seen = new Set([child])
