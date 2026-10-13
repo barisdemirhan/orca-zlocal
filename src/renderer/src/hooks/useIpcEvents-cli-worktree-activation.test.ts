@@ -489,6 +489,8 @@ describe('useIpcEvents CLI-created worktree activation', () => {
       {
         selector: 'env-1',
         method: 'runtime.clientEvents.subscribe',
+        params: { agentHub: false },
+        expectedEnvironmentPairingRevision: undefined,
         timeoutMs: 15_000
       },
       expect.any(Object)

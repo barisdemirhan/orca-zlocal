@@ -199,6 +199,7 @@ describe('headless hook agent-status projection (#11761)', () => {
       'paneKey',
       'prompt',
       'providerSession',
+      'spawnedBy',
       'state',
       'stateHistory',
       'stateStartedAt',
