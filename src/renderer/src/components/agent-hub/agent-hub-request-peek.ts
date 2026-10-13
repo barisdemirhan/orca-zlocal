@@ -1,4 +1,6 @@
 import { translate } from '@/i18n/i18n'
+import { toast } from 'sonner'
+import { agentHubPeekRefusalReason } from './agent-hub-peek-refusal'
 import {
   joinAbsolutePath,
   normalizeAbsolutePath,
@@ -11,6 +13,7 @@ import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
   openAgentHubPeekFile,
   openAgentHubPeekUrl,
+  agentHubPeekFileKind,
   type AgentHubPeekLinkSource
 } from './agent-hub-peek-routing'
 import { isAgentHubPeekHostMounted } from './agent-hub-peek-store'
@@ -78,6 +81,11 @@ export async function executeAgentHubPeek(
   if (url) {
     await openAgentHubPeekUrl(link, source, true)
     return
+  }
+  if (filePath && !agentHubPeekFileKind(filePath)) {
+    const reason = agentHubPeekRefusalReason(filePath)
+    toast.error(reason)
+    throw new Error(reason)
   }
   if (!filePath || !openAgentHubPeekFile(filePath, source, true)) {
     throw new Error(

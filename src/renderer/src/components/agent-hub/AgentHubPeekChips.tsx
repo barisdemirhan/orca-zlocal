@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { agentHubPeekItemsInMessage } from './agent-hub-peek-message-links'
+import { agentHubPeekRefusalReason } from './agent-hub-peek-refusal'
 import { openAgentHubPeek, type AgentHubPeekItem } from './agent-hub-peek-store'
 const NO_LINKS: readonly string[] = []
 
@@ -72,10 +73,7 @@ export function AgentHubPeekChips({
           variant="outline"
           size="xs"
           disabled
-          title={translate(
-            'agentHub.requests.peekUnsupported',
-            'This URL or file cannot be opened in Peek on its host.'
-          )}
+          title={agentHubPeekRefusalReason(link)}
           aria-label={translate('agentHub.peek.chipLabel', 'Peek at {{value0}}', { value0: link })}
         >
           {/^https?:\/\//i.test(link) ? (

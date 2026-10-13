@@ -21448,6 +21448,7 @@
       "pairedPeekUnavailable": "Peek はこのペアリング済みホストの URL やファイルをまだ開けません。",
       "peekUnavailable": "現在のビューでは Peek を利用できません。",
       "peekUnsupported": "この URL やファイルは、そのホストの Peek では開けません。",
+      "peekUnsupportedFile": "Peek はウェブページ、画像、PDF、音声、動画、HTML ファイルを開けます。このファイル形式には対応していません。",
       "targetUnavailable": "このターミナルは所属ホストで利用できなくなりました。",
       "mirrorAddFailed": "呼び出し元のミラーにターミナルを追加できませんでした（{{reason}}）。",
       "mirrorOpenFailed": "ミラーを開けませんでした（{{reason}}）。",

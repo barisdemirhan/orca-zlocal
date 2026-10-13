@@ -22064,6 +22064,7 @@
       "pairedPeekUnavailable": "Peek cannot open URLs or files from this paired host yet.",
       "peekUnavailable": "Peek is unavailable in the current view.",
       "peekUnsupported": "This URL or file cannot be opened in Peek on its host.",
+      "peekUnsupportedFile": "Peek opens web pages, images, PDF, audio, video and HTML files. This file type is not supported.",
       "targetUnavailable": "This terminal is no longer available on its host.",
       "mirrorAddFailed": "The terminal could not be added to the caller’s mirror ({{reason}}).",
       "mirrorOpenFailed": "The mirror could not be opened ({{reason}}).",

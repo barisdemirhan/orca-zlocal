@@ -21449,6 +21449,7 @@
       "pairedPeekUnavailable": "Peek 暂时无法打开此配对主机上的 URL 或文件。",
       "peekUnavailable": "当前视图中无法使用 Peek。",
       "peekUnsupported": "无法在所属主机的 Peek 中打开此 URL 或文件。",
+      "peekUnsupportedFile": "Peek 可打开网页、图片、PDF、音频、视频和 HTML 文件。不支持此文件类型。",
       "targetUnavailable": "此终端在所属主机上已不可用。",
       "mirrorAddFailed": "无法将终端添加到调用方的镜像窗口（{{reason}}）。",
       "mirrorOpenFailed": "无法打开镜像窗口（{{reason}}）。",

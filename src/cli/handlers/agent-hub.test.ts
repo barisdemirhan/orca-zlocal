@@ -42,6 +42,13 @@ async function run(argv: string[], json = false): Promise<void> {
 }
 
 describe('hub CLI', () => {
+  it('reports missing Peek input as a usage error before contacting the host', async () => {
+    await expect(run(['hub', 'peek'])).rejects.toMatchObject({
+      code: 'invalid_argument',
+      message: 'Missing <url|path>. Usage: orca hub peek <url|path>'
+    })
+    expect(call).not.toHaveBeenCalled()
+  })
   it('parses notification flags and preserves every link with the caller separate from the target', async () => {
     await run(
       [

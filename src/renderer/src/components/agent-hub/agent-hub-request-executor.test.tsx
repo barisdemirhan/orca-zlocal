@@ -2,6 +2,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
+import { toast } from 'sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
 import { toRemoteRuntimePtyId } from '../../../../shared/remote-runtime-pty-id'
@@ -283,7 +284,17 @@ describe('Agent Hub non-card actions', () => {
         pairedContext
       )
     ).toMatchObject({ kind: 'error', message: 'Host disconnected' })
-    expect(await run({ ...base, kind: 'peek', link: 'code.ts' })).toMatchObject({ kind: 'error' })
+    const toastError = vi.spyOn(toast, 'error').mockImplementation(() => 0)
+    expect(await run({ ...base, kind: 'peek', link: 'notes.md' })).toEqual({
+      kind: 'error',
+      code: 'invalid_argument',
+      message:
+        'Peek opens web pages, images, PDF, audio, video and HTML files. This file type is not supported.'
+    })
+    expect(toastError).toHaveBeenCalledWith(
+      'Peek opens web pages, images, PDF, audio, video and HTML files. This file type is not supported.'
+    )
+    toastError.mockRestore()
   })
 
   it('reports host-scoped mirrors, parked panes, CLI questions and desktop presence only', async () => {

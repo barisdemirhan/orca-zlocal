@@ -14,10 +14,17 @@ import {
 } from '../../shared/rpc-contract/agent-hub-params'
 import { agentHubCallerFlags, parseAgentHubParams, printAgentHubCommand } from './agent-hub-command'
 import { agentHubAsk } from './agent-hub-ask'
+import { RuntimeClientError } from '../runtime-client'
 
-function agentHubPeekLink({ flags, cwd }: HandlerContext): string | undefined {
+function agentHubPeekLink({ flags, cwd }: HandlerContext): string {
   const link = getOptionalStringFlag(flags, 'link')
-  if (!link || /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(link)) {
+  if (!link) {
+    throw new RuntimeClientError(
+      'invalid_argument',
+      'Missing <url|path>. Usage: orca hub peek <url|path>'
+    )
+  }
+  if (/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(link)) {
     return link
   }
   if (link === '~' || /^~[/\\]/.test(link)) {
