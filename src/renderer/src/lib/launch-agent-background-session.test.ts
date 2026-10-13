@@ -120,6 +120,7 @@ describe('launchAgentBackgroundSession', () => {
     expect(mockCreateTab).toHaveBeenCalledWith('wt-1', undefined, undefined, {
       id: tabId,
       initialPtyId: 'pty-1',
+      initialLeafId: expect.any(String),
       activate: false,
       recordInteraction: false
     })

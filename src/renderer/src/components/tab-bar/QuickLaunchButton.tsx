@@ -27,14 +27,15 @@ import { chatUnavailableLabel, rowTitle, rowLabel, rowId } from './tab-agent-row
 
 export type QuickLaunchAgentMenuItemsProps = {
   worktreeId: string
-  groupId: string
-  /** Reuse the tab bar’s focus handoff after creating a terminal tab. */
-  onFocusTerminal: (tabId: string) => void
-  /** Forward the initial prompt; delivery policy determines submission versus a user-confirmed draft. */
+  /** Optional initial prompt forwarded to `launchAgentInNewTab`. When set,
+   *  the picked agent boots with this prompt — argv/flag agents auto-submit,
+   *  followup-path agents land it as a draft for the user to confirm. */
   prompt?: string
   /** Use non-default modes for generated context that must not become shell syntax. */
   promptDelivery?: 'auto-submit' | 'draft' | 'submit-after-ready'
-  /** Default launch telemetry to tab_bar_quick_launch. */
+  /** Telemetry surface for `agent_started.launch_source`. Defaults to
+   *  `'tab_bar_quick_launch'` so the existing tab-bar `+` callsite is
+   *  unchanged. */
   launchSource?: LaunchSource
   /** Called after a prompt is queued into the agent, or immediately for argv prompt launches. */
   onPromptDelivered?: () => void
@@ -42,7 +43,17 @@ export type QuickLaunchAgentMenuItemsProps = {
   onPromptHandedOff?: (delivered: Promise<unknown>) => void
   /** Nothing to send: e.g. every note is already on its way, so no agent is started. */
   disabled?: boolean
-}
+} & (
+  | { onLaunch: (agent: TuiAgent) => void; groupId?: never; onFocusTerminal?: never }
+  | {
+      onLaunch?: never
+      groupId: string
+      /** Called after the tab is created so keyboard focus lands in the new xterm.
+       *  Reuses the TabBar's existing double-rAF handoff — this component does
+       *  not duplicate the focus logic. */
+      onFocusTerminal: (tabId: string) => void
+    }
+)
 
 const ROW_NAVIGATION_KEYS = new Set(['ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'])
 
@@ -61,6 +72,7 @@ export function useTabAgentMenuLaunch({
   launchSource,
   onPromptDelivered,
   onPromptHandedOff,
+  onLaunch,
   disabled,
   onFocusHostTerminal,
   onFocusChat
@@ -75,6 +87,10 @@ export function useTabAgentMenuLaunch({
         return
       }
       const { agent } = row
+      if (onLaunch) {
+        onLaunch(agent)
+        return
+      }
       const entry = getCatalogEntry(agent)
       const label = entry?.label ?? agent
       const result = launchAgentInNewTab({
@@ -145,6 +161,7 @@ export function useTabAgentMenuLaunch({
       launchSource,
       onPromptDelivered,
       onPromptHandedOff,
+      onLaunch,
       disabled,
       onFocusHostTerminal,
       onFocusChat
@@ -159,17 +176,27 @@ function QuickLaunchAgentMenuItemsInner(props: QuickLaunchAgentMenuItemsProps): 
   const detectionTarget = useAgentDetectionTargetForWorktree(props.worktreeId)
   const model = useNewTabAgentMenuRows(props.worktreeId, true, detectionTarget)
   const runLaunch = useTabAgentMenuLaunch(props)
-  return <ProjectedAgentMenuItems {...props} model={model} runLaunch={runLaunch} />
+  return (
+    <ProjectedAgentMenuItems
+      disabled={props.disabled}
+      model={model}
+      runLaunch={runLaunch}
+      // Why: a caller-owned launch shows its pending state in the open menu.
+      keepOpenOnSelect={props.onLaunch !== undefined}
+    />
+  )
 }
 
 export function ProjectedAgentMenuItems({
   disabled = false,
   model,
-  runLaunch
+  runLaunch,
+  keepOpenOnSelect = false
 }: {
   disabled?: boolean
   model: NewTabAgentMenuModel
   runLaunch: (row: NewTabAgentMenuRow) => void
+  keepOpenOnSelect?: boolean
 }): React.JSX.Element {
   const desktopDefaultAgent = useAppStore((s) => s.settings?.defaultTuiAgent)
   const openSettingsPage = useAppStore((s) => s.openSettingsPage)
@@ -273,6 +300,7 @@ export function ProjectedAgentMenuItems({
                 label={label}
                 disabled={disabled}
                 runLaunch={runLaunch}
+                keepOpenOnSelect={keepOpenOnSelect}
               >
                 {rowContent}
               </SurfaceChoiceRow>
@@ -280,7 +308,12 @@ export function ProjectedAgentMenuItems({
               <DropdownMenuItem
                 variant="launch"
                 disabled={disabled}
-                onSelect={() => runLaunch(row)}
+                onSelect={(event) => {
+                  if (keepOpenOnSelect) {
+                    event.preventDefault()
+                  }
+                  runLaunch(row)
+                }}
                 title={rowTitle(row, label)}
               >
                 {rowContent}
@@ -313,6 +346,7 @@ function SurfaceChoiceRow({
   label,
   disabled,
   runLaunch,
+  keepOpenOnSelect,
   children
 }: {
   row: NewTabAgentMenuRow
@@ -320,6 +354,7 @@ function SurfaceChoiceRow({
   label: string
   disabled: boolean
   runLaunch: (row: NewTabAgentMenuRow) => void
+  keepOpenOnSelect: boolean
   children: React.ReactNode
 }): React.JSX.Element {
   const otherButton = useRef<HTMLButtonElement>(null)
@@ -352,6 +387,11 @@ function SurfaceChoiceRow({
             ? release.target
             : event.target
         runLaunch(target instanceof Node && otherButton.current?.contains(target) ? other : row)
+      }}
+      onSelect={(event) => {
+        if (keepOpenOnSelect) {
+          event.preventDefault()
+        }
       }}
       onKeyDown={(event) => {
         if (event.key === 'ArrowRight') {

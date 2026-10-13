@@ -97,6 +97,7 @@ export async function adoptAgentBackgroundSessionTab(args: {
   const tab = store.createTab(args.worktreeId, undefined, undefined, {
     id: reservedTabId,
     initialPtyId: ptyId,
+    initialLeafId: launchRegistration.leafId,
     activate: false,
     recordInteraction: false,
     ...(ORCA_LAYOUT_OWNER_IS_MAIN ? { initialLeafId: parsePaneKey(args.paneKey)?.leafId } : {})

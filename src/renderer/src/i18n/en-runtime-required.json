@@ -15,6 +15,7 @@
       "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available."
     },
     "mirror": {
+      "newAgentInWorkspace": "New {{agent}} agent in {{workspace}}",
       "tabCount_one": "{{value0}} tab",
       "tabCount_other": "{{value0}} tabs",
       "workerCount": "{{value0}} workers"

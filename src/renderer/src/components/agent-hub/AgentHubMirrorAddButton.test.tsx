@@ -30,7 +30,9 @@ const fixture = vi.hoisted(() => ({
   disappeared: new Set<string>(),
   launch: vi.fn<typeof launchAgentBackgroundSession>(),
   release: vi.fn(),
-  detected: Array<TuiAgent>('claude', 'codex', 'gemini')
+  detected: Array<TuiAgent>('claude', 'codex', 'gemini'),
+  openSettingsPage: vi.fn(),
+  openSettingsTarget: vi.fn()
 }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 vi.mock('@/lib/launch-agent-background-session', () => ({
@@ -49,6 +51,8 @@ vi.mock('@/store', async () => {
     useAppStore: create(() => ({
       tabsByWorktree,
       repos: [],
+      openSettingsPage: fixture.openSettingsPage,
+      openSettingsTarget: fixture.openSettingsTarget,
       activeView: 'activity',
       activeWorktreeId: 'typing-workspace',
       activeTabId: 'typing-tab',
@@ -74,6 +78,7 @@ afterEach(() => {
 beforeEach(() => {
   vi.clearAllMocks()
   fixture.launch.mockReset()
+  fixture.detected = ['claude', 'codex', 'gemini']
   useAppStore.setState({ tabsByWorktree: {} })
 })
 function setup() {
@@ -268,20 +273,53 @@ it('switches picker sections with arrow keys and links keyboard selection to the
   )
 })
 
-it('offers enabled agents default-first with Tab and arrow navigation', async () => {
+async function openNewAgent(workspace?: string) {
+  await userEvent.setup().click(
+    screen.getByRole('button', {
+      name: workspace ? `Add agent in ${workspace}` : 'New agent'
+    })
+  )
+  return screen.findByRole('menuitem', { name: /^Claude$/ })
+}
+
+it('puts New agent beside the switcher and offers the shared menu with keyboard navigation and settings', async () => {
   setup()
   const user = userEvent.setup()
-  expect(screen.getByText('New agent')).toBeTruthy()
-  expect(screen.queryByRole('button', { name: /New Gemini agent/ })).toBeNull()
-  const codex = screen.getByRole('button', { name: 'New Codex agent in feature' })
-  const claude = screen.getByRole('button', { name: 'New Claude agent in feature' })
-  codex.focus()
-  await user.tab()
-  expect(document.activeElement).toBe(claude)
-  await user.keyboard('{ArrowLeft}')
+  const trigger = screen.getByRole('button', { name: 'New agent' })
+  expect(
+    trigger.parentElement?.parentElement?.contains(screen.getByRole('tab', { name: /^Agents/ }))
+  ).toBe(true)
+  trigger.focus()
+  await user.keyboard('{Enter}')
+  const codex = await screen.findByRole('menuitem', { name: /^Codex/ })
+  const claude = screen.getByRole('menuitem', { name: /^Claude$/ })
+  expect(screen.getAllByRole('menuitem').map((row) => row.textContent)).toEqual([
+    expect.stringContaining('Codex'),
+    'Claude',
+    'Agent settings…'
+  ])
+  expect(screen.queryByRole('menuitem', { name: /^Gemini/ })).toBeNull()
   expect(document.activeElement).toBe(codex)
   await user.keyboard('{ArrowDown}')
   expect(document.activeElement).toBe(claude)
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('menuitem')).toBeNull()
+  expect(screen.getByRole('textbox', { name: 'Filter terminals' })).toBeTruthy()
+  await openNewAgent()
+  await user.click(screen.getByRole('menuitem', { name: 'Agent settings…' }))
+  expect(fixture.openSettingsTarget).toHaveBeenCalledWith({ pane: 'agents', repoId: null })
+  expect(fixture.openSettingsPage).toHaveBeenCalledOnce()
+})
+
+it.each([
+  [[], 'No agents detected'],
+  [['gemini'], 'No enabled agents']
+] as const)('keeps settings available in the %s empty menu', async (detected, message) => {
+  fixture.detected = [...detected]
+  setup()
+  await userEvent.setup().click(screen.getByRole('button', { name: 'New agent' }))
+  expect(await screen.findByRole('menuitem', { name: message })).toBeTruthy()
+  expect(screen.getByRole('menuitem', { name: 'Agent settings…' })).toBeTruthy()
 })
 
 it('launches in the active home workspace and adds and selects the returned pane without navigation', async () => {
@@ -294,7 +332,7 @@ it('launches in the active home workspace and adds and selects the returned pane
     type: useAppStore.getState().activeTabType,
     view: useAppStore.getState().activeView
   }
-  fireEvent.click(screen.getByRole('button', { name: 'New Claude agent in feature' }))
+  fireEvent.click(await openNewAgent())
   await waitFor(() =>
     expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
   )
@@ -330,7 +368,7 @@ it('uses the home workspace while a family member from another workspace is disp
   const tabId = mirror.tabs[0].id
   act(() => toggleAgentHubMirrorViewing(id, tabId, paneTargetFromTerminalRow(row)))
   prepareLaunch()
-  fireEvent.click(screen.getByRole('button', { name: 'New Claude agent in feature' }))
+  fireEvent.click(await openNewAgent())
   await waitFor(() => expect(fixture.launch).toHaveBeenCalledOnce())
   expect(fixture.launch.mock.calls[0]?.[0].worktreeId).toBe(worktree.id)
 })
@@ -338,8 +376,8 @@ it('uses the home workspace while a family member from another workspace is disp
 it('opens the workspace header choices and launches in that workspace', async () => {
   const { id, second } = setup()
   prepareLaunch()
-  fireEvent.click(screen.getByRole('button', { name: 'Add agent in second' }))
-  fireEvent.click(screen.getByRole('button', { name: 'New Codex agent in second' }))
+  await openNewAgent('second')
+  fireEvent.click(screen.getByRole('menuitem', { name: /^Codex/ }))
   await waitFor(() =>
     expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
   )
@@ -356,7 +394,7 @@ it('refuses to start anything when the mirror fills after the picker opened', as
     fixture.groups[0]?.workspaces[0]?.rows.filter((row) => row.tab.id.startsWith('extra-')) ?? []
   // Keep the picker open with its stale count while another source fills the window.
   act(() => extra.forEach((row) => addAgentHubMirrorTab(id, paneTargetFromTerminalRow(row), false)))
-  fireEvent.click(screen.getByRole('button', { name: 'New Claude agent in feature' }))
+  fireEvent.click(await openNewAgent())
   await waitFor(() =>
     expect(toast.error).toHaveBeenCalledWith('A mirror can hold up to 10 terminals.')
   )
@@ -374,7 +412,7 @@ it.each(['reject', 'no-result'] as const)(
     } else {
       fixture.launch.mockResolvedValue(null)
     }
-    fireEvent.click(screen.getByRole('button', { name: 'New Claude agent in feature' }))
+    fireEvent.click(await openNewAgent())
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith('Could not start Claude.', {
         description:
@@ -383,6 +421,10 @@ it.each(['reject', 'no-result'] as const)(
     )
     expect(readAgentHubMirrors()).toEqual(before)
     expect(screen.getByRole('textbox', { name: 'Filter terminals' })).toBeTruthy()
+    await userEvent.setup().keyboard('{Escape}')
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'New agent' }))
+    )
   }
 )
 
@@ -401,10 +443,12 @@ it('keeps focus on another typing field when a delayed launch closes the picker 
     await ready
     return launch(args)
   })
-  const button = screen.getByRole('button', { name: 'New Claude agent in feature' })
+  const button = await openNewAgent()
   fireEvent.click(button)
   fireEvent.click(button)
   expect(fixture.launch).toHaveBeenCalledOnce()
+  expect(screen.getByRole('button', { name: 'New agent' }).hasAttribute('disabled')).toBe(true)
+  expect(button.hasAttribute('data-disabled')).toBe(true)
   const prompt = screen.getByRole('textbox', { name: 'Main prompt' })
   prompt.focus()
   await act(async () => resolve())

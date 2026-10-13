@@ -139,12 +139,10 @@ export function AgentHubMirrorPickerBody({
         }
       }}
     >
-      {homeWorktree ? (
-        <div className="border-b border-border px-2.5 py-2">
+      <div className="flex items-center justify-between gap-2 px-2.5 pt-2.5 pb-2.5">
+        {homeWorktree ? (
           <AgentHubMirrorNewAgent worktree={homeWorktree} pending={pending} onStart={onStart} />
-        </div>
-      ) : null}
-      <div className="flex items-center px-2.5 pt-2.5 pb-2.5">
+        ) : null}
         <AgentHubTabSwitcher
           tabs={PICKER_SECTIONS.map((value) => ({
             value,
