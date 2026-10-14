@@ -18215,7 +18215,6 @@
         "ask": "询问",
         "free": "自由执行",
         "workingFolder": "工作文件夹",
-        "folderRequired": "未选择 — 选择文件夹后才能启动 Orb",
         "choose": "选择…",
         "hidden": "隐藏",
         "speakReplies": "朗读回复",
@@ -21573,13 +21572,13 @@
     }
   },
   "auto.agentHub.orb.talk": "与 Orb 对话",
-  "auto.agentHub.orb.chooseFolderFirst": "请先选择 Orb 的工作文件夹",
   "auto.agentHub.orb.disabled": "启用代理控制以与 Orb 对话",
   "auto.agentHub.orb.openFailed": "无法打开 Orb，请重试。",
   "auto.agentHub.orb.working": "处理中",
   "auto.agentHub.orb.open": "打开",
   "auto.agentHub.orb.toSend": "发送",
   "auto.agentHub.orb.approvalKeys": "允许 ↵ / 拒绝 esc",
+  "auto.agentHub.orb.sharedWorkingFolder": "使用浮动工作区目录。更改也会应用于新的浮动标签页。",
   "workspaceDeletion": {
     "preferenceSaveFailed": "无法保存删除偏好设置",
     "alwaysForceDelete": "始终强制删除",

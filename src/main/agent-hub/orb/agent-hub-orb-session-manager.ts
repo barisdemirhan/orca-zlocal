@@ -155,18 +155,19 @@ export class AgentHubOrbSessionManager {
 
   private async openOnce(params: AgentHubOrbOpenParams): Promise<AgentHubOrbSession> {
     const settings = normalizeAgentHubOrbSettings(this.getSettings())
-    const cwd = params.cwd?.trim() || settings.cwd
-    if (!cwd) {
-      throw new AgentHubError('invalid_argument', 'Orb folder is not chosen')
-    }
-    if (!isAbsolute(cwd)) {
-      throw new AgentHubError('invalid_argument', 'Orb folder must be an absolute path')
-    }
-    const directory = await stat(cwd).catch(() => null)
-    if (!directory?.isDirectory()) {
-      throw new AgentHubError('invalid_argument', 'Orb folder does not exist or is not a directory')
-    }
+    const cwd = params.cwd?.trim()
+    // Older clients may supply a cwd; ordinary opens use the host's floating workspace resolver.
     if (params.cwd !== undefined) {
+      if (!cwd || !isAbsolute(cwd)) {
+        throw new AgentHubError('invalid_argument', 'Orb folder must be an absolute path')
+      }
+      const directory = await stat(cwd).catch(() => null)
+      if (!directory?.isDirectory()) {
+        throw new AgentHubError(
+          'invalid_argument',
+          'Orb folder does not exist or is not a directory'
+        )
+      }
       await this.saveCwd(cwd)
     }
     const host = await this.ensureHost()
@@ -213,7 +214,7 @@ export class AgentHubOrbSessionManager {
       caller,
       ...create,
       origin: AGENT_HUB_ORB_ORIGIN,
-      hostLaunchDirectory: cwd,
+      ...(cwd ? { hostLaunchDirectory: cwd } : {}),
       options: {
         ...(model ? { model } : {}),
         ...agentHubOrbPermissionOptions(this.getSettings(), agent)

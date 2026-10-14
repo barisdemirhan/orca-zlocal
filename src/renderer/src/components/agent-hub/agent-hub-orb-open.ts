@@ -32,22 +32,11 @@ async function open(params?: AgentHubOrbOpenParams): Promise<void> {
     showAgentHubOrbPanel({ ...session, tabId: tab.id })
   } catch (error) {
     const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null
-    const message =
-      typeof error === 'object' && error !== null && 'message' in error ? error.message : null
-    if (code === 'invalid_argument' && typeof message === 'string' && /folder/i.test(message)) {
-      const store = useAppStore.getState()
-      store.openSettingsTarget({ pane: 'agentHub', repoId: null })
-      store.openSettingsPage()
-      toast(
-        translate('auto.agentHub.orb.chooseFolderFirst', "Choose the Orb's working folder first")
-      )
-    } else {
-      toast.error(
-        code === 'disabled'
-          ? translate('auto.agentHub.orb.disabled', 'Enable Agent control to talk to Orb')
-          : translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.')
-      )
-    }
+    toast.error(
+      code === 'disabled'
+        ? translate('auto.agentHub.orb.disabled', 'Enable Agent control to talk to Orb')
+        : translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.')
+    )
   }
 }
 

@@ -59,12 +59,12 @@ beforeEach(() => {
   })
 })
 describe('open Orb', () => {
-  it('opens Agent Hub settings and explains a missing folder', async () => {
-    mocks.open.mockRejectedValue({ code: 'invalid_argument', message: 'Choose a working folder' })
+  it('reports a folder failure without requiring a separate Orb folder choice', async () => {
+    mocks.open.mockRejectedValue({ code: 'invalid_argument', message: 'Invalid working folder' })
     await openAgentHubOrb()
-    expect(mocks.settings).toHaveBeenCalledWith({ pane: 'agentHub', repoId: null })
-    expect(mocks.page).toHaveBeenCalledOnce()
-    expect(mocks.toast).toHaveBeenCalledWith("Choose the Orb's working folder first")
+    expect(mocks.toast.error).toHaveBeenCalledWith('Could not open Orb. Try again.')
+    expect(mocks.settings).not.toHaveBeenCalled()
+    expect(mocks.page).not.toHaveBeenCalled()
     expect(mocks.reveal).not.toHaveBeenCalled()
   })
   it('reports disabled and other failures without changing the workspace', async () => {

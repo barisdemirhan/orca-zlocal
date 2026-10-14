@@ -41,7 +41,8 @@ beforeEach(() => {
     experimentalAgentHub: true,
     agentHubOrbAgent: 'codex',
     agentHubOrbModel: null,
-    agentHubOrbCwd: state.root
+    agentHubOrbCwd: null,
+    floatingTerminalCwd: state.root
   })
   runtime = {
     isAgentHubEnabled: () =>
@@ -66,7 +67,8 @@ beforeEach(() => {
         path: state.root
       },
       runtimeKind: 'native',
-      hostLaunchDirectory: params.hostLaunchDirectory ?? join(state.root, 'floating'),
+      hostLaunchDirectory:
+        params.hostLaunchDirectory ?? (settings.floatingTerminalCwd || state.root),
       options: { model: 'global-model' }
     })),
     publishStructuredAgentSessionTab: async (params) => {
@@ -215,13 +217,27 @@ describe('Orb conversations on the structured host', () => {
       second.sessionId
     ])
   })
-  it('requires a chosen folder, rejects missing and file paths, and persists an explicit cwd', async () => {
-    settings.agentHubOrbCwd = null
-    settings.floatingTerminalCwd = state.root
-    await expect(manager.open()).rejects.toMatchObject({
-      code: 'invalid_argument',
-      message: 'Orb folder is not chosen'
-    })
+  it('uses the host-resolved floating directory instead of a separately saved Orb folder', async () => {
+    settings.agentHubOrbCwd = join(state.root, 'old-orb-folder')
+    const opened = await manager.open()
+    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(state.root)
+    await manager.close()
+    const nextDirectory = join(state.root, 'floating-next')
+    await mkdir(nextDirectory)
+    settings.floatingTerminalCwd = nextDirectory
+    const next = await manager.open()
+    expect(state.store.getRecord(next.sessionId)?.launchDirectory).toBe(nextDirectory)
+    const resumed = await manager.open({ resume: { sessionId: opened.sessionId } })
+    expect(resumed.sessionId).toBe(opened.sessionId)
+    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(state.root)
+  })
+  it('starts without a separate folder choice using the floating host default', async () => {
+    settings.floatingTerminalCwd = ''
+    const opened = await manager.open()
+    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(state.root)
+    expect(settings.agentHubOrbCwd).toBeNull()
+  })
+  it('keeps explicit cwd requests compatible and rejects missing and file paths before launch', async () => {
     await expect(manager.open({ cwd: join(state.root, 'missing') })).rejects.toMatchObject({
       code: 'invalid_argument'
     })

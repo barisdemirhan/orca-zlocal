@@ -37,7 +37,7 @@ export function AgentHubSettingsOrbSection({
   const chooseFolder = async (): Promise<void> => {
     const path = await window.api.app.pickFloatingWorkspaceDirectory()
     if (path) {
-      updateSettings({ agentHubOrbCwd: path })
+      updateSettings({ floatingTerminalCwd: path })
     }
   }
   return (
@@ -131,14 +131,13 @@ export function AgentHubSettingsOrbSection({
       <SettingsRow
         label={translate('auto.agentHub.orb.workingFolder', 'Working folder')}
         description={
-          orb.cwd ? (
-            <span className="break-all font-mono">{orb.cwd}</span>
-          ) : (
-            translate(
-              'auto.agentHub.orb.folderRequired',
-              'Not chosen — the Orb cannot start until you pick a folder'
-            )
-          )
+          <>
+            {translate(
+              'auto.agentHub.orb.sharedWorkingFolder',
+              'Uses the floating workspace directory. Changes also apply to new floating tabs.'
+            )}
+            <span className="block break-all font-mono">{settings.floatingTerminalCwd || '~'}</span>
+          </>
         }
         control={
           <Button type="button" variant="outline" size="xs" onClick={() => void chooseFolder()}>

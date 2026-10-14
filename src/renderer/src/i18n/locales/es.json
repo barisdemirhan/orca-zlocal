@@ -18687,7 +18687,6 @@
         "ask": "Preguntar",
         "free": "Actuar libremente",
         "workingFolder": "Carpeta de trabajo",
-        "folderRequired": "Sin elegir — Orb no puede iniciarse hasta que elijas una carpeta",
         "choose": "Elegir…",
         "hidden": "Oculto",
         "speakReplies": "Leer respuestas",
@@ -22295,13 +22294,13 @@
     }
   },
   "auto.agentHub.orb.talk": "Hablar con Orb",
-  "auto.agentHub.orb.chooseFolderFirst": "Primero elige la carpeta de trabajo de Orb",
   "auto.agentHub.orb.disabled": "Activa el control de agentes para hablar con Orb",
   "auto.agentHub.orb.openFailed": "No se pudo abrir Orb. Inténtalo de nuevo.",
   "auto.agentHub.orb.working": "Trabajando",
   "auto.agentHub.orb.open": "Abrir",
   "auto.agentHub.orb.toSend": "para enviar",
   "auto.agentHub.orb.approvalKeys": "Permitir ↵ / Denegar esc",
+  "auto.agentHub.orb.sharedWorkingFolder": "Usa el directorio del espacio de trabajo flotante. Los cambios también se aplican a las nuevas pestañas flotantes.",
   "workspaceDeletion": {
     "preferenceSaveFailed": "No se pudo guardar la preferencia de eliminación",
     "alwaysForceDelete": "Forzar siempre la eliminación",

@@ -18907,7 +18907,6 @@
         "ask": "Demander",
         "free": "Agir librement",
         "workingFolder": "Dossier de travail",
-        "folderRequired": "Non choisi — l’Orb ne peut pas démarrer avant le choix d’un dossier",
         "choose": "Choisir…",
         "hidden": "Masqué",
         "speakReplies": "Lire les réponses",
@@ -22295,13 +22294,13 @@
     }
   },
   "auto.agentHub.orb.talk": "Parler à Orb",
-  "auto.agentHub.orb.chooseFolderFirst": "Choisissez d’abord le dossier de travail d’Orb",
   "auto.agentHub.orb.disabled": "Activez le contrôle des agents pour parler à Orb",
   "auto.agentHub.orb.openFailed": "Impossible d’ouvrir Orb. Réessayez.",
   "auto.agentHub.orb.working": "En cours",
   "auto.agentHub.orb.open": "Ouvrir",
   "auto.agentHub.orb.toSend": "pour envoyer",
   "auto.agentHub.orb.approvalKeys": "Autoriser ↵ / Refuser esc",
+  "auto.agentHub.orb.sharedWorkingFolder": "Utilise le dossier de l’espace de travail flottant. Les changements s’appliquent aussi aux nouveaux onglets flottants.",
   "workspaceDeletion": {
     "preferenceSaveFailed": "Impossible d'enregistrer la préférence de suppression",
     "alwaysForceDelete": "Toujours forcer la suppression",

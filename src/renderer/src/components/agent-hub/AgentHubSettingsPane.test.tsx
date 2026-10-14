@@ -95,7 +95,7 @@ function Pane(): React.JSX.Element {
   )
 }
 
-it('groups the hub preferences and starts the Orb with a required folder and unassigned shortcut', () => {
+it('groups the hub preferences and shares the floating workspace directory and unassigned shortcut', () => {
   render(<Pane />)
   for (const name of ['Dock', 'Alerts', 'Popover', 'Mirrors & canvas', 'Voice', 'Orb']) {
     expect(screen.getByRole('heading', { name })).toBeTruthy()
@@ -103,7 +103,12 @@ it('groups the hub preferences and starts the Orb with a required folder and una
   expect(screen.getByRole('combobox', { name: 'Agent' }).textContent).toContain('Claude')
   expect(screen.getByRole('combobox', { name: 'Model' }).textContent).toContain('Agent default')
   expect(screen.getByText('Working folder')).toBeTruthy()
-  expect(screen.getByText('Not chosen — the Orb cannot start until you pick a folder')).toBeTruthy()
+  expect(
+    screen.getByText(
+      'Uses the floating workspace directory. Changes also apply to new floating tabs.'
+    )
+  ).toBeTruthy()
+  expect(screen.getByText('~')).toBeTruthy()
   expect(screen.getByText('Not set')).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Add shortcut for Talk shortcut' })).toBeTruthy()
   expect(screen.getByRole('switch', { name: 'Speak replies' }).hasAttribute('disabled')).toBe(true)
@@ -122,15 +127,15 @@ it('shows the automatic approval warning only when Act freely is selected', () =
   expect(screen.queryByText(warning)).toBeNull()
 })
 
-it('keeps the folder unset on cancellation and persists only the user-selected path', async () => {
+it('keeps the shared directory on cancellation and updates the floating workspace when chosen', async () => {
   render(<Pane />)
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Choose…' })))
   expect(useAppStore.getState().updateSettings).not.toHaveBeenCalled()
   pickFolder.mockResolvedValue('/project/orb')
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Choose…' })))
-  expect(useAppStore.getState().settings?.agentHubOrbCwd).toBe('/project/orb')
+  expect(useAppStore.getState().settings?.floatingTerminalCwd).toBe('/project/orb')
+  expect(useAppStore.getState().settings?.agentHubOrbCwd).toBeNull()
   expect(screen.getByText('/project/orb')).toBeTruthy()
-  expect(screen.queryByText('Not chosen — the Orb cannot start until you pick a folder')).toBeNull()
 })
 
 it('loads registered ACP agents with Chat UI off and clears the model pick when changing agents', async () => {
