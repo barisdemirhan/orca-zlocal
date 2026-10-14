@@ -2,19 +2,15 @@ import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
-import {
-  activateStructuredAgentSessionTab,
-  findStructuredAgentSessionTab
-} from '@/lib/structured-agent-session-tab-activation'
+import { findStructuredAgentSessionTab } from '@/lib/structured-agent-session-tab-activation'
 import { refreshLocalStructuredSessionTabs } from '@/runtime/local-structured-session-tabs-sync'
-import { revealFloatingWorkspacePanel } from '@/lib/floating-workspace-panel-reveal'
-import { selectFloatingWorkspacePanelVisible } from '@/store/floating-workspace-panel-selector'
-import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
+import type { AgentHubOrbOpenParams } from '../../../../shared/agent-hub-orb'
+import { showAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
 let opening: Promise<void> | null = null
-async function open(): Promise<void> {
+async function open(params?: AgentHubOrbOpenParams): Promise<void> {
   try {
-    const session = await window.api.agentHub.orb.open()
+    const session = await window.api.agentHub.orb.open(params)
     let store = useAppStore.getState()
     let tab = findStructuredAgentSessionTab(store.unifiedTabsByWorktree, {
       workspaceId: FLOATING_TERMINAL_WORKTREE_ID,
@@ -33,27 +29,7 @@ async function open(): Promise<void> {
     if (!tab) {
       throw new Error('Orb tab was not published')
     }
-    const focused =
-      document.activeElement instanceof Element &&
-      document.activeElement.closest('[data-floating-terminal-panel]') !== null
-    const group = store.groupsByWorktree[FLOATING_TERMINAL_WORKTREE_ID]?.find(
-      (candidate) => candidate.id === store.activeGroupIdByWorktree[FLOATING_TERMINAL_WORKTREE_ID]
-    )
-    if (
-      selectFloatingWorkspacePanelVisible(store) &&
-      group?.id === tab.groupId &&
-      group.activeTabId === tab.id &&
-      focused
-    ) {
-      window.dispatchEvent(new Event(TOGGLE_FLOATING_TERMINAL_EVENT))
-      return
-    }
-    revealFloatingWorkspacePanel(store)
-    activateStructuredAgentSessionTab({
-      worktreeId: FLOATING_TERMINAL_WORKTREE_ID,
-      tabId: tab.id,
-      target: { kind: 'local' }
-    })
+    showAgentHubOrbPanel({ ...session, tabId: tab.id })
   } catch (error) {
     const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null
     const message =
@@ -75,9 +51,9 @@ async function open(): Promise<void> {
   }
 }
 
-export function openAgentHubOrb(): Promise<void> {
+export function openAgentHubOrb(params?: AgentHubOrbOpenParams): Promise<void> {
   if (!opening) {
-    opening = open().finally(() => {
+    opening = open(params).finally(() => {
       opening = null
     })
   }

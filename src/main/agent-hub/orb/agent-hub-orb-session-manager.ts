@@ -28,6 +28,7 @@ import {
   prepareStructuredAgentSessionCreateForWorktree
 } from '../../runtime/rpc/methods/structured-agent-session-create'
 import { commitStructuredAgentSessionLaunchPrompt } from '../../runtime/rpc/methods/agent-launch-structured-prompt'
+import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
 
 const caller = { callerKey: 'trusted-local:agent-hub-orb' }
 type OrbRuntime = Pick<
@@ -36,10 +37,13 @@ type OrbRuntime = Pick<
   | 'ensureStructuredAgentSessionHost'
   | 'resolveStructuredAgentSessionCreateIntent'
   | 'publishStructuredAgentSessionTab'
+  | 'closeMobileSessionTab'
 >
 
 export class AgentHubOrbSessionManager {
   private opening: Promise<AgentHubOrbSession> | null = null
+  private openingResumeId: string | undefined
+  private operations: Promise<void> = Promise.resolve()
   private active: AgentHubOrbSession | null = null
 
   constructor(
@@ -71,13 +75,44 @@ export class AgentHubOrbSessionManager {
 
   open(params: AgentHubOrbOpenParams = {}): Promise<AgentHubOrbSession> {
     this.requireEnabled()
-    if (this.opening) {
+    if (this.opening && (!params.resume || params.resume.sessionId === this.openingResumeId)) {
       return this.opening
     }
-    this.opening = this.openOnce(params).finally(() => {
-      this.opening = null
+    const opening = this.enqueue(() => this.openOnce(params)).finally(() => {
+      if (this.opening === opening) {
+        this.opening = null
+        this.openingResumeId = undefined
+      }
     })
-    return this.opening
+    this.opening = opening
+    this.openingResumeId = params.resume?.sessionId
+    return opening
+  }
+
+  close(): Promise<void> {
+    this.requireEnabled()
+    this.opening = null
+    this.openingResumeId = undefined
+    return this.enqueue(() => this.closeOnce())
+  }
+
+  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    const next = this.operations.then(operation)
+    this.operations = next.then(
+      () => {},
+      () => {}
+    )
+    return next
+  }
+
+  private async closeOnce(): Promise<void> {
+    const host = await this.ensureHost()
+    const current = this.current()
+    if (!current) {
+      return
+    }
+    await closeAgentHubOrbSession(this.runtime, host, current)
+    this.active = null
   }
 
   async list(limit = 30): Promise<AgentHubOrbConversation[]> {
@@ -137,7 +172,7 @@ export class AgentHubOrbSessionManager {
     const host = await this.ensureHost()
     this.requireEnabled()
     const current = this.current()
-    if (current) {
+    if (current && (!params.resume || current.sessionId === params.resume.sessionId)) {
       await this.ensureOpeningPrompt(host, current.sessionId)
       return current
     }
@@ -148,6 +183,9 @@ export class AgentHubOrbSessionManager {
     const agent = previous?.provider ?? params.agent ?? settings.agent
     if (!isStructuredAgentId(agent) || (previous && params.agent && params.agent !== agent)) {
       throw new AgentHubError('invalid_argument', 'Orb resume must use the conversation agent')
+    }
+    if (current) {
+      await this.closeOnce()
     }
     if (previous) {
       const revealed = await host.revealSession(previous.sessionId)

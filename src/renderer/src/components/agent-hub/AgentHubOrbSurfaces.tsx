@@ -15,6 +15,9 @@ import {
 } from './agent-hub-requests-store'
 import type { AgentHubLists } from './agent-hub-lists'
 import { useAgentHubOrb } from './agent-hub-orb-session'
+import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { AgentHubOrbPanel } from './AgentHubOrbPanel'
+import { toggleAgentHubOrb } from './agent-hub-orb-composer'
 
 export function useAgentHubOrbSurfaces(
   threads: readonly AgentPaneThread[],
@@ -29,6 +32,7 @@ export function useAgentHubOrbSurfaces(
       ? agentHubDockPopoverSide(preferences.dockPosition.edge)
       : 'top'
   const orb = useAgentHubOrb(threads)
+  const panelOpen = useAgentHubOrbPanel((s) => s.session !== null)
   const preferredPlacement = useAppStore((s) => s.settings?.agentHubOrbPlacement ?? 'dock')
   const placement =
     preferredPlacement === 'dock' && preferences.placement === 'status-bar'
@@ -71,7 +75,7 @@ export function useAgentHubOrbSurfaces(
       </span>
     ) : null
   const pill =
-    pillVisible && !hidden ? (
+    pillVisible && !panelOpen && !hidden ? (
       <AgentHubOrbPill
         state={orb.state}
         sessionId={orb.session?.sessionId ?? ''}
@@ -81,5 +85,28 @@ export function useAgentHubOrbSurfaces(
         onOpen={open}
       />
     ) : null
-  return { counts, label, hubLists, dockButton, statusButton, pill, pillVisible, open }
+  const panel = (
+    requestPresentationOf: Parameters<typeof AgentHubOrbPanel>[0]['requestPresentationOf']
+  ) => (
+    <AgentHubOrbPanel
+      anchorRef={anchorRef}
+      side={side}
+      docked={preferences.placement === 'dock'}
+      hidden={hidden}
+      requestPresentationOf={requestPresentationOf}
+    />
+  )
+  return {
+    counts,
+    label,
+    hubLists,
+    dockButton,
+    statusButton,
+    pill,
+    pillVisible,
+    panelOpen,
+    open,
+    panel,
+    toggle: toggleAgentHubOrb
+  }
 }

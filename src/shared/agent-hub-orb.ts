@@ -25,5 +25,6 @@ export type AgentHubOrbConversation = {
 export type AgentHubOrbApi = {
   open(params?: AgentHubOrbOpenParams): Promise<AgentHubOrbSession>
   current(): Promise<AgentHubOrbSession | null>
+  close(): Promise<void>
   list(params?: { limit?: number }): Promise<AgentHubOrbConversation[]>
 }

@@ -18691,7 +18691,18 @@
         "choose": "Elegir…",
         "hidden": "Oculto",
         "speakReplies": "Leer respuestas",
-        "comingLater": "Disponible más adelante"
+        "comingLater": "Disponible más adelante",
+        "title": "Orb",
+        "pastConversations": "Conversaciones anteriores",
+        "backToConversation": "Volver a la conversación",
+        "newConversation": "Nueva",
+        "searchConversations": "Buscar conversaciones",
+        "allAgents": "Todos los agentes",
+        "today": "Hoy",
+        "yesterday": "Ayer",
+        "noConversations": "No se encontraron conversaciones",
+        "historyHint": "Haz clic para reabrir. Cada conversación conserva su agente y continúa donde se detuvo.",
+        "historyFailed": "No se pudieron cargar las conversaciones. Inténtalo de nuevo."
       },
       "alerts": {
         "info": "Cuando un agente comparte información",

@@ -12,6 +12,9 @@ import { NativeChatSessionOptionPickers } from './NativeChatSessionOptionPickers
 import { NativeChatComposerPermissionPicker } from './NativeChatPermissionModePicker'
 import { NativeChatComposerGoalChip } from './NativeChatComposerGoalChip'
 import { NativeChatContextUsageRing } from './NativeChatContextUsageRing'
+import { useContext } from 'react'
+import { AgentHubOrbComposerContext } from '../agent-hub/agent-hub-orb-composer'
+import { AgentHubOrbComposerMic } from '../agent-hub/AgentHubOrbComposerMic'
 import type { NativeChatContextUsageSummary } from './native-chat-context-usage-summary'
 import type { NativeChatOptionPickerRequest } from './native-chat-composer-types'
 
@@ -74,6 +77,7 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
   agent
 }: NativeChatComposerActionsProps): React.JSX.Element {
   useUiLanguageRevision()
+  const orbTabId = useContext(AgentHubOrbComposerContext)
   const stops = isWorking
   const handleCriticalAction = (event: React.MouseEvent<HTMLButtonElement>): void => {
     // Ignore a double-click’s second press after Send becomes Stop so it cannot cancel the newly started turn.
@@ -161,50 +165,54 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
           focusComposer={focusComposer}
         />
         {contextUsage ? <NativeChatContextUsageRing usage={contextUsage} /> : null}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant={isDictating ? 'secondary' : 'ghost'}
-              size="icon-sm"
-              aria-label={dictationLabel}
-              disabled={dictationDisabled}
-              onClick={isDictationHoldMode ? undefined : onDictationToggle}
-              onPointerDown={(event) => {
-                if (!isDictationHoldMode || dictationDisabled) {
-                  return
-                }
-                event.preventDefault()
-                onDictationHoldStart()
-              }}
-              onPointerUp={() => {
-                if (isDictationHoldMode && !dictationDisabled) {
-                  onDictationHoldEnd()
-                }
-              }}
-              onPointerCancel={() => {
-                if (isDictationHoldMode && !dictationDisabled) {
-                  onDictationHoldEnd()
-                }
-              }}
-              onPointerLeave={(event) => {
-                if (isDictationHoldMode && event.buttons === 1 && !dictationDisabled) {
-                  onDictationHoldEnd()
-                }
-              }}
-              className="pointer-coarse:size-11"
-            >
-              {isDictating ? (
-                <Square className="size-3.5 fill-current" />
-              ) : (
-                <Mic className="size-4" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top" sideOffset={4}>
-            {dictationLabel}
-          </TooltipContent>
-        </Tooltip>
+        {orbTabId ? (
+          <AgentHubOrbComposerMic disabled={dictationDisabled} />
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant={isDictating ? 'secondary' : 'ghost'}
+                size="icon-sm"
+                aria-label={dictationLabel}
+                disabled={dictationDisabled}
+                onClick={isDictationHoldMode ? undefined : onDictationToggle}
+                onPointerDown={(event) => {
+                  if (!isDictationHoldMode || dictationDisabled) {
+                    return
+                  }
+                  event.preventDefault()
+                  onDictationHoldStart()
+                }}
+                onPointerUp={() => {
+                  if (isDictationHoldMode && !dictationDisabled) {
+                    onDictationHoldEnd()
+                  }
+                }}
+                onPointerCancel={() => {
+                  if (isDictationHoldMode && !dictationDisabled) {
+                    onDictationHoldEnd()
+                  }
+                }}
+                onPointerLeave={(event) => {
+                  if (isDictationHoldMode && event.buttons === 1 && !dictationDisabled) {
+                    onDictationHoldEnd()
+                  }
+                }}
+                className="pointer-coarse:size-11"
+              >
+                {isDictating ? (
+                  <Square className="size-3.5 fill-current" />
+                ) : (
+                  <Mic className="size-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={4}>
+              {dictationLabel}
+            </TooltipContent>
+          </Tooltip>
+        )}
         <DraftNotSavedIcon shown={draftNotSaved === true} />
         {editSession ? (
           <Button type="button" variant="ghost" size="sm" onClick={editSession.cancel}>

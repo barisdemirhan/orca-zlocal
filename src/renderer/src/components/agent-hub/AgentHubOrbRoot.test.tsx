@@ -18,6 +18,11 @@ import { orbAsk } from './agent-hub-orb-test-fixtures'
 import { getAgentHubCommands } from './agent-hub-commands'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
+import {
+  showAgentHubOrbPanel,
+  closeAgentHubOrbPanel,
+  useAgentHubOrbPanel
+} from './agent-hub-orb-panel-store'
 
 const mocks = vi.hoisted(() => ({ orb: vi.fn(), open: vi.fn(), threads: vi.fn() }))
 vi.mock('@/store', async () => {
@@ -48,7 +53,12 @@ vi.mock('./agent-hub-mirror-store', () => ({
   useAgentHubMirrors: () => ({ windows: [], chips: [] }),
   readAgentHubMirrors: () => ({ windows: [], chips: [] })
 }))
-vi.mock('./AgentHubPopover', () => ({ AgentHubPopoverContent: () => null }))
+vi.mock('./AgentHubPopover', async () => {
+  const { PopoverContent } = await import('@/components/ui/popover')
+  return { AgentHubPopoverContent: () => <PopoverContent data-testid="hub-panel" /> }
+})
+vi.mock('./AgentHubOrbPanel', () => ({ AgentHubOrbPanel: () => null }))
+vi.mock('./agent-hub-orb-composer', () => ({ toggleAgentHubOrb: mocks.open }))
 vi.mock('./AgentHubShortcutsDialog', () => ({ AgentHubShortcutsDialog: () => null }))
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimBackdrop: () => null }))
 vi.mock('./AgentHubMirrorFocusShade', () => ({ AgentHubWorkspaceFocusShade: () => null }))
@@ -74,6 +84,7 @@ vi.mock('./AgentHubRootAlerts', () => ({
 vi.mock('./AgentHubOrbPill', () => ({ AgentHubOrbPill: () => <div data-testid="orb-pill" /> }))
 
 beforeEach(() => {
+  closeAgentHubOrbPanel()
   clearAgentHubAlerts()
   clearAgentHubRequestHost('local')
   mocks.open.mockClear()
@@ -100,6 +111,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  closeAgentHubOrbPanel()
   clearAgentHubAlerts()
   clearAgentHubRequestHost('local')
 })
@@ -153,6 +165,24 @@ it('returns the same queued peek after Orb releases its slot, even while alerts 
   )
   expect(screen.getByTestId('peek').textContent).toBe('Existing worker question')
   expect(screen.getByTestId('tray').dataset.hidden).toBe('false')
+})
+
+it('exchanges the Hub and Orb panels and hides the Orb pill while its panel is open', () => {
+  mocks.orb.mockReturnValue({
+    state: { kind: 'working' },
+    session: { sessionId: 'orb-session' },
+    readState: EMPTY_STRUCTURED_AGENT_SESSION,
+    openOrb: mocks.open
+  })
+  show()
+  act(() => getAgentHubCommands()?.toggle())
+  expect(screen.getByTestId('hub-panel')).toBeTruthy()
+  act(() => showAgentHubOrbPanel({ sessionId: 'orb-session', tabId: 'orb-tab', resumed: false }))
+  expect(screen.queryByTestId('hub-panel')).toBeNull()
+  expect(screen.queryByTestId('orb-pill')).toBeNull()
+  act(() => getAgentHubCommands()?.toggle())
+  expect(useAgentHubOrbPanel.getState().session).toBeNull()
+  expect(screen.getByTestId('hub-panel')).toBeTruthy()
 })
 
 it('keeps Orb asks in the Inbox without incrementing waiting and keeps its active pill visible with auto-hide', () => {

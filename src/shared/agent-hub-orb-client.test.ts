@@ -23,6 +23,9 @@ it('routes Orb reads and opens over the existing runtime transport and validates
   call.mockResolvedValue({ id: 'call', ok: true, result: [], _meta: { runtimeId: 'host' } })
   await expect(api.list({ limit: 5 })).resolves.toEqual([])
   expect(call).toHaveBeenLastCalledWith({ method: 'agentHub.orb.list', params: { limit: 5 } })
+  call.mockResolvedValue({ id: 'call', ok: true, result: null, _meta: { runtimeId: 'host' } })
+  await expect(api.close()).resolves.toBeUndefined()
+  expect(call).toHaveBeenLastCalledWith({ method: 'agentHub.orb.close', params: {} })
   call.mockResolvedValue({
     id: 'call',
     ok: false,
@@ -33,7 +36,12 @@ it('routes Orb reads and opens over the existing runtime transport and validates
 
 it('refuses every paired web entry point without transport effects', async () => {
   const api = createDisabledAgentHubOrbApi()
-  for (const request of [() => api.open(), () => api.current(), () => api.list()]) {
+  for (const request of [
+    () => api.open(),
+    () => api.current(),
+    () => api.close(),
+    () => api.list()
+  ]) {
     await expect(request()).rejects.toMatchObject({ code: 'disabled' })
   }
 })

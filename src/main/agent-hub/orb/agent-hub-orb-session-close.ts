@@ -1,0 +1,48 @@
+import type { AgentHubOrbSession } from '../../../shared/agent-hub-orb'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
+import { isStructuredAgentId } from '../../../shared/agent-session-provider-handle'
+import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
+import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
+import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
+import { structuredSessionCloseSettled } from '../../runtime/structured-worker-authority'
+
+export async function closeAgentHubOrbSession(
+  runtime: Pick<OrcaRuntimeService, 'closeMobileSessionTab' | 'publishStructuredAgentSessionTab'>,
+  host: StructuredAgentSessionHost,
+  current: AgentHubOrbSession
+): Promise<void> {
+  const tabId = host.getSessionTabId(current.sessionId)
+  if (tabId) {
+    try {
+      const outcome = await runtime.closeMobileSessionTab(
+        `id:${FLOATING_TERMINAL_WORKTREE_ID}`,
+        tabId,
+        { reason: 'user' }
+      )
+      if (
+        outcome.refused ||
+        host.getSessionTabId(current.sessionId) ||
+        !structuredSessionCloseSettled(current.sessionId)
+      ) {
+        throw new AgentHubError('invalid_argument', 'Orb conversation could not be closed')
+      }
+    } catch (error) {
+      if (
+        !host.getSessionTabId(current.sessionId) &&
+        !structuredSessionCloseSettled(current.sessionId)
+      ) {
+        const agent = host.deps.store.getRecord(current.sessionId)?.provider
+        if (isStructuredAgentId(agent)) {
+          await host.setSessionTabVisibility(current.sessionId, true, tabId)
+          await runtime.publishStructuredAgentSessionTab({
+            workspaceId: FLOATING_TERMINAL_WORKTREE_ID,
+            sessionId: current.sessionId,
+            agent,
+            activate: false
+          })
+        }
+      }
+      throw error
+    }
+  }
+}

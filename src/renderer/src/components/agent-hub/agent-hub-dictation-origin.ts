@@ -23,6 +23,12 @@ function setSession(next: AgentHubDictationSession | null): void {
 /** The pane dictation would insert into: the focused terminal, as the dictation feature reads it. */
 export function readFocusedTerminalPane(): AgentHubDictationPane | null {
   const active = document.activeElement
+  if (active instanceof HTMLElement) {
+    const orb = active.closest<HTMLElement>('[data-agent-hub-orb-chat-tab-id]')
+    if (orb?.dataset.agentHubOrbChatTabId) {
+      return { tabId: orb.dataset.agentHubOrbChatTabId, leafId: null }
+    }
+  }
   if (!(active instanceof HTMLElement) || !active.classList.contains('xterm-helper-textarea')) {
     return null
   }
@@ -68,4 +74,8 @@ export function trackAgentHubDictationOrigin(): () => void {
 
 export function useAgentHubDictationSession(): AgentHubDictationSession | null {
   return useSyncExternalStore(subscribe, () => session)
+}
+
+export function readAgentHubDictationSession(): AgentHubDictationSession | null {
+  return session
 }

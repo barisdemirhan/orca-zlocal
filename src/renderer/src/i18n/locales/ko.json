@@ -18219,7 +18219,18 @@
         "choose": "선택…",
         "hidden": "숨김",
         "speakReplies": "응답 읽어주기",
-        "comingLater": "추후 제공"
+        "comingLater": "추후 제공",
+        "title": "Orb",
+        "pastConversations": "지난 대화",
+        "backToConversation": "대화로 돌아가기",
+        "newConversation": "새 대화",
+        "searchConversations": "대화 검색",
+        "allAgents": "모든 에이전트",
+        "today": "오늘",
+        "yesterday": "어제",
+        "noConversations": "대화를 찾을 수 없습니다",
+        "historyHint": "클릭하여 다시 엽니다. 각 대화는 같은 에이전트로 중단된 지점부터 이어집니다.",
+        "historyFailed": "대화를 불러오지 못했습니다. 다시 시도하세요."
       },
       "alerts": {
         "info": "에이전트가 정보를 공유할 때",

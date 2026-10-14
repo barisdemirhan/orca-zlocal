@@ -60,6 +60,8 @@ import { useAgentHubSessionRestore } from './use-agent-hub-session-restore'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { useAgentHubOrbSurfaces } from './AgentHubOrbSurfaces'
 import { agentHubOrbRequest } from './agent-hub-orb-state'
+import { closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { useAgentHubOrbPanelExclusion } from './agent-hub-orb-panel-exclusion'
 
 function useGroupNameById(): ReadonlyMap<string, string> {
   const projectGroups = useAppStore((s) => s.projectGroups)
@@ -140,6 +142,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   }, [orb.hubLists.needsYou, counts.needsYou, preferences.defaultTab])
 
   const openHub = useCallback((tab?: AgentHubTab, paneKey: string | null = null) => {
+    closeAgentHubOrbPanel()
     if (!openRef.current) {
       restoreFocusRef.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -154,17 +157,13 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     setRequest((current) => ({ tab: tab ?? defaultTabRef.current, paneKey, seq: current.seq + 1 }))
     setOpen(true)
   }, [])
-  // A dock button for the tab already on show closes the hub, like a toggle.
-  const openHubTab = useCallback(
-    (tab: AgentHubTab) => {
-      if (openRef.current && shownTabRef.current === tab) {
-        setOpen(false)
-        return
-      }
-      openHub(tab)
-    },
-    [openHub]
-  )
+  const openHubTab = useAgentHubOrbPanelExclusion({
+    restoreFocusRef,
+    openRef,
+    shownTabRef,
+    setOpen,
+    openHub
+  })
   const setPopoverOpen = useCallback(
     (next: boolean) => (next ? openHub() : setOpen(false)),
     [openHub]
@@ -244,7 +243,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   useAgentHubMirrorCommands(
     {
       toggle: () => (openRef.current ? setOpen(false) : openHub()),
-      toggleOrb: orb.open,
+      toggleOrb: orb.toggle,
       jumpToNextWaiting,
       toggleMirrors,
       toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null,
@@ -276,7 +275,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const dockHidden =
     inSettings ||
     (preferences.dockAutoHide &&
-      !open &&
+      !(open || orb.panelOpen) &&
       !canvasOpen &&
       !orb.pillVisible &&
       hubAlerts.length === 0 &&
@@ -313,7 +312,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     <>
       <AgentHubShortcutsDialog />
       {docked && !inSettings ? orb.statusButton : null}
-      <Popover open={open && !inSettings} onOpenChange={setPopoverOpen}>
+      <Popover open={open && !orb.panelOpen && !inSettings} onOpenChange={setPopoverOpen}>
         {docked ? (
           dockHidden ? null : (
             createPortal(
@@ -328,7 +327,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   muted={muted}
                   onOpenTab={openHubTab}
                   onNextWaiting={jumpToNextWaiting}
-                  pinned={open}
+                  pinned={open || orb.panelOpen}
                   mirrors={{ windows: windows.length, chips: chips.length }}
                   flushTop={canvasOpen}
                   canvas={
@@ -373,6 +372,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         )}
         {content}
       </Popover>
+      {orb.panel(requestPresentationOf)}
       {hubAlerts.length > 0 && !orb.pillVisible && !open && !inSettings ? (
         <AgentHubRootAlerts
           alerts={hubAlerts}

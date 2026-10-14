@@ -77,6 +77,12 @@ vi.mock('./NativeChatView', async () => {
 })
 
 import StructuredAgentSessionPaneOverlayLayer from './StructuredAgentSessionPaneOverlayLayer'
+import {
+  closeAgentHubOrbPanel,
+  setAgentHubOrbDestination,
+  showAgentHubOrbPanel,
+  useAgentHubOrbPanel
+} from '../agent-hub/agent-hub-orb-panel-store'
 
 const WORKTREE_ID = 'wt-1'
 const GROUP_ID = 'group-1'
@@ -86,6 +92,7 @@ const SECOND_TAB_ID = 'structured-agent-session-session-2'
 
 describe('StructuredAgentSessionPaneOverlayLayer', () => {
   beforeEach(() => {
+    closeAgentHubOrbPanel()
     mocks.focusGroup.mockClear()
     mocks.mountsByTabId.clear()
     mocks.unmountsByTabId.clear()
@@ -94,7 +101,37 @@ describe('StructuredAgentSessionPaneOverlayLayer', () => {
     mocks.store?.setState(createState(FIRST_TAB_ID))
   })
 
-  afterEach(cleanup)
+  afterEach(() => {
+    closeAgentHubOrbPanel()
+    cleanup()
+  })
+
+  it('moves one retained chat into Orb and back without remounting or changing the session host', () => {
+    const { container, rerender } = render(
+      <StructuredAgentSessionPaneOverlayLayer worktreeId={WORKTREE_ID} isWorktreeActive />
+    )
+    const chat = chatSurface(container, FIRST_TAB_ID)
+    const destination = document.createElement('div')
+    document.body.append(destination)
+    act(() => {
+      showAgentHubOrbPanel({ sessionId: 'session-1', tabId: FIRST_TAB_ID, resumed: false })
+      setAgentHubOrbDestination(destination)
+    })
+    rerender(
+      <StructuredAgentSessionPaneOverlayLayer worktreeId={WORKTREE_ID} isWorktreeActive={false} />
+    )
+    expect(chatSurface(destination, FIRST_TAB_ID)).toBe(chat)
+    expect(chat.dataset.chatVisible).toBe('true')
+    expect(chat.dataset.chatFocusedGroup).toBe('true')
+    expect(container.querySelector(`[data-chat-tab-id="${FIRST_TAB_ID}"]`)).toBeNull()
+    act(() => useAgentHubOrbPanel.setState({ chatVisible: false }))
+    expect(chat.dataset.chatVisible).toBe('false')
+    act(() => closeAgentHubOrbPanel())
+    expect(chatSurface(container, FIRST_TAB_ID)).toBe(chat)
+    expect(mocks.mountsByTabId.get(FIRST_TAB_ID)).toBe(1)
+    expect(mocks.unmountsByTabId.get(FIRST_TAB_ID) ?? 0).toBe(0)
+    destination.remove()
+  })
 
   // Two hosts can publish the same workspace id; each tab records which one holds its chat.
   it('reads each chat from the host recorded on its tab, not its workspace', () => {

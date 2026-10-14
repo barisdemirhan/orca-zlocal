@@ -68,6 +68,22 @@ afterEach(() => {
 })
 
 describe('dictation origin', () => {
+  it('keeps Orb composer dictation on its tab even when focus moves to history', () => {
+    const slot = document.createElement('div')
+    slot.dataset.agentHubOrbChatTabId = 'orb-tab'
+    const composer = document.createElement('textarea')
+    slot.append(composer)
+    document.body.append(slot)
+    const history = document.createElement('input')
+    document.body.append(history)
+    const { result } = renderHook(() => useAgentHubDictationSession())
+    composer.focus()
+    setDictationState('starting')
+    expect(result.current).toEqual({ pane: { tabId: 'orb-tab', leafId: null } })
+    history.focus()
+    setDictationState('stopping')
+    expect(result.current?.pane?.tabId).toBe('orb-tab')
+  })
   it('ties a dictation to the terminal focused when it started, as the shortcut does', () => {
     const inputA = mountTerminal('tab-1', LEAF_A)
     mountTerminal('tab-2', LEAF_B)

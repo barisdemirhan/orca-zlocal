@@ -19119,7 +19119,18 @@
         "choose": "Choose…",
         "hidden": "Hidden",
         "speakReplies": "Speak replies",
-        "comingLater": "Coming later"
+        "comingLater": "Coming later",
+        "title": "Orb",
+        "pastConversations": "Past conversations",
+        "backToConversation": "Back to conversation",
+        "newConversation": "New",
+        "searchConversations": "Search conversations",
+        "allAgents": "All agents",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "noConversations": "No conversations found",
+        "historyHint": "Click to reopen. Each conversation keeps its own agent and continues where it stopped.",
+        "historyFailed": "Could not load conversations. Try again."
       },
       "alerts": {
         "info": "When an agent shares information",

@@ -18911,7 +18911,18 @@
         "choose": "Choisir…",
         "hidden": "Masqué",
         "speakReplies": "Lire les réponses",
-        "comingLater": "Disponible ultérieurement"
+        "comingLater": "Disponible ultérieurement",
+        "title": "Orb",
+        "pastConversations": "Conversations précédentes",
+        "backToConversation": "Retour à la conversation",
+        "newConversation": "Nouvelle",
+        "searchConversations": "Rechercher des conversations",
+        "allAgents": "Tous les agents",
+        "today": "Aujourd’hui",
+        "yesterday": "Hier",
+        "noConversations": "Aucune conversation trouvée",
+        "historyHint": "Cliquez pour rouvrir. Chaque conversation conserve son agent et reprend où elle s’est arrêtée.",
+        "historyFailed": "Impossible de charger les conversations. Réessayez."
       },
       "alerts": {
         "info": "Lorsqu’un agent partage des informations",

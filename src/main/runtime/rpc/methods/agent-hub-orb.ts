@@ -17,6 +17,15 @@ function orbFor(ctx: RpcContext) {
 
 export const AGENT_HUB_ORB_METHODS = [
   defineMethod({
+    name: 'agentHub.orb.close',
+    permission: 'workspace',
+    params: null,
+    handler: async (_params, ctx) => {
+      await orbFor(ctx).close()
+      return null
+    }
+  }),
+  defineMethod({
     name: 'agentHub.orb.open',
     permission: 'workspace',
     params: AgentHubOrbOpenParamsSchema,

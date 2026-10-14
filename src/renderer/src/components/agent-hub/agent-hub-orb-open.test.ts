@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
-import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
+import { useAgentHubOrbPanel, closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAppStore } from '@/store'
 import { openAgentHubOrb } from './agent-hub-orb-open'
 
@@ -44,6 +43,7 @@ vi.mock('@/lib/floating-workspace-panel-reveal', () => ({
 beforeEach(() => {
   vi.clearAllMocks()
   document.body.replaceChildren()
+  closeAgentHubOrbPanel()
   useAppStore.setState({
     activeTabId: null,
     floatingWorkspacePanelOpen: false,
@@ -77,51 +77,22 @@ describe('open Orb', () => {
     expect(mocks.settings).not.toHaveBeenCalled()
     expect(mocks.reveal).not.toHaveBeenCalled()
   })
-  it('reveals and activates its existing local floating chat, repairing a publication race', async () => {
+  it('opens its attached panel, repairing a publication race without navigating the floating workspace', async () => {
     mocks.find.mockReturnValueOnce(null)
     await openAgentHubOrb()
     expect(mocks.refresh).toHaveBeenCalledOnce()
-    expect(mocks.reveal).toHaveBeenCalledOnce()
-    expect(mocks.activate).toHaveBeenCalledWith({
-      worktreeId: FLOATING_TERMINAL_WORKTREE_ID,
+    expect(useAgentHubOrbPanel.getState().session).toEqual({
+      sessionId: 'orb-session',
       tabId: 'orb-tab',
-      target: { kind: 'local' }
+      resumed: false
     })
-  })
-  it('closes a visible focused Orb, but leaves it open when another field has focus', async () => {
-    const toggle = vi.fn()
-    window.addEventListener(TOGGLE_FLOATING_TERMINAL_EVENT, toggle)
-    const panel = document.createElement('div')
-    panel.dataset.floatingTerminalPanel = ''
-    const field = document.createElement('textarea')
-    panel.append(field)
-    document.body.append(panel)
-    useAppStore.setState({
-      floatingWorkspacePanelOpen: true,
-      activeTabId: 'main-tab',
-      groupsByWorktree: {
-        [FLOATING_TERMINAL_WORKTREE_ID]: [
-          {
-            id: 'orb-group',
-            worktreeId: FLOATING_TERMINAL_WORKTREE_ID,
-            tabOrder: ['orb-tab'],
-            activeTabId: 'orb-tab'
-          }
-        ]
-      },
-      activeGroupIdByWorktree: { [FLOATING_TERMINAL_WORKTREE_ID]: 'orb-group' }
-    })
-    field.focus()
-    await openAgentHubOrb()
-    expect(toggle).toHaveBeenCalledOnce()
+    expect(mocks.reveal).not.toHaveBeenCalled()
     expect(mocks.activate).not.toHaveBeenCalled()
-    const outside = document.createElement('input')
-    document.body.append(outside)
-    outside.focus()
-    await openAgentHubOrb()
-    expect(toggle).toHaveBeenCalledOnce()
-    expect(mocks.activate).toHaveBeenCalledOnce()
-    window.removeEventListener(TOGGLE_FLOATING_TERMINAL_EVENT, toggle)
+  })
+  it('routes history resumes through the same panel entry point', async () => {
+    await openAgentHubOrb({ resume: { sessionId: 'orb-session' } })
+    expect(mocks.open).toHaveBeenCalledWith({ resume: { sessionId: 'orb-session' } })
+    expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('orb-session')
   })
   it('joins concurrent presses and reports a missing published tab', async () => {
     mocks.find.mockReturnValue(null)

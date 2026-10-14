@@ -18219,7 +18219,18 @@
         "choose": "选择…",
         "hidden": "隐藏",
         "speakReplies": "朗读回复",
-        "comingLater": "稍后推出"
+        "comingLater": "稍后推出",
+        "title": "Orb",
+        "pastConversations": "历史对话",
+        "backToConversation": "返回对话",
+        "newConversation": "新建",
+        "searchConversations": "搜索对话",
+        "allAgents": "所有智能体",
+        "today": "今天",
+        "yesterday": "昨天",
+        "noConversations": "未找到对话",
+        "historyHint": "点击重新打开。每个对话保留自己的智能体，并从停止的位置继续。",
+        "historyFailed": "无法加载对话。请重试。"
       },
       "alerts": {
         "info": "智能体分享信息时",

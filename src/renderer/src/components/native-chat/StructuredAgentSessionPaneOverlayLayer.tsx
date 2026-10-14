@@ -9,6 +9,8 @@ import {
 import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
 import NativeChatView from './NativeChatView'
 import { isStructuredTab } from '../../../../shared/structured-agent-session-tab'
+import { useAgentHubOrbPanel } from '../agent-hub/agent-hub-orb-panel-store'
+import { AgentHubOrbComposerContext } from '../agent-hub/agent-hub-orb-composer'
 
 type StructuredAgentSessionTab = Tab & {
   contentType: 'agent-session'
@@ -36,6 +38,10 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
   // Resolve from the tab’s recorded host because workspace ids can collide across hosts.
   const owner = useAppStore((state) => structuredAgentSessionOwnerForTab(state, tab))
   const target = useMemo(() => structuredAgentSessionTargetForHost(owner), [owner])
+  const destination = useAgentHubOrbPanel((s) =>
+    s.session?.tabId === tab.id ? s.destination : null
+  )
+  const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
   if (!target) {
     return null
   }
@@ -46,17 +52,21 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
       dimmed={hasSplitGroups && !isFocusedGroup}
       data-structured-agent-session-overlay-tab-id={tab.id}
       onFocusOwningGroup={onFocusOwningGroup}
+      retainContent
+      destination={destination}
     >
-      <NativeChatView
-        mode="structured"
-        tabId={tab.id}
-        groupId={groupId}
-        sessionId={tab.entityId}
-        agent={tab.agentSessionAgent}
-        isVisible={isActive}
-        isFocusedGroup={isFocusedGroup}
-        target={target}
-      />
+      <AgentHubOrbComposerContext value={destination ? tab.id : null}>
+        <NativeChatView
+          mode="structured"
+          tabId={tab.id}
+          groupId={destination ? undefined : groupId}
+          sessionId={tab.entityId}
+          agent={tab.agentSessionAgent}
+          isVisible={destination ? chatVisible : isActive}
+          isFocusedGroup={destination ? chatVisible : isFocusedGroup}
+          target={target}
+        />
+      </AgentHubOrbComposerContext>
     </RetainedPaneHost>
   )
 })

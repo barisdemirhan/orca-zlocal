@@ -24,6 +24,9 @@ export function createAgentHubOrbApi(
       ),
     current: async () =>
       AgentHubOrbSessionSchema.nullable().parse(await invoke('agentHub.orb.current', {})),
+    close: async () => {
+      await invoke('agentHub.orb.close', {})
+    },
     list: async (params = {}) =>
       AgentHubOrbConversationSchema.array().parse(
         await invoke('agentHub.orb.list', AgentHubOrbListParamsSchema.parse(params))
@@ -35,5 +38,5 @@ export function createDisabledAgentHubOrbApi(): AgentHubOrbApi {
   const disabled = async (): Promise<never> => {
     throw { code: 'disabled', message: 'Agent Hub Orb is unavailable to paired clients' }
   }
-  return { open: disabled, current: disabled, list: disabled }
+  return { open: disabled, current: disabled, close: disabled, list: disabled }
 }

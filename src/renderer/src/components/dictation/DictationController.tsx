@@ -13,7 +13,7 @@ import { recordStoppedSession, waitForStoppedSession } from './dictation-stopped
 import { translate } from '@/i18n/i18n'
 import { showDictationStartErrorToast } from './dictation-start-error-toast'
 import { useHoldDictationGesture } from './use-hold-dictation-gesture'
-import { DICTATION_CONTROL_EVENT, type DictationControlAction } from './dictation-control-events'
+import { useDictationControlEvents } from './use-dictation-control-events'
 import { publishDictationMeter } from './dictation-meter-store'
 import { useDictationTerminalMountLease } from './use-dictation-terminal-mount-lease'
 
@@ -298,34 +298,15 @@ export function DictationController() {
     return cleanup
   }, [settings?.voice?.dictationMode, settings?.voice?.enabled, startDictation, stopDictation])
 
-  useEffect(() => {
-    const canDictate = (): boolean => Boolean(settings?.voice?.enabled)
-    const handleControl = (event: Event): void => {
-      if (!canDictate() || dictationStateRef.current === 'stopping') {
-        return
-      }
-      const action = (event as CustomEvent<DictationControlAction>).detail
-      if (action === 'start') {
-        if (dictationStateRef.current === 'idle') {
-          void startDictation()
-        }
-        return
-      }
-      if (action === 'stop') {
-        if (dictationStateRef.current === 'listening' || dictationStateRef.current === 'starting') {
-          void stopDictation()
-        }
-        return
-      }
-      if (dictationStateRef.current === 'listening' || dictationStateRef.current === 'starting') {
-        void stopDictation()
-      } else {
-        void startDictation()
-      }
-    }
-    document.addEventListener(DICTATION_CONTROL_EVENT, handleControl)
-    return () => document.removeEventListener(DICTATION_CONTROL_EVENT, handleControl)
-  }, [settings?.voice?.enabled, startDictation, stopDictation])
+  useDictationControlEvents({
+    settings,
+    state: dictationStateRef,
+    target: insertionTargetRef,
+    cancelled: intentionalTargetCancellationRef,
+    discard: discardBufferedAudio,
+    start: startDictation,
+    stop: stopDictation
+  })
 
   useHoldDictationGesture({
     dictationStateRef,

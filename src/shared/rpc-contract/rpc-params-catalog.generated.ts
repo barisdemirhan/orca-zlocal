@@ -765,6 +765,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentHub.canvas': AgentHubCanvasParams,
   'agentHub.mirror': AgentHubMirrorParams,
   'agentHub.notify': AgentHubNotifyParams,
+  'agentHub.orb.close': null,
   'agentHub.orb.current': null,
   'agentHub.orb.list': AgentHubOrbListParamsSchema,
   'agentHub.orb.open': AgentHubOrbOpenParamsSchema,

@@ -22,6 +22,11 @@ import {
 } from '../../../shared/structured-agent-session-send-mutation'
 import { createStructuredAgentSessionOperationId } from '../../../shared/structured-agent-session-mutation'
 import { randomUUID } from 'node:crypto'
+import { claudeProviderHandle } from '../../../shared/agent-session-provider-handle-encoding'
+import {
+  committedMobileSessionTabClose,
+  refusedMobileSessionTabClose
+} from '../../runtime/mobile-session-tab-close-outcome'
 
 let state: ReturnType<typeof hostTestState>
 let settings: ReturnType<typeof createGlobalSettingsFixture>
@@ -56,14 +61,32 @@ beforeEach(() => {
       },
       provider: params.agent,
       agent: params.agent,
-      accountHome: { variable: 'CODEX_HOME', path: state.root },
+      accountHome: {
+        variable: params.agent === 'claude' ? 'CLAUDE_CONFIG_DIR' : 'CODEX_HOME',
+        path: state.root
+      },
       runtimeKind: 'native',
       hostLaunchDirectory: params.hostLaunchDirectory ?? join(state.root, 'floating'),
       options: { model: 'global-model' }
     })),
     publishStructuredAgentSessionTab: async (params) => {
       await state.host.setSessionTabVisibility(params.sessionId, true)
-    }
+    },
+    closeMobileSessionTab: vi.fn(async (_worktree, tabId) => {
+      const record = state.store
+        .listRecords()
+        .find((entry) => state.host.getSessionTabId(entry.sessionId) === tabId)
+      if (!record) {
+        throw new Error('No visible session')
+      }
+      await state.host.setSessionTabVisibility(record.sessionId, false)
+      await state.host.close(record.sessionId, 'user-close')
+      return committedMobileSessionTabClose(
+        { forgetTabs: () => {} },
+        FLOATING_TERMINAL_WORKTREE_ID,
+        [tabId]
+      )
+    })
   }
   manager = createAgentHubOrbSessionManager(runtime, {
     getSettings: () => settings,
@@ -81,6 +104,117 @@ afterEach(async () => {
 })
 
 describe('Orb conversations on the structured host', () => {
+  it('closes through the existing tab path and preserves history, with an idle close doing nothing', async () => {
+    await manager.close()
+    expect(runtime.closeMobileSessionTab).not.toHaveBeenCalled()
+    const first = await manager.open({ model: 'kept-model' })
+    await manager.close()
+    expect(runtime.closeMobileSessionTab).toHaveBeenCalledWith(
+      `id:${FLOATING_TERMINAL_WORKTREE_ID}`,
+      first.tabId,
+      { reason: 'user' }
+    )
+    expect(manager.current()).toBeNull()
+    expect(await manager.list()).toMatchObject([
+      { sessionId: first.sessionId, agent: 'codex', model: 'kept-model' }
+    ])
+    await manager.close()
+    expect(runtime.closeMobileSessionTab).toHaveBeenCalledTimes(1)
+  })
+
+  it('switches to a past conversation and keeps exactly one tab even for concurrent resumes', async () => {
+    const acquire = state.acquire.getMockImplementation()
+    if (!acquire) {
+      throw new Error('Expected host acquisition fixture')
+    }
+    state.acquire.mockImplementation(async (input) => {
+      const acquired = await acquire(input)
+      return input.identity.agent === 'claude'
+        ? {
+            ...acquired,
+            link: { ...acquired.link, handle: claudeProviderHandle('claude-orb-thread', null) }
+          }
+        : acquired
+    })
+    const first = await manager.open({ model: 'first-model' })
+    await manager.close()
+    const second = await manager.open({ agent: 'claude', model: 'second-model' })
+    const [resumedFirst, resumedSecond] = await Promise.all([
+      manager.open({ resume: { sessionId: first.sessionId } }),
+      manager.open({ resume: { sessionId: second.sessionId } })
+    ])
+    expect(resumedFirst).toMatchObject({ sessionId: first.sessionId, resumed: true })
+    expect(resumedSecond).toMatchObject({ sessionId: second.sessionId, resumed: true })
+    expect(manager.current()?.sessionId).toBe(second.sessionId)
+    expect(
+      state.store.listRecords().filter((entry) => state.host.getSessionTabId(entry.sessionId))
+    ).toHaveLength(1)
+    expect(await manager.open({ resume: { sessionId: second.sessionId } })).toEqual(resumedSecond)
+    expect(await manager.open()).toEqual(resumedSecond)
+    expect(state.store.listRecords()).toHaveLength(2)
+    expect(state.store.getRecord(first.sessionId)?.options?.model).toBe('first-model')
+    expect(state.store.getRecord(second.sessionId)?.provider).toBe('claude')
+  })
+
+  it('leaves the active conversation intact for an invalid resume or refused close', async () => {
+    const previous = await manager.open()
+    await manager.close()
+    const active = await manager.open()
+    await expect(manager.open({ resume: { sessionId: 'missing' } })).rejects.toMatchObject({
+      code: 'not_found'
+    })
+    expect(manager.current()?.sessionId).toBe(active.sessionId)
+    vi.mocked(runtime.closeMobileSessionTab).mockResolvedValueOnce(
+      refusedMobileSessionTabClose('stale-publication')
+    )
+    await expect(manager.open({ resume: { sessionId: previous.sessionId } })).rejects.toMatchObject(
+      { code: 'invalid_argument' }
+    )
+    expect(manager.current()?.sessionId).toBe(active.sessionId)
+    expect(state.host.getSessionTabId(previous.sessionId)).toBeNull()
+  })
+
+  it('serializes an opening, close, and next opening instead of returning the conversation being closed', async () => {
+    const firstOpening = manager.open()
+    const closing = manager.close()
+    const nextOpening = manager.open()
+    const first = await firstOpening
+    await closing
+    const next = await nextOpening
+    expect(next.sessionId).not.toBe(first.sessionId)
+    expect(manager.current()?.sessionId).toBe(next.sessionId)
+    expect(
+      state.store.listRecords().filter((entry) => state.host.getSessionTabId(entry.sessionId))
+    ).toHaveLength(1)
+  })
+
+  it('keeps the active conversation visible and refuses a switch when the provider close has not settled', async () => {
+    const previous = await manager.open()
+    await manager.close()
+    const active = await manager.open()
+    state.host.deps.adapter.closeSession = vi.fn(async () => true).mockResolvedValueOnce(false)
+    await expect(manager.open({ resume: { sessionId: previous.sessionId } })).rejects.toThrow(
+      'provider-child'
+    )
+    expect(manager.current()?.sessionId).toBe(active.sessionId)
+    expect(state.host.getSessionTabId(active.sessionId)).toBe(active.tabId)
+    expect(state.host.getSessionTabId(previous.sessionId)).toBeNull()
+  })
+
+  it('orders history by activity and leaves the model absent when the conversation uses its agent default', async () => {
+    vi.mocked(Date.now).mockReturnValue(HOST_TEST_NOW + 10_000)
+    const first = await manager.open()
+    await manager.close()
+    vi.mocked(Date.now).mockReturnValue(HOST_TEST_NOW)
+    const second = await manager.open({ model: 'model-2' })
+    const entries = await manager.list(1)
+    expect(entries[0].sessionId).toBe(first.sessionId)
+    expect(entries[0]).not.toHaveProperty('model')
+    expect((await manager.list()).map((entry) => entry.sessionId)).toEqual([
+      first.sessionId,
+      second.sessionId
+    ])
+  })
   it('requires a chosen folder, rejects missing and file paths, and persists an explicit cwd', async () => {
     settings.agentHubOrbCwd = null
     settings.floatingTerminalCwd = state.root
@@ -247,6 +381,7 @@ describe('Orb conversations on the structured host', () => {
     expect(() => manager.current()).toThrow(expect.objectContaining({ code: 'disabled' }))
     expect(() => manager.open()).toThrow(expect.objectContaining({ code: 'disabled' }))
     await expect(manager.list()).rejects.toMatchObject({ code: 'disabled' })
+    expect(() => manager.close()).toThrow(expect.objectContaining({ code: 'disabled' }))
     expect(state.store.listRecords()).toHaveLength(0)
   })
 })
