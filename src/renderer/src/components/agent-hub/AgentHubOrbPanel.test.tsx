@@ -108,7 +108,7 @@ it('opens with the conversation model and title and places an unanchored panel a
   )
   act(() => mocks.listeners.forEach((listener) => listener()))
   await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2))
-  fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+  fireEvent.click(screen.getByRole('button', { name: /^Close\b/ }))
   expect(useAgentHubOrbPanel.getState().session).toBeNull()
   expect(mocks.close).not.toHaveBeenCalled()
 })
