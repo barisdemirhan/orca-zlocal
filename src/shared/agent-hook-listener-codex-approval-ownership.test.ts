@@ -93,6 +93,48 @@ describe('Codex approval ownership', () => {
     expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
   })
 
+  it.each([
+    ['auto_review', false],
+    ['user', false],
+    ['auto_review', true],
+    ['user', true]
+  ] as const)(
+    'recovers %s ownership, child=%s, after a long output when the listener starts cold',
+    (reviewer, child) => {
+      const transcriptPath = writeRollout({ reviewer })
+      appendRollout(transcriptPath, {
+        type: 'response_item',
+        payload: { type: 'function_call_output', output: 'x'.repeat(2 * 1024 * 1024) }
+      })
+      const request = child ? childPermissionRequest : permissionRequest
+      expect(request(transcriptPath)?.payload.state).toBe(
+        reviewer === 'auto_review' ? 'working' : 'waiting'
+      )
+    }
+  )
+
+  it('reads a later manual policy behind a long output instead of retaining an earlier auto reviewer', () => {
+    const transcriptPath = writeRollout({ reviewer: 'auto_review' })
+    expect(permissionRequest(transcriptPath)?.payload.state).toBe('working')
+    appendRollout(transcriptPath, { type: 'turn_context', payload: { approvals_reviewer: 'user' } })
+    appendRollout(transcriptPath, {
+      type: 'response_item',
+      payload: { output: 'x'.repeat(2 * 1024 * 1024) }
+    })
+    expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
+  })
+
+  it('does not hide an approval when its newer policy lies outside the bounded lookback', () => {
+    const transcriptPath = writeRollout({ reviewer: 'auto_review' })
+    expect(permissionRequest(transcriptPath)?.payload.state).toBe('working')
+    appendRollout(transcriptPath, { type: 'turn_context', payload: { approvals_reviewer: 'user' } })
+    appendRollout(transcriptPath, {
+      type: 'response_item',
+      payload: { output: 'x'.repeat(8 * 1024 * 1024 + 1) }
+    })
+    expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
+  })
+
   it('reconciles reviewer ownership before a child-first auto-reviewed approval', () => {
     const transcriptPath = writeRollout({ reviewer: 'auto_review' })
 

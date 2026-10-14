@@ -12,7 +12,7 @@ import { reconcileCodexTranscriptTurn, type CodexTranscriptTurn } from './codex-
 
 import { isCodexStatusTranscriptLine } from './codex-status-transcript-line'
 
-import { readApprovalsReviewer } from './codex-subagent-reviewer'
+import { resolveCodexApprovalsReviewer } from './codex-subagent-reviewer'
 import type { CodexApprovalsReviewer } from './codex-subagent-reviewer'
 
 import {
@@ -237,16 +237,21 @@ export function reconcileCodexSubagentTranscript(
     // Why: a different rollout is a different session, so its predecessor's reviewer is void.
     state.approvalsReviewer = undefined
   }
+  const previousOffset = state.parent.offset
   const parentRecords = readJsonlCursor(state.parent, isCodexStatusTranscriptLine)
   changed ||=
     Boolean(parentRecords?.length) ||
     (parentRecords === undefined && state.approvalsReviewer !== undefined)
   reconcileCodexTranscriptTurn(state.rootTurn, parentRecords ?? [])
   // A stale reviewer must never turn an unreadable rollout into a hidden prompt.
-  state.approvalsReviewer =
-    parentRecords === undefined
-      ? undefined
-      : (readApprovalsReviewer(parentRecords) ?? state.approvalsReviewer)
+  const previousReviewer = state.approvalsReviewer
+  state.approvalsReviewer = resolveCodexApprovalsReviewer(
+    state.parent,
+    previousOffset,
+    parentRecords,
+    state.approvalsReviewer
+  )
+  changed ||= state.approvalsReviewer !== previousReviewer
   // Hook-only and restored children may predate the bounded parent transcript read.
   for (const [id, child] of roster) {
     if (!state.subagents.has(id)) {

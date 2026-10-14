@@ -9,7 +9,7 @@ import {
   type Stats
 } from 'node:fs'
 
-const TRANSCRIPT_READ_MAX_BYTES = 1024 * 1024
+export const TRANSCRIPT_READ_MAX_BYTES = 1024 * 1024
 const TRANSCRIPT_LINE_MAX_BYTES = 256 * 1024
 const TRANSCRIPT_DIRECTORY_MAX_ENTRIES = 4096
 
@@ -55,7 +55,8 @@ export function readJsonlFirstRecord(filePath: string): JsonRecord | undefined {
 /** Undefined distinguishes unreadable/vanished files from no new lines; lineFilter rejects raw substrings before JSON.parse. */
 export function readJsonlCursor(
   cursor: JsonlCursor,
-  lineFilter?: (line: string) => boolean
+  lineFilter?: (line: string) => boolean,
+  maxReadBytes = TRANSCRIPT_READ_MAX_BYTES
 ): JsonRecord[] | undefined {
   if (!cursor.filePath) {
     return undefined
@@ -76,7 +77,7 @@ export function readJsonlCursor(
   if (stats.size === cursor.offset) {
     return []
   }
-  const bytesToRead = Math.min(stats.size - cursor.offset, TRANSCRIPT_READ_MAX_BYTES)
+  const bytesToRead = Math.min(stats.size - cursor.offset, maxReadBytes)
   const start = stats.size - cursor.offset > bytesToRead ? stats.size - bytesToRead : cursor.offset
   const buffer = Buffer.allocUnsafe(bytesToRead)
   let bytesRead = 0

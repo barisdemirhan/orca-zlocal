@@ -1,10 +1,16 @@
 import { extname, isAbsolute } from 'node:path'
 
-import { readJsonlCursor, type JsonRecord } from './codex-rollout-jsonl-cursor'
+import {
+  readJsonlCursor,
+  TRANSCRIPT_READ_MAX_BYTES,
+  type JsonlCursor,
+  type JsonRecord
+} from './codex-rollout-jsonl-cursor'
 import { isCodexStatusTranscriptLine } from './codex-status-transcript-line'
 import type { CodexSubagentTranscriptState } from './codex-subagent-transcript'
 
 const REVIEWER_CURSOR_MAX_PATHS = 64
+const REVIEWER_LOOKBACK_MAX_BYTES = 8 * 1024 * 1024
 
 /** Codex's `approvals_reviewer`: `user` is a human, `auto_review` is Codex's own review agent. */
 export type CodexApprovalsReviewer = 'user' | 'auto_review'
@@ -40,6 +46,32 @@ export function readApprovalsReviewer(records: JsonRecord[]): CodexApprovalsRevi
     }
   }
   return reviewer
+}
+
+/** Recover policy beyond the lifecycle tail after a cold start or a skipped output burst. */
+export function resolveCodexApprovalsReviewer(
+  cursor: JsonlCursor,
+  previousOffset: number,
+  records: JsonRecord[] | undefined,
+  previousReviewer: CodexApprovalsReviewer | undefined
+): CodexApprovalsReviewer | undefined {
+  if (records === undefined) {
+    return undefined
+  }
+  const reviewer = readApprovalsReviewer(records)
+  if (reviewer !== undefined) {
+    return reviewer
+  }
+  if (cursor.offset - previousOffset <= TRANSCRIPT_READ_MAX_BYTES) {
+    return previousReviewer
+  }
+  const recent = readJsonlCursor(
+    { filePath: cursor.filePath, offset: 0, carry: '' },
+    (line) => /"(?:turn_context|thread_settings_applied)"/.test(line),
+    REVIEWER_LOOKBACK_MAX_BYTES
+  )
+  // Unknown ownership stays visible; never inherit auto review across an unreadable gap.
+  return recent ? readApprovalsReviewer(recent) : undefined
 }
 
 /** Whether the transcript's own review agent resolves this permission request. */
@@ -79,14 +111,22 @@ export function reconcileCodexSubagentReviewer(
     cursor = { filePath: normalizedPath, offset: 0, carry: '' }
     state.reviewerCursorsByPath.set(normalizedPath, cursor)
   }
+  const previousOffset = cursor.offset
   const records = readJsonlCursor(cursor, isCodexStatusTranscriptLine)
   if (records === undefined) {
     state.reviewerCursorsByPath.delete(normalizedPath)
     state.reviewersByPath.delete(normalizedPath)
     return
   }
-  const reviewer = readApprovalsReviewer(records)
+  const reviewer = resolveCodexApprovalsReviewer(
+    cursor,
+    previousOffset,
+    records,
+    state.reviewersByPath.get(normalizedPath)
+  )
   if (reviewer !== undefined) {
     state.reviewersByPath.set(normalizedPath, reviewer)
+  } else {
+    state.reviewersByPath.delete(normalizedPath)
   }
 }
