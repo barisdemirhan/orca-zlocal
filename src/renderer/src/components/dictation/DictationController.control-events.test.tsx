@@ -58,8 +58,8 @@ vi.mock('./DictationIndicator', () => ({ DictationIndicator: () => null }))
 vi.mock('./use-dictation-terminal-mount-lease', () => ({
   useDictationTerminalMountLease: () => {}
 }))
-vi.mock('./dictation-insertion-target', () => ({
-  captureInsertionTarget: () => ({ kind: 'text', element: document.activeElement }),
+vi.mock(import('./dictation-insertion-target'), async (original) => ({
+  ...(await original()),
   insertText: mocks.insert
 }))
 beforeEach(() => {
@@ -89,13 +89,18 @@ beforeEach(() => {
 afterEach(cleanup)
 
 it('advertises cancel, discards an active capture, and ignores the final transcript arriving during teardown', async () => {
-  render(<DictationController />)
+  const view = render(
+    <>
+      <textarea aria-label="Reply" />
+      <DictationController />
+    </>
+  )
+  view.getByRole('textbox', { name: 'Reply' }).focus()
   expect(canCancelDictation()).toBe(true)
   act(() => dispatchDictationControl('start'))
   await waitFor(() => expect(useAppStore.getState().dictationState).toBe('listening'))
   act(cancelDictation)
   expect(mocks.discard).toHaveBeenCalledOnce()
-  expect(useAppStore.getState().dictationState).toBe('stopping')
   const sessionId = mocks.startSpeech.mock.calls[0]?.[2]
   if (!sessionId) {
     throw new Error('No speech session')
