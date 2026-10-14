@@ -41,7 +41,7 @@ afterEach(() => {
   resetAgentHubMirrorsForTest()
   vi.restoreAllMocks()
 })
-function target(id: string): AgentHubPaneTarget {
+function target(id: string, agentType: AgentHubPaneTarget['agentType'] = null): AgentHubPaneTarget {
   const worktree = makeWorktree()
   return {
     worktree,
@@ -49,17 +49,17 @@ function target(id: string): AgentHubPaneTarget {
     tab: makeTabWithIds(id, worktree.id),
     paneKey: null,
     title: id,
-    agentType: null
+    agentType
   }
 }
-function stage(count = 3, onReveal = vi.fn()) {
-  openAgentHubMirror(target('one'))
+function stage(count = 3, onReveal = vi.fn(), agentType: AgentHubPaneTarget['agentType'] = null) {
+  openAgentHubMirror(target('one', agentType))
   const id = readAgentHubMirrors().windows[0]?.id
   if (!id) {
     throw new Error('No window')
   }
   for (let i = 1; i < count; i++) {
-    addAgentHubMirrorTab(id, target(`entry-${i}`))
+    addAgentHubMirrorTab(id, target(`entry-${i}`, agentType))
   }
   function Stage(): React.JSX.Element {
     const { windows } = useAgentHubMirrors()
@@ -114,6 +114,31 @@ it('jumps an inactive tab to its own workspace from its menu and keeps the other
     'entry-1'
   ])
 })
+
+it.each([
+  { tabId: 'one', agentType: 'claude', host: 'Local Mac' },
+  { tabId: 'entry-1', agentType: 'codex', host: 'workhost' },
+  { tabId: 'one', agentType: null, host: 'Local Mac' }
+] as const)(
+  'keeps the hover workspace actions for an inactive $agentType tab on $host without status',
+  async ({ tabId, agentType, host }) => {
+    const reveal = vi.fn()
+    stage(10, reveal, agentType)
+    const tab = screen.getByRole('tab', { name: `${tabId}, idle` })
+    const user = userEvent.setup()
+    await user.hover(tab)
+    const jump = await screen.findByRole('button', { name: 'Jump' })
+    const card = jump.closest('[data-slot="hover-card-content"]')
+    if (!(card instanceof HTMLElement)) {
+      throw new Error('No tab hover card')
+    }
+    expect(within(card).getByText(host)).toBeTruthy()
+    expect(tab.getAttribute('aria-selected')).toBe('false')
+    await user.click(jump)
+    expect(reveal).toHaveBeenCalledWith(target(tabId, agentType), null)
+    expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(9)
+  }
+)
 
 it('names the tab close control on hover', async () => {
   stage(2)

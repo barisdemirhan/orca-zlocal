@@ -15,7 +15,7 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import { HubChip, HubCrumb } from './AgentHubInlineLabels'
 import { agentHubIndicatorKind, agentHubStateSince, agentHubToolName } from './agent-hub-lists'
-import type { AgentHubLocation } from './agent-hub-pane-target'
+import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useClaudeSessionModel } from './use-claude-session-model'
 
 export type AgentHubThreadCardActions = {
@@ -52,13 +52,15 @@ function Detail({
  */
 export function AgentHubThreadHoverCard({
   thread,
+  target,
   location,
   actions,
   hint,
   suppressed = false,
   children
 }: {
-  thread: AgentPaneThread
+  thread: AgentPaneThread | null
+  target?: Pick<AgentHubPaneTarget, 'title' | 'agentType'>
   location: AgentHubLocation
   actions?: AgentHubThreadCardActions
   hint?: string
@@ -74,7 +76,7 @@ export function AgentHubThreadHoverCard({
         {children}
       </HoverCardTrigger>
       <HoverCardContent side="bottom" align="start" className="w-72">
-        <ThreadDetails thread={thread} location={location} actions={actions} />
+        <ThreadDetails thread={thread} target={target} location={location} actions={actions} />
         {hint ? <p className="mt-2.5 text-xs text-muted-foreground">{hint}</p> : null}
       </HoverCardContent>
     </HoverCard>
@@ -83,53 +85,58 @@ export function AgentHubThreadHoverCard({
 
 function ThreadDetails({
   thread,
+  target,
   location,
   actions
 }: {
-  thread: AgentPaneThread
+  thread: AgentPaneThread | null
+  target?: Pick<AgentHubPaneTarget, 'title' | 'agentType'>
   location: AgentHubLocation
   actions?: AgentHubThreadCardActions
 }): React.JSX.Element {
   const now = useNow(30_000)
-  const kind = agentHubIndicatorKind(thread)
-  const copy = activityThreadRowCopy(thread)
-  const entry = thread.paneEntry ?? thread.currentAgentEntry
+  const kind = thread ? agentHubIndicatorKind(thread) : null
+  const copy = thread ? activityThreadRowCopy(thread) : null
+  const agentType = thread?.agentType ?? target?.agentType ?? null
+  const entry = thread?.paneEntry ?? thread?.currentAgentEntry
   const reportedModel = entry?.model?.trim()
   const scannedModel = useClaudeSessionModel(
-    thread.agentType === 'claude' && !reportedModel ? (entry?.providerSession?.id ?? null) : null
+    agentType === 'claude' && !reportedModel ? (entry?.providerSession?.id ?? null) : null
   )
   const model = reportedModel || scannedModel
-  const tool = kind === 'work' ? agentHubToolName(thread) : null
+  const tool = thread && kind === 'work' ? agentHubToolName(thread) : null
   return (
     <div className="flex flex-col gap-2.5 text-xs">
       <div className="flex items-center gap-2.5">
-        <HubAvatar agentType={thread.agentType} kind={kind} />
+        <HubAvatar agentType={agentType} kind={kind} />
         <div className="min-w-0">
           <div className="break-words text-[13px] font-semibold text-foreground">
-            {copy.taskTitle}
+            {copy?.taskTitle ?? target?.title}
           </div>
           <div className="truncate text-muted-foreground">
-            {formatAgentTypeLabel(thread.agentType)}
+            {agentType ? formatAgentTypeLabel(agentType) : null}
             {model ? ` · ${model}` : ''}
           </div>
         </div>
       </div>
       <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5">
-        <Detail label={translate('agentHub.hover.state', 'State')}>
-          {/* Wraps instead of running past the card when the state and tool are long. */}
-          <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <HubStateIndicator kind={kind} />
-            <span className="min-w-0">{threadAgentStateLabel(thread)}</span>
-            <span className="text-muted-foreground/70">
-              · {formatShortTimeAgo(agentHubStateSince(thread), now)}
-            </span>
-            {tool ? (
-              <span className="max-w-full min-w-0 truncate">
-                <HubChip>{tool}</HubChip>
+        {thread && kind ? (
+          <Detail label={translate('agentHub.hover.state', 'State')}>
+            {/* Wraps instead of running past the card when the state and tool are long. */}
+            <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              <HubStateIndicator kind={kind} />
+              <span className="min-w-0">{threadAgentStateLabel(thread)}</span>
+              <span className="text-muted-foreground/70">
+                · {formatShortTimeAgo(agentHubStateSince(thread), now)}
               </span>
-            ) : null}
-          </span>
-        </Detail>
+              {tool ? (
+                <span className="max-w-full min-w-0 truncate">
+                  <HubChip>{tool}</HubChip>
+                </span>
+              ) : null}
+            </span>
+          </Detail>
+        ) : null}
         <Detail label={translate('agentHub.hover.where', 'Where')}>
           <span className="block min-w-0">
             <HubCrumb location={location} wrap />
@@ -137,7 +144,7 @@ function ThreadDetails({
         </Detail>
       </dl>
       {/* A bare state name would repeat the State line above. */}
-      {copy.statusLine && copy.statusKind !== 'state' ? (
+      {copy?.statusLine && copy.statusKind !== 'state' ? (
         // Why anywhere: a long path or command has no spaces to break at.
         <p className="line-clamp-3 rounded-md bg-foreground/[0.05] px-2 py-1.5 leading-relaxed [overflow-wrap:anywhere] text-foreground/80">
           {copy.statusLine}

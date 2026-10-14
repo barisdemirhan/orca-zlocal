@@ -194,21 +194,15 @@ export function AgentHubMirrorTab({
             />
           </button>
         ) : null}
-        {thread ? (
-          <AgentHubThreadHoverCard
-            thread={thread}
-            location={location}
-            actions={{ ...actions, showJumpShortcut: active }}
-            suppressed={drag.active !== null || editing}
-          >
-            {tabNode}
-          </AgentHubThreadHoverCard>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>{tabNode}</TooltipTrigger>
-            <TooltipContent respectReducedMotion>{title}</TooltipContent>
-          </Tooltip>
-        )}
+        <AgentHubThreadHoverCard
+          thread={thread}
+          target={{ title, agentType: tab.target.agentType }}
+          location={location}
+          actions={{ ...actions, showJumpShortcut: active }}
+          suppressed={drag.active !== null || editing}
+        >
+          {tabNode}
+        </AgentHubThreadHoverCard>
         {closable ? (
           // Why a wrapper: the button keeps its primitive look; only its visibility follows the tab.
           <span className="flex shrink-0 opacity-0 transition-opacity duration-100 group-hover/tab:opacity-100 group-data-[active=true]/tab:opacity-100 focus-within:opacity-100">
