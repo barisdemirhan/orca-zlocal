@@ -145,41 +145,55 @@ export function DockExtras({
 
 export function DockButton({
   label,
+  hint,
   actionId,
   side,
   className,
   disabled,
   pressed,
+  preserveFocus = false,
   onClick,
   children
 }: {
   label: string
+  hint?: React.ReactNode
   actionId?: string
   side: 'top' | 'bottom' | 'left' | 'right'
   className: string
   disabled?: boolean
   /** For a button that switches something on and off. */
   pressed?: boolean
+  preserveFocus?: boolean
   onClick: () => void
   children: React.ReactNode
 }): React.JSX.Element {
+  const button = (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      aria-pressed={pressed}
+      onClick={onClick}
+      onMouseDown={preserveFocus ? (event) => event.preventDefault() : undefined}
+      className={className}
+    >
+      {children}
+    </button>
+  )
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          disabled={disabled}
-          aria-pressed={pressed}
-          onClick={onClick}
-          className={className}
-        >
-          {children}
-        </button>
+        {disabled ? (
+          <span data-agent-hub-dock-button className="inline-flex">
+            {button}
+          </span>
+        ) : (
+          button
+        )}
       </TooltipTrigger>
       <TooltipContent side={side} sideOffset={8}>
         <span className="flex items-center gap-2">
-          {label}
+          {hint ?? label}
           <AgentHubShortcut actionId={actionId} />
         </span>
       </TooltipContent>

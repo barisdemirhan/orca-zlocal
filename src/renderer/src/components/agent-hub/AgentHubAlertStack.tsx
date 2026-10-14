@@ -57,7 +57,7 @@ function alertText(alert: AgentHubThreadAlert): string {
 }
 
 /** Places a floating element beside its anchor (the hub, the tray or a chip), kept on screen. */
-function placeBesideAnchor(
+export function placeBesideAnchor(
   bubble: HTMLElement,
   anchor: HTMLElement,
   side: AgentHubAlertSide

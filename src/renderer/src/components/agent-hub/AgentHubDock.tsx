@@ -33,7 +33,7 @@ import {
   agentHubDockDropPosition,
   agentHubDockPlacement,
   agentHubDockPopoverSide,
-  isHorizontalAgentHubDock
+  agentHubDockMeasuredExtent
 } from './agent-hub-dock-geometry'
 import type { AgentHubTab } from './agent-hub-keys'
 import {
@@ -44,6 +44,8 @@ import type { AgentHubCounts } from './agent-hub-lists'
 import { agentHubMirrorsToggleAction } from './agent-hub-mirror-tray'
 import { useDockBarMotion } from './use-dock-bar-motion'
 import { useViewportSize } from './use-viewport-size'
+import { AgentHubOrbButton } from './AgentHubOrbButton'
+import type { AgentHubOrbState } from './agent-hub-orb-state'
 
 // Leaving the dock for a moment (to reach the popover) must not snap it shut.
 const COLLAPSE_DELAY_MS = 220
@@ -71,6 +73,7 @@ export function AgentHubDock({
   onNextWaiting,
   onToggleMirrors,
   onMove,
+  orb,
   ...anchorProps
 }: React.ComponentProps<'div'> & {
   position: AgentHubDockPosition
@@ -91,6 +94,7 @@ export function AgentHubDock({
   onNextWaiting: () => void
   onToggleMirrors: () => void
   onMove: (position: AgentHubDockPosition) => void
+  orb?: { state: AgentHubOrbState; onOpen: () => void; disabled: boolean } | null
 }): React.JSX.Element {
   const viewport = useViewportSize()
   const terminalCounts = useAgentHubTerminalCounts(terminals)
@@ -133,15 +137,13 @@ export function AgentHubDock({
   )
   const zoom = AGENT_HUB_DOCK_ZOOM[size]
   // The bar measures in its own (unzoomed) pixels; placement works in the window's.
-  const lengthOf = (bar: { width: number; height: number }): number =>
-    (isHorizontalAgentHubDock(position.edge) ? bar.width : bar.height) * zoom
   const placement = dragPoint
     ? { left: dragPoint.x, top: dragPoint.y, transform: 'translate(-50%, -50%)' }
     : agentHubDockPlacement(
         position,
         viewport,
         flushTop ? { ...DOCK_CHROME, titleBarHeight: 0 } : DOCK_CHROME,
-        barSize && restSize ? { rest: lengthOf(restSize), current: lengthOf(barSize) } : null
+        agentHubDockMeasuredExtent(position.edge, zoom, restSize, barSize)
       )
 
   useLayoutEffect(
@@ -154,7 +156,8 @@ export function AgentHubDock({
   )
 
   const onTarget = (target: EventTarget): boolean =>
-    target instanceof Element && target.closest('button, [role="menu"]') !== null
+    target instanceof Element &&
+    target.closest('button, [data-agent-hub-dock-button], [role="menu"]') !== null
 
   return (
     <div
@@ -221,6 +224,15 @@ export function AgentHubDock({
           data-dragging={dragPoint !== null}
           className="relative flex cursor-pointer items-center justify-start overflow-hidden data-[edge=left]:flex-col data-[edge=right]:flex-col text-foreground group-data-[dragging=true]/dock:cursor-grabbing data-[dragging=true]:rounded-xl data-[dragging=true]:border data-[dragging=true]:border-border data-[dragging=true]:bg-[var(--hub-notch)] data-[dragging=true]:shadow-floating data-[edge=bottom]:h-7 data-[edge=bottom]:rounded-t-xl data-[edge=bottom]:px-2.5 data-[edge=left]:w-7 data-[edge=left]:rounded-r-xl data-[edge=left]:py-2.5 data-[edge=right]:w-7 data-[edge=right]:rounded-l-xl data-[edge=right]:py-2.5 data-[edge=top]:h-7 data-[edge=top]:rounded-b-xl data-[edge=top]:px-2.5"
         >
+          {orb ? (
+            <>
+              <AgentHubOrbButton {...orb} side={side} />
+              <span
+                aria-hidden
+                className="mx-1 h-3.5 shrink-0 border-l border-border group-data-[edge=left]/dock:mx-0 group-data-[edge=left]/dock:my-1 group-data-[edge=left]/dock:h-0 group-data-[edge=left]/dock:w-3.5 group-data-[edge=left]/dock:border-t group-data-[edge=left]/dock:border-l-0 group-data-[edge=right]/dock:mx-0 group-data-[edge=right]/dock:my-1 group-data-[edge=right]/dock:h-0 group-data-[edge=right]/dock:w-3.5 group-data-[edge=right]/dock:border-t group-data-[edge=right]/dock:border-l-0"
+              />
+            </>
+          ) : null}
           {/* One face. The inbox, the counts and (with mirrors open or parked) the mirrors button
               are drawn once and hold still; unfolding only lets the bar grow over the buttons
               after them, so whatever is under the pointer stays put. */}

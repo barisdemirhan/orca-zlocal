@@ -21560,6 +21560,14 @@
       "unavailable": "このリンクを開けませんでした。"
     }
   },
+  "auto.agentHub.orb.talk": "Orb と話す",
+  "auto.agentHub.orb.chooseFolderFirst": "先に Orb の作業フォルダを選択してください",
+  "auto.agentHub.orb.disabled": "Orb と話すには Agent の操作を有効にしてください",
+  "auto.agentHub.orb.openFailed": "Orb を開けませんでした。もう一度お試しください。",
+  "auto.agentHub.orb.working": "作業中",
+  "auto.agentHub.orb.open": "開く",
+  "auto.agentHub.orb.toSend": "で送信",
+  "auto.agentHub.orb.approvalKeys": "許可 ↵ / 拒否 esc",
   "workspaceDeletion": {
     "preferenceSaveFailed": "削除の設定を保存できませんでした",
     "alwaysForceDelete": "常に強制削除",

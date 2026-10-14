@@ -22283,6 +22283,14 @@
       }
     }
   },
+  "auto.agentHub.orb.talk": "Talk to Orb",
+  "auto.agentHub.orb.chooseFolderFirst": "Choose the Orb's working folder first",
+  "auto.agentHub.orb.disabled": "Enable Agent control to talk to Orb",
+  "auto.agentHub.orb.openFailed": "Could not open Orb. Try again.",
+  "auto.agentHub.orb.working": "Working",
+  "auto.agentHub.orb.open": "Open",
+  "auto.agentHub.orb.toSend": "to send",
+  "auto.agentHub.orb.approvalKeys": "Allow ↵ / Deny esc",
   "updates": {
     "installBlock": {
       "instancesLabel": "Instances using Orca",

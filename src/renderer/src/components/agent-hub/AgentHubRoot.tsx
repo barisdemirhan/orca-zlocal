@@ -27,10 +27,8 @@ import { clearAgentHubAlerts, useAgentHubAlertQueue } from './agent-hub-alert-qu
 import { agentHubAlertMatchesMirrorTab } from './agent-hub-alert-target'
 import {
   agentHubInboxRequests,
-  agentHubAwayAnswerCount,
   agentHubRequestKey,
-  readAgentHubRequests,
-  useAgentHubRequests
+  readAgentHubRequests
 } from './agent-hub-requests-store'
 import { agentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
@@ -41,7 +39,6 @@ import type { AgentHubTab } from './agent-hub-keys'
 import { agentHubInitialTab } from './agent-hub-initial-tab'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { agentHubThreadCardKey, showAgentHubCardsAgain } from './agent-hub-answered-cards'
-import { agentHubCounts } from './agent-hub-lists'
 import {
   arrangeAgentHubFloatingWindowsByDefault,
   openAgentHubMirrorInLayout
@@ -61,6 +58,8 @@ import { useAgentHubCanvasWelcome } from './use-agent-hub-canvas-welcome'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubSessionRestore } from './use-agent-hub-session-restore'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
+import { useAgentHubOrbSurfaces } from './AgentHubOrbSurfaces'
+import { agentHubOrbRequest } from './agent-hub-orb-state'
 
 function useGroupNameById(): ReadonlyMap<string, string> {
   const projectGroups = useAppStore((s) => s.projectGroups)
@@ -73,6 +72,10 @@ function useGroupNameById(): ReadonlyMap<string, string> {
 /** The Agent Hub: counts, popover, live mirror, alerts and shortcuts, on a dock or the status bar. */
 export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Element {
   const preferences = useAgentHubPreferences()
+  const anchorRef = useRef<HTMLElement>(null)
+  const inSettings = useAppStore((s) => s.activeView === 'settings')
+  const docked = preferences.placement === 'dock'
+  const side = docked ? agentHubDockPopoverSide(preferences.dockPosition.edge) : 'top'
   const now = useNow(60_000)
   // Worker agents too: the hub nests them under the agent that dispatched them.
   const { allThreads: threads } = useAgentPaneThreads({
@@ -85,15 +88,13 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const lineage = useMemo(() => buildAgentHubLineage(threads, now), [threads, now])
   const finishedMaxAgeMs = preferences.finishedClearMinutes * 60_000
   const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
-  const requests = useAgentHubRequests()
-  const requestCards = agentHubInboxRequests(requests)
-  const counts = agentHubCounts(lists, requestCards.length, agentHubAwayAnswerCount(requests))
-  useAgentHubAlerts(lists, preferences)
+  const orb = useAgentHubOrbSurfaces(threads, lists, anchorRef, preferences, inSettings)
+  const counts = orb.counts
+  useAgentHubAlerts(orb.hubLists, preferences)
   useAgentHubSessionRestore(preferences.restoreOnLaunch, preferences.canvas)
   const alerts = useAgentHubAlertQueue()
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const inSettings = useAppStore((s) => s.activeView === 'settings')
   useAgentHubFocusedPaneOutline(preferences.focusedPaneOutline && !inSettings)
   const groupNameById = useGroupNameById()
   const hostLabels = useAgentHubHostLabels()
@@ -108,7 +109,6 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     seq: 0
   })
   const panelRootRef = useRef<HTMLDivElement>(null)
-  const anchorRef = useRef<HTMLElement>(null)
   const trayRef = useRef<HTMLDivElement>(null)
   const threadsRef = useRef(threads)
   useEffect(() => {
@@ -133,11 +133,11 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     agentHubInitialTab(preferences.defaultTab, counts.needsYou)
   )
   const shownTabRef = useRef<AgentHubTab>('inbox')
-  const needsYouRef = useRef(lists.needsYou)
+  const needsYouRef = useRef(orb.hubLists.needsYou)
   useEffect(() => {
-    needsYouRef.current = lists.needsYou
+    needsYouRef.current = orb.hubLists.needsYou
     defaultTabRef.current = agentHubInitialTab(preferences.defaultTab, counts.needsYou)
-  }, [lists.needsYou, counts.needsYou, preferences.defaultTab])
+  }, [orb.hubLists.needsYou, counts.needsYou, preferences.defaultTab])
 
   const openHub = useCallback((tab?: AgentHubTab, paneKey: string | null = null) => {
     if (!openRef.current) {
@@ -225,7 +225,9 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const jumpToNextWaiting = useCallback(() => {
     const next = needsYouRef.current[0]
     if (!next) {
-      const request = agentHubInboxRequests(readAgentHubRequests())[0]
+      const request = agentHubInboxRequests(readAgentHubRequests()).find(
+        (item) => !agentHubOrbRequest(item)
+      )
       if (request) {
         openHub('inbox', agentHubRequestKey(request.host, request.request.requestId))
         return
@@ -242,6 +244,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   useAgentHubMirrorCommands(
     {
       toggle: () => (openRef.current ? setOpen(false) : openHub()),
+      toggleOrb: orb.open,
       jumpToNextWaiting,
       toggleMirrors,
       toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null,
@@ -250,16 +253,6 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     (target) => jump({ target, thread: null })
   )
 
-  const label =
-    counts.needsYou === 1
-      ? translate('agentHub.trigger.needsYouOne', '1 needs you')
-      : counts.needsYou > 1
-        ? translate('agentHub.trigger.needsYouOther', '{{value0}} need you', {
-            value0: counts.needsYou
-          })
-        : translate('agentHub.title', 'Agents')
-  const docked = preferences.placement === 'dock'
-  const side = docked ? agentHubDockPopoverSide(preferences.dockPosition.edge) : 'top'
   const muted = (preferences.alertsMutedUntil ?? 0) > now
   const canvasOpen = useAgentHubCanvas(preferences.canvas) && !inSettings
   const centred = useAgentHubCanvasWelcome({
@@ -285,6 +278,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     (preferences.dockAutoHide &&
       !open &&
       !canvasOpen &&
+      !orb.pillVisible &&
       hubAlerts.length === 0 &&
       chips.length === 0 &&
       counts.needsYou + counts.working + counts.finished === 0)
@@ -318,6 +312,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   return (
     <>
       <AgentHubShortcutsDialog />
+      {docked && !inSettings ? orb.statusButton : null}
       <Popover open={open && !inSettings} onOpenChange={setPopoverOpen}>
         {docked ? (
           dockHidden ? null : (
@@ -346,6 +341,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   }}
                   onToggleMirrors={toggleMirrors}
                   onMove={(position) => void updateSettings({ agentHubDockPosition: position })}
+                  orb={orb.dockButton}
                 />
               </PopoverAnchor>,
               document.body
@@ -360,9 +356,10 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                     anchorRef.current = node
                   }}
                   counts={counts}
-                  label={label}
+                  label={orb.label}
                   open={open}
                   iconOnly={iconOnly}
+                  orb={orb.statusButton}
                 />
               </PopoverTrigger>
             </TooltipTrigger>
@@ -376,7 +373,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         )}
         {content}
       </Popover>
-      {hubAlerts.length > 0 && !open && !inSettings ? (
+      {hubAlerts.length > 0 && !orb.pillVisible && !open && !inSettings ? (
         <AgentHubRootAlerts
           alerts={hubAlerts}
           anchorRef={chips.length > 0 ? trayRef : anchorRef}
@@ -400,7 +397,8 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         trayRef={trayRef}
         traySide={side}
         trayAlertSide={agentHubTrayAlertSide(docked ? preferences.dockPosition : null)}
-        trayHidden={open}
+        trayHidden={open || orb.pillVisible}
+        trayAlertsHidden={orb.pillVisible}
         hubOpen={open}
         trayPeekMs={preferences.trayPeekSeconds * 1000}
         hidden={inSettings}
@@ -413,6 +411,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         onReveal={(target, thread) => jump({ target, thread })}
         onOpenCard={(paneKey) => openHub('inbox', paneKey)}
       />
+      {orb.pill}
       {inSettings ? null : <AgentHubPeek />}
       <AgentHubDictationPaneTag />
     </>

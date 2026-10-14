@@ -22283,6 +22283,14 @@
       "unavailable": "No se pudo abrir este enlace."
     }
   },
+  "auto.agentHub.orb.talk": "Hablar con Orb",
+  "auto.agentHub.orb.chooseFolderFirst": "Primero elige la carpeta de trabajo de Orb",
+  "auto.agentHub.orb.disabled": "Activa el control de agentes para hablar con Orb",
+  "auto.agentHub.orb.openFailed": "No se pudo abrir Orb. Inténtalo de nuevo.",
+  "auto.agentHub.orb.working": "Trabajando",
+  "auto.agentHub.orb.open": "Abrir",
+  "auto.agentHub.orb.toSend": "para enviar",
+  "auto.agentHub.orb.approvalKeys": "Permitir ↵ / Denegar esc",
   "workspaceDeletion": {
     "preferenceSaveFailed": "No se pudo guardar la preferencia de eliminación",
     "alwaysForceDelete": "Forzar siempre la eliminación",

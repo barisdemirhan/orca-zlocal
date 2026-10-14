@@ -123,6 +123,7 @@ export function AgentHubMirrorTray({
   side,
   alertSide,
   hidden,
+  alertsHidden = false,
   peekMs,
   onRestore,
   onReveal,
@@ -143,6 +144,7 @@ export function AgentHubMirrorTray({
   alertSide: AgentHubAlertSide
   /** Out of sight while the hub's own panel is open over the same spot. */
   hidden: boolean
+  alertsHidden?: boolean
   /** How long the pile fans out when a parked mirror asks or finishes; 0 never. */
   peekMs: number
   onRestore: (key: string) => void
@@ -255,7 +257,7 @@ export function AgentHubMirrorTray({
             thread={item.thread}
             kind={item.kind}
             location={item.location}
-            alert={item.alert}
+            alert={alertsHidden ? null : item.alert}
             alertSide={alertSide}
             locationOfAlert={locationOfAlert}
             requestPresentationOf={requestPresentationOf}

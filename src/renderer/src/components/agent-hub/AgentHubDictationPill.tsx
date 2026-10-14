@@ -18,16 +18,20 @@ type DictationPhase = 'starting' | 'listening' | 'finishing'
 export function AgentHubDictationPill({
   phase,
   compact = false,
-  disabled = false
+  disabled = false,
+  stopActionId = 'voice.dictation',
+  stopHint
 }: {
   phase: DictationPhase
   compact?: boolean
   disabled?: boolean
+  stopActionId?: 'voice.dictation' | 'agentHub.toggleOrb'
+  stopHint?: string
 }): React.JSX.Element {
   const transcript = useAppStore((s) => (compact ? '' : s.partialTranscript.trim()))
   const isHoldMode = useAppStore((s) => s.settings?.voice?.dictationMode === 'hold')
   const meter = useDictationMeter()
-  const shortcut = useShortcutKeyDetails('voice.dictation')
+  const shortcut = useShortcutKeyDetails(stopActionId)
   const isListening = phase === 'listening'
   const isClipping = isListening && meter.isClipping
   const lifecycleLabel =
@@ -78,18 +82,24 @@ export function AgentHubDictationPill({
           {isClipping ? label : lifecycleLabel}
         </span>
         {/* Why on the pill: a stop shortcut kept in a tooltip goes unnoticed. */}
-        {phase !== 'finishing' && !isHoldMode && shortcut.keys.length > 0 ? (
+        {phase !== 'finishing' &&
+        (!isHoldMode || stopHint) &&
+        (shortcut.keys.length > 0 || stopHint) ? (
           <span
             aria-hidden
             data-agent-hub-dictation-stop-key
             className={
-              compact
+              compact && !stopHint
                 ? 'hidden shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground @min-[30rem]/hub-reply:flex'
                 : 'flex shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground'
             }
           >
-            <HubKeys keys={shortcut.keys} />
-            {translate('agentHub.mirror.dictationStopKey', 'to stop')}
+            {shortcut.keys.length > 0 ? (
+              <HubKeys keys={shortcut.keys} />
+            ) : (
+              <span>{translate('auto.agentHub.orb.notSet', 'Not set')}</span>
+            )}
+            {stopHint ?? translate('agentHub.mirror.dictationStopKey', 'to stop')}
           </span>
         ) : null}
         {phase === 'finishing' && !canCancel ? null : (

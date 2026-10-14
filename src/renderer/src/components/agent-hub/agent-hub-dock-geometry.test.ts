@@ -3,13 +3,26 @@ import {
   agentHubNotchShape,
   agentHubDockDropPosition,
   agentHubDockPlacement,
-  agentHubDockPopoverSide
+  agentHubDockPopoverSide,
+  agentHubDockMeasuredExtent
 } from './agent-hub-dock-geometry'
 
 const viewport = { width: 1600, height: 1000 }
 const chrome = { statusBarHeight: 24, titleBarHeight: 36 }
 
 describe('agent hub dock geometry', () => {
+  it('includes the measured Orb slot in empty docks at every edge and zoom', () => {
+    for (const edge of ['bottom', 'top', 'left', 'right'] as const) {
+      const horizontal = edge === 'bottom' || edge === 'top'
+      const rest = horizontal ? { width: 192, height: 28 } : { width: 28, height: 192 }
+      const expanded = horizontal ? { width: 392, height: 28 } : { width: 28, height: 392 }
+      expect(agentHubDockMeasuredExtent(edge, 1.25, rest, expanded)).toEqual({
+        rest: 240,
+        current: 490
+      })
+      expect(agentHubDockMeasuredExtent(edge, 1, null, expanded)).toBeNull()
+    }
+  })
   it('sits the bottom dock on the status bar, centred on its offset', () => {
     expect(agentHubDockPlacement({ edge: 'bottom', offset: 0.5 }, viewport, chrome)).toEqual({
       left: 800,

@@ -16,6 +16,23 @@ function clamp(value: number, [min, max]: readonly [number, number]): number {
 /** The dock's length along its edge: folded (`rest`) and as drawn now (`current`). */
 export type AgentHubDockExtent = { rest: number; current: number }
 
+/** Measured content includes the Orb slot and divider, even with every count at zero. */
+export function agentHubDockMeasuredExtent(
+  edge: AgentHubDockEdge,
+  zoom: number,
+  rest: { width: number; height: number } | null,
+  current: { width: number; height: number } | null
+): AgentHubDockExtent | null {
+  if (!rest || !current) {
+    return null
+  }
+  const horizontal = isHorizontalAgentHubDock(edge)
+  return {
+    rest: (horizontal ? rest.width : rest.height) * zoom,
+    current: (horizontal ? current.width : current.height) * zoom
+  }
+}
+
 /**
  * Fixed-position placement for the dock. The bottom and top docks overlap the status bar's and
  * the title bar's 1px divider, so the notch reads as part of that bar. Once measured, the dock

@@ -79,6 +79,7 @@ export function AgentHubMirrors({
   traySide,
   trayAlertSide,
   trayHidden,
+  trayAlertsHidden = false,
   hubOpen,
   trayPeekMs,
   threads,
@@ -100,6 +101,7 @@ export function AgentHubMirrors({
   trayAlertSide: AgentHubAlertSide
   /** The hub's own panel is open over the tray's spot. */
   trayHidden: boolean
+  trayAlertsHidden?: boolean
   /** The hub's panel has the keyboard: a mirror popped out from it must not take focus. */
   hubOpen: boolean
   trayPeekMs: number
@@ -383,6 +385,7 @@ export function AgentHubMirrors({
           side={traySide}
           alertSide={trayAlertSide}
           hidden={trayHidden || hidden}
+          alertsHidden={trayAlertsHidden}
           peekMs={trayPeekMs}
           onRestore={(id) => {
             restoreAgentHubMirror(id)

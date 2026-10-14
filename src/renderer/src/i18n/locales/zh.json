@@ -21561,6 +21561,14 @@
       "unavailable": "无法打开此链接。"
     }
   },
+  "auto.agentHub.orb.talk": "与 Orb 对话",
+  "auto.agentHub.orb.chooseFolderFirst": "请先选择 Orb 的工作文件夹",
+  "auto.agentHub.orb.disabled": "启用代理控制以与 Orb 对话",
+  "auto.agentHub.orb.openFailed": "无法打开 Orb，请重试。",
+  "auto.agentHub.orb.working": "处理中",
+  "auto.agentHub.orb.open": "打开",
+  "auto.agentHub.orb.toSend": "发送",
+  "auto.agentHub.orb.approvalKeys": "允许 ↵ / 拒绝 esc",
   "workspaceDeletion": {
     "preferenceSaveFailed": "无法保存删除偏好设置",
     "alwaysForceDelete": "始终强制删除",
