@@ -130,6 +130,14 @@ describe('a direct click in a mirror', () => {
     ['/a/README.md', { kind: 'markdown', filePath: '/a/README.md', connectionId: null }],
     ['/a/report.MARKDOWN', { kind: 'markdown' }],
     ['/a/docs.mdx', { kind: 'markdown' }],
+    ['/a/data.csv', { kind: 'csv' }],
+    ['/a/data.tsv', { kind: 'csv' }],
+    ['/a/flow.mmd', { kind: 'mermaid' }],
+    ['/a/flow.mermaid', { kind: 'mermaid' }],
+    ['/a/analysis.ipynb', { kind: 'notebook' }],
+    ['/a/main.ts', { kind: 'text' }],
+    ['/a/server.log', { kind: 'text' }],
+    ['/a/Makefile', { kind: 'text' }],
     ['/a/report.html', { kind: 'web', url: 'file:///a/report.html' }]
   ])('peeks at %s', (filePath, content) => {
     expect(peekTerminalFileFromMirror(filePath, source(clickIn('m-1')))).toBe(true)
@@ -139,7 +147,7 @@ describe('a direct click in a mirror', () => {
   it.each([
     ['outside a mirror', () => clickIn(null), true, '/a/shot.png', null],
     ['with Agent Hub off', () => clickIn('m-1'), false, '/a/shot.png', null],
-    ['for a file Peek cannot show', () => clickIn('m-1'), true, '/a/main.ts', null],
+    ['for a file Peek cannot show', () => clickIn('m-1'), true, '/a/archive.zip', null],
     ['before the file owner has loaded', () => clickIn('m-1'), true, '/a/shot.png', undefined]
   ])('leaves the click to Orca %s', (_, event, enabled, filePath, connectionId) => {
     mocks.settings = { experimentalAgentHub: enabled }

@@ -59,6 +59,7 @@ vi.mock('../editor/editor-lazy-views', () => ({
     )
   },
   ImageViewer: () => <output>file preview</output>,
+  MonacoCodeExcerpt: ({ lines }: { lines: string[] }) => <output>{lines.join('\n')}</output>,
   MediaViewer: ({ canOpenLocally }: { canOpenLocally: boolean }) => (
     <output>{String(canOpenLocally)}</output>
   )
@@ -261,17 +262,26 @@ describe('Peek Markdown', () => {
 
 describe('Peek file ownership', () => {
   it.each([
-    ['local', false, null, undefined],
-    ['ssh:workhost-ssh', false, null, 'workhost-ssh'],
-    ['runtime:workhost', false, 'workhost', undefined],
-    ['local', true, null, undefined],
-    ['ssh:workhost-ssh', true, null, 'workhost-ssh'],
-    ['runtime:workhost', true, 'workhost', undefined]
+    ['preview.png', 'local', false, null, undefined],
+    ['preview.png', 'ssh:workhost-ssh', false, null, 'workhost-ssh'],
+    ['preview.png', 'runtime:workhost', false, 'workhost', undefined],
+    ['preview.png', 'local', true, null, undefined],
+    ['preview.png', 'ssh:workhost-ssh', true, null, 'workhost-ssh'],
+    ['preview.png', 'runtime:workhost', true, 'workhost', undefined],
+    ['source.ts', 'local', false, null, undefined],
+    ['source.ts', 'ssh:workhost-ssh', false, null, 'workhost-ssh'],
+    ['source.ts', 'runtime:workhost', false, 'workhost', undefined],
+    ['source.ts', 'local', true, null, undefined],
+    ['source.ts', 'ssh:workhost-ssh', true, null, 'workhost-ssh'],
+    ['source.ts', 'runtime:workhost', true, 'workhost', undefined]
   ] as const)(
-    'reads %s files from their owner, folder=%s, while another runtime is selected',
-    async (hostId, folder, environmentId, connectionId) => {
+    'reads %s from %s, folder=%s, while another runtime is selected',
+    async (fileName, hostId, folder, environmentId, connectionId) => {
       const worktreeId = seedOwner(hostId, folder)
-      const item = agentHubPeekFileItem('/workspace/preview.png', {
+      if (fileName === 'source.ts') {
+        readFile.mockResolvedValue({ content: 'file preview', isBinary: false })
+      }
+      const item = agentHubPeekFileItem(`/workspace/${fileName}`, {
         worktreeId,
         onPairedRuntime: environmentId !== null,
         event: undefined,
@@ -289,8 +299,8 @@ describe('Peek file ownership', () => {
         expect.objectContaining({
           target: environmentId ? { kind: 'environment', environmentId } : { kind: 'local' },
           worktreeId,
-          filePath: '/workspace/preview.png',
-          relativePath: 'preview.png',
+          filePath: `/workspace/${fileName}`,
+          relativePath: fileName,
           ...(connectionId ? { connectionId } : {})
         })
       )

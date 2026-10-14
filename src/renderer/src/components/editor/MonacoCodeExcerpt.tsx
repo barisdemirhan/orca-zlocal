@@ -62,6 +62,11 @@ export function useMonacoColorizedLines(lines: string[], language: string): stri
         const nextLines = html.split('<br/>').slice(0, lineCount)
         setHtmlLines(nextLines)
       })
+      .catch(() => {
+        if (!cancelled) {
+          setHtmlLines(lines.map(() => ''))
+        }
+      })
 
     return () => {
       cancelled = true

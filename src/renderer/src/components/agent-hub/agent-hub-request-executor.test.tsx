@@ -290,14 +290,13 @@ describe('Agent Hub non-card actions', () => {
       preserveKeyboardFocus: true
     })
     const toastError = vi.spyOn(toast, 'error').mockImplementation(() => 0)
-    expect(await run({ ...base, kind: 'peek', link: 'notes.txt' })).toEqual({
+    expect(await run({ ...base, kind: 'peek', link: 'archive.zip' })).toEqual({
       kind: 'error',
       code: 'invalid_argument',
-      message:
-        'Peek opens web pages, images, PDF, audio, video, HTML and Markdown files. This file type is not supported.'
+      message: 'This file type cannot be shown in Peek. Open it in the workspace or default app.'
     })
     expect(toastError).toHaveBeenCalledWith(
-      'Peek opens web pages, images, PDF, audio, video, HTML and Markdown files. This file type is not supported.'
+      'This file type cannot be shown in Peek. Open it in the workspace or default app.'
     )
     toastError.mockRestore()
   })

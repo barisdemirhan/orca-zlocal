@@ -30,11 +30,11 @@ it('explains unsupported file chips and keeps URL refusals unchanged', () => {
     createElement(AgentHubPeekChips, {
       text: '',
       worktree,
-      links: ['./notes.txt', 'ftp://example.com']
+      links: ['./archive.zip', 'ftp://example.com']
     })
   )
-  expect(screen.getByRole('button', { name: 'Peek at ./notes.txt' }).title).toBe(
-    'Peek opens web pages, images, PDF, audio, video, HTML and Markdown files. This file type is not supported.'
+  expect(screen.getByRole('button', { name: 'Peek at ./archive.zip' }).title).toBe(
+    'This file type cannot be shown in Peek. Open it in the workspace or default app.'
   )
   expect(screen.getByRole('button', { name: 'Peek at ftp://example.com' }).title).toBe(
     'This URL or file cannot be opened in Peek on its host.'
@@ -55,7 +55,7 @@ it('offers the pages and peekable files an agent message points to, once each', 
   const message = [
     'Storybook: http://127.0.0.1:6007, and again http://127.0.0.1:6007.',
     'Contact sheet: ~/Documents/Agents/Artifacts/northwind/contact-tr.png',
-    'Changed src/app/main.ts and docs/review.pdf; see docs/review.pdf',
+    'Changed docs/review.pdf; see docs/review.pdf',
     'Read docs/report.md'
   ].join('\n')
 
@@ -69,15 +69,22 @@ it('offers the pages and peekable files an agent message points to, once each', 
   ])
 })
 
-it('opens an enabled Markdown chip from an explicit report link', () => {
+it.each([
+  ['./notes.md', 'notes.md', 'markdown'],
+  ['./notes.txt', 'notes.txt', 'text'],
+  ['./main.ts', 'main.ts', 'text'],
+  ['./data.csv', 'data.csv', 'csv'],
+  ['./flow.mmd', 'flow.mmd', 'mermaid'],
+  ['./analysis.ipynb', 'analysis.ipynb', 'notebook']
+])('opens an enabled chip from %s', (link, title, kind) => {
   const worktree = { ...makeWorktree(), hostId: 'local' as const }
   useAppStore.setState({
     repos: [makeRepo()],
     worktreesByRepo: { [worktree.repoId]: [worktree] }
   })
-  render(createElement(AgentHubPeekChips, { text: '', worktree, links: ['./notes.md'] }))
-  const chip = screen.getByRole('button', { name: 'Peek at notes.md' })
+  render(createElement(AgentHubPeekChips, { text: '', worktree, links: [link] }))
+  const chip = screen.getByRole('button', { name: `Peek at ${title}` })
   expect(chip).not.toHaveProperty('disabled', true)
   fireEvent.click(chip)
-  expect(readAgentHubPeek()?.history[0]?.content).toMatchObject({ kind: 'markdown' })
+  expect(readAgentHubPeek()?.history[0]?.content).toMatchObject({ kind })
 })

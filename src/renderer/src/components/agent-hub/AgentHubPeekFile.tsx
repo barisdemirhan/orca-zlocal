@@ -11,6 +11,11 @@ import { ImageViewer, MarkdownPreview, MediaViewer } from '../editor/editor-lazy
 import { absolutePathToFileUri } from '../editor/markdown-internal-links'
 import { buildImageDataUri } from '../../../../shared/image-data-uri'
 import type { AgentHubPeekContent } from './agent-hub-peek-store'
+import { AgentHubPeekDocument } from './AgentHubPeekDocument'
+import {
+  canRenderAgentHubPeekDocument,
+  isAgentHubPeekDocumentKind
+} from './agent-hub-peek-document-budget'
 
 function runtimeReadTargetKey(target: RuntimeFileReadArgs['target'] | undefined): string {
   return target?.kind === 'environment' ? target.environmentId : ''
@@ -111,10 +116,15 @@ export function AgentHubPeekFile({
 
   const state: LoadState = load.key === key ? load.state : { status: 'loading' }
   const readyFile = state.status === 'ready' ? state.file : null
+  const documentKind = isAgentHubPeekDocumentKind(content.kind) ? content.kind : null
+  const tooLarge =
+    readyFile !== null &&
+    isAgentHubPeekDocumentKind(content.kind) &&
+    !canRenderAgentHubPeekDocument(content.kind, readyFile.content)
   const unreadable =
     readyFile !== null &&
-    (content.kind === 'markdown'
-      ? readyFile.isBinary
+    (content.kind === 'markdown' || documentKind !== null
+      ? readyFile.isBinary || tooLarge
       : !readyFile.isBinary || (!readyFile.mediaUrl && !readyFile.isImage))
   const onUnavailableRef = useRef(onUnavailable)
   const onContentSizeRef = useRef(onContentSize)
@@ -128,14 +138,14 @@ export function AgentHubPeekFile({
       onUnavailableRef.current()
       return undefined
     }
-    if (content.kind === 'markdown') {
+    if (content.kind === 'markdown' || documentKind !== null) {
       onContentSizeRef.current(null)
       return undefined
     }
     return readyFile
       ? measureNaturalSize(readyFile, (size) => onContentSizeRef.current(size))
       : undefined
-  }, [readyFile, state.status, unreadable, content.kind])
+  }, [readyFile, state.status, unreadable, content.kind, documentKind])
   const loading = (
     <Centered>
       <Loader2 aria-hidden className="size-4 animate-spin motion-reduce:animate-none" />
@@ -181,6 +191,25 @@ export function AgentHubPeekFile({
               const uri = absolutePathToFileUri(document.filePath)
               onOpenLink?.(options?.anchor ? `${uri}#${options.anchor}` : uri)
             }}
+          />
+        </div>
+      ) : documentKind !== null ? (
+        <div
+          className="h-full min-h-0"
+          onClickCapture={(event) => {
+            const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null
+            const href = anchor?.getAttribute('href')
+            if (href && onOpenLink?.(href)) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+          }}
+        >
+          <AgentHubPeekDocument
+            file={{ ...content, kind: documentKind }}
+            content={file.content}
+            cacheKey={`agent-hub-peek:${key}`}
+            worktreeId={worktreeId}
           />
         </div>
       ) : file.mediaUrl ? (

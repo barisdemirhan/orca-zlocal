@@ -52,6 +52,14 @@ function kindLabel(item: AgentHubPeekItem): string {
       return translate('agentHub.peek.kindMedia', 'Media')
     case 'markdown':
       return translate('agentHub.peek.kindMarkdown', 'Markdown')
+    case 'csv':
+      return translate('agentHub.peek.kindCsv', 'Table')
+    case 'mermaid':
+      return translate('agentHub.peek.kindMermaid', 'Diagram')
+    case 'notebook':
+      return translate('agentHub.peek.kindNotebook', 'Notebook')
+    case 'text':
+      return translate('agentHub.peek.kindText', 'Code / text')
   }
 }
 
@@ -165,9 +173,9 @@ export function AgentHubPeek(): React.JSX.Element | null {
     return null
   }
   const web = item.content.kind === 'web'
-  // Pages, PDFs and Markdown take the room; images and video shrink to their own size.
+  // Documents take the room; images and video shrink to their own size.
   const contentSize =
-    web || item.content.kind === 'pdf' || item.content.kind === 'markdown'
+    web || !['image', 'media'].includes(item.content.kind)
       ? null
       : measured?.location === item.location
         ? measured.size

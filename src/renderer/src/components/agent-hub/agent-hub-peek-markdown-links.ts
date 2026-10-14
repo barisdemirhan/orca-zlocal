@@ -18,7 +18,7 @@ import { closeAgentHubPeek, openAgentHubPeek, type AgentHubPeekItem } from './ag
 
 /** Returns false for links the Markdown viewer handles itself, including same-page anchors. */
 export function openAgentHubPeekMarkdownLink(item: AgentHubPeekItem, href: string): boolean {
-  if (item.content.kind !== 'markdown') {
+  if (item.content.kind !== 'markdown' && item.content.kind !== 'notebook') {
     return false
   }
   const content = item.content

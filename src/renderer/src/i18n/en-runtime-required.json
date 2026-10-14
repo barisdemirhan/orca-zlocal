@@ -3,6 +3,10 @@
     "alert": {
       "more": "+{{value0}} more in the hub"
     },
+    "close": "Close (esc)",
+    "dock": {
+      "mute": "Mute alerts for 2 hours"
+    },
     "footer": {
       "answer": "Answer",
       "move": "Move",
