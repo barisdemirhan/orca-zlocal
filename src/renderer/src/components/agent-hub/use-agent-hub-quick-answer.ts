@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { toast } from 'sonner'
+import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agent-support'
 import type { AgentType } from '../../../../shared/agent-status-types'
@@ -16,7 +18,8 @@ import {
   agentHubCardKey,
   readAnsweredAgentHubCard,
   recordAgentHubCardAnswer,
-  useAnsweredAgentHubCard
+  useAnsweredAgentHubCard,
+  useAgentHubCardAnswerPending
 } from './agent-hub-answered-cards'
 import { agentHubStateSince } from './agent-hub-lists'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
@@ -62,20 +65,21 @@ export type AgentHubQuickAnswer = {
   options: readonly AgentHubAnswerOption[]
   /** The answer on record for this prompt, from any surface. */
   chosen: number | null
+  pending: boolean
   canAnswer: boolean
   ptyId: string | null
   send: Send
   cardKey: string
   /** Sends option `index`; false when nothing was sent. */
-  choose: (index: number) => boolean
+  choose: (index: number, onDeliverySettled?: (delivered: boolean) => void) => boolean
   /** `choose` for a number key: refused while the surface has just appeared. */
-  chooseByKey: (index: number) => boolean
+  chooseByKey: (index: number, onDeliverySettled?: (delivered: boolean) => void) => boolean
   /** Whether a number key would be taken right now. */
   keysArmed: () => boolean
   /** Answers a single question in the user's own words; false for anything else. */
-  reply: (text: string) => boolean
-  /** Marks an answer a surface sent by itself (the card's approval path). */
-  recordChoice: (index: number | null) => void
+  reply: (text: string, onDeliverySettled?: (delivered: boolean) => void) => boolean
+  /** A null key denies; only an acknowledged write completes the answer. */
+  answerApproval: (index: number, key: string | null) => Promise<boolean> | null
 }
 
 /**
@@ -107,6 +111,7 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
   const canSend = useNativeChatCanSend(ptyId)
   const cardKey = agentHubCardKey(paneKey, target.stateSince, interactivePrompt)
   const chosen = useAnsweredAgentHubCard(cardKey)
+  const pending = useAgentHubCardAnswerPending(cardKey)
   // Why in an effect: the guard starts once the surface is on screen; until then no key is taken.
   const shownAt = useRef(Number.POSITIVE_INFINITY)
   useEffect(() => {
@@ -130,38 +135,59 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
 
   const answerQuestion = (
     selections: Parameters<Send['sendAnswer']>[1],
-    marker: number
+    marker: number,
+    onDeliverySettled?: (delivered: boolean) => void
   ): boolean => {
     if (!simpleQuestion || card?.kind !== 'question' || !open()) {
       return false
     }
-    recordAgentHubCardAnswer(cardKey, marker)
+    const settle = recordAgentHubCardAnswer(cardKey, marker, true)
     // A refused or lost delivery hands the answer back for another try.
     const result = send.sendAnswer(card.prompt, selections, (delivered) => {
-      if (!delivered) {
-        recordAgentHubCardAnswer(cardKey, null)
+      if (settle(delivered)) {
+        onDeliverySettled?.(delivered)
       }
     })
     if (result.settleAfterMs <= 0) {
-      recordAgentHubCardAnswer(cardKey, null)
+      settle(false)
       return false
     }
     return true
   }
-  const choose = (index: number): boolean => {
+  const answerApproval = (index: number, key: string | null): Promise<boolean> | null => {
+    if (!approval || !open()) {
+      return null
+    }
+    const settle = recordAgentHubCardAnswer(cardKey, index, true)
+    return Promise.resolve()
+      .then(() => (key === null ? send.cancelAsk() : send.sendRawVerified(key)))
+      .catch(() => false)
+      .then((delivered) => {
+        const current = settle(delivered)
+        if (current && !delivered) {
+          toast.error(
+            translate('agentHub.requests.sendFailed', 'Could not send your answer. Try again.')
+          )
+        }
+        return current && delivered
+      })
+  }
+  const choose = (index: number, onDeliverySettled?: (delivered: boolean) => void): boolean => {
     const option = options[index]
     if (!option || !open()) {
       return false
     }
     if (simpleQuestion) {
-      return answerQuestion([{ indices: [index] }], index)
+      return answerQuestion([{ indices: [index] }], index, onDeliverySettled)
     }
-    recordAgentHubCardAnswer(cardKey, index)
-    if (option.deny) {
-      send.cancelAsk()
-    } else {
-      send.sendRaw(nativeChatApprovalAcceptKey(agentType))
+    const delivery = answerApproval(
+      index,
+      option.deny ? null : nativeChatApprovalAcceptKey(agentType)
+    )
+    if (!delivery) {
+      return false
     }
+    void delivery.then((delivered) => onDeliverySettled?.(delivered))
     return true
   }
   const keysArmed = (): boolean =>
@@ -173,15 +199,17 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
     question: simpleQuestion?.question ?? approval?.detail ?? approval?.title ?? null,
     options,
     chosen,
+    pending,
     canAnswer,
     ptyId,
     send,
     cardKey,
     choose,
-    chooseByKey: (index) => keysArmed() && choose(index),
+    chooseByKey: (index, onDeliverySettled) => keysArmed() && choose(index, onDeliverySettled),
     keysArmed,
     // Why -1: the card marks a free-text answer the same way, so neither answers twice.
-    reply: (text) => text.trim() !== '' && answerQuestion([{ indices: [], other: text }], -1),
-    recordChoice: (index) => recordAgentHubCardAnswer(cardKey, index)
+    reply: (text, onDeliverySettled) =>
+      text.trim() !== '' && answerQuestion([{ indices: [], other: text }], -1, onDeliverySettled),
+    answerApproval
   }
 }

@@ -22304,6 +22304,7 @@
   "auto.agentHub.orb.open": "Abrir",
   "auto.agentHub.orb.toSend": "para enviar",
   "auto.agentHub.orb.approvalKeys": "Permitir ↵ / Denegar esc",
+  "auto.agentHub.orb.piRequiresFree": "Pi requiere Actuar libremente. Elige otro agente para pedir permiso antes de ejecutar comandos.",
   "auto.agentHub.orb.sharedWorkingFolder": "Usa el directorio del espacio de trabajo flotante. Los cambios también se aplican a las nuevas pestañas flotantes.",
   "workspaceDeletion": {
     "preferenceSaveFailed": "No se pudo guardar la preferencia de eliminación",

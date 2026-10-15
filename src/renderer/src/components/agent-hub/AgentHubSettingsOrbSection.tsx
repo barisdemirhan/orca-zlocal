@@ -1,6 +1,9 @@
 import { translate } from '@/i18n/i18n'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
-import { normalizeAgentHubOrbSettings } from '../../../../shared/agent-hub-orb-settings'
+import {
+  normalizeAgentHubOrbSettings,
+  agentHubOrbSupportsAsk
+} from '../../../../shared/agent-hub-orb-settings'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -25,6 +28,11 @@ export function AgentHubSettingsOrbSection({
 }): React.JSX.Element {
   const orb = normalizeAgentHubOrbSettings(settings)
   const { agents, models } = useAgentHubOrbOptions(orb.agent)
+  const supportsAsk = agentHubOrbSupportsAsk(orb.agent)
+  const askUnavailable = translate(
+    'agentHub.orb.piRequiresFree',
+    'Pi requires Act freely. Choose another agent to ask before running commands.'
+  )
   const agentLabel = translate('auto.agentHub.orb.agent', 'Agent')
   const modelLabel = translate('auto.agentHub.orb.model', 'Model')
   const defaultModel = translate('auto.agentHub.orb.agentDefault', 'Agent default')
@@ -109,12 +117,14 @@ export function AgentHubSettingsOrbSection({
       <SettingsRow
         label={approvalsLabel}
         description={
-          orb.permission === 'free'
-            ? translate(
-                'auto.agentHub.orb.freeWarning',
-                'The Orb runs commands without asking. Use with care.'
-              )
-            : undefined
+          !supportsAsk
+            ? askUnavailable
+            : orb.permission === 'free'
+              ? translate(
+                  'auto.agentHub.orb.freeWarning',
+                  'The Orb runs commands without asking. Use with care.'
+                )
+              : undefined
         }
         control={
           <SettingsSegmentedControl
@@ -122,7 +132,12 @@ export function AgentHubSettingsOrbSection({
             ariaLabel={approvalsLabel}
             onChange={(value) => updateSettings({ agentHubOrbPermission: value })}
             options={[
-              { value: 'ask', label: translate('auto.agentHub.orb.ask', 'Ask') },
+              {
+                value: 'ask',
+                label: translate('auto.agentHub.orb.ask', 'Ask'),
+                disabled: !supportsAsk,
+                tooltip: !supportsAsk ? askUnavailable : undefined
+              },
               { value: 'free', label: translate('auto.agentHub.orb.free', 'Act freely') }
             ]}
           />

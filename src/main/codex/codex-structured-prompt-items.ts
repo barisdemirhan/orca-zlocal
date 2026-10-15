@@ -24,6 +24,12 @@ const APPROVAL_DECISION_LABELS: Record<CodexApprovalDecision, string> = {
   cancel: 'Stop'
 }
 
+const APPROVAL_PERMISSION_KINDS: Partial<Record<CodexApprovalDecision, string>> = {
+  accept: 'allow_once',
+  acceptForSession: 'allow_always',
+  decline: 'reject_once'
+}
+
 const PENDING = {
   state: 'pending',
   selectedOptionId: null,
@@ -61,7 +67,13 @@ export function codexApprovalOptions(params: unknown): AgentJournalPromptOption[
       )
     : []
   const decisions = offered.length > 0 ? offered : CODEX_APPROVAL_DECISIONS
-  return decisions.map((decision) => ({ id: decision, label: APPROVAL_DECISION_LABELS[decision] }))
+  return decisions.map((decision) => ({
+    id: decision,
+    label: APPROVAL_DECISION_LABELS[decision],
+    ...(APPROVAL_PERMISSION_KINDS[decision] === undefined
+      ? {}
+      : { permissionKind: APPROVAL_PERMISSION_KINDS[decision] })
+  }))
 }
 
 export function codexApprovalItem(input: {

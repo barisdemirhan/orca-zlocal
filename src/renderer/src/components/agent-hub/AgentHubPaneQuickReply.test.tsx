@@ -19,6 +19,7 @@ type QuickAnswerStub = Pick<
   | 'simpleQuestion'
   | 'options'
   | 'chosen'
+  | 'pending'
   | 'canAnswer'
   | 'cardKey'
   | 'choose'
@@ -37,6 +38,7 @@ const quick = vi.hoisted(() => {
         { id: 'b', label: 'Keep' }
       ],
       chosen: null,
+      pending: false,
       canAnswer: true,
       cardKey: 'tab-1:leaf-1:1000',
       choose: vi.fn(() => true),
@@ -179,10 +181,10 @@ it('opens in the asking pane with its options and answers by click or number key
   expect(screen.getByText('Adds a Delete action')).toBeTruthy()
 
   fireEvent.click(screen.getByRole('button', { name: /Keep$/ }))
-  expect(quick.answer.choose).toHaveBeenCalledWith(1)
+  expect(quick.answer.choose).toHaveBeenCalledWith(1, expect.any(Function))
 
   fireEvent.keyDown(openCard(), { key: '1' })
-  expect(quick.answer.chooseByKey).toHaveBeenCalledWith(0)
+  expect(quick.answer.chooseByKey).toHaveBeenCalledWith(0, expect.any(Function))
 })
 
 it("takes several questions in the agent's full card, keeping the keys until all are sent", () => {

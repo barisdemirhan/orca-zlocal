@@ -46,6 +46,11 @@ describe('recorded ACP traffic through the journal', () => {
       'allow-once',
       'reject-once'
     ])
+    expect(approvals[0]!.options.map((option) => option.permissionKind)).toEqual([
+      'allow_always',
+      'allow_once',
+      'reject_once'
+    ])
     expect(approvals.map((body) => body.resolution)).toMatchObject([
       { state: 'resolved', selectedOptionId: 'allow-once' },
       { state: 'resolved', selectedOptionId: 'reject-once' }

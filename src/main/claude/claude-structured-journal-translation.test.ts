@@ -765,7 +765,7 @@ describe('Claude structured journal translation', () => {
     expect(state.items.at(-1)?.body).toMatchObject({
       kind: 'approval',
       title: 'Allow Bash?',
-      options: expect.arrayContaining([{ id: 'allow', label: 'Allow' }])
+      options: expect.arrayContaining([expect.objectContaining({ id: 'allow', label: 'Allow' })])
     })
     expect(bindings[0]).toEqual([
       'orca:claude-prompt%3Aorca-session%3Apermission-1',

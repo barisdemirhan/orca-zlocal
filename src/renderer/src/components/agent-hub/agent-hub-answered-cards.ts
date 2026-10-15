@@ -14,6 +14,8 @@ type PromptRecord = {
   choice: number | null
   at: number
   dismissedIn: ReadonlySet<AgentHubCardSurface>
+  pending?: boolean
+  answerToken?: symbol
 }
 
 // Why module scope: the hub's cards unmount on paging and closing while their answer is still
@@ -76,14 +78,34 @@ export function readAnsweredAgentHubCard(key: string, now = Date.now()): number 
   return entry.choice
 }
 
-export function recordAgentHubCardAnswer(key: string, choice: number | null): void {
+export function recordAgentHubCardAnswer(
+  key: string,
+  choice: number | null,
+  pending = false
+): (delivered: boolean) => boolean {
   const entry = records.get(key)
-  write(key, { choice, at: Date.now(), dismissedIn: entry?.dismissedIn ?? new Set() })
+  const answerToken = Symbol()
+  write(key, {
+    choice,
+    at: Date.now(),
+    dismissedIn: entry?.dismissedIn ?? new Set(),
+    pending,
+    answerToken
+  })
+  return (delivered) => {
+    const current = records.get(key)
+    if (current?.answerToken !== answerToken) {
+      return false
+    }
+    write(key, { ...current, choice: delivered ? choice : null, pending: false, at: Date.now() })
+    return true
+  }
 }
 
 export function dismissAgentHubCard(key: string, surface: AgentHubCardSurface): void {
   const entry = records.get(key)
   write(key, {
+    ...entry,
     choice: entry?.choice ?? null,
     at: entry?.at ?? Date.now(),
     dismissedIn: new Set([...(entry?.dismissedIn ?? []), surface])
@@ -122,6 +144,10 @@ export function withoutDismissedAgentHubCards(
 /** The answer on record for this prompt, from any surface, as it changes. */
 export function useAnsweredAgentHubCard(key: string): number | null {
   return useSyncExternalStore(subscribe, () => readAnsweredAgentHubCard(key))
+}
+
+export function useAgentHubCardAnswerPending(key: string): boolean {
+  return useSyncExternalStore(subscribe, () => records.get(key)?.pending === true)
 }
 
 export function useAgentHubCardDismissed(key: string, surface: AgentHubCardSurface): boolean {

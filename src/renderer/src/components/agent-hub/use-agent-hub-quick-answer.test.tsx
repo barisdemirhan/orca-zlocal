@@ -25,8 +25,9 @@ import {
 const send = vi.hoisted(() => ({
   sendAnswer: vi.fn(() => ({ settleAfterMs: 800 })),
   sendRaw: vi.fn(),
+  sendRawVerified: vi.fn(async () => true),
   cancelPending: vi.fn(),
-  cancelAsk: vi.fn(),
+  cancelAsk: vi.fn(async () => true),
   cancel: vi.fn()
 }))
 vi.mock('@/store', async () => {
@@ -73,7 +74,10 @@ function threadWith(interactivePrompt: string) {
 }
 
 beforeEach(() => {
-  Object.values(send).forEach((fn) => fn.mockClear())
+  Object.values(send).forEach((fn) => fn.mockReset())
+  send.sendAnswer.mockReturnValue({ settleAfterMs: 800 })
+  send.sendRawVerified.mockResolvedValue(true)
+  send.cancelAsk.mockResolvedValue(true)
   resetAgentHubAnsweredCardsForTest()
 })
 afterEach(() => {
@@ -145,21 +149,66 @@ it('ignores a number key pressed as the surface appears, and takes it after the 
   expect(chosen).toBe(true)
 })
 
-it('allows an approval once with the agent key and denies with Esc', () => {
+it('allows an approval once with the agent key and denies with Esc', async () => {
   const thread = threadWith(JSON.stringify({ approval: { tool: 'bash', summary: 'pnpm test' } }))
   const allow = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
   expect(allow.result.current.options.map((option) => option.deny ?? false)).toEqual([false, true])
-  act(() => {
+  await act(async () => {
     allow.result.current.choose(0)
   })
-  expect(send.sendRaw).toHaveBeenCalledWith('1')
+  expect(send.sendRawVerified).toHaveBeenCalledWith('1')
 
   resetAgentHubAnsweredCardsForTest()
   const deny = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
-  act(() => {
+  await act(async () => {
     deny.result.current.choose(1)
   })
   expect(send.cancelAsk).toHaveBeenCalledOnce()
+})
+
+it.each(['allow', 'deny'] as const)(
+  'reopens an approval when its %s delivery is rejected',
+  async (decision) => {
+    const thread = threadWith(JSON.stringify({ approval: { tool: 'bash', summary: 'pnpm test' } }))
+    if (decision === 'allow') {
+      send.sendRawVerified.mockResolvedValueOnce(false)
+    } else {
+      send.cancelAsk.mockResolvedValueOnce(false)
+    }
+    const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
+    await act(async () => {
+      expect(hook.result.current.choose(decision === 'allow' ? 0 : 1)).toBe(true)
+    })
+    expect(hook.result.current.chosen).toBeNull()
+    expect(readAnsweredAgentHubCard(agentHubThreadCardKey(thread))).toBeNull()
+  }
+)
+
+it('waits for the host acknowledgement before reporting an answer and permits retry after failure', async () => {
+  const thread = threadWith(JSON.stringify({ approval: { tool: 'bash', summary: 'pnpm test' } }))
+  let finish: (delivered: boolean) => void = () => {
+    throw new Error('Delivery not started')
+  }
+  send.sendRawVerified.mockReturnValueOnce(
+    new Promise<boolean>((resolve) => {
+      finish = resolve
+    })
+  )
+  const settled = vi.fn()
+  const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
+  await act(async () => {
+    expect(hook.result.current.choose(0, settled)).toBe(true)
+  })
+  expect(hook.result.current.pending).toBe(true)
+  expect(settled).not.toHaveBeenCalled()
+  await act(async () => finish(false))
+  expect(hook.result.current.pending).toBe(false)
+  expect(hook.result.current.chosen).toBeNull()
+  expect(settled).toHaveBeenLastCalledWith(false)
+  await act(async () => {
+    expect(hook.result.current.choose(0, settled)).toBe(true)
+  })
+  expect(settled).toHaveBeenLastCalledWith(true)
 })
 
 it('offers no quick options for a prompt with several questions', () => {

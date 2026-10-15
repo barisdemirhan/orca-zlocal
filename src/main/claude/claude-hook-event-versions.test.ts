@@ -93,6 +93,7 @@ describe('claudeKnowsHookEvent', () => {
         .map(([event]) => event)
       expect(known.sort()).toEqual(
         [
+          'Notification',
           'PostToolUse',
           'PreToolUse',
           'SessionStart',

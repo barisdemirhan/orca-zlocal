@@ -32,8 +32,8 @@ export function orbApproval(): StructuredPromptItem {
       title: 'Allow command?',
       detail: 'pnpm test',
       options: [
-        { id: 'allow', label: 'Allow' },
-        { id: 'deny', label: 'Deny' }
+        { id: 'allow', label: 'Allow', permissionKind: 'allow_once' },
+        { id: 'deny', label: 'Deny', permissionKind: 'reject_once' }
       ],
       resolution: { state: 'pending', selectedOptionId: null, resolvedBy: null, resolvedAt: null }
     }

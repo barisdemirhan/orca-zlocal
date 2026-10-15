@@ -43,8 +43,15 @@ export function AgentHubAlertQuickOptions({
   const quick = useAgentHubQuickAnswer(quickAnswerTargetOf(alert.thread))
   const options = quick.options.slice(0, QUICK_OPTION_LIMIT)
   const choose = (index: number, byKey: boolean): void => {
-    if (byKey ? quick.chooseByKey(index) : quick.choose(index)) {
-      onAnswered()
+    const settled = (delivered: boolean): void => {
+      if (delivered) {
+        onAnswered()
+      }
+    }
+    if (byKey) {
+      quick.chooseByKey(index, settled)
+    } else {
+      quick.choose(index, settled)
     }
   }
   const onKey = useEffectEvent((event: KeyboardEvent): void => {

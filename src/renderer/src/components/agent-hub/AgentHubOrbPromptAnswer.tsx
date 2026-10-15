@@ -40,9 +40,8 @@ export function AgentHubOrbPromptAnswer({
       ? !isNewerApprovalSubject(body.subject)
       : !body.questions && !body.freeTextInput
   const options = simple ? body.options : []
-  const denyIndex = options.findIndex((option) =>
-    /^(deny|reject|decline|cancel|abort)([-_]|$)/i.test(option.id)
-  )
+  const allowIndex = options.findIndex((option) => option.permissionKind === 'allow_once')
+  const denyIndex = options.findIndex((option) => option.permissionKind === 'reject_once')
   const submit = (action: () => Promise<unknown>, index: number | null): boolean => {
     if (sending.current) {
       return false
@@ -98,7 +97,11 @@ export function AgentHubOrbPromptAnswer({
         }, null)
   useAgentHubOrbAnswerKeys((key) => {
     if (body.kind === 'approval' && key === 'Enter') {
-      return choose(0)
+      if (allowIndex !== -1) {
+        return choose(allowIndex)
+      }
+      onOpen()
+      return true
     }
     if (body.kind === 'approval' && key === 'Escape') {
       return deny()
@@ -127,7 +130,14 @@ export function AgentHubOrbPromptAnswer({
       />
       {body.kind === 'approval' && options.length > 0 ? (
         <span className="text-xs text-muted-foreground">
-          {translate('auto.agentHub.orb.approvalKeys', 'Allow ↵ / Deny esc')}
+          {allowIndex !== -1 ? (
+            translate('auto.agentHub.orb.approvalKeys', 'Allow ↵ / Deny esc')
+          ) : (
+            <>
+              {translate('auto.agentHub.orb.open', 'Open')} ↵ /{' '}
+              {translate('components.native-chat.approval.deny', 'Deny')} esc
+            </>
+          )}
         </span>
       ) : null}
       {options.length === 0 ? (

@@ -57,6 +57,66 @@ const show = (state: Parameters<typeof AgentHubOrbPillContent>[0]['state'], onOp
   )
 
 describe('Orb pill', () => {
+  it('uses the one-time permission on Enter even when Grok offers session-wide edits first', async () => {
+    const item = orbApproval()
+    if (item.body.kind !== 'approval') {
+      throw new Error('Expected approval fixture')
+    }
+    // Grok's recorded option order: src/main/acp/fixtures/s2-permission.jsonl.
+    const body = {
+      ...item.body,
+      options: [
+        {
+          id: 'allow-edits-session',
+          label: 'Yes, allow all edits during this session',
+          permissionKind: 'allow_always'
+        },
+        { id: 'allow-once', label: 'Yes', permissionKind: 'allow_once' },
+        {
+          id: 'reject-once',
+          label: 'No, and tell Grok what to do differently',
+          permissionKind: 'reject_once'
+        }
+      ]
+    }
+    vi.useFakeTimers()
+    vi.setSystemTime(100_000)
+    show({ kind: 'needsYou', request: { kind: 'prompt', item: { ...orbApproval(), body } } })
+    act(() => vi.advanceTimersByTime(400))
+    await act(async () => fireEvent.keyDown(document.body, { key: 'Enter' }))
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      'agentSession.respondToApproval',
+      'agentSession.respondTo:approval',
+      { itemId: 'approval', expectedRevision: 2, optionId: 'allow-once' }
+    )
+  })
+
+  it.each([undefined, 'future_allow', 'allow_always'])(
+    'opens approvals with scope %s on Enter without granting anything',
+    async (permissionKind) => {
+      vi.useFakeTimers()
+      vi.setSystemTime(100_000)
+      const open = vi.fn()
+      const item = orbApproval()
+      if (item.body.kind !== 'approval') {
+        throw new Error('Expected approval fixture')
+      }
+      const body = {
+        ...item.body,
+        options: item.body.options.map(({ id, label }) => ({
+          id,
+          label,
+          ...(permissionKind === undefined ? {} : { permissionKind })
+        }))
+      }
+      show({ kind: 'needsYou', request: { kind: 'prompt', item: { ...item, body } } }, open)
+      act(() => vi.advanceTimersByTime(400))
+      await act(async () => fireEvent.keyDown(document.body, { key: 'Enter' }))
+      expect(mocks.mutate).not.toHaveBeenCalled()
+      expect(open).toHaveBeenCalledOnce()
+    }
+  )
+
   it.each(['off', 'idle'] as const)('does not occupy the slot while %s', (kind) => {
     show({ kind })
     expect(document.querySelector('[data-agent-hub-orb-pill]')).toBeNull()

@@ -10,6 +10,7 @@ import type { AgentHookEventPayload } from '../listener-event'
 import type { ClaudeLeadTurnState, HookListenerState } from '../listener-state'
 import { readString } from '../tool-input-preview'
 import { resolveClaudePaneStatus } from './claude-pane-hold-evidence'
+import { deletePaneScopedCacheEntry } from '../pane-scoped-cache-entries'
 export {
   resolveClaudePaneStatus,
   type ClaudePaneStatusResolution
@@ -62,12 +63,20 @@ export function voidClaimsOfReplacedClaudeSession(
   if (previousOwner === undefined || previousOwner === sessionId) {
     return
   }
-  // Compact restarts stay in-turn. If more compact-capable owner events are added, give them equivalent guards.
+  deletePaneScopedCacheEntry(state.claudeHumanPromptContextByPaneKey, paneKey)
+  // The new owner must reach the normal turn fold instead of inheriting the old prompt's hold.
+  if (state.claudeLeadStateByPaneKey.get(paneKey)?.waitingHumanPrompt) {
+    state.claudeLeadStateByPaneKey.delete(paneKey)
+  }
+  // Why: a compact restart mints a SessionStart mid-turn under the same conversation; the existing
+  // handler already fails closed on non-idle sources, and this must not undercut it. No other
+  // allow-listed event carries a compact `trigger`, so SessionStart is the whole guard — if a
+  // compact event is ever added to CLAUDE_SESSION_OWNER_EVENTS, re-derive one for it deliberately.
   if (eventName === 'SessionStart') {
     return
   }
   state.claudeActiveSessionCronPaneKeys.delete(paneKey)
-  // Replaced conversations' owed notifications cannot reach the new one.
+  // Why: the replaced conversation's notifications will never reach this one.
   state.claudeLaunchedBackgroundTasksByPaneKey.delete(paneKey)
   const roster = state.claudeSubagentRosterByPaneKey.get(paneKey)
   if (!roster) {

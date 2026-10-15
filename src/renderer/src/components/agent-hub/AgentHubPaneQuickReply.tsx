@@ -58,12 +58,13 @@ function PaneQuickReplyCard({
   const chosen = quick.chosen
   // Answered here or elsewhere: show it briefly, then leave.
   useEffect(() => {
-    if (chosen === null) {
+    if (chosen === null || quick.pending) {
+      setGone(false)
       return undefined
     }
     const timer = setTimeout(() => setGone(true), AGENT_HUB_ANSWERED_VISIBLE_MS)
     return () => clearTimeout(timer)
-  }, [chosen])
+  }, [chosen, quick.pending])
   // Several questions, or one with several picks, take the agent's full question card.
   const fullCard =
     quick.options.length === 0 && quick.canAnswer && quick.card?.kind === 'question'
@@ -163,13 +164,10 @@ function PaneQuickReplyCard({
           // The full card moves on to its next question itself; it leaves once all are sent.
           const taken = fullCard
             ? quick.keysArmed() && (nativeControlRef.current?.chooseOption(index) ?? false)
-            : quick.chooseByKey(index)
+            : quick.chooseByKey(index, answered)
           if (taken) {
             event.preventDefault()
             event.stopPropagation()
-            if (!fullCard) {
-              answered(true)
-            }
           }
         }}
         className="pointer-events-auto absolute bottom-3 left-3 z-[45] max-h-[calc(100%-1.5rem)] w-[min(26rem,calc(100%-1.5rem))] animate-in scrollbar-sleek overflow-y-auto rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none duration-150 fade-in-0 slide-in-from-bottom-1 motion-reduce:animate-none! focus-visible:ring-2 focus-visible:ring-ring"
@@ -224,7 +222,7 @@ function PaneQuickReplyCard({
                 options={quick.options}
                 chosen={chosen}
                 disabled={chosen !== null || !quick.canAnswer}
-                onChoose={(index) => answered(quick.choose(index))}
+                onChoose={(index) => quick.choose(index, answered)}
               />
             </div>
           </>
@@ -235,10 +233,12 @@ function PaneQuickReplyCard({
             onSubmit={(event) => {
               event.preventDefault()
               const reply = text.trim()
-              if (quick.reply(reply)) {
-                setSentText(reply)
-                answered(true)
-              }
+              quick.reply(reply, (delivered) => {
+                if (delivered) {
+                  setSentText(reply)
+                }
+                answered(delivered)
+              })
             }}
           >
             <input

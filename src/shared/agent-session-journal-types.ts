@@ -167,6 +167,8 @@ export type AgentJournalPromptOption = {
   id: string
   label: string
   description?: string
+  /** Provider-declared permission scope; absent or newer values never enable an approval shortcut. */
+  permissionKind?: string
 }
 
 export type AgentJournalFreeTextInput = {

@@ -33,6 +33,17 @@ let settings: ReturnType<typeof createGlobalSettingsFixture>
 let manager: AgentHubOrbSessionManager
 let runtime: ConstructorParameters<typeof AgentHubOrbSessionManager>[0]
 
+it('refuses Pi Ask before reserving a session or starting a provider', async () => {
+  settings.agentHubOrbAgent = 'pi'
+  settings.agentHubOrbPermission = 'ask'
+  await expect(manager.open()).rejects.toMatchObject({
+    code: 'invalid_argument',
+    message: 'Pi requires Act freely. Choose another agent to ask before running commands.'
+  })
+  expect(state.store.listRecords()).toHaveLength(0)
+  expect(state.acquire).not.toHaveBeenCalled()
+})
+
 beforeEach(() => {
   vi.spyOn(Date, 'now').mockReturnValue(HOST_TEST_NOW)
   state = hostTestState()

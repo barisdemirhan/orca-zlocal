@@ -40,7 +40,11 @@ const userHook = (event: string) => ({
 })
 
 function userOwnedSettings(): HooksConfig {
-  const events = [...Object.keys(CLAUDE_HOOK_EVENT_FIRST_VERSIONS), 'Notification']
+  const events = [
+    ...Object.keys(CLAUDE_HOOK_EVENT_FIRST_VERSIONS),
+    'Elicitation',
+    'ElicitationResult'
+  ]
   return {
     env: { CLAUDE_CODE_USE_BEDROCK: '1' },
     permissions: { allow: ['Bash(git status)'] },
@@ -88,6 +92,16 @@ describe('Claude managed hook events by resolved version', () => {
     }
   )
 
+  it.each([
+    ['2.1.75', false],
+    ['2.1.76', true]
+  ] as const)('gates MCP form hooks at the public feature floor on %s', (version, supported) => {
+    const written = managedEvents(install({ hooks: {} }, version))
+    expect(written).toContain('Notification')
+    expect(written.includes('Elicitation')).toBe(supported)
+    expect(written.includes('ElicitationResult')).toBe(supported)
+  })
+
   it.each(Object.keys(enums))('writes only events Claude %s knows', (version) => {
     const written = install({ hooks: {} }, version)
     const unknown = Object.keys(written.hooks ?? {}).filter(
@@ -109,6 +123,7 @@ describe('Claude managed hook events by resolved version', () => {
   it('omits every event newer than an old Claude', () => {
     expect(managedEvents(install({ hooks: {} }, '2.1.32 (Claude Code)'))).toEqual(
       [
+        'Notification',
         'PermissionRequest',
         'PostToolUse',
         'PostToolUseFailure',
@@ -127,6 +142,7 @@ describe('Claude managed hook events by resolved version', () => {
     (version) => {
       expect(managedEvents(install({ hooks: {} }, version))).toEqual(
         [
+          'Notification',
           'PostToolUse',
           'PreToolUse',
           'SessionStart',
@@ -156,6 +172,7 @@ describe('Claude managed hook events by resolved version', () => {
       )
       expect(managedEvents(written)).toEqual(
         [
+          'Notification',
           'PostToolUse',
           'PreToolUse',
           'SessionStart',
@@ -202,7 +219,7 @@ describe('Claude managed hook events by resolved version', () => {
 
   it('gates a known Claude older than the unresolved-version set by its own enum', () => {
     expect(managedEvents(install({ hooks: {} }, '1.0.52'))).toEqual(
-      ['PostToolUse', 'PreToolUse', 'Stop', 'SubagentStop'].sort()
+      ['Notification', 'PostToolUse', 'PreToolUse', 'Stop', 'SubagentStop'].sort()
     )
     const downgraded = install(install({ hooks: {} }, '2.1.261'), '1.0.22')
     expect(managedEvents(downgraded)).toEqual([])

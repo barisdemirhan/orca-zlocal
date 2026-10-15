@@ -22304,6 +22304,7 @@
   "auto.agentHub.orb.open": "Ouvrir",
   "auto.agentHub.orb.toSend": "pour envoyer",
   "auto.agentHub.orb.approvalKeys": "Autoriser ↵ / Refuser esc",
+  "auto.agentHub.orb.piRequiresFree": "Pi nécessite Agir librement. Choisissez un autre agent pour demander une autorisation avant d’exécuter des commandes.",
   "auto.agentHub.orb.sharedWorkingFolder": "Utilise le dossier de l’espace de travail flottant. Les changements s’appliquent aussi aux nouveaux onglets flottants.",
   "workspaceDeletion": {
     "preferenceSaveFailed": "Impossible d'enregistrer la préférence de suppression",

@@ -21581,6 +21581,7 @@
   "auto.agentHub.orb.open": "開く",
   "auto.agentHub.orb.toSend": "で送信",
   "auto.agentHub.orb.approvalKeys": "許可 ↵ / 拒否 esc",
+  "auto.agentHub.orb.piRequiresFree": "Pi は「自由に実行」が必要です。コマンド実行前に確認するには別のエージェントを選んでください。",
   "auto.agentHub.orb.sharedWorkingFolder": "フローティングワークスペースのフォルダを使用します。変更は新しいフローティングタブにも適用されます。",
   "workspaceDeletion": {
     "preferenceSaveFailed": "削除の設定を保存できませんでした",

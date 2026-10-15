@@ -21582,6 +21582,7 @@
   "auto.agentHub.orb.open": "打开",
   "auto.agentHub.orb.toSend": "发送",
   "auto.agentHub.orb.approvalKeys": "允许 ↵ / 拒绝 esc",
+  "auto.agentHub.orb.piRequiresFree": "Pi 需要“自由执行”模式。如需在执行命令前询问，请选择其他代理。",
   "auto.agentHub.orb.sharedWorkingFolder": "使用浮动工作区目录。更改也会应用于新的浮动标签页。",
   "workspaceDeletion": {
     "preferenceSaveFailed": "无法保存删除偏好设置",

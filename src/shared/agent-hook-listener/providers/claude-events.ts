@@ -1,5 +1,8 @@
 import type { ParsedAgentStatusPayload } from '../../agent-status-types'
-import { isAgentStatusHeldOpenByChildWork } from '../../agent-lead-status-fold'
+import {
+  continueMainAgentStatus,
+  isAgentStatusHeldOpenByChildWork
+} from '../../agent-lead-status-fold'
 import { isAskUserQuestionTool } from '../../agent-question-answered-intent'
 import { readClaudeBackgroundAgentTasks } from '../../claude-background-task-inventory'
 import {
@@ -10,7 +13,7 @@ import {
   reapUnconfirmedRestoredClaudeSubagents,
   upsertWorkingClaudeSubagent
 } from '../../claude-subagent-roster'
-import type { HookListenerState } from '../listener-state'
+import type { ClaudeLeadTurnState, HookListenerState } from '../listener-state'
 import { readFirstString } from '../interactive-tool'
 import { shouldIgnoreCompactContinuationUserPromptSubmit } from '../prompt-fields'
 import { readString } from '../tool-input-preview'
@@ -31,6 +34,7 @@ import {
 } from './claude-pane-hold-evidence'
 import { buildClaudeStatusPayload } from './claude-status-build'
 import { trackClaudeTaskNotificationDelivery } from './claude-task-notification-delivery'
+import { normalizeClaudeHumanNotification } from './claude-human-notifications'
 import { recordClaudeTeammateSpawn } from './claude-teammate-spawn'
 
 const CLAUDE_HOOK_AGENT_ID_PREFIX = 'hook-agent-'
@@ -43,6 +47,11 @@ export function normalizeClaudeEvent(
   hookPayload: Record<string, unknown>
 ): ParsedAgentStatusPayload | null {
   const eventAgentId = readString(hookPayload, 'agent_id')
+  voidClaimsOfReplacedClaudeSession(state, eventName, eventAgentId, paneKey, hookPayload)
+  const humanNotification = normalizeClaudeHumanNotification(state, eventName, paneKey, hookPayload)
+  if (humanNotification !== undefined) {
+    return humanNotification
+  }
   if (
     eventName === 'SubagentStart' ||
     eventName === 'TeammateIdle' ||
@@ -50,9 +59,11 @@ export function normalizeClaudeEvent(
   ) {
     return normalizeClaudeSubagentLifecycleEvent(state, eventName, paneKey, hookPayload)
   }
-  voidClaimsOfReplacedClaudeSession(state, eventName, eventAgentId, paneKey, hookPayload)
   if (eventName === 'SessionStart') {
-    // SessionStart supplies resume identity before prompts; mark idle/sessionBoundary to avoid phantom work/completion notifications (STA-3386).
+    // Why: SessionStart is the only signal a resumed session emits before its first prompt
+    // (STA-3386). Land it as a session-boundary 'done' row: 'working' would show a phantom
+    // spinner on an idle TUI (why Devin/Pi/Grok drop the event), and the sessionBoundary
+    // flag keeps completion-reactive consumers (notifications, automation runs) out of it.
     const sessionStartSource = hookPayload['source']
     if (
       eventAgentId !== undefined ||
@@ -77,13 +88,27 @@ export function normalizeClaudeEvent(
     })
   }
   const previousLead = state.claudeLeadStateByPaneKey.get(paneKey)
-  // Only Stop/StopFailure carries a turn verdict; cancellation never retires surviving shell/cron/subagent work.
+  const childHumanWait =
+    eventAgentId === undefined &&
+    previousLead?.state === 'waiting' &&
+    previousLead.waitingHumanPrompt &&
+    previousLead.waitingAgentId
+      ? previousLead
+      : undefined
+  const previousTurn = childHumanWait ? childHumanWait.stateBeforeWait : previousLead
+  // Why: only a turn boundary may declare a verdict or carry a prior cancellation forward; any
+  // other event starts a fresh turn and drops it. The verdict is a fact about the main agent's turn and
+  // nothing else: a cancel never touches the shell, cron or subagent the turn left running.
   const isTurnBoundary = eventName === 'Stop' || eventName === 'StopFailure'
-  // Plain Stop has unknown outcome. Carry inferred cancellation; is_interrupt remains a secondary source for supporting builds.
+  // Why: absent means unknown — a plain Stop never becomes `success`, so a cancel can never read as a
+  // success. Current Claude sends NO hook on a cancel and no `is_interrupt` on Stop, so the
+  // cancellation normally arrives through Orca's own inferred interrupt
+  // (`markClaudeLeadTurnInterrupted`) and is carried forward here; `is_interrupt` on a turn
+  // boundary is kept as the secondary source for builds that do send it.
   const outcome = !isTurnBoundary
     ? undefined
     : (eventAgentId === undefined && hookPayload['is_interrupt'] === true) ||
-        previousLead?.outcome === 'cancellation'
+        previousTurn?.outcome === 'cancellation'
       ? ('cancellation' as const)
       : eventName === 'StopFailure'
         ? ('failure' as const)
@@ -274,7 +299,7 @@ export function normalizeClaudeEvent(
   const taskWakeupTurn =
     eventName === 'UserPromptSubmit'
       ? isTaskWakeup
-      : !isTurnBoundary && !isManualCompactCompletion && previousLead?.taskWakeupTurn === true
+      : !isTurnBoundary && !isManualCompactCompletion && previousTurn?.taskWakeupTurn === true
   const resolvedStatus = resolveClaudePaneStatus(state, paneKey, {
     state: reportedStateName,
     ...(taskWakeupTurn ? { taskWakeupTurn: true as const } : {})
@@ -295,7 +320,7 @@ export function normalizeClaudeEvent(
       ? Date.now()
       : undefined
 
-  setClaudeMainAgentTurnState(state, paneKey, {
+  const nextLead: Omit<ClaudeLeadTurnState, 'stateStartedAt'> = {
     state: reportedStateName,
     ...(taskWakeupTurn ? { taskWakeupTurn: true as const } : {}),
     ...(outcome ? { outcome } : {}),
@@ -303,7 +328,22 @@ export function normalizeClaudeEvent(
     ...(isAskUserQuestionWait && waitingToolUseId !== undefined ? { waitingToolUseId } : {}),
     ...(stateBeforeWait ? { stateBeforeWait } : {}),
     ...(turnCompletedAt !== undefined ? { turnCompletedAt } : {})
-  })
+  }
+  if (childHumanWait && !isWaitingInducing) {
+    // The main turn advances beneath a child's still-visible form.
+    const heldLead = setClaudeMainAgentTurnState(state, paneKey, {
+      ...childHumanWait,
+      stateBeforeWait: {
+        ...nextLead,
+        ...continueMainAgentStatus(previousTurn, nextLead, Date.now())
+      }
+    })
+    return buildClaudeStatusPayload(state, eventName, promptText, paneKey, hookPayload, {
+      ...resolveClaudePaneStatus(state, paneKey, heldLead),
+      updateToolSnapshot: false
+    })
+  }
+  setClaudeMainAgentTurnState(state, paneKey, nextLead)
 
   const effectiveRoster = state.claudeSubagentRosterByPaneKey.get(paneKey)
   if (

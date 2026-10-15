@@ -19,8 +19,8 @@ const CODEX_ITEM_ID = 'item-4'
 describe('codex approval items', () => {
   it('offers only the decisions this request named', () => {
     expect(codexApprovalOptions({ availableDecisions: ['accept', 'decline'] })).toEqual([
-      { id: 'accept', label: 'Allow' },
-      { id: 'decline', label: 'Deny' }
+      { id: 'accept', label: 'Allow', permissionKind: 'allow_once' },
+      { id: 'decline', label: 'Deny', permissionKind: 'reject_once' }
     ])
   })
 

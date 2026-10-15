@@ -29,8 +29,9 @@ import {
 const send = vi.hoisted(() => ({
   sendAnswer: vi.fn(),
   sendRaw: vi.fn(),
+  sendRawVerified: vi.fn(async () => true),
   cancelPending: vi.fn(),
-  cancelAsk: vi.fn(),
+  cancelAsk: vi.fn(async () => true),
   cancel: vi.fn()
 }))
 
@@ -122,24 +123,28 @@ function afterGuard(): void {
 it.each([
   ['opencode', '\r'],
   ['claude', '1']
-])('allows a %s approval once with the key its prompt expects', (agentType, key) => {
+])('allows a %s approval once with the key its prompt expects', async (agentType, key) => {
   const control = renderApprovalCard(agentType)
   afterGuard()
 
-  expect(control.current?.chooseOption(0)).toBe(true)
-  expect(send.sendRaw).toHaveBeenCalledWith(key)
+  await act(async () => {
+    expect(control.current?.chooseOption(0)).toBe(true)
+  })
+  expect(send.sendRawVerified).toHaveBeenCalledWith(key)
 })
 
-it('ignores a number key pressed as the card appears', () => {
+it('ignores a number key pressed as the card appears', async () => {
   const control = renderApprovalCard('claude')
 
   expect(control.current?.chooseOption(0)).toBe(false)
-  expect(send.sendRaw).not.toHaveBeenCalled()
+  expect(send.sendRawVerified).not.toHaveBeenCalled()
   afterGuard()
-  expect(control.current?.chooseOption(0)).toBe(true)
+  await act(async () => {
+    expect(control.current?.chooseOption(0)).toBe(true)
+  })
 })
 
-it('denies with a single Escape, not the Stop sequence', () => {
+it('denies with a single Escape, not the Stop sequence', async () => {
   const control = renderApprovalCard('opencode')
   afterGuard()
 
@@ -151,7 +156,7 @@ it('denies with a single Escape, not the Stop sequence', () => {
   expect(chose).toBe(true)
   const form = container.querySelector('form')
   expect(form).not.toBeNull()
-  act(() => {
+  await act(async () => {
     form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
   })
 
@@ -159,16 +164,18 @@ it('denies with a single Escape, not the Stop sequence', () => {
   expect(send.cancel).not.toHaveBeenCalled()
 })
 
-it('keeps a reopened card answered while its answer is on the way, then allows a retry', () => {
+it('keeps a reopened card answered while its answer is on the way, then allows a retry', async () => {
   const first = renderApprovalCard('claude')
   afterGuard()
-  expect(first.current?.chooseOption(0)).toBe(true)
+  await act(async () => {
+    expect(first.current?.chooseOption(0)).toBe(true)
+  })
 
   act(() => root.render(<div />))
   const reopened = renderApprovalCard('claude')
   afterGuard()
   expect(reopened.current?.chooseOption(0)).toBe(false)
-  expect(send.sendRaw).toHaveBeenCalledTimes(1)
+  expect(send.sendRawVerified).toHaveBeenCalledTimes(1)
 
   act(() => {
     vi.advanceTimersByTime(AGENT_HUB_ANSWER_HOLD_MS)
@@ -176,8 +183,10 @@ it('keeps a reopened card answered while its answer is on the way, then allows a
   act(() => root.render(<div />))
   const later = renderApprovalCard('claude')
   afterGuard()
-  expect(later.current?.chooseOption(0)).toBe(true)
-  expect(send.sendRaw).toHaveBeenCalledTimes(2)
+  await act(async () => {
+    expect(later.current?.chooseOption(0)).toBe(true)
+  })
+  expect(send.sendRawVerified).toHaveBeenCalledTimes(2)
 })
 
 it('hides from the Inbox without answering, and keeps the agent waiting', () => {
@@ -186,6 +195,6 @@ it('hides from the Inbox without answering, and keeps the agent waiting', () => 
   const hide = container.querySelector<HTMLButtonElement>('[data-agent-hub-card-hide]')
   act(() => hide?.click())
   expect(isAgentHubCardDismissed(agentHubThreadCardKey(lastThread), 'inbox')).toBe(true)
-  expect(send.sendRaw).not.toHaveBeenCalled()
+  expect(send.sendRawVerified).not.toHaveBeenCalled()
   expect(send.cancelAsk).not.toHaveBeenCalled()
 })

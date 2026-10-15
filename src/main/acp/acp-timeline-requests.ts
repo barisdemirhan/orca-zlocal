@@ -30,7 +30,8 @@ export function acpPermissionPresentation(
       detail: null,
       options: options.map((option) => ({
         id: option.optionId,
-        label: option.name
+        label: option.name,
+        ...(option.kind === undefined ? {} : { permissionKind: option.kind })
       })),
       resolution: pendingAcpResolution
     },

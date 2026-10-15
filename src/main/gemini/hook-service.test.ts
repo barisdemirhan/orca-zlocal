@@ -96,7 +96,8 @@ describe('GeminiHookService', () => {
       'AfterAgent',
       'AfterTool',
       'BeforeAgent',
-      'BeforeTool'
+      'BeforeTool',
+      'Notification'
     ])
     expect(config.hooks.PreToolUse).toBeUndefined()
     expect(config.hooks.BeforeAgent).toHaveLength(2)
@@ -109,6 +110,7 @@ describe('GeminiHookService', () => {
     expect(config.hooks.AfterAgent[0].hooks[0].command).toMatch(managedCommandPattern)
     expect(config.hooks.AfterTool[0].hooks[0].command).toMatch(managedCommandPattern)
     expect(config.hooks.BeforeTool[0].hooks[0].command).toMatch(managedCommandPattern)
+    expect(config.hooks.Notification[0].hooks[0].command).toMatch(managedCommandPattern)
   })
 
   // Shell execution is covered separately by windows-hook-payload-delivery.test.ts.

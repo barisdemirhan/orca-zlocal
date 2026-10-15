@@ -90,7 +90,10 @@ it('answers the newest question from its bubble by click or number key, then let
       disconnect(): void {}
     }
   )
-  const choose = vi.fn(() => true)
+  const choose = vi.fn((_index: number, onDeliverySettled?: (delivered: boolean) => void) => {
+    onDeliverySettled?.(true)
+    return true
+  })
   quick.answer = {
     options: [
       { id: 'a', label: 'Add delete', recommended: true },
@@ -157,7 +160,7 @@ it('answers the newest question from its bubble by click or number key, then let
   button.blur()
   window.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true }))
   expect(choose).toHaveBeenCalledTimes(1)
-  expect(choose).toHaveBeenCalledWith(1)
+  expect(choose).toHaveBeenCalledWith(1, expect.any(Function))
   act(() => vi.advanceTimersByTime(1000))
   expect(onDismiss).toHaveBeenCalledWith('q')
   expect(onDismiss).not.toHaveBeenCalledWith('older')

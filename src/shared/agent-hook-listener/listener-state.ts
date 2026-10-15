@@ -24,6 +24,7 @@ import {
   movePaneScopedSetEntries
 } from './pane-scoped-cache-entries'
 import type { JcodeUserPromptEvidence } from '../jcode-session-files'
+import type { ClaudeHumanPromptContext } from './providers/claude-human-notifications'
 import {
   moveOpenCodeSessionBindings,
   unbindOpenCodeSessionsOfPane,
@@ -60,6 +61,8 @@ export type HookListenerState = {
   claudeConsumedCompactPromptIdByPaneKey: Map<string, string>
   /** Lead session_id changes retire replaced-conversation claims even without SessionStart (/clear/relaunch/resume). */
   claudeSessionOwnerByPaneKey: Map<string, string>
+  claudeHumanPromptContextByPaneKey: Map<string, ClaudeHumanPromptContext>
+  geminiPermissionByPaneKey: Map<string, { sessionId?: string; toolCallId?: string }>
   /** Live thread-spawn children per Codex pane. */
   codexSubagentRosterByPaneKey: Map<string, CodexSubagentRoster>
   /** Incremental parent/child rollout cursors for Codex collaboration v2. */
@@ -139,6 +142,8 @@ export function createHookListenerState(
     claudeLaunchedBackgroundTasksByPaneKey: new Map(),
     claudeConsumedCompactPromptIdByPaneKey: new Map(),
     claudeSessionOwnerByPaneKey: new Map(),
+    claudeHumanPromptContextByPaneKey: new Map(),
+    geminiPermissionByPaneKey: new Map(),
     codexSubagentRosterByPaneKey: new Map(),
     codexSubagentTranscriptByPaneKey: new Map(),
     codexLeadStateByPaneKey: new Map(),
@@ -236,6 +241,8 @@ export function clearPaneCacheState(state: HookListenerState, paneKey: string): 
   state.claudeActiveSessionCronPaneKeys.delete(paneKey)
   state.claudeLaunchedBackgroundTasksByPaneKey.delete(paneKey)
   state.claudeSessionOwnerByPaneKey.delete(paneKey)
+  deletePaneScopedCacheEntry(state.claudeHumanPromptContextByPaneKey, paneKey)
+  state.geminiPermissionByPaneKey.delete(paneKey)
   state.codexSubagentRosterByPaneKey.delete(paneKey)
   state.codexSubagentTranscriptByPaneKey.delete(paneKey)
   state.codexLeadStateByPaneKey.delete(paneKey)
@@ -288,6 +295,8 @@ export function movePaneCacheState(
   movePaneScopedSetEntries(state.claudeActiveSessionCronPaneKeys, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeLaunchedBackgroundTasksByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeSessionOwnerByPaneKey, fromPaneKey, toPaneKey)
+  movePaneScopedMapEntries(state.claudeHumanPromptContextByPaneKey, fromPaneKey, toPaneKey)
+  movePaneScopedMapEntries(state.geminiPermissionByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexSubagentRosterByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexSubagentTranscriptByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexLeadStateByPaneKey, fromPaneKey, toPaneKey)
@@ -312,6 +321,8 @@ export function clearPaneTurnCacheState(state: HookListenerState, paneKey: strin
   state.grokActiveTurnByPaneKey.delete(paneKey)
   state.grokMainAgentStatusByPaneKey.delete(paneKey)
   state.grokBackgroundTasksByPaneKey.delete(paneKey)
+  deletePaneScopedCacheEntry(state.claudeHumanPromptContextByPaneKey, paneKey)
+  state.geminiPermissionByPaneKey.delete(paneKey)
 }
 
 export function clearAllListenerCaches(state: HookListenerState): void {
@@ -332,6 +343,8 @@ export function clearAllListenerCaches(state: HookListenerState): void {
   state.claudeActiveSessionCronPaneKeys.clear()
   state.claudeLaunchedBackgroundTasksByPaneKey.clear()
   state.claudeSessionOwnerByPaneKey.clear()
+  state.claudeHumanPromptContextByPaneKey.clear()
+  state.geminiPermissionByPaneKey.clear()
   state.codexSubagentRosterByPaneKey.clear()
   state.codexSubagentTranscriptByPaneKey.clear()
   state.codexLeadStateByPaneKey.clear()

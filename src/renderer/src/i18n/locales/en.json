@@ -22304,6 +22304,7 @@
   "auto.agentHub.orb.open": "Open",
   "auto.agentHub.orb.toSend": "to send",
   "auto.agentHub.orb.approvalKeys": "Allow ↵ / Deny esc",
+  "auto.agentHub.orb.piRequiresFree": "Pi requires Act freely. Choose another agent to ask before running commands.",
   "auto.agentHub.orb.sharedWorkingFolder": "Uses the floating workspace directory. Changes also apply to new floating tabs.",
   "updates": {
     "installBlock": {

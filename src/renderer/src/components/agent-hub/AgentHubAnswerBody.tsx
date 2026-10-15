@@ -6,6 +6,7 @@ import type { AgentHubAnswerOption } from './agent-hub-answer-options'
 import { HubChip } from './AgentHubInlineLabels'
 import { HubDictateButton } from './AgentHubDictateButton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { toast } from 'sonner'
 
 export type { AgentHubAnswerOption } from './agent-hub-answer-options'
 export { questionOptions } from './agent-hub-answer-options'
@@ -169,7 +170,7 @@ export function HubReplyField({
   /** Enter on an empty field still sends (the deny step's plain "No"). */
   allowEmpty?: boolean
   inputRef?: React.Ref<HTMLInputElement>
-  onSend: (text: string) => void
+  onSend: (text: string) => void | boolean | Promise<boolean>
   /** Saves the clipboard's image where the agent runs and returns its path. */
   onPasteImage?: () => Promise<string | null>
 }): React.JSX.Element {
@@ -194,9 +195,28 @@ export function HubReplyField({
     const text = value.trim()
     if ((text || images.length > 0 || allowEmpty) && !disabled) {
       // Why paths: an answer travels as typed text, and both agents read an image from its path.
-      onSend([text, ...images.map((image) => image.path)].filter(Boolean).join(' '))
-      setValue('')
-      dropImages(null)
+      const submittedImages = new Set(images.map((image) => image.path))
+      const settled = (delivered: void | boolean): void => {
+        if (delivered !== false) {
+          setValue((current) => (current.trim() === text ? '' : current))
+          dropImages(submittedImages)
+        }
+      }
+      const failed = (): void => {
+        toast.error(
+          translate('agentHub.requests.sendFailed', 'Could not send your answer. Try again.')
+        )
+      }
+      try {
+        const result = onSend([text, ...submittedImages].filter(Boolean).join(' '))
+        if (result instanceof Promise) {
+          void result.then(settled).catch(failed)
+        } else {
+          settled(result)
+        }
+      } catch {
+        failed()
+      }
     }
   }
   const pasteImage = (event: React.ClipboardEvent<HTMLInputElement>): void => {

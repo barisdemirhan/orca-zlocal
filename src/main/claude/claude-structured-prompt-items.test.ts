@@ -51,9 +51,9 @@ describe('Claude structured approval presentation', () => {
       blockedPath: '/repo/secrets.txt',
       matchedAskRule: { source: 'project', toolName: 'Write', ruleContent: 'ask' },
       options: [
-        { id: 'allow', label: 'Allow' },
-        { id: 'allowForSession', label: 'Allow for this session' },
-        { id: 'deny', label: 'Deny' }
+        { id: 'allow', label: 'Allow', permissionKind: 'allow_once' },
+        { id: 'allowForSession', label: 'Allow for this session', permissionKind: 'allow_always' },
+        { id: 'deny', label: 'Deny', permissionKind: 'reject_once' }
       ]
     })
   })

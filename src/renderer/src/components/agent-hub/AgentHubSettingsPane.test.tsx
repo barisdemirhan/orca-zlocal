@@ -127,6 +127,27 @@ it('shows the automatic approval warning only when Act freely is selected', () =
   expect(screen.queryByText(warning)).toBeNull()
 })
 
+it('keeps Pi Ask unavailable until the user explicitly selects Act freely', () => {
+  useAppStore.setState({
+    settings: createGlobalSettingsFixture({
+      experimentalAgentHub: true,
+      agentHubOrbAgent: 'pi',
+      agentHubOrbPermission: 'ask'
+    })
+  })
+  render(<Pane />)
+  const ask = screen.getByRole('radio', { name: 'Ask' })
+  expect(ask.getAttribute('aria-disabled')).toBe('true')
+  expect(
+    screen.getByText('Pi requires Act freely. Choose another agent to ask before running commands.')
+  ).toBeTruthy()
+  expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('ask')
+  fireEvent.click(screen.getByRole('radio', { name: 'Act freely' }))
+  expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('free')
+  fireEvent.click(ask)
+  expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('free')
+})
+
 it('keeps the shared directory on cancellation and updates the floating workspace when chosen', async () => {
   render(<Pane />)
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Choose…' })))

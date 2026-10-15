@@ -21581,6 +21581,7 @@
   "auto.agentHub.orb.open": "열기",
   "auto.agentHub.orb.toSend": "눌러 보내기",
   "auto.agentHub.orb.approvalKeys": "허용 ↵ / 거부 esc",
+  "auto.agentHub.orb.piRequiresFree": "Pi는 자유롭게 실행 모드가 필요합니다. 명령 실행 전에 확인하려면 다른 에이전트를 선택하세요.",
   "auto.agentHub.orb.sharedWorkingFolder": "플로팅 작업 공간의 폴더를 사용합니다. 변경 사항은 새 플로팅 탭에도 적용됩니다.",
   "workspaceDeletion": {
     "preferenceSaveFailed": "삭제 환경설정을 저장하지 못했습니다",

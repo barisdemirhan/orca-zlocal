@@ -9,7 +9,11 @@ import {
   type AgentHubOrbOpenParams,
   type AgentHubOrbSession
 } from '../../../shared/agent-hub-orb'
-import { normalizeAgentHubOrbSettings } from '../../../shared/agent-hub-orb-settings'
+import {
+  normalizeAgentHubOrbSettings,
+  agentHubOrbSupportsAsk,
+  AGENT_HUB_ORB_PI_PERMISSION_REASON
+} from '../../../shared/agent-hub-orb-settings'
 import type { AgentHubSettings } from '../../../shared/agent-hub-settings'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { isStructuredAgentId } from '../../../shared/agent-session-provider-handle'
@@ -174,6 +178,10 @@ export class AgentHubOrbSessionManager {
     this.requireEnabled()
     const current = this.current()
     if (current && (!params.resume || current.sessionId === params.resume.sessionId)) {
+      const record = host.deps.store.getRecord(current.sessionId)
+      if (record && settings.permission === 'ask' && !agentHubOrbSupportsAsk(record.provider)) {
+        throw new AgentHubError('invalid_argument', AGENT_HUB_ORB_PI_PERMISSION_REASON)
+      }
       await this.ensureOpeningPrompt(host, current.sessionId)
       return current
     }
@@ -182,6 +190,9 @@ export class AgentHubOrbSessionManager {
       throw new AgentHubError('not_found', 'Orb conversation was not found on this host')
     }
     const agent = previous?.provider ?? params.agent ?? settings.agent
+    if (settings.permission === 'ask' && !agentHubOrbSupportsAsk(agent)) {
+      throw new AgentHubError('invalid_argument', AGENT_HUB_ORB_PI_PERMISSION_REASON)
+    }
     if (!isStructuredAgentId(agent) || (previous && params.agent && params.agent !== agent)) {
       throw new AgentHubError('invalid_argument', 'Orb resume must use the conversation agent')
     }

@@ -29,9 +29,7 @@ function refreshSessionModels(): Promise<void> {
 
 /** The model a Claude session runs, from the usage scan; null until known or when scanning is off. */
 export function useClaudeSessionModel(sessionId: string | null): string | null {
-  const [model, setModel] = useState(() =>
-    sessionId ? (modelBySession.get(sessionId) ?? null) : null
-  )
+  const [, refresh] = useState(0)
   useEffect(() => {
     if (!sessionId || Date.now() - fetchedAt < STALE_MS) {
       return
@@ -39,12 +37,12 @@ export function useClaudeSessionModel(sessionId: string | null): string | null {
     let live = true
     void refreshSessionModels().then(() => {
       if (live) {
-        setModel(modelBySession.get(sessionId) ?? null)
+        refresh((revision) => revision + 1)
       }
     })
     return () => {
       live = false
     }
   }, [sessionId])
-  return model
+  return sessionId ? (modelBySession.get(sessionId) ?? null) : null
 }

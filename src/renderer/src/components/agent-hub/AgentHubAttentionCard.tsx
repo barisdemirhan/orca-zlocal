@@ -161,13 +161,7 @@ export function AgentHubAttentionCard({
         requestAnimationFrame(() => replyRef.current?.focus())
         return true
       }
-      quick.recordChoice(index)
-      if (option.deny) {
-        send.cancelAsk()
-      } else {
-        send.sendRaw(option.send)
-      }
-      return true
+      return quick.answerApproval(index, option.deny ? null : option.send) !== null
     }
     return nativeControlRef.current?.chooseOption(index) ?? false
   }
@@ -184,18 +178,22 @@ export function AgentHubAttentionCard({
     })
   }
 
-  const reply = (text: string): void => {
+  const reply = async (text: string): Promise<boolean> => {
     if (simpleQuestion) {
-      quick.reply(text)
-      return
+      return new Promise((resolve) => {
+        if (!quick.reply(text, resolve)) {
+          resolve(false)
+        }
+      })
     }
     if (!ptyId || !approval || chosen !== null) {
-      return
+      return false
     }
-    quick.recordChoice(denyIndex)
-    send.cancelAsk()
+    if (!(await quick.answerApproval(denyIndex, null))) {
+      return false
+    }
     if (!text) {
-      return
+      return true
     }
     setTimeout(() => {
       // Why re-check: the pane may have closed, or the hub been turned off, during the delay.
@@ -207,6 +205,7 @@ export function AgentHubAttentionCard({
         void submitPromptToAgentPty({ tabId, ptyId, content: text })
       }
     }, DENY_THEN_INSTRUCT_DELAY_MS)
+    return true
   }
   const hideLabel = translate('agentHub.card.hide', 'Hide until it asks again')
 
