@@ -22,6 +22,9 @@ import { toggleAgentHubMirrorViewing } from './agent-hub-mirror-viewing'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-signals'
 import { flyMirrorWindowToHub } from './mirror-window-flight'
 
+const closeAgent = vi.hoisted(() => vi.fn())
+vi.mock('./agent-hub-close-agent', () => ({ closeAgentHubAgent: closeAgent }))
+
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   return { useAppStore: create(() => ({ settings: {}, keybindings: {}, tabsByWorktree: {} })) }
@@ -57,6 +60,8 @@ afterEach(() => {
   cleanup()
   resetAgentHubMirrorsForTest()
   vi.restoreAllMocks()
+  vi.clearAllMocks()
+  vi.useRealTimers()
 })
 
 function target(id: string): AgentHubPaneTarget {
@@ -170,8 +175,9 @@ it('lands immediately when the animation API throws', () => {
 })
 
 it('moves Jump into each tab menu, restores it for a singleton and closes the container', async () => {
+  vi.useFakeTimers({ toFake: ['performance'] })
   const reveal = vi.fn()
-  openAgentHubMirror(target('first'))
+  openAgentHubMirror({ ...target('first'), agentType: 'codex' })
   function Stage(): React.JSX.Element {
     const { windows } = useAgentHubMirrors()
     return (
@@ -232,7 +238,7 @@ it('moves Jump into each tab menu, restores it for a singleton and closes the co
     throw new Error('No mirror window')
   }
   act(() => {
-    addAgentHubMirrorTab(windowId, target('second'))
+    addAgentHubMirrorTab(windowId, { ...target('second'), agentType: 'codex' })
   })
   expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
   fireEvent.contextMenu(screen.getByRole('tab', { name: 'first, idle' }))
@@ -246,8 +252,24 @@ it('moves Jump into each tab menu, restores it for a singleton and closes the co
   ).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Jump' }))
   expect(reveal).toHaveBeenLastCalledWith('second')
+  const close = screen.getByRole('button', { name: 'Close mirror' })
+  fireEvent.contextMenu(close)
+  const endAgent = await screen.findByRole('menuitem', { name: 'Close agent' })
+  fireEvent.click(endAgent)
+  expect(closeAgent).not.toHaveBeenCalled()
+  act(() => vi.advanceTimersByTime(400))
+  fireEvent.click(endAgent)
+  expect(closeAgent).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({
+      tab: expect.objectContaining({ id: 'second' }),
+      paneKey: 'second:leaf'
+    }),
+    'idle'
+  )
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
   fireEvent.click(screen.getByRole('button', { name: 'Close mirror' }))
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(closeAgent).toHaveBeenCalledTimes(1)
 })
 
 vi.mock('./agent-hub-mirror-source', async (original) => ({

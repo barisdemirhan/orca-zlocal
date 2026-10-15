@@ -29,6 +29,7 @@ import { useAgentHubFamilyBarShown } from './agent-hub-family-bar'
 import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
 import { returnRetainedPaneDestinationHome } from '../tab-group/retained-pane-destinations'
+import { closeAgentHubAgent } from './agent-hub-close-agent'
 
 // A tab that has not attached by then is not coming back on its own.
 const ATTACH_GIVE_UP_MS = 10_000
@@ -275,6 +276,8 @@ export function AgentHubMirrorWindow({
           onReveal={onReveal}
           onMinimize={minimizeAlone}
           onClose={() => leave(onClose)}
+          isAgent={thread !== null || target.agentType !== null}
+          onCloseAgent={() => closeAgentHubAgent(target, activeKind)}
         />
       </header>
       <div

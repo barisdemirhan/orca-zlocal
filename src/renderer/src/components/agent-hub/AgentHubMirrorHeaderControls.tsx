@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Minus, PictureInPicture2, X } from 'lucide-react'
+import { Minus, PictureInPicture2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubDimToggle } from './AgentHubDimToggle'
@@ -8,6 +8,7 @@ import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { AgentHubMirrorCloseButton } from './AgentHubMirrorCloseButton'
 
 export function AgentHubMirrorHeaderControls({
   target,
@@ -17,7 +18,9 @@ export function AgentHubMirrorHeaderControls({
   showJump = true,
   onReveal,
   onMinimize,
-  onClose
+  onClose,
+  onCloseAgent,
+  isAgent
 }: {
   target: AgentHubPaneTarget
   reachable: boolean
@@ -27,10 +30,11 @@ export function AgentHubMirrorHeaderControls({
   onReveal: () => void
   onMinimize: () => void
   onClose: () => void
+  onCloseAgent: () => void
+  isAgent: boolean
 }): React.JSX.Element {
   const dockLabel = translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
   const minimizeLabel = translate('agentHub.mirror.minimize', 'Minimize')
-  const closeLabel = translate('agentHub.mirror.close', 'Close mirror')
   return (
     <div className="flex shrink-0 items-center gap-0.5">
       <AgentHubDimToggle appearance="mirror" />
@@ -61,18 +65,7 @@ export function AgentHubMirrorHeaderControls({
           <Minus className="size-3.5" />
         </Button>
       </AgentHubActionTooltip>
-      <AgentHubActionTooltip label={closeLabel}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          className="text-muted-foreground hover:text-foreground"
-          aria-label={closeLabel}
-          onClick={onClose}
-        >
-          <X className="size-3.5" />
-        </Button>
-      </AgentHubActionTooltip>
+      <AgentHubMirrorCloseButton isAgent={isAgent} onClose={onClose} onCloseAgent={onCloseAgent} />
     </div>
   )
 }

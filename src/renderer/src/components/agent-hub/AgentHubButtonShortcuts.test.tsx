@@ -48,6 +48,8 @@ async function renderAction(
           onReveal={onClick}
           onMinimize={vi.fn()}
           onClose={vi.fn()}
+          onCloseAgent={vi.fn()}
+          isAgent={false}
         />
       </TooltipProvider>
     )

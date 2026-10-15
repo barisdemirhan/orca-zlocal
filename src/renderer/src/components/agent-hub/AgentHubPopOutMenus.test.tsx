@@ -87,6 +87,8 @@ it('the mirror header sends back on click without a custom right-click menu', ()
         onReveal={vi.fn()}
         onMinimize={vi.fn()}
         onClose={vi.fn()}
+        onCloseAgent={vi.fn()}
+        isAgent={false}
       />
     </TooltipProvider>
   )
