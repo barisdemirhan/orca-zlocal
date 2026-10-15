@@ -80,7 +80,9 @@ function AgentHubShortcutEditorRows({
         </p>
       ) : null}
       {KEYBINDING_DEFINITIONS.filter(
-        (action) => action.id.startsWith('agentHub.') || action.id === 'voice.dictation'
+        (action) =>
+          action.id.startsWith('agentHub.') ||
+          ['voice.dictation', 'voice.dictationImprove'].includes(action.id)
       ).map(({ id: actionId }) => {
         const definition = editor.catalog.definitionsByAction.get(actionId)
         if (!definition) {
