@@ -33,6 +33,11 @@ import {
 } from '../../runtime/rpc/methods/structured-agent-session-create'
 import { commitStructuredAgentSessionLaunchPrompt } from '../../runtime/rpc/methods/agent-launch-structured-prompt'
 import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
+import { listAgentHubOrbConversations } from './agent-hub-orb-history'
+import {
+  agentHubOrbSettingsNeedTransition,
+  requireIdleAgentHubOrbSession
+} from './agent-hub-orb-settings-transition'
 
 const caller = { callerKey: 'trusted-local:agent-hub-orb' }
 type OrbRuntime = Pick<
@@ -42,13 +47,15 @@ type OrbRuntime = Pick<
   | 'resolveStructuredAgentSessionCreateIntent'
   | 'publishStructuredAgentSessionTab'
   | 'closeMobileSessionTab'
->
+> & { agentHub: Pick<OrcaRuntimeService['agentHub'], 'snapshot'> }
 
 export class AgentHubOrbSessionManager {
   private opening: Promise<AgentHubOrbSession> | null = null
   private openingResumeId: string | undefined
+  private openingSettingsKey: string | undefined
   private operations: Promise<void> = Promise.resolve()
   private active: AgentHubOrbSession | null = null
+  private selectedSettings: ReturnType<typeof normalizeAgentHubOrbSettings> | null = null
 
   constructor(
     private readonly runtime: OrbRuntime,
@@ -79,17 +86,25 @@ export class AgentHubOrbSessionManager {
 
   open(params: AgentHubOrbOpenParams = {}): Promise<AgentHubOrbSession> {
     this.requireEnabled()
-    if (this.opening && (!params.resume || params.resume.sessionId === this.openingResumeId)) {
+    const settings = normalizeAgentHubOrbSettings(this.getSettings())
+    const settingsKey = JSON.stringify([settings.agent, settings.model, settings.permission])
+    if (
+      this.opening &&
+      this.openingSettingsKey === settingsKey &&
+      (!params.resume || params.resume.sessionId === this.openingResumeId)
+    ) {
       return this.opening
     }
     const opening = this.enqueue(() => this.openOnce(params)).finally(() => {
       if (this.opening === opening) {
         this.opening = null
         this.openingResumeId = undefined
+        this.openingSettingsKey = undefined
       }
     })
     this.opening = opening
     this.openingResumeId = params.resume?.sessionId
+    this.openingSettingsKey = settingsKey
     return opening
   }
 
@@ -97,6 +112,7 @@ export class AgentHubOrbSessionManager {
     this.requireEnabled()
     this.opening = null
     this.openingResumeId = undefined
+    this.openingSettingsKey = undefined
     return this.enqueue(() => this.closeOnce())
   }
 
@@ -122,43 +138,12 @@ export class AgentHubOrbSessionManager {
   async list(limit = 30): Promise<AgentHubOrbConversation[]> {
     this.requireEnabled()
     const host = await this.ensureHost()
-    const conversations: AgentHubOrbConversation[] = []
-    for (const record of this.orbRecords(host)) {
-      if (!isStructuredAgentId(record.provider)) {
-        continue
-      }
-      const snapshot = await host.journalSnapshot(record.sessionId)
-      const messages = snapshot.items.flatMap((item) => {
-        if (item.body.kind !== 'message') {
-          return []
-        }
-        const text = item.body.blocks
-          .flatMap((block) => (block.type === 'text' ? [block.text] : []))
-          .join(' ')
-          .trim()
-        return [{ role: item.body.role, text }]
-      })
-      const firstUser = messages.find(
-        (message) => message.role === 'user' && message.text !== AGENT_HUB_ORB_OPENING_PROMPT
-      )
-      const lastReply = messages.findLast((message) => message.role === 'assistant')?.text
-      conversations.push({
-        sessionId: record.sessionId,
-        agent: record.provider,
-        ...(record.options?.model ? { model: record.options.model } : {}),
-        title: (record.conversationName || firstUser?.text || 'Orb').slice(0, 120),
-        startedAt: record.createdAt,
-        lastActiveAt: Math.max(record.updatedAt, ...snapshot.items.map((item) => item.observedAt)),
-        ...(lastReply ? { lastReply: lastReply.slice(0, 240) } : {})
-      })
-    }
-    return conversations
-      .sort((left, right) => right.lastActiveAt - left.lastActiveAt)
-      .slice(0, limit)
+    return listAgentHubOrbConversations(host, this.orbRecords(host), limit)
   }
 
   private async openOnce(params: AgentHubOrbOpenParams): Promise<AgentHubOrbSession> {
     const settings = normalizeAgentHubOrbSettings(this.getSettings())
+    this.selectedSettings ??= settings
     const cwd = params.cwd?.trim()
     // Older clients may supply a cwd; ordinary opens use the host's floating workspace resolver.
     if (params.cwd !== undefined) {
@@ -177,12 +162,19 @@ export class AgentHubOrbSessionManager {
     const host = await this.ensureHost()
     this.requireEnabled()
     const current = this.current()
-    if (current && (!params.resume || current.sessionId === params.resume.sessionId)) {
-      const record = host.deps.store.getRecord(current.sessionId)
+    const record = current ? host.deps.store.getRecord(current.sessionId) : null
+    const changeSettings =
+      !params.resume && agentHubOrbSettingsNeedTransition(this.selectedSettings, settings, record)
+    if (
+      current &&
+      !changeSettings &&
+      (!params.resume || current.sessionId === params.resume.sessionId)
+    ) {
       if (record && settings.permission === 'ask' && !agentHubOrbSupportsAsk(record.provider)) {
         throw new AgentHubError('invalid_argument', AGENT_HUB_ORB_PI_PERMISSION_REASON)
       }
       await this.ensureOpeningPrompt(host, current.sessionId)
+      this.selectedSettings = settings
       return current
     }
     const previous = params.resume ? host.deps.store.getRecord(params.resume.sessionId) : null
@@ -196,10 +188,13 @@ export class AgentHubOrbSessionManager {
     if (!isStructuredAgentId(agent) || (previous && params.agent && params.agent !== agent)) {
       throw new AgentHubError('invalid_argument', 'Orb resume must use the conversation agent')
     }
-    if (current) {
-      await this.closeOnce()
+    if (current && changeSettings) {
+      await requireIdleAgentHubOrbSession(host, this.runtime.agentHub, current.sessionId)
     }
     if (previous) {
+      if (current) {
+        await this.closeOnce()
+      }
       const revealed = await host.revealSession(previous.sessionId)
       await this.runtime.publishStructuredAgentSessionTab({
         workspaceId: revealed.workspaceId,
@@ -209,6 +204,7 @@ export class AgentHubOrbSessionManager {
       })
       const tabId = host.getSessionTabId(previous.sessionId)
       this.active = { sessionId: previous.sessionId, ...(tabId ? { tabId } : {}), resumed: true }
+      this.selectedSettings = settings
       await this.ensureOpeningPrompt(host, previous.sessionId)
       return this.active
     }
@@ -232,6 +228,9 @@ export class AgentHubOrbSessionManager {
       }
     })
     this.requireEnabled()
+    if (current) {
+      await this.closeOnce()
+    }
     const result = await commitStructuredAgentSessionCreate({
       runtime: this.runtime,
       caller,
@@ -246,6 +245,7 @@ export class AgentHubOrbSessionManager {
       ...(result.value.tabId ? { tabId: result.value.tabId } : {}),
       resumed: false
     }
+    this.selectedSettings = settings
     await this.ensureOpeningPrompt(host, result.value.sessionId)
     return this.active
   }

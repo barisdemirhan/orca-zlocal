@@ -1,9 +1,17 @@
 import {
+  agentHubMirrorWindows,
   homeAgentHubMirrorTab,
+  removeAgentHubMirrorEntries,
+  replaceAgentHubMirrorWindow,
+  type AgentHubMirrorState,
   type AgentHubMirrorWindowState
 } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
-import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
+import { folderWorkspaceToWorktree } from '../../../../shared/folder-workspace-worktree'
+import {
+  getExecutionHostIdFromWorktreeHostIdentity,
+  getWorktreeHostIdentity
+} from '../../../../shared/worktree/host-qualified-identity'
 import { parsePaneKey } from '../../../../shared/stable-pane-id'
 import { collectLeafIdsInOrder } from '../terminal-pane/terminal-layout-leaf-ids'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -17,14 +25,18 @@ export function findAgentHubMirrorSource(
   state: SourceState,
   reference: { worktreeId: string; tabId: string; hostIdentity: string | null }
 ): AgentHubTerminalRow | null {
+  const hostId =
+    reference.hostIdentity === null
+      ? undefined
+      : getExecutionHostIdFromWorktreeHostIdentity(reference.hostIdentity)
   const matches: AgentHubTerminalRow[] = []
   const find = (rows: readonly AgentHubTerminalRow[]): void => {
     for (const row of rows) {
       if (
         row.tab.id === reference.tabId &&
-        row.worktree.id === reference.worktreeId &&
-        (reference.hostIdentity === null ||
-          getWorktreeHostIdentity(row.worktree) === reference.hostIdentity)
+        (reference.hostIdentity === null
+          ? row.worktree.id === reference.worktreeId
+          : row.worktree.hostId === hostId)
       ) {
         matches.push(row)
       }
@@ -37,8 +49,10 @@ export function findAgentHubMirrorSource(
     }
   }
   // A v1 reference has no host; never restore it into an arbitrarily chosen execution host.
-  const hosts = new Set(matches.map((row) => getWorktreeHostIdentity(row.worktree)))
-  return hosts.size === 1 ? (matches[0] ?? null) : null
+  const exact = matches.filter((row) => row.worktree.id === reference.worktreeId)
+  const candidates = exact.length ? exact : hostId ? matches : []
+  const owners = new Set(candidates.map((row) => getWorktreeHostIdentity(row.worktree)))
+  return owners.size === 1 ? (candidates[0] ?? null) : null
 }
 
 export function agentHubMirrorPaneExists(
@@ -79,12 +93,41 @@ export function isAgentHubMirrorSourceClosed(
   state: SourceState,
   target: AgentHubPaneTarget
 ): boolean {
-  const tabs = state.tabsByWorktree[target.worktree.id]
+  const workspaces = [
+    ...Object.values(state.worktreesByRepo).flat(),
+    ...state.folderWorkspaces.map(folderWorkspaceToWorktree)
+  ]
+  const owners = workspaces.filter((workspace) => workspace.id === target.worktree.id)
+  // Unqualified tab/layout maps cannot prove closure using another host's inventory.
+  if (
+    owners.some((owner) => owner.hostId !== target.worktree.hostId) ||
+    (target.worktree.hostId && owners.length === 0)
+  ) {
+    return false
+  }
+  const currentTabs = state.tabsByWorktree[target.worktree.id]
+  const moved = currentTabs?.some((tab) => tab.id === target.tab.id)
+    ? null
+    : findAgentHubMirrorSource(state, {
+        worktreeId: target.worktree.id,
+        tabId: target.tab.id,
+        hostIdentity: getWorktreeHostIdentity(target.worktree)
+      })
+  const tabs = moved ? state.tabsByWorktree[moved.worktree.id] : currentTabs
   if (!tabs) {
     return false
   }
   if (!tabs.some((tab) => tab.id === target.tab.id)) {
     return true
+  }
+  if (
+    workspaces.some(
+      (workspace) =>
+        workspace.hostId !== target.worktree.hostId &&
+        state.tabsByWorktree[workspace.id]?.some((tab) => tab.id === target.tab.id)
+    )
+  ) {
+    return false
   }
   return Boolean(
     target.paneKey &&
@@ -107,12 +150,39 @@ export function resolveAgentHubMirrorTarget(target: AgentHubPaneTarget): AgentHu
   return { ...target, worktree: row.worktree, repo: row.repo, tab: row.tab }
 }
 
+export function reconcileAgentHubMirrorSources(state: AgentHubMirrorState): AgentHubMirrorState {
+  const app = useAppStore.getState()
+  let next = removeAgentHubMirrorEntries(state, (target) =>
+    isAgentHubMirrorSourceClosed(app, target)
+  )
+  for (const window of agentHubMirrorWindows(next)) {
+    const refresh = (target: AgentHubPaneTarget): AgentHubPaneTarget => {
+      if (app.tabsByWorktree[target.worktree.id]?.some((tab) => tab.id === target.tab.id)) {
+        return target
+      }
+      const resolved = resolveAgentHubMirrorTarget(target)
+      return resolved && resolved.worktree.id !== target.worktree.id ? resolved : target
+    }
+    const tabs = window.tabs.map((tab) => {
+      const target = refresh(tab.target)
+      const viewing = tab.viewing ? refresh(tab.viewing) : undefined
+      return target !== tab.target || viewing !== tab.viewing ? { ...tab, target, viewing } : tab
+    })
+    if (tabs.some((tab, index) => tab !== window.tabs[index])) {
+      next = replaceAgentHubMirrorWindow(next, window.id, { ...window, tabs })
+    }
+  }
+  return next
+}
+
 export function resolveAgentHubMirrorWindow(
   window: AgentHubMirrorWindowState,
   resolveTarget = resolveAgentHubMirrorTarget
 ): AgentHubMirrorWindowState | null {
   const tabs = window.tabs.flatMap((tab) => {
-    const target = resolveTarget(tab.target)
+    const target =
+      resolveTarget(tab.target) ??
+      (isAgentHubMirrorSourceClosed(useAppStore.getState(), tab.target) ? null : tab.target)
     const viewing = tab.viewing ? resolveTarget(tab.viewing) : null
     return target
       ? [

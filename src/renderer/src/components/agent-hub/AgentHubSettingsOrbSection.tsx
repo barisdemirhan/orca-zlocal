@@ -13,17 +13,13 @@ import {
   SettingsSubsectionHeader,
   SettingsSwitchRow
 } from '../settings/SettingsFormControls'
-import { AgentHubOrbTalkShortcut } from './AgentHubOrbTalkShortcut'
-import type { AgentHubShortcutEditor } from './use-agent-hub-shortcut-editor'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
 
 export function AgentHubSettingsOrbSection({
   settings,
-  updateSettings,
-  shortcutEditor
+  updateSettings
 }: {
   settings: GlobalSettings
-  shortcutEditor: AgentHubShortcutEditor
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }): React.JSX.Element {
   const orb = normalizeAgentHubOrbSettings(settings)
@@ -39,9 +35,11 @@ export function AgentHubSettingsOrbSection({
   const approvalsLabel = translate('auto.agentHub.orb.approvals', 'Approvals')
   const placementLabel = translate('auto.agentHub.orb.placement', 'Placement')
   const placement =
-    settings.agentHubOrbPlacement === 'statusBar' || settings.agentHubOrbPlacement === 'hidden'
+    settings.agentHubOrbPlacement === 'dock' ||
+    settings.agentHubOrbPlacement === 'statusBar' ||
+    settings.agentHubOrbPlacement === 'hidden'
       ? settings.agentHubOrbPlacement
-      : 'dock'
+      : 'floating'
   const chooseFolder = async (): Promise<void> => {
     const path = await window.api.app.pickFloatingWorkspaceDirectory()
     if (path) {
@@ -50,7 +48,13 @@ export function AgentHubSettingsOrbSection({
   }
   return (
     <section className="space-y-3">
-      <SettingsSubsectionHeader title={translate('auto.agentHub.settings.orb', 'Orb')} />
+      <SettingsSubsectionHeader
+        title={translate('auto.agentHub.settings.orb', 'Orb')}
+        description={translate(
+          'agentHub.orb.settingsApply',
+          'Agent, model and approval changes start a new conversation when Orb is idle. Past conversations keep their agent and model.'
+        )}
+      />
       <SettingsRow
         label={agentLabel}
         control={
@@ -168,6 +172,7 @@ export function AgentHubSettingsOrbSection({
             ariaLabel={placementLabel}
             onChange={(value) => updateSettings({ agentHubOrbPlacement: value })}
             options={[
+              { value: 'floating', label: translate('auto.agentHub.orb.floating', 'Floating') },
               {
                 value: 'dock',
                 label: translate('auto.components.settings.ExperimentalPane.agentHub.dock', 'Dock')
@@ -184,7 +189,6 @@ export function AgentHubSettingsOrbSection({
           />
         }
       />
-      <AgentHubOrbTalkShortcut editor={shortcutEditor} />
       <SettingsSwitchRow
         label={translate('auto.agentHub.orb.speakReplies', 'Speak replies')}
         description={translate('auto.agentHub.orb.comingLater', 'Coming later')}

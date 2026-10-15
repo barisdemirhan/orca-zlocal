@@ -14,6 +14,7 @@ export type AgentHubMirrorTab = {
   target: AgentHubPaneTarget
   viewing?: AgentHubPaneTarget
   origin: 'manual' | 'auto'
+  isPinned?: boolean
 }
 export type AgentHubMirrorWindowState = {
   id: string
@@ -200,4 +201,8 @@ export function removeAgentHubMirrorEntries(
     }
   }
   return next
+}
+
+export function orderAgentHubMirrorTabs(tabs: readonly AgentHubMirrorTab[]): AgentHubMirrorTab[] {
+  return [...tabs.filter((tab) => tab.isPinned), ...tabs.filter((tab) => !tab.isPinned)]
 }

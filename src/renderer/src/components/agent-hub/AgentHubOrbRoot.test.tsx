@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -240,4 +241,77 @@ it('shows status-bar Orb even with docked hub, and hidden placement still respon
   expect(screen.queryByRole('button', { name: 'Talk to Orb · Not set' })).toBeNull()
   act(() => getAgentHubCommands()?.toggleOrb?.())
   expect(mocks.open).toHaveBeenCalledOnce()
+})
+
+it.each(['floating', undefined] as const)(
+  'shows a keyboard-accessible floating Orb for placement %s',
+  async (placement) => {
+    const settings = useAppStore.getState().settings
+    if (!settings) {
+      throw new Error('Expected settings')
+    }
+    useAppStore.setState({ settings: { ...settings, agentHubOrbPlacement: placement } })
+    show()
+    const button = screen.getByRole('button', { name: 'Talk to Orb · Not set' })
+    expect(button.closest('[data-agent-hub-orb-floating]')).not.toBeNull()
+    expect(screen.queryByTestId('dock')).toBeNull()
+    act(() => button.focus())
+    await userEvent.setup().keyboard('{Enter}')
+    expect(mocks.open).toHaveBeenCalledOnce()
+  }
+)
+
+it('moves the floating Orb without opening it, cancels a drag, and keeps it inside a resized window', () => {
+  const settings = useAppStore.getState().settings
+  if (!settings) {
+    throw new Error('Expected settings')
+  }
+  const update = useAppStore.getState().updateSettings
+  vi.mocked(update).mockClear()
+  useAppStore.setState({
+    settings: {
+      ...settings,
+      agentHubOrbPlacement: 'floating',
+      agentHubOrbPosition: { x: 100, y: 100 }
+    }
+  })
+  show()
+  const button = screen.getByRole('button', { name: 'Talk to Orb · Not set' })
+  const sphere = button.closest<HTMLElement>('[data-agent-hub-orb-floating]')
+  if (!sphere) {
+    throw new Error('Expected floating Orb')
+  }
+  sphere.setPointerCapture = vi.fn()
+  sphere.hasPointerCapture = () => true
+  sphere.releasePointerCapture = vi.fn()
+  fireEvent.pointerDown(button, { button: 0, pointerId: 1, clientX: 110, clientY: 110 })
+  fireEvent.pointerMove(sphere, { buttons: 1, pointerId: 1, clientX: 210, clientY: 210 })
+  fireEvent.pointerUp(sphere, { pointerId: 1 })
+  fireEvent.click(button, { detail: 1 })
+  expect(mocks.open).not.toHaveBeenCalled()
+  expect(update).toHaveBeenLastCalledWith({ agentHubOrbPosition: { x: 200, y: 200 } })
+  expect(sphere.style.left).toBe('200px')
+  fireEvent.pointerDown(button, { button: 0, pointerId: 2, clientX: 210, clientY: 210 })
+  fireEvent.pointerMove(sphere, { buttons: 1, pointerId: 2, clientX: 310, clientY: 310 })
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(sphere.style.left).toBe('200px')
+  expect(update).toHaveBeenCalledOnce()
+  fireEvent.pointerDown(button, { button: 0, pointerId: 3, clientX: 210, clientY: 210 })
+  fireEvent.pointerMove(sphere, { buttons: 1, pointerId: 3, clientX: 310, clientY: 310 })
+  fireEvent.pointerCancel(sphere, { pointerId: 3 })
+  expect(sphere.style.left).toBe('200px')
+  expect(update).toHaveBeenCalledOnce()
+  const width = window.innerWidth
+  const height = window.innerHeight
+  try {
+    window.innerWidth = 180
+    window.innerHeight = 180
+    fireEvent(window, new Event('resize'))
+    expect(Number.parseFloat(sphere.style.left)).toBeLessThanOrEqual(132)
+    expect(Number.parseFloat(sphere.style.top)).toBeLessThanOrEqual(108)
+  } finally {
+    window.innerWidth = width
+    window.innerHeight = height
+    fireEvent(window, new Event('resize'))
+  }
 })

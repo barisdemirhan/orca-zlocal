@@ -23,9 +23,8 @@ import {
   type AgentHubReopenedMirror
 } from './agent-hub-mirror-session-reopen'
 export type { AgentHubReopenedMirror } from './agent-hub-mirror-session-reopen'
-import { useAppStore } from '@/store'
 import {
-  isAgentHubMirrorSourceClosed,
+  reconcileAgentHubMirrorSources,
   resolveAgentHubMirrorTarget,
   resolveAgentHubMirrorWindow
 } from './agent-hub-mirror-source'
@@ -50,7 +49,6 @@ import {
   findAgentHubMirrorMembership,
   selectAgentHubMirrorTarget,
   replaceAgentHubMirrorWindow,
-  removeAgentHubMirrorEntries,
   hasAgentHubMirrorEntryRoom,
   type AgentHubMirrorChip,
   type AgentHubMirrorState,
@@ -185,10 +183,7 @@ export function minimizeAgentHubMirror(id: string): void {
 }
 /** Drops entries whose source tab or split leaf was closed; a window goes when it empties. */
 export function pruneClosedAgentHubMirrorSources(): void {
-  const app = useAppStore.getState()
-  const next = removeAgentHubMirrorEntries(state, (target) =>
-    isAgentHubMirrorSourceClosed(app, target)
-  )
+  const next = reconcileAgentHubMirrorSources(state)
   if (next !== state) {
     emit(next)
   }

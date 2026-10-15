@@ -1,5 +1,5 @@
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
-import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { returnAgentHubMirrorTabToWorkspace } from './agent-hub-mirror-tab-operations'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { Button } from '../ui/button'
@@ -40,7 +40,7 @@ export function AgentHubBorrowedTerminal({
               )
           )
           if (window) {
-            closeAgentHubMirrorTab(window.id, activeAgentHubMirrorTab(window).id)
+            returnAgentHubMirrorTabToWorkspace(window.id, activeAgentHubMirrorTab(window).id)
           }
         }}
       >

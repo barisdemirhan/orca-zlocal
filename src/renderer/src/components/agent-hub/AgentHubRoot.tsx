@@ -71,7 +71,6 @@ function useGroupNameById(): ReadonlyMap<string, string> {
   )
 }
 
-/** The Agent Hub: counts, popover, live mirror, alerts and shortcuts, on a dock or the status bar. */
 export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Element {
   const preferences = useAgentHubPreferences()
   const anchorRef = useRef<HTMLElement>(null)
@@ -91,7 +90,6 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const finishedMaxAgeMs = preferences.finishedClearMinutes * 60_000
   const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
   const orb = useAgentHubOrbSurfaces(threads, lists, anchorRef, preferences, inSettings)
-  const counts = orb.counts
   useAgentHubAlerts(orb.hubLists, preferences)
   useAgentHubSessionRestore(preferences.restoreOnLaunch, preferences.canvas)
   const alerts = useAgentHubAlertQueue()
@@ -132,14 +130,14 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   }, [open])
 
   const defaultTabRef = useRef<AgentHubTab>(
-    agentHubInitialTab(preferences.defaultTab, counts.needsYou)
+    agentHubInitialTab(preferences.defaultTab, orb.counts.needsYou)
   )
   const shownTabRef = useRef<AgentHubTab>('inbox')
   const needsYouRef = useRef(orb.hubLists.needsYou)
   useEffect(() => {
     needsYouRef.current = orb.hubLists.needsYou
-    defaultTabRef.current = agentHubInitialTab(preferences.defaultTab, counts.needsYou)
-  }, [orb.hubLists.needsYou, counts.needsYou, preferences.defaultTab])
+    defaultTabRef.current = agentHubInitialTab(preferences.defaultTab, orb.counts.needsYou)
+  }, [orb.hubLists.needsYou, orb.counts.needsYou, preferences.defaultTab])
 
   const openHub = useCallback((tab?: AgentHubTab, paneKey: string | null = null) => {
     closeAgentHubOrbPanel()
@@ -280,7 +278,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       !orb.pillVisible &&
       hubAlerts.length === 0 &&
       chips.length === 0 &&
-      counts.needsYou + counts.working + counts.finished === 0)
+      orb.counts.needsYou + orb.counts.working + orb.counts.finished === 0)
 
   const content = (
     <AgentHubPopoverContent
@@ -323,7 +321,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   }}
                   position={preferences.dockPosition}
                   size={preferences.dockSize}
-                  counts={counts}
+                  counts={orb.counts}
                   muted={muted}
                   onOpenTab={openHubTab}
                   onNextWaiting={jumpToNextWaiting}
@@ -354,7 +352,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   ref={(node: HTMLButtonElement | null) => {
                     anchorRef.current = node
                   }}
-                  counts={counts}
+                  counts={orb.counts}
                   label={orb.label}
                   open={open}
                   iconOnly={iconOnly}
@@ -372,6 +370,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         )}
         {content}
       </Popover>
+      {orb.floatingButton}
       {orb.panel(requestPresentationOf)}
       {hubAlerts.length > 0 && !orb.pillVisible && !open && !inSettings ? (
         <AgentHubRootAlerts

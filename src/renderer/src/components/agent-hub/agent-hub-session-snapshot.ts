@@ -16,6 +16,7 @@ export type AgentHubSavedMirrorTab = {
   title: string
   agentType: string | null
   origin: 'manual' | 'auto'
+  isPinned?: boolean
 }
 export type AgentHubSavedMirror = {
   id: string
@@ -86,7 +87,8 @@ function parseTab(value: unknown): AgentHubSavedMirrorTab | null {
     paneKey: typeof value.paneKey === 'string' && value.paneKey ? value.paneKey : null,
     title: typeof value.title === 'string' ? value.title : '',
     agentType: typeof value.agentType === 'string' && value.agentType ? value.agentType : null,
-    origin: value.origin === 'auto' ? 'auto' : 'manual'
+    origin: value.origin === 'auto' ? 'auto' : 'manual',
+    ...(value.isPinned === true ? { isPinned: true } : {})
   }
 }
 /** Bounded salvage, in stored order: first owner wins and an invalid active reference is repaired. */

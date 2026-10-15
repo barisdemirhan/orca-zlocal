@@ -38,7 +38,8 @@ export type AgentHubSettings = {
   agentHubOrbModel?: string | null
   agentHubOrbPermission?: 'ask' | 'free'
   agentHubOrbCwd?: string | null
-  agentHubOrbPlacement?: 'dock' | 'statusBar' | 'hidden'
+  agentHubOrbPlacement?: 'floating' | 'dock' | 'statusBar' | 'hidden'
+  agentHubOrbPosition?: { x: number; y: number }
   agentHubOrbSpeakReplies?: boolean
   /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */
   agentHubMicMode?: AgentHubMicMode

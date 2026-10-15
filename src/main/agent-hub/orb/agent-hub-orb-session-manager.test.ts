@@ -56,6 +56,7 @@ beforeEach(() => {
     floatingTerminalCwd: state.root
   })
   runtime = {
+    agentHub: { snapshot: () => ({ requests: [], progress: [] }) },
     isAgentHubEnabled: () =>
       settings.experimentalAgentHub === true && settings.agentHubAgentControl !== false,
     ensureStructuredAgentSessionHost: async () => {},
@@ -88,7 +89,7 @@ beforeEach(() => {
     closeMobileSessionTab: vi.fn(async (_worktree, tabId) => {
       const record = state.store
         .listRecords()
-        .find((entry) => state.host.getSessionTabId(entry.sessionId) === tabId)
+        .find((entry) => `agent-session:${entry.sessionId}` === tabId)
       if (!record) {
         throw new Error('No visible session')
       }
@@ -124,7 +125,7 @@ describe('Orb conversations on the structured host', () => {
     await manager.close()
     expect(runtime.closeMobileSessionTab).toHaveBeenCalledWith(
       `id:${FLOATING_TERMINAL_WORKTREE_ID}`,
-      first.tabId,
+      `agent-session:${first.sessionId}`,
       { reason: 'user' }
     )
     expect(manager.current()).toBeNull()

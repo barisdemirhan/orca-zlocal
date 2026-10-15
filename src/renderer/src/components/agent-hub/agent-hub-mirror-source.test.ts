@@ -15,7 +15,11 @@ import { useAppStore } from '@/store'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,
-  resetAgentHubMirrorsForTest
+  resetAgentHubMirrorsForTest,
+  pruneClosedAgentHubMirrorSources,
+  commitAgentHubMirrorState,
+  minimizeAgentHubMirror,
+  restoreAgentHubMirror
 } from './agent-hub-mirror-store'
 
 vi.mock('@/store', async () => {
@@ -120,4 +124,101 @@ it('falls back to an existing leaf when the active leaf of a shell mirror was re
     agentHubMirrorShellLeafId({ root: null, activeLeafId: leafId, expandedLeafId: null })
   ).toBe(leafId)
   expect(agentHubMirrorShellLeafId(undefined)).toBeNull()
+})
+
+it('follows a pinned source moved on the same host and prunes it after closure in its new workspace', () => {
+  openAgentHubMirror(target)
+  const original = readAgentHubMirrors().windows[0]!
+  commitAgentHubMirrorState({
+    windows: [{ ...original, tabs: original.tabs.map((entry) => ({ ...entry, isPinned: true })) }],
+    chips: []
+  })
+  minimizeAgentHubMirror(original.id)
+  const moved = { ...worktree, id: 'moved-workspace' }
+  useAppStore.setState({
+    worktreesByRepo: { [repo.id]: [worktree, moved] },
+    tabsByWorktree: { [worktree.id]: [], [moved.id]: [{ ...tab, worktreeId: moved.id }] }
+  })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors().chips[0]?.window.tabs[0]?.target.worktree.id).toBe(moved.id)
+  expect(readAgentHubMirrors().chips[0]?.window.tabs[0]).toMatchObject({
+    id: original.activeTabId,
+    isPinned: true
+  })
+  expect(resolveAgentHubMirrorTarget(target)?.worktree.id).toBe(moved.id)
+  useAppStore.setState({ tabsByWorktree: { [worktree.id]: [], [moved.id]: [] } })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
+})
+
+it('does not treat another host inventory with equal workspace and tab ids as source closure', () => {
+  openAgentHubMirror({ ...target, paneKey: makePaneKey(tab.id, leafId) })
+  const original = readAgentHubMirrors().windows[0]!
+  commitAgentHubMirrorState({
+    windows: [{ ...original, tabs: original.tabs.map((entry) => ({ ...entry, isPinned: true })) }],
+    chips: []
+  })
+  useAppStore.setState({
+    worktreesByRepo: { [repo.id]: [{ ...worktree, hostId: 'ssh:other' }] },
+    tabsByWorktree: { [worktree.id]: [] },
+    terminalLayoutsByTabId: {}
+  })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors().windows[0]?.id).toBe(original.id)
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]?.target.worktree.hostId).toBe('ssh:workhost')
+})
+
+it('keeps a pinned done agent through unknown remote inventory and restore, then removes its closed leaf', () => {
+  const agent = { ...target, paneKey: makePaneKey(tab.id, leafId) }
+  openAgentHubMirror(agent)
+  const original = readAgentHubMirrors().windows[0]!
+  commitAgentHubMirrorState({
+    windows: [{ ...original, tabs: original.tabs.map((entry) => ({ ...entry, isPinned: true })) }],
+    chips: []
+  })
+  useAppStore.setState({
+    agentStatusByPaneKey: {
+      [agent.paneKey]: {
+        state: 'done',
+        prompt: '',
+        updatedAt: 1000,
+        stateStartedAt: 1000,
+        stateHistory: [],
+        paneKey: agent.paneKey,
+        agentType: 'claude'
+      }
+    }
+  })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors().windows[0]?.id).toBe(original.id)
+  minimizeAgentHubMirror(original.id)
+  useAppStore.setState({ tabsByWorktree: {}, terminalLayoutsByTabId: {} })
+  pruneClosedAgentHubMirrorSources()
+  restoreAgentHubMirror(original.id)
+  expect(readAgentHubMirrors().windows[0]?.tabs[0]).toMatchObject({ isPinned: true })
+  const otherLeaf = '22222222-2222-4222-8222-222222222222'
+  useAppStore.setState({
+    ...state(),
+    terminalLayoutsByTabId: {
+      [tab.id]: {
+        root: { type: 'leaf', leafId: otherLeaf },
+        activeLeafId: otherLeaf,
+        expandedLeafId: null
+      }
+    }
+  })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
+})
+
+it('does not rebind a moved tab to another execution host', () => {
+  openAgentHubMirror(target)
+  const other = { ...worktree, id: 'other-workspace', hostId: 'ssh:other' as const }
+  useAppStore.setState({
+    worktreesByRepo: { [repo.id]: [worktree, other] },
+    tabsByWorktree: { [worktree.id]: [], [other.id]: [{ ...tab, worktreeId: other.id }] }
+  })
+  expect(resolveAgentHubMirrorTarget(target)).toBeNull()
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
 })

@@ -54,6 +54,7 @@ import {
 } from './agent-hub-session-restore'
 import {
   agentHubSessionSnapshot,
+  parseAgentHubSessionSnapshot,
   type AgentHubSavedMirror,
   type AgentHubSavedMirrorTab,
   type AgentHubSessionSnapshot
@@ -324,3 +325,22 @@ vi.mock('./agent-hub-mirror-source', async (original) => ({
     target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
   ) => target
 }))
+
+it('round-trips pin state through persisted groups and prunes closed sources while accepting old unpinned entries', () => {
+  const group = saved('tab-a')
+  group.tabs.push({ ...saved('tab-b').tabs[0]!, isPinned: true })
+  group.tabs.push(saved('closed').tabs[0]!)
+  const parsed = parseAgentHubSessionSnapshot(JSON.parse(JSON.stringify(snapshotOf([group]))))!
+  const state = storeWith({ 'tab-a': LEAF_A, 'tab-b': LEAF_B })
+  applyAgentHubSession(resolveAgentHubSession(parsed, state, options))
+  const restored = readAgentHubMirrors().windows[0]!
+  expect(restored.tabs.map((tab) => tab.target.tab.id)).toEqual(['tab-b', 'tab-a'])
+  expect(restored.tabs[0]).toMatchObject({ isPinned: true })
+  expect(restored.tabs[1]?.isPinned).not.toBe(true)
+  minimizeAgentHubMirror(restored.id)
+  const captured = captureAgentHubSession()
+  expect(captured.windows[0]?.tabs[0]).toMatchObject({ tabId: 'tab-b', isPinned: true })
+  resetAgentHubMirrorsForTest()
+  applyAgentHubSession(resolveAgentHubSession(captured, state, options))
+  expect(readAgentHubMirrors().chips[0]?.window.tabs[0]).toMatchObject({ isPinned: true })
+})

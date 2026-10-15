@@ -62,7 +62,14 @@ export function resolveAgentHubSession(
         return []
       }
       sources.add(key)
-      return [{ id: entry.id, target, origin: entry.origin }]
+      return [
+        {
+          id: entry.id,
+          target,
+          origin: entry.origin,
+          ...(entry.isPinned ? { isPinned: true } : {})
+        }
+      ]
     })
     const first = tabs[0]
     if (!first) {
@@ -118,7 +125,7 @@ function savedMirror(
   return {
     id: window.id,
     activeTabId: window.activeTabId,
-    tabs: window.tabs.map(({ id, target, origin }) => ({
+    tabs: window.tabs.map(({ id, target, origin, isPinned }) => ({
       id,
       worktreeId: target.worktree.id,
       tabId: target.tab.id,
@@ -126,7 +133,8 @@ function savedMirror(
       hostIdentity: getWorktreeHostIdentity(target.worktree),
       title: target.title,
       agentType: target.agentType,
-      origin
+      origin,
+      ...(isPinned ? { isPinned: true } : {})
     })),
     minimized,
     minimizedAt,

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import { useAppStore } from '@/store'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubOrbButton } from './AgentHubOrbButton'
+import { AgentHubFloatingOrb } from './AgentHubFloatingOrb'
 import { AgentHubOrbPill } from './AgentHubOrbPill'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
@@ -33,12 +34,22 @@ export function useAgentHubOrbSurfaces(
       : 'top'
   const orb = useAgentHubOrb(threads)
   const panelOpen = useAgentHubOrbPanel((s) => s.session !== null)
-  const preferredPlacement = useAppStore((s) => s.settings?.agentHubOrbPlacement ?? 'dock')
+  const configuredPlacement = useAppStore((s) => s.settings?.agentHubOrbPlacement)
+  const preferredPlacement =
+    configuredPlacement === 'dock' ||
+    configuredPlacement === 'statusBar' ||
+    configuredPlacement === 'hidden'
+      ? configuredPlacement
+      : 'floating'
   const placement =
     preferredPlacement === 'dock' && preferences.placement === 'status-bar'
       ? 'statusBar'
       : preferredPlacement
   const statusRef = useRef<HTMLSpanElement>(null)
+  const floatingRef = useRef<HTMLDivElement>(null)
+  const orbAnchorRef =
+    placement === 'floating' ? floatingRef : placement === 'statusBar' ? statusRef : anchorRef
+  const orbSide = placement === 'floating' || placement === 'statusBar' ? 'top' : side
   const pillVisible = orb.state.kind !== 'off' && orb.state.kind !== 'idle'
   const { openOrb } = orb
   const open = useCallback(() => {
@@ -74,14 +85,23 @@ export function useAgentHubOrbSurfaces(
         <AgentHubOrbButton state={orb.state} disabled={!agentControl} side="top" onOpen={open} />
       </span>
     ) : null
+  const floatingButton =
+    placement === 'floating' && !hidden ? (
+      <AgentHubFloatingOrb
+        anchorRef={floatingRef}
+        state={orb.state}
+        disabled={!agentControl}
+        onOpen={open}
+      />
+    ) : null
   const pill =
     pillVisible && !panelOpen && !hidden ? (
       <AgentHubOrbPill
         state={orb.state}
         sessionId={orb.session?.sessionId ?? ''}
         readState={orb.readState}
-        anchorRef={placement === 'statusBar' ? statusRef : anchorRef}
-        side={placement === 'statusBar' ? 'top' : side}
+        anchorRef={orbAnchorRef}
+        side={orbSide}
         onOpen={open}
       />
     ) : null
@@ -89,9 +109,10 @@ export function useAgentHubOrbSurfaces(
     requestPresentationOf: Parameters<typeof AgentHubOrbPanel>[0]['requestPresentationOf']
   ) => (
     <AgentHubOrbPanel
-      anchorRef={anchorRef}
-      side={side}
-      docked={preferences.placement === 'dock'}
+      anchorRef={orbAnchorRef}
+      side={orbSide}
+      docked={placement === 'dock' && preferences.placement === 'dock'}
+      floating={placement === 'floating'}
       hidden={hidden}
       requestPresentationOf={requestPresentationOf}
     />
@@ -102,6 +123,7 @@ export function useAgentHubOrbSurfaces(
     hubLists,
     dockButton,
     statusButton,
+    floatingButton,
     pill,
     pillVisible,
     panelOpen,

@@ -40,6 +40,8 @@ export function usePruneClosedAgentHubMirrorSources(threads?: readonly AgentPane
     return useAppStore.subscribe((state, previous) => {
       if (
         state.tabsByWorktree !== previous.tabsByWorktree ||
+        state.worktreesByRepo !== previous.worktreesByRepo ||
+        state.folderWorkspaces !== previous.folderWorkspaces ||
         state.terminalLayoutsByTabId !== previous.terminalLayoutsByTabId
       ) {
         pruneClosedAgentHubMirrorSources()

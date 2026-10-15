@@ -1,6 +1,6 @@
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
-import { closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { returnAgentHubMirrorTabToWorkspace } from './agent-hub-mirror-tab-operations'
 import { returnAgentHubMirrorTabHome } from './agent-hub-mirror-viewing'
 import { Maximize2, PictureInPicture2, Minimize2, X } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -80,7 +80,7 @@ export function HubRowMirrorActions({
               if (owner.kind === 'viewing') {
                 returnAgentHubMirrorTabHome(owner.window.id, owner.tab.id)
               } else {
-                closeAgentHubMirrorTab(owner.window.id, owner.tab.id)
+                returnAgentHubMirrorTabToWorkspace(owner.window.id, owner.tab.id)
               }
             }
           }}

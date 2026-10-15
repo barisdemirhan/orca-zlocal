@@ -58,6 +58,7 @@ describe('Codex approval ownership', () => {
     return post({
       hook_event_name: 'PermissionRequest',
       tool_name: 'Bash',
+      tool_input: { command: 'python3 report.py' },
       transcript_path: transcriptPath
     })
   }
@@ -84,13 +85,23 @@ describe('Codex approval ownership', () => {
   it('reads an auto-reviewed approval as ongoing work, not as needing the user', () => {
     const transcriptPath = writeRollout({ reviewer: 'auto_review' })
 
-    expect(permissionRequest(transcriptPath)?.payload.state).toBe('working')
+    const approval = permissionRequest(transcriptPath)?.payload
+
+    expect(approval).toMatchObject({ state: 'working', toolName: 'Bash' })
+    expect(approval?.toolInput).toContain('python3 report.py')
+    expect(approval?.interactivePrompt).toBeUndefined()
+    expect(childPostToolUse()?.payload.interactivePrompt).toBeUndefined()
   })
 
   it('keeps a user-reviewed approval waiting', () => {
     const transcriptPath = writeRollout({ reviewer: 'user' })
 
-    expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
+    const approval = permissionRequest(transcriptPath)?.payload
+
+    expect(approval?.state).toBe('waiting')
+    expect(approval?.interactivePrompt).toBe(
+      JSON.stringify({ approval: { tool: 'Bash', summary: 'python3 report.py' } })
+    )
   })
 
   it.each([
@@ -185,7 +196,11 @@ describe('Codex approval ownership', () => {
       }
     })
 
-    expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
+    const approval = permissionRequest(transcriptPath)?.payload
+    expect(approval?.state).toBe('waiting')
+    expect(approval?.interactivePrompt).toBe(
+      JSON.stringify({ approval: { tool: 'Bash', summary: 'python3 report.py' } })
+    )
   })
 
   it('accepts Codex’s legacy guardian_subagent reviewer spelling as auto review', () => {
@@ -197,7 +212,11 @@ describe('Codex approval ownership', () => {
   it('keeps waiting when the rollout names no reviewer, as older Codex builds do not', () => {
     const transcriptPath = writeRollout({})
 
-    expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
+    const approval = permissionRequest(transcriptPath)?.payload
+    expect(approval?.state).toBe('waiting')
+    expect(approval?.interactivePrompt).toBe(
+      JSON.stringify({ approval: { tool: 'Bash', summary: 'python3 report.py' } })
+    )
   })
 
   it('keeps waiting when the rollout cannot be read at all', () => {
@@ -229,10 +248,16 @@ describe('Codex approval ownership', () => {
     const question = post({
       hook_event_name: 'PreToolUse',
       tool_name: 'request_user_input',
+      tool_input: { questions: [{ id: 'scope', question: 'Continue with the approved scope?' }] },
       transcript_path: transcriptPath
     })
 
     expect(question?.payload.state).toBe('waiting')
+    expect(question?.payload.interactivePrompt).toBe(
+      JSON.stringify({
+        questions: [{ id: 'scope', question: 'Continue with the approved scope?' }]
+      })
+    )
   })
 
   it('does not carry one session’s reviewer into the next rollout', () => {

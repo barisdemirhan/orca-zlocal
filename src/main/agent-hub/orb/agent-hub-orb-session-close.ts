@@ -14,9 +14,10 @@ export async function closeAgentHubOrbSession(
   const tabId = host.getSessionTabId(current.sessionId)
   if (tabId) {
     try {
+      // The runtime snapshot addresses the session; the durable tab id belongs to its window.
       const outcome = await runtime.closeMobileSessionTab(
         `id:${FLOATING_TERMINAL_WORKTREE_ID}`,
-        tabId,
+        `agent-session:${current.sessionId}`,
         { reason: 'user' }
       )
       if (

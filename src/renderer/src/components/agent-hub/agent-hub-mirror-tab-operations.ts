@@ -1,8 +1,10 @@
 import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
+import { partitionPinnedTabOrder } from '@/store/slices/tabs/tabs-tab-order'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
   clearAgentHubMirrorViewing,
+  orderAgentHubMirrorTabs,
   agentHubMirrorWindows,
   agentHubMirrorSourceKey,
   findAgentHubMirrorMembership,
@@ -130,7 +132,9 @@ export function reorderAgentHubMirrorTabs(
     return { status: 'invalid-order' }
   }
   // Why no source check: reordering moves nothing out of the window, so a disconnected entry can stay.
-  const tabs = order.flatMap((id) => window.tabs.find((tab) => tab.id === id) ?? [])
+  const tabs = orderAgentHubMirrorTabs(
+    order.flatMap((id) => window.tabs.find((tab) => tab.id === id) ?? [])
+  )
   if (tabs.every((tab, index) => tab === window.tabs[index])) {
     return { status: 'noop' }
   }
@@ -140,11 +144,23 @@ export function reorderAgentHubMirrorTabs(
   return changed(window, window.activeTabId)
 }
 export function closeAgentHubMirrorTab(windowId: string, tabId: string): AgentHubMirrorTabResult {
+  if (findWindow(windowId)?.tabs.find((tab) => tab.id === tabId)?.isPinned) {
+    return { status: 'noop' }
+  }
+  return returnAgentHubMirrorTabToWorkspace(windowId, tabId)
+}
+
+/** Explicit navigation releases mirror ownership, including a pinned entry. */
+export function returnAgentHubMirrorTabToWorkspace(
+  windowId: string,
+  tabId: string
+): AgentHubMirrorTabResult {
   const window = findWindow(windowId)
   if (!window) {
     return { status: 'missing-window' }
   }
-  if (!window.tabs.some((tab) => tab.id === tabId)) {
+  const tab = window.tabs.find((entry) => entry.id === tabId)
+  if (!tab) {
     return { status: 'missing-entry' }
   }
   commitAgentHubMirrorState(
@@ -157,3 +173,31 @@ export function closeAgentHubMirrorTab(windowId: string, tabId: string): AgentHu
   return changed(window, tabId)
 }
 export { moveAgentHubMirrorTab, detachAgentHubMirrorTab } from './agent-hub-mirror-tab-transfer'
+
+export function toggleAgentHubMirrorTabPin(
+  windowId: string,
+  tabId: string
+): AgentHubMirrorTabResult {
+  const window = findWindow(windowId)
+  if (!window) {
+    return { status: 'missing-window' }
+  }
+  if (!window.tabs.some((tab) => tab.id === tabId)) {
+    return { status: 'missing-entry' }
+  }
+  const tabs = window.tabs.map((tab) =>
+    tab.id === tabId ? { ...tab, isPinned: !tab.isPinned, origin: 'manual' as const } : tab
+  )
+  const order = partitionPinnedTabOrder(
+    tabs.map((tab) => tab.id),
+    tabs,
+    tabId
+  )
+  commitAgentHubMirrorState(
+    replaceAgentHubMirrorWindow(readAgentHubMirrors(), windowId, {
+      ...window,
+      tabs: order.flatMap((id) => tabs.find((tab) => tab.id === id) ?? [])
+    })
+  )
+  return changed(window, tabId)
+}

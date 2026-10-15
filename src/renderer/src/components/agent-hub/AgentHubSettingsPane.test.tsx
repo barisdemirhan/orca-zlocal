@@ -1,5 +1,5 @@
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
@@ -8,6 +8,8 @@ import type { KeybindingActionId, KeybindingOverrides } from '../../../../shared
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubSettingsPane } from './AgentHubSettingsPane'
 import { AgentHubExperimentalSetting } from './AgentHubExperimentalSetting'
+import { AgentHubShortcutsDialog } from './AgentHubShortcutsDialog'
+import { setAgentHubShortcutsOpen } from './agent-hub-shortcuts-dialog'
 import { callStructuredAgentSession } from '@/runtime/structured-agent-session-client'
 import { ensureLocalRuntimeCapabilities } from '@/runtime/local-runtime-capabilities'
 import { resetHostStructuredAgentsForTests } from '@/runtime/host-structured-agents'
@@ -78,6 +80,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  setAgentHubShortcutsOpen(false)
   resetHostStructuredAgentsForTests()
   resetHostModelCatalogSnapshotsForTests()
 })
@@ -91,6 +94,7 @@ function Pane(): React.JSX.Element {
   return (
     <TooltipProvider>
       <AgentHubSettingsPane settings={settings} updateSettings={updateSettings} />
+      <AgentHubShortcutsDialog />
     </TooltipProvider>
   )
 }
@@ -109,16 +113,32 @@ it('groups the hub preferences and shares the floating workspace directory and u
     )
   ).toBeTruthy()
   expect(screen.getByText('~')).toBeTruthy()
-  expect(screen.getByText('Not set')).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Add shortcut for Talk shortcut' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Edit shortcuts' })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Add shortcut for/ })).toBeNull()
   expect(screen.getByRole('switch', { name: 'Speak replies' }).hasAttribute('disabled')).toBe(true)
   expect(screen.getByText('Coming later')).toBeTruthy()
 })
 
-it('shows the automatic approval warning only when Act freely is selected', () => {
+it('keeps approvals and their warning independent of Orb placement', () => {
+  useAppStore.setState({
+    settings: createGlobalSettingsFixture({
+      experimentalAgentHub: true,
+      agentHubOrbPlacement: 'dock'
+    })
+  })
   render(<Pane />)
   const warning = 'The Orb runs commands without asking. Use with care.'
   expect(screen.queryByText(warning)).toBeNull()
+  fireEvent.click(
+    within(screen.getByRole('radiogroup', { name: 'Placement' })).getByRole('radio', {
+      name: 'Floating'
+    })
+  )
+  expect(useAppStore.getState().updateSettings).toHaveBeenLastCalledWith({
+    agentHubOrbPlacement: 'floating'
+  })
+  expect(useAppStore.getState().settings?.agentHubOrbPlacement).toBe('floating')
+  expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('ask')
   fireEvent.click(screen.getByRole('radio', { name: 'Act freely' }))
   expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('free')
   expect(screen.getByText(warning)).toBeTruthy()
@@ -203,23 +223,31 @@ it('does not start a model probe on a host without saved-only catalog support', 
   expect(screen.getByRole('combobox', { name: 'Model' }).textContent).toContain('Agent default')
 })
 
-it('records the Orb shortcut through the shared keybinding store', async () => {
+it('edits Orb and Hub shortcuts in the modal through the shared recorder and releases it on close', async () => {
   render(<Pane />)
+  fireEvent.click(screen.getByRole('button', { name: 'Edit shortcuts' }))
+  await screen.findByRole('dialog')
   fireEvent.click(screen.getByRole('button', { name: 'Add shortcut for Toggle Agent Hub' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Add shortcut for Talk shortcut' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Add shortcut for Toggle Agent Hub Orb' }))
   expect(
-    screen.queryByRole('button', { name: /Press shortcut keys for Toggle Agent Hub/ })
+    screen.queryByRole('button', { name: /Press shortcut keys for Toggle Agent Hub\./ })
   ).toBeNull()
   expect(window.api.ui.setShortcutRecorderFocused).toHaveBeenLastCalledWith(true)
-  fireEvent.keyDown(screen.getByRole('button', { name: /Press shortcut keys for Talk shortcut/ }), {
-    key: 'F8',
-    code: 'F8',
-    ctrlKey: true
-  })
+  fireEvent.keyDown(
+    screen.getByRole('button', { name: /Press shortcut keys for Toggle Agent Hub Orb/ }),
+    {
+      key: 'F8',
+      code: 'F8',
+      ctrlKey: true
+    }
+  )
   await waitFor(() =>
     expect(useAppStore.getState().keybindings['agentHub.toggleOrb']).toEqual(['Mod+F8'])
   )
-  expect(screen.queryByText('Not set')).toBeNull()
+  expect(window.api.ui.setShortcutRecorderFocused).toHaveBeenLastCalledWith(false)
+  fireEvent.click(screen.getByRole('button', { name: 'Add shortcut for Toggle Agent Hub' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   expect(window.api.ui.setShortcutRecorderFocused).toHaveBeenLastCalledWith(false)
 })
 

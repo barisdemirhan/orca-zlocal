@@ -13,7 +13,8 @@ import {
 } from './agent-hub-mirror-membership'
 import {
   activateAgentHubMirrorTab,
-  closeAgentHubMirrorTab
+  closeAgentHubMirrorTab,
+  returnAgentHubMirrorTabToWorkspace
 } from './agent-hub-mirror-tab-operations'
 import {
   requestAgentHubMirrorSelection,
@@ -193,7 +194,7 @@ export function AgentHubMirrorTabStrip({
             )}
             onSelect={(focusTerminal) => select(tab.id, focusTerminal)}
             onReveal={() => {
-              closeAgentHubMirrorTab(window.id, tab.id)
+              returnAgentHubMirrorTabToWorkspace(window.id, tab.id)
               onReveal(
                 tab.target,
                 threads.find((thread) => agentHubTargetShowsThread(tab.target, thread)) ?? null

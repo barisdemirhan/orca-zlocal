@@ -22,7 +22,7 @@ it('lets agents control Agent Hub by default while keeping the experiment opt-in
     agentHubOrbModel: null,
     agentHubOrbPermission: 'ask',
     agentHubOrbCwd: null,
-    agentHubOrbPlacement: 'dock',
+    agentHubOrbPlacement: 'floating',
     agentHubOrbSpeakReplies: false
   })
 })

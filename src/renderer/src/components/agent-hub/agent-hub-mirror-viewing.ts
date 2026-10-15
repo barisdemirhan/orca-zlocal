@@ -11,7 +11,7 @@ import { agentHubPaneTargetKey, type AgentHubPaneTarget } from './agent-hub-pane
 import { commitAgentHubMirrorState, readAgentHubMirrors } from './agent-hub-mirror-store'
 import { resolveAgentHubMirrorTarget } from './agent-hub-mirror-source'
 import {
-  closeAgentHubMirrorTab,
+  returnAgentHubMirrorTabToWorkspace,
   type AgentHubMirrorTabResult
 } from './agent-hub-mirror-tab-operations'
 
@@ -88,7 +88,7 @@ export function releaseAgentHubMirrorShownTarget(
   if (tab.viewing) {
     returnAgentHubMirrorTabHome(windowId, tabId)
   } else {
-    closeAgentHubMirrorTab(windowId, tabId)
+    returnAgentHubMirrorTabToWorkspace(windowId, tabId)
   }
   return target
 }

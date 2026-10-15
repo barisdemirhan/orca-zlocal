@@ -19,7 +19,7 @@ import {
   resetAgentHubMirrorsForTest,
   minimizeAgentHubMirror
 } from './agent-hub-mirror-store'
-import { addAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { addAgentHubMirrorTab, closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
 function render(ui: React.ReactNode) {
   return renderDOM(<TooltipProvider>{ui}</TooltipProvider>)
 }
@@ -143,4 +143,34 @@ it('opens from Shift+F10 and returns focus after Escape without closing the term
   expect(document.activeElement).toBe(trigger)
   expect(onClose).not.toHaveBeenCalled()
   expect(readAgentHubMirrors().windows).toHaveLength(1)
+})
+
+it('pins from the menu, places pins first and protects only mirror dismissal', () => {
+  const source = open('first')
+  addAgentHubMirrorTab(source.id, {
+    ...source.tabs[0]!.target,
+    title: 'second',
+    tab: makeTabWithIds('second', source.tabs[0]!.target.worktree.id)
+  })
+  const entry = readAgentHubMirrors().windows[0]!.tabs[1]!
+  const onClose = vi.fn()
+  render(
+    <AgentHubMirrorTabMenu windowId={source.id} entryId={entry.id} onClose={onClose}>
+      <button>Terminal tab</button>
+    </AgentHubMirrorTabMenu>
+  )
+  fireEvent.contextMenu(screen.getByText('Terminal tab'))
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Pin Tab' }))
+  expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.tab.id)).toEqual([
+    'second',
+    'first'
+  ])
+  fireEvent.contextMenu(screen.getByText('Terminal tab'))
+  expect(screen.getByRole('menuitem', { name: 'Close tab' }).getAttribute('data-disabled')).toBe('')
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Close tab' }))
+  expect(onClose).not.toHaveBeenCalled()
+  expect(closeAgentHubMirrorTab(source.id, entry.id).status).toBe('noop')
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Unpin Tab' }))
+  expect(closeAgentHubMirrorTab(source.id, entry.id).status).toBe('changed')
+  expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.tab.id)).toEqual(['first'])
 })

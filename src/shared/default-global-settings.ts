@@ -269,7 +269,7 @@ export function buildDefaultSettings(args: {
     agentHubOrbModel: null,
     agentHubOrbPermission: 'ask',
     agentHubOrbCwd: null,
-    agentHubOrbPlacement: 'dock',
+    agentHubOrbPlacement: 'floating',
     agentHubOrbSpeakReplies: false,
     agentHubPlacement: 'dock',
     agentHubDockPosition: DEFAULT_AGENT_HUB_DOCK_POSITION,

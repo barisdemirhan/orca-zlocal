@@ -1,5 +1,5 @@
 import { translate } from '@/i18n/i18n'
-import { formatKeybindingList } from '../../../../shared/keybindings'
+import { KEYBINDING_DEFINITIONS, formatKeybindingList } from '../../../../shared/keybindings'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { ShortcutRecorderButton } from '../settings/ShortcutRecorderButton'
@@ -10,13 +10,13 @@ import {
   type AgentHubShortcutEditor
 } from './use-agent-hub-shortcut-editor'
 
-/** Edits the same bindings as Keyboard Shortcuts, without leaving the hub's settings. */
+/** Shares the global shortcut recorder and save path inside the Hub dialog. */
 export function AgentHubShortcutSetting(): React.JSX.Element {
   const editor = useAgentHubShortcutEditor()
   return <AgentHubShortcutEditorRows editor={editor} />
 }
 
-export function AgentHubShortcutEditorRows({
+function AgentHubShortcutEditorRows({
   editor
 }: {
   editor: AgentHubShortcutEditor
@@ -79,7 +79,9 @@ export function AgentHubShortcutEditorRows({
           )}
         </p>
       ) : null}
-      {AGENT_HUB_SUGGESTED_BINDINGS.map(([actionId]) => {
+      {KEYBINDING_DEFINITIONS.filter(
+        (action) => action.id.startsWith('agentHub.') || action.id === 'voice.dictation'
+      ).map(({ id: actionId }) => {
         const definition = editor.catalog.definitionsByAction.get(actionId)
         if (!definition) {
           return null

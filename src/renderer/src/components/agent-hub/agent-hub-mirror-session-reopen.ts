@@ -3,6 +3,7 @@ import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import {
   agentHubMirrorWindows,
   homeAgentHubMirrorTab,
+  orderAgentHubMirrorTabs,
   agentHubMirrorSourceKey,
   AGENT_HUB_MIRROR_ENTRY_CAP,
   type AgentHubMirrorChip,
@@ -52,7 +53,7 @@ export function reopenAgentHubMirrorState(
       entries++
       return true
     })
-    const homeTabs = tabs.map(homeAgentHubMirrorTab)
+    const homeTabs = orderAgentHubMirrorTabs(tabs.map(homeAgentHubMirrorTab))
     const first = homeTabs[0]
     if (!first) {
       continue

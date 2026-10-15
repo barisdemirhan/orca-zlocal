@@ -8,14 +8,11 @@ import {
 import type { AgentHubSettingsSectionProps } from './agent-hub-settings-section-props'
 import type { AgentHubDockSize, AgentHubPlacement } from '../../../../shared/agent-hub-settings'
 import { AGENT_HUB_DOCK_SIZES, agentHubDockSizeLabel } from './AgentHubDockMenu'
-import { AgentHubShortcutEditorRows } from './AgentHubShortcutSetting'
-import type { AgentHubShortcutEditor } from './use-agent-hub-shortcut-editor'
 
 export function AgentHubSettingsDockSection({
   preferences,
-  updateSettings,
-  shortcutEditor
-}: AgentHubSettingsSectionProps & { shortcutEditor: AgentHubShortcutEditor }): React.JSX.Element {
+  updateSettings
+}: AgentHubSettingsSectionProps): React.JSX.Element {
   return (
     <section className="space-y-3">
       <SettingsSubsectionHeader title={translate('auto.agentHub.settings.dock', 'Dock')} />
@@ -89,8 +86,6 @@ export function AgentHubSettingsDockSection({
           onChange={() => updateSettings({ agentHubDockAutoHide: !preferences.dockAutoHide })}
         />
       ) : null}
-
-      <AgentHubShortcutEditorRows editor={shortcutEditor} />
     </section>
   )
 }

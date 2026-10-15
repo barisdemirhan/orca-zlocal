@@ -15,7 +15,8 @@ import {
   closeAgentHubMirrorTab,
   reorderAgentHubMirrorTabs,
   moveAgentHubMirrorTab,
-  detachAgentHubMirrorTab
+  detachAgentHubMirrorTab,
+  toggleAgentHubMirrorTabPin
 } from './agent-hub-mirror-tab-operations'
 import {
   commitAgentHubMirrorState,
@@ -407,4 +408,29 @@ describe('temporary viewing lifecycle', () => {
     expect(owner('a').tab.viewing).toBeUndefined()
     expect(findAgentHubMirrorMembership(readAgentHubMirrors(), target('worker'))).toBeNull()
   })
+})
+
+it('keeps pin partitions through reordering, moves, detach and parked restoration', () => {
+  openAgentHubMirror(target('a'))
+  const id = owner('a').window.id
+  addAgentHubMirrorTab(id, target('b'))
+  addAgentHubMirrorTab(id, target('c'))
+  toggleAgentHubMirrorTabPin(id, owner('b').tab.id)
+  toggleAgentHubMirrorTabPin(id, owner('c').tab.id)
+  const cId = owner('c').tab.id
+  reorderAgentHubMirrorTabs(id, [owner('a').tab.id, cId, owner('b').tab.id])
+  expect(owner('a').window.tabs.map((tab) => tab.target.tab.id)).toEqual(['c', 'b', 'a'])
+  openAgentHubMirror(target('destination'))
+  const destination = owner('destination').window.id
+  moveAgentHubMirrorTab(id, cId, destination, 1)
+  expect(owner('c').window.tabs.map((tab) => tab.target.tab.id)).toEqual(['c', 'destination'])
+  expect(owner('c').tab).toMatchObject({ id: cId, isPinned: true })
+  detachAgentHubMirrorTab(destination, cId, { x: 100, y: 100 })
+  const detached = owner('c').window.id
+  minimizeAgentHubMirror(detached)
+  restoreAgentHubMirror(detached)
+  expect(owner('c').tab).toMatchObject({ id: cId, isPinned: true })
+  toggleAgentHubMirrorTabPin(id, owner('b').tab.id)
+  expect(owner('b').tab.isPinned).toBe(false)
+  expectInvariants()
 })

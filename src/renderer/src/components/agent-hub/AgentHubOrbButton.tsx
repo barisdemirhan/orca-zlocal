@@ -28,12 +28,14 @@ export function AgentHubOrbButton({
   state,
   side,
   onOpen,
-  disabled = false
+  disabled = false,
+  floating = false
 }: {
   state: AgentHubOrbState
   side: 'top' | 'bottom' | 'left' | 'right'
   onOpen: () => void
   disabled?: boolean
+  floating?: boolean
 }): React.JSX.Element {
   const bindings = useAppStore((s) => s.keybindings)
   const shortcut = formatOptionalShortcutLabel('agentHub.toggleOrb', bindings)
@@ -50,7 +52,11 @@ export function AgentHubOrbButton({
         </>
       }
       side={side}
-      className={DOCK_BUTTON}
+      className={
+        floating
+          ? 'grid size-12 cursor-grab place-items-center rounded-full border border-border bg-popover text-popover-foreground shadow-floating transition-colors hover:bg-accent active:cursor-grabbing disabled:opacity-40'
+          : DOCK_BUTTON
+      }
       disabled={disabled}
       preserveFocus
       onClick={onOpen}

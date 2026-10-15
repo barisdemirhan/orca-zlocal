@@ -2,6 +2,7 @@ import { createBrowserUuid } from '@/lib/browser-uuid'
 import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import {
   AGENT_HUB_MIRROR_TAB_CAP,
+  orderAgentHubMirrorTabs,
   replaceAgentHubMirrorWindow,
   removeAgentHubMirrorTab,
   activeAgentHubMirrorTab,
@@ -65,7 +66,7 @@ export function moveAgentHubMirrorTab(
     target,
     origin: 'manual'
   })
-  const next = { ...destination, tabs, activeTabId: tabId }
+  const next = { ...destination, tabs: orderAgentHubMirrorTabs(tabs), activeTabId: tabId }
   let state = readAgentHubMirrors()
   if (fromId !== toId) {
     state = replaceAgentHubMirrorWindow(state, fromId, removeAgentHubMirrorTab(source, tabId))

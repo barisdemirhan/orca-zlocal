@@ -13,7 +13,12 @@ import {
   findAgentHubMirrorMembership,
   shownAgentHubMirrorTarget
 } from './agent-hub-mirror-membership'
-import { addAgentHubMirrorTab, closeAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { releaseAgentHubMirrorShownTarget } from './agent-hub-mirror-viewing'
+import {
+  addAgentHubMirrorTab,
+  closeAgentHubMirrorTab,
+  toggleAgentHubMirrorTabPin
+} from './agent-hub-mirror-tab-operations'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,
@@ -111,7 +116,7 @@ it('rejects a stale picker reservation with truthful feedback without raising it
   expect(readAgentHubMirrors().windows.at(-1)?.id).toBe(destination)
   expect(readAgentHubMirrors().windows.find((window) => window.id === owner)?.tabs).toHaveLength(1)
 })
-it('tab and window closes release memberships without calling terminal close or kill', () => {
+it('explicit return releases a pinned membership without closing the source or its siblings', () => {
   const id = open('a')
   addAgentHubMirrorTab(id, target('b'))
   addAgentHubMirrorTab(id, target('c'))
@@ -119,7 +124,10 @@ it('tab and window closes release memberships without calling terminal close or 
   if (!b) {
     throw new Error('No b')
   }
-  closeAgentHubMirrorTab(id, b.id)
+  toggleAgentHubMirrorTabPin(id, b.id)
+  expect(closeAgentHubMirrorTab(id, b.id).status).toBe('noop')
+  expect(releaseAgentHubMirrorShownTarget(id, b.id)?.tab.id).toBe('b')
+  expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.tab.id)).toEqual(['a', 'c'])
   closeAgentHubMirror(id)
   expect(readAgentHubMirrors().windows).toHaveLength(0)
   expect(closeTab).not.toHaveBeenCalled()

@@ -1,3 +1,4 @@
+import { Pin, PinOff } from 'lucide-react'
 import { useRef } from 'react'
 import { translate } from '@/i18n/i18n'
 import {
@@ -17,7 +18,11 @@ import {
 } from './agent-hub-mirror-membership'
 import { readAgentHubMirrors, useAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
-import { moveAgentHubMirrorTab, detachAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import {
+  moveAgentHubMirrorTab,
+  detachAgentHubMirrorTab,
+  toggleAgentHubMirrorTabPin
+} from './agent-hub-mirror-tab-operations'
 import { mirrorTabTransferFeedback } from './agent-hub-mirror-transfer-feedback'
 import { readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
@@ -76,6 +81,9 @@ export function AgentHubMirrorTabMenu({
 }): React.JSX.Element {
   const { windows } = useAgentHubMirrors()
   const keyboardOrigin = useRef<HTMLElement | null>(null)
+  const isPinned =
+    windows.find((window) => window.id === windowId)?.tabs.find((tab) => tab.id === entryId)
+      ?.isPinned === true
   const destinations = windows.filter((window) => window.id !== windowId)
   return (
     <ContextMenu>
@@ -177,7 +185,13 @@ export function AgentHubMirrorTabMenu({
           </ContextMenuItem>
         ) : null}
         <ContextMenuSeparator />
-        <ContextMenuItem onSelect={onClose}>
+        <ContextMenuItem onSelect={() => toggleAgentHubMirrorTabPin(windowId, entryId)}>
+          {isPinned ? <PinOff /> : <Pin />}
+          {isPinned
+            ? translate('auto.components.tab.bar.SortableTabContextMenu.417722e9c2', 'Unpin Tab')
+            : translate('auto.components.tab.bar.SortableTabContextMenu.60f958ec75', 'Pin Tab')}
+        </ContextMenuItem>
+        <ContextMenuItem disabled={isPinned} onSelect={() => !isPinned && onClose()}>
           {translate('agentHub.mirror.closeTab', 'Close tab')}
         </ContextMenuItem>
       </ContextMenuContent>

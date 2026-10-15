@@ -62,7 +62,7 @@ describe('open Orb', () => {
   it('reports a folder failure without requiring a separate Orb folder choice', async () => {
     mocks.open.mockRejectedValue({ code: 'invalid_argument', message: 'Invalid working folder' })
     await openAgentHubOrb()
-    expect(mocks.toast.error).toHaveBeenCalledWith('Could not open Orb. Try again.')
+    expect(mocks.toast.error).toHaveBeenCalledWith('Invalid working folder')
     expect(mocks.settings).not.toHaveBeenCalled()
     expect(mocks.page).not.toHaveBeenCalled()
     expect(mocks.reveal).not.toHaveBeenCalled()
@@ -73,7 +73,7 @@ describe('open Orb', () => {
     expect(mocks.toast.error).toHaveBeenLastCalledWith('Enable Agent control to talk to Orb')
     mocks.open.mockRejectedValueOnce({ code: 'invalid_argument', message: 'Bad model' })
     await openAgentHubOrb()
-    expect(mocks.toast.error).toHaveBeenLastCalledWith('Could not open Orb. Try again.')
+    expect(mocks.toast.error).toHaveBeenLastCalledWith('Bad model')
     expect(mocks.settings).not.toHaveBeenCalled()
     expect(mocks.reveal).not.toHaveBeenCalled()
   })

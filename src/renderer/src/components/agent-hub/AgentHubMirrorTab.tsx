@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core'
 import { useState } from 'react'
-import { AudioLines, ChevronRight, X } from 'lucide-react'
+import { AudioLines, ChevronRight, Pin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -131,6 +131,7 @@ export function AgentHubMirrorTab({
       }}
       className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none group-hover/tab:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
+      {tab.isPinned ? <Pin aria-hidden className="size-3 shrink-0" /> : null}
       <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} />
       <div
         className="min-w-0 flex-1 text-[13px] leading-tight"
@@ -167,6 +168,7 @@ export function AgentHubMirrorTab({
         data-dragging={draggable.isDragging}
         data-active={active}
         data-single={!closable}
+        data-pinned={tab.isPinned === true}
         className="group/tab relative flex min-w-60 max-w-80 basis-80 items-center gap-1 rounded-md border border-transparent px-1 hover:bg-accent data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background data-[single=true]:border-transparent data-[single=true]:bg-transparent data-[single=true]:hover:bg-accent"
       >
         {familyRoot ? (
@@ -203,7 +205,7 @@ export function AgentHubMirrorTab({
         >
           {tabNode}
         </AgentHubThreadHoverCard>
-        {closable ? (
+        {closable && !tab.isPinned ? (
           // Why a wrapper: the button keeps its primitive look; only its visibility follows the tab.
           <span className="flex shrink-0 opacity-0 transition-opacity duration-100 group-hover/tab:opacity-100 group-data-[active=true]/tab:opacity-100 focus-within:opacity-100">
             <Tooltip>

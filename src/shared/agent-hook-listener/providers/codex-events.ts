@@ -46,8 +46,20 @@ export function buildCodexStatusPayload(
   hookPayload: Record<string, unknown>,
   options: AgentLeadStatusResolution & { updateLead: boolean }
 ): ParsedAgentStatusPayload | null {
+  const toolFields = extractToolFields('codex', eventName, hookPayload)
+  if (
+    eventName === 'PermissionRequest' &&
+    !isAskUserQuestionTool(toolFields.toolName) &&
+    codexTurnApprovalsAreAutoReviewed(
+      state.codexSubagentTranscriptByPaneKey.get(paneKey),
+      readFirstString(hookPayload, ['transcript_path', 'transcriptPath'])
+    )
+  ) {
+    // Review-owned approvals must not leave a human reply card in the shared tool snapshot.
+    toolFields.interactivePrompt = undefined
+  }
   const snapshot = options.updateLead
-    ? resolveToolState(state, paneKey, extractToolFields('codex', eventName, hookPayload), {
+    ? resolveToolState(state, paneKey, toolFields, {
         resetOnNewTurn: isNewTurnEvent('codex', eventName)
       })
     : (state.lastToolByPaneKey.get(paneKey) ?? {})
