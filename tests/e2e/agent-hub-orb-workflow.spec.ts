@@ -1,67 +1,93 @@
-import path from 'node:path'
-import { existsSync } from 'node:fs'
-import type { Page } from '@stablyai/playwright-test'
-import { test as base, expect } from './helpers/orca-app'
+import { readFileSync } from 'node:fs'
+import { expect } from './helpers/orca-app'
+import { configureOrb, showOrbConversation, test } from './helpers/agent-hub-orb-fixture'
 import { waitForSessionReady } from './helpers/store'
-import { createAgentHubOrbCli } from './helpers/agent-hub-orb-cli'
 
-const test = base.extend<{ orbCli: ReturnType<typeof createAgentHubOrbCli> }>({
-  orbCli: async ({ registerPostElectronShutdownCleanup }, provideFixture, testInfo) => {
-    const cli = createAgentHubOrbCli()
-    registerPostElectronShutdownCleanup(async () => cli.cleanup())
-    await provideFixture(cli)
-    if (testInfo.status !== testInfo.expectedStatus && existsSync(cli.ledger)) {
-      await testInfo.attach('fake-codex-protocol', {
-        path: cli.ledger,
-        contentType: 'application/x-ndjson'
-      })
-    }
-  },
-  launchEnv: async ({ orbCli }, provideFixture) => {
-    await provideFixture({
-      PATH: `${orbCli.directory}${path.delimiter}${process.env.PATH ?? ''}`,
-      ORCA_E2E_ORB_CLI_LEDGER: orbCli.ledger,
-      OPENAI_API_KEY: '',
-      CODEX_API_KEY: '',
-      ANTHROPIC_API_KEY: '',
-      CLAUDE_CODE_OAUTH_TOKEN: ''
-    })
-  }
-})
-
-async function configureOrb(page: Page, cwd: string, placement: 'floating' | 'statusBar') {
-  await page.evaluate(
-    async ({ cwd, placement }) => {
-      await window.__store?.getState().updateSettings({
-        uiLanguage: 'en',
-        theme: 'dark',
-        experimentalAgentHub: true,
-        agentHubAgentControl: true,
-        agentHubAlertSound: false,
-        agentHubOrbAgent: 'codex',
-        agentHubOrbModel: 'orb-e2e-a',
-        agentHubOrbPermission: 'ask',
-        agentHubOrbPlacement: placement,
-        agentHubOrbPosition: { x: Math.round(window.innerWidth * 0.65), y: 220 },
-        floatingTerminalCwd: cwd
-      })
-    },
-    { cwd, placement }
-  )
-}
-
-test('Orb preserves a draft in its model picker and reopens history after New', async ({
+test('Orb repairs an unavailable saved model, keeps startup diagnostics quiet and recovers a rejected turn', async ({
   orcaPage,
-  seededRepoPath
+  seededRepoPath,
+  orbCli
 }, testInfo) => {
   test.setTimeout(180_000)
   await waitForSessionReady(orcaPage)
-  await configureOrb(orcaPage, seededRepoPath, 'statusBar')
+  await configureOrb(orcaPage, seededRepoPath, 'statusBar', 'gpt-6.1-sol')
 
   await orcaPage.getByRole('button', { name: /^Talk to Orb/ }).click()
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
+  await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
+  await expect(panel.locator('header')).toContainText('Codex · orb-e2e-a')
+  const turnDetails = panel.getByRole('button', { name: 'Toggle turn details', exact: true })
+  await turnDetails.click()
+  await expect(turnDetails).toHaveAttribute('aria-expanded', 'true')
+  const hook = panel.locator('p').filter({ hasText: /^hook exited with code 127$/ })
+  await expect(hook).toBeVisible()
+  const review = panel.locator('details').filter({
+    has: orcaPage.locator('summary').filter({ hasText: 'Automatic approval review approved' })
+  })
+  await expect(review).toHaveJSProperty('open', false)
+  await expect(review.locator('summary')).not.toContainText('risk:')
+  await expect(review.locator('pre')).toContainText(
+    'Read-only status query within the requested task.'
+  )
+  await expect(
+    panel.locator('p').filter({ hasText: /Automatic approval review approved/ })
+  ).toHaveCount(0)
+  const mcp = panel.locator('details').filter({
+    has: orcaPage.locator('summary').filter({ hasText: 'MCP connection details' })
+  })
+  await expect(mcp).toHaveCount(3)
+  for (const server of ['sentry', 'raindrop', 'postman']) {
+    const diagnostic = mcp.filter({ hasText: `"name":"${server}"` })
+    await expect(diagnostic).toHaveCount(1)
+    await expect(diagnostic).toHaveJSProperty('open', false)
+    await expect(diagnostic.locator('pre')).not.toBeVisible()
+  }
+  await expect(panel.locator('p').filter({ hasText: /MCP server|MCP client for/ })).toHaveCount(0)
+  await hook.scrollIntoViewIfNeeded()
+  await testInfo.attach('orb-quiet-startup', {
+    body: await panel.screenshot(),
+    contentType: 'image/png'
+  })
+  const sentry = mcp.filter({ hasText: '"name":"sentry"' })
+  await sentry.locator('summary').click()
+  await expect(sentry.locator('pre')).toBeVisible()
+  await expect(sentry.locator('pre')).toContainText('codex mcp login sentry')
+  await testInfo.attach('orb-startup-diagnostics-on-demand', {
+    body: await panel.screenshot(),
+    contentType: 'image/png'
+  })
+  await sentry.locator('summary').click()
   const composer = panel.locator('[contenteditable="true"]')
+  orbCli.rejectModel('orb-e2e-a')
+  await composer.fill('Orb lifecycle rejected marker')
+  await panel.getByRole('button', { name: 'Send', exact: true }).click()
+  const failure = panel
+    .locator('p')
+    .filter({ hasText: "The 'orb-e2e-a' model is not supported" })
+    .first()
+  await expect(failure).toBeVisible()
+  await expect(failure).toHaveText(
+    "The 'orb-e2e-a' model is not supported when using Codex with a ChatGPT account."
+  )
+  const failureDetails = panel
+    .locator('details')
+    .filter({ hasText: 'invalid_request_error' })
+    .first()
+  await expect(failureDetails).toHaveJSProperty('open', false)
+  await expect(failureDetails.locator('pre')).not.toBeVisible()
+  await expect(panel.getByText('Orb lifecycle rejected marker', { exact: true })).toHaveCount(1)
+  await expect(
+    panel.getByText('Reply: Orb lifecycle rejected marker', { exact: true })
+  ).toHaveCount(0)
+  await testInfo.attach('orb-actionable-model-failure', {
+    body: await panel.screenshot(),
+    contentType: 'image/png'
+  })
+  await failureDetails.locator('summary').click()
+  await expect(failureDetails.locator('pre')).toBeVisible()
+  await expect(failureDetails.locator('pre')).toContainText('invalid_request_error')
+  await failureDetails.locator('summary').click()
   await composer.fill('Orb lifecycle marker')
   const model = panel.getByRole('button', { name: /^Model Orb test A/ })
   await expect(model).toBeEnabled()
@@ -86,22 +112,55 @@ test('Orb preserves a draft in its model picker and reopens history after New', 
   await panel.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(panel.getByText('Reply: Orb lifecycle marker', { exact: true })).toBeVisible()
   await expect(panel.getByRole('button', { name: /^Model Orb test B/ })).toBeEnabled()
+  await expect(panel.locator('header')).toContainText('Codex · orb-e2e-b')
+  await expect(panel.getByText('Orb lifecycle marker', { exact: true })).toHaveCount(1)
+  orbCli.rejectModel(null)
 
   await panel.getByRole('button', { name: 'Past conversations', exact: true }).click()
   await expect(panel.getByRole('button', { name: /Orb lifecycle marker/ })).toBeVisible()
   await panel.getByRole('button', { name: 'New', exact: true }).click()
   await expect(panel.locator('[data-agent-hub-orb-history]')).toHaveCount(0)
+  await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
   await expect(panel.getByText('Reply: Orb lifecycle marker', { exact: true })).toHaveCount(0)
   await panel.getByRole('button', { name: 'Past conversations', exact: true }).click()
   await panel.getByRole('button', { name: /Orb lifecycle marker/ }).click()
   await expect(panel.locator('[data-agent-hub-orb-history]')).toHaveCount(0)
+  await showOrbConversation(orcaPage)
   await expect(panel.getByText('Reply: Orb lifecycle marker', { exact: true })).toBeVisible()
   await expect(panel.getByRole('button', { name: /^Model Orb test B/ })).toBeVisible()
+  await expect(panel.locator('header')).toContainText('Codex · orb-e2e-b')
   await expect(panel.getByText('Could not load conversations. Try again.')).toHaveCount(0)
   await testInfo.attach('orb-resumed-conversation', {
-    body: await orcaPage.screenshot(),
+    body: await panel.screenshot(),
     contentType: 'image/png'
+  })
+  const requests: {
+    method: string
+    params: { model?: string; threadId?: string; input?: { text?: string }[] }
+  }[] = readFileSync(orbCli.ledger, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line))
+  const turnsFor = (text: string) =>
+    requests.filter(
+      (request) =>
+        request.method === 'turn/start' && request.params.input?.some((item) => item.text === text)
+    )
+  const rejected = turnsFor('Orb lifecycle rejected marker')
+  const recovered = turnsFor('Orb lifecycle marker')
+  expect(requests.find((request) => request.method === 'thread/start')?.params.model).toBe(
+    'orb-e2e-a'
+  )
+  expect(rejected).toHaveLength(1)
+  expect(recovered).toHaveLength(1)
+  expect(rejected[0].params.model).toBe('orb-e2e-a')
+  expect(recovered[0].params.model).toBe('orb-e2e-b')
+  expect(rejected[0].params.threadId).toBeTruthy()
+  expect(recovered[0].params.threadId).toBe(rejected[0].params.threadId)
+  await testInfo.attach('orb-codex-protocol', {
+    path: orbCli.ledger,
+    contentType: 'application/x-ndjson'
   })
 })
 
@@ -126,6 +185,7 @@ test('floating Orb drags with its open draft and restores its position after rel
   await expect(orb).toBeVisible()
   await orb.getByRole('button', { name: /^Talk to Orb/ }).click()
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
+  await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
   const composer = panel.locator('[contenteditable="true"]')
   await composer.fill('Unsent floating draft')
@@ -169,11 +229,12 @@ test('floating Orb drags with its open draft and restores its position after rel
 test('saved model and approval settings replace idle Orb while past conversations keep their model', async ({
   orcaPage,
   seededRepoPath
-}) => {
+}, testInfo) => {
   await waitForSessionReady(orcaPage)
   await configureOrb(orcaPage, seededRepoPath, 'statusBar')
   await orcaPage.getByRole('button', { name: /^Talk to Orb/ }).click()
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
+  await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
   await panel.locator('[contenteditable="true"]').fill('Orb lifecycle settings original')
   await panel.getByRole('button', { name: 'Send', exact: true }).click()
@@ -182,21 +243,24 @@ test('saved model and approval settings replace idle Orb while past conversation
   ).toBeVisible()
   await expect(panel.getByRole('button', { name: /^Model Orb test A/ })).toBeEnabled()
 
-  await orcaPage.evaluate(() => {
-    const state = window.__store?.getState()
-    state?.openSettingsTarget({ pane: 'agentHub', repoId: null })
-    state?.openSettingsPage()
-  })
-  await orcaPage.getByRole('combobox', { name: 'Model', exact: true }).click()
+  await panel.getByRole('button', { name: 'Orb settings', exact: true }).click()
+  const orbSettings = panel.getByRole('region', { name: 'Orb settings', exact: true })
+  await expect(orbSettings).toBeVisible()
+  await orbSettings.getByRole('combobox', { name: 'Model', exact: true }).click()
   await orcaPage.getByRole('option', { name: 'GPT-5.6 Sol', exact: true }).click()
-  const freely = orcaPage
+  const freely = orbSettings
     .getByRole('radiogroup', { name: 'Approvals', exact: true })
     .getByRole('radio', { name: 'Act freely', exact: true })
   await freely.click()
   await expect(freely).toHaveAttribute('aria-checked', 'true')
-  await orcaPage.evaluate(() => window.__store?.getState().closeSettingsPage())
+  await testInfo.attach('orb-in-panel-settings', {
+    body: await orcaPage.screenshot(),
+    contentType: 'image/png'
+  })
+  await panel.getByRole('button', { name: 'Back to conversation', exact: true }).click()
 
   await expect(panel.getByRole('button', { name: /^Model GPT-5.6 Sol/ })).toBeVisible()
+  await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
   await expect(
     panel.getByText('Reply: Orb lifecycle settings original', { exact: true })

@@ -1,0 +1,86 @@
+.agent-hub-orb-stage {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 12px 12px;
+  min-height: calc(var(--orb-diameter) + 116px);
+  user-select: none;
+}
+
+.agent-hub-orb-stage[hidden],
+.agent-hub-orb-request-host[hidden] {
+  display: none;
+}
+.agent-hub-orb-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--orb-diameter) + 82px);
+  height: calc(var(--orb-diameter) + 52px);
+  touch-action: none;
+  cursor: grab;
+}
+.agent-hub-orb-art:active {
+  cursor: grabbing;
+}
+.agent-hub-orb-art-sphere {
+  width: var(--orb-diameter);
+  height: var(--orb-diameter);
+}
+.agent-hub-orb-resize {
+  position: absolute;
+  display: flex;
+  right: 25px;
+  bottom: 10px;
+}
+.agent-hub-orb-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  gap: 6px;
+  margin-top: 17px;
+  min-height: 32px;
+}
+.agent-hub-orb-request-host {
+  z-index: 61;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  user-select: text;
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--shadow-floating);
+}
+.agent-hub-orb-stage[data-embedded='true'] {
+  position: relative;
+  z-index: auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 0;
+  padding: 0 12px 10px;
+  gap: 0 10px;
+}
+.agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-art {
+  width: calc(var(--orb-diameter) + 20px);
+  height: calc(var(--orb-diameter) + 20px);
+  cursor: default;
+}
+.agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-resize {
+  right: -6px;
+  bottom: -6px;
+}
+.agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-controls {
+  margin-top: 0;
+}
+.agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-request-host {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 8px;
+  box-shadow: none;
+}

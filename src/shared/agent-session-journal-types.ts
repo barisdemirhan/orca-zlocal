@@ -1,8 +1,15 @@
 import type { AgentJournalTurnScope } from './agent-session-journal-turn-scope'
 export type { AgentJournalTurnScope } from './agent-session-journal-turn-scope'
 import type { AgentSessionProviderContextBoundary } from './agent-session-provider-context'
-// Persist/republish plain JSON only. Append-only rows are upcast on read, never rewritten;
-// unreadable versions/kinds must refuse writes rather than be skipped or compacted away.
+// ─── Canonical agent-session journal: cross-process wire shapes ─────────────
+// The host-owned timeline for a structured agent session. Everything here must
+// be plain JSON: rows are persisted verbatim and later republished to clients,
+// so no class instances, Maps, or Dates.
+//
+// Rows are append-only. `schemaVersion` is upcast at read time and never
+// rewritten in place, so a host that cannot read a row (a newer version, or a
+// newer kind) refuses to write the journal rather than skipping or compacting
+// past it.
 
 import type { UnreadAgentSessionFailureFact } from './agent-session-failure'
 import type { AgentSessionFailureRowWords } from './agent-session-failure-words'
@@ -12,17 +19,24 @@ import type { AgentJournalTurnOutcome } from './agent-turn-outcome'
 import type { NativeChatToolMetadata } from './native-chat/tools/native-chat-tool-identity'
 import type { AgentSessionContextUsage } from './agent-session-context-usage'
 import type { AgentSessionProviderHandle } from './agent-session-provider-handle'
-import type { NativeChatBlock, NativeChatRole } from './native-chat-types'
+import type {
+  NativeChatBlock,
+  NativeChatRole,
+  NativeChatSpokenProvenance
+} from './native-chat-types'
 import type { AgentMessageSource } from './agent-session/agent-session-message-source'
 import type { AgentSessionExecutionOptions } from './agent-session-execution-options'
 
 export { type AgentType }
 
 /** Bump only alongside a read-time upcaster in `journal-row-schema.ts`. */
-/** v3 introduced turn items; other rows stay v2. The first v3 row stops older hosts writing (read-only on released builds, failed load here) rather than allowing truncation. */
+/** v3 introduced the `turn` item. A row without one is still written at v2 so
+ *  an older host keeps reading it; the first v3 row stops that host writing the chat
+ *  (a released one keeps it read-only, this build fails its load) instead of truncating. */
 export const AGENT_SESSION_JOURNAL_SCHEMA_VERSION = 4
 export const AGENT_SESSION_JOURNAL_TURN_ITEM_SCHEMA_VERSION = 3
-/** v4 queue rows make older builds keep the chat read-only; other rows retain their own version. */
+/** v4 introduced the `queue` row: an older build keeps a chat holding one read-only rather than
+ *  meeting a kind it does not know. Every other row keeps its own version. */
 export const AGENT_SESSION_JOURNAL_QUEUE_SCHEMA_VERSION = 4
 const AGENT_SESSION_JOURNAL_PRE_TURN_SCHEMA_VERSION = 2
 
@@ -101,6 +115,8 @@ export type AgentJournalMessageItem = {
   kind: 'message'
   role: NativeChatRole
   blocks: NativeChatBlock[]
+  /** Native canonical transcript provenance; never inferred from text or replayed as input. */
+  spoken?: NativeChatSpokenProvenance
   /** Absent ⇒ an ordinary turn input. `goal` ⇒ the text was set as the thread
    *  goal's objective, and the provider pursues it without a turn of its own. */
   sentAs?: AgentJournalMessageSendMode

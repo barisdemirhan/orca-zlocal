@@ -8,6 +8,7 @@ import type { CodexSubagentExecutions } from './codex-subagent-executions'
 import type { CodexThreadItem } from './codex-structured-item-translation'
 import type { CodexHelperName } from './codex-collab-agent-item-translation'
 import type { StructuredAgentSessionCommandRun } from '../native-chat/agent-session-wire/structured-agent-session-adapter'
+import type { CodexTimelineEntry } from './codex-structured-realtime-timeline'
 
 export type CodexActiveJournalItem = {
   threadId: string
@@ -60,6 +61,11 @@ export type CodexJournalTranslator = {
   restoreThread: (
     threadId: string,
     thread: Record<string, unknown>
+  ) => CodexJournalTranslationAdmission
+  restoreTimeline?: (
+    threadId: string,
+    entries: readonly CodexTimelineEntry[],
+    realtimeOnly?: boolean
   ) => CodexJournalTranslationAdmission
   resolvePrompt: (journalItemId: string) => void
   flush: () => void

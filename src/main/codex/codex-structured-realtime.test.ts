@@ -1,0 +1,250 @@
+import { afterEach, describe, expect, it } from 'vitest'
+import { CodexAppServerRequestError } from './app-server/codex-app-server-request-error'
+import { CodexAppServerUnsupportedError } from './codex-app-server-session'
+import {
+  adapterFor,
+  fakeCodex,
+  identityFor,
+  THREAD_ID
+} from './codex-structured-session-adapter-fixture'
+import type { CodexStructuredSessionAdapter } from './codex-structured-session-adapter'
+import type { CodexStructuredSessionEvent } from './codex-structured-session-state'
+
+const SDP = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'
+const OWNER = { voiceSessionId: 'voice-attempt-1', generation: 1 }
+const INPUT = { ...OWNER, sessionId: 'session-1', fence: 7, sdp: SDP }
+const VOICES = {
+  voices: { defaultV1: 'alloy', defaultV2: 'alloy', v1: ['alloy'], v2: ['alloy'], v3: ['alloy'] }
+}
+let adapter: CodexStructuredSessionAdapter | undefined
+afterEach(async () => {
+  await adapter?.closeAll()
+})
+
+async function setup(routes: Parameters<typeof fakeCodex>[0] = {}) {
+  const codex = fakeCodex({
+    'thread/realtime/listVoices': () => VOICES,
+    'thread/timeline/list': () => ({ data: [], nextCursor: null }),
+    ...routes
+  })
+  const events: CodexStructuredSessionEvent[] = []
+  adapter = adapterFor(codex, {}, events)
+  await adapter.acquire({ identity: identityFor('session-1'), fence: 7, spawnToken: 'spawn-1' })
+  const connection = codex.connections[0]
+  if (!connection) {
+    throw new Error('Expected the acquired provider connection')
+  }
+  return { adapter, codex, events, connection }
+}
+
+describe('Codex native realtime on a structured conversation', () => {
+  it('starts and stops voice on the acquired thread without another connection, seed or turn interrupt', async () => {
+    const rig = await setup()
+    rig.codex.routes['thread/realtime/start'] = () => {
+      rig.connection.handlers.onNotification?.('thread/realtime/started', {
+        threadId: THREAD_ID,
+        realtimeSessionId: OWNER.voiceSessionId,
+        version: 'v3'
+      })
+      rig.connection.handlers.onNotification?.('thread/realtime/sdp', {
+        threadId: THREAD_ID,
+        sdp: SDP
+      })
+      return {}
+    }
+    expect(await rig.adapter.startVoice(INPUT)).toEqual({
+      ok: true,
+      value: { ...OWNER, state: 'connecting' }
+    })
+    const start = rig.connection.calls.find((call) => call.method === 'thread/realtime/start')
+    expect(start?.params).toEqual({
+      threadId: THREAD_ID,
+      realtimeSessionId: OWNER.voiceSessionId,
+      outputModality: 'audio',
+      transport: { type: 'webrtc', sdp: SDP }
+    })
+    expect(
+      rig.events.filter((event) => event.type === 'voice').map((event) => event.event.type)
+    ).toEqual(['started', 'sdp'])
+    rig.codex.routes['thread/realtime/stop'] = () => {
+      rig.connection.handlers.onNotification?.('thread/realtime/closed', {
+        threadId: THREAD_ID,
+        reason: null
+      })
+      return {}
+    }
+    expect(await rig.adapter.stopVoice(INPUT)).toEqual({ ...OWNER, state: 'off' })
+    expect(rig.adapter.holdsVoice('session-1')).toBe(false)
+    expect(rig.codex.connections).toHaveLength(1)
+    expect(
+      rig.connection.calls
+        .filter((call) => /^(thread\/start|turn\/start|turn\/interrupt)$/.test(call.method))
+        .map((call) => call.method)
+    ).toEqual(['thread/start'])
+    expect(rig.connection.closeCount).toBe(0)
+  })
+
+  it('keeps an ambiguous start and stop owned, refuses overlap, and accepts closure without replay', async () => {
+    const rig = await setup({
+      'thread/realtime/start': () => {
+        throw new Error('timed out')
+      },
+      'thread/realtime/stop': () => {
+        throw new Error('transport lost')
+      }
+    })
+    await expect(rig.adapter.startVoice(INPUT)).rejects.toThrow('could not connect')
+    expect(rig.adapter.holdsVoice('session-1')).toBe(true)
+    expect(await rig.adapter.stopVoice(INPUT)).toEqual({ ...OWNER, state: 'unverifiable' })
+    expect(
+      await rig.adapter.startVoice({ ...INPUT, voiceSessionId: 'another-attempt', generation: 2 })
+    ).toMatchObject({ ok: false })
+    expect(
+      rig.connection.calls.filter((call) => call.method === 'thread/realtime/start')
+    ).toHaveLength(1)
+    rig.connection.handlers.onNotification?.('thread/realtime/closed', { threadId: THREAD_ID })
+    expect(rig.adapter.holdsVoice('session-1')).toBe(false)
+    expect(await rig.adapter.startVoice(INPUT)).toMatchObject({ ok: false })
+    expect(
+      rig.connection.calls.filter((call) => call.method === 'thread/realtime/start')
+    ).toHaveLength(1)
+  })
+
+  it('does not publish or stop a newer voice from an older fence, child, or attempt', async () => {
+    const rig = await setup()
+    await rig.adapter.startVoice(INPUT)
+    expect(await rig.adapter.stopVoice({ ...INPUT, voiceSessionId: 'old-voice' })).toMatchObject({
+      state: 'off'
+    })
+    expect(rig.connection.calls.some((call) => call.method === 'thread/realtime/stop')).toBe(false)
+    await rig.adapter.acquire({
+      identity: identityFor('session-1'),
+      fence: 8,
+      spawnToken: 'spawn-2'
+    })
+    const second = rig.codex.connections[1]
+    if (!second) {
+      throw new Error('Expected the replacement provider connection')
+    }
+    await rig.adapter.startVoice({
+      ...INPUT,
+      fence: 8,
+      generation: 2,
+      voiceSessionId: 'voice-attempt-2'
+    })
+    const before = rig.events.filter((event) => event.type === 'voice').length
+    rig.connection.handlers.onNotification?.('thread/realtime/started', {
+      threadId: THREAD_ID,
+      realtimeSessionId: OWNER.voiceSessionId,
+      version: 'v3'
+    })
+    rig.connection.handlers.onNotification?.('thread/realtime/sdp', {
+      threadId: THREAD_ID,
+      sdp: SDP
+    })
+    rig.connection.handlers.onNotification?.('thread/realtime/closed', { threadId: THREAD_ID })
+    second.handlers.onNotification?.('thread/realtime/started', {
+      threadId: THREAD_ID,
+      realtimeSessionId: OWNER.voiceSessionId,
+      version: 'v3'
+    })
+    second.handlers.onNotification?.('thread/realtime/sdp', { threadId: THREAD_ID, sdp: SDP })
+    expect(rig.events.filter((event) => event.type === 'voice')).toHaveLength(before)
+    expect(rig.adapter.holdsVoice('session-1')).toBe(true)
+    expect(await rig.adapter.startVoice(INPUT)).toMatchObject({ ok: false })
+  })
+
+  it('distinguishes native unsupported from an unknown probe and never starts audio from either', async () => {
+    const rig = await setup({
+      'thread/realtime/listVoices': () => {
+        throw new CodexAppServerUnsupportedError('method missing')
+      }
+    })
+    expect(await rig.adapter.readVoiceCapability('session-1')).toMatchObject({ supported: false })
+    expect(await rig.adapter.startVoice(INPUT)).toMatchObject({ ok: false })
+    expect(rig.connection.calls.some((call) => call.method === 'thread/realtime/start')).toBe(false)
+    expect(await rig.adapter.readVoiceCapability('at-rest')).toMatchObject({ supported: null })
+    await rig.adapter.acquire({
+      identity: identityFor('session-1'),
+      fence: 8,
+      spawnToken: 'spawn-2'
+    })
+    rig.codex.routes['thread/realtime/listVoices'] = () => {
+      throw new Error('timed out')
+    }
+    expect(await rig.adapter.readVoiceCapability('session-1')).toMatchObject({ supported: null })
+    rig.codex.routes['thread/realtime/listVoices'] = () => VOICES
+    expect(await rig.adapter.readVoiceCapability('session-1')).toEqual({
+      supported: true,
+      accountAccess: 'unchecked'
+    })
+    expect(rig.codex.connections).toHaveLength(2)
+  })
+
+  it('publishes only safe current transcript activity and sanitizes a native account refusal', async () => {
+    const rig = await setup()
+    await rig.adapter.startVoice(INPUT)
+    const notify = rig.connection.handlers.onNotification
+    notify?.('thread/realtime/started', {
+      threadId: THREAD_ID,
+      realtimeSessionId: OWNER.voiceSessionId,
+      version: 'v3'
+    })
+    notify?.('thread/realtime/item/started', {
+      threadId: THREAD_ID,
+      item: {
+        id: 'spoken-user',
+        realtimeSessionId: OWNER.voiceSessionId,
+        type: 'transcriptSegment',
+        role: 'user',
+        text: ''
+      }
+    })
+    notify?.('thread/realtime/item/transcript/delta', {
+      threadId: THREAD_ID,
+      itemId: 'spoken-user',
+      delta: 'private partial'
+    })
+    notify?.('thread/realtime/item/transcript/delta', {
+      threadId: THREAD_ID,
+      itemId: 'old-item',
+      delta: 'stale partial'
+    })
+    notify?.('thread/realtime/outputAudio/delta', { threadId: THREAD_ID, audio: 'private-pcm' })
+    const projected = rig.events
+      .filter((event) => event.type === 'voice')
+      .map((event) => event.event)
+    expect(projected.filter((event) => event.type === 'transcript')).toEqual([
+      {
+        type: 'transcript',
+        sessionId: 'session-1',
+        ...OWNER,
+        role: 'user',
+        phase: 'started',
+        itemId: 'spoken-user',
+        hasText: false
+      },
+      {
+        type: 'transcript',
+        sessionId: 'session-1',
+        ...OWNER,
+        role: 'user',
+        phase: 'delta',
+        itemId: 'spoken-user',
+        hasText: true
+      }
+    ])
+    expect(JSON.stringify(rig.events)).not.toMatch(/private partial|stale partial|private-pcm/)
+    notify?.('thread/realtime/closed', { threadId: THREAD_ID })
+    rig.codex.routes['thread/realtime/start'] = () => {
+      throw new CodexAppServerRequestError('thread/realtime/start', -32600, `account quota ${SDP}`)
+    }
+    const refused = await rig.adapter.startVoice({
+      ...INPUT,
+      voiceSessionId: 'voice-attempt-2',
+      generation: 2
+    })
+    expect(refused).toMatchObject({ ok: false, rejected: expect.stringContaining('usage limit') })
+    expect(JSON.stringify(refused)).not.toContain(SDP)
+  })
+})

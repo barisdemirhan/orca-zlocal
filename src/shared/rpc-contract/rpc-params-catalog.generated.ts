@@ -622,6 +622,12 @@ import {
   QueuedMessageUpdateParams
 } from './structured-agent-session-queued-edit-params'
 import { RenameParams } from './structured-agent-session-rename-params'
+import {
+  StartVoiceParams,
+  StopVoiceParams,
+  SubscribeVoiceParams,
+  VoiceCapabilityParams
+} from './structured-agent-session-voice-params'
 import { TerminalDaemonRestartSeveredParams } from './terminal-daemon-params'
 import { TerminalLimitUpdateParams } from './terminal-limit-params'
 import { TerminalAdoptOrphans } from './terminal-orphan-params'
@@ -814,12 +820,16 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentSession.send': SendParams,
   'agentSession.setOption': SetOptionParams,
   'agentSession.sleepWorkspace': SleepWorkspaceParams,
+  'agentSession.startVoice': StartVoiceParams,
+  'agentSession.stopVoice': StopVoiceParams,
   'agentSession.subscribe': SubscribeParams,
   'agentSession.subscribeAvailability': AvailabilityParams,
   'agentSession.subscribeStatus': null,
   'agentSession.subscribeTurnCompletions': SubscribeTurnCompletionsParams,
+  'agentSession.subscribeVoice': SubscribeVoiceParams,
   'agentSession.threadGoal': ThreadGoalParams,
   'agentSession.unsubscribe': UnsubscribeParams,
+  'agentSession.voiceCapability': VoiceCapabilityParams,
   'agentSessionAttachment.read': AttachmentReadParams,
   'agentSessionAttachment.uploadAbort': AttachmentUploadIdParams,
   'agentSessionAttachment.uploadAppend': AttachmentUploadAppendParams,

@@ -6,6 +6,7 @@ import { NativeChatPacedMarkdown } from './NativeChatPacedMarkdown'
 import { NATIVE_CHAT_QUOTE_SOURCE_PROPS } from './native-chat-quote-selection'
 import { NativeChatToolRun } from './NativeChatToolRun'
 import { NativeChatCodeBlock, NativeChatPlainCodeBlock } from './NativeChatCodeBlock'
+import { NativeChatSpokenLabel } from './NativeChatSpokenLabel'
 import { NativeChatAgentControls, NativeChatImageAttachments } from './NativeChatTranscriptChrome'
 import type { useNativeChatWorkRun } from './use-native-chat-work-run'
 
@@ -65,6 +66,7 @@ export function NativeChatAssistantMessageRow({
         isSystem && 'text-xs text-chat-foreground-faint'
       )}
     >
+      <NativeChatSpokenLabel message={message} />
       <NativeChatImageAttachments
         blocks={prose}
         runtimeContext={runtimeContext}

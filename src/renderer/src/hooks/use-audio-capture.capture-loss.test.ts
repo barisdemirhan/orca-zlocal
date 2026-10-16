@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
 
-import { renderHook } from '@testing-library/react'
+import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAudioCapture } from './use-audio-capture'
+import { acquireMicrophoneCaptureLease } from '@/components/dictation/microphone-capture-lease'
 
 class FakeTrack extends EventTarget {
   stop = vi.fn()
@@ -65,6 +66,7 @@ describe('useAudioCapture device loss', () => {
   })
 
   afterEach(() => {
+    cleanup()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })
@@ -77,6 +79,19 @@ describe('useAudioCapture device loss', () => {
     track.dispatchEvent(new Event('ended'))
 
     expect(onCaptureLost).toHaveBeenCalledTimes(1)
+  })
+
+  it('waits for the shared microphone owner to release capture before dictation can start', async () => {
+    const release = await acquireMicrophoneCaptureLease()
+    const { result } = renderHook(() => useAudioCapture())
+    try {
+      await expect(result.current.start()).rejects.toThrow('already in use')
+      expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
+    } finally {
+      release()
+    }
+    await result.current.start()
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledOnce()
   })
 
   it('stays silent when we stopped capture ourselves', async () => {

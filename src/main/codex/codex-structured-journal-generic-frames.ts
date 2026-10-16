@@ -26,6 +26,7 @@ import type { CodexRowAttribution } from './codex-subagent-linkage'
 import { codexAuthenticationFailure } from './codex-authentication-failure'
 import { agentSessionFailureWords } from '../../shared/agent-session-failure-words'
 import { CodexUsageLimits } from './codex-usage-limits'
+import { CodexMcpStartupFailures } from './codex-mcp-startup-failures'
 
 const OVERFLOW_BUCKET = '__codex-generic-overflow__'
 type TurnRows = { drawn: number; wordless: number }
@@ -60,6 +61,7 @@ function publish(sink: StructuredAgentSessionEventSink): CodexJournalTranslation
 }
 
 export class CodexJournalGenericFrames {
+  private readonly mcpStartupFailures = new CodexMcpStartupFailures()
   private readonly genericRowsByTurn = new Map<string, TurnRows>()
   private readonly suppressedRowsByTurn = new Map<string, SuppressedSummary>()
   private readonly bucketOrder = new Map<string, number>()
@@ -92,13 +94,18 @@ export class CodexJournalGenericFrames {
     if (this.usageLimits.observe(kind, payload)) {
       return CODEX_JOURNAL_ADMITTED
     }
+    const startupFailureKey = this.mcpStartupFailures.observeStatus(kind, payload, threadId)
     const translated = unhandledProviderFrameJournalItem('codex', kind, payload)
+    const digest = translated?.body.providerFrame?.payload.digest
+    if (this.mcpStartupFailures.isDuplicate(startupFailureKey, digest)) {
+      return CODEX_JOURNAL_ADMITTED
+    }
     // Declined frames count as success; rejection would force-close the provider.
     const ended = kind === 'notification:error' && !readCodexErrorWillRetry(payload)
     const usageLimit = ended ? this.usageLimits.failure(payload) : null
     const failure =
       usageLimit ?? (ended ? codexAuthenticationFailure(payload, this.deps.account?.()) : null)
-    return translated
+    const admission = translated
       ? this.appendFrameRow(threadId, payload, {
           ...translated,
           body: failure
@@ -114,6 +121,10 @@ export class CodexJournalGenericFrames {
             : translated.body
         })
       : CODEX_JOURNAL_ADMITTED
+    if (admission.accepted && startupFailureKey && digest) {
+      this.mcpStartupFailures.remember(startupFailureKey, digest)
+    }
+    return admission
   }
 
   appendFrameRow(
@@ -240,6 +251,7 @@ export class CodexJournalGenericFrames {
     this.cancelSuppressionFlush?.()
     this.genericRowsByTurn.clear()
     this.suppressedRowsByTurn.clear()
+    this.mcpStartupFailures.clear()
     this.bucketOrder.clear()
     this.bookkeepingBytes = 0
   }

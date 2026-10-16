@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore, useState } from 'react'
+import { useCallback, useEffect, useSyncExternalStore, useState } from 'react'
 import { structuredAgentLabel } from '@/lib/structured-agent-session-launch-label'
 import {
   loadHostStructuredAgents,
@@ -7,11 +7,15 @@ import {
 } from '@/runtime/host-structured-agents'
 import {
   preloadHostModelCatalogSnapshots,
+  recordHostModelCatalogSnapshot,
   readHostModelCatalogSnapshot
 } from '@/runtime/host-model-catalog-snapshots'
 import { ensureLocalRuntimeCapabilities } from '@/runtime/local-runtime-capabilities'
-import { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } from '../../../../shared/structured-agent-session-surface-capabilities'
+import { callStructuredAgentSession } from '@/runtime/structured-agent-session-client'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session-wire'
 import { structuredAgentSessionSeedCatalog } from '../../../../shared/structured-agent-session-seed-catalog'
+import { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } from '../../../../shared/structured-agent-session-surface-capabilities'
 
 const LOCAL = { kind: 'local' } as const
 const readAgents = () => readHostStructuredAgentsForRuntime('local', null)
@@ -21,37 +25,58 @@ export function useAgentHubOrbOptions(agent: string) {
   const agents = [
     ...new Set(['claude', 'codex', ...(registered?.map((row) => row.agent) ?? [])])
   ].map((id) => ({ id, label: structuredAgentLabel(id) }))
-  const [, refreshCatalog] = useState(0)
-  const catalog = readHostModelCatalogSnapshot(LOCAL, agent, { newLaunch: true, seedsModel: true })
+  const [revision, refreshCatalog] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const refreshModels = useCallback(() => refreshCatalog((value) => value + 1), [])
+  const catalog = readHostModelCatalogSnapshot(LOCAL, agent, {
+    newLaunch: true,
+    seedsModel: true,
+    worktree: FLOATING_TERMINAL_WORKTREE_ID
+  })
   const models =
     catalog && catalog.origin !== 'unknown'
       ? catalog.models
-      : structuredAgentSessionSeedCatalog(agent).models
+      : agent === 'codex'
+        ? []
+        : structuredAgentSessionSeedCatalog(agent).models
   useEffect(() => {
     let stale = false
+    setLoading(true)
     void ensureLocalRuntimeCapabilities()
       .then(async (capabilities) => {
         if (stale) {
           return
         }
         await loadHostStructuredAgents('local', capabilities, null)
-        if (
-          stale ||
-          !capabilities?.includes(AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY)
-        ) {
+        if (stale) {
           return
         }
-        await preloadHostModelCatalogSnapshots(LOCAL, [agent], { savedOnly: true })
+        if (agent !== 'codex') {
+          if (capabilities?.includes(AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY)) {
+            await preloadHostModelCatalogSnapshots(LOCAL, [agent], { savedOnly: true })
+          }
+          return
+        }
+        const listed = await callStructuredAgentSession<AgentSessionModelCatalogResult>(
+          LOCAL,
+          'agentSession.modelCatalog',
+          { agent, worktree: FLOATING_TERMINAL_WORKTREE_ID, waitForListing: true }
+        )
         if (!stale) {
-          refreshCatalog((revision) => revision + 1)
+          recordHostModelCatalogSnapshot(LOCAL, agent, FLOATING_TERMINAL_WORKTREE_ID, listed)
         }
       })
       .catch(() => {
-        // Older or unavailable hosts keep the seed catalog.
+        // A failed read proves no new model; other agents retain their launch-safe aliases.
+      })
+      .finally(() => {
+        if (!stale) {
+          setLoading(false)
+        }
       })
     return () => {
       stale = true
     }
-  }, [agent])
-  return { agents, models }
+  }, [agent, revision])
+  return { agents, models, loading, refreshModels }
 }

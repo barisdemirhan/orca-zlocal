@@ -1,26 +1,40 @@
-import { Loader2 } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { formatOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { DockButton, DOCK_BUTTON } from './AgentHubDockParts'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
+import { AgentHubOrbSphere } from './AgentHubOrbSphere'
 
-export function AgentHubOrbMark({ state }: { state: AgentHubOrbState }): React.JSX.Element {
-  if (state.kind === 'working') {
-    return (
-      <Loader2
-        aria-hidden
-        className="size-3.5 animate-spin text-foreground motion-reduce:animate-none"
-      />
-    )
-  }
+export function AgentHubOrbMark({
+  state,
+  large = false
+}: {
+  state: AgentHubOrbState
+  large?: boolean
+}): React.JSX.Element {
   return (
     <span
       aria-hidden
       data-agent-hub-orb-state={state.kind}
-      className="size-3.5 rounded-full border border-muted-foreground data-[agent-hub-orb-state=listening]:border-agent-orb-listening data-[agent-hub-orb-state=listening]:bg-agent-orb-listening data-[agent-hub-orb-state=needsYou]:border-agent-question data-[agent-hub-orb-state=needsYou]:bg-agent-question data-[agent-hub-orb-state=done]:border-status-success data-[agent-hub-orb-state=done]:bg-status-success/20"
-    />
+      className={large ? 'inline-flex size-8' : 'inline-flex size-4'}
+    >
+      <AgentHubOrbSphere
+        decorative
+        label="Orb"
+        phase={
+          state.kind === 'working'
+            ? 'thinking'
+            : state.kind === 'needsYou'
+              ? 'request'
+              : state.kind === 'done'
+                ? 'result'
+                : state.kind === 'listening'
+                  ? 'listening'
+                  : 'idle'
+        }
+      />
+    </span>
   )
 }
 
@@ -61,7 +75,7 @@ export function AgentHubOrbButton({
       preserveFocus
       onClick={onOpen}
     >
-      <AgentHubOrbMark state={state} />
+      <AgentHubOrbMark state={state} large={floating} />
     </DockButton>
   )
 }

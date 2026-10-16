@@ -171,6 +171,15 @@ const MessageBody = z.object({
   kind: z.literal('message'),
   role: z.string().min(1),
   blocks: z.array(Block),
+  spoken: z
+    .object({
+      // Provider metadata stays open so a newer writer cannot make this message unreadable.
+      provider: z.string().min(1),
+      threadId: z.string().min(1),
+      realtimeSessionId: z.string().min(1),
+      itemId: z.string().min(1)
+    })
+    .optional(),
   // Open like roles: a send mode a newer build writes must not turn the row malformed.
   sentAs: z.string().min(1).optional(),
   command: z.object({ name: z.string().min(1) }).optional(),

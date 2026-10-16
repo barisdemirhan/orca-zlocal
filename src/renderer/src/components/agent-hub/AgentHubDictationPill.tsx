@@ -20,13 +20,15 @@ export function AgentHubDictationPill({
   compact = false,
   disabled = false,
   stopActionId = 'voice.dictation',
-  stopHint
+  stopHint,
+  responsiveHint = false
 }: {
   phase: DictationPhase
   compact?: boolean
   disabled?: boolean
   stopActionId?: 'voice.dictation' | 'agentHub.toggleOrb'
   stopHint?: string
+  responsiveHint?: boolean
 }): React.JSX.Element {
   const transcript = useAppStore((s) => (compact ? '' : s.partialTranscript.trim()))
   const isHoldMode = useAppStore((s) => s.settings?.voice?.dictationMode === 'hold')
@@ -89,9 +91,11 @@ export function AgentHubDictationPill({
             aria-hidden
             data-agent-hub-dictation-stop-key
             className={
-              compact && !stopHint
-                ? 'hidden shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground @min-[30rem]/hub-reply:flex'
-                : 'flex shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground'
+              responsiveHint
+                ? 'hidden shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground @min-[24rem]/hub-dictation:flex'
+                : compact && !stopHint
+                  ? 'hidden shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground @min-[30rem]/hub-reply:flex'
+                  : 'flex shrink-0 items-center gap-1 text-xs whitespace-nowrap text-muted-foreground'
             }
           >
             {shortcut.keys.length > 0 ? (

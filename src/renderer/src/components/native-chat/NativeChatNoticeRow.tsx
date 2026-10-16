@@ -1,3 +1,4 @@
+import { useContext } from 'react'
 import { agentSessionGoalControlWords } from './agent-session-goal-control-words'
 import { AlertCircle, AlertTriangle, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -35,6 +36,13 @@ import { agentSessionFailureSentence } from '../../../../shared/agent-session-fa
 import { sayAgentSessionFailureTranslated } from './agent-session-failure-words-text'
 import { nativeChatAntigravitySignInContent } from './native-chat-antigravity-settings'
 import { formatUsageLimitResetClock } from '../../../../shared/agent-session-usage-limit'
+import { NativeChatPresentationContext } from './native-chat-presentation-context'
+import {
+  isCodexMcpStartupNotice,
+  nativeChatApprovedReviewSummary,
+  nativeChatCodexApiErrorSummary,
+  nativeChatHookErrorSummary
+} from '../../../../shared/native-chat-provider-frame-summary'
 
 const HOST_STATUS_WORDS: Record<AgentSessionHostStatusPresentation, () => string> = {
   'history-repaired': () =>
@@ -74,6 +82,7 @@ export function NativeChatNoticeRow({
   allowFileUriLinks?: boolean
 }): React.JSX.Element {
   useTranslation()
+  const orb = useContext(NativeChatPresentationContext) === 'orb'
   const orcaStopView = useNativeChatOrcaStopView()
   const claudeSignIn = useNativeChatClaudeSignInView()
   const look = nativeChatNoticeLook(block)
@@ -103,6 +112,21 @@ export function NativeChatNoticeRow({
       <pre className="whitespace-pre-wrap break-words font-mono text-xs text-chat-foreground">
         {block.text}
       </pre>
+    )
+  }
+  const approvedReview = orb ? nativeChatApprovedReviewSummary(block) : null
+  if (approvedReview) {
+    return <ProviderFrameRow block={block} summary={approvedReview} />
+  }
+  if (orb && isCodexMcpStartupNotice(block)) {
+    return (
+      <ProviderFrameRow
+        block={block}
+        summary={translate(
+          'components.native-chat.notices.mcpStartupDetails',
+          'MCP connection details'
+        )}
+      />
     )
   }
   if (look.kind === 'host-status') {
@@ -192,6 +216,10 @@ export function NativeChatNoticeRow({
               { agentName, wslDistro },
               sayAgentSessionFailureTranslated
             )
+        : orb
+          ? (nativeChatHookErrorSummary(block) ??
+            nativeChatCodexApiErrorSummary(block) ??
+            agentSessionGoalControlWords(block.text))
           : agentSessionGoalControlWords(block.text)
   const failureDetail = agentSessionFailureDetailText(failure)
   const detail = failureDetail?.trim() !== text.trim() ? failureDetail : undefined

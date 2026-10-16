@@ -27,11 +27,25 @@ import {
   committedMobileSessionTabClose,
   refusedMobileSessionTabClose
 } from '../../runtime/mobile-session-tab-close-outcome'
+import { AgentModelCatalogStore } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
+import { createAgentModelCatalogService } from '../../native-chat/agent-model-catalog/agent-model-catalog-service'
+import type { AgentModelCatalogProbe } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
 
 let state: ReturnType<typeof hostTestState>
 let settings: ReturnType<typeof createGlobalSettingsFixture>
 let manager: AgentHubOrbSessionManager
 let runtime: ConstructorParameters<typeof AgentHubOrbSessionManager>[0]
+
+function serveCodexModels(probe: AgentModelCatalogProbe): void {
+  state.host.deps.modelCatalog = createAgentModelCatalogService({
+    store: new AgentModelCatalogStore(),
+    getRecord: (sessionId) => state.store.getRecord(sessionId) ?? undefined,
+    drivesRecord: () => true,
+    resolveAccountHome: async () => ({ variable: 'CODEX_HOME', path: state.root }),
+    workspaceMayOverrideDefaultModel: async () => false,
+    probes: { codex: probe }
+  })
+}
 
 it('refuses Pi Ask before reserving a session or starting a provider', async () => {
   settings.agentHubOrbAgent = 'pi'
@@ -55,6 +69,24 @@ beforeEach(() => {
     agentHubOrbCwd: null,
     floatingTerminalCwd: state.root
   })
+  serveCodexModels(async () => ({
+    models: [
+      'default-model',
+      'kept-model',
+      'first-model',
+      'model-2',
+      'chosen-model',
+      'orb-model',
+      'previous-model'
+    ].map((id, index) => ({
+      id,
+      label: id,
+      isDefault: index === 0,
+      efforts: []
+    })),
+    fastModeTierByModel: new Map(),
+    origin: 'probe'
+  }))
   runtime = {
     agentHub: { snapshot: () => ({ requests: [], progress: [] }) },
     isAgentHubEnabled: () =>
@@ -118,6 +150,60 @@ afterEach(async () => {
 })
 
 describe('Orb conversations on the structured host', () => {
+  it.each([true, false])(
+    'replaces a stale saved Codex model from the launch account’s catalog (named default: %s)',
+    async (isDefault) => {
+      settings.agentHubOrbModel = 'gpt-6.1-sol'
+      serveCodexModels(async () => ({
+        models: [
+          { id: 'first-supported', label: 'First supported', isDefault: false, efforts: [] },
+          { id: 'supported-model', label: 'Supported', isDefault, efforts: [] }
+        ],
+        fastModeTierByModel: new Map(),
+        origin: 'probe'
+      }))
+
+      const opened = await manager.open()
+      const expectedModel = isDefault ? 'supported-model' : 'first-supported'
+
+      expect(state.store.getRecord(opened.sessionId)?.options?.model).toBe(expectedModel)
+      expect(state.acquire.mock.calls[0]?.[0].options?.model).toBe(expectedModel)
+      expect(settings.agentHubOrbModel).toBe(expectedModel)
+      expect(await manager.open()).toEqual(opened)
+      expect(state.store.listRecords()).toHaveLength(1)
+      expect(await manager.list()).toMatchObject([
+        { sessionId: opened.sessionId, model: expectedModel }
+      ])
+    }
+  )
+
+  it.each(['empty', 'failed', 'unavailable', 'missing'] as const)(
+    'does not create a Codex conversation or rewrite its saved model when the catalog is %s',
+    async (kind) => {
+      settings.agentHubOrbModel = 'kept-unverified-model'
+      serveCodexModels(async () => {
+        if (kind === 'failed') {
+          throw new Error('catalog request failed')
+        }
+        return {
+          models:
+            kind === 'empty' ? [] : [{ id: 'model', label: 'Model', isDefault: true, efforts: [] }],
+          fastModeTierByModel: new Map(),
+          origin: 'probe',
+          ...(kind === 'unavailable' ? { unavailable: { reason: 'notSignedIn' as const } } : {})
+        }
+      })
+      if (kind === 'missing') {
+        delete state.host.deps.modelCatalog
+      }
+
+      await expect(manager.open()).rejects.toThrow('Codex models could not be verified')
+      expect(state.store.listRecords()).toHaveLength(0)
+      expect(state.acquire).not.toHaveBeenCalled()
+      expect(settings.agentHubOrbModel).toBe('kept-unverified-model')
+    }
+  )
+
   it('closes through the existing tab path and preserves history, with an idle close doing nothing', async () => {
     await manager.close()
     expect(runtime.closeMobileSessionTab).not.toHaveBeenCalled()
@@ -215,7 +301,7 @@ describe('Orb conversations on the structured host', () => {
     expect(state.host.getSessionTabId(previous.sessionId)).toBeNull()
   })
 
-  it('orders history by activity and leaves the model absent when the conversation uses its agent default', async () => {
+  it('orders history by activity and records the verified Codex default used by the conversation', async () => {
     vi.mocked(Date.now).mockReturnValue(HOST_TEST_NOW + 10_000)
     const first = await manager.open()
     await manager.close()
@@ -223,7 +309,7 @@ describe('Orb conversations on the structured host', () => {
     const second = await manager.open({ model: 'model-2' })
     const entries = await manager.list(1)
     expect(entries[0].sessionId).toBe(first.sessionId)
-    expect(entries[0]).not.toHaveProperty('model')
+    expect(entries[0].model).toBe('default-model')
     expect((await manager.list()).map((entry) => entry.sessionId)).toEqual([
       first.sessionId,
       second.sessionId
@@ -279,7 +365,7 @@ describe('Orb conversations on the structured host', () => {
       origin: 'agent-hub-orb',
       location: { workspaceId: FLOATING_TERMINAL_WORKTREE_ID, workspaceKind: 'folder' },
       launchDirectory: state.root,
-      options: {}
+      options: { model: 'default-model' }
     })
     const snapshot = await state.host.journalSnapshot(first.sessionId)
     expect(snapshot.submissions).toHaveLength(1)

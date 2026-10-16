@@ -303,6 +303,40 @@ describe('Orb pill', () => {
     expect(pill?.style.transform).toBe('')
     expect(pill?.style.bottom).toBe('')
   })
+  it('keeps the whole pill within a narrow viewport beside a right-hand anchor', () => {
+    const width = window.innerWidth
+    const height = window.innerHeight
+    const anchor = document.createElement('div')
+    document.body.append(anchor)
+    vi.spyOn(anchor, 'getBoundingClientRect').mockReturnValue(new DOMRect(300, 200, 20, 20))
+    try {
+      window.innerWidth = 320
+      window.innerHeight = 240
+      render(
+        <AgentHubOrbPill
+          {...props}
+          state={{ kind: 'working', command: 'pnpm test' }}
+          anchorRef={{ current: anchor }}
+          side="right"
+          onOpen={vi.fn()}
+        />
+      )
+      const pill = document.querySelector('[data-agent-hub-orb-pill]')?.parentElement
+      if (!pill) {
+        throw new Error('Expected Orb pill')
+      }
+      vi.spyOn(pill, 'offsetWidth', 'get').mockReturnValue(240)
+      vi.spyOn(pill, 'offsetHeight', 'get').mockReturnValue(40)
+      fireEvent(window, new Event('resize'))
+      expect(Number.parseFloat(pill.style.left)).toBeGreaterThanOrEqual(8)
+      expect(Number.parseFloat(pill.style.left) + pill.offsetWidth).toBeLessThanOrEqual(312)
+      expect(Number.parseFloat(pill.style.top) + pill.offsetHeight).toBeLessThanOrEqual(232)
+    } finally {
+      window.innerWidth = width
+      window.innerHeight = height
+      anchor.remove()
+    }
+  })
   it.each(['top', 'bottom', 'left', 'right'] as const)(
     'anchors its pill on the %s side and follows a changed edge',
     (side) => {

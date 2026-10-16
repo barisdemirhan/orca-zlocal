@@ -1,7 +1,6 @@
 import type { AgentSessionAccountKind } from '../../shared/agent-session-availability'
 import { throwIfSignalAborted, waitForPromiseWithSignal } from '../../shared/abort-signal-reason'
 import type { StructuredAgentSessionAcquireInput } from '../native-chat/agent-session-wire/structured-agent-session-adapter'
-import { AgentSessionAcquisitionRefusal } from '../native-chat/agent-session-wire/structured-agent-session-adapter'
 import type {
   StructuredAgentSessionProviderOpenInput,
   StructuredAgentSessionProviderOpenResult
@@ -15,6 +14,7 @@ import type { CodexJournalTranslator } from './codex-structured-journal-translat
 import { codexProviderHandleLink } from './codex-structured-owner-identity'
 import { openCodexThread } from './codex-structured-thread-open'
 import { catchUpCodexThread } from './codex-structured-thread-catch-up'
+import { restoreAcquiredCodexJournal } from './codex-structured-session-journal'
 import { withCodexVisualsThreadConfig } from './codex-structured-visuals'
 import { NATIVE_CHAT_SCRATCH_DIR_ENV } from '../native-chat/native-chat-visuals-delivery'
 import {
@@ -111,16 +111,23 @@ export async function openCodexStructuredSession(
   current()
   start.setPrimaryThreadId(opened.threadId)
   attempt.window.appliedSettings.observe(opened)
-  const restored = translator?.restoreThread(opened.threadId, opened.thread ?? {})
-  if (restored && !restored.accepted) {
-    throw AgentSessionAcquisitionRefusal.historyTooLarge(
-      'Codex thread history exceeds the bounded restore queue; history was not partially imported.'
-    )
-  }
+  const realtimeTimelineReady = await waitForPromiseWithSignal(
+    restoreAcquiredCodexJournal({
+      connection,
+      opened,
+      translator,
+      resumed: launch.resumeThreadId !== null,
+      timeoutMs: deps.requestTimeoutMs,
+      beforeRestore: current
+    }),
+    openInput.signal
+  )
+  // A restored realtime timeline already holds every turn; paging them in again would duplicate rows.
   if (
     translator &&
     input.events &&
     launch.resumeThreadId !== null &&
+    !realtimeTimelineReady &&
     !opened.supersededThreadId &&
     !threadReturnedTurns(opened.thread)
   ) {
@@ -160,6 +167,7 @@ export async function openCodexStructuredSession(
     connection,
     ...codexSessionLifecycle(input.fence, generation),
     threadId: opened.threadId,
+    realtimeTimelineReady,
     historyMode: opened.historyMode,
     permissions: {
       acquiredMode: input.permissionMode ?? 'ask',

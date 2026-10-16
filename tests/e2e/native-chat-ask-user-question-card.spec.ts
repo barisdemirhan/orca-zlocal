@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import type { Page } from '@stablyai/playwright-test'
@@ -101,7 +101,7 @@ function pendingAskTranscript(args: { sessionId: string; userText: string }): st
 test.describe('Desktop chat AskUserQuestion card (#11761)', () => {
   test('renders the answerable question card from the transcript when live status carries no ask', async ({
     orcaPage
-  }) => {
+  }, testInfo) => {
     await waitForSessionReady(orcaPage)
     await waitForActiveWorktree(orcaPage)
     await ensureTerminalVisible(orcaPage)
@@ -113,8 +113,6 @@ test.describe('Desktop chat AskUserQuestion card (#11761)', () => {
 
     const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-ask-card-'))
     const transcriptPath = path.join(scratchDir, `${sessionId}.jsonl`)
-    const screenshotDir = path.join(process.cwd(), 'validation-screenshots', 'ask-user-question')
-    mkdirSync(screenshotDir, { recursive: true })
 
     try {
       const userText = 'Reformat the config file for me'
@@ -140,13 +138,16 @@ test.describe('Desktop chat AskUserQuestion card (#11761)', () => {
         .filter({ hasText: QUESTION })
       await expect(cardQuestion).toBeVisible({ timeout: 10_000 })
       await expect(orcaPage.getByRole('button', { name: /Spaces/ })).toBeVisible()
-      await orcaPage.screenshot({ path: path.join(screenshotDir, '01-question-card.png') })
+      await orcaPage.screenshot({ path: testInfo.outputPath('01-question-card.png') })
 
       // A final single-select pick auto-submits (#26288), proving the card accepts answers.
       await orcaPage.getByRole('button', { name: /Spaces/ }).click()
       // Require card dismissal and composer return; the transcript keeps its resolution receipt.
       await expect(cardQuestion).toHaveCount(0, { timeout: 20_000 })
-      await orcaPage.screenshot({ path: path.join(screenshotDir, '03-answered.png') })
+      await expect(
+        orcaPage.getByRole('textbox', { name: 'Ask anything, @ to mention files, / for commands' })
+      ).toBeVisible()
+      await orcaPage.screenshot({ path: testInfo.outputPath('03-answered.png') })
     } finally {
       rmSync(scratchDir, { recursive: true, force: true })
     }

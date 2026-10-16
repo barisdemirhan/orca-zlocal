@@ -34,7 +34,11 @@ async function open(
     if (!tab) {
       throw new Error('Orb tab was not published')
     }
-    if (!preserveVisibility || useAgentHubOrbPanel.getState().session) {
+    if (preserveVisibility) {
+      if (useAgentHubOrbPanel.getState().session) {
+        useAgentHubOrbPanel.setState({ session: { ...session, tabId: tab.id } })
+      }
+    } else {
       showAgentHubOrbPanel({ ...session, tabId: tab.id })
     }
     return true

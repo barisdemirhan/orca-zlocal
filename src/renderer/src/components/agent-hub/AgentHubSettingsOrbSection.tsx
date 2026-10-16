@@ -23,7 +23,7 @@ export function AgentHubSettingsOrbSection({
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }): React.JSX.Element {
   const orb = normalizeAgentHubOrbSettings(settings)
-  const { agents, models } = useAgentHubOrbOptions(orb.agent)
+  const { agents, models, loading, refreshModels } = useAgentHubOrbOptions(orb.agent)
   const supportsAsk = agentHubOrbSupportsAsk(orb.agent)
   const askUnavailable = translate(
     'agentHub.orb.piRequiresFree',
@@ -83,15 +83,37 @@ export function AgentHubSettingsOrbSection({
       />
       <SettingsRow
         label={modelLabel}
+        description={
+          orb.agent === 'codex' && models.length === 0
+            ? loading
+              ? translate('agentHub.orb.modelsLoading', 'Loading available models…')
+              : translate(
+                  'agentHub.orb.modelsUnavailable',
+                  'Could not load available models. Open the model menu to retry.'
+                )
+            : undefined
+        }
         control={
-          models.length > 0 ? (
+          orb.agent === 'codex' || models.length > 0 ? (
             <Select
               value={orb.model ? `model:${orb.model}` : 'agent-default'}
-              onValueChange={(value) =>
+              onOpenChange={(open) => {
+                if (open && orb.agent === 'codex') {
+                  refreshModels()
+                }
+              }}
+              onValueChange={(value) => {
+                if (
+                  orb.agent === 'codex' &&
+                  value !== 'agent-default' &&
+                  !models.some((model) => `model:${model.id}` === value)
+                ) {
+                  return
+                }
                 updateSettings({
                   agentHubOrbModel: value === 'agent-default' ? null : value.slice('model:'.length)
                 })
-              }
+              }}
             >
               <SelectTrigger aria-label={modelLabel}>
                 <SelectValue />
@@ -99,7 +121,12 @@ export function AgentHubSettingsOrbSection({
               <SelectContent>
                 <SelectItem value="agent-default">{defaultModel}</SelectItem>
                 {orb.model && !models.some((model) => model.id === orb.model) ? (
-                  <SelectItem value={`model:${orb.model}`}>{orb.model}</SelectItem>
+                  <SelectItem value={`model:${orb.model}`} disabled={orb.agent === 'codex'}>
+                    {orb.model}
+                    {orb.agent === 'codex'
+                      ? ` · ${translate('agentHub.orb.modelUnavailable', 'Unavailable')}`
+                      : ''}
+                  </SelectItem>
                 ) : null}
                 {models.map((model) => (
                   <SelectItem key={model.id} value={`model:${model.id}`}>

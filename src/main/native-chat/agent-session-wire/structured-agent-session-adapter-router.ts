@@ -130,6 +130,30 @@ export class StructuredAgentSessionAdapterRouter implements StructuredAgentSessi
   heldSends = (sessionId: string): ReadonlySet<string> | undefined =>
     this.liveOwnerOrNull(sessionId)?.heldSends?.(sessionId)
 
+  startVoice: NonNullable<StructuredAgentSessionAdapter['startVoice']> = (input) =>
+    this.owner(input.sessionId).startVoice?.(input) ??
+    Promise.resolve({ ok: false, rejected: 'Live voice is unavailable for this provider.' })
+
+  stopVoice: NonNullable<StructuredAgentSessionAdapter['stopVoice']> = (input) =>
+    this.liveOwnerOrNull(input.sessionId)?.stopVoice?.(input) ??
+    Promise.resolve({
+      voiceSessionId: input.voiceSessionId,
+      generation: input.generation,
+      state: 'off'
+    })
+
+  holdsVoice = (sessionId: string): boolean =>
+    this.liveOwnerOrNull(sessionId)?.holdsVoice?.(sessionId) === true
+
+  readVoiceCapability: NonNullable<StructuredAgentSessionAdapter['readVoiceCapability']> = (
+    sessionId
+  ) =>
+    this.liveOwnerOrNull(sessionId)?.readVoiceCapability?.(sessionId) ??
+    Promise.resolve({
+      supported: null,
+      reason: 'Native voice support will be checked when this conversation connects.'
+    })
+
   holdsLiveProviderProcess = (sessionId: string, acquisitionGeneration: string): boolean =>
     this.liveOwnerOrNull(sessionId)?.holdsLiveProviderProcess?.(sessionId, acquisitionGeneration) ??
     false

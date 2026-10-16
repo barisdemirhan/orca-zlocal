@@ -9,10 +9,12 @@ import {
   SESSION_TABS_TAB_DELTA_RUNTIME_CAPABILITY,
   WORKTREE_BACKGROUND_REMOVAL_RUNTIME_CAPABILITY
 } from './protocol-version'
+import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from './agent-session-voice'
 
 // Electron clients can decode client-hosted page placement; becoming a page
 // host still requires the separate authenticated browser-client lease.
 export const ELECTRON_REMOTE_RUNTIME_CLIENT_CAPABILITIES = [
+  AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY,
   // Agent Hub adds its capability on the live connection only while its renderer consumer is subscribed.
   ...NATIVE_REMOTE_RUNTIME_CLIENT_CAPABILITIES,
   TERMINAL_IMAGE_VIEWER_CAPABILITY,

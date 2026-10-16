@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -18,6 +18,11 @@ import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
 import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
 import { NativeChatSessionOptionPickers } from '../native-chat/NativeChatSessionOptionPickers'
 import type { SessionOptionDescriptor } from '../../../../shared/native-chat-session-options'
+import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
+import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
+import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
+import { orbAsk } from './agent-hub-orb-test-fixtures'
 
 const mocks = vi.hoisted(() => {
   const listeners = new Set<() => void>()
@@ -25,6 +30,21 @@ const mocks = vi.hoisted(() => {
     open: vi.fn(),
     close: vi.fn(),
     list: vi.fn(),
+    pickFolder: vi.fn(),
+    voice: {
+      capability: 'unsupported' as const,
+      canStart: false,
+      connection: 'off' as const,
+      input: 'listening' as const,
+      output: 'silent' as const,
+      textMode: true,
+      startLive: vi.fn(async () => {}),
+      stopLive: vi.fn(async () => {}),
+      muteInput: vi.fn(),
+      stopSpeaking: vi.fn(),
+      switchToText: vi.fn(async () => {}),
+      prepareDictation: vi.fn(async () => false)
+    },
     listeners,
     feed: {
       activate: () => () => {},
@@ -35,16 +55,35 @@ const mocks = vi.hoisted(() => {
     }
   }
 })
+vi.mock('./use-agent-hub-orb-voice', () => ({ useAgentHubOrbVoice: () => mocks.voice }))
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
+  const { createGlobalSettingsFixture } =
+    await import('../../../../shared/global-settings-test-fixture')
+  const useAppStore = create(() => ({
+    dictationState: 'idle',
+    unifiedTabsByWorktree: {},
+    keybindings: {},
+    updateSettings: vi.fn((updates: Partial<GlobalSettings>) => {
+      useAppStore.setState((state) => ({ settings: { ...state.settings, ...updates } }))
+    }),
+    settings: createGlobalSettingsFixture()
+  }))
   return {
-    useAppStore: create(() => ({
-      dictationState: 'idle',
-      unifiedTabsByWorktree: {},
-      keybindings: {}
-    }))
+    useAppStore
   }
 })
+vi.mock('./use-agent-hub-orb-options', () => ({
+  useAgentHubOrbOptions: (agent: string) => ({
+    agents: [
+      { id: 'claude', label: 'Claude' },
+      { id: 'codex', label: 'Codex' }
+    ],
+    models: agent === 'codex' ? [{ id: 'next-model', label: 'Next model' }] : [],
+    loading: false,
+    refreshModels: () => {}
+  })
+}))
 vi.mock('@/lib/structured-agent-session-launch-label', () => ({
   structuredAgentLabel: (id: string) => (id === 'codex' ? 'Codex' : 'Claude')
 }))
@@ -80,29 +119,45 @@ beforeEach(() => {
     resumed: Boolean(params?.resume)
   }))
   mocks.close.mockResolvedValue(undefined)
+  mocks.pickFolder.mockResolvedValue(null)
   Object.defineProperty(window, 'api', {
     configurable: true,
-    value: { agentHub: { orb: { list: mocks.list, open: mocks.open, close: mocks.close } } }
+    value: {
+      agentHub: { orb: { list: mocks.list, open: mocks.open, close: mocks.close } },
+      app: { pickFloatingWorkspaceDirectory: mocks.pickFolder }
+    }
   })
 })
 afterEach(() => {
   cleanup()
   closeAgentHubOrbPanel()
   mocks.listeners.clear()
+  clearAgentHubRequestHost('local')
+  clearAgentHubRequestHost('remote')
 })
-function show() {
+const requestPresentation: AgentHubRequestPresentation = {
+  title: 'Orb',
+  targetTitle: 'Orb',
+  target: null,
+  location: { project: 'Orca', group: null, workspace: null }
+}
+function show(chat = true) {
   showAgentHubOrbPanel({ sessionId: 'current', tabId: 'tab-current', resumed: false })
-  return render(
+  const rendered = render(
     <TooltipProvider>
       <AgentHubOrbPanel
         anchorRef={{ current: null }}
         side="right"
         docked
         hidden={false}
-        requestPresentationOf={vi.fn()}
+        requestPresentationOf={() => requestPresentation}
       />
     </TooltipProvider>
   )
+  if (chat) {
+    fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
+  }
+  return rendered
 }
 
 it('keeps the retained chat and its model picker open until an actual outside interaction', async () => {
@@ -163,6 +218,7 @@ it('keeps the retained chat and its model picker open until an actual outside in
       <button>Outside</button>
     </TooltipProvider>
   )
+  await user.click(screen.getByRole('button', { name: 'Show conversation' }))
   const draft = await screen.findByRole('textbox', { name: 'Chat draft' })
   const trigger = screen.getByRole('button', { name: /Model.*Opus/ })
   await user.click(trigger)
@@ -189,8 +245,11 @@ it('keeps the retained chat and its model picker open until an actual outside in
   await waitFor(() => expect(useAgentHubOrbPanel.getState().session).toBeNull())
 })
 
-it('opens with the conversation model and title and places an unanchored panel above the bottom centre', async () => {
-  show()
+it('opens a quiet Orb before revealing the same conversation and its model above the bottom centre', async () => {
+  show(false)
+  expect(screen.getByRole('img', { name: 'Ready' })).toBeTruthy()
+  expect(mocks.voice.startLive).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
   expect(await screen.findByText('Codex · gpt-model')).toBeTruthy()
   expect(screen.getByText(/Mic worker ·/)).toBeTruthy()
   const rect = agentHubOrbAnchorRect(null)
@@ -223,28 +282,114 @@ it('reopens from history with one resume call and creates New by closing then op
   )
 })
 
-it('Escape cancels an active dictation and leaves the panel open, then closes it when idle', async () => {
-  const actions: unknown[] = []
-  const listener = (event: Event) => {
-    if (event instanceof CustomEvent) {
-      actions.push(event.detail)
+it.each(['orb', 'other'] as const)(
+  'Escape cancels only its own recording when %s owns dictation',
+  async (owner) => {
+    const actions: unknown[] = []
+    const listener = (event: Event) => {
+      if (event instanceof CustomEvent) {
+        actions.push(event.detail)
+      }
+    }
+    const stopTracking = trackAgentHubDictationOrigin()
+    document.addEventListener(DICTATION_CONTROL_EVENT, listener)
+    show()
+    await screen.findByText('Codex · gpt-model')
+    const terminal = document.createElement('div')
+    terminal.dataset.terminalTabId = 'other-worker'
+    const input = document.createElement('textarea')
+    input.className = 'xterm-helper-textarea'
+    terminal.append(input)
+    const slot = document.querySelector('[data-agent-hub-orb-chat-tab-id="tab-current"]')
+    if (!slot) {
+      throw new Error('Missing Orb composer slot')
+    }
+    if (owner === 'orb') {
+      slot.append(input)
+    } else {
+      document.body.append(terminal)
+    }
+    try {
+      input.focus()
+      act(() => useAppStore.setState({ dictationState: 'listening' }))
+      fireEvent.keyDown(document.querySelector('[data-agent-hub-orb-panel]') ?? document.body, {
+        key: 'Escape'
+      })
+      expect(actions).toEqual(owner === 'orb' ? ['cancel'] : [])
+      expect(Boolean(useAgentHubOrbPanel.getState().session)).toBe(owner === 'orb')
+      expect(useAppStore.getState().dictationState).toBe('listening')
+      act(() => useAppStore.setState({ dictationState: 'idle' }))
+      fireEvent.keyDown(document.querySelector('[data-agent-hub-orb-panel]') ?? document.body, {
+        key: 'Escape'
+      })
+      expect(useAgentHubOrbPanel.getState().session).toBeNull()
+    } finally {
+      act(() => useAppStore.setState({ dictationState: 'idle' }))
+      stopTracking()
+      terminal.remove()
+      document.removeEventListener(DICTATION_CONTROL_EVENT, listener)
     }
   }
-  document.addEventListener(DICTATION_CONTROL_EVENT, listener)
+)
+
+it('edits the shared Orb settings without losing the retained draft or conversation model', async () => {
+  function RetainedDraft(): React.JSX.Element {
+    const destination = useAgentHubOrbPanel((state) => state.destination)
+    return (
+      <RetainedPaneHost
+        groupId={undefined}
+        isVisible={false}
+        retainContent
+        destination={destination}
+      >
+        <input aria-label="Chat draft" defaultValue="unfinished plan" />
+      </RetainedPaneHost>
+    )
+  }
+  mocks.open.mockResolvedValue({ sessionId: 'current', resumed: false })
   show()
+  render(<RetainedDraft />)
   await screen.findByText('Codex · gpt-model')
-  act(() => useAppStore.setState({ dictationState: 'listening' }))
-  fireEvent.keyDown(document.querySelector('[data-agent-hub-orb-panel]') ?? document.body, {
-    key: 'Escape'
+  const draft = screen.getByRole('textbox', { name: 'Chat draft' })
+  if (!(draft instanceof HTMLInputElement)) {
+    throw new Error('Expected retained chat draft')
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Orb settings' }))
+  const settings = screen.getByRole('region', { name: 'Orb settings' })
+  expect(useAgentHubOrbPanel.getState().destination?.contains(draft)).toBe(true)
+  expect(useAgentHubOrbPanel.getState().chatVisible).toBe(false)
+  fireEvent.keyDown(within(settings).getByRole('combobox', { name: 'Agent' }), {
+    key: 'ArrowDown'
   })
-  expect(actions).toEqual(['cancel'])
-  expect(useAgentHubOrbPanel.getState().session).not.toBeNull()
-  act(() => useAppStore.setState({ dictationState: 'idle' }))
-  fireEvent.keyDown(document.querySelector('[data-agent-hub-orb-panel]') ?? document.body, {
-    key: 'Escape'
+  fireEvent.click(await screen.findByRole('option', { name: 'Codex' }))
+  fireEvent.keyDown(within(settings).getByRole('combobox', { name: 'Model' }), {
+    key: 'ArrowDown'
   })
-  expect(useAgentHubOrbPanel.getState().session).toBeNull()
-  document.removeEventListener(DICTATION_CONTROL_EVENT, listener)
+  fireEvent.click(await screen.findByRole('option', { name: 'Next model' }))
+  fireEvent.click(within(settings).getByRole('radio', { name: 'Act freely' }))
+  await act(async () => fireEvent.click(within(settings).getByRole('button', { name: 'Choose…' })))
+  expect(useAppStore.getState().settings?.floatingTerminalCwd).toBe('~')
+  mocks.pickFolder.mockResolvedValue('/project/orb')
+  await act(async () => fireEvent.click(within(settings).getByRole('button', { name: 'Choose…' })))
+  fireEvent.click(
+    within(within(settings).getByRole('radiogroup', { name: 'Placement' })).getByRole('radio', {
+      name: 'Status bar'
+    })
+  )
+  expect(useAppStore.getState().settings).toMatchObject({
+    agentHubOrbAgent: 'codex',
+    agentHubOrbModel: 'next-model',
+    agentHubOrbPermission: 'free',
+    floatingTerminalCwd: '/project/orb',
+    agentHubOrbPlacement: 'statusBar'
+  })
+  await waitFor(() => expect(mocks.open).toHaveBeenCalledOnce())
+  expect(screen.getByRole('region', { name: 'Orb settings' })).toBe(settings)
+  expect(mocks.close).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'Back to conversation' }))
+  expect(screen.getByRole('textbox', { name: 'Chat draft' })).toBe(draft)
+  expect(draft.value).toBe('unfinished plan')
+  expect(screen.getByText('Codex · gpt-model')).toBeTruthy()
 })
 
 it('reopening leaves another pane recording and cancels only the Orb recording it switches away from', async () => {
@@ -359,3 +504,55 @@ it('applies debounced saved settings serially to an open Orb and does not reopen
   expect(useAgentHubOrbPanel.getState().session).toBeNull()
   expect(useAppStore.getState().settings?.agentHubOrbModel).toBe('final-model')
 })
+
+it.each([
+  ['responded', 'Answer received'],
+  ['denied_by_user', 'Request denied'],
+  ['already_resolved', 'This request was answered elsewhere or is no longer available.']
+] as const)(
+  'shows the actual %s outcome only after host closure and dismisses only its presentation',
+  async (reason, message) => {
+    const request = orbAsk('current')
+    for (const [host, item] of [
+      ['remote', request],
+      ['local', orbAsk('previous')]
+    ] as const) {
+      applyAgentHubDelivery(host, item)
+      applyAgentHubDelivery(host, {
+        ...item,
+        kind: 'closed',
+        reason: 'responded',
+        result: { answer: 'Other', index: null, by: 'human', desktop: 'device' }
+      })
+    }
+    show(false)
+    expect(screen.queryByText('Answer received')).toBeNull()
+    act(() => applyAgentHubDelivery('local', request))
+    expect(screen.getByRole('img', { name: 'Waiting for your answer' })).toBeTruthy()
+    const respond = vi.fn(async () => {})
+    const unregister = registerAgentHubRequestResponder(respond)
+    try {
+      await act(async () => fireEvent.click(screen.getByRole('button', { name: /Second/ })))
+      expect(respond).toHaveBeenCalledOnce()
+      expect(screen.getByText('Sending…')).toBeTruthy()
+      expect(screen.queryByText('Answer received')).toBeNull()
+      act(() =>
+        applyAgentHubDelivery('local', {
+          ...request,
+          kind: 'closed',
+          reason,
+          ...(reason === 'responded'
+            ? { result: { answer: 'Second', index: 2, by: 'human' as const, desktop: 'device' } }
+            : {})
+        })
+      )
+      expect(screen.getByText(message)).toBeTruthy()
+      expect(screen.queryByText('Which approach?')).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Dismiss request outcome' }))
+      expect(screen.queryByText(message)).toBeNull()
+      expect(respond).toHaveBeenCalledOnce()
+    } finally {
+      unregister()
+    }
+  }
+)

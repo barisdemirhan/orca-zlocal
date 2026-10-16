@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
+import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
 import type { AgentHubRequest, AgentHubResponse } from '../../../../shared/agent-hub-requests'
 import { AgentHubInboxBody } from './AgentHubPanelSections'
@@ -24,7 +25,11 @@ import {
   agentHubNotifyRequest,
   agentHubGateRequest
 } from './agent-hub-request-test-fixtures'
-import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
+import {
+  agentHubRequestPresentation,
+  type AgentHubRequestPresentation
+} from './agent-hub-request-presentation'
+import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 vi.mock('sonner', () => ({ toast: vi.fn() }))
 
 const presentation: AgentHubRequestPresentation = {
@@ -37,7 +42,12 @@ const initial = useAppStore.getState()
 const respond = vi.fn<(host: string, id: string, result: AgentHubResponse) => Promise<void>>()
 let unregister: () => void
 const cardControl = createRef<AgentHubCardControl>()
-function Inbox(): React.JSX.Element {
+const defaultRequestPresentation = () => presentation
+function Inbox({
+  requestPresentationOf = defaultRequestPresentation
+}: {
+  requestPresentationOf?: Parameters<typeof AgentHubInboxBody>[0]['requestPresentationOf']
+} = {}): React.JSX.Element {
   const requests = useAgentHubRequests()
   const items = agentHubInboxRequests(requests)
   const lists = buildAgentHubLists([])
@@ -53,7 +63,7 @@ function Inbox(): React.JSX.Element {
         now={0}
         popoutKeys={[]}
         cardControlRef={cardControl}
-        requestPresentationOf={() => presentation}
+        requestPresentationOf={requestPresentationOf}
         actions={{
           locationOf: () => presentation.location,
           isSelected: () => false,
@@ -218,6 +228,63 @@ it.each([
     expect(respond).toHaveBeenCalledWith('workhost', consent.requestId, { kind: 'consent', decision })
     close(consent)
     expect(screen.queryByRole('button', { name: label })).toBeNull()
+  }
+)
+
+it.each(['local', 'workhost'])(
+  'identifies a pane-less Orb once and keeps its consent tied to host %s',
+  async (host) => {
+    const target = agentHubThreadsFor([{ paneKey: PANE_KEY, state: 'working', at: 1 }])[0]
+    target.paneTitle = 'eSIM eksik özellikler'
+    target.worktree = {
+      ...target.worktree,
+      hostId: 'local',
+      ...(host === 'local' ? {} : { runtimeOwnerEnvironmentId: host })
+    }
+    const consent: Extract<AgentHubRequest, { kind: 'consent' }> = {
+      ...agentHubAskRequest(),
+      kind: 'consent',
+      caller: {
+        kind: 'orb',
+        sessionId: 'orb-session',
+        paneKey: 'orb:orb-session',
+        terminalHandle: 'orb:orb-session',
+        title: 'Orb'
+      },
+      target: { paneKey: target.paneKey, terminalHandle: 'target-terminal' },
+      operation: { kind: 'mirror', action: 'open' }
+    }
+    act(() => applyAgentHubDelivery(host, consent))
+    render(
+      <Inbox
+        requestPresentationOf={(requestHost, request) =>
+          agentHubRequestPresentation(
+            useAppStore.getState(),
+            [target],
+            requestHost,
+            request,
+            () => presentation.location
+          )
+        }
+      />
+    )
+    expect.soft(screen.getAllByText('Orb')).toHaveLength(1)
+    expect
+      .soft(
+        screen.queryByRole('region', {
+          name: '@Orb wants to open the mirror of eSIM eksik özellikler'
+        })
+      )
+      .not.toBeNull()
+    if (host === 'workhost') {
+      expect(screen.getByText('workhost')).toBeTruthy()
+    }
+    expect(respond).not.toHaveBeenCalled()
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Allow once' })))
+    expect(respond).toHaveBeenCalledExactlyOnceWith(host, consent.requestId, {
+      kind: 'consent',
+      decision: 'once'
+    })
   }
 )
 

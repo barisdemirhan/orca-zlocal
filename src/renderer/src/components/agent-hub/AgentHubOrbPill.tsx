@@ -77,13 +77,17 @@ export function AgentHubOrbPillContent({
       data-agent-hub-orb-pill={state.kind}
       data-agent-hub-alert-stack
       role="status"
-      className="flex max-w-[min(32rem,calc(100vw-1rem))] flex-wrap items-center gap-2 rounded-xl border border-border bg-popover px-3 py-2 text-popover-foreground shadow-floating"
+      className="flex max-w-[min(32rem,calc(100vw-1rem))] flex-wrap items-center gap-2 rounded-xl border border-border bg-popover px-3 py-2 text-popover-foreground shadow-floating data-[agent-hub-orb-pill=working]:w-80"
     >
       <AgentHubOrbMark state={state} />
       {state.kind === 'listening' ? (
         <Listening />
       ) : state.kind === 'working' ? (
-        <button type="button" className="min-w-0 truncate text-xs" onClick={onOpen}>
+        <button
+          type="button"
+          className="min-w-0 flex-1 truncate text-left text-xs"
+          onClick={onOpen}
+        >
           {translate('auto.agentHub.orb.working', 'Working')}
           {state.command ? (
             <>
@@ -144,6 +148,14 @@ export function AgentHubOrbPill({
       pill.style.bottom = ''
       pill.style.transform = ''
       placeBesideAnchor(pill, anchorRef.current, side)
+      pill.style.left = `${Math.max(
+        8,
+        Math.min(Number.parseFloat(pill.style.left), window.innerWidth - pill.offsetWidth - 8)
+      )}px`
+      pill.style.top = `${Math.max(
+        8,
+        Math.min(Number.parseFloat(pill.style.top), window.innerHeight - pill.offsetHeight - 8)
+      )}px`
     } else {
       pill.style.left = '50%'
       pill.style.top = ''
@@ -168,7 +180,7 @@ export function AgentHubOrbPill({
     }
   })
   return createPortal(
-    <div ref={pillRef} className="fixed z-[48]">
+    <div ref={pillRef} className="fixed z-[48] w-max max-w-[calc(100vw-1rem)]">
       <AgentHubOrbPillContent {...props} />
     </div>,
     document.body

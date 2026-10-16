@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 
-import { act, renderHook } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+// One press is one action: a later press of the same control is never answered from an earlier one.
+
+import { act, cleanup, renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { RuntimeClientTarget } from '@/runtime/runtime-client-target'
 
 const mocks = vi.hoisted(() => ({
   call: vi.fn(),
@@ -81,6 +84,7 @@ beforeEach(() => {
   mocks.hostAnswersRepeatedStops.mockResolvedValue(false)
   mocks.operations = 0
 })
+afterEach(cleanup)
 
 describe('a write pressed again', () => {
   it('applies an option picked again after a pick whose answer was lost', async () => {
@@ -423,3 +427,116 @@ it.each([
     expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(message)
   }
 )
+
+describe('native voice acquisition on the same conversation', () => {
+  const fields = { voiceSessionId: 'voice-1', generation: 1, sdp: 'fixture offer' }
+  const receipt = { voiceSessionId: 'voice-1', generation: 1, state: 'connecting' as const }
+
+  it('accepts the confirmed acquired fence while that conversation still owns the request', async () => {
+    let reply: ((value: unknown) => void) | undefined
+    mocks.call.mockReturnValueOnce(
+      new Promise((resolve) => {
+        reply = resolve
+      })
+    )
+    const stateRef = { current: { fence: 3 } }
+    const { result } = renderHook(() =>
+      useStructuredAgentSessionMutate({ sessionId: 'session', target: { kind: 'local' }, stateRef })
+    )
+    const started = result.current.write(
+      'agentSession.startVoice',
+      'agentSession.startVoice',
+      fields
+    )
+    stateRef.current.fence = 4
+    reply?.({ ok: true, fence: 4, value: receipt })
+    expect(await started).toEqual({ kind: 'done', value: receipt })
+  })
+
+  it.each([
+    { fence: 5, value: receipt },
+    { fence: 4, value: { ...receipt, voiceSessionId: 'other-voice' } },
+    { fence: 4, value: { ...receipt, generation: 2 } }
+  ])(
+    'drops a reply that does not confirm the current fence and voice attempt: %j',
+    async (answer) => {
+      let reply: ((value: unknown) => void) | undefined
+      mocks.call.mockReturnValueOnce(
+        new Promise((resolve) => {
+          reply = resolve
+        })
+      )
+      const stateRef = { current: { fence: 4 } }
+      const { result } = renderHook(() =>
+        useStructuredAgentSessionMutate({
+          sessionId: 'session',
+          target: { kind: 'local' },
+          stateRef
+        })
+      )
+      const started = result.current.write(
+        'agentSession.startVoice',
+        'agentSession.startVoice',
+        fields
+      )
+      reply?.({ ok: true, ...answer })
+      expect(await started).toEqual({ kind: 'dropped' })
+    }
+  )
+
+  it.each([
+    { sessionId: 'other-session', target: { kind: 'environment', environmentId: 'host-a' } },
+    { sessionId: 'session', target: { kind: 'environment', environmentId: 'host-b' } },
+    { sessionId: 'session', target: { kind: 'local' } }
+  ] satisfies { sessionId: string; target: RuntimeClientTarget }[])(
+    'drops the old owner after switching to %j even when its fence number is the same',
+    async (next) => {
+      let reply: ((value: unknown) => void) | undefined
+      mocks.call.mockReturnValueOnce(
+        new Promise((resolve) => {
+          reply = resolve
+        })
+      )
+      const stateRef = { current: { fence: 3 } }
+      const initialProps: { sessionId: string; target: RuntimeClientTarget } = {
+        sessionId: 'session',
+        target: { kind: 'environment', environmentId: 'host-a' }
+      }
+      const { result, rerender } = renderHook(
+        (props: typeof initialProps) => useStructuredAgentSessionMutate({ ...props, stateRef }),
+        { initialProps }
+      )
+      const started = result.current.write(
+        'agentSession.startVoice',
+        'agentSession.startVoice',
+        fields
+      )
+      rerender(next)
+      reply?.({ ok: true, fence: 3, value: receipt })
+      expect(await started).toEqual({ kind: 'dropped' })
+    }
+  )
+
+  it('does not deliver an older generation after another voice attempt supersedes it', async () => {
+    const replies: ((value: unknown) => void)[] = []
+    mocks.call.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          replies.push(resolve)
+        })
+    )
+    const stateRef = { current: { fence: 3 } }
+    const { result } = renderHook(() =>
+      useStructuredAgentSessionMutate({ sessionId: 'session', target: { kind: 'local' }, stateRef })
+    )
+    const first = result.current.write('agentSession.startVoice', 'agentSession.startVoice', fields)
+    const second = result.current.write('agentSession.startVoice', 'agentSession.startVoice', {
+      ...fields,
+      generation: 2
+    })
+    replies[0]?.({ ok: true, fence: 3, value: receipt })
+    replies[1]?.({ ok: true, fence: 3, value: { ...receipt, generation: 2 } })
+    expect(await first).toEqual({ kind: 'dropped' })
+    expect(await second).toEqual({ kind: 'done', value: { ...receipt, generation: 2 } })
+  })
+})

@@ -7,14 +7,33 @@ import {
 } from '../dictation/dictation-control-events'
 import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
-import { readAgentHubDictationSession } from './agent-hub-dictation-origin'
+import {
+  readAgentHubDictationSession,
+  useAgentHubDictationSession
+} from './agent-hub-dictation-origin'
 import { startAgentHubDictation } from './agent-hub-dictation-improve'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { openAgentHubOrb } from './agent-hub-orb-open'
+import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 
 export const AgentHubOrbComposerContext = createContext<string | null>(null)
 type OrbComposer = { input: RefObject<NativeChatComposerInput | null>; send: () => void }
 const composers = new Map<string, OrbComposer>()
+
+export function useAgentHubOrbComposerDictation() {
+  const tabId = useContext(AgentHubOrbComposerContext)
+  const session = useAgentHubDictationSession()
+  const state = useAppStore((s) => s.dictationState)
+  const phase =
+    tabId && session?.pane?.tabId === tabId && isDictationRunning(state)
+      ? state === 'starting'
+        ? ('starting' as const)
+        : state === 'listening'
+          ? ('listening' as const)
+          : ('finishing' as const)
+      : null
+  return { session, phase }
+}
 
 export function useAgentHubOrbComposerBinding(
   input: RefObject<NativeChatComposerInput | null>,
@@ -57,7 +76,12 @@ export function useAgentHubOrbComposerBinding(
         pendingSend = false
         frame = requestAnimationFrame(() => {
           const panel = useAgentHubOrbPanel.getState()
-          if (panel.session?.tabId === tabId && panel.chatVisible && input.current?.value.trim()) {
+          if (
+            panel.session?.tabId === tabId &&
+            panel.chatVisible &&
+            input.current?.value.trim() &&
+            readAgentHubOrbVoice(tabId)?.getSnapshot().textMode !== false
+          ) {
             composers.get(tabId)?.send()
           }
         })
@@ -95,6 +119,16 @@ export function toggleAgentHubOrb(): void {
     ) {
       dispatchDictationControl('stop')
     }
+    return
+  }
+  const voice = readAgentHubOrbVoice(panel.session.tabId)
+  if (voice && !voice.getSnapshot().textMode) {
+    void voice.prepareDictation().then((ready) => {
+      const current = useAgentHubOrbPanel.getState()
+      if (ready && current.session?.tabId === panel.session?.tabId && current.chatVisible) {
+        toggleAgentHubOrb()
+      }
+    })
     return
   }
   const input = composers.get(panel.session.tabId)?.input.current

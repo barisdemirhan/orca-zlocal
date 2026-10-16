@@ -1,7 +1,7 @@
 import { NativeChatPromptEditor } from './NativeChatPromptEditor'
 import type { NativeChatComposerInput } from './native-chat-composer-input'
 import type { ClipboardEventHandler, KeyboardEventHandler, RefObject } from 'react'
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import type { useImeEnterGestureOwnership } from '@/lib/ime-composition-keyboard-event'
 import { cn } from '@/lib/utils'
@@ -29,6 +29,9 @@ import type { NativeChatComposerGoalMode } from './use-native-chat-composer-subm
 import { translate } from '@/i18n/i18n'
 import { useNativeChatComposerDraftUnsaved } from './use-native-chat-draft-unsaved'
 import { useLatestHandler } from '@/lib/use-latest-handler'
+import { AgentHubOrbComposerContext } from '../agent-hub/agent-hub-orb-composer'
+import { AgentHubOrbComposerDictationOverlay } from '../agent-hub/AgentHubOrbComposerDictationOverlay'
+import { useAgentHubOrbVoiceContext } from '../agent-hub/agent-hub-orb-voice-context'
 
 function noop(): void {}
 
@@ -169,6 +172,9 @@ export function NativeChatComposerField({
   goalMode,
   agent
 }: NativeChatComposerFieldProps): React.JSX.Element {
+  const orbTabId = useContext(AgentHubOrbComposerContext)
+  const voice = useAgentHubOrbVoiceContext()
+  const voiceHoldsInput = voice.controller !== null && !voice.snapshot.textMode
   const draftNotSaved = useNativeChatComposerDraftUnsaved(draftScopeKey)
   const optionCount =
     autocomplete.mode === 'slash'
@@ -258,7 +264,12 @@ export function NativeChatComposerField({
   const focusComposer = useCallback(() => textareaRef.current?.focus(), [textareaRef])
 
   return (
-    <div className="shrink-0 bg-chat-canvas">
+    <div
+      className="shrink-0 bg-chat-canvas"
+      hidden={voiceHoldsInput}
+      inert={voiceHoldsInput}
+      data-agent-hub-orb-composer-hidden={voiceHoldsInput || undefined}
+    >
       <div className="px-3 pt-2 pb-4 sm:px-4">
         <div className="relative mx-auto w-full max-w-(--chat-content-max-width)">
           {autocomplete.mode === 'slash' ? (
@@ -297,6 +308,7 @@ export function NativeChatComposerField({
             className={cn(
               // Use a constant container border so focus changes cannot flash it.
               'rounded-xl border border-chat-composer-border p-1.5 shadow-xs',
+              orbTabId && 'relative',
               'bg-chat-composer-surface',
               // Contain caret-blink repaint to the composer; keep 4px slack around overhanging attachment buttons, while menus use portals.
               '[contain:paint]'
@@ -382,6 +394,7 @@ export function NativeChatComposerField({
                 {...(agent ? { agent } : {})}
               />
             </div>
+            {orbTabId ? <AgentHubOrbComposerDictationOverlay /> : null}
           </div>
         </div>
       </div>

@@ -190,6 +190,7 @@ export function createStructuredAgentSessionConversationLifetime(
     },
     hasOpenDispatch,
     providerHoldsDispatch,
+    providerHoldsVoice: (sessionId) => deps().adapter.holdsVoice?.(sessionId) === true,
     // Host eviction is reportable interruption, not personal cancellation.
     stopAgent: (sessionId) => stopAgent(sessionId, { cause: 'evict', resting: true }),
     // Word handed-over and queued startup failures from the same hostStopped fact.

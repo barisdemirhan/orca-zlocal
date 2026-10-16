@@ -8,7 +8,8 @@ import { translate } from '@/i18n/i18n'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
 import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
 import { agentHubCounts } from './agent-hub-lists'
-import { agentHubOrbRequest, agentHubOrbThread } from './agent-hub-orb-state'
+import { agentHubOrbThread } from './agent-hub-orb-state'
+import { agentHubCurrentOrbRequest } from './agent-hub-orb-request-owner'
 import {
   agentHubInboxRequests,
   agentHubAwayAnswerCount,
@@ -16,7 +17,7 @@ import {
 } from './agent-hub-requests-store'
 import type { AgentHubLists } from './agent-hub-lists'
 import { useAgentHubOrb } from './agent-hub-orb-session'
-import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { AgentHubOrbPanel } from './AgentHubOrbPanel'
 import { toggleAgentHubOrb } from './agent-hub-orb-composer'
 
@@ -33,7 +34,9 @@ export function useAgentHubOrbSurfaces(
       ? agentHubDockPopoverSide(preferences.dockPosition.edge)
       : 'top'
   const orb = useAgentHubOrb(threads)
-  const panelOpen = useAgentHubOrbPanel((s) => s.session !== null)
+  const panelSession = useAgentHubOrbPanel((s) => s.session)
+  const panelOpen = panelSession !== null
+  const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
   const configuredPlacement = useAppStore((s) => s.settings?.agentHubOrbPlacement)
   const preferredPlacement =
     configuredPlacement === 'dock' ||
@@ -50,10 +53,16 @@ export function useAgentHubOrbSurfaces(
   const orbAnchorRef =
     placement === 'floating' ? floatingRef : placement === 'statusBar' ? statusRef : anchorRef
   const orbSide = placement === 'floating' || placement === 'statusBar' ? 'top' : side
-  const pillVisible = orb.state.kind !== 'off' && orb.state.kind !== 'idle'
   const { openOrb } = orb
   const open = useCallback(() => {
     void openOrb()
+  }, [openOrb])
+  const togglePanel = useCallback(() => {
+    if (useAgentHubOrbPanel.getState().session) {
+      closeAgentHubOrbPanel()
+    } else {
+      void openOrb()
+    }
   }, [openOrb])
   const hubLists = useMemo(
     () => ({
@@ -64,9 +73,26 @@ export function useAgentHubOrbSurfaces(
     [lists, orb.session?.tabId]
   )
   const requests = useAgentHubRequests()
+  const requestSession = panelSession ?? orb.session
+  const belongsToCurrentOrb = useCallback(
+    (item: Parameters<typeof agentHubCurrentOrbRequest>[0]) =>
+      agentHubCurrentOrbRequest(
+        item,
+        requestSession ? { host: 'local', sessionId: requestSession.sessionId } : null
+      ),
+    [requestSession]
+  )
+  const ownsRequest = useCallback(
+    (item: Parameters<typeof agentHubCurrentOrbRequest>[0]) =>
+      panelOpen && chatVisible && !hidden && belongsToCurrentOrb(item),
+    [panelOpen, chatVisible, hidden, belongsToCurrentOrb]
+  )
+  const inbox = agentHubInboxRequests(requests)
+  const pillVisible =
+    orb.state.kind !== 'off' && orb.state.kind !== 'idle' && !inbox.some(belongsToCurrentOrb)
   const counts = agentHubCounts(
     { ...lists, needsYou: hubLists.needsYou },
-    agentHubInboxRequests(requests).filter((item) => !agentHubOrbRequest(item)).length,
+    inbox.filter((item) => !ownsRequest(item)).length,
     agentHubAwayAnswerCount(requests)
   )
   const label =
@@ -78,11 +104,16 @@ export function useAgentHubOrbSurfaces(
           })
         : translate('agentHub.title', 'Agents')
   const dockButton =
-    placement === 'dock' ? { state: orb.state, disabled: !agentControl, onOpen: open } : null
+    placement === 'dock' ? { state: orb.state, disabled: !agentControl, onOpen: togglePanel } : null
   const statusButton =
     placement === 'statusBar' ? (
       <span ref={statusRef} className="flex items-center">
-        <AgentHubOrbButton state={orb.state} disabled={!agentControl} side="top" onOpen={open} />
+        <AgentHubOrbButton
+          state={orb.state}
+          disabled={!agentControl}
+          side="top"
+          onOpen={togglePanel}
+        />
       </span>
     ) : null
   const floatingButton =
@@ -91,7 +122,7 @@ export function useAgentHubOrbSurfaces(
         anchorRef={floatingRef}
         state={orb.state}
         disabled={!agentControl}
-        onOpen={open}
+        onOpen={togglePanel}
       />
     ) : null
   const pill =
@@ -114,6 +145,7 @@ export function useAgentHubOrbSurfaces(
       docked={placement === 'dock' && preferences.placement === 'dock'}
       floating={placement === 'floating'}
       hidden={hidden}
+      state={orb.state}
       requestPresentationOf={requestPresentationOf}
     />
   )
@@ -121,6 +153,7 @@ export function useAgentHubOrbSurfaces(
     counts,
     label,
     hubLists,
+    ownsRequest,
     dockButton,
     statusButton,
     floatingButton,

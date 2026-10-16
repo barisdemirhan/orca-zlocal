@@ -6,6 +6,7 @@ import {
   type AgentHubRequestsState
 } from './agent-hub-requests-store'
 import { agentHubRequestBase } from './agent-hub-request-test-fixtures'
+import { orbAsk } from './agent-hub-orb-test-fixtures'
 
 const base = agentHubRequestBase()
 const ask: Extract<AgentHubRequest, { kind: 'ask' }> = {
@@ -152,5 +153,91 @@ describe('Agent Hub request projection', () => {
     expect(state.get('workhost')?.notifications.size).toBe(0)
     expect(state.get('local')?.notifications.size).toBe(3)
     expect(agentHubInboxRequests(state)).toHaveLength(1)
+  })
+})
+
+describe('Orb request outcomes', () => {
+  it('requires a known pending identity and never turns a missing snapshot or stale closure into an outcome', () => {
+    const request = orbAsk('current')
+    let state = reduceAgentHubRequests(new Map(), 'local', request)
+    expect(agentHubInboxRequests(state)).toHaveLength(1)
+    expect(state.get('local')?.orbReceipts.size).toBe(0)
+    state = reduceAgentHubRequests(state, 'local', {
+      kind: 'snapshot',
+      snapshot: { requests: [], progress: [] }
+    })
+    expect(state.get('local')?.orbReceipts.size).toBe(0)
+    state = reduceAgentHubRequests(state, 'local', {
+      ...request,
+      kind: 'closed',
+      reason: 'responded'
+    })
+    expect(state.get('local')?.orbReceipts.size).toBe(0)
+    for (const changed of [
+      { ...request, createdAt: request.createdAt + 1 },
+      { ...request, caller: { ...request.caller, sessionId: 'previous' } },
+      { ...request, target: { ...request.target, paneKey: 'another-pane' } }
+    ]) {
+      state = reduceAgentHubRequests(state, 'local', request)
+      state = reduceAgentHubRequests(state, 'local', {
+        ...changed,
+        kind: 'closed',
+        reason: 'responded'
+      })
+      expect(state.get('local')?.orbReceipts.size).toBe(0)
+    }
+  })
+
+  it('keeps actual closures on their own host and preserves them across replay without adding Inbox items', () => {
+    const request = orbAsk('current')
+    let state: AgentHubRequestsState = new Map()
+    for (const host of ['local', 'workhost']) {
+      state = reduceAgentHubRequests(state, host, request)
+      state = reduceAgentHubRequests(state, host, {
+        ...request,
+        kind: 'closed',
+        reason: host === 'local' ? 'responded' : 'denied_by_user',
+        ...(host === 'local'
+          ? { result: { answer: 'First', index: 1, by: 'human' as const, desktop: 'device' } }
+          : {})
+      })
+    }
+    state = reduceAgentHubRequests(state, 'local', {
+      kind: 'snapshot',
+      snapshot: { requests: [], progress: [] }
+    })
+    expect(state.get('local')?.orbReceipts.get('current')?.result?.answer).toBe('First')
+    expect(state.get('workhost')?.orbReceipts.get('current')?.reason).toBe('denied_by_user')
+    expect(agentHubInboxRequests(state)).toHaveLength(0)
+    expect(state.get('local')?.awayAnswers.size).toBe(0)
+    state = reduceAgentHubRequests(state, 'local', { ...request, requestId: 'next-question' })
+    expect(state.get('local')?.orbReceipts.has('current')).toBe(false)
+    expect(state.get('workhost')?.orbReceipts.has('current')).toBe(true)
+    expect(agentHubInboxRequests(state)).toHaveLength(1)
+  })
+
+  it('retains only the latest outcome per Orb session and at most twenty sessions per host', () => {
+    let state: AgentHubRequestsState = new Map()
+    for (let index = 0; index < 25; index++) {
+      const request = { ...orbAsk(`session-${index}`), requestId: `question-${index}` }
+      state = reduceAgentHubRequests(state, 'local', request)
+      state = reduceAgentHubRequests(state, 'local', {
+        ...request,
+        kind: 'closed',
+        reason: 'timeout'
+      })
+    }
+    expect(state.get('local')?.orbReceipts.size).toBe(20)
+    expect(state.get('local')?.orbReceipts.has('session-4')).toBe(false)
+    expect(state.get('local')?.orbReceipts.has('session-5')).toBe(true)
+    const latest = { ...orbAsk('session-24'), requestId: 'latest' }
+    state = reduceAgentHubRequests(state, 'local', latest)
+    state = reduceAgentHubRequests(state, 'local', {
+      ...latest,
+      kind: 'closed',
+      reason: 'already_resolved'
+    })
+    expect(state.get('local')?.orbReceipts.size).toBe(20)
+    expect(state.get('local')?.orbReceipts.get('session-24')?.requestId).toBe('latest')
   })
 })

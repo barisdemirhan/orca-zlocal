@@ -94,6 +94,14 @@ describe('open Orb', () => {
     expect(mocks.open).toHaveBeenCalledWith({ resume: { sessionId: 'orb-session' } })
     expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('orb-session')
   })
+  it('keeps the secondary panel view while applying saved settings', async () => {
+    await openAgentHubOrb()
+    useAgentHubOrbPanel.setState({ chatVisible: false })
+    mocks.open.mockResolvedValueOnce({ sessionId: 'updated-session', resumed: false })
+    await openAgentHubOrb(undefined, true)
+    expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('updated-session')
+    expect(useAgentHubOrbPanel.getState().chatVisible).toBe(false)
+  })
   it('joins concurrent presses and reports a missing published tab', async () => {
     mocks.find.mockReturnValue(null)
     await Promise.all([openAgentHubOrb(), openAgentHubOrb()])

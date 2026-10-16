@@ -41,6 +41,7 @@ import { codexStoppedRequestEndWait, settleCodexRequestEndWaiters } from './code
 import { changeCodexThreadGoalWithSettings } from './codex-structured-thread-goal'
 import { startCodexTerminalStopProbe } from './codex-background-terminals'
 import { codexBackgroundTaskStops, stopCodexBackgroundTasks } from './codex-background-task-stops'
+import { CodexStructuredVoiceAdapter } from './codex-structured-voice-adapter'
 import {
   compactCodexStructuredSession,
   answerCodexStructuredPrompt,
@@ -58,6 +59,7 @@ export class CodexStructuredSessionAdapter implements StructuredAgentSessionAdap
   private readonly acquisitions = new CodexAcquisitionRegistry()
   private readonly notificationRetries: ReturnType<typeof createCodexStructuredNotificationRetry>
   private readonly teardown: CodexStructuredSessionTeardown
+  private readonly voice = new CodexStructuredVoiceAdapter(this.sessions, () => this.deps)
 
   constructor(private readonly deps: CodexStructuredSessionAdapterDeps) {
     this.atRestCommands = deps.atRestCommands
@@ -139,6 +141,10 @@ export class CodexStructuredSessionAdapter implements StructuredAgentSessionAdap
     session: CodexSession,
     event: CodexStructuredSessionEvent
   ): CodexJournalTranslationAdmission {
+    const realtime = this.voice.notification(session, event)
+    if (realtime) {
+      return realtime
+    }
     if (event.type === 'notification') {
       turnEnd.noteCodexTurnOpened(session, event.method, event.params)
       if (event.method === 'skills/changed') {
@@ -293,6 +299,11 @@ export class CodexStructuredSessionAdapter implements StructuredAgentSessionAdap
       () => this.sessions.get(input.sessionId) === session
     )
   }
+
+  startVoice = this.voice.start
+  stopVoice = this.voice.stop
+  holdsVoice = this.voice.holds
+  readVoiceCapability = this.voice.capability
 
   answerPrompt: StructuredAgentSessionAdapter['answerPrompt'] = (request) =>
     answerCodexStructuredPrompt({ request, sessions: this.sessions })

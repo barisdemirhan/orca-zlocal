@@ -32,9 +32,11 @@ import * as conversation from './structured-agent-session-host-delivery'
 import { wireStructuredAgentSessionQueuedMessages as wireQueuedMessages } from './structured-agent-session-queued-wiring'
 import * as sessionLogger from './structured-agent-session-logger'
 import { sleepStructuredAgentSessionWorkspace } from './structured-agent-session-workspace-sleep'
+import { StructuredAgentSessionVoice } from './structured-agent-session-voice'
 export type { StructuredAgentSessionHostDeps } from './structured-agent-session-host-types'
 
 export class StructuredAgentSessionHost {
+  readonly voice = new StructuredAgentSessionVoice(() => this.mutationContext())
   private readonly conversationCommands = new StructuredConversationCommandController(
     () => this.mutationContext(),
     this

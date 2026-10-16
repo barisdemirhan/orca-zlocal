@@ -6,6 +6,7 @@ import {
 } from '../sidebar/workspace-chrome-metrics'
 import { clampAgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { useViewportSize } from './use-viewport-size'
+import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
 
 const ORB_SIZE = { width: 48, height: 48 }
 type Position = { x: number; y: number }
@@ -64,6 +65,7 @@ export function useAgentHubOrbPosition() {
     const cancel = (): void => {
       const current = drag.current
       drag.current = null
+      releaseAgentHubOrbGesture(drag)
       if (!current) {
         return
       }
@@ -95,6 +97,7 @@ export function useAgentHubOrbPosition() {
         return
       }
       drag.current = null
+      releaseAgentHubOrbGesture(drag)
       release(current)
       if (!current.moved) {
         return
@@ -133,13 +136,14 @@ export function useAgentHubOrbPosition() {
         release(drag.current)
       }
       drag.current = null
+      releaseAgentHubOrbGesture(drag)
     }
   }, [updateSettings])
 
   return {
     position,
     onPointerDown: (event: React.PointerEvent<HTMLElement>): void => {
-      if (event.button !== 0 || drag.current) {
+      if (event.button !== 0 || drag.current || !claimAgentHubOrbGesture(drag, event.pointerId)) {
         return
       }
       suppressClick.current = false

@@ -41,7 +41,8 @@ vi.mock('@/lib/worktree-runtime-owner', () => ({
 }))
 
 vi.mock('./NativeChatView', async () => {
-  const { useEffect } = await import('react')
+  const { useContext, useEffect } = await import('react')
+  const { NativeChatPresentationContext } = await import('./native-chat-presentation-context')
   return {
     default: function MockNativeChatView({
       tabId,
@@ -56,6 +57,7 @@ vi.mock('./NativeChatView', async () => {
       isFocusedGroup: boolean
       target: unknown
     }) {
+      const presentation = useContext(NativeChatPresentationContext)
       mocks.groupIdByTabId.set(tabId, groupId)
       mocks.targetByTabId.set(tabId, target)
       useEffect(() => {
@@ -69,6 +71,7 @@ vi.mock('./NativeChatView', async () => {
           data-chat-tab-id={tabId}
           data-chat-visible={String(isVisible)}
           data-chat-focused-group={String(isFocusedGroup)}
+          data-chat-presentation={presentation}
           data-native-chat-working="true"
         />
       )
@@ -111,6 +114,7 @@ describe('StructuredAgentSessionPaneOverlayLayer', () => {
       <StructuredAgentSessionPaneOverlayLayer worktreeId={WORKTREE_ID} isWorktreeActive />
     )
     const chat = chatSurface(container, FIRST_TAB_ID)
+    expect(chat.dataset.chatPresentation).toBe('chat')
     const destination = document.createElement('div')
     document.body.append(destination)
     act(() => {
@@ -123,11 +127,14 @@ describe('StructuredAgentSessionPaneOverlayLayer', () => {
     expect(chatSurface(destination, FIRST_TAB_ID)).toBe(chat)
     expect(chat.dataset.chatVisible).toBe('true')
     expect(chat.dataset.chatFocusedGroup).toBe('true')
+    expect(chat.dataset.chatPresentation).toBe('orb')
+    expect(chatSurface(container, SECOND_TAB_ID).dataset.chatPresentation).toBe('chat')
     expect(container.querySelector(`[data-chat-tab-id="${FIRST_TAB_ID}"]`)).toBeNull()
     act(() => useAgentHubOrbPanel.setState({ chatVisible: false }))
     expect(chat.dataset.chatVisible).toBe('false')
     act(() => closeAgentHubOrbPanel())
     expect(chatSurface(container, FIRST_TAB_ID)).toBe(chat)
+    expect(chat.dataset.chatPresentation).toBe('chat')
     expect(mocks.mountsByTabId.get(FIRST_TAB_ID)).toBe(1)
     expect(mocks.unmountsByTabId.get(FIRST_TAB_ID) ?? 0).toBe(0)
     destination.remove()

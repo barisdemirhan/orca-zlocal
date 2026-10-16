@@ -1,0 +1,396 @@
+// @vitest-environment happy-dom
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import type { AgentHubOrbSession } from '../../../../shared/agent-hub-orb'
+import type { AgentSessionVoiceOwner } from '../../../../shared/agent-session-voice'
+import type { RuntimeEnvironmentStatus } from '../../../../shared/runtime-host-status'
+import type { Tab } from '../../../../shared/tab-types'
+import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/structured-agent-session-reducer'
+import {
+  getRuntimeEnvironmentRevision,
+  replaceRuntimeEnvironmentRevisions
+} from '@/runtime/runtime-environment-revision'
+import type { RuntimeClientTarget } from '@/runtime/runtime-client-target'
+import { useStructuredAgentSessionMutate } from '../native-chat/use-structured-agent-session-mutate'
+import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
+import { useAgentHubOrbVoice } from './use-agent-hub-orb-voice'
+
+type VoiceParams = AgentSessionVoiceOwner & {
+  envelope: { sessionId: string; expectedRuntimeFence: number }
+}
+const mocks = vi.hoisted(() => {
+  const state: {
+    unifiedTabsByWorktree: Record<string, Tab[]>
+    runtimeStatusByEnvironmentId: Map<string, RuntimeEnvironmentStatus>
+    settings: { activeRuntimeEnvironmentId: string | null }
+    dictationState: 'idle'
+  } = {
+    unifiedTabsByWorktree: {},
+    runtimeStatusByEnvironmentId: new Map(),
+    settings: { activeRuntimeEnvironmentId: null },
+    dictationState: 'idle'
+  }
+  return {
+    state,
+    snapshot: vi.fn(),
+    unsubscribe: vi.fn(),
+    call: vi.fn<
+      (
+        target: RuntimeClientTarget,
+        method: string,
+        params?: VoiceParams,
+        options?: unknown
+      ) => Promise<unknown>
+    >()
+  }
+})
+vi.mock('@/store', () => ({
+  useAppStore: Object.assign(
+    (selector: (state: typeof mocks.state) => unknown) => selector(mocks.state),
+    { getState: () => mocks.state }
+  )
+}))
+vi.mock('@/runtime/runtime-rpc-client', () => ({ callRuntimeRpc: mocks.call }))
+vi.mock('@/runtime/structured-agent-session-host-capability', () => ({
+  structuredAgentSessionHostKey: (target: RuntimeClientTarget) =>
+    target.kind === 'local' ? 'local' : `environment:${target.environmentId}`,
+  useStructuredAgentSessionHostCapabilityState: () => 'supported'
+}))
+vi.mock('../native-chat/structured-agent-session-read-owner', () => ({
+  getStructuredAgentSessionReadOwner: () => ({
+    subscribe: () => () => {},
+    getSnapshot: mocks.snapshot
+  })
+}))
+
+class Track extends EventTarget {
+  enabled = true
+  stop = vi.fn()
+}
+class Stream {
+  getTracks = () => [track]
+  getAudioTracks = () => [track]
+}
+class Peer {
+  static instances: Peer[] = []
+  iceGatheringState = 'complete'
+  localDescription: RTCSessionDescriptionInit | null = null
+  createDataChannel = () => ({ close: vi.fn() })
+  addTrack = vi.fn()
+  createOffer = async () => ({ type: 'offer' as const, sdp: 'v=0\r\nm=audio 9 RTP/AVP 111' })
+  setLocalDescription = async (description: RTCSessionDescriptionInit) => {
+    this.localDescription = description
+  }
+  close = vi.fn()
+  constructor() {
+    Peer.instances.push(this)
+  }
+}
+let track: Track
+let answerStart: () => void
+let sentStart: { target: RuntimeClientTarget; params: VoiceParams }
+let closeSubscription: () => void
+let failSubscription: () => void
+let apiDescriptor: PropertyDescriptor | undefined
+const session: AgentHubOrbSession = { sessionId: 'session-a', tabId: 'tab-a', resumed: false }
+const targetA: RuntimeClientTarget = { kind: 'environment', environmentId: 'host-a' }
+
+function tab(host: Tab['executionHostId'] = 'local'): Tab {
+  return {
+    id: 'tab-a',
+    entityId: 'session-a',
+    groupId: 'group',
+    worktreeId: 'workspace',
+    contentType: 'agent-session',
+    label: 'Orb',
+    customLabel: null,
+    color: null,
+    sortOrder: 0,
+    createdAt: 0,
+    agentSessionAgent: 'codex',
+    executionHostId: host
+  }
+}
+function hostStatus(environmentId: string): RuntimeEnvironmentStatus {
+  const status = {
+    runtimeId: `${environmentId}-runtime`,
+    rendererGraphEpoch: 1,
+    graphStatus: 'ready' as const,
+    authoritativeWindowId: null,
+    liveTabCount: 1,
+    liveLeafCount: 0
+  }
+  return {
+    status,
+    checkedAt: 1,
+    connectionGeneration: 7,
+    snapshot: {
+      environmentId,
+      pairingRevision: 10,
+      sequence: 1,
+      checkedAt: 1,
+      status,
+      verification: 'verified',
+      transport: 'ready'
+    }
+  }
+}
+function subscribe(
+  args: { params: AgentSessionVoiceOwner & { sessionId: string } },
+  onResponse: (response: unknown) => void
+) {
+  onResponse({ id: 'voice', ok: true, result: { ...args.params, type: 'ready' } })
+  return Promise.resolve({ unsubscribe: mocks.unsubscribe })
+}
+beforeEach(() => {
+  vi.clearAllMocks()
+  track = new Track()
+  Peer.instances = []
+  mocks.state.unifiedTabsByWorktree = { workspace: [tab()] }
+  mocks.state.runtimeStatusByEnvironmentId = new Map([
+    ['host-a', hostStatus('host-a')],
+    ['host-b', hostStatus('host-b')]
+  ])
+  mocks.snapshot.mockReturnValue({ state: { ...EMPTY_STRUCTURED_AGENT_SESSION, fence: 3 } })
+  replaceRuntimeEnvironmentRevisions([
+    { id: 'host-a', createdAt: 1, pairingRevision: 10 },
+    { id: 'host-b', createdAt: 1, pairingRevision: 10 }
+  ])
+  mocks.call.mockImplementation(async (target, method, params) => {
+    if (method === 'agentSession.voiceCapability') {
+      return { supported: true, accountAccess: 'unchecked' }
+    }
+    if (!params) {
+      throw new Error('Missing voice params')
+    }
+    if (method === 'agentSession.startVoice') {
+      sentStart = { target, params }
+      return new Promise((resolve) => {
+        answerStart = () =>
+          resolve({
+            ok: true,
+            fence: 4,
+            value: {
+              voiceSessionId: params.voiceSessionId,
+              generation: params.generation,
+              state: 'connecting'
+            }
+          })
+      })
+    }
+    return {
+      ok: true,
+      fence: 4,
+      value: {
+        voiceSessionId: params.voiceSessionId,
+        generation: params.generation,
+        state: 'off'
+      }
+    }
+  })
+  vi.stubGlobal('RTCPeerConnection', Peer)
+  vi.stubGlobal('MediaStream', Stream)
+  vi.stubGlobal('isSecureContext', true)
+  vi.stubGlobal('navigator', {
+    mediaDevices: { getUserMedia: vi.fn(async () => new MediaStream()) },
+    locks: {
+      request: async (
+        _name: string,
+        _options: unknown,
+        callback: (lock: object) => Promise<void>
+      ) => callback({})
+    }
+  })
+  apiDescriptor = Object.getOwnPropertyDescriptor(window, 'api')
+  Object.defineProperty(window, 'api', {
+    configurable: true,
+    value: {
+      runtime: { call: vi.fn(), subscribe },
+      runtimeEnvironments: {
+        call: vi.fn(),
+        subscribe: (
+          args: Parameters<typeof subscribe>[0],
+          handlers: {
+            onResponse: (response: unknown) => void
+            onClose: () => void
+            onError: (error: { code: string; message: string }) => void
+          }
+        ) => {
+          closeSubscription = handlers.onClose
+          failSubscription = () => handlers.onError({ code: 'connection_lost', message: 'Lost' })
+          return subscribe(args, handlers.onResponse)
+        }
+      }
+    }
+  })
+})
+afterEach(async () => {
+  cleanup()
+  await Promise.resolve()
+  if (apiDescriptor) {
+    Object.defineProperty(window, 'api', apiDescriptor)
+  } else {
+    Reflect.deleteProperty(window, 'api')
+  }
+  vi.unstubAllGlobals()
+  replaceRuntimeEnvironmentRevisions([])
+})
+
+async function beginVoice(result: { current: ReturnType<typeof useAgentHubOrbVoice> }) {
+  await waitFor(() => expect(result.current.capability).toBe('supported'))
+  let starting = Promise.resolve()
+  act(() => {
+    starting = result.current.startLive()
+  })
+  await waitFor(() =>
+    expect(mocks.call.mock.calls.some((call) => call[1] === 'agentSession.startVoice')).toBe(true)
+  )
+  const controller = readAgentHubOrbVoice('tab-a')
+  if (!controller) {
+    throw new Error('Voice controller was not registered')
+  }
+  return { starting, controller }
+}
+const stops = () => mocks.call.mock.calls.filter((call) => call[1] === 'agentSession.stopVoice')
+function expectOldStop(target: RuntimeClientTarget): void {
+  expect(stops()).toHaveLength(1)
+  expect(stops()[0]).toEqual([
+    target,
+    'agentSession.stopVoice',
+    expect.objectContaining({
+      envelope: expect.objectContaining({ sessionId: 'session-a', expectedRuntimeFence: 4 }),
+      voiceSessionId: sentStart.params.voiceSessionId,
+      generation: sentStart.params.generation
+    }),
+    ...(target.kind === 'local'
+      ? []
+      : [
+          expect.objectContaining({
+            expectedEnvironmentPairingRevision: 10,
+            expectedEnvironmentRuntimeId: 'host-a-runtime'
+          })
+        ])
+  ])
+}
+
+it.each(['hide', 'unmount'] as const)(
+  'stops its acquired native voice after %s disables the real hook while start is in flight',
+  async (close) => {
+    const { result, rerender, unmount } = renderHook<
+      ReturnType<typeof useAgentHubOrbVoice>,
+      { owner: AgentHubOrbSession | null }
+    >(({ owner }) => useAgentHubOrbVoice(owner, owner !== null), {
+      initialProps: { owner: session }
+    })
+    const { starting, controller } = await beginVoice(result)
+    if (close === 'hide') {
+      rerender({ owner: null })
+    } else {
+      unmount()
+    }
+    expect(track.stop).toHaveBeenCalledOnce()
+    expect(Peer.instances[0]?.close).toHaveBeenCalledOnce()
+    await act(async () => {
+      answerStart()
+      await starting
+      await controller.stopLive()
+    })
+    expectOldStop({ kind: 'local' })
+    expect(controller.getSnapshot().connection).toBe('off')
+    await controller.stopLive()
+    expect(stops()).toHaveLength(1)
+  }
+)
+
+it('cleans up host A and its old session after selection moves to B at the same numeric fence', async () => {
+  mocks.state.unifiedTabsByWorktree = { workspace: [tab('runtime:host-a')] }
+  const { result, rerender } = renderHook(({ owner }) => useAgentHubOrbVoice(owner, true), {
+    initialProps: { owner: session }
+  })
+  const { starting, controller } = await beginVoice(result)
+  mocks.state.unifiedTabsByWorktree = { workspace: [tab('runtime:host-b')] }
+  rerender({ owner: { ...session, sessionId: 'session-b' } })
+  await act(async () => {
+    answerStart()
+    await starting
+    await controller.stopLive()
+  })
+  expectOldStop(targetA)
+  expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledOnce()
+  expect(
+    mocks.call.mock.calls.filter((call) => call[1] === 'agentSession.startVoice')
+  ).toHaveLength(1)
+})
+
+it.each([
+  'pairing',
+  'connection',
+  'disconnected',
+  'runtime',
+  'stream-close',
+  'stream-error'
+] as const)(
+  'leaves closure unverifiable instead of retargeting when the old host %s changes',
+  async (change) => {
+    mocks.state.unifiedTabsByWorktree = { workspace: [tab('runtime:host-a')] }
+    const { result, rerender } = renderHook<
+      ReturnType<typeof useAgentHubOrbVoice>,
+      { owner: AgentHubOrbSession | null }
+    >(({ owner }) => useAgentHubOrbVoice(owner, owner !== null), {
+      initialProps: { owner: session }
+    })
+    const { starting, controller } = await beginVoice(result)
+    rerender({ owner: null })
+    const status = hostStatus('host-a')
+    if (change === 'pairing') {
+      replaceRuntimeEnvironmentRevisions([{ id: 'host-a', createdAt: 1, pairingRevision: 11 }])
+      expect(getRuntimeEnvironmentRevision('host-a')).toBe(11)
+    } else if (change === 'connection') {
+      status.connectionGeneration = 8
+    } else if (change === 'disconnected') {
+      status.status = null
+      if (status.snapshot) {
+        status.snapshot.transport = 'disconnected'
+      }
+    } else if (change === 'stream-close') {
+      closeSubscription()
+    } else if (change === 'stream-error') {
+      failSubscription()
+    } else if (status.status) {
+      status.status = { ...status.status, runtimeId: 'replacement-runtime' }
+    }
+    mocks.state.runtimeStatusByEnvironmentId.set('host-a', status)
+    await act(async () => {
+      answerStart()
+      await starting
+      await controller.stopLive()
+    })
+    expect(stops()).toHaveLength(0)
+    expect(controller.getSnapshot()).toMatchObject({
+      connection: 'error',
+      input: 'muted',
+      output: 'silent'
+    })
+    expect(track.stop).toHaveBeenCalledOnce()
+  }
+)
+
+it('keeps normal mutation writes dropped after the pane is disabled', async () => {
+  const stateRef = { current: { fence: 3 } }
+  const { result, rerender } = renderHook(
+    ({ enabled }) =>
+      useStructuredAgentSessionMutate({
+        enabled,
+        sessionId: 'session-a',
+        target: { kind: 'local' },
+        stateRef
+      }),
+    { initialProps: { enabled: true } }
+  )
+  const oldWrite = result.current.write
+  rerender({ enabled: false })
+  expect(
+    await oldWrite('agentSession.send', 'agentSession.send', { text: 'preserved draft' })
+  ).toEqual({ kind: 'dropped' })
+  expect(mocks.call).not.toHaveBeenCalled()
+})

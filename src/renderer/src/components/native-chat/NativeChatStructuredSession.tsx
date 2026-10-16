@@ -67,6 +67,7 @@ import {
   NativeChatClaudeSignInContext,
   useNativeChatClaudeSignIn
 } from './native-chat-claude-sign-in'
+import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
 
 export function NativeChatStructuredSession(
   props: Omit<NativeChatStructuredViewProps, 'mode'>
@@ -361,31 +362,40 @@ export function NativeChatStructuredSession(
               workingStartedAt={controller.workingStartedAt}
             />
           )}
-          {composerShown ? null : <NativeChatPromptSlotNotices notices={notices} />}
-          {prompt && approval ? (
-            <NativeChatApprovalCard
-              key={`${prompt.itemId}:${prompt.revision}`}
-              approval={approval}
-              onChoose={(optionId) =>
-                void promptResponse.respond(prompt, { kind: 'option', optionId })
-              }
-              isSubmitting={promptResponse.holds(prompt)}
-              onCancel={cancelPrompt}
-              shouldFocus={!promptsUnanswerable && props.isVisible && props.isFocusedGroup}
-              {...fileLinkProps}
-            />
-          ) : null}
-          {prompt && questionBody ? (
-            <NativeChatStructuredQuestionCard
-              key={`${prompt.itemId}:${prompt.revision}`}
-              questions={agentSessionPromptQuestions(questionBody)}
-              onAnswer={(response) => void promptResponse.respond(prompt, response)}
-              isSubmitting={promptResponse.holds(prompt)}
-              onCancel={cancelPrompt}
-              shouldFocus={!promptsUnanswerable && props.isVisible && props.isFocusedGroup}
-              answerInputRef={questionAnswerInputRef}
-            />
-          ) : null}
+          {/* Prompt cards take the composer's slot, below the background-task dock. */}
+          <NativeChatOrbPromptSlot
+            tabId={props.tabId}
+            sessionId={props.sessionId}
+            pending={prompt !== null}
+            journalItems={controller.journalItems}
+            host={props.target.kind === 'local' ? 'local' : props.target.environmentId}
+          >
+            {composerShown ? null : <NativeChatPromptSlotNotices notices={notices} />}
+            {prompt && approval ? (
+              <NativeChatApprovalCard
+                key={`${prompt.itemId}:${prompt.revision}`}
+                approval={approval}
+                onChoose={(optionId) =>
+                  void promptResponse.respond(prompt, { kind: 'option', optionId })
+                }
+                isSubmitting={promptResponse.holds(prompt)}
+                onCancel={cancelPrompt}
+                shouldFocus={!promptsUnanswerable && props.isVisible && props.isFocusedGroup}
+                {...fileLinkProps}
+              />
+            ) : null}
+            {prompt && questionBody ? (
+              <NativeChatStructuredQuestionCard
+                key={`${prompt.itemId}:${prompt.revision}`}
+                questions={agentSessionPromptQuestions(questionBody)}
+                onAnswer={(response) => void promptResponse.respond(prompt, response)}
+                isSubmitting={promptResponse.holds(prompt)}
+                onCancel={cancelPrompt}
+                shouldFocus={!promptsUnanswerable && props.isVisible && props.isFocusedGroup}
+                answerInputRef={questionAnswerInputRef}
+              />
+            ) : null}
+          </NativeChatOrbPromptSlot>
           {prompt ? null : <NativeChatStructuredAsyncQuestion {...asyncQuestion} />}
           {composerShown && <NativeChatInstallSlot slot={install.slot} agentLabel={agentLabel} />}
           {composerShown ? (

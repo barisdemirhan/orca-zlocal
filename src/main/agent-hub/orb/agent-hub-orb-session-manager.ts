@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import { agentHubOrbPermissionOptions } from './agent-hub-orb-permission-settings'
 import { stat } from 'node:fs/promises'
 import { isAbsolute } from 'node:path'
@@ -15,25 +14,18 @@ import {
   AGENT_HUB_ORB_PI_PERMISSION_REASON
 } from '../../../shared/agent-hub-orb-settings'
 import type { AgentHubSettings } from '../../../shared/agent-hub-settings'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { isStructuredAgentId } from '../../../shared/agent-session-provider-handle'
 import type { AgentSessionRecord } from '../../../shared/agent-session-record'
-import {
-  structuredAgentSessionCreateParams,
-  createStructuredAgentSessionId
-} from '../../../shared/structured-agent-session-create'
 import { getStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-registry'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import type { RuntimeStore } from '../../runtime/runtime-store-contract'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
-import {
-  commitStructuredAgentSessionCreate,
-  prepareStructuredAgentSessionCreateForWorktree
-} from '../../runtime/rpc/methods/structured-agent-session-create'
+import { commitStructuredAgentSessionCreate } from '../../runtime/rpc/methods/structured-agent-session-create'
 import { commitStructuredAgentSessionLaunchPrompt } from '../../runtime/rpc/methods/agent-launch-structured-prompt'
 import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
 import { listAgentHubOrbConversations } from './agent-hub-orb-history'
+import { prepareAgentHubOrbSessionCreate } from './agent-hub-orb-session-create'
 import {
   agentHubOrbSettingsNeedTransition,
   requireIdleAgentHubOrbSession
@@ -60,7 +52,8 @@ export class AgentHubOrbSessionManager {
   constructor(
     private readonly runtime: OrbRuntime,
     private readonly getSettings: () => AgentHubSettings,
-    private readonly saveCwd: (cwd: string) => void | Promise<void>
+    private readonly saveCwd: (cwd: string) => void | Promise<void>,
+    private readonly saveModel?: (model: string | null) => void | Promise<void>
   ) {}
 
   requireEnabled(): void {
@@ -209,23 +202,15 @@ export class AgentHubOrbSessionManager {
       return this.active
     }
     const model = params.model === undefined ? settings.model : params.model
-    const create = structuredAgentSessionCreateParams({
-      sessionId: createStructuredAgentSessionId(agent, randomUUID),
-      worktree: FLOATING_TERMINAL_WORKTREE_ID,
-      agent,
-      randomUuid: randomUUID
-    })
-    const prepared = await prepareStructuredAgentSessionCreateForWorktree({
+    const { prepared, model: resolvedModel } = await prepareAgentHubOrbSessionCreate({
       runtime: this.runtime,
-      ensureHost: async () => host,
+      host,
       caller,
-      ...create,
-      origin: AGENT_HUB_ORB_ORIGIN,
-      ...(cwd ? { hostLaunchDirectory: cwd } : {}),
-      options: {
-        ...(model ? { model } : {}),
-        ...agentHubOrbPermissionOptions(this.getSettings(), agent)
-      }
+      agent,
+      model,
+      cwd,
+      explicitModel: params.model !== undefined,
+      permissionOptions: agentHubOrbPermissionOptions(this.getSettings(), agent)
     })
     this.requireEnabled()
     if (current) {
@@ -245,7 +230,19 @@ export class AgentHubOrbSessionManager {
       ...(result.value.tabId ? { tabId: result.value.tabId } : {}),
       resumed: false
     }
-    this.selectedSettings = settings
+    const latestSettings = normalizeAgentHubOrbSettings(this.getSettings())
+    if (
+      params.model === undefined &&
+      this.saveModel &&
+      resolvedModel !== settings.model &&
+      latestSettings.agent === settings.agent &&
+      latestSettings.model === settings.model
+    ) {
+      await this.saveModel?.(resolvedModel)
+      this.selectedSettings = { ...settings, model: resolvedModel }
+    } else {
+      this.selectedSettings = settings
+    }
     await this.ensureOpeningPrompt(host, result.value.sessionId)
     return this.active
   }
@@ -306,6 +303,12 @@ export function createAgentHubOrbSessionManager(
         throw new Error('runtime_unavailable')
       }
       store.updateSettings({ agentHubOrbCwd: cwd }, { notifyListeners: true })
+    },
+    (model) => {
+      if (!store?.updateSettings) {
+        throw new Error('runtime_unavailable')
+      }
+      store.updateSettings({ agentHubOrbModel: model }, { notifyListeners: true })
     }
   )
 }

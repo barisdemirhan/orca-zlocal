@@ -168,8 +168,16 @@ describe('capability gating', () => {
     for (const method of STRUCTURED_AGENT_SESSION_METHODS) {
       expect(names).toContain(method.name)
     }
+    expect(STRUCTURED_AGENT_SESSION_METHODS.map((method) => method.name)).toEqual(
+      expect.arrayContaining([
+        'agentSession.voiceCapability',
+        'agentSession.startVoice',
+        'agentSession.stopVoice',
+        'agentSession.subscribeVoice'
+      ])
+    )
     // Keep protocol stable: structured capability already hides additive session methods from older clients.
-    expect(STRUCTURED_AGENT_SESSION_METHODS).toHaveLength(43)
+    expect(STRUCTURED_AGENT_SESSION_METHODS).toHaveLength(47)
   })
 
   it('hides the surface from a declared client that did not advertise it', async () => {

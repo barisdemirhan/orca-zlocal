@@ -1,8 +1,51 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { projectStructuredItemToNativeChat } from '../../../shared/structured-agent-session-projection'
+import { nativeChatCodexApiErrorSummary } from '../../../shared/native-chat-provider-frame-summary'
 import { unhandledProviderFrameJournalItem } from './unhandled-provider-frame'
 
 describe('unhandled provider frame journal fallback', () => {
+  it('projects the captured Codex model error with a readable summary and its original payload', () => {
+    const frames: { case: string; method: string; params: unknown }[] = readFileSync(
+      join(__dirname, '../../codex/__fixtures__/codex-app-server-turn-endings.jsonl'),
+      'utf8'
+    )
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line))
+    const frame = frames.find(
+      (entry) => entry.case === '0.141.0-bad-model' && entry.method === 'error'
+    )
+    if (!frame) {
+      throw new Error('Expected the captured Codex model error')
+    }
+    const journal = unhandledProviderFrameJournalItem(
+      'codex',
+      `notification:${frame.method}`,
+      frame.params
+    )
+    if (!journal) {
+      throw new Error('Expected the model error to be journaled')
+    }
+    const message = projectStructuredItemToNativeChat({
+      itemId: 'model-error',
+      revision: 1,
+      sequence: 1,
+      observedAt: 1,
+      body: journal.body
+    })
+    const block = message?.blocks.find((candidate) => candidate.type === 'text')
+    if (!block || block.type !== 'text') {
+      throw new Error('Expected the model error text block')
+    }
+    expect(nativeChatCodexApiErrorSummary(block)).toBe(
+      "The 'gpt-qa-nonexistent' model is not supported when using Codex with a ChatGPT account."
+    )
+    expect(block.tone).toBe('error')
+    expect(block.providerFrame?.payload.head).toBe(JSON.stringify(frame.params))
+  })
+
   it('keeps a compact label and bounds the expandable payload without dropping it', () => {
     const item = unhandledProviderFrameJournalItem(
       'future-provider',
@@ -111,14 +154,39 @@ describe('unhandled provider frame journal fallback', () => {
 
     expect(
       unhandledProviderFrameJournalItem('codex', kind, {
-        run: { id: 'hook-1', status: 'completed' }
+        run: {
+          id: 'hook-1',
+          status: 'completed',
+          entries: [{ kind: 'info', text: 'Hook completed' }]
+        }
       })
     ).toBeNull()
-    expect(
-      unhandledProviderFrameJournalItem('codex', kind, {
-        run: { id: 'hook-1', status: 'failed' }
-      })
-    ).not.toBeNull()
+    const failedHook = {
+      threadId: 'thread-fixture',
+      turnId: 'turn-fixture',
+      run: {
+        id: 'stop:17:/fixtures/hooks.json',
+        eventName: 'stop',
+        handlerType: 'command',
+        executionMode: 'sync',
+        scope: 'turn',
+        sourcePath: '/fixtures/hooks.json',
+        source: 'user',
+        displayOrder: 17,
+        status: 'failed',
+        statusMessage: null,
+        startedAt: 1_000,
+        completedAt: 1_007,
+        durationMs: 7,
+        entries: [{ kind: 'error', text: 'hook exited with code 127' }]
+      }
+    }
+    const row = unhandledProviderFrameJournalItem('codex', kind, failedHook)
+    expect(row).toMatchObject({
+      classification: 'error-surface',
+      body: { text: 'codex · notification:hook/completed', tone: 'error' }
+    })
+    expect(row?.body.providerFrame?.payload.head).toBe(JSON.stringify(failedHook))
   })
 
   it('keeps unknown substantive frames visible for both providers', () => {

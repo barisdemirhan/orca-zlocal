@@ -191,7 +191,7 @@ export async function callStructuredAgentSession<TResult>(
       })
 }
 
-async function subscribeStructuredAgentSessionMethod<TEvent>(
+export async function subscribeStructuredAgentSessionMethod<TEvent>(
   target: RuntimeClientTarget,
   method: string,
   params: unknown,

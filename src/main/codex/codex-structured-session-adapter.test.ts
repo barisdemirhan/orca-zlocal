@@ -574,52 +574,100 @@ describe('CodexStructuredSessionAdapter.dispatch', () => {
     ).rejects.toThrow('connection ended')
   })
 
-  it('applies an option change to the next turn only', async () => {
-    const codex = fakeCodex({
-      'model/list': () => ({
-        data: [
-          {
-            model: 'gpt-live',
-            supportedReasoningEfforts: [{ reasoningEffort: 'medium' }],
-            defaultReasoningEffort: 'medium'
-          },
-          {
-            model: 'gpt-5',
-            supportedReasoningEfforts: [{ reasoningEffort: 'high' }],
-            defaultReasoningEffort: 'high'
-          }
-        ],
-        nextCursor: null
+  it.each([false, true])(
+    'applies an option change to the next turn only (resumed unlisted model: %s)',
+    async (resumed) => {
+      const codex = fakeCodex({
+        'model/list': () => ({
+          data: [
+            ...(!resumed
+              ? [
+                  {
+                    model: 'gpt-live',
+                    supportedReasoningEfforts: [{ reasoningEffort: 'medium' }],
+                    defaultReasoningEffort: 'medium'
+                  }
+                ]
+              : []),
+            {
+              model: 'gpt-5',
+              supportedReasoningEfforts: [{ reasoningEffort: 'high' }],
+              defaultReasoningEffort: 'high'
+            }
+          ],
+          nextCursor: null
+        })
       })
-    })
-    codex.routes['turn/start'] = answerWithOpenedTurn(codex, 'turn-1')
-    const adapter = adapterFor(codex, { codexHome: '/codex/home' }, [], {
-      modelCatalog: new AgentModelCatalogStore()
-    })
-    await acquireReadyCodexForTest(adapter, {
-      identity: identityFor('session-1'),
-      fence: 7,
-      spawnToken: 'spawn-9'
-    })
-    await adapter.readOptions({ sessionId: 'session-1', fence: 7 })
+      if (resumed) {
+        codex.routes['thread/resume'] = () => ({
+          thread: { id: THREAD_ID },
+          model: 'gpt-6.1-sol',
+          reasoningEffort: 'xhigh'
+        })
+      }
+      codex.routes['turn/start'] = answerWithOpenedTurn(codex, 'turn-1')
+      const adapter = adapterFor(
+        codex,
+        {
+          codexHome: '/codex/home',
+          ...(resumed ? { resumeThreadId: THREAD_ID } : {})
+        },
+        [],
+        {
+          modelCatalog: new AgentModelCatalogStore()
+        }
+      )
+      await acquireReadyCodexForTest(adapter, {
+        identity: identityFor('session-1'),
+        fence: 7,
+        spawnToken: 'spawn-9'
+      })
+      const current = await adapter.readOptions({ sessionId: 'session-1', fence: 7 })
+      if (resumed) {
+        expect(current.current.model).toBe('gpt-6.1-sol')
+        expect(current.models.find((model) => model.id === 'gpt-6.1-sol')?.description).toContain(
+          'not in this account’s model list'
+        )
+        await expect(
+          adapter.setOption({
+            sessionId: 'session-1',
+            key: 'model',
+            value: 'gpt-6.1-sol',
+            fence: 7
+          })
+        ).rejects.toThrow('does not offer model gpt-6.1-sol')
+      }
 
-    await adapter.setOption({ sessionId: 'session-1', key: 'model', value: 'gpt-5', fence: 7 })
-    await adapter.setOption({ sessionId: 'session-1', key: 'effort', value: 'high', fence: 7 })
-    await expect(
-      adapter.setOption({ sessionId: 'session-1', key: 'sandboxEscape', value: 'yes', fence: 7 })
-    ).rejects.toThrow('no thread option named sandboxEscape')
-    await expect(
-      adapter.setOption({ sessionId: 'session-1', key: 'approvalPolicy', value: 'never', fence: 7 })
-    ).rejects.toThrow('no thread option named approvalPolicy')
-    await adapter.dispatch({
-      sessionId: 'session-1',
-      clientMessageId: 'client-1',
-      body: USER_MESSAGE,
-      fence: 7
-    })
+      await adapter.setOption({ sessionId: 'session-1', key: 'model', value: 'gpt-5', fence: 7 })
+      await adapter.setOption({ sessionId: 'session-1', key: 'effort', value: 'high', fence: 7 })
+      await expect(
+        adapter.setOption({ sessionId: 'session-1', key: 'sandboxEscape', value: 'yes', fence: 7 })
+      ).rejects.toThrow('no thread option named sandboxEscape')
+      await expect(
+        adapter.setOption({
+          sessionId: 'session-1',
+          key: 'approvalPolicy',
+          value: 'never',
+          fence: 7
+        })
+      ).rejects.toThrow('no thread option named approvalPolicy')
+      await adapter.dispatch({
+        sessionId: 'session-1',
+        clientMessageId: 'client-1',
+        body: USER_MESSAGE,
+        fence: 7
+      })
 
-    const turnStart = codex.connections[0].calls.findLast((call) => call.method === 'turn/start')
-    expect(turnStart?.params).toMatchObject({ model: 'gpt-5', effort: 'high' })
-    expect(turnStart?.params).not.toHaveProperty('sandboxEscape')
-  })
+      const turnStart = codex.connections[0].calls.findLast((call) => call.method === 'turn/start')
+      expect(turnStart?.params).toMatchObject({
+        threadId: THREAD_ID,
+        model: 'gpt-5',
+        effort: 'high'
+      })
+      expect(turnStart?.params).not.toHaveProperty('sandboxEscape')
+      expect(
+        codex.connections[0].calls.filter((call) => call.method === 'turn/start')
+      ).toHaveLength(1)
+    }
+  )
 })

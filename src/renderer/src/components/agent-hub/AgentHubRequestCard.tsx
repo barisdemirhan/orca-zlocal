@@ -48,7 +48,14 @@ export function AgentHubRequestCard({
   const canResolveGate = useAppStore((app) => agentHubCanResolveGate(app, host))
   const busy =
     (state !== undefined && state.phase !== 'error') || (request.kind === 'gate' && !canResolveGate)
-  const agent = request.caller.agentType ?? 'agent'
+  const agent =
+    request.caller.kind === 'orb'
+      ? translate('auto.agentHub.orb.title', 'Orb')
+      : (request.caller.agentType ?? 'agent')
+  const showCallerTitle =
+    presentation.title !== presentation.location.project ||
+    presentation.location.group ||
+    presentation.location.workspace
   const send = (result: Parameters<typeof answerAgentHubRequest>[2]): void => {
     void answerAgentHubRequest(host, request.requestId, result)
   }
@@ -99,7 +106,7 @@ export function AgentHubRequestCard({
     <>
       <div className="flex items-start gap-2.5 pr-6">
         <HubAvatar
-          agentType={agent}
+          agentType={request.caller.agentType ?? null}
           kind={
             request.kind === 'notify'
               ? request.level === 'done'
@@ -122,7 +129,9 @@ export function AgentHubRequestCard({
               {translate('agentHub.requests.decisionGate', 'Decision gate')}
             </Badge>
           ) : null}
-          <div className="truncate text-xs text-muted-foreground">{presentation.title}</div>
+          {showCallerTitle ? (
+            <div className="truncate text-xs text-muted-foreground">{presentation.title}</div>
+          ) : null}
           {request.kind === 'gate' ? (
             <div className="truncate text-xs text-muted-foreground">
               {request.runTitle} · {request.taskTitle}

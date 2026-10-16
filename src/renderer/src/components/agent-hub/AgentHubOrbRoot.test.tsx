@@ -8,6 +8,8 @@ import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/structured-ag
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubCounts } from './agent-hub-lists'
 import { AgentHubRoot } from './AgentHubRoot'
+import { AgentHubOrbButton } from './AgentHubOrbButton'
+import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 import {
   applyAgentHubDelivery,
   clearAgentHubRequestHost,
@@ -16,6 +18,11 @@ import {
 } from './agent-hub-requests-store'
 import { clearAgentHubAlerts, pushAgentHubAlerts } from './agent-hub-alert-queue'
 import { orbAsk } from './agent-hub-orb-test-fixtures'
+import {
+  agentHubGateRequest,
+  agentHubNotifyRequest,
+  agentHubRequestBase
+} from './agent-hub-request-test-fixtures'
 import { getAgentHubCommands } from './agent-hub-commands'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -66,8 +73,16 @@ vi.mock('./AgentHubMirrorFocusShade', () => ({ AgentHubWorkspaceFocusShade: () =
 vi.mock('./AgentHubPeek', () => ({ AgentHubPeek: () => null }))
 vi.mock('./AgentHubDictationPaneTag', () => ({ AgentHubDictationPaneTag: () => null }))
 vi.mock('./AgentHubDock', () => ({
-  AgentHubDock: ({ counts, orb }: { counts: AgentHubCounts; orb?: unknown }) => (
-    <div data-testid="dock" data-waiting={counts.needsYou} data-orb={Boolean(orb)} />
+  AgentHubDock: ({
+    counts,
+    orb
+  }: {
+    counts: AgentHubCounts
+    orb?: Omit<Parameters<typeof AgentHubOrbButton>[0], 'side'> | null
+  }) => (
+    <div data-testid="dock" data-waiting={counts.needsYou} data-orb={Boolean(orb)}>
+      {orb ? <AgentHubOrbButton {...orb} side="top" /> : null}
+    </div>
   )
 }))
 vi.mock('./AgentHubMirrors', () => ({
@@ -88,7 +103,7 @@ beforeEach(() => {
   closeAgentHubOrbPanel()
   clearAgentHubAlerts()
   clearAgentHubRequestHost('local')
-  mocks.open.mockClear()
+  mocks.open.mockReset()
   mocks.threads.mockReturnValue([])
   mocks.orb.mockReturnValue({
     state: { kind: 'idle' },
@@ -101,6 +116,7 @@ beforeEach(() => {
     throw new Error('Expected settings')
   }
   useAppStore.setState({
+    dictationState: 'idle',
     settings: {
       ...settings,
       agentHubPlacement: 'dock',
@@ -122,6 +138,42 @@ const show = () =>
       <AgentHubRoot iconOnly={false} />
     </TooltipProvider>
   )
+
+it.each(['dock', 'statusBar', 'floating'] as const)(
+  'toggles the %s Orb panel without stopping another pane recording',
+  (placement) => {
+    const settings = useAppStore.getState().settings
+    if (!settings) {
+      throw new Error('Expected settings')
+    }
+    const control = vi.fn()
+    document.addEventListener(DICTATION_CONTROL_EVENT, control)
+    try {
+      useAppStore.setState({
+        settings: {
+          ...settings,
+          agentHubOrbPlacement: placement,
+          agentHubDockAutoHide: false
+        },
+        dictationState: 'listening'
+      })
+      mocks.open.mockImplementationOnce(() =>
+        showAgentHubOrbPanel({ sessionId: 'orb-session', tabId: 'orb-tab', resumed: false })
+      )
+      show()
+      const button = screen.getByRole('button', { name: 'Talk to Orb · Not set' })
+      fireEvent.click(button)
+      expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('orb-session')
+      fireEvent.click(button)
+      expect(useAgentHubOrbPanel.getState().session).toBeNull()
+      expect(mocks.open).toHaveBeenCalledOnce()
+      expect(control).not.toHaveBeenCalled()
+      expect(useAppStore.getState().dictationState).toBe('listening')
+    } finally {
+      document.removeEventListener(DICTATION_CONTROL_EVENT, control)
+    }
+  }
+)
 
 it('returns the same queued peek after Orb releases its slot, even while alerts are muted', () => {
   const request = orbAsk('worker-session')
@@ -186,27 +238,74 @@ it('exchanges the Hub and Orb panels and hides the Orb pill while its panel is o
   expect(screen.getByTestId('hub-panel')).toBeTruthy()
 })
 
-it('keeps Orb asks in the Inbox without incrementing waiting and keeps its active pill visible with auto-hide', () => {
-  const request = orbAsk()
-  applyAgentHubDelivery('local', request)
-  const [local] = agentHubThreadsFor([{ paneKey: PANE_KEY, state: 'waiting', at: 100_000 }])
-  if (!local) {
-    throw new Error('Expected local thread')
+it.each(['ask', 'consent', 'gate', 'notify'] as const)(
+  'gives the visible Orb the current %s and returns its card and count to Hub when hidden',
+  (kind) => {
+    const ask = orbAsk()
+    const request =
+      kind === 'ask'
+        ? ask
+        : kind === 'gate'
+          ? { ...agentHubGateRequest(), caller: ask.caller }
+          : kind === 'notify'
+            ? agentHubNotifyRequest({ caller: ask.caller, level: 'needs-you' })
+            : {
+                ...agentHubRequestBase(),
+                caller: ask.caller,
+                kind: 'consent' as const,
+                operation: { kind: 'mirror' as const, action: 'close' as const }
+              }
+    applyAgentHubDelivery('local', request)
+    const [local] = agentHubThreadsFor([{ paneKey: PANE_KEY, state: 'waiting', at: 100_000 }])
+    if (!local) {
+      throw new Error('Expected local thread')
+    }
+    mocks.threads.mockReturnValue([
+      local,
+      { ...local, worktree: { ...local.worktree, hostId: 'ssh:other' }, paneKey: 'remote-pane' }
+    ])
+    mocks.orb.mockReturnValue({
+      state:
+        kind === 'ask'
+          ? {
+              kind: 'needsYou',
+              request: { kind: 'request', item: { host: 'local', request: ask } }
+            }
+          : { kind: 'working' },
+      session: { sessionId: 'orb-session', tabId: local.tab.id },
+      readState: EMPTY_STRUCTURED_AGENT_SESSION,
+      openOrb: mocks.open
+    })
+    show()
+    expect(screen.getByTestId('dock').dataset.waiting).toBe('2')
+    expect(screen.queryByTestId('orb-pill')).toBeNull()
+    act(() =>
+      showAgentHubOrbPanel({ sessionId: 'orb-session', tabId: local.tab.id, resumed: false })
+    )
+    expect(screen.getByTestId('dock').dataset.waiting).toBe('1')
+    expect(agentHubInboxRequests(readAgentHubRequests())).toHaveLength(1)
+    act(() => useAgentHubOrbPanel.setState({ chatVisible: false }))
+    expect(screen.getByTestId('dock').dataset.waiting).toBe('2')
+    act(() => closeAgentHubOrbPanel())
+    expect(screen.getByTestId('dock').dataset.waiting).toBe('2')
+    expect(screen.queryByTestId('orb-pill')).toBeNull()
   }
-  mocks.threads.mockReturnValue([
-    local,
-    { ...local, worktree: { ...local.worktree, hostId: 'ssh:other' }, paneKey: 'remote-pane' }
-  ])
+)
+
+it('uses the visible panel session while the background current-session read is still stale', () => {
+  applyAgentHubDelivery('local', orbAsk('current'))
   mocks.orb.mockReturnValue({
-    state: { kind: 'needsYou', request: { kind: 'request', item: { host: 'local', request } } },
-    session: { sessionId: 'orb-session', tabId: local.tab.id },
+    state: { kind: 'idle' },
+    session: { sessionId: 'previous' },
     readState: EMPTY_STRUCTURED_AGENT_SESSION,
     openOrb: mocks.open
   })
   show()
   expect(screen.getByTestId('dock').dataset.waiting).toBe('1')
-  expect(agentHubInboxRequests(readAgentHubRequests())).toHaveLength(1)
-  expect(screen.getByTestId('orb-pill')).toBeTruthy()
+  act(() => showAgentHubOrbPanel({ sessionId: 'current', resumed: false }))
+  expect(screen.getByTestId('dock').dataset.waiting).toBe('0')
+  act(() => closeAgentHubOrbPanel())
+  expect(screen.getByTestId('dock').dataset.waiting).toBe('1')
 })
 
 it('falls back to the existing hub status item when an Orb dock has no hub dock', () => {

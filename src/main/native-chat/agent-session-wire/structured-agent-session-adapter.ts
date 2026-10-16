@@ -23,6 +23,7 @@ import type {
   AgentSessionRecord
 } from '../../../shared/agent-session-record'
 import type { StructuredAgentSessionAtRestCommands } from './structured-agent-session-at-rest-commands'
+import type { StructuredAgentSessionVoiceAdapter as NativeVoice } from './structured-agent-session-voice-adapter'
 import type { AgentSessionSlashCommand } from '../../../shared/agent-session-wire'
 import type { AgentSessionThreadGoalChange } from '../../../shared/agent-session-thread-goal-wire'
 import type { SubmissionRejectionFact } from '../../../shared/agent-session-failure'
@@ -167,7 +168,10 @@ export type StructuredAgentSessionSetOptionInput = {
   signal?: AbortSignal
 }
 
-export type StructuredAgentSessionAdapter = StructuredAgentSessionAdapterStop & {
+type SessionControls = StructuredAgentSessionAdapterStop & NativeVoice
+
+export type StructuredAgentSessionAdapter = SessionControls & {
+  /** Opens the published process under the host's startup signal. */
   open: StructuredAgentSessionProviderOpen
   supportsCreate?(location: AgentSessionExecutionLocation, agent: string): boolean
   /** Keep runtime/location support in adapter data for remote enablement. */

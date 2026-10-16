@@ -59,7 +59,6 @@ import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubSessionRestore } from './use-agent-hub-session-restore'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { useAgentHubOrbSurfaces } from './AgentHubOrbSurfaces'
-import { agentHubOrbRequest } from './agent-hub-orb-state'
 import { closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbPanelExclusion } from './agent-hub-orb-panel-exclusion'
 
@@ -90,6 +89,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const finishedMaxAgeMs = preferences.finishedClearMinutes * 60_000
   const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
   const orb = useAgentHubOrbSurfaces(threads, lists, anchorRef, preferences, inSettings)
+  const { ownsRequest } = orb
   useAgentHubAlerts(orb.hubLists, preferences)
   useAgentHubSessionRestore(preferences.restoreOnLaunch, preferences.canvas)
   const alerts = useAgentHubAlertQueue()
@@ -223,7 +223,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     const next = needsYouRef.current[0]
     if (!next) {
       const request = agentHubInboxRequests(readAgentHubRequests()).find(
-        (item) => !agentHubOrbRequest(item)
+        (item) => !ownsRequest(item)
       )
       if (request) {
         openHub('inbox', agentHubRequestKey(request.host, request.request.requestId))
@@ -233,7 +233,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
       return
     }
     jump(threadOpenRequest(next))
-  }, [jump, openHub])
+  }, [jump, openHub, ownsRequest])
 
   // An open or minimized mirror raises its own pane's alerts; the hub's bubble takes the rest.
   const { windows, chips } = useAgentHubMirrors()

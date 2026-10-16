@@ -80,7 +80,7 @@ async function preflightCodexRewind(
   if (session.historyMode === 'legacy') {
     return { ok: false, reason: 'history-not-paginated' }
   }
-  if (session.activeTurnIds?.size || session.dispatchPending) {
+  if (session.activeTurnIds?.size || session.dispatchPending || session.realtime?.holdsWork) {
     return { ok: false, reason: 'busy' }
   }
   const metadata = record(

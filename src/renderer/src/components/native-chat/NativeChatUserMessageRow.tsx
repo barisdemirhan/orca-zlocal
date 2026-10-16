@@ -14,6 +14,7 @@ import { NativeChatCodeBlock } from './NativeChatCodeBlock'
 import { NativeChatCopyButton } from './NativeChatCopyButton'
 import { NativeChatMessageTimestamp } from './NativeChatMessageTimestamp'
 import { NativeChatAgentMessageCard } from './NativeChatAgentMessageCard'
+import { NativeChatSpokenLabel } from './NativeChatSpokenLabel'
 import {
   NativeChatDetailsDisclosure,
   NativeChatImageAttachments
@@ -138,6 +139,7 @@ export function NativeChatUserMessageRow({
           )}
         </div>
       )}
+      <NativeChatSpokenLabel message={message} />
       {message.sentAs === 'goal' ? (
         <div className="flex items-center gap-1 text-xs text-chat-foreground-faint">
           <Goal className="size-3" aria-hidden />

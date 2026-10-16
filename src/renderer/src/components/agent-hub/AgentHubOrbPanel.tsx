@@ -5,11 +5,16 @@ import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-c
 import { useAgentHubOrbPanel, closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { cancelDictation } from './agent-hub-dictation-cancel'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
+import { readAgentHubDictationSession } from './agent-hub-dictation-origin'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { useAnchorBinding } from './use-anchor-binding'
 import { AgentHubOrbConversation } from './AgentHubOrbConversation'
 import { useAgentHubOrbSettingsSync } from './use-agent-hub-orb-settings-sync'
+import { useAgentHubOrbVoice } from './use-agent-hub-orb-voice'
+import type { AgentHubOrbState } from './agent-hub-orb-state'
+
+const IDLE_ORB_STATE: AgentHubOrbState = { kind: 'idle' }
 
 export function agentHubOrbAnchorRect(anchor: HTMLElement | null): DOMRect {
   return (
@@ -19,20 +24,30 @@ export function agentHubOrbAnchorRect(anchor: HTMLElement | null): DOMRect {
 }
 
 function isOrbChatInteraction(target: EventTarget | null): boolean {
-  const destination = useAgentHubOrbPanel.getState().destination
-  if (!(target instanceof Node) || !destination) {
+  const panel = useAgentHubOrbPanel.getState()
+  if (!(target instanceof Node)) {
     return false
   }
-  if (destination.contains(target)) {
-    return true
-  }
+  const destinations = [
+    panel.destination,
+    panel.requestDestination,
+    document.querySelector('[data-agent-hub-orb-stage]')
+  ]
   // Retained chat portals keep their React ancestry outside this popover.
-  return [...destination.querySelectorAll('[aria-controls]')].some((trigger) =>
-    trigger
-      .getAttribute('aria-controls')
-      ?.split(/\s+/)
-      .some((id) => destination.ownerDocument.getElementById(id)?.contains(target))
-  )
+  return destinations.some((destination) => {
+    if (!destination) {
+      return false
+    }
+    return (
+      destination.contains(target) ||
+      [...destination.querySelectorAll('[aria-controls]')].some((trigger) =>
+        trigger
+          .getAttribute('aria-controls')
+          ?.split(/\s+/)
+          .some((id) => destination.ownerDocument.getElementById(id)?.contains(target))
+      )
+    )
+  })
 }
 
 export function AgentHubOrbPanel({
@@ -41,6 +56,7 @@ export function AgentHubOrbPanel({
   docked,
   floating = false,
   hidden,
+  state = IDLE_ORB_STATE,
   requestPresentationOf
 }: {
   anchorRef: RefObject<HTMLElement | null>
@@ -48,10 +64,16 @@ export function AgentHubOrbPanel({
   docked: boolean
   floating?: boolean
   hidden: boolean
+  state?: AgentHubOrbState
   requestPresentationOf: (host: string, request: AgentHubRequestBase) => AgentHubRequestPresentation
 }): React.JSX.Element | null {
   const session = useAgentHubOrbPanel((s) => s.session)
   const sessionId = session?.sessionId
+  const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
+  const presentation = useAgentHubOrbPanel((s) => s.presentation)
+  const compact = useAgentHubOrbPanel((s) => s.compact)
+  const voice = useAgentHubOrbVoice(session, !hidden && chatVisible)
+  const orbOnly = chatVisible && (presentation === 'orb' || compact)
   const ownedPointerDowns = useRef(new WeakSet<Event>())
   useEffect(() => {
     const owned = new WeakSet<Event>()
@@ -97,12 +119,23 @@ export function AgentHubOrbPanel({
           collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
           surface="panel"
           className="w-132 max-w-[calc(100vw-2rem)]"
+          style={orbOnly ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}
           {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
           data-agent-hub-orb-panel
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
           onEscapeKeyDown={(event) => {
-            if (isDictationRunning(useAppStore.getState().dictationState)) {
+            if (voice.output === 'speaking') {
+              event.preventDefault()
+              voice.stopSpeaking()
+            } else if (voice.connection === 'connecting' || voice.connection === 'live') {
+              event.preventDefault()
+              void voice.stopLive()
+            } else if (
+              session.tabId &&
+              isDictationRunning(useAppStore.getState().dictationState) &&
+              readAgentHubDictationSession()?.pane?.tabId === session.tabId
+            ) {
               event.preventDefault()
               cancelDictation()
             }
@@ -120,6 +153,9 @@ export function AgentHubOrbPanel({
           <AgentHubOrbConversation
             sessionId={session.sessionId}
             tabId={session.tabId}
+            state={state}
+            voice={voice}
+            visible={!hidden}
             requestPresentationOf={requestPresentationOf}
           />
           {anchored ? <PopoverArrow width={14} height={7} /> : null}

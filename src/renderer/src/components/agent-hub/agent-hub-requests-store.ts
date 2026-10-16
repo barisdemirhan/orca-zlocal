@@ -6,6 +6,11 @@ import type {
   AgentHubProgress,
   AgentHubRequest
 } from '../../../../shared/agent-hub-requests'
+import {
+  projectAgentHubOrbClosedReceipt,
+  pruneAgentHubOrbReceiptForRequest,
+  type AgentHubOrbRequestReceipts
+} from './agent-hub-orb-request-receipts'
 
 export type AgentHubRequestHost = string
 export type AgentHubInboxRequest = {
@@ -26,6 +31,7 @@ export type AgentHubHostRequests = {
   progressByPane: ReadonlyMap<string, AgentHubProgress>
   awayAnswers: ReadonlyMap<string, AgentHubAwayAnswer>
   answerStates: ReadonlyMap<string, AgentHubRequestAnswerState>
+  orbReceipts: AgentHubOrbRequestReceipts
 }
 export type AgentHubRequestsState = ReadonlyMap<AgentHubRequestHost, AgentHubHostRequests>
 
@@ -37,7 +43,8 @@ function emptyHost(): AgentHubHostRequests {
     notifications: new Map(),
     progressByPane: new Map(),
     awayAnswers: new Map(),
-    answerStates: new Map()
+    answerStates: new Map(),
+    orbReceipts: new Map()
   }
 }
 
@@ -49,7 +56,8 @@ export function reduceAgentHubRequests(
   if (event.kind === 'snapshot') {
     let next: AgentHubRequestsState = new Map(state).set(host, {
       ...emptyHost(),
-      awayAnswers: state.get(host)?.awayAnswers ?? new Map()
+      awayAnswers: state.get(host)?.awayAnswers ?? new Map(),
+      orbReceipts: state.get(host)?.orbReceipts ?? new Map()
     })
     for (const item of [...event.snapshot.requests, ...event.snapshot.progress]) {
       next = reduceAgentHubRequests(next, host, item)
@@ -79,17 +87,22 @@ export function reduceAgentHubRequests(
   const progressByPane = new Map(previous.progressByPane)
   const awayAnswers = new Map(previous.awayAnswers)
   const answerStates = new Map(previous.answerStates)
+  let orbReceipts = previous.orbReceipts
   switch (event.kind) {
     case 'gate':
+      orbReceipts = pruneAgentHubOrbReceiptForRequest(orbReceipts, event)
       pendingGates.set(event.requestId, event)
       break
     case 'ask':
+      orbReceipts = pruneAgentHubOrbReceiptForRequest(orbReceipts, event)
       pendingAsks.set(event.requestId, event)
       break
     case 'consent':
+      orbReceipts = pruneAgentHubOrbReceiptForRequest(orbReceipts, event)
       pendingConsents.set(event.requestId, event)
       break
     case 'notify':
+      orbReceipts = pruneAgentHubOrbReceiptForRequest(orbReceipts, event)
       notifications.set(event.requestId, event)
       break
     case 'progress':
@@ -100,6 +113,14 @@ export function reduceAgentHubRequests(
       }
       break
     case 'closed':
+      orbReceipts = projectAgentHubOrbClosedReceipt(
+        orbReceipts,
+        pendingGates.get(event.requestId) ??
+          pendingAsks.get(event.requestId) ??
+          pendingConsents.get(event.requestId) ??
+          notifications.get(event.requestId),
+        event
+      )
       pendingGates.delete(event.requestId)
       pendingAsks.delete(event.requestId)
       pendingConsents.delete(event.requestId)
@@ -134,7 +155,8 @@ export function reduceAgentHubRequests(
     notifications,
     progressByPane,
     awayAnswers,
-    answerStates
+    answerStates,
+    orbReceipts
   })
 }
 
@@ -238,4 +260,18 @@ export function dismissAgentHubAwayAnswer(host: string, requestId: string): void
   const awayAnswers = new Map(view.awayAnswers)
   awayAnswers.delete(requestId)
   commit(new Map(state).set(host, { ...view, awayAnswers }))
+}
+
+export function dismissAgentHubOrbRequestReceipt(
+  host: string,
+  sessionId: string,
+  requestId: string
+): void {
+  const view = state.get(host)
+  if (view?.orbReceipts.get(sessionId)?.requestId !== requestId) {
+    return
+  }
+  const orbReceipts = new Map(view.orbReceipts)
+  orbReceipts.delete(sessionId)
+  commit(new Map(state).set(host, { ...view, orbReceipts }))
 }

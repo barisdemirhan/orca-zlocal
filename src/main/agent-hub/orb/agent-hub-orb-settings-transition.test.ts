@@ -11,6 +11,8 @@ import {
   HOST_TEST_THREAD
 } from '../../native-chat/agent-session-wire/structured-agent-session-host-test-data'
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session-journal-types'
+import { createAgentModelCatalogService } from '../../native-chat/agent-model-catalog/agent-model-catalog-service'
+import { AgentModelCatalogStore } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
 
 let state: ReturnType<typeof hostTestState>
 let settings: ReturnType<typeof createGlobalSettingsFixture>
@@ -23,6 +25,25 @@ beforeEach(() => {
   state = hostTestState()
   setStructuredAgentSessionHost(state.host)
   settings = createGlobalSettingsFixture({ agentHubOrbAgent: 'codex', agentHubOrbModel: null })
+  state.host.deps.modelCatalog = createAgentModelCatalogService({
+    store: new AgentModelCatalogStore(),
+    getRecord: (sessionId) => state.store.getRecord(sessionId) ?? undefined,
+    drivesRecord: () => true,
+    resolveAccountHome: async () => ({ variable: 'CODEX_HOME', path: state.root }),
+    workspaceMayOverrideDefaultModel: async () => false,
+    probes: {
+      codex: async () => ({
+        models: ['default-model', 'explicit-model', 'new-model'].map((id, index) => ({
+          id,
+          label: id,
+          isDefault: index === 0,
+          efforts: []
+        })),
+        fastModeTierByModel: new Map(),
+        origin: 'probe'
+      })
+    }
+  })
   runtime = new OrcaRuntimeService()
   const acquire = state.acquire.getMockImplementation()
   if (!acquire) {
@@ -247,18 +268,38 @@ it('restores the original tab if the provider cannot prove it stopped during a s
   expect(state.store.listRecords()).toHaveLength(1)
 })
 
-it('keeps the current conversation visible if the selected provider cannot prepare a launch', async () => {
-  const current = await manager.open()
-  await settle(current.sessionId)
-  vi.spyOn(runtimeForOrb, 'resolveStructuredAgentSessionCreateIntent').mockRejectedValueOnce(
-    new Error('selected provider unavailable')
-  )
-  settings.agentHubOrbAgent = 'claude'
-  await expect(manager.open()).rejects.toThrow('selected provider unavailable')
-  expect(manager.current()?.sessionId).toBe(current.sessionId)
-  expect(state.host.getSessionTabId(current.sessionId)).toBe(current.tabId)
-  expect(state.store.listRecords()).toHaveLength(1)
-})
+it.each(['launch', 'catalog'] as const)(
+  'keeps the current conversation visible if the selected provider cannot prepare its %s',
+  async (failure) => {
+    const current = await manager.open()
+    await settle(current.sessionId)
+    if (failure === 'launch') {
+      vi.spyOn(runtimeForOrb, 'resolveStructuredAgentSessionCreateIntent').mockRejectedValueOnce(
+        new Error('selected provider unavailable')
+      )
+      settings.agentHubOrbAgent = 'claude'
+    } else {
+      state.host.deps.modelCatalog = createAgentModelCatalogService({
+        store: new AgentModelCatalogStore(),
+        getRecord: (sessionId) => state.store.getRecord(sessionId) ?? undefined,
+        drivesRecord: () => true,
+        resolveAccountHome: async () => ({ variable: 'CODEX_HOME', path: state.root }),
+        probes: {
+          codex: async () => {
+            throw new Error('catalog unavailable')
+          }
+        }
+      })
+      settings.agentHubOrbModel = 'new-model'
+    }
+    await expect(manager.open()).rejects.toThrow(
+      failure === 'launch' ? 'selected provider unavailable' : 'Codex models could not be verified'
+    )
+    expect(manager.current()?.sessionId).toBe(current.sessionId)
+    expect(state.host.getSessionTabId(current.sessionId)).toBe(current.tabId)
+    expect(state.store.listRecords()).toHaveLength(1)
+  }
+)
 
 it('refuses changed settings while the previous agent is opening instead of returning its session as applied', async () => {
   state.dispatch.mockResolvedValueOnce({ state: 'admitted' })

@@ -8,6 +8,7 @@ import {
   AGENT_LAUNCH_RUNTIME_CAPABILITY,
   AGENT_LAUNCH_TAB_CLOSED_CLIENT_CAPABILITY
 } from '../../shared/agent-launch-runtime-capability'
+import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../shared/agent-session-voice'
 import {
   TERMINAL_QUICK_COMMAND_LARGE_LISTS_RUNTIME_CAPABILITY,
   TERMINAL_QUICK_COMMAND_LONG_PROMPTS_RUNTIME_CAPABILITY
@@ -16,6 +17,7 @@ import {
 /** Curate one capability set for unary/streaming desktop calls; remote-only gates can alter local semantics even on the same build. */
 export const DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES: readonly RuntimeCapability[] = [
   ...STRUCTURED_AGENT_SESSION_RENDERER_CLIENT_CAPABILITIES,
+  AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY,
   REPO_SEARCH_QUALIFIED_REFS_RUNTIME_CAPABILITY,
   // Agent-launch authorization requires this even for the same-build desktop renderer.
   AGENT_LAUNCH_RUNTIME_CAPABILITY,

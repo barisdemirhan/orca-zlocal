@@ -259,6 +259,33 @@ describe('nested corruption is rejected', () => {
 })
 
 describe('forward tolerance', () => {
+  it('keeps spoken messages readable across provider vocabularies without admitting malformed provenance', () => {
+    const body = {
+      kind: 'message',
+      role: 'assistant',
+      blocks: [{ type: 'text', text: 'Spoken answer' }]
+    }
+    const spoken = {
+      provider: 'codex',
+      threadId: 'thread-1',
+      realtimeSessionId: 'voice-1',
+      itemId: 'transcript-1'
+    }
+    for (const provider of ['codex', 'future-provider']) {
+      const message = { ...body, spoken: { ...spoken, provider } }
+      expect(AgentJournalItemBodySchema.parse(message)).toEqual(message)
+    }
+    for (const metadata of [
+      { ...spoken, provider: '' },
+      { ...spoken, provider: 7 },
+      { ...spoken, threadId: '' },
+      { ...spoken, realtimeSessionId: null },
+      { ...spoken, itemId: 7 }
+    ]) {
+      expect(isAdmissibleAgentJournalItemBody({ ...body, spoken: metadata })).toBe(false)
+    }
+  })
+
   it('keeps unknown block types, wider state strings, and extra keys admissible', () => {
     expect(
       isAdmissibleAgentJournalItemBody({

@@ -1,10 +1,16 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { projectStructuredItemsToNativeChat } from '../../../../shared/structured-agent-session-projection'
 import type { AgentSessionFailureFact } from '../../../../shared/agent-session-failure'
-import type { AgentJournalStatusItem } from '../../../../shared/agent-session-journal-types'
+import type {
+  AgentJournalPlainStatusItem,
+  AgentJournalStatusItem
+} from '../../../../shared/agent-session-journal-types'
+import type { NativeChatTextBlock } from '../../../../shared/native-chat-types'
 import { isAdmissibleAgentJournalItemBody } from '../../../../shared/agent-session-journal-schemas'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { MessageRow } from './NativeChatMessageRow'
@@ -13,6 +19,7 @@ import { useAppStore } from '@/store'
 import { i18n } from '@/i18n/i18n'
 import { agentSessionFailureWords } from '../../../../shared/agent-session-failure-words'
 import { agentSessionFailureFact } from '../../../../shared/agent-session-failure'
+import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import {
   NativeChatOrcaStopContext,
   type NativeChatOrcaStopView
@@ -61,7 +68,8 @@ function renderStatus(
   continueAvailable = false,
   remoteHost = false,
   agentName?: string,
-  offer: ContinueOffer = NO_OFFER
+  offer: ContinueOffer = NO_OFFER,
+  presentation: 'chat' | 'orb' = 'chat'
 ) {
   const [message] = projectStructuredItemsToNativeChat([
     {
@@ -76,14 +84,16 @@ function renderStatus(
   const view = orcaStopView(hostLabel, continueAvailable, remoteHost, offer)
   return render(
     <TooltipProvider>
-      <NativeChatOrcaStopContext.Provider value={view}>
-        <MessageRow
-          message={message!}
-          agentName={agentName}
-          expandSignal={false}
-          onScrollMessageToTop={vi.fn()}
-        />
-      </NativeChatOrcaStopContext.Provider>
+      <NativeChatPresentationContext value={presentation}>
+        <NativeChatOrcaStopContext.Provider value={view}>
+          <MessageRow
+            message={message!}
+            agentName={agentName}
+            expandSignal={false}
+            onScrollMessageToTop={vi.fn()}
+          />
+        </NativeChatOrcaStopContext.Provider>
+      </NativeChatPresentationContext>
     </TooltipProvider>
   )
 }
@@ -519,6 +529,356 @@ describe('notice rows', () => {
     expect(disclosure?.querySelector('pre')).toHaveTextContent('Your allowance resets tomorrow.')
     expect(screen.queryByText('codex')).not.toBeInTheDocument()
   })
+
+  function mcpStartupFailure(
+    name = 'sentry',
+    text = 'The sentry MCP server is not logged in. Run `codex mcp login sentry`.'
+  ): AgentJournalPlainStatusItem {
+    const head = JSON.stringify({ threadId: 'thread-fixture', name, status: 'failed', error: text })
+    return {
+      kind: 'status',
+      text,
+      tone: 'error',
+      providerFrame: {
+        provider: 'codex',
+        kind: 'notification:mcpServer/startupStatus/updated',
+        payload: { head, byteLength: head.length, digest: 'digest', truncated: false }
+      }
+    }
+  }
+
+  it.each([
+    ['sentry', 'The sentry MCP server is not logged in. Run `codex mcp login sentry`.'],
+    ['postman', 'The postman MCP server requires OAuth reauthentication.'],
+    ['raindrop', 'MCP client for `raindrop` failed to start: Transport channel closed.']
+  ])('keeps the first %s startup error inside closed diagnostics', (name, text) => {
+    const body = mcpStartupFailure(name, text)
+    const { container } = renderStatus(body, null, false, false, undefined, NO_OFFER, 'orb')
+    const disclosure = screen.getByText('MCP connection details').closest('details')
+
+    expect(disclosure).not.toHaveAttribute('open')
+    expect(disclosure).toHaveClass('text-muted-foreground')
+    expect(disclosure?.querySelector('summary')).not.toHaveTextContent(text)
+    expect(disclosure?.querySelector('pre')).toHaveTextContent(body.providerFrame!.payload.head)
+    expect(container.querySelector('p')).toBeNull()
+    expect(container.querySelector('svg')).toBeNull()
+  })
+
+  it.each([
+    [
+      'turn error',
+      {
+        ...mcpStartupFailure(),
+        providerFrame: { ...mcpStartupFailure().providerFrame!, kind: 'notification:error' }
+      }
+    ],
+    [
+      'typed failure',
+      {
+        ...mcpStartupFailure(),
+        ...agentSessionFailureWords(
+          {
+            kind: 'providerStartFailed',
+            detail: { text: 'The MCP server is unavailable.', audience: 'person' }
+          },
+          { agentName: 'Codex', surface: 'row' }
+        )
+      }
+    ],
+    ['presentation', { ...mcpStartupFailure(), presentation: 'future-error' }],
+    [
+      'other provider',
+      {
+        ...mcpStartupFailure(),
+        providerFrame: { ...mcpStartupFailure().providerFrame!, provider: 'future' }
+      }
+    ]
+  ] satisfies [string, AgentJournalStatusItem][])(
+    'keeps a %s visible even when it mentions an MCP server',
+    (_name, body) => {
+      const { container } = renderStatus(body, null, false, false, undefined, NO_OFFER, 'orb')
+      expect(screen.getByText(body.text, { selector: 'p' })).toBeInTheDocument()
+      expect(container.querySelector('svg')).toBeInTheDocument()
+      expect(screen.queryByText('MCP connection details')).toBeNull()
+    }
+  )
+
+  it('shows the captured Codex model failure as a readable error with intact diagnostics', () => {
+    const frames: { case: string; method: string; params: { error?: { message?: string } } }[] =
+      readFileSync(
+        join(__dirname, '../../../../main/codex/__fixtures__/codex-app-server-turn-endings.jsonl'),
+        'utf8'
+      )
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line))
+    const frame = frames.find(
+      (entry) => entry.case === '0.141.0-bad-model' && entry.method === 'error'
+    )
+    const text = frame?.params.error?.message
+    if (!frame || !text) {
+      throw new Error('Expected the captured Codex model error')
+    }
+    const head = JSON.stringify(frame.params)
+    const { container } = renderStatus(
+      {
+        kind: 'status',
+        tone: 'error',
+        text,
+        providerFrame: {
+          provider: 'codex',
+          kind: `notification:${frame.method}`,
+          payload: { head, byteLength: head.length, digest: 'digest', truncated: false }
+        }
+      },
+      null,
+      false,
+      false,
+      undefined,
+      NO_OFFER,
+      'orb'
+    )
+    expect(
+      screen.getByText(
+        "The 'gpt-qa-nonexistent' model is not supported when using Codex with a ChatGPT account.",
+        { selector: 'p' }
+      )
+    ).toBeInTheDocument()
+    expect(container.querySelector('svg')).toBeInTheDocument()
+    const disclosure = screen.getByText('Details').closest('details')
+    expect(disclosure).not.toHaveAttribute('open')
+    expect(disclosure?.querySelector('pre')).toHaveTextContent(head)
+  })
+
+  it.each([
+    ['malformed envelope', '{"type":"error",', {}],
+    [
+      'unknown envelope',
+      '{"type":"error","status":400,"error":{"type":"future_error","message":"Provider detail"}}',
+      {}
+    ],
+    [
+      'typed failure',
+      '{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"Provider detail"}}',
+      { failure: { kind: 'providerStartFailed' } }
+    ]
+  ] satisfies [string, string, Partial<NativeChatTextBlock>][])(
+    'preserves the original Codex error text for a %s',
+    (_name, text, extra) => {
+      const head = JSON.stringify({ error: { message: text } })
+      render(
+        <NativeChatPresentationContext value="orb">
+          <NativeChatNoticeRow
+            block={{
+              type: 'text',
+              tone: 'error',
+              text,
+              providerFrame: {
+                provider: 'codex',
+                kind: 'notification:error',
+                payload: { head, byteLength: head.length, digest: 'digest', truncated: false }
+              },
+              ...extra
+            }}
+          />
+        </NativeChatPresentationContext>
+      )
+      expect(screen.getByText(text, { selector: 'p' })).toBeInTheDocument()
+    }
+  )
+
+  const approvedReview =
+    'Automatic approval review approved (risk: low, authorization: medium): Read-only status query within the requested task.'
+
+  function reviewWarning(extra: Partial<NativeChatTextBlock> = {}): NativeChatTextBlock {
+    const payload = JSON.stringify({ threadId: 'thread-fixture', message: approvedReview })
+    return {
+      type: 'text',
+      text: approvedReview,
+      tone: 'warning',
+      providerFrame: {
+        provider: 'codex',
+        kind: 'notification:warning',
+        payload: {
+          head: payload,
+          byteLength: payload.length,
+          digest: 'digest',
+          truncated: false
+        }
+      },
+      ...extra
+    }
+  }
+
+  it('keeps a successful automatic review compact and its reason inside closed details', () => {
+    const block = reviewWarning()
+    const { container } = render(
+      <NativeChatPresentationContext value="orb">
+        <NativeChatNoticeRow block={block} />
+      </NativeChatPresentationContext>
+    )
+    const summary = screen.getByText('Automatic approval review approved').closest('summary')
+    const disclosure = summary?.closest('details')
+
+    expect(disclosure).toBeInTheDocument()
+    expect(disclosure).not.toHaveAttribute('open')
+    expect(disclosure).toHaveClass('text-muted-foreground')
+    expect(summary).not.toHaveTextContent('risk:')
+    expect(summary).not.toHaveTextContent('Read-only status query')
+    expect(disclosure?.querySelector('pre')).toHaveTextContent(block.providerFrame!.payload.head)
+    expect(screen.queryByText(approvedReview, { selector: 'p' })).toBeNull()
+    expect(container.querySelector('svg')).toBeNull()
+  })
+
+  it.each([
+    ['rejected review', { text: approvedReview.replace('approved', 'rejected') }],
+    ['review question', { text: 'Automatic approval review requires a decision: Allow access?' }],
+    ['unrecognized warning', { text: 'Sandbox access needs attention.' }],
+    ['unknown review format', { text: approvedReview.replace('risk: low', 'risk: unknown') }],
+    ['error row', { tone: 'error' }],
+    ['failure fact', { failure: { kind: 'providerStartFailed' } }],
+    ['presentation row', { presentation: 'future-warning' }],
+    [
+      'answered request',
+      { providerFrame: { ...reviewWarning().providerFrame!, kind: 'request:approval' } }
+    ]
+  ] satisfies [string, Partial<NativeChatTextBlock>][])(
+    'keeps the full notice for a %s',
+    (_name, extra) => {
+      const block = reviewWarning(extra)
+      const { container } = render(
+        <NativeChatPresentationContext value="orb">
+          <NativeChatNoticeRow block={block} />
+        </NativeChatPresentationContext>
+      )
+      expect(screen.getByText(block.text, { selector: 'p' })).toBeInTheDocument()
+      expect(container.querySelector('svg')).toBeInTheDocument()
+    }
+  )
+
+  const storedHookPayload = JSON.stringify({
+    run: {
+      id: 'stop:17:/fixtures/hooks.json',
+      status: 'failed',
+      entries: [{ kind: 'error', text: 'hook exited with code 127' }]
+    }
+  })
+
+  const modelErrorEnvelope =
+    '{"type":"error","status":400,"error":{"type":"invalid_request_error","message":"The selected model is unsupported."}}'
+
+  it.each([
+    [
+      'automatic review',
+      {
+        kind: 'status',
+        text: approvedReview,
+        tone: 'warning',
+        providerFrame: reviewWarning().providerFrame
+      }
+    ],
+    ['MCP startup', mcpStartupFailure()],
+    [
+      'hook error',
+      {
+        kind: 'status',
+        text: 'codex · notification:hook/completed',
+        tone: 'error',
+        providerFrame: {
+          provider: 'codex',
+          kind: 'notification:hook/completed',
+          payload: {
+            head: storedHookPayload,
+            byteLength: storedHookPayload.length,
+            digest: 'digest',
+            truncated: false
+          }
+        }
+      }
+    ],
+    [
+      'model error',
+      {
+        kind: 'status',
+        text: modelErrorEnvelope,
+        tone: 'error',
+        providerFrame: {
+          provider: 'codex',
+          kind: 'notification:error',
+          payload: {
+            head: modelErrorEnvelope,
+            byteLength: modelErrorEnvelope.length,
+            digest: 'digest',
+            truncated: false
+          }
+        }
+      }
+    ]
+  ] satisfies [string, AgentJournalStatusItem][])(
+    'keeps the original normal Chat View presentation for %s',
+    (_name, body) => {
+      const { container } = renderStatus(body)
+      expect(screen.getByText(body.text, { selector: 'p' })).toBeInTheDocument()
+      expect(container.querySelector('svg')).toBeInTheDocument()
+      expect(screen.getByText('Details').closest('details')).not.toHaveAttribute('open')
+    }
+  )
+
+  it.each([
+    [
+      'complete older hook frame',
+      'notification:hook/completed',
+      storedHookPayload,
+      false,
+      'hook exited with code 127'
+    ],
+    [
+      'malformed payload',
+      'notification:hook/completed',
+      '{',
+      false,
+      'codex · notification:hook/completed'
+    ],
+    [
+      'truncated payload',
+      'notification:hook/completed',
+      storedHookPayload,
+      true,
+      'codex · notification:hook/completed'
+    ],
+    [
+      'another frame kind',
+      'notification:future/event',
+      storedHookPayload,
+      false,
+      'codex · notification:future/event'
+    ]
+  ] as const)(
+    'reads a %s without guessing from other diagnostics',
+    (_name, kind, head, truncated, text) => {
+      const { container } = renderStatus(
+        {
+          kind: 'status',
+          text: `codex · ${kind}`,
+          tone: 'error',
+          providerFrame: {
+            provider: 'codex',
+            kind,
+            payload: { head, byteLength: head.length, digest: 'digest', truncated }
+          }
+        },
+        null,
+        false,
+        false,
+        undefined,
+        NO_OFFER,
+        'orb'
+      )
+      expect(screen.getByText(text, { selector: 'p' })).toBeInTheDocument()
+      expect(container.querySelector('details')).not.toHaveAttribute('open')
+      expect(container.querySelector('details pre')).toHaveTextContent(head)
+    }
+  )
   it('keeps the column layout of command output in monospace', () => {
     const text =
       'Context Usage\n⛁ ⛁ ⛶   gpt-4o · 16.6k/128k tokens (13%)\n      ⛁ Skills: 304 tokens'
