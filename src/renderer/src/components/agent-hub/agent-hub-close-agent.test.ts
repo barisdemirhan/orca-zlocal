@@ -17,7 +17,8 @@ const mocks = vi.hoisted(() => {
     requestConfirm: vi.fn(),
     requestPane: vi.fn(),
     closeRemote: vi.fn(),
-    ptyKill: vi.fn()
+    ptyKill: vi.fn(),
+    probe: vi.fn()
   }
 })
 
@@ -36,6 +37,7 @@ vi.mock('../terminal-pane/request-active-terminal-pane-close', () => ({
 }))
 vi.mock('@/runtime/web-runtime-session', () => ({ closeWebRuntimeTerminal: mocks.closeRemote }))
 vi.mock('../terminal/terminal-tab-actions', () => ({ closeTerminalTab: mocks.closeTerminalTab }))
+vi.mock('../terminal/pty-running-work-probe', () => ({ probePtyRunningWork: mocks.probe }))
 vi.mock('../terminal-pane/closed-terminal-leaf-notice', () => ({
   applyClosedTerminalLeafNotice: mocks.closeLeaf
 }))
@@ -60,19 +62,23 @@ beforeEach(() => {
   mocks.requestPane.mockReturnValue(true)
   mocks.closeRemote.mockReturnValue(false)
   mocks.ptyKill.mockResolvedValue(undefined)
+  mocks.probe.mockResolvedValue([])
   vi.stubGlobal('window', { api: { pty: { kill: mocks.ptyKill } } })
   mocks.layouts['tab-1'] = { root: { type: 'leaf', leafId: LEAF_A } }
   mocks.settings.skipCloseTerminalWithRunningProcessConfirm = false
 })
 
 describe('closeAgentHubAgent', () => {
-  it('closes an idle agent tab without asking', () => {
-    closeAgentHubAgent(target(LEAF_A), 'idle')
-    expect(mocks.requestConfirm).not.toHaveBeenCalled()
-    expect(mocks.closeTerminalTab).toHaveBeenCalledWith('tab-1', {
-      skipRunningProcessConfirm: true
-    })
-  })
+  it.each(['idle', 'done', null] as const)(
+    'keeps the normal process guard for a %s tab',
+    (kind) => {
+      closeAgentHubAgent(target(LEAF_A), kind)
+      expect(mocks.requestConfirm).not.toHaveBeenCalled()
+      expect(mocks.closeTerminalTab).toHaveBeenCalledWith('tab-1', {
+        skipRunningProcessConfirm: false
+      })
+    }
+  )
 
   it('asks for a working agent and closes only after confirm', () => {
     closeAgentHubAgent(target(LEAF_A), 'work')
@@ -80,7 +86,9 @@ describe('closeAgentHubAgent', () => {
     const [request] = mocks.requestConfirm.mock.calls[0] ?? []
     expect(request).toMatchObject({ terminalTabId: 'tab-1', copyKind: 'agent' })
     request.onConfirm()
-    expect(mocks.closeTerminalTab).toHaveBeenCalledTimes(1)
+    expect(mocks.closeTerminalTab).toHaveBeenCalledExactlyOnceWith('tab-1', {
+      skipRunningProcessConfirm: true
+    })
   })
 
   it('honours the setting that turned off running-terminal close prompts', () => {
@@ -103,27 +111,43 @@ describe('closeAgentHubAgent', () => {
   it('closes only the mounted pane of a split tab through its own close path', () => {
     mocks.layouts['tab-1'] = splitLayout
     closeAgentHubAgent(target(LEAF_B), 'done')
-    expect(mocks.requestPane).toHaveBeenCalledWith('tab-1', { leafId: LEAF_B, confirm: false })
+    expect(mocks.requestPane).toHaveBeenCalledWith('tab-1', { leafId: LEAF_B, confirm: true })
     expect(mocks.ptyKill).not.toHaveBeenCalled()
     expect(mocks.closeLeaf).not.toHaveBeenCalled()
     expect(mocks.closeTerminalTab).not.toHaveBeenCalled()
   })
 
-  it('stops only that pane PTY when no mounted pane handles the close', () => {
+  it('stops only that pane PTY when no mounted pane handles the close', async () => {
     mocks.layouts['tab-1'] = splitLayout
     mocks.requestPane.mockReturnValue(false)
     closeAgentHubAgent(target(LEAF_B), 'idle')
-    expect(mocks.ptyKill).toHaveBeenCalledExactlyOnceWith('pty-b')
+    await vi.waitFor(() => expect(mocks.ptyKill).toHaveBeenCalledExactlyOnceWith('pty-b'))
     expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B)
     expect(mocks.closeTerminalTab).not.toHaveBeenCalled()
   })
 
-  it('leaves the kill to the runtime when it owns a remote PTY', () => {
+  it('leaves the kill to the runtime when it owns a remote PTY', async () => {
     mocks.layouts['tab-1'] = splitLayout
     mocks.requestPane.mockReturnValue(false)
     mocks.closeRemote.mockReturnValue(true)
     closeAgentHubAgent(target(LEAF_B), 'idle')
+    await vi.waitFor(() => expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B))
     expect(mocks.ptyKill).not.toHaveBeenCalled()
     expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B)
+  })
+
+  it('waits for confirmation before stopping an unmounted shell with a live command', async () => {
+    mocks.layouts['tab-1'] = splitLayout
+    mocks.requestPane.mockReturnValue(false)
+    mocks.probe.mockResolvedValue([{ ptyId: 'pty-b', verdict: 'live' }])
+    closeAgentHubAgent(target(LEAF_B), 'idle')
+    await vi.waitFor(() => expect(mocks.requestConfirm).toHaveBeenCalledOnce())
+    expect(mocks.ptyKill).not.toHaveBeenCalled()
+    expect(mocks.closeLeaf).not.toHaveBeenCalled()
+    const [request] = mocks.requestConfirm.mock.calls[0] ?? []
+    request.onConfirm()
+    expect(mocks.ptyKill).toHaveBeenCalledExactlyOnceWith('pty-b')
+    expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B)
+    expect(mocks.closeTerminalTab).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,5 @@
 import { closeTerminalTab } from '../terminal/terminal-tab-actions'
+import { guardRunningTerminalClose } from '../terminal/running-terminal-close-guard'
 import { applyClosedTerminalLeafNotice } from '../terminal-pane/closed-terminal-leaf-notice'
 import { requestActiveTerminalPaneClose } from '../terminal-pane/request-active-terminal-pane-close'
 import { closeWebRuntimeTerminal } from '@/runtime/web-runtime-session'
@@ -17,21 +18,25 @@ function countLeaves(node: TerminalPaneLayoutNode | null | undefined): number {
 }
 
 /** A mounted pane runs its full user-close path; an unmounted one has its PTY stopped here. */
-function closeSplitLeaf(tabId: string, leafId: string): void {
-  if (requestActiveTerminalPaneClose(tabId, { leafId, confirm: false })) {
+function closeSplitLeaf(tabId: string, leafId: string, title: string, confirmed: boolean): void {
+  if (requestActiveTerminalPaneClose(tabId, { leafId, confirm: !confirmed })) {
     return
   }
-  const ptyId = useAppStore.getState().terminalLayoutsByTabId[tabId]?.ptyIdsByLeafId?.[leafId]
-  if (ptyId && !closeWebRuntimeTerminal(ptyId)) {
-    void window.api.pty.kill(ptyId).catch(() => {})
+  const close = (): void => {
+    const ptyId = useAppStore.getState().terminalLayoutsByTabId[tabId]?.ptyIdsByLeafId?.[leafId]
+    if (ptyId && !closeWebRuntimeTerminal(ptyId)) {
+      void window.api.pty.kill(ptyId).catch(() => {})
+    }
+    applyClosedTerminalLeafNotice(tabId, leafId)
   }
-  applyClosedTerminalLeafNotice(tabId, leafId)
+  if (confirmed) {
+    close()
+  } else {
+    guardRunningTerminalClose({ terminalTabId: tabId, tabLabel: title, onClose: close })
+  }
 }
 
-/**
- * Ends one agent (or shell) from the hub: its pane when the tab is split, so siblings survive,
- * else the whole tab. A working or waiting agent asks first; an idle or finished one does not.
- */
+/** Closes one pane or tab, preserving the running-process guard until the user confirms. */
 export function closeAgentHubAgent(
   target: AgentHubPaneTarget,
   kind: AgentHubIndicatorKind | null
@@ -41,13 +46,12 @@ export function closeAgentHubAgent(
   const layout = useAppStore.getState().terminalLayoutsByTabId[tabId]
   const splitLeaf = leafId !== null && countLeaves(layout?.root) > 1 ? leafId : null
 
-  const close = (): void => {
+  const close = (confirmed: boolean): void => {
     if (splitLeaf) {
-      closeSplitLeaf(tabId, splitLeaf)
+      closeSplitLeaf(tabId, splitLeaf, target.title, confirmed)
       return
     }
-    // Why: confirmation already happened (or is not wanted); the pinned-tab guard still applies.
-    closeTerminalTab(tabId, { skipRunningProcessConfirm: true })
+    closeTerminalTab(tabId, { skipRunningProcessConfirm: confirmed })
   }
 
   const skipConfirm = useAppStore.getState().settings?.skipCloseTerminalWithRunningProcessConfirm
@@ -56,9 +60,9 @@ export function closeAgentHubAgent(
       terminalTabId: tabId,
       tabLabel: target.title,
       copyKind: 'agent',
-      onConfirm: close
+      onConfirm: () => close(true)
     })
     return
   }
-  close()
+  close(false)
 }
