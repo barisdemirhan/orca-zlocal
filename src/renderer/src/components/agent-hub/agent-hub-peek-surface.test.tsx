@@ -175,7 +175,10 @@ describe('Peek Markdown', () => {
       )
       expect(readFile).toHaveBeenCalledWith(
         expect.objectContaining({
-          target: runtimeId ? { kind: 'environment', environmentId: runtimeId } : { kind: 'local' },
+          target:
+            runtimeId === null
+              ? { kind: 'local' }
+              : { kind: 'environment', environmentId: runtimeId },
           worktreeId,
           filePath: '/workspace/report.md',
           ...(hostId === 'ssh:workhost-ssh' ? { connectionId: 'workhost-ssh' } : {})
@@ -356,7 +359,8 @@ describe('Peek file ownership', () => {
       await screen.findByText('file preview')
       expect(readFile).toHaveBeenCalledWith(
         expect.objectContaining({
-          target: environmentId ? { kind: 'environment', environmentId } : { kind: 'local' },
+          target:
+            environmentId === null ? { kind: 'local' } : { kind: 'environment', environmentId },
           worktreeId,
           filePath: `/workspace/${fileName}`,
           relativePath: fileName,
