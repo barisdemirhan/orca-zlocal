@@ -35,7 +35,9 @@ vi.mock('@/store/running-terminal-close-confirm', () => ({
 vi.mock('../terminal-pane/request-active-terminal-pane-close', () => ({
   requestActiveTerminalPaneClose: mocks.requestPane
 }))
-vi.mock('@/runtime/web-runtime-session', () => ({ closeWebRuntimeTerminal: mocks.closeRemote }))
+vi.mock('@/runtime/web-runtime-terminal-actions', () => ({
+  closeWebRuntimeTerminal: mocks.closeRemote
+}))
 vi.mock('../terminal/terminal-tab-actions', () => ({ closeTerminalTab: mocks.closeTerminalTab }))
 vi.mock('../terminal/pty-running-work-probe', () => ({ probePtyRunningWork: mocks.probe }))
 vi.mock('../terminal-pane/closed-terminal-leaf-notice', () => ({

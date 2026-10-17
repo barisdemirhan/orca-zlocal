@@ -247,7 +247,8 @@ it('keeps the retained chat and its model picker open until an actual outside in
   expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
   expect(document.querySelector('[data-agent-hub-orb-panel]')).not.toBeNull()
   expect(screen.getByRole('textbox', { name: 'Chat draft' })).toBe(draft)
-  await waitFor(() => expect(document.activeElement).toBe(draft))
+  // The combined picker stays open after a model pick; only effort closes it.
+  expect(document.activeElement).toBe(screen.getByRole('combobox'))
   await user.click(screen.getByRole('button', { name: 'Outside' }))
   await waitFor(() => expect(useAgentHubOrbPanel.getState().session).toBeNull())
 })
