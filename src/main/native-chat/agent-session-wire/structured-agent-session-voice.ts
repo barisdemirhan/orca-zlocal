@@ -8,14 +8,19 @@ import {
   type AgentSessionVoiceStartParams,
   type AgentSessionVoiceStopParams
 } from '../../../shared/agent-session-voice'
-import { LOCAL_EXECUTION_HOST_ID } from '../../../shared/execution-host'
 import { refuse } from '../../../shared/agent-session-wire-refusals'
 import type { StructuredAgentSessionCaller } from './structured-agent-session-host-types'
 import {
   mutateStructuredAgentSession,
+  runStructuredAgentSessionMutation,
   type StructuredAgentSessionMutationContext
 } from './structured-agent-session-mutation-context'
-import { openForProviderWrite, openWithAgent } from './structured-agent-session-send-preparation'
+import { openForProviderWrite } from './structured-agent-session-send-preparation'
+import {
+  openWithReadyStructuredAgentSessionChild,
+  runWithReadyStructuredAgentSessionOperation
+} from './structured-agent-session-ready-operation'
+import { codexVoiceTargetCapability } from './structured-agent-session-voice-capability'
 import type { MutationPlan } from './structured-agent-session-mutation-plans'
 
 type Subscriber = AgentSessionVoiceOwner & {
@@ -53,29 +58,8 @@ export class StructuredAgentSessionVoice {
 
   constructor(private readonly context: () => StructuredAgentSessionMutationContext) {}
 
-  private targetCapability = (sessionId: string): AgentSessionVoiceCapability => {
-    const { deps } = this.context()
-    const record = deps.store.getRecord(sessionId)
-    if (!record) {
-      return { supported: false, reason: 'This conversation is unavailable.' }
-    }
-    if (record.provider !== 'codex') {
-      return { supported: false, reason: 'Live voice requires a Codex conversation.' }
-    }
-    if (
-      record.location.executionHostId !== LOCAL_EXECUTION_HOST_ID ||
-      record.location.wslDistro !== null
-    ) {
-      return {
-        supported: false,
-        reason: 'This execution host does not support native Codex Live voice.'
-      }
-    }
-    const adapter = deps.agents.registration(record.provider)?.adapter
-    return adapter?.startVoice && adapter.stopVoice
-      ? { supported: true, accountAccess: 'unchecked' }
-      : { supported: false, reason: 'This host does not support native Codex Live voice.' }
-  }
+  private targetCapability = (sessionId: string): AgentSessionVoiceCapability =>
+    codexVoiceTargetCapability(this.context().deps, sessionId)
 
   capability = async (sessionId: string): Promise<AgentSessionVoiceCapability> => {
     const target = this.targetCapability(sessionId)
@@ -172,12 +156,25 @@ export class StructuredAgentSessionVoice {
         state: 'unverifiable'
       })
     }
-    return mutateStructuredAgentSession(
+    return runWithReadyStructuredAgentSessionOperation(
       context,
-      caller,
+      caller.callerKey,
       params.envelope,
       plan,
-      openWithAgent(context, params.envelope, beforeStart)
+      (selection) =>
+        runStructuredAgentSessionMutation(
+          context,
+          caller,
+          params.envelope,
+          plan,
+          openWithReadyStructuredAgentSessionChild(context, params.envelope, selection)
+        ),
+      {
+        beforeAgent: () => {
+          const admitted = beforeStart()
+          return admitted.ok ? null : admitted
+        }
+      }
     )
   }
 

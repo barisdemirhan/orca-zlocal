@@ -51,7 +51,7 @@ beforeEach(() => {
   }
   state.acquire.mockImplementation(async (input) => {
     const acquired = await acquire(input)
-    return input.identity.agent === 'claude'
+    return input.identity.agent === 'claude' && acquired.link
       ? {
           ...acquired,
           link: { ...acquired.link, handle: claudeProviderHandle('orb-thread', null) }
@@ -62,6 +62,7 @@ beforeEach(() => {
     agentHub: runtime.agentHub,
     isAgentHubEnabled: () => true,
     ensureStructuredAgentSessionHost: async () => {},
+    getAgentProviderSessionRows: () => [],
     resolveStructuredAgentSessionCreateIntent: async (params) => ({
       envelope: { ...params.envelope, expectedRuntimeFence: null, payloadFingerprint: '' },
       location: {

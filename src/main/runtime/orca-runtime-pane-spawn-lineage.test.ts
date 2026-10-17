@@ -2,8 +2,6 @@ import './orca-runtime-test-lifecycle.spec'
 import { describe, expect, it, vi } from 'vitest'
 import {
   OrcaRuntimeService,
-  RpcDispatcher,
-  TERMINAL_METHODS,
   computeWorktreePathMock,
   ensurePathWithinWorkspaceMock,
   listWorktrees
@@ -13,6 +11,8 @@ import {
   makeRuntimeStoreWithWorkspaceSession,
   makeWorkspaceSessionWithHeadlessTerminal
 } from './orca-runtime-test-fixtures.spec'
+import { RpcDispatcher } from './rpc/dispatcher'
+import { TERMINAL_METHODS } from './rpc/methods/terminal'
 import type { RuntimeStore } from './runtime-store-contract'
 import { makeAgentStatusStoreWiring } from './agent-status-store-wiring.test-fixture'
 import { parseWorkspaceSession } from '../../shared/workspace-session-schema'

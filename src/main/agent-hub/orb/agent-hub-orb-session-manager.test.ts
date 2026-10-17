@@ -94,6 +94,7 @@ beforeEach(() => {
     isAgentHubEnabled: () =>
       settings.experimentalAgentHub === true && settings.agentHubAgentControl !== false,
     ensureStructuredAgentSessionHost: async () => {},
+    getAgentProviderSessionRows: () => [],
     resolveStructuredAgentSessionCreateIntent: vi.fn<
       ConstructorParameters<
         typeof AgentHubOrbSessionManager
@@ -244,7 +245,7 @@ describe('Orb conversations on the structured host', () => {
     }
     state.acquire.mockImplementation(async (input) => {
       const acquired = await acquire(input)
-      return input.identity.agent === 'claude'
+      return input.identity.agent === 'claude' && acquired.link
         ? {
             ...acquired,
             link: { ...acquired.link, handle: claudeProviderHandle('claude-orb-thread', null) }

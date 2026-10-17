@@ -47,6 +47,10 @@ export abstract class OrcaRuntimeWithPruneMobileSessionTabGroupLayout extends Or
     })
   }
 
+  protected abstract getTerminalSpawnedBy(
+    paneKey: string
+  ): NonNullable<AgentStatusEntry['spawnedBy']> | undefined
+
   protected pruneMobileSessionTabGroupLayout(
     layout: TabGroupLayoutNode | null | undefined,
     validGroupIds: ReadonlySet<string>
@@ -136,7 +140,7 @@ export abstract class OrcaRuntimeWithPruneMobileSessionTabGroupLayout extends Or
       isRendererOwnedMobileBrowserTab: (...args) => this.isRendererOwnedMobileBrowserTab(...args),
       getProviderSessionRows: (paneKey) => this.getAgentProviderSessionRowsForPaneFn?.(paneKey),
       getProviderSessionSnapshot: () => this.getAgentProviderSessionSnapshotFn?.() ?? [],
-      getSpawnedBy: (paneKey) => this.getTerminalSpawnedBy?.(paneKey),
+      getSpawnedBy: (paneKey) => this.getTerminalSpawnedBy(paneKey),
       getStatusSnapshot: () => this.getAgentStatusSnapshotFn?.() ?? [],
       getLeafKey: (tabId, leafId) => this.getLeafKey(tabId, leafId),
       findPty: (worktreeId, tab, options) =>

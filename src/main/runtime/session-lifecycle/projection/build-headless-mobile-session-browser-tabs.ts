@@ -29,6 +29,8 @@ import { closeLeafOrTab } from '../../../persistence/terminal-topology/terminal-
 import { markAgentLaunchesClosedByUser } from '../../../agent-launch/agent-launch-pane-attachment'
 
 export abstract class OrcaRuntimeWithBuildHeadlessMobileSessionBrowserTabs extends OrcaRuntimeWithPersistTerminalSurfaceRetirements {
+  protected abstract pruneTerminalSpawnLineage(target: TerminalSurfaceCloseTarget): void
+
   protected abstract getRendererOwnedBrowserPageIds(
     ...args: Parameters<BrowserOwnership['getRendererOwnedBrowserPageIds']>
   ): ReturnType<BrowserOwnership['getRendererOwnedBrowserPageIds']>
@@ -168,7 +170,7 @@ export abstract class OrcaRuntimeWithBuildHeadlessMobileSessionBrowserTabs exten
     if (refusal) {
       throw refusal
     }
-    this.pruneTerminalSpawnLineage?.(target)
+    this.pruneTerminalSpawnLineage(target)
     return ptyIdsToKill
   }
 

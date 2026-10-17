@@ -49,6 +49,8 @@ import {
 } from '../runtime-agent-terminal-startup'
 import { removeWorktreeMetaRow } from '../../persistence/host-qualified-worktree-meta'
 
+import type { TerminalSurfaceCloseTarget } from '../../../shared/terminal-surface-close-target'
+
 export abstract class OrcaRuntimeWithResolveWorktreeRemovalTarget extends OrcaRuntimeWithRemoveManagedWorktree {
   protected abstract resolveExplicitWorktreeIdScoped(
     worktreeId: string,
@@ -56,6 +58,7 @@ export abstract class OrcaRuntimeWithResolveWorktreeRemovalTarget extends OrcaRu
   ): Promise<ResolvedWorktree | null>
   protected abstract cancelScheduledMobileSessionTabsChanged(worktreeId: string): void
   protected abstract notifyMobileSessionTabsRemoved(worktreeId: string): void
+  protected abstract pruneTerminalSpawnLineage(target: TerminalSurfaceCloseTarget): void
 
   protected async resolveWorktreeRemovalTarget(
     worktreeSelector: string,
@@ -191,7 +194,7 @@ export abstract class OrcaRuntimeWithResolveWorktreeRemovalTarget extends OrcaRu
         : [])
     ])
     for (const tabId of removedTabIds) {
-      this.pruneTerminalSpawnLineage?.({ kind: 'tab', tabId })
+      this.pruneTerminalSpawnLineage({ kind: 'tab', tabId })
     }
     removeWorktreeMetaRow(store, worktreeId, hostId)
     // Retire only this host's panes even when a same-id owner survives.
