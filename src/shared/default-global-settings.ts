@@ -267,7 +267,6 @@ export function buildDefaultSettings(args: {
     agentHubAgentControl: true,
     agentHubOrbAgent: 'claude',
     agentHubOrbModel: null,
-    agentHubOrbPermission: 'ask',
     agentHubOrbCwd: null,
     agentHubOrbPlacement: 'floating',
     agentHubOrbSpeakReplies: false,

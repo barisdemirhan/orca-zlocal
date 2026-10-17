@@ -1,4 +1,7 @@
-import { agentHubOrbPermissionOptions } from './agent-hub-orb-permission-settings'
+import {
+  agentHubOrbAutoModeSupported,
+  agentHubOrbPermissionOptions
+} from './agent-hub-orb-permission-settings'
 import { stat } from 'node:fs/promises'
 import { isAbsolute } from 'node:path'
 import {
@@ -209,7 +212,11 @@ export class AgentHubOrbSessionManager {
       agent,
       model,
       cwd,
-      permissionOptions: agentHubOrbPermissionOptions(this.getSettings(), agent)
+      permissionOptions: agentHubOrbPermissionOptions(
+        this.getSettings(),
+        agent,
+        await agentHubOrbAutoModeSupported(host.deps.modelCatalog, agent, model)
+      )
     })
     this.requireEnabled()
     const created = await replaceAgentHubOrbSession(
@@ -254,6 +261,20 @@ export class AgentHubOrbSessionManager {
   }
 }
 
+// Why: a choice never made resolves to Approve for me or Full access, so it ranks with Approve for me.
+const ORB_ACCESS_RANK = {
+  ask: 0,
+  'accept-edits': 1,
+  auto: 2,
+  'full-access': 3
+} as const
+
+function agentHubOrbAccessRank(
+  permission: ReturnType<typeof normalizeAgentHubOrbSettings>['permission']
+): number {
+  return permission ? ORB_ACCESS_RANK[permission] : ORB_ACCESS_RANK.auto
+}
+
 export function createAgentHubOrbSessionManager(
   runtime: OrbRuntime,
   store: Pick<RuntimeStore, 'getSettings' | 'updateSettings' | 'onSettingsChanged'> | null
@@ -273,7 +294,7 @@ export function createAgentHubOrbSessionManager(
   let enabled = runtime.isAgentHubEnabled()
   store?.onSettingsChanged?.(() => {
     const next = normalizeAgentHubOrbSettings(store.getSettings()).permission
-    const restrict = permission === 'free' && next === 'ask'
+    const restrict = agentHubOrbAccessRank(next) < agentHubOrbAccessRank(permission)
     const nextEnabled = runtime.isAgentHubEnabled()
     const disabled = enabled && !nextEnabled
     permission = next

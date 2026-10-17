@@ -19139,7 +19139,7 @@
         "openDenyKeys": "Open ↵ / Deny esc",
         "toSend": "to send",
         "approvalKeys": "Allow ↵ / Deny esc",
-        "piRequiresFree": "Pi requires Act freely. Choose another agent to ask before running commands.",
+        "piRequiresFree": "Pi requires Full access. Choose another agent to ask before running commands.",
         "sharedWorkingFolder": "Uses the floating workspace directory. Changes also apply to new floating tabs.",
         "size": "Orb size",
         "sizePixels": "{{value0}} pixels",

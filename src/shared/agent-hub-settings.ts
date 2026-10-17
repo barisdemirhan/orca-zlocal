@@ -38,7 +38,8 @@ export type AgentHubSettings = {
   agentHubAgentControl?: boolean
   agentHubOrbAgent?: StructuredAgentId
   agentHubOrbModel?: string | null
-  agentHubOrbPermission?: 'ask' | 'free'
+  /** Absent until chosen. `free` is Full access; the other chat modes are newer values. */
+  agentHubOrbPermission?: 'ask' | 'free' | 'accept-edits' | 'auto'
   agentHubOrbCwd?: string | null
   agentHubOrbPlacement?: 'floating' | 'dock' | 'statusBar' | 'hidden'
   agentHubOrbPosition?: { x: number; y: number }

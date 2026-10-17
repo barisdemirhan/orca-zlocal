@@ -150,7 +150,7 @@ it.each(['agent', 'model'] as const)(
     expect(next.sessionId).not.toBe(first.sessionId)
     expect(state.store.getRecord(next.sessionId)).toMatchObject({
       provider: setting === 'agent' ? 'claude' : 'codex',
-      permissionMode: 'ask',
+      permissionMode: setting === 'agent' ? 'full-access' : 'auto',
       ...(setting === 'agent' ? {} : { options: { model: 'new-model' } })
     })
     if (setting === 'agent') {
@@ -180,7 +180,7 @@ it.each(['agent', 'model'] as const)(
     expect(next.sessionId).not.toBe(first.sessionId)
     expect(state.store.getRecord(next.sessionId)).toMatchObject({
       provider: selection === 'agent' ? 'claude' : 'codex',
-      permissionMode: 'ask',
+      permissionMode: selection === 'agent' ? 'full-access' : 'auto',
       ...(selection === 'agent' ? {} : { options: { model: 'new-model' } })
     })
     if (selection === 'agent') {

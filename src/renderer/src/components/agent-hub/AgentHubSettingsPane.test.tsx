@@ -122,7 +122,8 @@ it('keeps approvals and their warning independent of Orb placement', () => {
   useAppStore.setState({
     settings: createGlobalSettingsFixture({
       experimentalAgentHub: true,
-      agentHubOrbPlacement: 'dock'
+      agentHubOrbPlacement: 'dock',
+      agentHubOrbPermission: 'ask'
     })
   })
   render(<Pane />)
@@ -138,15 +139,36 @@ it('keeps approvals and their warning independent of Orb placement', () => {
   })
   expect(useAppStore.getState().settings?.agentHubOrbPlacement).toBe('floating')
   expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('ask')
-  fireEvent.click(screen.getByRole('radio', { name: 'Act freely' }))
+  fireEvent.click(screen.getByRole('radio', { name: 'Full access' }))
   expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('free')
   expect(screen.getByText(warning)).toBeTruthy()
-  fireEvent.click(screen.getByRole('radio', { name: 'Ask' }))
+  fireEvent.click(screen.getByRole('radio', { name: 'Ask for approval' }))
   expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('ask')
   expect(screen.queryByText(warning)).toBeNull()
 })
 
-it('keeps Pi Ask unavailable until the user explicitly selects Act freely', () => {
+it('offers the modes Codex supports and selects Approve for me before any choice', () => {
+  useAppStore.setState({
+    settings: createGlobalSettingsFixture({
+      experimentalAgentHub: true,
+      agentHubOrbAgent: 'codex'
+    })
+  })
+  render(<Pane />)
+  const group = within(screen.getByRole('radiogroup', { name: 'Approvals' }))
+  expect(
+    group
+      .getAllByRole('radio')
+      .map((radio) => radio.getAttribute('aria-label') ?? radio.textContent)
+  ).toEqual(['Ask for approval', 'Approve for me', 'Full access'])
+  expect(group.getByRole('radio', { name: 'Approve for me' }).getAttribute('aria-checked')).toBe(
+    'true'
+  )
+  fireEvent.click(group.getByRole('radio', { name: 'Approve for me' }))
+  expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('auto')
+})
+
+it('keeps Pi Ask unavailable and Full access selected', () => {
   useAppStore.setState({
     settings: createGlobalSettingsFixture({
       experimentalAgentHub: true,
@@ -155,13 +177,14 @@ it('keeps Pi Ask unavailable until the user explicitly selects Act freely', () =
     })
   })
   render(<Pane />)
-  const ask = screen.getByRole('radio', { name: 'Ask' })
+  const ask = screen.getByRole('radio', { name: 'Ask for approval' })
   expect(ask.getAttribute('aria-disabled')).toBe('true')
   expect(
-    screen.getByText('Pi requires Act freely. Choose another agent to ask before running commands.')
+    screen.getByText(
+      'Pi requires Full access. Choose another agent to ask before running commands.'
+    )
   ).toBeTruthy()
-  expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('ask')
-  fireEvent.click(screen.getByRole('radio', { name: 'Act freely' }))
+  fireEvent.click(screen.getByRole('radio', { name: 'Full access' }))
   expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('free')
   fireEvent.click(ask)
   expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('free')

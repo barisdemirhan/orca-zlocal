@@ -1,9 +1,14 @@
 import { translate } from '@/i18n/i18n'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import { chatModelSupportsAutoMode } from '../../../../shared/agent-chat-permission-mode'
 import {
   normalizeAgentHubOrbSettings,
-  agentHubOrbSupportsAsk
+  agentHubOrbOfferedModes,
+  agentHubOrbPermissionSettingValue,
+  agentHubOrbSupportsAsk,
+  resolveAgentHubOrbMode
 } from '../../../../shared/agent-hub-orb-settings'
+import { nativeChatPermissionModeLabel } from '../native-chat/native-chat-permission-mode-labels'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -24,14 +29,36 @@ export function AgentHubSettingsOrbSection({
   const orb = normalizeAgentHubOrbSettings(settings)
   const { agents, models, loading, refreshModels } = useAgentHubOrbOptions(orb.agent)
   const supportsAsk = agentHubOrbSupportsAsk(orb.agent)
+  const autoSupported = chatModelSupportsAutoMode(models, orb.model)
+  const permission =
+    resolveAgentHubOrbMode(orb.agent, orb.permission, autoSupported) ??
+    orb.permission ??
+    'full-access'
   const askUnavailable = translate(
     'auto.agentHub.orb.piRequiresFree',
-    'Pi requires Act freely. Choose another agent to ask before running commands.'
+    'Pi requires Full access. Choose another agent to ask before running commands.'
   )
   const agentLabel = translate('auto.agentHub.orb.agent', 'Agent')
   const modelLabel = translate('auto.agentHub.orb.model', 'Model')
   const defaultModel = translate('auto.agentHub.orb.agentDefault', 'Agent default')
   const approvalsLabel = translate('auto.agentHub.orb.approvals', 'Approvals')
+  const permissionOptions = [
+    // Why: Pi cannot ask, so its Ask stays visible but off, with the reason on hover.
+    ...(supportsAsk
+      ? []
+      : [
+          {
+            value: 'ask' as const,
+            label: nativeChatPermissionModeLabel('ask'),
+            disabled: true,
+            tooltip: askUnavailable
+          }
+        ]),
+    ...agentHubOrbOfferedModes(orb.agent, autoSupported).map((mode) => ({
+      value: mode,
+      label: nativeChatPermissionModeLabel(mode)
+    }))
+  ]
   const placementLabel = translate('auto.agentHub.orb.placement', 'Placement')
   const placement =
     settings.agentHubOrbPlacement === 'dock' ||
@@ -149,7 +176,7 @@ export function AgentHubSettingsOrbSection({
         description={
           !supportsAsk
             ? askUnavailable
-            : orb.permission === 'free'
+            : permission === 'full-access'
               ? translate(
                   'auto.agentHub.orb.freeWarning',
                   'The Orb runs commands without asking. Use with care.'
@@ -158,18 +185,15 @@ export function AgentHubSettingsOrbSection({
         }
         control={
           <SettingsSegmentedControl
-            value={orb.permission}
+            value={permission}
             ariaLabel={approvalsLabel}
-            onChange={(value) => updateSettings({ agentHubOrbPermission: value })}
-            options={[
-              {
-                value: 'ask',
-                label: translate('auto.agentHub.orb.ask', 'Ask'),
-                disabled: !supportsAsk,
-                tooltip: !supportsAsk ? askUnavailable : undefined
-              },
-              { value: 'free', label: translate('auto.agentHub.orb.free', 'Act freely') }
-            ]}
+            wrap
+            onChange={(value) =>
+              updateSettings({
+                agentHubOrbPermission: agentHubOrbPermissionSettingValue(value)
+              })
+            }
+            options={permissionOptions}
           />
         }
       />

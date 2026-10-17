@@ -722,6 +722,18 @@ describe('notice rows', () => {
     expect(screen.queryByText(approvedReview, { selector: 'p' })).toBeNull()
   })
 
+  it('omits a successful automatic review reported as a guardian warning', () => {
+    const block = reviewWarning({
+      providerFrame: { ...reviewWarning().providerFrame!, kind: 'notification:guardianWarning' }
+    })
+    const { container } = render(
+      <NativeChatPresentationContext value="orb">
+        <NativeChatNoticeRow block={block} />
+      </NativeChatPresentationContext>
+    )
+    expect(container).toBeEmptyDOMElement()
+  })
+
   it.each([
     ['rejected review', { text: approvedReview.replace('approved', 'rejected') }],
     ['review question', { text: 'Automatic approval review requires a decision: Allow access?' }],

@@ -53,7 +53,7 @@ it('refuses Pi Ask before reserving a session or starting a provider', async () 
   settings.agentHubOrbPermission = 'ask'
   await expect(manager.open()).rejects.toMatchObject({
     code: 'invalid_argument',
-    message: 'Pi requires Act freely. Choose another agent to ask before running commands.'
+    message: 'Pi requires Full access. Choose another agent to ask before running commands.'
   })
   expect(state.store.listRecords()).toHaveLength(0)
   expect(state.acquire).not.toHaveBeenCalled()
@@ -395,7 +395,7 @@ describe('Orb conversations on the structured host', () => {
       origin: 'agent-hub-orb',
       location: { workspaceId: FLOATING_TERMINAL_WORKTREE_ID, workspaceKind: 'folder' },
       launchDirectory: state.root,
-      permissionMode: 'ask'
+      permissionMode: 'auto'
     })
     expect(records[0]?.options).toBeUndefined()
     const snapshot = await state.host.journalSnapshot(first.sessionId)

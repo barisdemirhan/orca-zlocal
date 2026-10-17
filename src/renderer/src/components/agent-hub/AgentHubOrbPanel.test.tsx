@@ -440,7 +440,7 @@ it('edits the shared Orb settings without losing the retained draft or conversat
     key: 'ArrowDown'
   })
   fireEvent.click(await screen.findByRole('option', { name: 'Next model' }))
-  fireEvent.click(within(settings).getByRole('radio', { name: 'Act freely' }))
+  fireEvent.click(within(settings).getByRole('radio', { name: 'Full access' }))
   await act(async () => fireEvent.click(within(settings).getByRole('button', { name: 'Choose…' })))
   expect(useAppStore.getState().settings?.floatingTerminalCwd).toBe('~')
   mocks.pickFolder.mockResolvedValue('/project/orb')

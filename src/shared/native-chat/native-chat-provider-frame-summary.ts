@@ -117,10 +117,16 @@ export function nativeChatCodexApiErrorSummary(row: ProviderFrameRowText): strin
   }
 }
 
+// Why: Codex reports the review verdict as either a plain or a guardian warning frame.
+const APPROVED_REVIEW_FRAME_KINDS: ReadonlySet<string> = new Set([
+  'notification:warning',
+  'notification:guardianWarning'
+])
+
 export function nativeChatApprovedReviewSummary(row: ProviderFrameRowText): string | null {
   if (
     row.providerFrame?.provider !== 'codex' ||
-    row.providerFrame.kind !== 'notification:warning' ||
+    !APPROVED_REVIEW_FRAME_KINDS.has(row.providerFrame.kind) ||
     row.tone !== 'warning' ||
     row.presentation !== undefined ||
     row.failure !== undefined
