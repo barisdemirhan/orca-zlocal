@@ -10,7 +10,8 @@ import {
   useAgentHubOrbPanel
 } from './agent-hub-orb-panel-store'
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
-import { clearAgentHubRequestHost } from './agent-hub-requests-store'
+import { orbAsk } from './agent-hub-orb-test-fixtures'
+import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -126,6 +127,27 @@ it('keeps voice availability messages inside the control strip', () => {
   expect(controls?.contains(status)).toBe(true)
   expect(status.classList.contains('bg-muted')).toBe(true)
   expect(useAgentHubOrbPanel.getState().destination?.contains(status)).toBe(false)
+})
+
+it('shows only Hub request outcomes answered while this Orb panel was open', () => {
+  const old = orbAsk('orb')
+  applyAgentHubDelivery('local', old)
+  applyAgentHubDelivery('local', { ...old, kind: 'closed', reason: 'responded' })
+  render(conversation())
+  expect(document.querySelector('[data-agent-hub-orb-request-receipt]')).toBeNull()
+  const current = { ...orbAsk('orb'), requestId: 'current-request' }
+  act(() => {
+    applyAgentHubDelivery('local', current)
+  })
+  act(() => {
+    applyAgentHubDelivery('local', { ...current, kind: 'closed', reason: 'responded' })
+  })
+  expect(document.querySelector('[data-agent-hub-orb-request-receipt="responded"]')).not.toBeNull()
+  act(() => {
+    closeAgentHubOrbPanel()
+    showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'orb-tab', resumed: true })
+  })
+  expect(document.querySelector('[data-agent-hub-orb-request-receipt]')).toBeNull()
 })
 
 it('keeps compact actions in one strip with history, new and settings only in its menu', async () => {

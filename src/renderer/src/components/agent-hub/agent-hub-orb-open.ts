@@ -53,16 +53,18 @@ async function open(
     return true
   } catch (error) {
     const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null
-    toast.error(
-      code === 'disabled'
-        ? translate('auto.agentHub.orb.disabled', 'Enable Agent control to talk to Orb')
-        : code
-          ? agentHubOrbErrorMessage(
-              error,
-              translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.')
-            )
-          : translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.')
-    )
+    if (!useAgentHubOrbPanel.getState().session) {
+      toast.error(
+        code === 'disabled'
+          ? translate('auto.agentHub.orb.disabled', 'Enable Agent control to talk to Orb')
+          : code
+            ? agentHubOrbErrorMessage(
+                error,
+                translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.')
+              )
+            : translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.')
+      )
+    }
     return false
   }
 }

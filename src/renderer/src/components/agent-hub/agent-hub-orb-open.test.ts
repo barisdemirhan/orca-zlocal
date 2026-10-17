@@ -1,6 +1,10 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useAgentHubOrbPanel, closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import {
+  useAgentHubOrbPanel,
+  closeAgentHubOrbPanel,
+  showAgentHubOrbPanel
+} from './agent-hub-orb-panel-store'
 import { useAppStore } from '@/store'
 import { openAgentHubOrb } from './agent-hub-orb-open'
 
@@ -76,6 +80,16 @@ describe('open Orb', () => {
     expect(mocks.toast.error).toHaveBeenLastCalledWith('Bad model')
     expect(mocks.settings).not.toHaveBeenCalled()
     expect(mocks.reveal).not.toHaveBeenCalled()
+  })
+  it('leaves open-panel failures inline and toasts only after the panel closes', async () => {
+    showAgentHubOrbPanel({ sessionId: 'current-session', tabId: 'current-tab', resumed: false })
+    mocks.open.mockRejectedValue({ code: 'invalid_argument', message: 'Bad model' })
+    expect(await openAgentHubOrb({ resume: { sessionId: 'past-session' } })).toBe(false)
+    expect(mocks.toast.error).not.toHaveBeenCalled()
+    expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current-session')
+    closeAgentHubOrbPanel()
+    expect(await openAgentHubOrb()).toBe(false)
+    expect(mocks.toast.error).toHaveBeenCalledExactlyOnceWith('Bad model')
   })
   it('opens its attached panel, repairing a publication race without navigating the floating workspace', async () => {
     mocks.find.mockReturnValueOnce(null)

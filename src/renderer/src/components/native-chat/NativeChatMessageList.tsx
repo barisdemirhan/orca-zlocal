@@ -10,7 +10,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { CommentMarkdownLinkClickHandler } from '@/components/sidebar/CommentMarkdown'
 import { translate } from '@/i18n/i18n'
 import type { NativeChatLiveSession } from './use-native-chat-live-session'
-import { useNativeChatTranscriptProjection } from './use-native-chat-transcript-projection'
+import { useNativeChatOrbPresentation } from './NativeChatOrbPresentation'
 import { structuredQuestionTranscript } from '../../../../shared/structured-agent-question-projection'
 import { nativeChatTaskListPredecessors } from '../../../../shared/native-chat/input/native-chat-task-list-history'
 import { NativeChatDockedTaskList } from './NativeChatDockedTaskList'
@@ -142,12 +142,8 @@ export function NativeChatMessageList({
   // Pending/failed reads cannot page; recovery remounts the sentinel to recheck its range.
   const showOlderHistory = hasMore && session.readPhase === 'ready'
 
-  const { messages, subagentRows } = useNativeChatTranscriptProjection(
-    session,
-    journalItems,
-    journalSubmissions,
-    latestTurn
-  )
+  const { messages, subagentRows, introduction, presentTurnStatuses } =
+    useNativeChatOrbPresentation(isWorking, session, journalItems, journalSubmissions, latestTurn)
   const {
     sections: subagentSections,
     subagentRowsInOrder,
@@ -197,7 +193,7 @@ export function NativeChatMessageList({
     turnKeys,
     liveTurnKey,
     receipts,
-    turnStatuses,
+    turnStatuses: presentTurnStatuses(turnStatuses),
     turnDiffs,
     expandedTurnKeys: expandedTurnIds,
     isWorking,
@@ -372,6 +368,7 @@ export function NativeChatMessageList({
                 // Shares the composer's maximum width; rail clearance and the 5px inner inset narrow constrained panes.
                 className={NATIVE_CHAT_TRANSCRIPT_COLUMN_CLASS}
               >
+                {introduction}
                 <NativeChatTranscriptItems
                   slots={slots}
                   loadedMessageIds={loadedMessageIds}

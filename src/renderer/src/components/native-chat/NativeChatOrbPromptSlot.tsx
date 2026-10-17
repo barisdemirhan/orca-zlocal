@@ -9,7 +9,10 @@ import { structuredQuestionTranscript } from '../../../../shared/structured-agen
 import { NativeChatResolutionReceipt } from './NativeChatResolutionReceipt'
 import type { NativeChatResolvedPrompt } from './native-chat-resolution-receipt'
 import { useAgentHubRequests, agentHubInboxRequests } from '../agent-hub/agent-hub-requests-store'
-import { agentHubCurrentOrbRequest } from '../agent-hub/agent-hub-orb-request-owner'
+import {
+  agentHubCurrentOrbRequest,
+  useAgentHubOrbSessionRequests
+} from '../agent-hub/agent-hub-orb-request-owner'
 
 const EMPTY_JOURNAL_ITEMS: readonly AgentJournalRenderItem[] = []
 
@@ -34,7 +37,24 @@ export function NativeChatOrbPromptSlot({
       : null
   )
   const orbOnly = useAgentHubOrbPanel((state) => state.presentation === 'orb' || state.compact)
-  const [dismissedReceipt, setDismissedReceipt] = useState<string | null>(null)
+  const closeGeneration = useAgentHubOrbPanel((state) => state.closeGeneration)
+  const pendingIds = useMemo(
+    () =>
+      journalItems
+        .filter(
+          ({ body }) =>
+            (body.kind === 'question' || body.kind === 'approval') &&
+            body.resolution.state === 'pending'
+        )
+        .map((item) => item.itemId),
+    [journalItems]
+  )
+  const scope = JSON.stringify([host, sessionId, tabId, closeGeneration])
+  const sessionRequests = useAgentHubOrbSessionRequests(scope, pendingIds, destination !== null)
+  const [dismissedReceipt, setDismissedReceipt] = useState<{
+    scope: string
+    itemId: string
+  } | null>(null)
   const hubPending = agentHubInboxRequests(useAgentHubRequests()).some((item) =>
     agentHubCurrentOrbRequest(item, { host, sessionId })
   )
@@ -45,12 +65,23 @@ export function NativeChatOrbPromptSlot({
     const receipts = structuredQuestionTranscript(journalItems).receipts
     let latest: { itemId: string; body: NativeChatResolvedPrompt } | null = null
     for (const [itemId, body] of receipts) {
-      if (body.resolution.state !== 'pending') {
+      if (body.resolution.state !== 'pending' && sessionRequests.has(itemId)) {
         latest = { itemId, body }
       }
     }
-    return latest?.itemId !== dismissedReceipt ? latest : null
-  }, [destination, dismissedReceipt, hubPending, journalItems, orbOnly, pending])
+    return dismissedReceipt?.scope === scope && latest?.itemId === dismissedReceipt.itemId
+      ? null
+      : latest
+  }, [
+    destination,
+    dismissedReceipt,
+    hubPending,
+    journalItems,
+    orbOnly,
+    pending,
+    scope,
+    sessionRequests
+  ])
   const requestVisible = pending || receipt !== null
   const homeRef = useRef<HTMLDivElement>(null)
   const [container] = useState(() => {
@@ -108,7 +139,7 @@ export function NativeChatOrbPromptSlot({
                 type="button"
                 variant="ghost"
                 size="xs"
-                onClick={() => setDismissedReceipt(receipt.itemId)}
+                onClick={() => setDismissedReceipt({ scope, itemId: receipt.itemId })}
               >
                 {translate('auto.agentHub.orb.dismissReceipt', 'Dismiss')}
               </Button>

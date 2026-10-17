@@ -42,7 +42,7 @@ import {
   nativeChatApprovedReviewSummary,
   nativeChatCodexApiErrorSummary,
   nativeChatHookErrorSummary
-} from '../../../../shared/native-chat-provider-frame-summary'
+} from '../../../../shared/native-chat/native-chat-provider-frame-summary'
 
 const HOST_STATUS_WORDS: Record<AgentSessionHostStatusPresentation, () => string> = {
   'history-repaired': () =>
@@ -80,7 +80,7 @@ export function NativeChatNoticeRow({
   agentName?: string
   onLinkClick?: CommentMarkdownLinkClickHandler
   allowFileUriLinks?: boolean
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   useTranslation()
   const orb = useContext(NativeChatPresentationContext) === 'orb'
   const orcaStopView = useNativeChatOrcaStopView()
@@ -116,7 +116,7 @@ export function NativeChatNoticeRow({
   }
   const approvedReview = orb ? nativeChatApprovedReviewSummary(block) : null
   if (approvedReview) {
-    return <ProviderFrameRow block={block} summary={approvedReview} />
+    return null
   }
   if (orb && isCodexMcpStartupNotice(block)) {
     return (

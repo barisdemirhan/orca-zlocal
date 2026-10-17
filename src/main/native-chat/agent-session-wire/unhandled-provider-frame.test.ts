@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { projectStructuredItemToNativeChat } from '../../../shared/structured-agent-session-projection'
-import { nativeChatCodexApiErrorSummary } from '../../../shared/native-chat-provider-frame-summary'
+import { nativeChatCodexApiErrorSummary } from '../../../shared/native-chat/native-chat-provider-frame-summary'
 import { unhandledProviderFrameJournalItem } from './unhandled-provider-frame'
 
 describe('unhandled provider frame journal fallback', () => {

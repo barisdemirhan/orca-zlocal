@@ -710,24 +710,16 @@ describe('notice rows', () => {
     }
   }
 
-  it('keeps a successful automatic review compact and its reason inside closed details', () => {
+  it('omits a successful automatic review from Orb', () => {
     const block = reviewWarning()
     const { container } = render(
       <NativeChatPresentationContext value="orb">
         <NativeChatNoticeRow block={block} />
       </NativeChatPresentationContext>
     )
-    const summary = screen.getByText('Automatic approval review approved').closest('summary')
-    const disclosure = summary?.closest('details')
-
-    expect(disclosure).toBeInTheDocument()
-    expect(disclosure).not.toHaveAttribute('open')
-    expect(disclosure).toHaveClass('text-muted-foreground')
-    expect(summary).not.toHaveTextContent('risk:')
-    expect(summary).not.toHaveTextContent('Read-only status query')
-    expect(disclosure?.querySelector('pre')).toHaveTextContent(block.providerFrame!.payload.head)
+    expect(screen.queryByText('Automatic approval review approved')).toBeNull()
+    expect(container).toBeEmptyDOMElement()
     expect(screen.queryByText(approvedReview, { selector: 'p' })).toBeNull()
-    expect(container.querySelector('svg')).toBeNull()
   })
 
   it.each([

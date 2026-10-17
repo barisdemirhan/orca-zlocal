@@ -1,4 +1,5 @@
-import type { NativeChatBlock, NativeChatMessage } from '../native-chat-types'
+import { AGENT_HUB_ORB_OPENING_PROMPT } from '../agent-hub-orb'
+import type { NativeChatBlock, NativeChatMessage, NativeChatTextBlock } from '../native-chat-types'
 
 type ProviderFrameTextBlock = Extract<NativeChatBlock, { type: 'text' }>
 
@@ -142,6 +143,54 @@ export function isCodexMcpStartupNotice(row: ProviderFrameRowText): boolean {
     row.presentation === undefined &&
     row.failure === undefined
   )
+}
+
+function isOrbOpeningMessage(message: NativeChatMessage | undefined): boolean {
+  if (message?.role !== 'user') {
+    return false
+  }
+  const text = message.blocks
+    .filter((block) => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n')
+    .trim()
+  return text === AGENT_HUB_ORB_OPENING_PROMPT || text.startsWith("You are Orca's Orb")
+}
+
+export type NativeChatConnectionWarning = { id: string; block: NativeChatTextBlock }
+
+export function nativeChatOrbConversationMessages(messages: readonly NativeChatMessage[]): {
+  messages: readonly NativeChatMessage[]
+  connectionWarnings: readonly NativeChatConnectionWarning[]
+} {
+  const visible: NativeChatMessage[] = []
+  const connectionWarnings: NativeChatConnectionWarning[] = []
+  let startup = isOrbOpeningMessage(messages.find((message) => message.role === 'user'))
+  for (const message of messages) {
+    if (isOrbOpeningMessage(message)) {
+      continue
+    }
+    if (message.role === 'user') {
+      startup = false
+    }
+    const blocks = message.blocks.filter((block, index) => {
+      if (block.type !== 'text' || message.role !== 'system') {
+        return true
+      }
+      if (nativeChatApprovedReviewSummary(block)) {
+        return false
+      }
+      if (isCodexMcpStartupNotice(block) || (startup && nativeChatHookErrorSummary(block))) {
+        connectionWarnings.push({ id: `${message.id}:${index}`, block })
+        return false
+      }
+      return true
+    })
+    if (blocks.length > 0) {
+      visible.push(blocks.length === message.blocks.length ? message : { ...message, blocks })
+    }
+  }
+  return { messages: visible, connectionWarnings }
 }
 
 /**

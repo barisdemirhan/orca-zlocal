@@ -20,7 +20,10 @@ import {
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
 import { agentHubInboxRequests, useAgentHubRequests } from './agent-hub-requests-store'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
-import { agentHubCurrentOrbRequest } from './agent-hub-orb-request-owner'
+import {
+  agentHubCurrentOrbRequest,
+  useAgentHubOrbSessionRequests
+} from './agent-hub-orb-request-owner'
 import { AgentHubOrbStage } from './AgentHubOrbStage'
 import { AgentHubOrbControls } from './AgentHubOrbControls'
 import { AgentHubOrbConversationHeader } from './AgentHubOrbConversationHeader'
@@ -53,6 +56,7 @@ export function AgentHubOrbConversation({
   const presentation = useAgentHubOrbPanel((s) => s.presentation)
   const compact = useAgentHubOrbPanel((s) => s.compact)
   const nativeRequestPending = useAgentHubOrbPanel((s) => s.nativeRequestPending)
+  const closeGeneration = useAgentHubOrbPanel((s) => s.closeGeneration)
   const nativeRequestVisible = useAgentHubOrbPanel(
     (s) => s.nativeRequestVisible || s.nativeRequestPending
   )
@@ -95,7 +99,14 @@ export function AgentHubOrbConversation({
   const requests = agentHubInboxRequests(requestState).filter((item) =>
     agentHubCurrentOrbRequest(item, { host: 'local', sessionId })
   )
-  const receipt = requestState.get('local')?.orbReceipts.get(sessionId)
+  const sessionRequests = useAgentHubOrbSessionRequests(
+    JSON.stringify(['local', sessionId, tabId, closeGeneration]),
+    requests.map((item) => item.request.requestId),
+    true
+  )
+  const latestReceipt = requestState.get('local')?.orbReceipts.get(sessionId)
+  const receipt =
+    latestReceipt && sessionRequests.has(latestReceipt.requestId) ? latestReceipt : undefined
   const currentRequest = nativeRequestPending ? undefined : requests[0]
   const hasRequest = nativeRequestPending || requests.length > 0
   const requestVisible = nativeRequestVisible || requests.length > 0 || receipt !== undefined
