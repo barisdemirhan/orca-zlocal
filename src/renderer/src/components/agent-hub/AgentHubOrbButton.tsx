@@ -17,6 +17,7 @@ export function AgentHubOrbMark({
     <span
       aria-hidden
       data-agent-hub-orb-state={state.kind}
+      data-agent-hub-orb-mark={large ? 'large' : 'small'}
       className={large ? 'inline-flex size-8' : 'inline-flex size-4'}
     >
       <AgentHubOrbSphere

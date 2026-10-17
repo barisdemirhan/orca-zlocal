@@ -373,3 +373,8 @@
     transform: scale(1);
   }
 }
+
+/* Why: the blurred halo reads as a square dark patch at dock-button size. */
+[data-agent-hub-orb-mark='small'] .agent-hub-orb-halo {
+  display: none;
+}

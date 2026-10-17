@@ -154,6 +154,7 @@ it.each(['dock', 'statusBar', 'floating'] as const)(
         settings: {
           ...settings,
           agentHubOrbPlacement: placement,
+          ...(placement === 'statusBar' ? { agentHubPlacement: 'status-bar' as const } : {}),
           agentHubDockAutoHide: false
         },
         dictationState: 'listening'
@@ -193,7 +194,7 @@ it('returns the same queued peek after Orb releases its slot, even while alerts 
   const { rerender } = show()
   expect(screen.getByTestId('peek').textContent).toBe('Existing worker question')
   mocks.orb.mockReturnValue({
-    state: { kind: 'working' },
+    state: { kind: 'listening' },
     session: { sessionId: 'orb-session' },
     readState: EMPTY_STRUCTURED_AGENT_SESSION,
     openOrb: mocks.open
@@ -322,7 +323,7 @@ it('falls back to the existing hub status item when an Orb dock has no hub dock'
   expect(screen.queryByTestId('dock')).toBeNull()
 })
 
-it('shows status-bar Orb even with docked hub, and hidden placement still responds to its command', () => {
+it('hides the status-bar Orb while the hub is docked, and hidden placement still responds to its command', () => {
   const settings = useAppStore.getState().settings
   if (!settings) {
     throw new Error('Expected settings')
@@ -331,7 +332,7 @@ it('shows status-bar Orb even with docked hub, and hidden placement still respon
     settings: { ...settings, agentHubOrbPlacement: 'statusBar', agentHubDockAutoHide: false }
   })
   show()
-  expect(screen.getByRole('button', { name: 'Talk to Orb · Not set' })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Talk to Orb · Not set' })).toBeNull()
   expect(screen.getByTestId('dock').dataset.orb).toBe('false')
   act(() =>
     useAppStore.setState({
