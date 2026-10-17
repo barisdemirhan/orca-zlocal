@@ -3,7 +3,13 @@ import type {
   CodexJournalTranslationAdmission
 } from './codex-structured-journal-contracts'
 import { appendCodexItemAndPublish } from './codex-structured-journal-sink'
-import { AGENT_JOURNAL_THREAD_SCOPE } from '../../shared/agent-session-journal-types'
+import {
+  AGENT_JOURNAL_THREAD_SCOPE,
+  type AgentJournalItemIdentity,
+  type AgentJournalMessageItem
+} from '../../shared/agent-session-journal-types'
+import { agentJournalItemKey } from '../../shared/agent-session-journal-item-key'
+import { estimateStructuredAgentSessionItemBytes } from '../native-chat/agent-session-wire/structured-agent-session-event-sink-estimate'
 import { CodexRealtimeTranscriptSchema } from './codex-structured-realtime-items'
 import type { CodexStructuredSessionEvent } from './codex-structured-session-state'
 
@@ -21,25 +27,31 @@ export function appendCodexRealtimeTranscript(
   if (!transcript.text.trim()) {
     return { accepted: true }
   }
-  return appendCodexItemAndPublish(
-    sink,
-    {
-      provider: 'orca',
-      clientMessageId: `codex-realtime:${JSON.stringify([threadId, transcript.id])}`
-    },
-    {
-      kind: 'message',
-      role: transcript.role,
-      blocks: [{ type: 'text', text: transcript.text }],
-      spoken: {
-        provider: 'codex',
-        threadId,
-        realtimeSessionId: transcript.realtimeSessionId,
-        itemId: transcript.id
-      }
-    },
-    { turnScope: AGENT_JOURNAL_THREAD_SCOPE }
-  )
+  const identity = {
+    provider: 'orca',
+    clientMessageId: `codex-realtime:${JSON.stringify([threadId, transcript.id])}`
+  } satisfies AgentJournalItemIdentity
+  const body = {
+    kind: 'message',
+    role: transcript.role,
+    blocks: [{ type: 'text', text: transcript.text }],
+    spoken: {
+      provider: 'codex',
+      threadId,
+      realtimeSessionId: transcript.realtimeSessionId,
+      itemId: transcript.id
+    }
+  } satisfies AgentJournalMessageItem
+  const options = { turnScope: AGENT_JOURNAL_THREAD_SCOPE }
+  if (sink.tryReviseResolvedItemAndPublish) {
+    const itemId = agentJournalItemKey(identity)
+    return sink.tryReviseResolvedItemAndPublish(
+      estimateStructuredAgentSessionItemBytes(identity, body),
+      (journal) => (journal.itemBody(itemId) ? null : { identity, body }),
+      options
+    )
+  }
+  return appendCodexItemAndPublish(sink, identity, body, options)
 }
 
 export function translateCodexRealtimeJournalEvent(

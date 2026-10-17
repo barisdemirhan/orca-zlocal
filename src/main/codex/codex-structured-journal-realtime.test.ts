@@ -129,6 +129,7 @@ describe('Codex canonical spoken messages in the real journal', () => {
       accepted: true
     })
     const first = await chat.snapshot()
+    const firstRows = await chat.rows()
     expect(first.items).toHaveLength(2)
 
     chat.notify('thread/realtime/item/completed', { item: USER_FINAL })
@@ -139,9 +140,8 @@ describe('Codex canonical spoken messages in the real journal', () => {
     })
     const restored = await chat.snapshot()
 
-    expect(restored.items.map((item) => item.itemId)).toEqual(
-      first.items.map((item) => item.itemId)
-    )
+    expect(await chat.rows()).toEqual(firstRows)
+    expect(restored.items).toEqual(first.items)
     expect(restored.items.map((item) => AgentJournalRenderItemSchema.parse(item).body)).toEqual([
       {
         kind: 'message',

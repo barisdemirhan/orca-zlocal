@@ -28,11 +28,13 @@ class Peer extends EventTarget {
     readyState: string
     onopen: (() => void) | null
     onclose: (() => void) | null
+    onmessage: ((event: MessageEvent) => void) | null
     close: () => void
   } = {
     readyState: 'connecting',
     onopen: null,
     onclose: null,
+    onmessage: null,
     close: vi.fn(() => {
       this.channel.readyState = 'closed'
       this.channel.onclose?.()
@@ -79,6 +81,7 @@ function event(
   payload:
     | { type: 'ready' }
     | { type: 'started' }
+    | { type: 'error'; message: string }
     | { type: 'closed'; reason?: string }
     | { type: 'sdp'; sdp: string }
 ): void {
@@ -173,6 +176,79 @@ it('starts only after the click and stream ready, and reports live only after na
     textMode: true,
     output: 'silent'
   })
+})
+
+it.each(['failed', 'closed'])(
+  'keeps Live through a temporary disconnection and stops on %s',
+  async (terminalState) => {
+    await start()
+    const peer = Peer.instances[0]
+    if (!peer) {
+      throw new Error('Expected a voice peer')
+    }
+    peer.connect()
+    event({ type: 'started' })
+    event({ type: 'sdp', sdp: 'fixture answer' })
+    await waitFor(() => expect(controller.getSnapshot().connection).toBe('live'))
+
+    peer.connectionState = 'disconnected'
+    peer.onconnectionstatechange?.()
+    expect(controller.getSnapshot().connection).toBe('live')
+    expect(track.stop).not.toHaveBeenCalled()
+    expect(client.stop).not.toHaveBeenCalled()
+    peer.connect()
+    expect(controller.getSnapshot().connection).toBe('live')
+
+    peer.connectionState = terminalState
+    peer.onconnectionstatechange?.()
+    await waitFor(() => expect(controller.getSnapshot().connection).toBe('error'))
+    expect(track.stop).toHaveBeenCalledOnce()
+    expect(client.stop).toHaveBeenCalledOnce()
+  }
+)
+
+it('unmutes reply audio from input speech events before the host transcribes the user', async () => {
+  const createElement = vi.spyOn(document, 'createElement')
+  try {
+    await start()
+    const peer = Peer.instances[0]
+    const audio = createElement.mock.results
+      .map((result) => result.value)
+      .find((element) => element instanceof HTMLAudioElement)
+    if (!peer || !(audio instanceof HTMLAudioElement)) {
+      throw new Error('Expected the voice peer and its output audio')
+    }
+    peer.connect()
+    event({ type: 'started' })
+    event({ type: 'sdp', sdp: 'fixture answer' })
+    await waitFor(() => expect(controller.getSnapshot().connection).toBe('live'))
+    expect(audio.muted).toBe(true)
+    for (const phase of ['started', 'stopped']) {
+      peer.channel.onmessage?.(
+        new MessageEvent('message', {
+          data: JSON.stringify({ type: `input_audio_buffer.speech_${phase}`, item_id: 'speech-1' })
+        })
+      )
+    }
+    expect(audio.muted).toBe(false)
+    controller.stopSpeaking()
+    expect(audio.muted).toBe(true)
+    peer.channel.onmessage?.(
+      new MessageEvent('message', {
+        data: JSON.stringify({ type: 'input_audio_buffer.speech_stopped', item_id: 'speech-1' })
+      })
+    )
+    expect(audio.muted).toBe(true)
+    await controller.stopLive()
+    peer.channel.onmessage?.(
+      new MessageEvent('message', {
+        data: JSON.stringify({ type: 'input_audio_buffer.speech_stopped', item_id: 'late-speech' })
+      })
+    )
+    expect(audio.muted).toBe(true)
+  } finally {
+    createElement.mockRestore()
+  }
 })
 
 it('keeps a pending permission request leased until the late stream is stopped', async () => {
@@ -271,6 +347,37 @@ it('keeps native unknown retryable and distinguishes native unsupported from a f
   vi.mocked(client.capability).mockRejectedValueOnce(new Error('offline'))
   await controller.startLive()
   expect(controller.getSnapshot().capability).toBe('error')
+  expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
+})
+
+it.each([
+  [
+    'Codex Live voice is unavailable because an account usage limit was reached.',
+    'Codex Live voice is unavailable because an account usage limit was reached.'
+  ],
+  ['Untrusted provider error v=0\r\nm=audio secret-sdp', 'Live voice could not connect. Try again.']
+])('shows only a sanitized native voice error: %s', async (message, reason) => {
+  await start()
+  event({ type: 'error', message })
+  await waitFor(() =>
+    expect(controller.getSnapshot()).toMatchObject({ connection: 'error', reason, input: 'muted' })
+  )
+  expect(track.stop).toHaveBeenCalledOnce()
+  expect(client.stop).toHaveBeenCalledOnce()
+})
+
+it('disables paired voice with the capability explanation before any capture or signalling', async () => {
+  await waitFor(() => expect(controller.getSnapshot().capability).toBe('supported'))
+  const reason =
+    'Live voice is not available on paired devices. Open this conversation on the host.'
+  vi.mocked(client.capability).mockResolvedValue({ supported: false, reason })
+  await controller.startLive()
+  expect(controller.getSnapshot()).toMatchObject({
+    capability: 'unsupported',
+    canStart: false,
+    reason
+  })
+  expect(client.subscribe).not.toHaveBeenCalled()
   expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
 })
 

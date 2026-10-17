@@ -192,8 +192,21 @@ export function createAgentSessionVoiceClient(
       ) {
         return Promise.reject(new AgentSessionVoiceRefusal('This voice attempt is unavailable.'))
       }
-      cleanup.stopping ??= stopOwned(cleanup)
-      return cleanup.stopping
+      const active = cleanup
+      // A refused or unverifiable stop must be retryable.
+      active.stopping ??= stopOwned(active).then(
+        (result) => {
+          if (result.state !== 'off') {
+            delete active.stopping
+          }
+          return result
+        },
+        (error) => {
+          delete active.stopping
+          throw error
+        }
+      )
+      return active.stopping
     }
   }
 }

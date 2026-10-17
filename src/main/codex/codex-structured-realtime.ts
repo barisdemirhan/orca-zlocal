@@ -1,4 +1,3 @@
-import { setTimeout as delay } from 'node:timers/promises'
 import type {
   AgentSessionVoiceEvent,
   AgentSessionVoiceOwner,
@@ -13,8 +12,6 @@ import { CodexAppServerUnsupportedError } from './codex-app-server-session'
 type VoiceAttempt = AgentSessionVoiceOwner & {
   state: 'connecting' | 'live' | 'stopping' | 'unverifiable' | 'off'
   started: boolean
-  closed: Promise<void>
-  close: () => void
   items: Map<string, 'user' | 'assistant'>
 }
 
@@ -60,13 +57,16 @@ export class CodexStructuredRealtime {
     if (!isAgentSessionVoiceSdp(input.sdp)) {
       return { ok: false, rejected: 'Invalid voice SDP offer.' }
     }
+    if (this.attempt?.state === 'unverifiable') {
+      await this.stop(this.attempt)
+    }
     if (this.holdsWork) {
       return {
         ok: false,
-        rejected: 'The previous Codex Live connection has not been confirmed closed.'
+        rejected: 'Codex Live voice is still closing. Try again shortly.'
       }
     }
-    if (this.spent.has(input.voiceSessionId) || this.spent.size >= 1024) {
+    if (this.spent.has(input.voiceSessionId)) {
       return {
         ok: false,
         rejected: 'This voice attempt cannot be replayed. Start a new Live attempt.'
@@ -80,19 +80,19 @@ export class CodexStructuredRealtime {
     if (this.holdsWork || this.spent.has(input.voiceSessionId)) {
       return {
         ok: false,
-        rejected: 'The previous Codex Live connection has not been confirmed closed.'
+        rejected: 'Codex Live voice is still closing. Try again shortly.'
       }
     }
     this.spent.add(input.voiceSessionId)
-    const closed = Promise.withResolvers<void>()
+    while (this.spent.size > 1024) {
+      this.spent.delete(this.spent.values().next().value ?? '')
+    }
     const attempt: VoiceAttempt = {
       voiceSessionId: input.voiceSessionId,
       generation: input.generation,
       state: 'connecting',
       started: false,
-      items: new Map(),
-      closed: closed.promise,
-      close: () => closed.resolve()
+      items: new Map()
     }
     this.attempt = attempt
     try {
@@ -112,7 +112,6 @@ export class CodexStructuredRealtime {
         !attempt.started
       ) {
         attempt.state = 'off'
-        attempt.close()
         return { ok: false, rejected: codexVoiceFailureMessage(error) }
       } else if (attempt.state !== 'off') {
         attempt.state = 'unverifiable'
@@ -135,20 +134,7 @@ export class CodexStructuredRealtime {
         { threadId: this.threadId },
         { timeoutMs: this.timeoutMs }
       )
-      if (!this.isOff(attempt)) {
-        const deadline = new AbortController()
-        try {
-          await Promise.race([
-            attempt.closed,
-            delay(Math.min(this.timeoutMs, 5_000), undefined, {
-              ref: false,
-              signal: deadline.signal
-            })
-          ])
-        } finally {
-          deadline.abort()
-        }
-      }
+      this.closeAttempt(attempt, 'Codex Live voice closed.')
     } catch {
       // A lost stop acknowledgement does not prove the voice transport closed.
     }
@@ -169,9 +155,7 @@ export class CodexStructuredRealtime {
       generation: attempt.generation
     }
     if (method === 'thread/realtime/closed') {
-      attempt.state = 'off'
-      attempt.close()
-      this.emit({ ...base, type: 'closed', reason: 'Codex Live voice closed.' })
+      this.closeAttempt(attempt, 'Codex Live voice closed.')
     } else if (method === 'thread/realtime/started') {
       // Untagged startup cannot establish which offer owns later untagged SDP.
       if (params.realtimeSessionId !== attempt.voiceSessionId) {
@@ -256,17 +240,22 @@ export class CodexStructuredRealtime {
 
   ended(): void {
     const attempt = this.attempt
-    if (!attempt || attempt.state === 'off') {
+    if (attempt) {
+      this.closeAttempt(attempt, 'The Codex provider connection ended.')
+    }
+  }
+
+  private closeAttempt(attempt: VoiceAttempt, reason: string): void {
+    if (attempt.state === 'off') {
       return
     }
     attempt.state = 'off'
-    attempt.close()
     this.emit({
       sessionId: this.sessionId,
       voiceSessionId: attempt.voiceSessionId,
       generation: attempt.generation,
       type: 'closed',
-      reason: 'The Codex provider connection ended.'
+      reason
     })
   }
 

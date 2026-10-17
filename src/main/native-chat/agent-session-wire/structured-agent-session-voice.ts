@@ -134,7 +134,13 @@ export class StructuredAgentSessionVoice {
         }
         const current = this.active.get(sessionId)
         if (current && ctx.adapter.holdsVoice?.(sessionId)) {
-          return invalid('The previous Live connection has not been confirmed closed.')
+          if (this.hasSubscriber(sessionId, current, current)) {
+            return invalid('The previous Live connection has not been confirmed closed.')
+          }
+          const stopped = await this.stopOwned(sessionId, current, current, ctx.fence)
+          if (stopped.state !== 'off' || ctx.adapter.holdsVoice?.(sessionId)) {
+            return invalid('The previous Live connection is still closing. Try again shortly.')
+          }
         }
         const owner: ActiveVoice = {
           voiceSessionId: params.voiceSessionId,

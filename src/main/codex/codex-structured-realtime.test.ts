@@ -66,15 +66,11 @@ describe('Codex native realtime on a structured conversation', () => {
     expect(
       rig.events.filter((event) => event.type === 'voice').map((event) => event.event.type)
     ).toEqual(['started', 'sdp'])
-    rig.codex.routes['thread/realtime/stop'] = () => {
-      rig.connection.handlers.onNotification?.('thread/realtime/closed', {
-        threadId: THREAD_ID,
-        reason: null
-      })
-      return {}
-    }
     expect(await rig.adapter.stopVoice(INPUT)).toEqual({ ...OWNER, state: 'off' })
     expect(rig.adapter.holdsVoice('session-1')).toBe(false)
+    expect(
+      rig.events.filter((event) => event.type === 'voice' && event.event.type === 'closed')
+    ).toHaveLength(1)
     expect(rig.codex.connections).toHaveLength(1)
     expect(
       rig.connection.calls
@@ -180,6 +176,35 @@ describe('Codex native realtime on a structured conversation', () => {
     })
     expect(rig.codex.connections).toHaveLength(2)
   })
+
+  it.each(['entries', 'bytes'] as const)(
+    'asks for a new Orb conversation when Live history exceeds the %s limit',
+    async (limit) => {
+      let offset = 0
+      const rig = await setup({
+        'thread/timeline/list': () => {
+          const data = Array.from({ length: limit === 'entries' ? 50 : 1 }, () => ({
+            type: 'item',
+            position: offset++,
+            turnId: 'turn-1',
+            item: {
+              id: `item-${offset}`,
+              type: 'agentMessage',
+              text: limit === 'bytes' ? 'x'.repeat(16 * 1024 * 1024) : 'History'
+            }
+          }))
+          return { data, nextCursor: limit === 'entries' ? `page-${offset}` : null }
+        }
+      })
+      expect(await rig.adapter.startVoice(INPUT)).toEqual({
+        ok: false,
+        rejected: 'This conversation is too long for Live voice. Start a new Orb conversation.'
+      })
+      expect(rig.connection.calls.some((call) => call.method === 'thread/realtime/start')).toBe(
+        false
+      )
+    }
+  )
 
   it('publishes only safe current transcript activity and sanitizes a native account refusal', async () => {
     const rig = await setup()

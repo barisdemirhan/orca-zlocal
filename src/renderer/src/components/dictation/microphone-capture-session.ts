@@ -7,7 +7,7 @@ import { openMicrophoneCaptureStream } from './microphone-devices'
 
 export class MicrophoneCaptureSession {
   private generation = 0
-  private pending = false
+  private pendingGeneration: number | null = null
   private stream: MediaStream | null = null
   private releaseLease: MicrophoneCaptureRelease | null = null
   private releaseFinished = Promise.resolve()
@@ -16,11 +16,19 @@ export class MicrophoneCaptureSession {
   constructor(private readonly requireCrossWindow = false) {}
 
   async open(preference: { deviceId?: string | null; label?: string | null } = {}) {
-    if (this.pending || this.stream) {
+    const requestedGeneration = this.generation
+    if (this.pendingGeneration !== null && this.pendingGeneration !== this.generation) {
+      // A stopped permission request owns the lease until it settles.
+      await this.openingFinished
+    }
+    if (this.pendingGeneration !== null || this.stream) {
       throw new MicrophoneCaptureBusyError()
     }
+    if (requestedGeneration !== this.generation) {
+      return null
+    }
     const generation = ++this.generation
-    this.pending = true
+    this.pendingGeneration = generation
     let finishOpening = (): void => {}
     this.openingFinished = new Promise<void>((resolve) => {
       finishOpening = resolve
@@ -56,7 +64,7 @@ export class MicrophoneCaptureSession {
       await this.release()
       throw error
     } finally {
-      this.pending = false
+      this.pendingGeneration = null
       finishOpening()
     }
   }
@@ -68,7 +76,7 @@ export class MicrophoneCaptureSession {
     this.generation += 1
     this.stream?.getTracks().forEach((track) => track.stop())
     this.stream = null
-    return this.pending ? this.openingFinished : this.release()
+    return this.pendingGeneration !== null ? this.openingFinished : this.release()
   }
 
   private release(): Promise<void> {

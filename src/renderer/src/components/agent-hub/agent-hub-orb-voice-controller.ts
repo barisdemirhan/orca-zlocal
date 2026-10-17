@@ -151,6 +151,7 @@ export class AgentHubOrbVoiceController {
           this.publish({ output: speaking ? 'speaking' : 'silent' })
         }
       },
+      onSpeech: (phase, itemId) => attempt.playback.inputSpeech(phase, itemId),
       onFailure: (reason) =>
         this.fail(
           generation,
@@ -237,7 +238,7 @@ export class AgentHubOrbVoiceController {
       closed: () => {
         void this.stopLive()
       },
-      failed: () => this.fail(attempt.generation, 'Live voice could not connect. Try again.')
+      failed: (error) => this.fail(attempt.generation, agentHubOrbVoiceStartFailure(error).reason)
     })
   }
 

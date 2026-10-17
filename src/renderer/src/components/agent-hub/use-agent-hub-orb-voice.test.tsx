@@ -394,3 +394,59 @@ it('keeps normal mutation writes dropped after the pane is disabled', async () =
   ).toEqual({ kind: 'dropped' })
   expect(mocks.call).not.toHaveBeenCalled()
 })
+
+it.each(['unverifiable', 'transport error'] as const)(
+  'retries a native stop after %s without reopening capture or retargeting the host',
+  async (failure) => {
+    const { result, rerender } = renderHook(() => useAgentHubOrbVoice(session, true))
+    const { starting, controller } = await beginVoice(result)
+    await act(async () => {
+      mocks.snapshot.mockReturnValue({ state: { ...EMPTY_STRUCTURED_AGENT_SESSION, fence: 4 } })
+      rerender()
+    })
+    await act(async () => {
+      answerStart()
+      await starting
+    })
+    expect(stops()).toHaveLength(0)
+    const original = mocks.call.getMockImplementation()
+    let firstStop = true
+    mocks.call.mockImplementation(async (target, method, params, options) => {
+      if (method === 'agentSession.stopVoice' && firstStop) {
+        firstStop = false
+        if (failure === 'transport error') {
+          throw new Error('stop request timed out')
+        }
+        return {
+          ok: true,
+          fence: 4,
+          value: {
+            voiceSessionId: sentStart.params.voiceSessionId,
+            generation: sentStart.params.generation,
+            state: 'unverifiable'
+          }
+        }
+      }
+      return original?.(target, method, params, options)
+    })
+    await act(async () => controller.stopLive())
+    expect(controller.getSnapshot()).toMatchObject({ connection: 'error', input: 'muted' })
+    expectOldStop({ kind: 'local' })
+    await act(async () => controller.stopLive())
+    expect(controller.getSnapshot().connection).toBe('off')
+    expect(stops()).toHaveLength(2)
+    expect(stops()[1]).toEqual([
+      { kind: 'local' },
+      'agentSession.stopVoice',
+      expect.objectContaining({
+        envelope: expect.objectContaining({ sessionId: 'session-a', expectedRuntimeFence: 4 }),
+        voiceSessionId: sentStart.params.voiceSessionId,
+        generation: sentStart.params.generation
+      })
+    ])
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledOnce()
+    expect(track.stop).toHaveBeenCalledOnce()
+    await act(async () => controller.stopLive())
+    expect(stops()).toHaveLength(2)
+  }
+)

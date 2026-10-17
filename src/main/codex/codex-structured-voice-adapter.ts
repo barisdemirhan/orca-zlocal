@@ -48,7 +48,9 @@ export class CodexStructuredVoiceAdapter {
           rejected:
             timeline.status === 'unsupported'
               ? 'This Codex version does not support canonical Live history.'
-              : 'Codex Live history could not be verified. Try again.'
+              : timeline.status === 'limit'
+                ? 'This conversation is too long for Live voice. Start a new Orb conversation.'
+                : 'Codex Live history could not be verified. Try again.'
         }
       }
       const admission = session.translator?.restoreTimeline?.(

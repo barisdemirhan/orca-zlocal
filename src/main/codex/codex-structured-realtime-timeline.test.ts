@@ -99,18 +99,7 @@ describe('Codex canonical realtime timeline reads', () => {
       'a repeated rollout position',
       page([{ ...SPOKEN, item: { ...SPOKEN.item, id: 'another-item' } }])
     ],
-    ['a repeated cursor', page([transcript(4)], 'next-page')],
-    [
-      'an oversized payload',
-      page([
-        {
-          type: 'item',
-          position: 4,
-          turnId: 'turn-1',
-          item: { type: 'agentMessage', id: 'oversized-answer', text: 'x'.repeat(16 * 1024 * 1024) }
-        }
-      ])
-    ]
+    ['a repeated cursor', page([transcript(4)], 'next-page')]
   ] as const)('admits no partial history when a later page has %s', async (_label, invalidPage) => {
     const request = vi
       .fn()
@@ -121,15 +110,35 @@ describe('Codex canonical realtime timeline reads', () => {
     expect(request).toHaveBeenCalledTimes(2)
   })
 
-  it('refuses an operation overflow across individually valid pages', async () => {
+  it('distinguishes an oversized payload from a retryable history read failure', async () => {
+    const request = vi.fn().mockResolvedValue(
+      page([
+        {
+          type: 'item',
+          position: 4,
+          turnId: 'turn-1',
+          item: { type: 'agentMessage', id: 'oversized-answer', text: 'x'.repeat(16 * 1024 * 1024) }
+        }
+      ])
+    )
+    expect(await readCodexRealtimeTimeline({ request }, THREAD)).toEqual({ status: 'limit' })
+    expect(request).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    [1024, 'ready'],
+    [1025, 'limit']
+  ] as const)('classifies a history of %i entries as %s', async (total, status) => {
     let offset = 0
     const request = vi.fn(async () => {
-      const data = Array.from({ length: 50 }, (_, index) => transcript(offset + index))
+      const data = Array.from({ length: Math.min(50, total - offset) }, (_, index) =>
+        transcript(offset + index)
+      )
       offset += data.length
-      return page(data, `page-${offset}`)
+      return page(data, offset < total ? `page-${offset}` : null)
     })
 
-    expect(await readCodexRealtimeTimeline({ request }, THREAD)).toEqual({ status: 'unknown' })
+    expect(await readCodexRealtimeTimeline({ request }, THREAD)).toMatchObject({ status })
     expect(request).toHaveBeenCalledTimes(21)
   })
 

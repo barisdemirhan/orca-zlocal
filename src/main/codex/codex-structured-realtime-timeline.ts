@@ -49,7 +49,7 @@ const TimelinePage = z.object({
 export type CodexTimelineEntry = z.infer<typeof TimelineEntry>
 export type CodexTimelineRead =
   | { status: 'ready'; entries: CodexTimelineEntry[] }
-  | { status: 'unsupported' | 'unknown' }
+  | { status: 'unsupported' | 'unknown' | 'limit' }
 
 /** Read every bounded page before admitting any history, so a partial read cannot claim restore. */
 export async function readCodexRealtimeTimeline(
@@ -70,12 +70,15 @@ export async function readCodexRealtimeTimeline(
       )
       bytes += Buffer.byteLength(JSON.stringify(raw ?? null), 'utf8')
       const parsed = TimelinePage.safeParse(raw)
-      if (!parsed.success || bytes > CODEX_RESTORE_MAX_BYTES) {
+      if (bytes > CODEX_RESTORE_MAX_BYTES) {
+        return { status: 'limit' }
+      }
+      if (!parsed.success) {
         return { status: 'unknown' }
       }
       entries.push(...parsed.data.data)
       if (entries.length > CODEX_RESTORE_MAX_OPERATIONS) {
-        return { status: 'unknown' }
+        return { status: 'limit' }
       }
       cursor = parsed.data.nextCursor ?? null
       if (!cursor) {

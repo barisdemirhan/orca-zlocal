@@ -4,7 +4,7 @@ type TranscriptEvent = Extract<AgentSessionVoiceEvent, { type: 'transcript' }>
 
 export class AgentHubOrbVoicePlayback {
   private inputGeneration = 0
-  private inputHasText = false
+  private receivedSpeech = false
   private releaseEligible = false
   private activeInput: string | null = null
   private readonly inputs = new Set<string>()
@@ -24,22 +24,8 @@ export class AgentHubOrbVoicePlayback {
 
   accept(event: TranscriptEvent): void {
     if (event.role === 'user') {
-      if (event.phase === 'started') {
-        if (this.inputs.has(event.itemId)) {
-          return
-        }
-        this.inputs.add(event.itemId)
-        this.activeInput = event.itemId
-        this.inputGeneration += 1
-        this.inputHasText = false
-        this.releaseEligible = true
-        for (const item of this.assistantItems) {
-          this.suppressedItems.add(item)
-        }
-        this.setOutput(false)
-      }
-      if (this.activeInput === event.itemId) {
-        this.inputHasText ||= event.hasText
+      if (!this.receivedSpeech) {
+        this.acceptInput(event.phase, event.itemId)
       }
       return
     }
@@ -47,20 +33,42 @@ export class AgentHubOrbVoicePlayback {
     if (event.phase === 'done') {
       return
     }
-    if (event.phase !== 'delta' || !event.hasText) {
-      return
-    }
     if (!this.assistantGenerations.has(event.itemId)) {
       this.assistantGenerations.set(event.itemId, this.inputGeneration)
     }
     if (
       !this.releaseEligible ||
-      !this.inputHasText ||
       this.suppressedItems.has(event.itemId) ||
       this.assistantGenerations.get(event.itemId) !== this.inputGeneration
     ) {
       return
     }
     this.setOutput(true)
+  }
+
+  inputSpeech(phase: 'started' | 'stopped', itemId: string): void {
+    this.receivedSpeech = true
+    if (!this.inputs.has(itemId)) {
+      this.acceptInput('started', itemId)
+    }
+    this.acceptInput(phase === 'stopped' ? 'done' : 'started', itemId)
+  }
+
+  private acceptInput(phase: TranscriptEvent['phase'], itemId: string): void {
+    if (phase === 'started') {
+      if (this.inputs.has(itemId)) {
+        return
+      }
+      this.inputs.add(itemId)
+      this.activeInput = itemId
+      this.inputGeneration += 1
+      this.releaseEligible = true
+      for (const item of this.assistantItems) {
+        this.suppressedItems.add(item)
+      }
+      this.setOutput(false)
+    } else if (phase === 'done' && this.activeInput === itemId && this.releaseEligible) {
+      this.setOutput(true)
+    }
   }
 }

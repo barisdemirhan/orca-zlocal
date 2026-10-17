@@ -35,6 +35,36 @@ function microphoneFailureMessage(error: unknown): string | null {
   return null
 }
 
+function codexFailureMessage(error: unknown): string | null {
+  if (!(error instanceof Error)) {
+    return null
+  }
+  switch (error.message) {
+    case 'This Codex version does not support Live voice.':
+      return translate(
+        'auto.agentHub.orb.codexVoiceUnsupported',
+        'This Codex version does not support Live voice.'
+      )
+    case 'Codex Live voice is unavailable because an account usage limit was reached.':
+      return translate(
+        'auto.agentHub.orb.codexVoiceUsageLimit',
+        'Codex Live voice is unavailable because an account usage limit was reached.'
+      )
+    case 'Codex refused Live voice. Check the current account and workspace access.':
+      return translate(
+        'auto.agentHub.orb.codexVoiceAccessDenied',
+        'Codex refused Live voice. Check the current account and workspace access.'
+      )
+    case 'Codex Live voice could not connect. Try again after the connection has closed.':
+      return translate(
+        'auto.agentHub.orb.codexVoiceConnectionFailed',
+        'Codex Live voice could not connect. Try again after the connection has closed.'
+      )
+    default:
+      return null
+  }
+}
+
 export function agentHubOrbVoiceStartFailure(error: unknown): {
   reason: string
   mediaUnsupported: boolean
@@ -46,6 +76,11 @@ export function agentHubOrbVoiceStartFailure(error: unknown): {
       error instanceof MicrophoneCaptureBusyError ||
       error instanceof MicrophoneCaptureUnavailableError
         ? error.message
-        : (microphoneFailureMessage(error) ?? 'Live voice could not connect. Try again.')
+        : (microphoneFailureMessage(error) ??
+          codexFailureMessage(error) ??
+          translate(
+            'auto.agentHub.orb.voiceConnectFailed',
+            'Live voice could not connect. Try again.'
+          ))
   }
 }

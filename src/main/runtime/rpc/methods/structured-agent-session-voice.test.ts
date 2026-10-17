@@ -75,6 +75,33 @@ describe('native voice capability at the runtime RPC boundary', () => {
     expect(hostCalls.subscribeVoice).not.toHaveBeenCalled()
   })
 
+  it('explains paired desktop voice unavailability while still refusing start and signalling', async () => {
+    const paired = { ...CURRENT, pairedDeviceId: 'paired-desktop' }
+    expect(
+      await call('agentSession.voiceCapability', { sessionId: SESSION }, paired)
+    ).toMatchObject({
+      ok: true,
+      result: {
+        supported: false,
+        reason: 'Live voice is not available on paired devices. Open this conversation on the host.'
+      }
+    })
+    for (const [method, params] of [
+      ['agentSession.startVoice', { envelope: envelope(), ...OWNER, sdp: SDP }],
+      ['agentSession.stopVoice', { envelope: envelope(), ...OWNER }],
+      ['agentSession.subscribeVoice', { sessionId: SESSION, ...OWNER }]
+    ] as const) {
+      expect(await call(method, params, paired)).toMatchObject({
+        ok: false,
+        error: { message: 'structured_agent_session_unsupported' }
+      })
+    }
+    expect(hostCalls.voiceCapability).not.toHaveBeenCalled()
+    expect(hostCalls.startVoice).not.toHaveBeenCalled()
+    expect(hostCalls.stopVoice).not.toHaveBeenCalled()
+    expect(hostCalls.subscribeVoice).not.toHaveBeenCalled()
+  })
+
   it('rejects a client-supplied connection identity instead of using it to address signalling', async () => {
     const reply = await call(
       'agentSession.subscribeVoice',

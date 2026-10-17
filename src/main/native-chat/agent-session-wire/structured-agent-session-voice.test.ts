@@ -180,13 +180,15 @@ describe('voice at the structured host mutation boundary', () => {
     })
     expect(acquire).toHaveBeenCalledTimes(1)
     expect(closeSession).not.toHaveBeenCalled()
-    await rig.restart()
-    expect(
-      rig.store.getOperationRow(CALLER.callerKey, start.envelope.clientOperationId)
-    ).toMatchObject({
+    const operation = rig.store.getOperationRow(CALLER.callerKey, start.envelope.clientOperationId)
+    expect(operation).toMatchObject({
       fingerprint: start.envelope.payloadFingerprint,
       outcome: { status: 'succeeded' }
     })
+    await rig.restart()
+    expect(rig.store.getOperationRow(CALLER.callerKey, start.envelope.clientOperationId)).toEqual(
+      operation
+    )
     expect(JSON.stringify(rig.store.listOperationRows())).not.toContain(SDP)
   })
 
@@ -254,5 +256,31 @@ describe('voice at the structured host mutation boundary', () => {
     subscribe(CALLER.callerKey, next, reconnected.connectionId)
     expect((await rig.host.voice.start(reconnected, startParams(next))).ok).toBe(false)
     expect(startVoice).toHaveBeenCalledTimes(1)
+    expect(stopVoice).toHaveBeenCalledTimes(2)
+    stopVoice.mockImplementation(async (owner) => {
+      voiceLive = false
+      return { voiceSessionId: owner.voiceSessionId, generation: owner.generation, state: 'off' }
+    })
+    expect((await rig.host.voice.start(reconnected, startParams(next))).ok).toBe(true)
+    expect(stopVoice).toHaveBeenLastCalledWith(expect.objectContaining(OWNER))
+    expect(startVoice).toHaveBeenLastCalledWith(expect.objectContaining(next))
+    expect(startVoice).toHaveBeenCalledTimes(2)
+    expect(acquire).toHaveBeenCalledTimes(1)
+    expect(closeSession).not.toHaveBeenCalled()
+    expect(cancelTurn).not.toHaveBeenCalled()
+  })
+
+  it('preserves an owned Live connection when another subscribed window tries to replace it', async () => {
+    const reader = subscribe()
+    expect((await rig.host.voice.start(CALLER, startParams())).ok).toBe(true)
+    const next = { voiceSessionId: 'new-attempt', generation: 2 }
+    const otherWindow = { ...CALLER, connectionId: 'another-window' }
+    const other = subscribe(CALLER.callerKey, next, otherWindow.connectionId)
+    expect((await rig.host.voice.start(otherWindow, startParams(next))).ok).toBe(false)
+    expect(startVoice).toHaveBeenCalledTimes(1)
+    expect(stopVoice).not.toHaveBeenCalled()
+    publish()
+    expect(reader.events.at(-1)).toEqual({ ...OWNER, sessionId: SESSION, type: 'sdp', sdp: SDP })
+    expect(other.events).toEqual([{ ...next, sessionId: SESSION, type: 'ready' }])
   })
 })

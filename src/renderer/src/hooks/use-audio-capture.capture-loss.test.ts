@@ -4,6 +4,7 @@ import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAudioCapture } from './use-audio-capture'
 import { acquireMicrophoneCaptureLease } from '@/components/dictation/microphone-capture-lease'
+import { MicrophoneCaptureSession } from '@/components/dictation/microphone-capture-session'
 
 class FakeTrack extends EventTarget {
   stop = vi.fn()
@@ -103,6 +104,108 @@ describe('useAudioCapture device loss', () => {
     track.dispatchEvent(new Event('ended'))
 
     expect(onCaptureLost).not.toHaveBeenCalled()
+  })
+
+  it.each(['granted', 'denied'] as const)(
+    'restarts dictation after a stopped permission request is %s',
+    async (permission) => {
+      const pending = Promise.withResolvers<MediaStream>()
+      const requested = Promise.withResolvers<void>()
+      const staleTrack = new FakeTrack()
+      vi.mocked(navigator.mediaDevices.getUserMedia).mockImplementationOnce(() => {
+        requested.resolve()
+        return pending.promise
+      })
+      const { result } = renderHook(() => useAudioCapture())
+      const first = result.current.start().catch(() => undefined)
+      await requested.promise
+      result.current.stop()
+      const second = result.current.start()
+      await Promise.resolve()
+      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledOnce()
+      if (permission === 'granted') {
+        pending.resolve(makeStream(staleTrack))
+      } else {
+        pending.reject(new DOMException('Permission denied', 'NotAllowedError'))
+      }
+      await first
+      await expect(second).resolves.toEqual({ fellBackToDefaultMicrophone: false })
+      expect(staleTrack.stop).toHaveBeenCalledTimes(permission === 'granted' ? 1 : 0)
+      expect(track.stop).not.toHaveBeenCalled()
+      expect(result.current.isCapturingRef.current).toBe(true)
+      result.current.stop()
+      expect(track.stop).toHaveBeenCalledOnce()
+    }
+  )
+
+  it('refuses an overlapping microphone open until its active stream is stopped', async () => {
+    const pending = Promise.withResolvers<MediaStream>()
+    const requested = Promise.withResolvers<void>()
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockImplementationOnce(() => {
+      requested.resolve()
+      return pending.promise
+    })
+    const session = new MicrophoneCaptureSession()
+    const opening = session.open()
+    await requested.promise
+    try {
+      await expect(session.open()).rejects.toThrow('already in use')
+      pending.resolve(makeStream(track))
+      await opening
+      await expect(session.open()).rejects.toThrow('already in use')
+      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledOnce()
+    } finally {
+      await session.stop()
+    }
+  })
+
+  it('cancels a dictation restart while the stopped permission request is still pending', async () => {
+    const pending = Promise.withResolvers<MediaStream>()
+    const requested = Promise.withResolvers<void>()
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockImplementationOnce(() => {
+      requested.resolve()
+      return pending.promise
+    })
+    const { result } = renderHook(() => useAudioCapture())
+    const first = result.current.start()
+    await requested.promise
+    result.current.stop()
+    const second = result.current.start()
+    result.current.stop()
+    pending.resolve(makeStream(track))
+    await expect(first).resolves.toBeUndefined()
+    await expect(second).resolves.toBeUndefined()
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledOnce()
+    expect(track.stop).toHaveBeenCalledOnce()
+    expect(result.current.isCapturingRef.current).toBe(false)
+  })
+
+  it('admits only one queued microphone restart when a stopped permission request finishes', async () => {
+    const pending = Promise.withResolvers<MediaStream>()
+    const requested = Promise.withResolvers<void>()
+    const staleTrack = new FakeTrack()
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockImplementationOnce(() => {
+      requested.resolve()
+      return pending.promise
+    })
+    const session = new MicrophoneCaptureSession()
+    const first = session.open()
+    await requested.promise
+    const stopping = session.stop()
+    const restarting = session.open()
+    const overlapping = expect(session.open()).rejects.toThrow('already in use')
+    pending.resolve(makeStream(staleTrack))
+    try {
+      await expect(first).resolves.toBeNull()
+      await stopping
+      const capture = await restarting
+      await overlapping
+      expect(capture?.stream.getTracks()).toEqual([track])
+      expect(staleTrack.stop).toHaveBeenCalledOnce()
+      expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(2)
+    } finally {
+      await session.stop()
+    }
   })
 
   it('publishes the copied audio envelope without suppressing speech input', async () => {

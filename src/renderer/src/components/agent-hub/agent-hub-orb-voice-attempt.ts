@@ -25,7 +25,7 @@ export function deliverAgentHubOrbVoiceEvent(
   sessionId: string,
   attempt: AgentHubOrbVoiceAttempt,
   event: AgentSessionVoiceEvent,
-  callbacks: { started: () => void; closed: () => void; failed: () => void }
+  callbacks: { started: () => void; closed: () => void; failed: (error: unknown) => void }
 ): void {
   if (
     event.sessionId !== sessionId ||
@@ -48,7 +48,7 @@ export function deliverAgentHubOrbVoiceEvent(
     } else if (event.type === 'transcript') {
       attempt.playback.accept(event)
     } else if (event.type === 'error') {
-      callbacks.failed()
+      callbacks.failed(new Error(event.message))
     }
   }
 }

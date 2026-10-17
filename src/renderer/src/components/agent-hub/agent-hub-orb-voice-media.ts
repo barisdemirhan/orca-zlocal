@@ -3,6 +3,7 @@ import { MicrophoneCaptureSession } from '../dictation/microphone-capture-sessio
 type VoiceMediaCallbacks = {
   onReady: (ready: boolean) => void
   onOutput: (speaking: boolean) => void
+  onSpeech: (phase: 'started' | 'stopped', itemId: string) => void
   onFailure: (reason: 'input-lost' | 'connection-lost' | 'playback-blocked') => void
 }
 
@@ -48,7 +49,7 @@ export class AgentHubOrbVoiceMedia {
       if (this.stopped) {
         return
       }
-      if (peer.connectionState === 'failed' || peer.connectionState === 'disconnected') {
+      if (peer.connectionState === 'failed' || peer.connectionState === 'closed') {
         this.callbacks.onFailure('connection-lost')
       } else {
         this.publishReady()
@@ -68,6 +69,7 @@ export class AgentHubOrbVoiceMedia {
       })
     }
     this.channel = peer.createDataChannel('oai-events')
+    this.channel.onmessage = this.inputSpeech
     this.channel.onopen = () => this.publishReady()
     this.channel.onclose = () => {
       if (!this.stopped) {
@@ -152,6 +154,32 @@ export class AgentHubOrbVoiceMedia {
   private readonly inputLost = (): void => {
     if (!this.stopped) {
       this.callbacks.onFailure('input-lost')
+    }
+  }
+
+  private readonly inputSpeech = (event: MessageEvent): void => {
+    if (this.stopped || typeof event.data !== 'string') {
+      return
+    }
+    try {
+      const payload: unknown = JSON.parse(event.data)
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        !('type' in payload) ||
+        !('item_id' in payload) ||
+        typeof payload.item_id !== 'string' ||
+        !payload.item_id
+      ) {
+        return
+      }
+      if (payload.type === 'input_audio_buffer.speech_started') {
+        this.callbacks.onSpeech('started', payload.item_id)
+      } else if (payload.type === 'input_audio_buffer.speech_stopped') {
+        this.callbacks.onSpeech('stopped', payload.item_id)
+      }
+    } catch {
+      // Other data-channel messages do not control playback.
     }
   }
 

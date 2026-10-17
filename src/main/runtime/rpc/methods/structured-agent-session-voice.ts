@@ -40,6 +40,14 @@ export const STRUCTURED_AGENT_SESSION_VOICE_METHODS = [
     permission: 'workspace',
     params: VoiceCapabilityParams,
     handler: async (params, ctx) => {
+      if (ctx.caller?.kind === 'paired-device') {
+        requireStructuredCapability(ctx)
+        return {
+          supported: false as const,
+          reason:
+            'Live voice is not available on paired devices. Open this conversation on the host.'
+        }
+      }
       requireVoiceClient(ctx)
       return (await requireInstalledStructuredHost(ctx, params.sessionId)).voice.capability(
         params.sessionId
