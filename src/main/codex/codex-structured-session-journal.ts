@@ -7,7 +7,6 @@ import {
 } from './codex-structured-journal-translation'
 import type { CodexOpenedThread } from './codex-structured-thread-open'
 import type { CodexAppServerConnection } from './codex-app-server-connection'
-import { readCodexRealtimeTimeline } from './codex-structured-realtime-timeline'
 import { AgentSessionAcquisitionRefusal } from '../native-chat/agent-session-wire/structured-agent-session-adapter'
 import type { CodexSubagentExecutions } from './codex-subagent-executions'
 import type {
@@ -23,22 +22,16 @@ export async function restoreAcquiredCodexJournal(input: {
   timeoutMs?: number
   beforeRestore: () => void
 }): Promise<boolean> {
-  const { connection, opened, translator } = input
-  const timeline =
-    input.resumed && translator
-      ? await readCodexRealtimeTimeline(connection, opened.threadId, input.timeoutMs)
-      : null
+  const { opened, translator } = input
   input.beforeRestore()
-  const admission =
-    timeline?.status === 'ready' && translator?.restoreTimeline
-      ? translator.restoreTimeline(opened.threadId, timeline.entries)
-      : translator?.restoreThread(opened.threadId, opened.thread ?? {})
+  const admission = translator?.restoreThread(opened.threadId, opened.thread ?? {})
   if (admission && !admission.accepted) {
     throw AgentSessionAcquisitionRefusal.historyTooLarge(
       'Codex thread history exceeds the bounded restore queue; history was not partially imported.'
     )
   }
-  return timeline?.status === 'ready' && admission?.accepted === true
+  // Canonical Live history is loaded only by the voice start adapter.
+  return false
 }
 
 export function createCodexSessionJournalTranslator(input: {
