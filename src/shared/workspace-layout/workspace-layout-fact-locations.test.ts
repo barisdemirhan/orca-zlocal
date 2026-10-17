@@ -106,6 +106,7 @@ function populate(loaded: LoadedWorkspaceLayout): LoadedWorkspaceLayout {
   fill(loaded, 'browserLive.docLocation', { kind: 'file', path: '/doc.md' })
   fill(loaded, 'view.activeWorkspaceExecutionHostId', LOCAL_EXECUTION_HOST_ID)
   fill(loaded, 'carried.remoteSessionIdsByTabId', { 'tab-shell': 'remote-1' })
+  fill(loaded, 'carried.terminalSpawnedByPaneKey', { 'tab-shell:1': { paneKey: 'tab-agent:1' } })
   fill(loaded, 'records.clientHostedBrowserPagesByWorkspace', { 'browser-1': [{ id: 'page-1' }] })
   // Tab fields on both kinds, since terminal and content tabs are written to different tables.
   const content = (holder: Holder) => holder.kind === 'browser'
