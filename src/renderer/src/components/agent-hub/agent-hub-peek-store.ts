@@ -2,6 +2,13 @@ import { useSyncExternalStore } from 'react'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import type { RuntimeFileReadArgs } from '@/runtime/runtime-file-client-types'
 
+/** The paired server that owns a peeked file, or null for local and SSH reads. */
+export function peekReadRuntimeEnvironmentId(
+  readContext: RuntimeFileReadArgs | undefined
+): string | null {
+  return readContext?.target.kind === 'environment' ? readContext.target.environmentId : null
+}
+
 export type AgentHubPeekContent =
   | { kind: 'web'; url: string; hostId: ExecutionHostId; routingWorktreeId?: string }
   | {

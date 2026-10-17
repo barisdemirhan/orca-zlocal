@@ -6,7 +6,7 @@ import {
   MermaidViewer,
   MonacoCodeExcerpt
 } from '../editor/editor-lazy-views'
-import type { AgentHubPeekContent } from './agent-hub-peek-store'
+import { peekReadRuntimeEnvironmentId, type AgentHubPeekContent } from './agent-hub-peek-store'
 import type { AgentHubPeekDocumentKind } from './agent-hub-peek-document-budget'
 
 type FileContent = Omit<Extract<AgentHubPeekContent, { filePath: string }>, 'kind'> & {
@@ -48,7 +48,7 @@ export function AgentHubPeekDocument({
           content={content}
           filePath={file.filePath}
           worktreeId={worktreeId}
-          runtimeEnvironmentId={file.readContext?.settings?.activeRuntimeEnvironmentId}
+          runtimeEnvironmentId={peekReadRuntimeEnvironmentId(file.readContext) ?? undefined}
           preferenceKey={cacheKey}
         />
       )

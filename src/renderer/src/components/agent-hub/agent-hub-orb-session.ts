@@ -100,6 +100,7 @@ export function useAgentHubOrb(threads: readonly AgentPaneThread[]) {
   const state = deriveAgentHubOrbState({
     sessionId: enabled ? (session?.sessionId ?? null) : null,
     items: native.journalItems,
+    currentRequests: native.currentRequests,
     working: native.isWorking || native.queueSendsNext,
     latestTurn: native.latestTurn,
     listening: Boolean(session?.tabId && dictation?.pane?.tabId === session.tabId),

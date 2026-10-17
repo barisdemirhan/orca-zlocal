@@ -7,7 +7,7 @@ import { useAgentHubOrbPanel } from '../agent-hub/agent-hub-orb-panel-store'
 import { registerRetainedPaneDestination } from '../tab-group/retained-pane-destinations'
 import { structuredQuestionTranscript } from '../../../../shared/structured-agent-question-projection'
 import { NativeChatResolutionReceipt } from './NativeChatResolutionReceipt'
-import type { NativeChatResolvedPrompt } from './native-chat-resolution-receipt'
+import type { NativeChatResolvedPrompt } from '../../../../shared/native-chat-resolution-receipt'
 import { useAgentHubRequests, agentHubInboxRequests } from '../agent-hub/agent-hub-requests-store'
 import {
   agentHubCurrentOrbRequest,

@@ -180,7 +180,7 @@ function prepareLaunch() {
       paneKey: `${tab.id}:11111111-1111-4111-8111-111111111111`,
       ptyId: tab.ptyId ?? 'pty-new',
       startupPlan,
-      terminalOwnership: { release: fixture.release, finalize: () => false }
+      terminalOwnership: { release: fixture.release, finalize: async () => null }
     }
   })
 }

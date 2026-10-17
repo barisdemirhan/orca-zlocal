@@ -24,15 +24,7 @@ import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 
 type SourceState = Parameters<typeof agentHubTerminalTreeFromState>[0] &
   Partial<
-    Pick<
-      AppState,
-      | 'sshConnectionStates'
-      | 'sshTargetLabels'
-      | 'removedSshTargetLabels'
-      | 'sshTargetsHydrated'
-      | 'sshStateByEnvironment'
-      | 'runtimeStatusByEnvironmentId'
-    >
+    Pick<AppState, 'sshConnectionStates' | 'sshStateByEnvironment' | 'runtimeStatusByEnvironmentId'>
   >
 const NO_PARENTS: ReadonlyMap<string, string> = new Map()
 
@@ -123,9 +115,6 @@ function sourceHostConnected(state: SourceState, target: AgentHubPaneTarget): bo
       {
         ...state,
         sshConnectionStates: state.sshConnectionStates ?? new Map(),
-        sshTargetLabels: state.sshTargetLabels ?? new Map(),
-        removedSshTargetLabels: state.removedSshTargetLabels ?? new Map(),
-        sshTargetsHydrated: state.sshTargetsHydrated ?? false,
         sshStateByEnvironment: state.sshStateByEnvironment ?? new Map()
       },
       environmentId ?? null,

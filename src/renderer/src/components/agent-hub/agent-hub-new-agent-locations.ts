@@ -2,7 +2,10 @@ import type { AppState } from '@/store/types'
 import { getIndexedAllWorktrees, getIndexedRepoMap } from '@/store/worktree-repo-index'
 import { compareWorktreeDisplayName } from '@/lib/worktree-display-name-order'
 import { orderEmptyQueryWorktrees } from '@/lib/order-empty-query-worktrees'
-import { getRepoDisplayLabelKey, getRepoDisplayLabelsByPath } from '@/lib/repo-display-labels'
+import {
+  getRepoDisplayLabelKey,
+  getRepoDisplayLabelsByPath
+} from '../../../../shared/repo-display-labels'
 import { getDeleteStateForWorktreeHost } from '../sidebar/worktree-delete-state-host-match'
 import {
   folderWorkspaceRepoId,

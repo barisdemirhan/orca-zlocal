@@ -139,7 +139,7 @@ export async function executeAgentHubPeek(
       filePath,
       connectionId: null,
       readContext: {
-        settings: context.settings,
+        target: context.target,
         worktreeId: target.worktree.id,
         filePath,
         relativePath

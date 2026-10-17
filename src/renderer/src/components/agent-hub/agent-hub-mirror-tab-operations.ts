@@ -1,5 +1,5 @@
 import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
-import { partitionPinnedTabOrder } from '@/store/slices/tabs/tabs-tab-order'
+import { partitionPinnedTabOrder } from '../../../../shared/workspace-layout/tab-order'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {

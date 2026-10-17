@@ -3,23 +3,16 @@ import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { userNamedFileAccess } from '@/lib/local-file-access'
 import { readRuntimeFileContent } from '@/runtime/runtime-file-read-client'
-import type {
-  RuntimeFileReadArgs,
-  RuntimeReadableFileContent
-} from '@/runtime/runtime-file-client-types'
+import type { RuntimeReadableFileContent } from '@/runtime/runtime-file-client-types'
 import { ImageViewer, MarkdownPreview, MediaViewer } from '../editor/editor-lazy-views'
 import { absolutePathToFileUri } from '../editor/markdown-internal-links'
 import { buildImageDataUri } from '../../../../shared/image-data-uri'
-import type { AgentHubPeekContent } from './agent-hub-peek-store'
+import { peekReadRuntimeEnvironmentId, type AgentHubPeekContent } from './agent-hub-peek-store'
 import { AgentHubPeekDocument } from './AgentHubPeekDocument'
 import {
   canRenderAgentHubPeekDocument,
   isAgentHubPeekDocumentKind
 } from './agent-hub-peek-document-budget'
-
-function runtimeReadTargetKey(target: RuntimeFileReadArgs['target'] | undefined): string {
-  return target?.kind === 'environment' ? target.environmentId : ''
-}
 
 type PeekFileContent = Extract<AgentHubPeekContent, { filePath: string }>
 
@@ -97,7 +90,7 @@ export function AgentHubPeekFile({
     state: { status: 'loading' }
   })
   const { filePath, connectionId } = content
-  const key = `${runtimeReadTargetKey(content.readContext?.target)}\u0000${content.readContext?.worktreeId ?? ''}\u0000${connectionId ?? ''}\u0000${filePath}`
+  const key = `${peekReadRuntimeEnvironmentId(content.readContext) ?? ''}\u0000${content.readContext?.worktreeId ?? ''}\u0000${connectionId ?? ''}\u0000${filePath}`
   useEffect(() => {
     let live = true
     void readRuntimeFileContent(
@@ -186,7 +179,7 @@ export function AgentHubPeekFile({
             content={file.content}
             filePath={filePath}
             sourceWorktreeId={worktreeId}
-            sourceRuntimeEnvironmentId={runtimeReadTargetKey(content.readContext?.target) || null}
+            sourceRuntimeEnvironmentId={peekReadRuntimeEnvironmentId(content.readContext)}
             scrollCacheKey={`agent-hub-peek:${key}`}
             initialAnchor={content.initialAnchor}
             showTableOfContents={false}
@@ -222,7 +215,7 @@ export function AgentHubPeekFile({
           src={file.mediaUrl}
           mimeType={file.mimeType ?? ''}
           filePath={content.filePath}
-          canOpenLocally={!connectionId && content.readContext?.target.kind !== 'environment'}
+          canOpenLocally={!connectionId && !peekReadRuntimeEnvironmentId(content.readContext)}
         />
       ) : (
         <ImageViewer content={file.content} filePath={content.filePath} mimeType={file.mimeType} />

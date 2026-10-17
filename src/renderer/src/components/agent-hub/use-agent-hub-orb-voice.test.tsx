@@ -10,7 +10,7 @@ import {
   getRuntimeEnvironmentRevision,
   replaceRuntimeEnvironmentRevisions
 } from '@/runtime/runtime-environment-revision'
-import type { RuntimeClientTarget } from '@/runtime/runtime-client-target'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { useStructuredAgentSessionMutate } from '../native-chat/use-structured-agent-session-mutate'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 import { useAgentHubOrbVoice } from './use-agent-hub-orb-voice'

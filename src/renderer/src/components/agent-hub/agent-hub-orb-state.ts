@@ -1,6 +1,6 @@
 import type { AgentJournalRenderItem } from '../../../../shared/agent-session-journal-types'
 import type { AgentSessionLatestTurn } from '../../../../shared/agent-session-wire'
-import type { RuntimeClientTarget } from '@/runtime/runtime-rpc-client'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import {
   getWorktreeExecutionHostId,
   LOCAL_EXECUTION_HOST_ID
@@ -48,6 +48,7 @@ export function agentHubOrbThread(thread: AgentPaneThread, tabId: string | undef
 export function deriveAgentHubOrbState(args: {
   sessionId: string | null
   items: AgentJournalRenderItem[]
+  currentRequests?: AgentJournalRenderItem[]
   working: boolean
   listening: boolean
   requests: readonly AgentHubInboxRequest[]
@@ -71,7 +72,10 @@ export function deriveAgentHubOrbState(args: {
       request: { kind: 'request', item: { ...ask, request: ask.request } }
     }
   }
-  const prompt = pendingStructuredSessionPrompts(args.items).at(-1)
+  const prompt = pendingStructuredSessionPrompts({
+    journalItems: args.items,
+    currentRequests: args.currentRequests
+  }).at(-1)
   if (prompt) {
     return { kind: 'needsYou', request: { kind: 'prompt', item: prompt } }
   }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useAppStore } from '@/store'
-import { getMixedWorktreeHostContextLabels } from '@/components/sidebar/worktree-list/grouping/host-labels'
+import { getMixedWorktreeHostContextLabels } from '../../../../shared/sidebar-list/host-labels'
 import { buildSidebarHostOptions } from '@/components/sidebar/sidebar-host-options'
 import { getSettingsFocusedExecutionHostId } from '../../../../shared/execution-host'
 import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'

@@ -83,6 +83,7 @@ function fixture(agent = false, worktreeId = FLOATING_TERMINAL_WORKTREE_ID) {
   const node = (
     <SortableTab
       tab={tab}
+      agent={agent ? 'claude' : null}
       unifiedTabId={tab.id}
       groupId="floating-group"
       tabCount={1}

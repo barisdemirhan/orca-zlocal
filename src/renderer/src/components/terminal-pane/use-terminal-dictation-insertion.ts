@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { PaneManager } from '@/lib/pane-manager/pane-manager'
-import type { PtyTransport } from './pty-transport'
+import type { PtyTransport } from './pty-transport-types'
 import {
   acquireTerminalInputMountLease,
   hasTerminalMountRetentionLease

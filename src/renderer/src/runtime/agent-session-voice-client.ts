@@ -11,7 +11,7 @@ import {
 import type { AgentSessionMutationResult } from '../../../shared/agent-session-wire'
 import type { RuntimeEnvironmentStatus } from '../../../shared/runtime-host-status'
 import { structuredAgentSessionPayloadFingerprint } from '../../../shared/structured-agent-session-mutation'
-import type { RuntimeClientTarget } from './runtime-client-target'
+import type { RuntimeClientTarget } from '../../../shared/runtime-client-target'
 import { getRuntimeEnvironmentRevision } from './runtime-environment-revision'
 import { runtimeHostConnectionStateForEntry } from './runtime-host-connection-state'
 import { callRuntimeRpc } from './runtime-rpc-client'

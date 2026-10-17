@@ -14,7 +14,12 @@ import {
   openAgentHubPeekUrl,
   type AgentHubPeekLinkSource
 } from './agent-hub-peek-routing'
-import { closeAgentHubPeek, openAgentHubPeek, type AgentHubPeekItem } from './agent-hub-peek-store'
+import {
+  closeAgentHubPeek,
+  openAgentHubPeek,
+  peekReadRuntimeEnvironmentId,
+  type AgentHubPeekItem
+} from './agent-hub-peek-store'
 
 /** Returns false for links the Markdown viewer handles itself, including same-page anchors. */
 export function openAgentHubPeekMarkdownLink(item: AgentHubPeekItem, href: string): boolean {
@@ -22,7 +27,7 @@ export function openAgentHubPeekMarkdownLink(item: AgentHubPeekItem, href: strin
     return false
   }
   const content = item.content
-  const runtimeEnvironmentId = content.readContext?.settings?.activeRuntimeEnvironmentId ?? null
+  const runtimeEnvironmentId = peekReadRuntimeEnvironmentId(content.readContext)
   const source: AgentHubPeekLinkSource = {
     worktreeId: item.worktreeId,
     onPairedRuntime: runtimeEnvironmentId !== null,
