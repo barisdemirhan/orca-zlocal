@@ -35,6 +35,7 @@ let state: ReturnType<typeof hostTestState>
 let settings: ReturnType<typeof createGlobalSettingsFixture>
 let manager: AgentHubOrbSessionManager
 let runtime: ConstructorParameters<typeof AgentHubOrbSessionManager>[0]
+let notifySettings: () => void
 
 function serveCodexModels(probe: AgentModelCatalogProbe): void {
   state.host.deps.modelCatalog = createAgentModelCatalogService({
@@ -59,6 +60,7 @@ it('refuses Pi Ask before reserving a session or starting a provider', async () 
 })
 
 beforeEach(() => {
+  notifySettings = () => {}
   vi.spyOn(Date, 'now').mockReturnValue(HOST_TEST_NOW)
   state = hostTestState()
   setStructuredAgentSessionHost(state.host)
@@ -138,6 +140,10 @@ beforeEach(() => {
     getSettings: () => settings,
     updateSettings: (updates) => {
       settings = { ...settings, ...updates }
+    },
+    onSettingsChanged: (listener) => {
+      notifySettings = () => listener({}, settings)
+      return () => {}
     }
   })
 })
@@ -150,30 +156,39 @@ afterEach(async () => {
 })
 
 describe('Orb conversations on the structured host', () => {
-  it.each([true, false])(
-    'replaces a stale saved Codex model from the launch account’s catalog (named default: %s)',
-    async (isDefault) => {
-      settings.agentHubOrbModel = 'gpt-6.1-sol'
-      serveCodexModels(async () => ({
-        models: [
-          { id: 'first-supported', label: 'First supported', isDefault: false, efforts: [] },
-          { id: 'supported-model', label: 'Supported', isDefault, efforts: [] }
-        ],
-        fastModeTierByModel: new Map(),
-        origin: 'probe'
-      }))
+  it('refuses an unavailable saved model without silently selecting or saving another model', async () => {
+    settings.agentHubOrbModel = 'gpt-6.1-sol'
+    serveCodexModels(async () => ({
+      models: [
+        { id: 'first-supported', label: 'First supported', isDefault: false, efforts: [] },
+        { id: 'supported-model', label: 'Supported', isDefault: true, efforts: [] }
+      ],
+      fastModeTierByModel: new Map(),
+      origin: 'probe'
+    }))
 
-      const opened = await manager.open()
-      const expectedModel = isDefault ? 'supported-model' : 'first-supported'
+    await expect(manager.open()).rejects.toThrow('selected Codex model is unavailable')
+    expect(state.acquire).not.toHaveBeenCalled()
+    expect(state.store.listRecords()).toHaveLength(0)
+    expect(settings.agentHubOrbModel).toBe('gpt-6.1-sol')
+  })
 
-      expect(state.store.getRecord(opened.sessionId)?.options?.model).toBe(expectedModel)
-      expect(state.acquire.mock.calls[0]?.[0].options?.model).toBe(expectedModel)
-      expect(settings.agentHubOrbModel).toBe(expectedModel)
-      expect(await manager.open()).toEqual(opened)
-      expect(state.store.listRecords()).toHaveLength(1)
-      expect(await manager.list()).toMatchObject([
-        { sessionId: opened.sessionId, model: expectedModel }
-      ])
+  it.each(['failed', 'missing'] as const)(
+    'uses provider defaults without reading or pinning a model when the catalog is %s',
+    async (kind) => {
+      const probe = vi.fn(async () => {
+        throw new Error('offline')
+      })
+      serveCodexModels(probe)
+      if (kind === 'missing') {
+        delete state.host.deps.modelCatalog
+      }
+      const first = await manager.open()
+      expect(state.store.getRecord(first.sessionId)?.options).toEqual({})
+      expect(state.acquire.mock.calls[0]?.[0].options?.model).toBeUndefined()
+      expect(settings.agentHubOrbModel).toBeNull()
+      expect(probe).not.toHaveBeenCalled()
+      expect(await manager.open()).toEqual(first)
     }
   )
 
@@ -301,18 +316,35 @@ describe('Orb conversations on the structured host', () => {
     expect(state.host.getSessionTabId(previous.sessionId)).toBeNull()
   })
 
-  it('orders history by activity and records the verified Codex default used by the conversation', async () => {
+  it('limits history by record activity before reading journals and keeps provider defaults unpinned', async () => {
     vi.mocked(Date.now).mockReturnValue(HOST_TEST_NOW + 10_000)
     const first = await manager.open()
     await manager.close()
     vi.mocked(Date.now).mockReturnValue(HOST_TEST_NOW)
     const second = await manager.open({ model: 'model-2' })
+    const read = vi.spyOn(state.host, 'journalSnapshot')
     const entries = await manager.list(1)
+    expect(read).toHaveBeenCalledExactlyOnceWith(first.sessionId)
     expect(entries[0].sessionId).toBe(first.sessionId)
-    expect(entries[0].model).toBe('default-model')
+    expect(entries[0].model).toBeUndefined()
     expect((await manager.list()).map((entry) => entry.sessionId)).toEqual([
       first.sessionId,
       second.sessionId
+    ])
+  })
+  it('reads long journals without passing every timestamp as a function argument', async () => {
+    const current = await manager.open()
+    const snapshot = await state.host.journalSnapshot(current.sessionId)
+    const item = snapshot.items[0]
+    if (!item) {
+      throw new Error('Expected the opening prompt in the journal')
+    }
+    vi.spyOn(state.host, 'journalSnapshot').mockResolvedValue({
+      ...snapshot,
+      items: Array.from({ length: 150_000 }, () => ({ ...item, observedAt: HOST_TEST_NOW + 1 }))
+    })
+    expect(await manager.list(1)).toMatchObject([
+      { sessionId: current.sessionId, lastActiveAt: HOST_TEST_NOW + 1 }
     ])
   })
   it('uses the host-resolved floating directory instead of a separately saved Orb folder', async () => {
@@ -352,10 +384,7 @@ describe('Orb conversations on the structured host', () => {
     expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(chosen)
   })
   it('coalesces concurrent opens, commits one opening instruction, and persists the floating location and tag', async () => {
-    const [first, second] = await Promise.all([
-      manager.open(),
-      manager.open({ model: 'another-model' })
-    ])
+    const [first, second] = await Promise.all([manager.open(), manager.open()])
     expect(second).toEqual(first)
     expect(manager.current()).toEqual(first)
     const records = state.store.listRecords()
@@ -365,7 +394,7 @@ describe('Orb conversations on the structured host', () => {
       origin: 'agent-hub-orb',
       location: { workspaceId: FLOATING_TERMINAL_WORKTREE_ID, workspaceKind: 'folder' },
       launchDirectory: state.root,
-      options: { model: 'default-model' }
+      options: {}
     })
     const snapshot = await state.host.journalSnapshot(first.sessionId)
     expect(snapshot.submissions).toHaveLength(1)
@@ -495,7 +524,51 @@ describe('Orb conversations on the structured host', () => {
     expect(() => manager.current()).toThrow(expect.objectContaining({ code: 'disabled' }))
     expect(() => manager.open()).toThrow(expect.objectContaining({ code: 'disabled' }))
     await expect(manager.list()).rejects.toMatchObject({ code: 'disabled' })
-    expect(() => manager.close()).toThrow(expect.objectContaining({ code: 'disabled' }))
+    await expect(manager.close()).resolves.toBeUndefined()
     expect(state.store.listRecords()).toHaveLength(0)
+  })
+
+  it.each(['experiment', 'control'] as const)(
+    'stops the host Orb when %s is disabled without requiring a panel reopen',
+    async (gate) => {
+      const current = await manager.open()
+      if (gate === 'experiment') {
+        settings.experimentalAgentHub = false
+      } else {
+        settings.agentHubAgentControl = false
+      }
+      notifySettings()
+      await vi.waitFor(() => expect(state.host.getSessionTabId(current.sessionId)).toBeNull())
+      expect(runtime.closeMobileSessionTab).toHaveBeenCalledOnce()
+      await expect(manager.close()).resolves.toBeUndefined()
+    }
+  )
+
+  it('stops an Act freely turn when Ask is saved while the renderer panel is closed', async () => {
+    settings.agentHubOrbPermission = 'free'
+    notifySettings()
+    state.dispatch.mockResolvedValueOnce({ state: 'admitted' })
+    const current = await manager.open()
+    const close = vi.fn(async () => true)
+    state.host.deps.adapter.closeSession = close
+    settings.agentHubOrbPermission = 'ask'
+    notifySettings()
+    await vi.waitFor(() => expect(close).toHaveBeenCalled())
+    await vi.waitFor(() => expect(state.host.getSessionTabId(current.sessionId)).toBeNull())
+    const next = await manager.open()
+    expect(next.sessionId).not.toBe(current.sessionId)
+    expect(settings.agentHubOrbPermission).toBe('ask')
+  })
+
+  it('republishes a committed Orb after an unconfirmed tab publication without attaching twice', async () => {
+    const attach = vi.spyOn(state.host, 'attach')
+    vi.spyOn(runtime, 'publishStructuredAgentSessionTab').mockRejectedValueOnce(
+      new Error('window timeout')
+    )
+    const current = await manager.open()
+    expect(attach).toHaveBeenCalledOnce()
+    expect(state.store.listRecords()).toHaveLength(1)
+    expect(state.host.getSessionTabId(current.sessionId)).toBe(current.tabId)
+    expect((await state.host.journalSnapshot(current.sessionId)).submissions).toHaveLength(1)
   })
 })

@@ -5,17 +5,23 @@ import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { findStructuredAgentSessionTab } from '@/lib/structured-agent-session-tab-activation'
 import { refreshLocalStructuredSessionTabs } from '@/runtime/local-structured-session-tabs-sync'
 import type { AgentHubOrbOpenParams } from '../../../../shared/agent-hub-orb'
+import { normalizeAgentHubOrbSettings } from '../../../../shared/agent-hub-orb-settings'
 import { showAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
 import { agentHubOrbErrorMessage } from './agent-hub-orb-error'
 
 let opening: Promise<boolean> | null = null
+let openingKey: string | null = null
+let openingCanJoin = false
 async function open(
   params: AgentHubOrbOpenParams | undefined,
-  preserveVisibility: boolean
+  preserveVisibility: boolean,
+  closeGeneration: number,
+  hostOpened: () => void
 ): Promise<boolean> {
   try {
     const session = await window.api.agentHub.orb.open(params)
+    hostOpened()
     let store = useAppStore.getState()
     let tab = findStructuredAgentSessionTab(store.unifiedTabsByWorktree, {
       workspaceId: FLOATING_TERMINAL_WORKTREE_ID,
@@ -33,6 +39,9 @@ async function open(
     }
     if (!tab) {
       throw new Error('Orb tab was not published')
+    }
+    if (useAgentHubOrbPanel.getState().closeGeneration !== closeGeneration) {
+      return true
     }
     if (preserveVisibility) {
       if (useAgentHubOrbPanel.getState().session) {
@@ -62,10 +71,41 @@ export function openAgentHubOrb(
   params?: AgentHubOrbOpenParams,
   preserveVisibility = false
 ): Promise<boolean> {
-  if (!opening) {
-    opening = open(params, preserveVisibility).finally(() => {
-      opening = null
-    })
+  const closeGeneration = useAgentHubOrbPanel.getState().closeGeneration
+  const settings = normalizeAgentHubOrbSettings(useAppStore.getState().settings ?? {})
+  const key = JSON.stringify({
+    resume: params?.resume?.sessionId,
+    agent: params?.agent,
+    model: params?.model,
+    cwd: params?.cwd,
+    agentSetting: settings.agent,
+    modelSetting: settings.model,
+    permission: settings.permission,
+    preserveVisibility,
+    closeGeneration
+  })
+  if (opening && openingCanJoin && openingKey === key) {
+    return opening
   }
-  return opening
+  const next = (opening ?? Promise.resolve())
+    .then(() =>
+      open(params, preserveVisibility, closeGeneration, () => {
+        if (opening === next) {
+          openingCanJoin = false
+        }
+      })
+    )
+    .finally(() => {
+      if (opening === next) {
+        opening = null
+        openingKey = null
+        openingCanJoin = false
+        useAgentHubOrbPanel.setState({ opening: false })
+      }
+    })
+  opening = next
+  openingKey = key
+  openingCanJoin = true
+  useAgentHubOrbPanel.setState({ opening: true })
+  return next
 }

@@ -118,13 +118,25 @@ export function AgentHubOrbPanel({
           sideOffset={docked ? 12 : 8}
           collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
           surface="panel"
-          className="w-132 max-w-[calc(100vw-2rem)]"
-          style={orbOnly ? { visibility: 'hidden', pointerEvents: 'none' } : undefined}
+          className="flex w-132 max-w-[calc(100vw-2rem)] flex-col"
+          style={{
+            maxHeight: 'var(--radix-popover-content-available-height)',
+            visibility: orbOnly ? 'hidden' : undefined,
+            pointerEvents: orbOnly ? 'none' : undefined
+          }}
           {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
           data-agent-hub-orb-panel
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
           onEscapeKeyDown={(event) => {
+            const requestDestination = useAgentHubOrbPanel.getState().requestDestination
+            if (
+              event.defaultPrevented ||
+              (event.target instanceof Node && requestDestination?.contains(event.target))
+            ) {
+              event.preventDefault()
+              return
+            }
             if (voice.output === 'speaking') {
               event.preventDefault()
               voice.stopSpeaking()
@@ -142,6 +154,9 @@ export function AgentHubOrbPanel({
           }}
           onInteractOutside={(event) => {
             if (
+              voice.connection === 'connecting' ||
+              voice.connection === 'live' ||
+              voice.connection === 'stopping' ||
               ownedPointerDowns.current.has(event.detail.originalEvent) ||
               isOrbChatInteraction(event.target) ||
               (event.target instanceof Node && anchorRef.current?.contains(event.target))

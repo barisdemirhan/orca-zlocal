@@ -109,4 +109,75 @@ describe('open Orb', () => {
     expect(mocks.refresh).toHaveBeenCalledOnce()
     expect(mocks.toast.error).toHaveBeenCalledWith('Could not open Orb. Try again.')
   })
+  it('queues a history resume after an in-flight open instead of showing its conversation', async () => {
+    let finish: ((session: { sessionId: string; resumed: boolean }) => void) | undefined
+    mocks.open.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        })
+    )
+    mocks.open.mockResolvedValueOnce({ sessionId: 'past-session', resumed: true })
+    const first = openAgentHubOrb()
+    const resume = openAgentHubOrb({ resume: { sessionId: 'past-session' } })
+    await Promise.resolve()
+    finish?.({ sessionId: 'first-session', resumed: false })
+    await Promise.all([first, resume])
+    expect(mocks.open).toHaveBeenCalledTimes(2)
+    expect(mocks.open).toHaveBeenLastCalledWith({ resume: { sessionId: 'past-session' } })
+    expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('past-session')
+  })
+  it('performs a settings reopen after an in-flight open with the same empty params', async () => {
+    let finish: ((session: { sessionId: string; resumed: boolean }) => void) | undefined
+    mocks.open.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        })
+    )
+    mocks.open.mockResolvedValueOnce({ sessionId: 'settings-session', resumed: false })
+    const first = openAgentHubOrb()
+    const updated = openAgentHubOrb(undefined, true)
+    await Promise.resolve()
+    finish?.({ sessionId: 'first-session', resumed: false })
+    await Promise.all([first, updated])
+    expect(mocks.open).toHaveBeenCalledTimes(2)
+    expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('settings-session')
+  })
+  it('opens a fresh conversation after New closes the panel during an in-flight open', async () => {
+    let finish: ((session: { sessionId: string; resumed: boolean }) => void) | undefined
+    mocks.open.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        })
+    )
+    mocks.open.mockResolvedValueOnce({ sessionId: 'new-session', resumed: false })
+    const first = openAgentHubOrb()
+    closeAgentHubOrbPanel()
+    const fresh = openAgentHubOrb()
+    await Promise.resolve()
+    finish?.({ sessionId: 'closed-session', resumed: false })
+    await Promise.all([first, fresh])
+    expect(mocks.open).toHaveBeenCalledTimes(2)
+    expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('new-session')
+  })
+  it('opens again after the host finished its first call but its tab repair is still pending', async () => {
+    let finishRepair: (() => void) | undefined
+    mocks.find.mockReturnValueOnce(null)
+    mocks.refresh.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishRepair = resolve
+        })
+    )
+    const first = openAgentHubOrb()
+    await vi.waitFor(() => expect(mocks.refresh).toHaveBeenCalledOnce())
+    mocks.open.mockResolvedValueOnce({ sessionId: 'new-session', resumed: false })
+    const fresh = openAgentHubOrb()
+    finishRepair?.()
+    await Promise.all([first, fresh])
+    expect(mocks.open).toHaveBeenCalledTimes(2)
+    expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('new-session')
+  })
 })

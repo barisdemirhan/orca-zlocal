@@ -156,6 +156,64 @@ it.each(['agent', 'model'] as const)(
   }
 )
 
+it.each(['agent', 'model'] as const)(
+  'checks the persisted %s against settings before this manager first opens Orb',
+  async (selection) => {
+    const first = await manager.open()
+    await settle(first.sessionId)
+    manager = new AgentHubOrbSessionManager(
+      runtimeForOrb,
+      () => settings,
+      () => {}
+    )
+    if (selection === 'agent') {
+      settings.agentHubOrbAgent = 'claude'
+    } else {
+      settings.agentHubOrbModel = 'new-model'
+    }
+    const next = await manager.open()
+    expect(next.sessionId).not.toBe(first.sessionId)
+    expect(state.store.getRecord(next.sessionId)).toMatchObject({
+      provider: selection === 'agent' ? 'claude' : 'codex',
+      options: selection === 'agent' ? {} : { model: 'new-model' }
+    })
+    expect(state.host.getSessionTabId(first.sessionId)).toBeNull()
+  }
+)
+
+it.each(['reveal', 'publication'] as const)(
+  'restores the original conversation if a history resume fails during %s',
+  async (failure) => {
+    const previous = await manager.open()
+    await manager.close()
+    const current = await manager.open()
+    if (failure === 'reveal') {
+      vi.spyOn(state.host, 'revealSession').mockRejectedValueOnce(new Error('reveal failed'))
+    } else {
+      vi.spyOn(runtimeForOrb, 'publishStructuredAgentSessionTab').mockRejectedValueOnce(
+        new Error('publication failed')
+      )
+    }
+    await expect(manager.open({ resume: { sessionId: previous.sessionId } })).rejects.toThrow(
+      `${failure} failed`
+    )
+    expect(manager.current()?.sessionId).toBe(current.sessionId)
+    expect(state.host.getSessionTabId(current.sessionId)).toBe(current.tabId)
+    expect(state.host.getSessionTabId(previous.sessionId)).toBeNull()
+  }
+)
+
+it('restores the original conversation if committing a settings replacement fails', async () => {
+  const current = await manager.open()
+  await settle(current.sessionId)
+  settings.agentHubOrbModel = 'new-model'
+  vi.spyOn(state.host, 'attach').mockRejectedValueOnce(new Error('attach failed'))
+  await expect(manager.open()).rejects.toThrow('attach failed')
+  expect(manager.current()?.sessionId).toBe(current.sessionId)
+  expect(state.host.getSessionTabId(current.sessionId)).toBe(current.tabId)
+  expect(state.store.listRecords()).toHaveLength(1)
+})
+
 it.each(['running', 'approval'] as const)(
   'refuses a settings transition with %s work without closing the current conversation',
   async (kind) => {

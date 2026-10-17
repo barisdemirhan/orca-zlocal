@@ -20,33 +20,38 @@ import { NativeChatSessionOptionPickers } from '../native-chat/NativeChatSession
 import type { SessionOptionDescriptor } from '../../../../shared/native-chat-session-options'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
+import type { AgentHubRequest } from '../../../../shared/agent-hub-requests'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
 import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
 import { orbAsk } from './agent-hub-orb-test-fixtures'
+import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
+import type { AgentSessionStatusSummary } from '../../../../shared/agent-session-wire'
 
 const mocks = vi.hoisted(() => {
   const listeners = new Set<() => void>()
+  const voice: AgentHubOrbVoiceValue = {
+    capability: 'unsupported' as const,
+    canStart: false,
+    connection: 'off' as const,
+    input: 'listening' as const,
+    output: 'silent' as const,
+    textMode: true,
+    startLive: vi.fn(async () => {}),
+    stopLive: vi.fn(async () => {}),
+    muteInput: vi.fn(),
+    stopSpeaking: vi.fn(),
+    switchToText: vi.fn(async () => {}),
+    prepareDictation: vi.fn(async () => false)
+  }
   return {
     open: vi.fn(),
     close: vi.fn(),
     list: vi.fn(),
     pickFolder: vi.fn(),
-    voice: {
-      capability: 'unsupported' as const,
-      canStart: false,
-      connection: 'off' as const,
-      input: 'listening' as const,
-      output: 'silent' as const,
-      textMode: true,
-      startLive: vi.fn(async () => {}),
-      stopLive: vi.fn(async () => {}),
-      muteInput: vi.fn(),
-      stopSpeaking: vi.fn(),
-      switchToText: vi.fn(async () => {}),
-      prepareDictation: vi.fn(async () => false)
-    },
+    voice,
     listeners,
     feed: {
+      getSnapshot: vi.fn(() => new Map<string, AgentSessionStatusSummary>()),
       activate: () => () => {},
       subscribe: (listener: () => void) => {
         listeners.add(listener)
@@ -108,6 +113,8 @@ const conversations: AgentHubOrbConversation[] = [
 ]
 beforeEach(() => {
   vi.clearAllMocks()
+  mocks.voice.connection = 'off'
+  mocks.feed.getSnapshot.mockReturnValue(new Map())
   closeAgentHubOrbPanel()
   useAppStore.setState({
     dictationState: 'idle',
@@ -258,11 +265,77 @@ it('opens a quiet Orb before revealing the same conversation and its model above
   expect(document.querySelector('[data-agent-hub-orb-panel]')?.getAttribute('data-side')).toBe(
     'top'
   )
+  mocks.feed.getSnapshot.mockReturnValue(
+    new Map([
+      [
+        'current',
+        {
+          sessionId: 'current',
+          workspaceId: 'floating',
+          agent: 'codex',
+          status: 'idle',
+          latestPrompt: '',
+          updatedAt: Date.now()
+        }
+      ]
+    ])
+  )
   act(() => mocks.listeners.forEach((listener) => listener()))
   await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2))
   fireEvent.click(screen.getByRole('button', { name: /^Close\b/ }))
   expect(useAgentHubOrbPanel.getState().session).toBeNull()
   expect(mocks.close).not.toHaveBeenCalled()
+})
+
+it.each(['connecting', 'live', 'stopping'] as const)(
+  'keeps the panel open on outside interactions while Live is %s',
+  async (connection) => {
+    mocks.voice.connection = connection
+    const user = userEvent.setup()
+    const { rerender } = show()
+    const outside = document.createElement('button')
+    outside.textContent = 'Workspace'
+    document.body.append(outside)
+    try {
+      await user.click(outside)
+      expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
+      expect(mocks.voice.stopLive).not.toHaveBeenCalled()
+      mocks.voice.connection = 'off'
+      rerender(
+        <TooltipProvider>
+          <AgentHubOrbPanel
+            anchorRef={{ current: null }}
+            side="top"
+            docked
+            hidden={false}
+            requestPresentationOf={() => requestPresentation}
+          />
+        </TooltipProvider>
+      )
+      await user.click(outside)
+      await waitFor(() => expect(useAgentHubOrbPanel.getState().session).toBeNull())
+    } finally {
+      outside.remove()
+    }
+  }
+)
+
+it('keeps an Orb approval open on Escape and still closes from the surrounding panel', async () => {
+  const request: AgentHubRequest = {
+    ...orbAsk('current'),
+    kind: 'consent',
+    operation: { kind: 'mirror', action: 'close' }
+  }
+  applyAgentHubDelivery('local', request)
+  show(false)
+  const answer = await screen.findByRole('button', { name: 'Deny' })
+  fireEvent.keyDown(answer, { key: 'Escape' })
+  expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
+  expect(screen.getByRole('button', { name: 'Deny' })).toBe(answer)
+  fireEvent.keyDown(document.querySelector('[data-agent-hub-orb-panel]') ?? document.body, {
+    key: 'Escape'
+  })
+  expect(useAgentHubOrbPanel.getState().session).toBeNull()
 })
 
 it('reopens from history with one resume call and creates New by closing then opening', async () => {

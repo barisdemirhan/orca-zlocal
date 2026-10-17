@@ -12,11 +12,19 @@ export async function listAgentHubOrbConversations(
   limit: number
 ): Promise<AgentHubOrbConversation[]> {
   const conversations: AgentHubOrbConversation[] = []
-  for (const record of records) {
+  const recent = records
+    .filter((record) => isStructuredAgentId(record.provider))
+    .sort((left, right) => right.updatedAt - left.updatedAt)
+    .slice(0, limit)
+  for (const record of recent) {
     if (!isStructuredAgentId(record.provider)) {
       continue
     }
     const snapshot = await host.journalSnapshot(record.sessionId)
+    let lastActiveAt = record.updatedAt
+    for (const item of snapshot.items) {
+      lastActiveAt = Math.max(lastActiveAt, item.observedAt)
+    }
     const messages = snapshot.items.flatMap((item) => {
       if (item.body.kind !== 'message') {
         return []
@@ -37,9 +45,9 @@ export async function listAgentHubOrbConversations(
       ...(record.options?.model ? { model: record.options.model } : {}),
       title: (record.conversationName || firstUser?.text || 'Orb').slice(0, 120),
       startedAt: record.createdAt,
-      lastActiveAt: Math.max(record.updatedAt, ...snapshot.items.map((item) => item.observedAt)),
+      lastActiveAt,
       ...(lastReply ? { lastReply: lastReply.slice(0, 240) } : {})
     })
   }
-  return conversations.sort((left, right) => right.lastActiveAt - left.lastActiveAt).slice(0, limit)
+  return conversations.sort((left, right) => right.lastActiveAt - left.lastActiveAt)
 }

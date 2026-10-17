@@ -1,22 +1,68 @@
 import type { AgentSessionRecord } from '../../../shared/agent-session-record'
+import type { AgentHubOrbSession } from '../../../shared/agent-hub-orb'
 import type { normalizeAgentHubOrbSettings } from '../../../shared/agent-hub-orb-settings'
 import { projectStructuredAgentSessionStatus } from '../../../shared/structured-agent-session-projection'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
 import type { AgentHubLedger } from '../../runtime/agent-hub/agent-hub-ledger'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
+import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
+import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
 
 type OrbSettings = ReturnType<typeof normalizeAgentHubOrbSettings>
 
 export function agentHubOrbSettingsNeedTransition(
-  previous: OrbSettings,
+  previous: OrbSettings | null,
   settings: OrbSettings,
   record: AgentSessionRecord | null
 ): boolean {
+  const differentSelection =
+    record !== null &&
+    (record.provider !== settings.agent || (record.options?.model ?? null) !== settings.model)
+  if (!previous) {
+    return differentSelection
+  }
   return (
     previous.permission !== settings.permission ||
-    ((previous.agent !== settings.agent || previous.model !== settings.model) &&
-      (record?.provider !== settings.agent || (record?.options?.model ?? null) !== settings.model))
+    ((previous.agent !== settings.agent || previous.model !== settings.model) && differentSelection)
   )
+}
+
+export async function replaceAgentHubOrbSession<T>(
+  runtime: Pick<
+    OrcaRuntimeService,
+    'closeMobileSessionTab' | 'publishStructuredAgentSessionTab' | 'isAgentHubEnabled'
+  >,
+  host: StructuredAgentSessionHost,
+  current: AgentHubOrbSession | null,
+  replacementId: string,
+  replace: () => Promise<T>
+): Promise<T> {
+  if (current) {
+    await closeAgentHubOrbSession(runtime, host, current)
+  }
+  try {
+    return await replace()
+  } catch (error) {
+    try {
+      if (host.deps.store.getRecord(replacementId)) {
+        await host.close(replacementId, 'user-close')
+        await host.setSessionTabVisibility(replacementId, false)
+      }
+    } finally {
+      if (current && runtime.isAgentHubEnabled()) {
+        const revealed = await host.revealSession(current.sessionId)
+        await host.setSessionTabVisibility(current.sessionId, true, current.tabId)
+        await runtime.publishStructuredAgentSessionTab({
+          workspaceId: revealed.workspaceId,
+          sessionId: revealed.sessionId,
+          agent: revealed.agent,
+          activate: false,
+          ...(current.tabId ? { tabId: current.tabId } : {})
+        })
+      }
+    }
+    throw error
+  }
 }
 
 export async function requireIdleAgentHubOrbSession(

@@ -6,8 +6,10 @@ import {
 } from '../../../../shared/agent-hub-orb-params'
 import { requireStructuredCapability } from './structured-agent-session-gate'
 
-function orbFor(ctx: RpcContext) {
-  ctx.runtime.agentHubOrb.requireEnabled()
+function orbFor(ctx: RpcContext, cleanup = false) {
+  if (!cleanup) {
+    ctx.runtime.agentHubOrb.requireEnabled()
+  }
   if (ctx.caller?.kind === 'paired-device' || ctx.clientKind === 'mobile') {
     throw new AgentHubError('disabled', 'Agent Hub Orb is unavailable to paired clients')
   }
@@ -21,7 +23,7 @@ export const AGENT_HUB_ORB_METHODS = [
     permission: 'workspace',
     params: null,
     handler: async (_params, ctx) => {
-      await orbFor(ctx).close()
+      await orbFor(ctx, true).close()
       return null
     }
   }),

@@ -5,6 +5,8 @@ import { AGENT_HUB_ORB_DEFAULT_DIAMETER } from './agent-hub-orb-geometry'
 
 type OrbPanelState = {
   session: AgentHubOrbSession | null
+  opening: boolean
+  closeGeneration: number
   destination: HTMLElement | null
   chatVisible: boolean
   presentation: 'chat' | 'orb'
@@ -18,6 +20,8 @@ type OrbPanelState = {
 
 export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   session: null,
+  opening: false,
+  closeGeneration: 0,
   destination: null,
   chatVisible: true,
   presentation: 'orb',
@@ -50,6 +54,7 @@ export function closeAgentHubOrbPanel(): void {
   setAgentHubOrbRequestDestination(null)
   useAgentHubOrbPanel.setState({
     session: null,
+    closeGeneration: useAgentHubOrbPanel.getState().closeGeneration + 1,
     chatVisible: true,
     compact: false,
     requestDestination: null,

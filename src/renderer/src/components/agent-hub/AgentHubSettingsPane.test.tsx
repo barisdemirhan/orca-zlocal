@@ -115,8 +115,7 @@ it('groups the hub preferences and shares the floating workspace directory and u
   expect(screen.getByText('~')).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Edit shortcuts' })).toBeTruthy()
   expect(screen.queryByRole('button', { name: /Add shortcut for/ })).toBeNull()
-  expect(screen.getByRole('switch', { name: 'Speak replies' }).hasAttribute('disabled')).toBe(true)
-  expect(screen.getByText('Coming later')).toBeTruthy()
+  expect(screen.queryByRole('switch', { name: 'Speak replies' })).toBeNull()
 })
 
 it('keeps approvals and their warning independent of Orb placement', () => {

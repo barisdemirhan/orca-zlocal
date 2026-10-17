@@ -14,20 +14,31 @@ import {
   agentHubOrbThread
 } from './agent-hub-orb-state'
 import { openAgentHubOrb } from './agent-hub-orb-open'
+import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
 export function useAgentHubOrb(threads: readonly AgentPaneThread[]) {
   const [session, setSession] = useState<AgentHubOrbSession | null>(null)
   const enabled = useAppStore((s) => s.settings?.agentHubAgentControl !== false)
   const tabs = useAppStore((s) => s.unifiedTabsByWorktree)
+  const opening = useAgentHubOrbPanel((s) => s.opening)
   const generation = useRef(0)
   const invalidate = useCallback(() => {
     ++generation.current
   }, [])
   const refresh = useCallback(async () => {
     const issued = ++generation.current
+    const panel = useAgentHubOrbPanel.getState().session
     try {
       const next = await window.api.agentHub.orb.current()
       if (issued === generation.current) {
+        if (
+          !useAgentHubOrbPanel.getState().opening &&
+          panel &&
+          panel === useAgentHubOrbPanel.getState().session &&
+          panel.sessionId !== next?.sessionId
+        ) {
+          closeAgentHubOrbPanel()
+        }
         setSession((current) =>
           current?.sessionId === next?.sessionId &&
           current?.tabId === next?.tabId &&
@@ -45,12 +56,23 @@ export function useAgentHubOrb(threads: readonly AgentPaneThread[]) {
         error.code === 'disabled'
       ) {
         setSession(null)
+        if (panel && panel === useAgentHubOrbPanel.getState().session) {
+          closeAgentHubOrbPanel()
+        }
       }
     }
   }, [])
   useEffect(() => {
-    void refresh()
-  }, [refresh, tabs, enabled])
+    if (!enabled) {
+      invalidate()
+      setSession(null)
+      closeAgentHubOrbPanel()
+      return
+    }
+    if (!opening) {
+      void refresh()
+    }
+  }, [refresh, tabs, enabled, opening, invalidate])
   useEffect(() => {
     const feed = getStructuredAgentSessionStatusFeed(AGENT_HUB_ORB_TARGET)
     const stop = feed.activate()

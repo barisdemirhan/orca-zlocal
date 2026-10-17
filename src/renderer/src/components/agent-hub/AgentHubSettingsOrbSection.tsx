@@ -10,8 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import {
   SettingsRow,
   SettingsSegmentedControl,
-  SettingsSubsectionHeader,
-  SettingsSwitchRow
+  SettingsSubsectionHeader
 } from '../settings/SettingsFormControls'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
 
@@ -26,7 +25,7 @@ export function AgentHubSettingsOrbSection({
   const { agents, models, loading, refreshModels } = useAgentHubOrbOptions(orb.agent)
   const supportsAsk = agentHubOrbSupportsAsk(orb.agent)
   const askUnavailable = translate(
-    'agentHub.orb.piRequiresFree',
+    'auto.agentHub.orb.piRequiresFree',
     'Pi requires Act freely. Choose another agent to ask before running commands.'
   )
   const agentLabel = translate('auto.agentHub.orb.agent', 'Agent')
@@ -215,13 +214,6 @@ export function AgentHubSettingsOrbSection({
             ]}
           />
         }
-      />
-      <SettingsSwitchRow
-        label={translate('auto.agentHub.orb.speakReplies', 'Speak replies')}
-        description={translate('auto.agentHub.orb.comingLater', 'Coming later')}
-        checked={false}
-        disabled
-        onChange={() => {}}
       />
     </section>
   )
