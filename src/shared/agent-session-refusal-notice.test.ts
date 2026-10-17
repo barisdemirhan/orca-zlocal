@@ -876,3 +876,19 @@ describe('saved Arguments refusals', () => {
     expect(agentSessionRefusalCauseParts(refused)).toEqual([])
   })
 })
+
+describe('Live voice start', () => {
+  it('says only that Live could not start when Codex turns the start down', () => {
+    expect(
+      agentSessionRefusalNotice(
+        {
+          code: 'agent_session_operation_invalid',
+          message: HOST_TEXT,
+          details: { reason: 'providerRejected' }
+        },
+        agentSessionWriteKindForMethod('agentSession.startVoice', {})
+      )
+    ).toBe('Live voice could not start.')
+    expect(agentSessionWriteKindForMethod('agentSession.send', {})).toBe('send')
+  })
+})

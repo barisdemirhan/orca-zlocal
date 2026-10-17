@@ -2,7 +2,10 @@ import { z } from 'zod'
 import type { CodexAppServerConnection } from './codex-app-server-connection'
 import { isCodexAppServerRequestError } from './app-server/codex-app-server-request-error'
 import { CodexAppServerUnsupportedError } from './codex-app-server-session'
-import { CodexRealtimeItemSchema } from './codex-structured-realtime-items'
+import {
+  CodexRealtimeItemSchema,
+  normalizeCodexTimelineEntry
+} from './codex-structured-realtime-items'
 import {
   CODEX_RESTORE_MAX_BYTES,
   CODEX_RESTORE_MAX_OPERATIONS
@@ -41,7 +44,11 @@ const TimelineEntry = z.discriminatedUnion('type', [
   })
 ])
 const TimelinePage = z.object({
-  data: z.array(TimelineEntry).max(50),
+  data: z
+    .array(z.unknown())
+    .max(50)
+    .transform((entries) => entries.map(normalizeCodexTimelineEntry))
+    .pipe(z.array(TimelineEntry)),
   nextCursor: z.string().min(1).max(4096).nullable().optional(),
   activeRealtimeSessionAtPageStart: z.string().nullable().optional()
 })

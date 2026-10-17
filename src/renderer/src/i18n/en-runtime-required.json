@@ -123,7 +123,9 @@
   "auto": {
     "agentHub": {
       "orb": {
+        "ask": "Ask",
         "comingLater": "Coming later",
+        "free": "Act freely",
         "speakReplies": "Speak replies",
         "talkShortcut": "Talk shortcut"
       }
@@ -1938,6 +1940,7 @@
         "notDoneStop": "The agent wasn't stopped.",
         "notDoneStopTask": "The background task wasn't stopped.",
         "notDoneStopTasks": "The background tasks weren't stopped.",
+        "notDoneVoice": "Live voice could not start.",
         "openCurrentConversation": "Open the current conversation to continue.",
         "optionRejected": "The agent didn't accept this setting.",
         "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",

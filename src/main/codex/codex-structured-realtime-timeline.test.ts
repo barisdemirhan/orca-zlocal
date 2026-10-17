@@ -29,6 +29,59 @@ function page(data: readonly unknown[], nextCursor: string | null = null) {
 }
 
 describe('Codex canonical realtime timeline reads', () => {
+  it('accepts the camelCase turn boundaries codex-cli 0.163.0 sends', async () => {
+    const request = vi.fn().mockResolvedValueOnce(
+      page([
+        { type: 'turnStarted', position: 1, turnId: 'turn-1', startedAt: 1_700_000_000 },
+        {
+          type: 'turnCompleted',
+          position: 2,
+          turnId: 'turn-1',
+          status: 'completed',
+          startedAt: 1_700_000_000,
+          completedAt: 1_700_000_002,
+          durationMs: 2_000,
+          error: null
+        }
+      ])
+    )
+    expect(await readCodexRealtimeTimeline({ request }, THREAD)).toEqual({
+      status: 'ready',
+      entries: [
+        { type: 'turnStarted', position: 1, turn_id: 'turn-1', started_at: 1_700_000_000 },
+        {
+          type: 'turnCompleted',
+          position: 2,
+          turn_id: 'turn-1',
+          status: 'completed',
+          started_at: 1_700_000_000,
+          completed_at: 1_700_000_002,
+          duration_ms: 2_000,
+          error: null
+        }
+      ]
+    })
+  })
+
+  it('accepts camelCase promoted-item fields and still rejects a turn boundary without an id', async () => {
+    const promoted = {
+      type: 'realtime',
+      position: 1,
+      item: {
+        id: 'p-1',
+        realtimeSessionId: 'voice-1',
+        type: 'bemItemPromoted',
+        turnId: 'turn-1',
+        itemId: 'item-1',
+        presentation: { type: 'wholeItem' }
+      }
+    }
+    const ready = vi.fn().mockResolvedValueOnce(page([promoted]))
+    expect((await readCodexRealtimeTimeline({ request: ready }, THREAD)).status).toBe('ready')
+    const bad = vi.fn().mockResolvedValueOnce(page([{ type: 'turnStarted', position: 1 }]))
+    expect(await readCodexRealtimeTimeline({ request: bad }, THREAD)).toEqual({ status: 'unknown' })
+  })
+
   it('reads native item and turn boundaries across pages before returning rollout order', async () => {
     const started: CodexTimelineEntry = {
       type: 'turnStarted',

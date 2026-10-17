@@ -36,6 +36,8 @@ export type AgentSessionWriteKind =
   | 'clear'
   | 'compact'
   | 'goal'
+  /** Starting Live voice: nothing was sent, so only Live is said not to have started. */
+  | 'voice'
 
 /** The kind of write an `agentSession.*` call stands for. */
 export function agentSessionWriteKindForMethod(
@@ -57,6 +59,9 @@ export function agentSessionWriteKindForMethod(
   }
   if (fingerprintMethod === 'agentSession.setOption') {
     return 'option'
+  }
+  if (fingerprintMethod === 'agentSession.startVoice') {
+    return 'voice'
   }
   if (fingerprintMethod === 'agentSession.threadGoal') {
     return 'goal'
