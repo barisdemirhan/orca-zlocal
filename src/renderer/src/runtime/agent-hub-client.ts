@@ -1,5 +1,8 @@
 import { createBrowserUuid } from '@/lib/browser-uuid'
-import { ORCHESTRATION_CONTRACT_VERSION } from '../../../shared/protocol-version'
+import {
+  ORCHESTRATION_CONTRACT_VERSION,
+  ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY
+} from '../../../shared/protocol-version'
 import { GateResolveByUserParams } from '../../../shared/rpc-contract/orchestration-gates-params'
 import type { AgentHubRendererApi } from '../../../shared/agent-hub-requests'
 import {
@@ -9,6 +12,7 @@ import {
 import { readAgentHubDelivery } from '../../../shared/rpc-contract/agent-hub-events'
 import { subscribeRuntimeEnvironment } from './runtime-environment-pairing-refresh'
 import { getRuntimeEnvironmentRevision } from './runtime-environment-revision'
+import { runtimeEnvironmentSupportsCapability } from './runtime-rpc-client'
 import {
   isAgentHubUnsupportedError,
   retainAgentHubConsumerCapability
@@ -111,9 +115,15 @@ export function createAgentHubClient(
       }
     },
     async respond(requestId, result) {
-      // Why: v1 hosts only accept the original two renderer error codes.
+      // Desktop-gate support proves this host accepts invalid_argument responses.
       const compatibleResult =
-        environmentId !== null && result.kind === 'error' && result.code === 'invalid_argument'
+        environmentId !== null &&
+        result.kind === 'error' &&
+        result.code === 'invalid_argument' &&
+        !(await runtimeEnvironmentSupportsCapability(
+          environmentId,
+          ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY
+        ))
           ? { ...result, code: 'disabled_by_user' as const }
           : result
       const params = AgentHubRespondParams.parse({ requestId, result: compatibleResult })

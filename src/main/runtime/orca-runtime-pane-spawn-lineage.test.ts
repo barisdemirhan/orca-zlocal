@@ -49,6 +49,21 @@ function setup() {
 }
 
 describe('host pane creator lineage', () => {
+  it('prunes lineage when an orphaned worktree is forgotten without individual terminal closes', async () => {
+    const f = setup()
+    const parent = created(await f.runtime.createTerminal(`id:${TEST_WORKTREE_ID}`))
+    const child = created(
+      await f.runtime.createTerminal(`id:${TEST_WORKTREE_ID}`, {
+        callerTerminalHandle: parent.handle
+      })
+    )
+    vi.spyOn(f.runtimeStore, 'getRepos').mockReturnValue([])
+    vi.spyOn(f.runtimeStore, 'getRepo').mockReturnValue(undefined)
+    await f.runtime.removeManagedWorktree(TEST_WORKTREE_ID)
+    expect(f.runtime.getTerminalSpawnedBy(child.paneKey)).toBeUndefined()
+    expect(f.getSession().terminalSpawnedByPaneKey).toEqual({})
+  })
+
   it('records RPC create/split callers on the execution host and gives orchestration parentage priority', async () => {
     const f = setup()
     const parent = await f.runtime.createTerminal(`id:${TEST_WORKTREE_ID}`)

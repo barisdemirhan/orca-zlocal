@@ -2,6 +2,7 @@ import type { AgentStatusEntry } from '../../shared/agent-status-types'
 import type { TerminalSurfaceCloseTarget } from '../../shared/terminal-surface-close-target'
 import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
 import { parsePaneKey } from '../../shared/stable-pane-id'
+import { terminalLayoutContainsLeaf } from '../../shared/workspace-session-pane-ownership'
 
 type SpawnedBy = NonNullable<AgentStatusEntry['spawnedBy']>
 type Lineage = Record<string, SpawnedBy>
@@ -30,6 +31,25 @@ export class RuntimePaneSpawnLineage {
 
   /** Publishes the persisted links once the host's status readers are wired. */
   restore(): void {
+    const session = this.deps.read()
+    if (session) {
+      const tabIds = new Set([
+        ...Object.values(session.tabsByWorktree)
+          .flat()
+          .map((tab) => tab.id),
+        ...Object.values(session.unifiedTabs ?? {})
+          .flat()
+          .map((tab) => tab.id)
+      ])
+      this.prune((paneKey) => {
+        const pane = parsePaneKey(paneKey)
+        if (!pane || !tabIds.has(pane.tabId)) {
+          return false
+        }
+        const layout = session.terminalLayoutsByTabId[pane.tabId]
+        return !layout?.root || terminalLayoutContainsLeaf(layout.root, pane.leafId)
+      })
+    }
     for (const [paneKey, spawnedBy] of Object.entries(this.links)) {
       this.deps.publish(paneKey, spawnedBy)
     }
@@ -77,10 +97,14 @@ export class RuntimePaneSpawnLineage {
         pane?.tabId === target.tabId && (target.kind === 'tab' || pane.leafId === target.leafId)
       )
     }
+    this.prune((paneKey) => !matches(paneKey))
+  }
+
+  private prune(keep: (paneKey: string) => boolean): void {
     const next: Lineage = {}
     const removed: string[] = []
     for (const [child, parent] of Object.entries(this.links)) {
-      if (matches(child) || matches(parent.paneKey)) {
+      if (!keep(child) || !keep(parent.paneKey)) {
         removed.push(child)
       } else {
         next[child] = parent

@@ -6,6 +6,13 @@ import type {
   AgentHubGate
 } from '../../../shared/agent-hub-requests'
 import { createAgentHubClient } from './agent-hub-client'
+import { runtimeEnvironmentSupportsCapability } from './runtime-rpc-client'
+import type * as RuntimeRpcClientModule from './runtime-rpc-client'
+
+vi.mock('./runtime-rpc-client', async (importOriginal) => ({
+  ...(await importOriginal<typeof RuntimeRpcClientModule>()),
+  runtimeEnvironmentSupportsCapability: vi.fn(async () => true)
+}))
 
 const request: AgentHubRequest = {
   requestId: '93b0c108-34c6-4e45-9d13-d8f4170d7456',
@@ -56,6 +63,60 @@ afterEach(() => {
 })
 
 describe('Agent Hub renderer API boundary', () => {
+  it.each([true, false])(
+    'preserves invalid_argument only for capable remote hosts (%s)',
+    async (supported) => {
+      vi.mocked(runtimeEnvironmentSupportsCapability).mockResolvedValueOnce(supported)
+      await createAgentHubClient('paired-host').respond(request.requestId, {
+        kind: 'error',
+        code: 'invalid_argument',
+        message: 'Unsupported layout'
+      })
+      expect(call).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          selector: 'paired-host',
+          method: 'agentHub.respond',
+          params: {
+            requestId: request.requestId,
+            result: {
+              kind: 'error',
+              code: supported ? 'invalid_argument' : 'disabled_by_user',
+              message: 'Unsupported layout'
+            }
+          }
+        })
+      )
+    }
+  )
+
+  it('keeps valid snapshot requests and progress when a newer host includes unknown kinds', async () => {
+    const received: AgentHubDelivery[] = []
+    const stop = createAgentHubClient().subscribe((event) => received.push(event))
+    const progress = { ...request, kind: 'progress', text: 'Building' }
+    localReceive?.(
+      envelope({
+        type: 'ready',
+        snapshot: {
+          agentHub: {
+            requests: [{ ...request, kind: 'future-request' }, request],
+            progress: [{ ...progress, kind: 'future-progress' }, progress]
+          }
+        }
+      })
+    )
+    expect(received).toEqual([
+      {
+        kind: 'snapshot',
+        snapshot: {
+          requests: [request],
+          progress: [expect.objectContaining({ kind: 'progress', text: 'Building' })]
+        }
+      }
+    ])
+    await Promise.resolve()
+    stop()
+  })
+
   it.each([null, 'paired-host'])(
     'restores the snapshot, delivers events and responds to the same host (%s)',
     async (environmentId) => {
@@ -108,6 +169,7 @@ describe('Agent Hub renderer API boundary', () => {
         })
       )
       if (environmentId) {
+        vi.mocked(runtimeEnvironmentSupportsCapability).mockResolvedValueOnce(false)
         await api.respond(request.requestId, {
           kind: 'error',
           code: 'invalid_argument',

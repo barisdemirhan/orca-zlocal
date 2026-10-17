@@ -15,6 +15,7 @@ beforeEach(() => {
   vi.stubEnv('ORCA_TERMINAL_HANDLE', 'term-self')
   vi.stubEnv('ORCA_PANE_KEY', 'pane-fallback')
   vi.stubEnv('ORCA_AGENT_SESSION_ID', '')
+  vi.stubEnv('ORCA_CLI_COMMAND', 'orca')
   client = new RuntimeClient('/agent-hub-cli-fixture', 60_000, null, null)
   call = vi.spyOn(client, 'call').mockResolvedValue({
     id: 'req-1',
@@ -260,6 +261,59 @@ describe('hub CLI', () => {
       code: 'connection_lost',
       message: expect.stringContaining('hub ask --resume'),
       data: { requestId: expect.any(String) }
+    })
+  })
+
+  it.each([false, true])(
+    'omits pairing credentials from pending output (json=%s)',
+    async (json) => {
+      vi.stubEnv('ORCA_CLI_COMMAND', 'orca-ide')
+      call.mockRejectedValueOnce(new RuntimeClientError('runtime_timeout', 'Wait ended'))
+      await run(
+        [
+          'hub',
+          'ask',
+          'Go?',
+          '--option',
+          'Yes',
+          '--pairing-code',
+          'fixture-secret',
+          '--host',
+          'host.test'
+        ],
+        json
+      )
+      const output = log.mock.calls.map((args) => args.join(' ')).join('\n')
+      expect(output).not.toContain('fixture-secret')
+      expect(output).not.toContain('pairing-code')
+      if (json) {
+        expect(JSON.parse(output)).toMatchObject({
+          resume: ['orca-ide', 'hub', 'ask', '--resume', expect.any(String), '--host', 'host.test']
+        })
+      } else {
+        expect(output).toContain('orca-ide hub ask --resume')
+        expect(output).toContain('--host host.test')
+      }
+    }
+  )
+
+  it('keeps pairing credentials out of disconnected-question recovery errors', async () => {
+    call.mockRejectedValueOnce(new RuntimeClientError('connection_lost', 'Connection closed'))
+    const failure = run([
+      'hub',
+      'ask',
+      'Go?',
+      '--option',
+      'Yes',
+      '--pairing-code',
+      'fixture-secret'
+    ])
+    await expect(failure).rejects.toMatchObject({
+      code: 'connection_lost',
+      message: expect.not.stringContaining('fixture-secret')
+    })
+    await expect(failure).rejects.toMatchObject({
+      message: expect.not.stringContaining('pairing-code')
     })
   })
 

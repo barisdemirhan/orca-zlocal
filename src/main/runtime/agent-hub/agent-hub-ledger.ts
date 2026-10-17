@@ -67,6 +67,7 @@ export class AgentHubLedger {
         this.desktops.set(desktop, count)
       } else {
         this.desktops.delete(desktop)
+        this.requests.unregisterDesktop(desktop)
       }
     }
   }
@@ -84,6 +85,7 @@ export class AgentHubLedger {
     this.rates.consume(caller, 'notify')
     const request: AgentHubRequest = {
       ...this.base(caller, target, 600_000),
+      ...(content.level === 'needs-you' ? { expiresAt: Number.MAX_SAFE_INTEGER } : {}),
       kind: 'notify',
       ...content
     }
@@ -209,7 +211,7 @@ export class AgentHubLedger {
       !this.sessionGrants.has(grantKey)
     ) {
       const consent: AgentHubRequest = {
-        ...this.base(caller, target, AGENT_HUB_UI_TIMEOUT_MS),
+        ...this.base(caller, target, 600_000),
         kind: 'consent',
         operation
       }
@@ -277,6 +279,7 @@ export class AgentHubLedger {
     signal?: AbortSignal
   ): Promise<AgentHubResponse> {
     this.requireDesktop()
+    this.rates.consume(caller, 'query')
     const request: AgentHubRequest = { ...this.base(caller, target, AGENT_HUB_UI_TIMEOUT_MS), kind }
     this.requests.create(request, this.desktops.keys())
     return (await this.requests.wait(request.requestId, signal)).response

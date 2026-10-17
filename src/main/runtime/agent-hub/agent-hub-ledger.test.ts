@@ -31,6 +31,92 @@ afterEach(() => {
 })
 
 describe('Agent Hub ledger', () => {
+  it('keeps needs-you notices until dismissed while ordinary notices expire', async () => {
+    const notice = ledger.notify(caller, caller, { ...notification, level: 'needs-you' })
+    ledger.notify(caller, caller, notification)
+    await vi.advanceTimersByTimeAsync(24 * 60 * 60_000)
+    expect(ledger.snapshot().requests).toMatchObject([
+      { requestId: notice.requestId, kind: 'notify', level: 'needs-you' }
+    ])
+    ledger.respond(notice.requestId, { kind: 'ack' }, 'A')
+    expect(ledger.snapshot().requests).toEqual([])
+  })
+
+  it('allows time for human consent before starting the short operation deadline', async () => {
+    const done = ledger.operate(caller, other, { kind: 'mirror', action: 'open' })
+    const consent = latest('consent')
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(ledger.snapshot().requests).toContainEqual(consent)
+    ledger.respond(consent.requestId, { kind: 'consent', decision: 'once' }, 'A')
+    await Promise.resolve()
+    ledger.respond(latest('mirror').requestId, { kind: 'ack' }, 'A')
+    await expect(done).resolves.toHaveProperty('requestId')
+  })
+
+  it('settles an away query when the last subscription of a silent desktop disconnects', async () => {
+    const stopB = ledger.registerDesktop('B')
+    const stopOtherB = ledger.registerDesktop('B')
+    const answer = ledger.ask(
+      caller,
+      caller,
+      { ...question, recommended: 1, ifAway: 'recommended' },
+      60_000
+    )
+    ledger.respond(
+      latest('presence').requestId,
+      { kind: 'presence', present: false, idleMinutes: 8 },
+      'A'
+    )
+    stopB()
+    expect(ledger.snapshot().requests.some((request) => request.kind === 'presence')).toBe(true)
+    stopOtherB()
+    await expect(answer).resolves.toMatchObject({ by: 'away-default', answer: 'Yes' })
+  })
+
+  it('shares a query limit across presence and status without publishing refused queries', async () => {
+    for (let index = 0; index < 30; index += 1) {
+      if (index % 2 === 0) {
+        const result = ledger.presence(caller, caller)
+        ledger.respond(
+          latest('presence').requestId,
+          { kind: 'presence', present: true, idleMinutes: 0 },
+          'A'
+        )
+        await result
+      } else {
+        const result = ledger.status(caller, caller)
+        ledger.respond(
+          latest('status').requestId,
+          { kind: 'status', mirrors: [], parked: [], waiting: [] },
+          'A'
+        )
+        await result
+      }
+    }
+    const count = events.length
+    await expect(ledger.presence(caller, caller)).rejects.toMatchObject({
+      code: 'rate_limited',
+      data: { retryAfterMs: 60_000 }
+    })
+    await expect(ledger.status(caller, caller)).rejects.toMatchObject({ code: 'rate_limited' })
+    expect(events).toHaveLength(count)
+    const otherResult = ledger.presence(other, other)
+    ledger.respond(
+      latest('presence').requestId,
+      { kind: 'presence', present: true, idleMinutes: 0 },
+      'A'
+    )
+    await otherResult
+    await vi.advanceTimersByTimeAsync(60_000)
+    const retried = ledger.status(caller, caller)
+    ledger.respond(
+      latest('status').requestId,
+      { kind: 'status', mirrors: [], parked: [], waiting: [] },
+      'A'
+    )
+    await expect(retried).resolves.toEqual({ mirrors: [], parked: [], waiting: [] })
+  })
+
   it('limits Orb notifications by session identity while keeping pane buckets separate', () => {
     const orb = { ...caller, kind: 'orb' as const, sessionId: 'codex_orb' }
     for (let index = 0; index < 6; index += 1) {

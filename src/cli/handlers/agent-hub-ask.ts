@@ -8,6 +8,7 @@ import {
 import { printResult } from '../format'
 import { quoteCliCommandArgument } from '../shell-command-quote'
 import { RuntimeClientError } from '../runtime-client'
+import { resolveOrchestrationCliExecutable } from '../runtime/orchestration-recovery-command'
 import { AgentHubAskParams } from '../../shared/rpc-contract/agent-hub-params'
 import type { AgentHubAnswer } from '../../shared/agent-hub-requests'
 import {
@@ -40,8 +41,8 @@ export const agentHubAsk: CommandHandler = async (ctx) => {
     throw new RuntimeClientError('invalid_argument', '--wait cannot exceed --timeout')
   }
   const id = resume ?? requestId ?? ''
-  const resumeArgv = ['orca', 'hub', 'ask', '--resume', id]
-  for (const flag of ['environment', 'host', 'pairing-code']) {
+  const resumeArgv = [resolveOrchestrationCliExecutable(), 'hub', 'ask', '--resume', id]
+  for (const flag of ['environment', 'host']) {
     const value = getOptionalStringFlag(flags, flag)
     if (value) {
       resumeArgv.push(`--${flag}`, value)

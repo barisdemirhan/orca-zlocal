@@ -88,15 +88,20 @@ export const AgentHubEventSchema: z.ZodType<AgentHubEvent> = z.discriminatedUnio
     result: answer.optional()
   })
 ])
+const snapshotEvents = z.array(z.unknown()).transform((items) =>
+  items.flatMap((item) => {
+    const parsed = AgentHubEventSchema.safeParse(item)
+    return parsed.success ? [parsed.data] : []
+  })
+)
+
 export const AgentHubSnapshotSchema: z.ZodType<AgentHubSnapshot> = z.object({
-  requests: z
-    .array(AgentHubEventSchema)
-    .transform((events) =>
-      events.filter((event) => event.kind !== 'closed' && event.kind !== 'progress')
-    ),
-  progress: z
-    .array(AgentHubEventSchema)
-    .transform((events) => events.filter((event) => event.kind === 'progress'))
+  requests: snapshotEvents.transform((events) =>
+    events.filter((event) => event.kind !== 'closed' && event.kind !== 'progress')
+  ),
+  progress: snapshotEvents.transform((events) =>
+    events.filter((event) => event.kind === 'progress')
+  )
 })
 
 export function readAgentHubDelivery(message: unknown): AgentHubDelivery | null {

@@ -16,7 +16,7 @@ export type AgentHubSettlement = {
 type Outcome = { value: AgentHubSettlement } | { error: AgentHubError }
 type Entry = {
   request: AgentHubRequest
-  timer: ReturnType<typeof setTimeout>
+  timer?: ReturnType<typeof setTimeout>
   outcome?: Outcome
   listeners: Set<(outcome: Outcome) => void>
   desktops: Set<string>
@@ -45,11 +45,14 @@ export class AgentHubPendingRequests {
   }
 
   create(request: AgentHubRequest, desktops: Iterable<string>): void {
-    const timer = setTimeout(
-      () => this.expire(request.requestId),
-      Math.max(0, request.expiresAt - this.now())
-    )
-    timer.unref?.()
+    const timer =
+      request.kind === 'notify' && request.level === 'needs-you'
+        ? undefined
+        : setTimeout(
+            () => this.expire(request.requestId),
+            Math.max(0, request.expiresAt - this.now())
+          )
+    timer?.unref?.()
     this.entries.set(request.requestId, {
       request,
       timer,
@@ -58,6 +61,16 @@ export class AgentHubPendingRequests {
       presence: new Map()
     })
     this.publish(request)
+  }
+
+  unregisterDesktop(desktop: string): void {
+    for (const entry of this.entries.values()) {
+      if (entry.outcome || entry.request.kind !== 'presence' || !entry.desktops.delete(desktop)) {
+        continue
+      }
+      entry.presence.delete(desktop)
+      this.settlePresence(entry)
+    }
   }
 
   wait(requestId: string, signal?: AbortSignal): Promise<AgentHubSettlement> {
@@ -144,13 +157,7 @@ export class AgentHubPendingRequests {
         throw new AgentHubError('already_resolved', 'This desktop already reported presence')
       }
       entry.presence.set(desktop, response)
-      if (!response.present && entry.presence.size < entry.desktops.size) {
-        return
-      }
-      const idleMinutes = Math.min(
-        ...[...entry.presence.values()].map((value) => value.idleMinutes)
-      )
-      this.finish(entry, { value: { response: { ...response, idleMinutes }, desktop } })
+      this.settlePresence(entry)
       return
     } else if (
       (request.kind === 'consent' && response.kind !== 'consent') ||
@@ -166,6 +173,31 @@ export class AgentHubPendingRequests {
       throw new AgentHubError('invalid_argument', 'Response kind does not match the hub request')
     }
     this.finish(entry, { value: { response, desktop, by } })
+  }
+
+  private settlePresence(entry: Entry): void {
+    if (!entry.desktops.size) {
+      this.finish(entry, { error: new AgentHubError('no_desktop', 'No connected desktop remains') })
+      return
+    }
+    const replies = [...entry.presence.entries()]
+    const present = replies.find(([, response]) => response.present)
+    if (!present && replies.length < entry.desktops.size) {
+      return
+    }
+    const reply = present ?? replies[0]
+    if (!reply) {
+      return
+    }
+    this.finish(entry, {
+      value: {
+        response: {
+          ...reply[1],
+          idleMinutes: Math.min(...replies.map(([, response]) => response.idleMinutes))
+        },
+        desktop: reply[0]
+      }
+    })
   }
 
   dispose(): void {

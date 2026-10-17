@@ -5,8 +5,8 @@ export function agentHubCallerRateKey(caller: AgentHubCaller): string {
   return caller.kind === 'orb' && caller.sessionId ? `orb:${caller.sessionId}` : caller.paneKey
 }
 
-type Bucket = 'notify' | 'peek' | 'mirror'
-const LIMITS = { notify: 6, peek: 6, mirror: 10 } as const
+type Bucket = 'notify' | 'peek' | 'mirror' | 'query'
+const LIMITS = { notify: 6, peek: 6, mirror: 10, query: 30 } as const
 
 export class AgentHubRateLimits {
   private readonly timestamps = new Map<string, number[]>()

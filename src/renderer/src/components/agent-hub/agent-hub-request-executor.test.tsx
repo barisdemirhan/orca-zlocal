@@ -34,6 +34,7 @@ import { AgentHubMirrorTab } from './AgentHubMirrorTab'
 import { AgentHubPeek } from './AgentHubPeek'
 import { useRef } from 'react'
 import { openWorkspaceBrowserTab } from '@/lib/workspace-browser-tab-open'
+import { fallbackAgentHubPeek } from './agent-hub-peek-routing'
 
 vi.mock('@/lib/workspace-browser-tab-open', () => ({
   openWorkspaceBrowserTab: vi.fn(async () => {})
@@ -206,7 +207,9 @@ describe('Agent Hub non-card actions', () => {
     document.body.append(typing)
     typing.focus()
     await act(async () => {
-      expect(await run({ ...base, kind: 'peek', link: '/artifact.png' })).toEqual({ kind: 'ack' })
+      expect(await run({ ...base, kind: 'peek', link: '/repo/wt-1/artifact.png' })).toEqual({
+        kind: 'ack'
+      })
     })
     expect(document.activeElement).toBe(typing)
     act(closeAgentHubPeek)
@@ -230,6 +233,10 @@ describe('Agent Hub non-card actions', () => {
       filePath: '/repo/wt-1/image.png',
       connectionId: null
     })
+    const localContent = readAgentHubPeek()?.history.at(-1)?.content
+    expect(
+      localContent && localContent.kind !== 'web' && localContent.readContext
+    ).not.toHaveProperty('access')
     const remote = {
       ...threads[0],
       worktree: {
@@ -299,6 +306,50 @@ describe('Agent Hub non-card actions', () => {
       'This file type cannot be shown in Peek. Open it in the workspace or default app.'
     )
     toastError.mockRestore()
+  })
+
+  it.each(['/outside/private.ts', '/repo/wt-10/private.ts', '../private.ts', '~/private.ts'])(
+    'refuses an agent file outside its target workspace (%s)',
+    async (link) => {
+      expect(await run({ ...base, kind: 'peek', link })).toMatchObject({
+        kind: 'error',
+        code: 'invalid_argument'
+      })
+      expect(readAgentHubPeek()).toBeNull()
+    }
+  )
+
+  it('opens agent HTML as workspace text with no user-named-file access', async () => {
+    expect(await run({ ...base, kind: 'peek', link: 'report.html' })).toEqual({ kind: 'ack' })
+    const content = readAgentHubPeek()?.history.at(-1)?.content
+    expect(content).toMatchObject({
+      kind: 'text',
+      filePath: '/repo/wt-1/report.html',
+      readContext: { worktreeId: threads[0].worktree.id, relativePath: 'report.html' }
+    })
+    expect(content && content.kind !== 'web' && content.readContext).not.toHaveProperty('access')
+  })
+
+  it('keeps failed agent previews inside the workspace when falling back to the editor', async () => {
+    const openFile = vi.spyOn(useAppStore.getState(), 'openFile').mockImplementation(() => '')
+    try {
+      await run({ ...base, kind: 'peek', link: 'notes.md' })
+      const item = readAgentHubPeek()?.history.at(-1)
+      if (!item) {
+        throw new Error('Missing agent Peek item')
+      }
+      fallbackAgentHubPeek(item)
+      expect(openFile).toHaveBeenCalledWith({
+        filePath: '/repo/wt-1/notes.md',
+        relativePath: 'notes.md',
+        worktreeId: threads[0].worktree.id,
+        language: 'markdown',
+        mode: 'edit',
+        runtimeEnvironmentId: null
+      })
+    } finally {
+      openFile.mockRestore()
+    }
   })
 
   it('reports host-scoped mirrors, parked panes, CLI questions and desktop presence only', async () => {

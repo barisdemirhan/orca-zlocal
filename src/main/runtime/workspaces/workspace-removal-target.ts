@@ -167,6 +167,32 @@ export abstract class OrcaRuntimeWithResolveWorktreeRemovalTarget extends OrcaRu
     )
     const acceptedRendererSnapshot = this.acceptedRendererMobileSnapshotByWorktree.get(worktreeId)
     const storedSnapshot = this.mobileSessionTabsByWorktree.get(worktreeId)
+    const sessions = [
+      store.getWorkspaceSession?.(hostId ?? persistedHostId),
+      ...(!preservesSameIdOwner ? [store.getWorkspaceSession?.()] : [])
+    ]
+    const removedTabIds = new Set([
+      ...sessions.flatMap((session) =>
+        Object.values(session?.tabsByWorktree ?? {})
+          .flat()
+          .filter((tab) => runtimeWorktreeIdsEqual(tab.worktreeId, worktreeId))
+          .map((tab) => tab.id)
+      ),
+      ...sessions.flatMap((session) =>
+        Object.values(session?.unifiedTabs ?? {})
+          .flat()
+          .filter((tab) => runtimeWorktreeIdsEqual(tab.worktreeId, worktreeId))
+          .map((tab) => tab.id)
+      ),
+      ...(!preservesSameIdOwner
+        ? (storedSnapshot?.tabs ?? []).map((tab) =>
+            tab.type === 'terminal' ? tab.parentTabId : tab.id
+          )
+        : [])
+    ])
+    for (const tabId of removedTabIds) {
+      this.pruneTerminalSpawnLineage?.({ kind: 'tab', tabId })
+    }
     removeWorktreeMetaRow(store, worktreeId, hostId)
     // Retire only this host's panes even when a same-id owner survives.
     this.dropAgentStatusForRemovedWorktreeFn?.(worktreeId, hostId ?? persistedHostId)
