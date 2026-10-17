@@ -44,6 +44,7 @@ export type KeybindingActionId =
   | 'dashboard.toggle'
   | 'agentHub.toggleOrb'
   | 'agentHub.toggle'
+  | 'agentHub.openAnswerQueue'
   | 'agentHub.nextWaiting'
   | 'agentHub.dockMirrors'
   | 'agentHub.toggleCanvas'

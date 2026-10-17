@@ -1,4 +1,3 @@
-import { agentHubMirrorWindowShowsThread } from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
@@ -12,6 +11,7 @@ import { translate } from '@/i18n/i18n'
 import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/activity-thread-actions'
 import { AgentHubRootAlerts } from './AgentHubRootAlerts'
+import { AgentHubAnswerQueue } from './AgentHubAnswerQueue'
 import { AgentHubCanvas } from './AgentHubCanvas'
 import { AgentHubDock } from './AgentHubDock'
 import { AgentHubDimBackdrop } from './AgentHubDimToggle'
@@ -24,7 +24,7 @@ import type { AgentHubOpenRequest } from './AgentHubPanel'
 import { AgentHubPopoverContent, type AgentHubPopoverRequest } from './AgentHubPopover'
 import { AgentHubStatusTrigger } from './AgentHubStatusTrigger'
 import { clearAgentHubAlerts, useAgentHubAlertQueue } from './agent-hub-alert-queue'
-import { agentHubAlertMatchesMirrorTab } from './agent-hub-alert-target'
+import { agentHubAlertsOutsideMirrors } from './agent-hub-alert-target'
 import {
   agentHubInboxRequests,
   agentHubRequestKey,
@@ -261,14 +261,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     openAgents: () => openHub('agents'),
     closeHub: () => setOpen(false)
   })
-  const hubAlerts = alerts.filter(
-    (candidate) =>
-      !chips.some((chip) =>
-        chip.window.tabs.some((tab) => agentHubAlertMatchesMirrorTab(candidate, tab))
-      ) &&
-      (candidate.request ||
-        !windows.some((window) => agentHubMirrorWindowShowsThread(window, candidate.thread)))
-  )
+  const hubAlerts = agentHubAlertsOutsideMirrors(alerts, { windows, chips })
   // Settings is its own page; the hub and its floating windows stay out of it.
   const dockHidden =
     inSettings ||
@@ -309,6 +302,12 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   return (
     <>
       <AgentHubShortcutsDialog />
+      <AgentHubAnswerQueue
+        threads={threads}
+        locationOf={locationOf}
+        requestPresentationOf={requestPresentationOf}
+        onJump={jump}
+      />
       {docked && !inSettings ? orb.statusButton : null}
       <Popover open={open && !orb.panelOpen && !inSettings} onOpenChange={setPopoverOpen}>
         {docked ? (

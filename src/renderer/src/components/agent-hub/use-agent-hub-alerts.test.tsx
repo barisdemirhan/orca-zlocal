@@ -31,6 +31,9 @@ vi.mock('./agent-hub-chime', () => ({ playAgentHubAlertSound: vi.fn() }))
 vi.mock('./agent-hub-mirror-store', () => ({ readAgentHubMirrors: () => ({ chips: [] }) }))
 
 const preferences: AgentHubPreferences = {
+  answerQueue: false,
+  answerQueueOpening: 'automatically',
+  answerQueueIncludeApprovals: false,
   agentControl: true,
   placement: 'dock',
   dockPosition: { edge: 'bottom', offset: 0 },

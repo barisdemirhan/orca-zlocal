@@ -22,6 +22,12 @@ export function disabledAgentTabActionIds(
   return normalizeDisabledTuiAgents(disabledTuiAgents).map((agent) => agentTabActionId(agent))
 }
 
+const TRANSLATED_TITLES: Partial<Record<KeybindingActionId, () => string>> = {
+  'agentHub.toggleOrb': () => translate('auto.agentHub.orb.toggle', 'Toggle Agent Hub Orb'),
+  'agentHub.openAnswerQueue': () =>
+    translate('agentHub.answerQueue.openShortcut', 'Open the Agent Hub Answer Queue')
+}
+
 export function groupDefinitions(
   disabledTuiAgents: readonly TuiAgent[],
   additionalDefinitions: readonly KeybindingDefinition[] = []
@@ -36,10 +42,8 @@ export function groupDefinitions(
       continue
     }
     const localized = localizeKeybindingDefinition(definition)
-    const item =
-      localized.id === 'agentHub.toggleOrb'
-        ? { ...localized, title: translate('auto.agentHub.orb.toggle', 'Toggle Agent Hub Orb') }
-        : localized
+    const translatedTitle = TRANSLATED_TITLES[localized.id]
+    const item = translatedTitle ? { ...localized, title: translatedTitle() } : localized
     groups.set(localized.group, [...(groups.get(localized.group) ?? []), item])
   }
   return Array.from(groups.entries()).map(([title, items]) => ({

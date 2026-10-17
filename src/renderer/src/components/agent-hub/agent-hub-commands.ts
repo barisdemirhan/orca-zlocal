@@ -1,4 +1,5 @@
 export type AgentHubCommands = {
+  openAnswerQueue?: (() => void) | null
   toggleOrb?: (() => void) | null
   nextMirrorTab?: (() => void) | null
   previousMirrorTab?: (() => void) | null
@@ -18,6 +19,16 @@ export type AgentHubCommands = {
 // Why a registry: the hub lives in the status bar, so its chords must fall through
 // (not be swallowed) whenever the experiment is off or the status bar is hidden.
 let registeredCommands: AgentHubCommands | null = null
+let answerQueueCommand: (() => void) | null = null
+
+export function registerAgentHubAnswerQueueCommand(command: (() => void) | null): () => void {
+  answerQueueCommand = command
+  return () => {
+    if (answerQueueCommand === command) {
+      answerQueueCommand = null
+    }
+  }
+}
 
 export function registerAgentHubCommands(commands: AgentHubCommands): () => void {
   registeredCommands = commands
@@ -29,5 +40,5 @@ export function registerAgentHubCommands(commands: AgentHubCommands): () => void
 }
 
 export function getAgentHubCommands(): AgentHubCommands | null {
-  return registeredCommands
+  return registeredCommands ? { ...registeredCommands, openAnswerQueue: answerQueueCommand } : null
 }

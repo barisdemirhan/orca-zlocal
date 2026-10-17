@@ -3,6 +3,7 @@ import type { KeybindingActionId } from '../../../../shared/keybindings'
 import { getAgentHubCommands, type AgentHubCommands } from './agent-hub-commands'
 
 const ACTIONS = [
+  ['agentHub.openAnswerQueue', 'openAnswerQueue'],
   ['agentHub.toggleOrb', 'toggleOrb'],
   ['agentHub.toggle', 'toggle'],
   ['agentHub.nextWaiting', 'jumpToNextWaiting'],

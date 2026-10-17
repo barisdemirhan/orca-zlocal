@@ -22195,6 +22195,25 @@
       "arrangeMirrors": "arrange mirrors",
       "openCanvas": "open the canvas",
       "closeCanvas": "close the canvas"
+    },
+    "answerQueue": {
+      "answeredElsewhere": "Answered elsewhere",
+      "automatically": "Automatically",
+      "caughtUp": "All caught up",
+      "exit": "Exit",
+      "includeApprovals": "Include approvals",
+      "isAsking": "is asking",
+      "later": "Later",
+      "laterHint": "later",
+      "onlyShortcut": "Only on shortcut",
+      "openShortcut": "Open the Agent Hub Answer Queue",
+      "openTerminal": "Open in terminal",
+      "openWhen": "Open when a question arrives",
+      "pick": "pick",
+      "send": "send",
+      "title": "Answer queue",
+      "unverifiable": "Host connection is unverifiable. Reconnect to send your answer.",
+      "waiting": "{{count}} waiting"
     }
   },
   "workspace": {

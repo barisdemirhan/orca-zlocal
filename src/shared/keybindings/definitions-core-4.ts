@@ -71,6 +71,15 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     allowInTerminal: true
   },
   {
+    id: 'agentHub.openAnswerQueue',
+    title: 'Open the Agent Hub Answer Queue',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'agent', 'hub', 'answer', 'queue', 'question', 'waiting'],
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
+  },
+  {
     id: 'agentHub.dockMirrors',
     title: 'Send Agent Hub Mirrors to the Hub or Bring Them Back',
     group: 'Agent Hub',

@@ -10,6 +10,7 @@ import {
   SettingsSwitchRow
 } from '../settings/SettingsFormControls'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 /** The Alerts part of the Agent Hub settings: what raises a bubble, the sound, and the mute. */
 export function AgentHubAlertSettings({
@@ -32,6 +33,49 @@ export function AgentHubAlertSettings({
           "A bubble next to the hub that opens the agent's card. Skipped for the pane you are looking at."
         )}
       />
+      <SettingsSwitchRow
+        label={translate('agentHub.answerQueue.title', 'Answer queue')}
+        checked={preferences.answerQueue}
+        onChange={() => updateSettings({ agentHubAnswerQueue: !preferences.answerQueue })}
+      />
+      {preferences.answerQueue ? (
+        <>
+          <SettingsRow
+            label={translate('agentHub.answerQueue.openWhen', 'Open when a question arrives')}
+            control={
+              <Select
+                value={preferences.answerQueueOpening}
+                onValueChange={(value) =>
+                  updateSettings({
+                    agentHubAnswerQueueOpening: value === 'shortcut' ? 'shortcut' : 'automatically'
+                  })
+                }
+              >
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="automatically">
+                    {translate('agentHub.answerQueue.automatically', 'Automatically')}
+                  </SelectItem>
+                  <SelectItem value="shortcut">
+                    {translate('agentHub.answerQueue.onlyShortcut', 'Only on shortcut')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            }
+          />
+          <SettingsSwitchRow
+            label={translate('agentHub.answerQueue.includeApprovals', 'Include approvals')}
+            checked={preferences.answerQueueIncludeApprovals}
+            onChange={() =>
+              updateSettings({
+                agentHubAnswerQueueIncludeApprovals: !preferences.answerQueueIncludeApprovals
+              })
+            }
+          />
+        </>
+      ) : null}
       <SettingsSwitchRow
         label={translate(
           'auto.components.settings.ExperimentalPane.agentHub.alertNeedsInput',

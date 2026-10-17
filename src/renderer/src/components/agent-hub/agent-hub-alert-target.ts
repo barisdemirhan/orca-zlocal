@@ -3,7 +3,12 @@ import { parsePaneKey } from '../../../../shared/stable-pane-id'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import { agentHubTargetShowsThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import { agentHubRequestHost, agentHubTargetPane } from './agent-hub-request-target'
-import { shownAgentHubMirrorTarget, type AgentHubMirrorTab } from './agent-hub-mirror-membership'
+import {
+  agentHubMirrorWindowShowsThread,
+  shownAgentHubMirrorTarget,
+  type AgentHubMirrorState,
+  type AgentHubMirrorTab
+} from './agent-hub-mirror-membership'
 
 export function agentHubAlertMatchesTarget(
   alert: AgentHubAlert,
@@ -32,5 +37,20 @@ export function agentHubAlertMatchesMirrorTab(
   return (
     agentHubAlertMatchesTarget(alert, tab.target) ||
     agentHubAlertMatchesTarget(alert, shownAgentHubMirrorTarget(tab))
+  )
+}
+
+/** The hub bubble's alerts: an open or minimized mirror raises its own pane's alerts. */
+export function agentHubAlertsOutsideMirrors(
+  alerts: readonly AgentHubAlert[],
+  { windows, chips }: AgentHubMirrorState
+): AgentHubAlert[] {
+  return alerts.filter(
+    (candidate) =>
+      !chips.some((chip) =>
+        chip.window.tabs.some((tab) => agentHubAlertMatchesMirrorTab(candidate, tab))
+      ) &&
+      (candidate.request ||
+        !windows.some((window) => agentHubMirrorWindowShowsThread(window, candidate.thread)))
   )
 }

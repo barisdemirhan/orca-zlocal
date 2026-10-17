@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import {
   normalizeAgentHubAlertOnInfo,
+  normalizeAgentHubAnswerQueue,
   normalizeAgentHubDefaultTab,
   normalizeAgentHubDockPosition,
   normalizeAgentHubDockSize,
@@ -17,6 +18,9 @@ import {
 } from '../../../../shared/agent-hub-settings'
 
 export type AgentHubPreferences = {
+  answerQueue: boolean
+  answerQueueOpening: 'automatically' | 'shortcut'
+  answerQueueIncludeApprovals: boolean
   agentControl: boolean
   placement: AgentHubPlacement
   dockPosition: AgentHubDockPosition
@@ -44,6 +48,9 @@ export function useAgentHubPreferences(): AgentHubPreferences {
   const raw = useAppStore(
     useShallow((s) => ({
       agentControl: s.settings?.agentHubAgentControl,
+      agentHubAnswerQueue: s.settings?.agentHubAnswerQueue,
+      agentHubAnswerQueueOpening: s.settings?.agentHubAnswerQueueOpening,
+      agentHubAnswerQueueIncludeApprovals: s.settings?.agentHubAnswerQueueIncludeApprovals,
       placement: s.settings?.agentHubPlacement,
       dockPosition: s.settings?.agentHubDockPosition,
       dockSize: s.settings?.agentHubDockSize,
@@ -67,6 +74,7 @@ export function useAgentHubPreferences(): AgentHubPreferences {
   )
   return useMemo(
     () => ({
+      ...normalizeAgentHubAnswerQueue(raw),
       agentControl: raw.agentControl !== false,
       placement: normalizeAgentHubPlacement(raw.placement),
       dockPosition: normalizeAgentHubDockPosition(raw.dockPosition),

@@ -57,7 +57,10 @@ describe('agent hub shortcut suggestions', () => {
     (platform) => {
       expect(agentHubSuggestedBindings(platform).map(([id]) => id)).toEqual(
         KEYBINDING_DEFINITIONS.filter(
-          (item) => item.id.startsWith('agentHub.') && item.id !== 'agentHub.toggleOrb'
+          (item) =>
+            item.id.startsWith('agentHub.') &&
+            item.id !== 'agentHub.toggleOrb' &&
+            item.id !== 'agentHub.openAnswerQueue'
         ).map((item) => item.id)
       )
       for (const [id, binding] of agentHubSuggestedBindings(platform)) {

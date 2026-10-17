@@ -13,6 +13,8 @@ export type AgentHubDefaultTab = 'inbox' | 'running' | 'agents' | 'all'
 
 export type AgentHubMicMode = 'dictate' | 'improve'
 
+export type AgentHubAnswerQueueOpening = 'automatically' | 'shortcut'
+
 export type AgentHubDockSize = 'small' | 'medium' | 'large'
 
 /**
@@ -64,6 +66,9 @@ export type AgentHubSettings = {
   agentHubAlertsMutedUntil?: number | null
   /** A question or approval from a terminal agent also opens as a card inside its pane. */
   agentHubPaneQuickReply?: boolean
+  agentHubAnswerQueue?: boolean
+  agentHubAnswerQueueOpening?: AgentHubAnswerQueueOpening
+  agentHubAnswerQueueIncludeApprovals?: boolean
   /** A thin outline on the terminal pane that has the keyboard: where typing and dictation go. */
   agentHubFocusedPaneOutline?: boolean
   /** Agent Hub "All terminals" also lists plain shells, not only agents. */
@@ -187,4 +192,15 @@ export function normalizeAgentHubMicMode(value: unknown): AgentHubMicMode {
 
 export function normalizeAgentHubAlertOnInfo(value: unknown): boolean {
   return value !== false
+}
+
+export function normalizeAgentHubAnswerQueue(settings: AgentHubSettings | null | undefined) {
+  return {
+    answerQueue: settings?.agentHubAnswerQueue === true,
+    answerQueueOpening:
+      settings?.agentHubAnswerQueueOpening === 'shortcut'
+        ? ('shortcut' as const)
+        : ('automatically' as const),
+    answerQueueIncludeApprovals: settings?.agentHubAnswerQueueIncludeApprovals === true
+  }
 }

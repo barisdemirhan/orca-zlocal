@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeAgentHubMicMode, normalizeAgentHubAlertOnInfo } from './agent-hub-settings'
+import {
+  normalizeAgentHubMicMode,
+  normalizeAgentHubAlertOnInfo,
+  normalizeAgentHubAnswerQueue
+} from './agent-hub-settings'
 import { createGlobalSettingsFixture } from './global-settings-test-fixture'
 describe('mirror microphone default mode', () => {
   it.each([undefined, null, '', 'unknown', true, 1, {}, 'dictate'])(
@@ -32,4 +36,26 @@ it('keeps info alerts on for older profiles and preserves an explicit opt-out', 
   expect(normalizeAgentHubAlertOnInfo(undefined)).toBe(true)
   expect(normalizeAgentHubAlertOnInfo(true)).toBe(true)
   expect(normalizeAgentHubAlertOnInfo(false)).toBe(false)
+})
+
+it('loads older settings with the answer queue off, automatic opening and approvals excluded', () => {
+  expect(normalizeAgentHubAnswerQueue({})).toEqual({
+    answerQueue: false,
+    answerQueueOpening: 'automatically',
+    answerQueueIncludeApprovals: false
+  })
+  expect(normalizeAgentHubAnswerQueue(createGlobalSettingsFixture())).toEqual(
+    normalizeAgentHubAnswerQueue({})
+  )
+  expect(
+    normalizeAgentHubAnswerQueue({
+      agentHubAnswerQueue: true,
+      agentHubAnswerQueueOpening: 'shortcut',
+      agentHubAnswerQueueIncludeApprovals: true
+    })
+  ).toEqual({
+    answerQueue: true,
+    answerQueueOpening: 'shortcut',
+    answerQueueIncludeApprovals: true
+  })
 })
