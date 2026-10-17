@@ -19,7 +19,10 @@ import {
   seedTestAgentSessionStoreFromNewerBuild
 } from './agent-session-record-store-test-harness'
 import { AGENT_SESSION_CLAIM_KEY_RETENTION_MS } from './agent-session/ownership/agent-session-claim-key-retention'
-import { openTestJournalHostDatabase } from '../native-chat/agent-session-journal/journal-host-database-test-support'
+import {
+  closeTestJournalHostDatabase,
+  openTestJournalHostDatabase
+} from '../native-chat/agent-session-journal/journal-host-database-test-support'
 import type { AgentSessionReserveRequest } from './agent-session/ownership/agent-session-reservation-admission'
 import {
   claudeProviderHandle,
@@ -654,22 +657,29 @@ describe('restart reconciliation', () => {
     })
   })
 
-  it('carries the operation ledger across a restart so a retry is still a replay', async () => {
-    const operation = { callerKey: 'client-1', operationId: operationId(), fingerprint: 'fp-1' }
-    const first = await open()
-    await first.reserveOwner(reserveRequest({ operation }))
-    await first.recordOperationOutcome({
-      callerKey: operation.callerKey,
-      operationId: operation.operationId,
-      outcome: { status: 'succeeded', sessionId: 'session-alpha' }
-    })
+  it.each(['client-1', 'paired:işçi'])(
+    'carries the operation ledger for %s across a restart so a retry is still a replay',
+    async (callerKey) => {
+      const operation = { callerKey, operationId: operationId(), fingerprint: 'fp-1' }
+      const first = await open()
+      await first.reserveOwner(reserveRequest({ operation }))
+      await first.recordOperationOutcome({
+        callerKey: operation.callerKey,
+        operationId: operation.operationId,
+        outcome: { status: 'succeeded', sessionId: 'session-alpha' }
+      })
+      const row = first.getOperationRow(callerKey, operation.operationId)
+      expect(row).toMatchObject({ outcome: { status: 'succeeded' } })
 
-    const reopened = await open()
-    expect(reopened.listOperationRows()).toHaveLength(1)
-    const replayed = await reopened.reserveOwner(reserveRequest({ operation }))
-    expect(replayed.disposition).toBe('replayed')
-    expect(replayed.record.sessionId).toBe('session-alpha')
-  })
+      closeTestJournalHostDatabase(directory)
+      const reopened = await open()
+      expect(reopened.listOperationRows()).toHaveLength(1)
+      expect(reopened.getOperationRow(callerKey, operation.operationId)).toEqual(row)
+      const replayed = await reopened.reserveOwner(reserveRequest({ operation }))
+      expect(replayed.disposition).toBe('replayed')
+      expect(replayed.record.sessionId).toBe('session-alpha')
+    }
+  )
 })
 
 describe('host and workspace isolation', () => {
