@@ -12,46 +12,57 @@ import type { Worktree } from '../../../../shared/worktree/types'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
 import { QuickLaunchAgentMenuItems } from '../tab-bar/QuickLaunchButton'
 
-export function AgentHubMirrorNewAgent({
-  worktree,
-  workspaceHeader = false,
-  pending,
-  onStart
-}: {
+export type AgentHubMirrorNewAgentProps = {
   worktree: Worktree
   workspaceHeader?: boolean
   pending: boolean
   onStart: (worktree: Worktree, agent: TuiAgent) => void
-}): React.JSX.Element {
+  onOpenDialog?: (worktree: Worktree) => void
+}
+
+export function AgentHubMirrorNewAgent({
+  worktree,
+  workspaceHeader = false,
+  pending,
+  onStart,
+  onOpenDialog
+}: AgentHubMirrorNewAgentProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
+  if (!workspaceHeader) {
+    return (
+      <Button
+        variant="outline"
+        size="xs"
+        disabled={pending}
+        onClick={() => onOpenDialog?.(worktree)}
+      >
+        <Plus />
+        {translate('agentHub.mirror.newAgent', 'New agent')}
+      </Button>
+    )
+  }
   const workspace = getActivityThreadWorkspaceTitle(worktree)
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
       <span
-        className={
-          workspaceHeader
-            ? 'opacity-0 group-hover/workspace:opacity-100 group-focus-within/workspace:opacity-100 data-[expanded=true]:opacity-100'
-            : undefined
-        }
+        className="opacity-0 group-hover/workspace:opacity-100 group-focus-within/workspace:opacity-100 data-[expanded=true]:opacity-100"
         data-expanded={open}
       >
         <DropdownMenuTrigger asChild>
           <Button
-            variant={workspaceHeader ? 'ghost' : 'outline'}
+            variant="ghost"
             size="xs"
             disabled={pending}
-            aria-label={
-              workspaceHeader
-                ? translate('agentHub.mirror.addAgentInWorkspace', 'Add agent in {{workspace}}', {
-                    workspace
-                  })
-                : undefined
-            }
+            aria-label={translate(
+              'agentHub.mirror.addAgentInWorkspace',
+              'Add agent in {{workspace}}',
+              {
+                workspace
+              }
+            )}
           >
             <Plus />
-            {workspaceHeader
-              ? translate('agentHub.mirror.agent', 'agent')
-              : translate('agentHub.mirror.newAgent', 'New agent')}
+            {translate('agentHub.mirror.agent', 'agent')}
           </Button>
         </DropdownMenuTrigger>
       </span>
@@ -69,6 +80,7 @@ export function AgentHubMirrorNewAgent({
           worktreeId={worktree.id}
           disabled={pending}
           onLaunch={(agent) => {
+            setOpen(false)
             onStart(worktree, agent)
           }}
         />

@@ -9,12 +9,17 @@ import type { launchAgentBackgroundSession } from '@/lib/launch-agent-background
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import { TooltipProvider } from '../ui/tooltip'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import {
+  makeRepo,
+  makeTabWithIds,
+  makeWorktree
+} from '../activity/ActivityPrototypePage-test-fixtures'
 import { buildAgentHubTerminalTree, type AgentHubGroupNode } from './agent-hub-terminal-tree'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { AgentHubMirrorAddButton } from './AgentHubMirrorAddButton'
 import {
   openAgentHubMirror,
+  closeAgentHubMirror,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
@@ -34,7 +39,7 @@ const fixture = vi.hoisted(() => ({
   openSettingsPage: vi.fn(),
   openSettingsTarget: vi.fn()
 }))
-vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), message: vi.fn() } }))
 vi.mock('@/lib/launch-agent-background-session', () => ({
   launchAgentBackgroundSession: fixture.launch
 }))
@@ -51,6 +56,11 @@ vi.mock('@/store', async () => {
     useAppStore: create(() => ({
       tabsByWorktree,
       repos: [],
+      worktreesByRepo: {},
+      projectGroups: [],
+      folderWorkspaces: [],
+      deleteStateByWorktreeId: {},
+      lastVisitedAtByWorktreeId: {},
       openSettingsPage: fixture.openSettingsPage,
       openSettingsTarget: fixture.openSettingsTarget,
       activeView: 'activity',
@@ -84,6 +94,10 @@ beforeEach(() => {
 function setup() {
   const worktree = makeWorktree()
   const second = { ...worktree, id: 'second', displayName: 'second', branch: 'second' }
+  useAppStore.setState({
+    repos: [makeRepo()],
+    worktreesByRepo: { [worktree.repoId]: [worktree, second] }
+  })
   fixture.groups = buildAgentHubTerminalTree({
     projectGroups: [],
     repos: [],
@@ -273,54 +287,71 @@ it('switches picker sections with arrow keys and links keyboard selection to the
   )
 })
 
+// AgentCombobox's trigger has no accessible name of its own; find it by its root marker.
+function agentTrigger(label: string): HTMLElement {
+  const trigger = document.querySelector<HTMLElement>(
+    'button[role="combobox"][data-agent-combobox-root="true"]'
+  )
+  if (!trigger) {
+    throw new Error('agent combobox trigger not found')
+  }
+  expect(trigger.textContent).toContain(label)
+  return trigger
+}
+
 async function openNewAgent(workspace?: string) {
-  await userEvent.setup().click(
+  const user = userEvent.setup()
+  if (!screen.queryByRole('button', { name: 'New agent' })) {
+    await user.click(screen.getByRole('button', { name: 'Add terminal to this mirror' }))
+  }
+  await user.click(
     screen.getByRole('button', {
       name: workspace ? `Add agent in ${workspace}` : 'New agent'
     })
   )
-  return screen.findByRole('menuitem', { name: /^Claude$/ })
+  if (workspace) {
+    return screen.findByRole('menuitem', { name: /^Claude$/ })
+  }
+  await user.click(await waitFor(() => agentTrigger('Codex')))
+  await user.click(await screen.findByRole('option', { name: 'Claude' }))
+  return screen.findByRole('button', { name: /Start agent/ })
 }
 
-it('puts New agent beside the switcher and offers the shared menu with keyboard navigation and settings', async () => {
-  setup()
+it('opens New agent outside the picker and restores the mirror add button on Escape', async () => {
+  const { onEscape } = setup()
   const user = userEvent.setup()
   const trigger = screen.getByRole('button', { name: 'New agent' })
-  expect(
-    trigger.parentElement?.parentElement?.contains(screen.getByRole('tab', { name: /^Agents/ }))
-  ).toBe(true)
+  expect(trigger.parentElement?.contains(screen.getByRole('tab', { name: /^Agents/ }))).toBe(true)
   trigger.focus()
   await user.keyboard('{Enter}')
-  const codex = await screen.findByRole('menuitem', { name: /^Codex/ })
-  const claude = screen.getByRole('menuitem', { name: /^Claude$/ })
-  expect(screen.getAllByRole('menuitem').map((row) => row.textContent)).toEqual([
-    expect.stringContaining('Codex'),
-    'Claude',
-    'Agent settings…'
-  ])
-  expect(screen.queryByRole('menuitem', { name: /^Gemini/ })).toBeNull()
-  expect(document.activeElement).toBe(codex)
-  await user.keyboard('{ArrowDown}')
-  expect(document.activeElement).toBe(claude)
+  const dialog = await screen.findByRole('dialog', { name: 'New agent' })
+  expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
+  agentTrigger('Codex')
+  expect(dialog.querySelector('[data-project-combobox-root]')?.textContent).toContain('Repo')
   await user.keyboard('{Escape}')
-  expect(screen.queryByRole('menuitem')).toBeNull()
-  expect(screen.getByRole('textbox', { name: 'Filter terminals' })).toBeTruthy()
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(onEscape).not.toHaveBeenCalled()
+  expect(document.activeElement).toBe(
+    screen.getByRole('button', { name: 'Add terminal to this mirror' })
+  )
   await openNewAgent()
-  await user.click(screen.getByRole('menuitem', { name: 'Agent settings…' }))
+  expect(screen.queryByRole('option', { name: /Gemini/ })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Open agent settings' }))
   expect(fixture.openSettingsTarget).toHaveBeenCalledWith({ pane: 'agents', repoId: null })
   expect(fixture.openSettingsPage).toHaveBeenCalledOnce()
 })
 
-it.each([
-  [[], 'No agents detected'],
-  [['gemini'], 'No enabled agents']
-] as const)('keeps settings available in the %s empty menu', async (detected, message) => {
-  fixture.detected = [...detected]
-  setup()
-  await userEvent.setup().click(screen.getByRole('button', { name: 'New agent' }))
-  expect(await screen.findByRole('menuitem', { name: message })).toBeTruthy()
-  expect(screen.getByRole('menuitem', { name: 'Agent settings…' })).toBeTruthy()
-})
+it.each([{ detected: [] }, { detected: ['gemini'] }] as const)(
+  'keeps settings available with no available agent in $detected',
+  async ({ detected }) => {
+    fixture.detected = [...detected]
+    setup()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'New agent' }))
+    await waitFor(() => agentTrigger('No available agents'))
+    expect(screen.getByRole('button', { name: /Start agent/ }).hasAttribute('disabled')).toBe(true)
+    expect(screen.getByRole('button', { name: 'Open agent settings' })).toBeTruthy()
+  }
+)
 
 it('launches in the active home workspace and adds and selects the returned pane without navigation', async () => {
   const { id, worktree } = setup()
@@ -377,6 +408,8 @@ it('opens the workspace header choices and launches in that workspace', async ()
   const { id, second } = setup()
   prepareLaunch()
   await openNewAgent('second')
+  expect(screen.queryByRole('menuitem', { name: /Project/ })).toBeNull()
+  expect(screen.queryByRole('menuitem', { name: /Workspace/ })).toBeNull()
   fireEvent.click(screen.getByRole('menuitem', { name: /^Codex/ }))
   await waitFor(() =>
     expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
@@ -403,7 +436,7 @@ it('refuses to start anything when the mirror fills after the picker opened', as
 })
 
 it.each(['reject', 'no-result'] as const)(
-  'reports a %s launch failure without changing mirror membership',
+  'reports a %s dialog launch failure and reopens the dialog with the same choices',
   async (failure) => {
     setup()
     const before = readAgentHubMirrors()
@@ -420,13 +453,27 @@ it.each(['reject', 'no-result'] as const)(
       })
     )
     expect(readAgentHubMirrors()).toEqual(before)
-    expect(screen.getByRole('textbox', { name: 'Filter terminals' })).toBeTruthy()
+    await screen.findByRole('dialog', { name: 'New agent' })
+    agentTrigger('Claude')
+    expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
     await userEvent.setup().keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     await waitFor(() =>
-      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'New agent' }))
+      expect(document.activeElement).toBe(
+        screen.getByRole('button', { name: 'Add terminal to this mirror' })
+      )
     )
   }
 )
+
+it('keeps the picker open after a failed launch from a workspace row', async () => {
+  setup()
+  fixture.launch.mockResolvedValue(null)
+  fireEvent.click(await openNewAgent('second'))
+  await waitFor(() => expect(toast.error).toHaveBeenCalledOnce())
+  expect(screen.getByRole('textbox', { name: 'Filter terminals' })).toBeTruthy()
+  expect(screen.queryByRole('dialog', { name: 'New agent' })).toBeNull()
+})
 
 it('keeps focus on another typing field when a delayed launch closes the picker and prevents duplicate starts', async () => {
   const { id } = setup()
@@ -447,8 +494,9 @@ it('keeps focus on another typing field when a delayed launch closes the picker 
   fireEvent.click(button)
   fireEvent.click(button)
   expect(fixture.launch).toHaveBeenCalledOnce()
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  fireEvent.click(screen.getByRole('button', { name: 'Add terminal to this mirror' }))
   expect(screen.getByRole('button', { name: 'New agent' }).hasAttribute('disabled')).toBe(true)
-  expect(button.hasAttribute('data-disabled')).toBe(true)
   const prompt = screen.getByRole('textbox', { name: 'Main prompt' })
   prompt.focus()
   await act(async () => resolve())
@@ -461,3 +509,44 @@ it('keeps focus on another typing field when a delayed launch closes the picker 
   expect(toast.error).not.toHaveBeenCalled()
   expect(document.activeElement).toBe(prompt)
 })
+
+it.each(['closed-mirror', 'full-mirror', 'missing-tab'] as const)(
+  'reports the launched workspace instead of a launch failure after %s',
+  async (failure) => {
+    const { id, worktree } = setup()
+    prepareLaunch()
+    const launch = fixture.launch.getMockImplementation()
+    if (!launch) {
+      throw new Error('No launch implementation')
+    }
+    fixture.launch.mockImplementation(async (args) => {
+      const launched = await launch(args)
+      if (failure === 'closed-mirror') {
+        closeAgentHubMirror(id)
+      } else if (failure === 'full-mirror') {
+        const rows = fixture.groups[0]?.workspaces[0]?.rows ?? []
+        rows
+          .filter((row) => row.tab.id.startsWith('extra-'))
+          .forEach((row) => {
+            addAgentHubMirrorTab(id, paneTargetFromTerminalRow(row), false)
+          })
+      } else {
+        useAppStore.setState({ tabsByWorktree: {} })
+      }
+      return launched
+    })
+    fireEvent.click(await openNewAgent())
+    await waitFor(() =>
+      expect(toast.message).toHaveBeenCalledWith(
+        `Claude started in ${worktree.displayName || worktree.branch}.`,
+        { description: 'It could not be added to this mirror. Open it from the workspace tabs.' }
+      )
+    )
+    expect(fixture.launch).toHaveBeenCalledOnce()
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(fixture.release).toHaveBeenCalledOnce()
+    await waitFor(() =>
+      expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
+    )
+  }
+)
