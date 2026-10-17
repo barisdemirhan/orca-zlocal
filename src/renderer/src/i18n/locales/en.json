@@ -19162,6 +19162,10 @@
         "shells": "shells",
         "orb": "orb",
         "voice": "voice"
+      },
+      "mirror": {
+        "newAgentStartedInWorkspace": "{{agent}} started in {{workspace}}.",
+        "newAgentNotAdded": "It could not be added to this mirror. Open it from the workspace tabs."
       }
     },
     "agentHubPeekOutsideWorkspace": "Agent Peek files must be inside the target workspace.",

@@ -194,7 +194,9 @@ export function AgentHubMirrorTabStrip({
             )}
             onSelect={(focusTerminal) => select(tab.id, focusTerminal)}
             onReveal={() => {
-              returnAgentHubMirrorTabToWorkspace(window.id, tab.id)
+              if (!tab.isPinned) {
+                returnAgentHubMirrorTabToWorkspace(window.id, tab.id)
+              }
               onReveal(
                 tab.target,
                 threads.find((thread) => agentHubTargetShowsThread(tab.target, thread)) ?? null

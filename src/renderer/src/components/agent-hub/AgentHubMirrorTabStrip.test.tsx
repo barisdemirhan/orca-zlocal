@@ -8,7 +8,7 @@ import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
-import { addAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { addAgentHubMirrorTab, toggleAgentHubMirrorTabPin } from './agent-hub-mirror-tab-operations'
 import {
   openAgentHubMirror,
   useAgentHubMirrors,
@@ -113,6 +113,25 @@ it('jumps an inactive tab to its own workspace from its menu and keeps the other
   expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.tab.id)).toEqual([
     'entry-1'
   ])
+})
+
+it('keeps a pinned inactive tab when Jump opens its workspace', async () => {
+  const reveal = vi.fn()
+  const windowId = stage(2, reveal)
+  const tab = readAgentHubMirrors().windows[0]?.tabs.find((entry) => entry.target.tab.id === 'one')
+  if (!tab) {
+    throw new Error('No inactive tab')
+  }
+  act(() => toggleAgentHubMirrorTabPin(windowId, tab.id))
+  fireEvent.contextMenu(screen.getByRole('tab', { name: 'one, idle' }))
+  fireEvent.click(
+    await screen.findByRole('menuitem', { name: 'Jump to this terminal in its workspace' })
+  )
+  expect(reveal).toHaveBeenCalledWith(tab.target, null)
+  expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
+  expect(
+    readAgentHubMirrors().windows[0]?.tabs.find((entry) => entry.id === tab.id)?.isPinned
+  ).toBe(true)
 })
 
 it.each([

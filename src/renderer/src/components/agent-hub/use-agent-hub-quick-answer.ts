@@ -131,7 +131,7 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
   )
   const canAnswer = card !== null && ptyId !== null && canSend
   // Why re-read: another surface may have answered since this one rendered.
-  const open = (): boolean => canAnswer && readAnsweredAgentHubCard(cardKey) === null
+  const open = (): boolean => canAnswer && !pending && readAnsweredAgentHubCard(cardKey) === null
 
   const answerQuestion = (
     selections: Parameters<Send['sendAnswer']>[1],
@@ -192,6 +192,34 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
   }
   const keysArmed = (): boolean =>
     performance.now() - shownAt.current >= AGENT_HUB_CARD_KEY_GUARD_MS
+  const fullCardSend: Send = {
+    ...send,
+    sendAnswer: (prompt, selections, onDeliverySettled) => {
+      if (card?.kind !== 'question' || !open()) {
+        return { settleAfterMs: 0 }
+      }
+      const settle = recordAgentHubCardAnswer(cardKey, -1, true)
+      const result = send.sendAnswer(prompt, selections, (delivered) => {
+        if (settle(delivered)) {
+          onDeliverySettled?.(delivered)
+        }
+      })
+      if (result.settleAfterMs <= 0) {
+        settle(false)
+      }
+      return result
+    },
+    cancelAsk: () => {
+      if (card?.kind !== 'question' || !open()) {
+        return Promise.resolve(false)
+      }
+      const settle = recordAgentHubCardAnswer(cardKey, -1, true)
+      return send
+        .cancelAsk()
+        .catch(() => false)
+        .then((delivered) => settle(delivered) && delivered)
+    }
+  }
   return {
     card,
     simpleQuestion,
@@ -202,7 +230,7 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
     pending,
     canAnswer,
     ptyId,
-    send,
+    send: fullCardSend,
     cardKey,
     choose,
     chooseByKey: (index, onDeliverySettled) => keysArmed() && choose(index, onDeliverySettled),

@@ -63,8 +63,8 @@ describe('hook status session-tabs republish', () => {
     }
   )
 
-  it.each(['done'] as const)(
-    'clears only the pane progress when its turn ends (%s)',
+  it.each(['working', 'blocked', 'waiting'] as const)(
+    'clears only the pane progress when its turn ends after %s',
     async (state) => {
       vi.useFakeTimers()
       vi.setSystemTime(1_000)
@@ -82,7 +82,7 @@ describe('hook status session-tabs republish', () => {
       const uninstall = installHookStatusSessionTabsRepublish(server, () => runtime)
       const caller = { paneKey: PANE, terminalHandle: 'term-worker' }
       const other = { paneKey: 'other-pane', terminalHandle: 'term-other' }
-      const report = (status: 'working' | typeof state, prompt: string): void =>
+      const report = (status: 'working' | 'blocked' | 'waiting' | 'done', prompt: string): void =>
         server.ingestTerminalStatus({
           paneKey: PANE,
           tabId: 'tab-provider',
@@ -95,7 +95,8 @@ describe('hook status session-tabs republish', () => {
         agentHub.updateProgress(other, other, 'Other work')
         report('working', 'Testing')
         expect(agentHub.snapshot().progress).toHaveLength(2)
-        report(state, '')
+        report(state, 'Finishing')
+        report('done', '')
         expect(agentHub.snapshot().progress.map((line) => line.target.paneKey)).toEqual([
           other.paneKey
         ])
@@ -107,7 +108,7 @@ describe('hook status session-tabs republish', () => {
         expect(agentHub.snapshot().progress).toHaveLength(2)
         report('working', 'Still working')
         uninstall()
-        report(state, '')
+        report('done', '')
         expect(agentHub.snapshot().progress).toHaveLength(2)
       } finally {
         uninstall()

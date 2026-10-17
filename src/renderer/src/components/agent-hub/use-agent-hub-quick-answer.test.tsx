@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
+import type { NativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import {
   makeRepo,
@@ -12,6 +13,7 @@ import {
   PANE_KEY
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import {
+  AGENT_HUB_ANSWER_HOLD_MS,
   agentHubThreadCardKey,
   readAnsweredAgentHubCard,
   resetAgentHubAnsweredCardsForTest
@@ -23,7 +25,7 @@ import {
 } from './use-agent-hub-quick-answer'
 
 const send = vi.hoisted(() => ({
-  sendAnswer: vi.fn(() => ({ settleAfterMs: 800 })),
+  sendAnswer: vi.fn<NativeChatInteractiveSend['sendAnswer']>(() => ({ settleAfterMs: 800 })),
   sendRaw: vi.fn(),
   sendRawVerified: vi.fn(async () => true),
   cancelPending: vi.fn(),
@@ -223,6 +225,121 @@ it('offers no quick options for a prompt with several questions', () => {
   const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
   expect(hook.result.current.options).toEqual([])
   expect(hook.result.current.reply('anything')).toBe(false)
+})
+
+it('shares a full-card answer before delivery so a competing surface cannot write twice', () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(1_000)
+  const thread = threadWith(
+    JSON.stringify({
+      questions: [
+        { question: 'A?', options: [{ label: 'x' }] },
+        { question: 'B?', options: [{ label: 'y' }] }
+      ]
+    })
+  )
+  let finish: ((delivered: boolean) => void) | undefined
+  send.sendAnswer.mockImplementation((_prompt, _selections, onSettled) => {
+    finish = onSettled
+    return { settleAfterMs: 800 }
+  })
+  const hook = renderHook(() => ({
+    pane: useAgentHubQuickAnswer(quickAnswerTargetOf(thread)),
+    hub: useAgentHubQuickAnswer(quickAnswerTargetOf(thread))
+  }))
+  const card = hook.result.current.pane.card
+  if (card?.kind !== 'question') {
+    throw new Error('No question card')
+  }
+  const selections = [{ indices: [0] }, { indices: [0] }]
+  const settled = vi.fn()
+  act(() => {
+    expect(
+      hook.result.current.pane.send.sendAnswer(card.prompt, selections, settled).settleAfterMs
+    ).toBe(800)
+    expect(hook.result.current.hub.send.sendAnswer(card.prompt, selections).settleAfterMs).toBe(0)
+  })
+  expect(hook.result.current.hub.pending).toBe(true)
+  expect(hook.result.current.hub.chosen).toBe(-1)
+  expect(send.sendAnswer).toHaveBeenCalledOnce()
+  vi.setSystemTime(1_000 + AGENT_HUB_ANSWER_HOLD_MS)
+  hook.rerender()
+  expect(hook.result.current.hub.pending).toBe(true)
+  expect(hook.result.current.hub.send.sendAnswer(card.prompt, selections).settleAfterMs).toBe(0)
+  act(() => finish?.(true))
+  expect(settled).toHaveBeenCalledWith(true)
+  expect(hook.result.current.hub.pending).toBe(false)
+  expect(hook.result.current.hub.send.sendAnswer(card.prompt, selections).settleAfterMs).toBe(0)
+  expect(send.sendAnswer).toHaveBeenCalledOnce()
+})
+
+it.each(['not-started', 'refused'] as const)(
+  'makes a full-card answer retryable on every surface after delivery is %s',
+  (failure) => {
+    const thread = threadWith(
+      JSON.stringify({
+        questions: [
+          { question: 'Pick several', multiSelect: true, options: [{ label: 'x' }, { label: 'y' }] }
+        ]
+      })
+    )
+    let finish: ((delivered: boolean) => void) | undefined
+    send.sendAnswer.mockImplementationOnce((_prompt, _selections, onSettled) => {
+      finish = onSettled
+      return { settleAfterMs: failure === 'not-started' ? 0 : 800 }
+    })
+    const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
+    const card = hook.result.current.card
+    if (card?.kind !== 'question') {
+      throw new Error('No question card')
+    }
+    act(() => {
+      hook.result.current.send.sendAnswer(card.prompt, [{ indices: [0, 1] }])
+    })
+    if (failure === 'refused') {
+      act(() => finish?.(false))
+    }
+    expect(hook.result.current.chosen).toBeNull()
+    expect(hook.result.current.pending).toBe(false)
+    act(() => {
+      hook.result.current.send.sendAnswer(card.prompt, [{ indices: [1] }])
+    })
+    expect(send.sendAnswer).toHaveBeenCalledTimes(2)
+    expect(hook.result.current.pending).toBe(true)
+  }
+)
+
+it('shares a full-card cancellation and allows a retry when the host refuses it', async () => {
+  const thread = threadWith(
+    JSON.stringify({
+      questions: [
+        { question: 'Pick several', multiSelect: true, options: [{ label: 'x' }, { label: 'y' }] }
+      ]
+    })
+  )
+  let finish: (delivered: boolean) => void = () => {}
+  send.cancelAsk.mockReturnValueOnce(
+    new Promise<boolean>((resolve) => {
+      finish = resolve
+    })
+  )
+  const hook = renderHook(() => ({
+    pane: useAgentHubQuickAnswer(quickAnswerTargetOf(thread)),
+    hub: useAgentHubQuickAnswer(quickAnswerTargetOf(thread))
+  }))
+  let delivery: Promise<boolean> = Promise.resolve(false)
+  act(() => {
+    delivery = hook.result.current.pane.send.cancelAsk()
+  })
+  expect(hook.result.current.hub.pending).toBe(true)
+  expect(await hook.result.current.hub.send.cancelAsk()).toBe(false)
+  expect(send.cancelAsk).toHaveBeenCalledOnce()
+  await act(async () => {
+    finish(false)
+  })
+  expect(await delivery).toBe(false)
+  expect(hook.result.current.hub.chosen).toBeNull()
+  expect(hook.result.current.hub.pending).toBe(false)
 })
 
 it("sends a reply in the user's words for a single question", () => {

@@ -56,6 +56,7 @@ function PaneQuickReplyCard({
   const [sentText, setSentText] = useState<string | null>(null)
   const [gone, setGone] = useState(false)
   const chosen = quick.chosen
+  const answerStarted = chosen !== null || quick.pending
   // Answered here or elsewhere: show it briefly, then leave.
   useEffect(() => {
     if (chosen === null || quick.pending) {
@@ -144,8 +145,11 @@ function PaneQuickReplyCard({
         role="group"
         aria-label={quick.question ?? translate('agentHub.quick.title', 'Quick reply')}
         data-agent-hub-pane-quick-reply={target.paneKey}
-        aria-busy={chosen !== null}
+        aria-busy={answerStarted}
         onKeyDown={(event) => {
+          if (event.nativeEvent.isComposing) {
+            return
+          }
           if (event.key === 'Escape') {
             event.preventDefault()
             event.stopPropagation()
@@ -190,11 +194,12 @@ function PaneQuickReplyCard({
             <X />
           </Button>
         </div>
-        {fullCard ? (
+        {fullCard && !answerStarted ? (
           <div className="px-3 pt-2 pb-2.5">
             <NativeChatInteractiveCard
               card={fullCard}
               send={quick.send}
+              finishAnswerAfterUnmount
               // Delivered: the card leaves and the terminal takes the keys back.
               onDismiss={() => {
                 setGone(true)
@@ -209,7 +214,7 @@ function PaneQuickReplyCard({
               <HubDictateButton compact targetInputRef={nativeAnswerInputRef} />
             </div>
           </div>
-        ) : (
+        ) : fullCard ? null : (
           <>
             {quick.question ? (
               <p className="px-3 pt-1.5 text-[13px] leading-snug font-medium break-words">
@@ -221,13 +226,13 @@ function PaneQuickReplyCard({
                 density="compact"
                 options={quick.options}
                 chosen={chosen}
-                disabled={chosen !== null || !quick.canAnswer}
+                disabled={answerStarted || !quick.canAnswer}
                 onChoose={(index) => quick.choose(index, answered)}
               />
             </div>
           </>
         )}
-        {quick.simpleQuestion && chosen === null ? (
+        {quick.simpleQuestion && !answerStarted ? (
           <form
             className="@container/hub-reply mx-3 mt-2 mb-2.5 flex min-w-0 items-center gap-1 rounded-lg border border-foreground/[0.08] bg-background/60 py-0.5 pr-0.5 pl-2.5 focus-within:border-foreground/20"
             onSubmit={(event) => {
@@ -260,7 +265,7 @@ function PaneQuickReplyCard({
               <SendHorizontal />
             </Button>
           </form>
-        ) : chosen !== null ? (
+        ) : answerStarted ? (
           // Why: the keys take a moment to reach the agent; a still card reads as frozen.
           <div
             role="status"

@@ -6,6 +6,7 @@ import {
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
+import type { RuntimeStatus } from '../../../../shared/runtime-types'
 import {
   agentHubMirrorShellLeafId,
   findAgentHubMirrorSource,
@@ -49,7 +50,9 @@ const state = () => ({
   retainedAgentsByPaneKey: {},
   sleepingAgentSessionsByPaneKey: {},
   paneForegroundAgentByPaneKey: {},
-  ptyIdsByTabId: {}
+  ptyIdsByTabId: {},
+  sshConnectionStates: new Map(),
+  runtimeStatusByEnvironmentId: new Map()
 })
 beforeEach(() => {
   resetAgentHubMirrorsForTest()
@@ -73,6 +76,67 @@ it('keeps temporarily unverifiable remote sources even without a live local PTY'
   expect(openAgentHubMirror(target)).toBe('opened')
   expect(readAgentHubMirrors().windows).toHaveLength(1)
 })
+it.each(['connected', 'disconnected', 'connecting', 'unknown'] as const)(
+  'handles a deleted workspace chip while its SSH host is %s',
+  (status) => {
+    openAgentHubMirror(target)
+    const original = readAgentHubMirrors().windows[0]!
+    minimizeAgentHubMirror(original.id)
+    useAppStore.setState({
+      worktreesByRepo: {},
+      tabsByWorktree: {},
+      terminalLayoutsByTabId: {},
+      sshConnectionStates: new Map(
+        status === 'unknown'
+          ? []
+          : [['workhost', { targetId: 'workhost', status, error: null, reconnectAttempt: 0 }]]
+      )
+    })
+    restoreAgentHubMirror(original.id)
+    expect(readAgentHubMirrors().windows).toHaveLength(status === 'connected' ? 0 : 1)
+  }
+)
+it.each(['verified', 'unavailable', 'checking'] as const)(
+  'handles a deleted paired-host workspace with %s contact',
+  (verification) => {
+    const paired = { ...worktree, hostId: 'runtime:paired' as const }
+    const runtimeStatus: RuntimeStatus = {
+      runtimeId: 'paired-runtime',
+      rendererGraphEpoch: 1,
+      graphStatus: 'ready',
+      authoritativeWindowId: 1,
+      liveTabCount: 0,
+      liveLeafCount: 0
+    }
+    useAppStore.setState({
+      worktreesByRepo: { [repo.id]: [paired] },
+      runtimeStatusByEnvironmentId: new Map([
+        [
+          'paired',
+          {
+            status: verification === 'verified' ? runtimeStatus : null,
+            checkedAt: 1,
+            snapshot: {
+              environmentId: 'paired',
+              pairingRevision: 1,
+              sequence: 1,
+              checkedAt: 1,
+              status: runtimeStatus,
+              verification,
+              transport: 'ready'
+            }
+          }
+        ]
+      ])
+    })
+    openAgentHubMirror({ ...target, worktree: paired })
+    const original = readAgentHubMirrors().windows[0]!
+    minimizeAgentHubMirror(original.id)
+    useAppStore.setState({ worktreesByRepo: {}, tabsByWorktree: {}, terminalLayoutsByTabId: {} })
+    restoreAgentHubMirror(original.id)
+    expect(readAgentHubMirrors().windows).toHaveLength(verification === 'verified' ? 0 : 1)
+  }
+)
 it('rejects ambiguous hostless legacy references while resolving a qualified owner', () => {
   const other = { ...worktree, hostId: 'ssh:other' as const }
   const mixed = { ...state(), worktreesByRepo: { [repo.id]: [worktree, other] } }

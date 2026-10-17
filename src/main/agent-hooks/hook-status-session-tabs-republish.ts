@@ -22,13 +22,17 @@ export function installHookStatusSessionTabsRepublish(
   statusStore: StatusStore,
   getRuntime: () => SessionTabsRepublisher | null | undefined
 ): () => void {
-  const workingPanes = (statuses: ReturnType<StatusStore['getStatusChangeSnapshot']>) =>
+  const activePanes = (statuses: ReturnType<StatusStore['getStatusChangeSnapshot']>) =>
     new Set(
       statuses
-        .filter((status) => status.observedInCurrentRuntime && status.state === 'working')
+        .filter(
+          (status) =>
+            status.observedInCurrentRuntime &&
+            (status.state === 'working' || status.state === 'blocked' || status.state === 'waiting')
+        )
         .map((status) => status.paneKey)
     )
-  let previousWorking = workingPanes(statusStore.getStatusChangeSnapshot())
+  let previousActive = activePanes(statusStore.getStatusChangeSnapshot())
   const unsubscribeStatus = statusStore.subscribeStatusChanges((statuses) => {
     for (const status of statuses) {
       // Only a finished turn clears it: blocked/waiting resume the same work, and an absent or
@@ -36,12 +40,12 @@ export function installHookStatusSessionTabsRepublish(
       if (
         status.observedInCurrentRuntime &&
         status.state === 'done' &&
-        previousWorking.has(status.paneKey)
+        previousActive.has(status.paneKey)
       ) {
         getRuntime()?.agentHub?.clearProgress(status.paneKey)
       }
     }
-    previousWorking = workingPanes(statuses)
+    previousActive = activePanes(statuses)
   })
   const resolveWorktreeId = (
     identity: { paneKey: string; worktreeId?: string; terminalHandle?: string },

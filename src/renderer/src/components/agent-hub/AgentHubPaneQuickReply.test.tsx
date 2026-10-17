@@ -142,6 +142,8 @@ beforeEach(() => {
   resetAgentHubAnsweredCardsForTest()
   quick.targets.length = 0
   quick.answer.chosen = null
+  quick.answer.pending = false
+  quick.answer.simpleQuestion = null
   quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000, asking.interactivePrompt ?? null)
   vi.mocked(quick.answer.choose).mockClear()
   vi.mocked(quick.answer.chooseByKey).mockClear()
@@ -318,6 +320,20 @@ it('closes on Esc for this prompt, hands the keys to the terminal, and returns f
   )
   expect(card()).not.toBeNull()
   expect(pane.container.querySelector('[data-agent-hub-pane-quick-reply-handle]')).toBeNull()
+})
+
+it('keeps the draft when Escape belongs to IME composition', () => {
+  quick.answer.simpleQuestion = { question: 'Keep it?', multiSelect: false, options: [] }
+  const pane = mountPane()
+  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } })
+  renderPortals(pane)
+  const input = screen.getByRole('textbox', { name: 'Your own answer…' })
+  fireEvent.change(input, { target: { value: '日本語' } })
+  fireEvent.keyDown(input, { key: 'Escape', isComposing: true })
+  expect(card()).not.toBeNull()
+  expect(input).toHaveProperty('value', '日本語')
+  fireEvent.keyDown(input, { key: 'Escape', isComposing: false })
+  expect(card()).toBeNull()
 })
 
 it('stays away from a pane a chat view covers', () => {

@@ -311,10 +311,11 @@ export function AgentHubAttentionCard({
         </>
       ) : canAnswer && card ? (
         <div className="mt-3">
-          {nativeCardDismissed ? null : (
+          {nativeCardDismissed || chosen !== null || quick.pending ? null : (
             <NativeChatInteractiveCard
               card={card}
               send={send}
+              finishAnswerAfterUnmount
               onDismiss={() => setDismissedNativeKey(nativeCardKey)}
               layout="embedded"
               highlightRecommended

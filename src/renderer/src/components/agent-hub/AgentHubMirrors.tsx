@@ -9,6 +9,7 @@ import {
 import { activeAgentHubMirrorTab, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
 import { agentHubMirrorPointerSelection } from './agent-hub-mirror-pointer-selection'
+import { useAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { agentHubMirrorShellLeafId } from './agent-hub-mirror-source'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -67,7 +68,7 @@ import {
 type MirrorSurface = 'portal' | 'in-workspace' | 'preview'
 
 /**
- * Mirror windows stay below the floating workspace (z-45); the tray portals above it (z-47).
+ * Mirrors stay below the floating workspace, rising above it while a mirror is focused.
  * Inside the mirrors' layer, the window clicked last is in front.
  * Windows borrow the real terminal pane through the portal Activity uses.
  */
@@ -115,6 +116,7 @@ export function AgentHubMirrors({
   onOpenCard: (paneKey: string) => void
 }): React.JSX.Element | null {
   const { windows, chips } = useAgentHubMirrors()
+  const focused = useAgentHubMirrorFocus() !== null
   const selection = useAgentHubMirrorSelection()
   const visited = useRef(new Set<string>())
   for (const window of windows) {
@@ -275,8 +277,8 @@ export function AgentHubMirrors({
       <div
         data-agent-hub-mirrors
         data-hidden={hidden}
-        // Why z-[44]: always under the floating workspace (45), still over the dim (43).
-        className="pointer-events-none fixed inset-0 z-[44] data-[hidden=true]:invisible"
+        data-focused={focused}
+        className="pointer-events-none fixed inset-0 z-[44] data-[focused=true]:z-[47] data-[hidden=true]:invisible"
       >
         {stableWindows.map((window) => {
           const tab = activeAgentHubMirrorTab(window)

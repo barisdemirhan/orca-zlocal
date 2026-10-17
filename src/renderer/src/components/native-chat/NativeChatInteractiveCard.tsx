@@ -22,8 +22,7 @@ export type NativeChatInteractiveCardControl = NativeChatQuestionCardControl
  * Render one prompt occurrence the view chose (see useNativeChatPromptCardPresentation): a
  * question wizard or a tool approval, in the composer's place. Sends through the composer's
  * verified runtime path (R8/R6): answers via agent-specific paste or selector keystrokes;
- * cancel/deny as ESC. Unmount cancels scheduled writes and ignores late results; writes already
- * issued to the transport cannot be recalled.
+ * cancel/deny as ESC. Unmount normally cancels scheduled writes and always ignores late results.
  *
  * The card hides (`onDismiss`) only once its answer was delivered: a refused or unconfirmed
  * answer keeps the choices up, so the user can answer again here or in the terminal.
@@ -39,7 +38,8 @@ export function NativeChatInteractiveCard({
   answerInputRef,
   layout,
   highlightRecommended,
-  controlRef
+  controlRef,
+  finishAnswerAfterUnmount = false
 }: {
   card: NonNullable<InteractivePromptCard>
   send: NativeChatInteractiveSend
@@ -58,6 +58,8 @@ export function NativeChatInteractiveCard({
   highlightRecommended?: boolean
   /** Number-key answers: option N of a question, or approval choice N. */
   controlRef?: Ref<NativeChatInteractiveCardControl>
+  /** The sender owns delivery after this short-lived card leaves. */
+  finishAnswerAfterUnmount?: boolean
 }): React.JSX.Element {
   const { sendAnswer, sendRawVerified, cancelPending, cancelAsk } = send
   // A question answer is a paced multi-step write (body→Enter per question); keep
@@ -81,9 +83,11 @@ export function NativeChatInteractiveCard({
     return () => {
       activeRef.current = false
       attemptRef.current += 1
-      cancelPending()
+      if (!finishAnswerAfterUnmount) {
+        cancelPending()
+      }
     }
-  }, [cancelPending])
+  }, [cancelPending, finishAnswerAfterUnmount])
 
   const choose = (raw: string): void => {
     if (submittingRef.current) {

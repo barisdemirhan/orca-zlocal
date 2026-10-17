@@ -1,10 +1,14 @@
 // @vitest-environment happy-dom
 import { act, createRef } from 'react'
 import { createRoot } from 'react-dom/client'
+import { fireEvent, within } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
+import { getDefaultSettings } from '../../../../shared/constants'
+import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import type { NativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import {
@@ -25,9 +29,10 @@ import {
   isAgentHubCardDismissed,
   resetAgentHubAnsweredCardsForTest
 } from './agent-hub-answered-cards'
+import { AgentHubPaneQuickReplyPortals } from './AgentHubPaneQuickReply'
 
 const send = vi.hoisted(() => ({
-  sendAnswer: vi.fn(),
+  sendAnswer: vi.fn<NativeChatInteractiveSend['sendAnswer']>(),
   sendRaw: vi.fn(),
   sendRawVerified: vi.fn(async () => true),
   cancelPending: vi.fn(),
@@ -64,7 +69,11 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-function renderApprovalCard(agentType: string) {
+function renderAttentionCard(
+  agentType: string,
+  interactivePrompt = JSON.stringify({ approval: { tool: 'bash', summary: 'pnpm test' } }),
+  pane?: Parameters<typeof AgentHubPaneQuickReplyPortals>[0]['panes'][number]
+) {
   const worktree = makeWorktree()
   const repo = makeRepo()
   const tab = makeTabWithIds('tab-1', worktree.id)
@@ -77,7 +86,7 @@ function renderApprovalCard(agentType: string) {
     terminalTitle: 'Agent',
     stateHistory: [],
     agentType,
-    interactivePrompt: JSON.stringify({ approval: { tool: 'bash', summary: 'pnpm test' } })
+    interactivePrompt
   }
   useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: entry } })
   const [thread] = makeThreads(
@@ -108,6 +117,9 @@ function renderApprovalCard(agentType: string) {
           onJump={() => {}}
           onPopout={() => {}}
         />
+        {pane ? (
+          <AgentHubPaneQuickReplyPortals panes={[pane]} tabId={tab.id} worktreeId={worktree.id} />
+        ) : null}
       </TooltipProvider>
     )
   })
@@ -124,7 +136,7 @@ it.each([
   ['opencode', '\r'],
   ['claude', '1']
 ])('allows a %s approval once with the key its prompt expects', async (agentType, key) => {
-  const control = renderApprovalCard(agentType)
+  const control = renderAttentionCard(agentType)
   afterGuard()
 
   await act(async () => {
@@ -134,7 +146,7 @@ it.each([
 })
 
 it('ignores a number key pressed as the card appears', async () => {
-  const control = renderApprovalCard('claude')
+  const control = renderAttentionCard('claude')
 
   expect(control.current?.chooseOption(0)).toBe(false)
   expect(send.sendRawVerified).not.toHaveBeenCalled()
@@ -145,7 +157,7 @@ it('ignores a number key pressed as the card appears', async () => {
 })
 
 it('denies with a single Escape, not the Stop sequence', async () => {
-  const control = renderApprovalCard('opencode')
+  const control = renderAttentionCard('opencode')
   afterGuard()
 
   // The deny option first asks for an instruction; an empty reply denies plainly.
@@ -165,14 +177,14 @@ it('denies with a single Escape, not the Stop sequence', async () => {
 })
 
 it('keeps a reopened card answered while its answer is on the way, then allows a retry', async () => {
-  const first = renderApprovalCard('claude')
+  const first = renderAttentionCard('claude')
   afterGuard()
   await act(async () => {
     expect(first.current?.chooseOption(0)).toBe(true)
   })
 
   act(() => root.render(<div />))
-  const reopened = renderApprovalCard('claude')
+  const reopened = renderAttentionCard('claude')
   afterGuard()
   expect(reopened.current?.chooseOption(0)).toBe(false)
   expect(send.sendRawVerified).toHaveBeenCalledTimes(1)
@@ -181,7 +193,7 @@ it('keeps a reopened card answered while its answer is on the way, then allows a
     vi.advanceTimersByTime(AGENT_HUB_ANSWER_HOLD_MS)
   })
   act(() => root.render(<div />))
-  const later = renderApprovalCard('claude')
+  const later = renderAttentionCard('claude')
   afterGuard()
   await act(async () => {
     expect(later.current?.chooseOption(0)).toBe(true)
@@ -190,7 +202,7 @@ it('keeps a reopened card answered while its answer is on the way, then allows a
 })
 
 it('hides from the Inbox without answering, and keeps the agent waiting', () => {
-  renderApprovalCard('claude')
+  renderAttentionCard('claude')
   afterGuard()
   const hide = container.querySelector<HTMLButtonElement>('[data-agent-hub-card-hide]')
   act(() => hide?.click())
@@ -198,3 +210,82 @@ it('hides from the Inbox without answering, and keeps the agent waiting', () => 
   expect(send.sendRawVerified).not.toHaveBeenCalled()
   expect(send.cancelAsk).not.toHaveBeenCalled()
 })
+
+it.each(['pane', 'hub'] as const)(
+  'finishes a full answer from the %s after Esc, with no second answer on the other card',
+  (sender) => {
+    const parsed = parsePaneKey(PANE_KEY)
+    if (!parsed) {
+      throw new Error('No pane key')
+    }
+    const paneContainer = document.createElement('div')
+    const terminalInput = document.createElement('textarea')
+    terminalInput.className = 'xterm-helper-textarea'
+    paneContainer.append(terminalInput)
+    document.body.append(paneContainer)
+    const pane = {
+      id: 7,
+      leafId: parsed.leafId,
+      container: paneContainer,
+      terminal: { focus: () => terminalInput.focus() }
+    }
+    let finish: ((delivered: boolean) => void) | undefined
+    send.sendAnswer.mockImplementation((_prompt, _selections, onSettled) => {
+      finish = onSettled
+      return { settleAfterMs: 5_000 }
+    })
+    useAppStore.setState({
+      settings: { ...getDefaultSettings('/home/u'), experimentalAgentHub: true }
+    })
+    try {
+      const control = renderAttentionCard(
+        'claude',
+        JSON.stringify({
+          questions: [
+            { question: 'Plan?', options: [{ label: 'Yes' }] },
+            { question: 'Ship?', options: [{ label: 'Now' }] }
+          ]
+        }),
+        pane
+      )
+      afterGuard()
+      expect(
+        document.querySelectorAll('[data-testid="native-chat-question-card-title"]')
+      ).toHaveLength(2)
+      const card = paneContainer.querySelector('[data-agent-hub-pane-quick-reply]')
+      if (!card) {
+        throw new Error('No pane card')
+      }
+      const choose = (): void => {
+        if (sender === 'pane') {
+          fireEvent.keyDown(card, { key: '1' })
+        } else {
+          expect(control.current?.chooseOption(0)).toBe(true)
+        }
+      }
+      act(choose)
+      act(choose)
+      expect(send.sendAnswer).toHaveBeenCalledWith(
+        expect.anything(),
+        [
+          { indices: [0], other: '' },
+          { indices: [0], other: '' }
+        ],
+        expect.any(Function)
+      )
+      expect(
+        document.querySelectorAll('[data-testid="native-chat-question-card-title"]')
+      ).toHaveLength(0)
+      expect(within(paneContainer).getByRole('status').textContent).toContain('Sending')
+      fireEvent.keyDown(card, { key: 'Escape' })
+      expect(paneContainer.querySelector('[data-agent-hub-pane-quick-reply]')).toBeNull()
+      expect(send.cancelPending).not.toHaveBeenCalled()
+      expect(control.current?.chooseOption(0)).toBe(false)
+      act(() => finish?.(true))
+      expect(send.sendAnswer).toHaveBeenCalledOnce()
+      expect(send.cancelPending).not.toHaveBeenCalled()
+    } finally {
+      paneContainer.remove()
+    }
+  }
+)

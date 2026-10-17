@@ -85,6 +85,9 @@ export function releaseAgentHubMirrorShownTarget(
     return null
   }
   const target = shownAgentHubMirrorTarget(tab)
+  if (tab.isPinned) {
+    return target
+  }
   if (tab.viewing) {
     returnAgentHubMirrorTabHome(windowId, tabId)
   } else {

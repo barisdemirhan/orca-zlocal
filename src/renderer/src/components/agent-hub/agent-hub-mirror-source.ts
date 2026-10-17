@@ -7,6 +7,10 @@ import {
   type AgentHubMirrorWindowState
 } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
+import type { AppState } from '@/store/types'
+import { runtimeHostConnectionStateForEntry } from '@/runtime/runtime-host-connection-state'
+import { selectRuntimeAwareSshStatus } from '@/store/slices/runtime-environment-ssh-selectors'
+import { parseExecutionHostId } from '../../../../shared/execution-host'
 import { folderWorkspaceToWorktree } from '../../../../shared/folder-workspace-worktree'
 import {
   getExecutionHostIdFromWorktreeHostIdentity,
@@ -18,7 +22,18 @@ import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 
-type SourceState = Parameters<typeof agentHubTerminalTreeFromState>[0]
+type SourceState = Parameters<typeof agentHubTerminalTreeFromState>[0] &
+  Partial<
+    Pick<
+      AppState,
+      | 'sshConnectionStates'
+      | 'sshTargetLabels'
+      | 'removedSshTargetLabels'
+      | 'sshTargetsHydrated'
+      | 'sshStateByEnvironment'
+      | 'runtimeStatusByEnvironmentId'
+    >
+  >
 const NO_PARENTS: ReadonlyMap<string, string> = new Map()
 
 export function findAgentHubMirrorSource(
@@ -85,10 +100,41 @@ export function agentHubMirrorShellLeafId(
   return leafIds[0] ?? null
 }
 
-/**
- * True only when the source's workspace is loaded and no longer holds its tab or split leaf.
- * An unknown workspace (not hydrated yet, a disconnected host) is not proof that it closed.
- */
+function sourceHostConnected(state: SourceState, target: AgentHubPaneTarget): boolean {
+  const host = parseExecutionHostId(target.worktree.hostId)
+  if (host?.kind === 'local') {
+    return true
+  }
+  const environmentId =
+    host?.kind === 'runtime' ? host.environmentId : target.worktree.runtimeOwnerEnvironmentId
+  if (
+    environmentId &&
+    runtimeHostConnectionStateForEntry(state.runtimeStatusByEnvironmentId?.get(environmentId)) !==
+      'connected'
+  ) {
+    return false
+  }
+  if (host?.kind === 'runtime') {
+    return true
+  }
+  return (
+    host?.kind === 'ssh' &&
+    selectRuntimeAwareSshStatus(
+      {
+        ...state,
+        sshConnectionStates: state.sshConnectionStates ?? new Map(),
+        sshTargetLabels: state.sshTargetLabels ?? new Map(),
+        removedSshTargetLabels: state.removedSshTargetLabels ?? new Map(),
+        sshTargetsHydrated: state.sshTargetsHydrated ?? false,
+        sshStateByEnvironment: state.sshStateByEnvironment ?? new Map()
+      },
+      environmentId ?? null,
+      host.targetId
+    ) === 'connected'
+  )
+}
+
+/** A missing source is closed only while its execution host can verify the inventory. */
 export function isAgentHubMirrorSourceClosed(
   state: SourceState,
   target: AgentHubPaneTarget
@@ -98,11 +144,18 @@ export function isAgentHubMirrorSourceClosed(
     ...state.folderWorkspaces.map(folderWorkspaceToWorktree)
   ]
   const owners = workspaces.filter((workspace) => workspace.id === target.worktree.id)
+  if (target.worktree.hostId && !owners.some((owner) => owner.hostId === target.worktree.hostId)) {
+    return (
+      sourceHostConnected(state, target) &&
+      !findAgentHubMirrorSource(state, {
+        worktreeId: target.worktree.id,
+        tabId: target.tab.id,
+        hostIdentity: getWorktreeHostIdentity(target.worktree)
+      })
+    )
+  }
   // Unqualified tab/layout maps cannot prove closure using another host's inventory.
-  if (
-    owners.some((owner) => owner.hostId !== target.worktree.hostId) ||
-    (target.worktree.hostId && owners.length === 0)
-  ) {
+  if (owners.some((owner) => owner.hostId !== target.worktree.hostId)) {
     return false
   }
   const currentTabs = state.tabsByWorktree[target.worktree.id]

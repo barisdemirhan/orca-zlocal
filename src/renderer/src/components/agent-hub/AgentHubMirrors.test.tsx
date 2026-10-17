@@ -13,6 +13,7 @@ import {
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 import { setAgentHubMirrorFocus } from './agent-hub-mirror-focus'
+import { toggleAgentHubMirrorTabPin } from './agent-hub-mirror-tab-operations'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 
 vi.mock('@/store', async () => {
@@ -53,7 +54,11 @@ vi.mock('./AgentHubMirrorTabStrip', () => ({
   agentHubMirrorPanelId: (id: string) => id,
   agentHubMirrorTabId: (id: string) => id
 }))
-vi.mock('./AgentHubMirrorHeaderControls', () => ({ AgentHubMirrorHeaderControls: () => null }))
+vi.mock('./AgentHubMirrorHeaderControls', () => ({
+  AgentHubMirrorHeaderControls: ({ onReveal }: { onReveal: () => void }) => (
+    <button onClick={onReveal}>Jump</button>
+  )
+}))
 vi.mock('./AgentHubMirrorDictationOverlay', () => ({ AgentHubMirrorDictationOverlay: () => null }))
 vi.mock('./AgentHubMirrorPreviews', () => ({ AgentHubMirrorPreviews: () => null }))
 vi.mock('./AgentHubMirrorChip', () => ({ AgentHubMirrorChip: () => <span>Minimized mirror</span> }))
@@ -78,7 +83,11 @@ function target(id: string): AgentHubPaneTarget {
   }
 }
 
-function Mirrors(): React.JSX.Element {
+function Mirrors({
+  onReveal = vi.fn()
+}: {
+  onReveal?: (target: AgentHubPaneTarget) => void
+}): React.JSX.Element {
   return (
     <AgentHubMirrors
       hidden={false}
@@ -100,7 +109,7 @@ function Mirrors(): React.JSX.Element {
         location: { group: null, project: 'Workspace', workspace: null },
         target: null
       })}
-      onReveal={vi.fn()}
+      onReveal={onReveal}
       onOpenCard={vi.fn()}
     />
   )
@@ -156,7 +165,7 @@ it('keeps mirrors below the floating workspace without a panel click and after m
   }
 })
 
-it('keeps the tray above the floating workspace and a late focus shade below mirrors', () => {
+it('raises focused mirrors and their late shade above the floating workspace', () => {
   openAgentHubMirror(target('first'))
   openAgentHubMirror(target('second'))
   const view = render(<Stage />)
@@ -171,11 +180,38 @@ it('keeps the tray above the floating workspace and a late focus shade below mir
   act(() => setAgentHubMirrorFocus(readAgentHubMirrors().windows[0]!.id))
   const shade = document.querySelector('[data-agent-hub-focus-shade="workspace"]')
   expect(shade?.getAttribute('data-shown')).toBe('true')
-  expect(shade?.classList.contains('data-[agent-hub-focus-shade=workspace]:z-[43]')).toBe(true)
+  expect(layer.getAttribute('data-focused')).toBe('true')
+  expect(layer.classList.contains('data-[focused=true]:z-[47]')).toBe(true)
+  expect(shade?.classList.contains('data-[agent-hub-focus-shade=workspace]:z-[46]')).toBe(true)
   if (!shade) {
     throw new Error('Workspace focus shade is missing')
   }
   expect(layer.compareDocumentPosition(shade) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
   fireEvent.pointerDown(shade)
   expect(shade.getAttribute('data-shown')).toBe('false')
+  expect(layer.getAttribute('data-focused')).toBe('false')
+})
+
+it.each([false, true])('Jump navigates while preserving a pinned tab (%s)', (pinned) => {
+  const source = target('first')
+  openAgentHubMirror(source)
+  const window = readAgentHubMirrors().windows[0]
+  if (!window) {
+    throw new Error('No mirror')
+  }
+  if (pinned) {
+    toggleAgentHubMirrorTabPin(window.id, window.activeTabId)
+  }
+  const reveal = vi.fn()
+  render(<Mirrors onReveal={reveal} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Jump' }))
+  expect(reveal).toHaveBeenCalledWith(source, null)
+  expect(readAgentHubMirrors().windows).toHaveLength(pinned ? 1 : 0)
+  if (pinned) {
+    expect(readAgentHubMirrors().windows[0]?.tabs[0]).toMatchObject({
+      id: window.activeTabId,
+      target: source,
+      isPinned: true
+    })
+  }
 })

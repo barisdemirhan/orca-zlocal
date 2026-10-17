@@ -17,6 +17,7 @@ import { releaseAgentHubMirrorShownTarget } from './agent-hub-mirror-viewing'
 import {
   addAgentHubMirrorTab,
   closeAgentHubMirrorTab,
+  returnAgentHubMirrorTabToWorkspace,
   toggleAgentHubMirrorTabPin
 } from './agent-hub-mirror-tab-operations'
 import {
@@ -116,7 +117,7 @@ it('rejects a stale picker reservation with truthful feedback without raising it
   expect(readAgentHubMirrors().windows.at(-1)?.id).toBe(destination)
   expect(readAgentHubMirrors().windows.find((window) => window.id === owner)?.tabs).toHaveLength(1)
 })
-it('explicit return releases a pinned membership without closing the source or its siblings', () => {
+it('keeps a pinned membership on Jump and permits an explicit return without closing the source', () => {
   const id = open('a')
   addAgentHubMirrorTab(id, target('b'))
   addAgentHubMirrorTab(id, target('c'))
@@ -126,10 +127,29 @@ it('explicit return releases a pinned membership without closing the source or i
   }
   toggleAgentHubMirrorTabPin(id, b.id)
   expect(closeAgentHubMirrorTab(id, b.id).status).toBe('noop')
+  const before = readAgentHubMirrors()
   expect(releaseAgentHubMirrorShownTarget(id, b.id)?.tab.id).toBe('b')
+  expect(readAgentHubMirrors()).toBe(before)
+  expect(returnAgentHubMirrorTabToWorkspace(id, b.id).status).toBe('changed')
   expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.tab.id)).toEqual(['a', 'c'])
   closeAgentHubMirror(id)
   expect(readAgentHubMirrors().windows).toHaveLength(0)
+  expect(closeTab).not.toHaveBeenCalled()
+  expect(kill).not.toHaveBeenCalled()
+})
+
+it.each([false, true])('keeps a pinned tab viewing its worker on Jump, parked: %s', (parked) => {
+  const id = open('dispatcher')
+  const tabId = readAgentHubMirrors().windows[0]?.activeTabId ?? ''
+  selectAgentHubMirrorFamilyMember(id, tabId, target('worker'))
+  toggleAgentHubMirrorTabPin(id, tabId)
+  if (parked) {
+    minimizeAgentHubMirror(id)
+  }
+  const before = readAgentHubMirrors()
+  expect(releaseAgentHubMirrorShownTarget(id, tabId)?.tab.id).toBe('worker')
+  expect(readAgentHubMirrors()).toBe(before)
+  expect(findAgentHubMirrorMembership(before, target('worker'))?.kind).toBe('viewing')
   expect(closeTab).not.toHaveBeenCalled()
   expect(kill).not.toHaveBeenCalled()
 })
