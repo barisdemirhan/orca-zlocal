@@ -7,16 +7,19 @@ import {
   resolveTildePath
 } from '@/lib/terminal-path-normalization'
 import { resolveTerminalFileLinkText } from '@/lib/terminal-links'
-import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
+import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
+import { getTerminalFileContext } from '../terminal-pane/terminal-file-path-mapping'
+import { detectLanguage } from '@/lib/language-detect'
+import { useAppStore } from '@/store'
 import { openRoutedHttpLink } from '@/lib/http-link-destinations'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
-  openAgentHubPeekFile,
+  agentHubPeekFileItem,
   openAgentHubPeekUrl,
   agentHubPeekFileKind,
   type AgentHubPeekLinkSource
 } from './agent-hub-peek-routing'
-import { isAgentHubPeekHostMounted } from './agent-hub-peek-store'
+import { isAgentHubPeekHostMounted, openAgentHubPeek } from './agent-hub-peek-store'
 
 export async function executeAgentHubPeek(
   host: string,
@@ -46,9 +49,20 @@ export async function executeAgentHubPeek(
   const filePath = url
     ? null
     : (resolveTerminalFileLinkText(link, cwd)?.absolutePath ??
-      normalizeAbsolutePath(link)?.normalized ??
-      resolveTildePath(link, cwd) ??
-      joinAbsolutePath(cwd, link))
+      (/^~[\\/]/.test(link)
+        ? resolveTildePath(link, cwd)
+        : (normalizeAbsolutePath(link)?.normalized ?? joinAbsolutePath(cwd, link))))
+  const relativePath = filePath
+    ? getRelativePathInsideWorktree(target.worktree.path, filePath)
+    : null
+  if (!url && (!filePath || relativePath === null)) {
+    throw new Error(
+      translate(
+        'auto.agentHubPeekOutsideWorkspace',
+        'Agent Peek files must be inside the target workspace.'
+      )
+    )
+  }
   const source: AgentHubPeekLinkSource = {
     worktreeId: target.worktree.id,
     worktreePath: target.worktree.path,
@@ -64,10 +78,14 @@ export async function executeAgentHubPeek(
           sourceOwner: source.sourceOwner,
           forceDestination: 'orca'
         })
-      } else if (filePath) {
-        openDetectedFilePath(filePath, null, null, {
+      } else if (filePath && relativePath !== null) {
+        // A failed agent preview must not retry with the clicked-file access grant.
+        useAppStore.getState().openFile({
+          filePath,
+          relativePath,
           worktreeId: target.worktree.id,
-          worktreePath: target.worktree.path,
+          language: detectLanguage(filePath),
+          mode: 'edit',
           runtimeEnvironmentId: host !== 'local' ? host : null
         })
       }
@@ -87,7 +105,13 @@ export async function executeAgentHubPeek(
     toast.error(reason)
     throw new Error(reason)
   }
-  if (!filePath || !openAgentHubPeekFile(filePath, source, true)) {
+  const item = filePath ? agentHubPeekFileItem(filePath, source) : null
+  if (
+    !item ||
+    !filePath ||
+    relativePath === null ||
+    (item.content.kind !== 'web' && !item.content.readContext)
+  ) {
     throw new Error(
       translate(
         'agentHub.requests.peekUnsupported',
@@ -95,4 +119,35 @@ export async function executeAgentHubPeek(
       )
     )
   }
+  if (item.content.kind === 'web') {
+    const context = getTerminalFileContext(
+      target.worktree.id,
+      target.worktree.path,
+      host !== 'local' ? host : null
+    )
+    if (!context.sourceHostResolved) {
+      throw new Error(
+        translate(
+          'agentHub.requests.peekUnsupported',
+          'This URL or file cannot be opened in Peek on its host.'
+        )
+      )
+    }
+    // Agent HTML is read as workspace text rather than loading an unrestricted file URL.
+    item.content = {
+      kind: 'text',
+      filePath,
+      connectionId: null,
+      readContext: {
+        settings: context.settings,
+        worktreeId: target.worktree.id,
+        filePath,
+        relativePath
+      }
+    }
+  } else if (item.content.readContext) {
+    const { access: _access, ...readContext } = item.content.readContext
+    item.content = { ...item.content, readContext }
+  }
+  openAgentHubPeek({ ...item, preserveKeyboardFocus: true })
 }

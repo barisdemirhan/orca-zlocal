@@ -19164,6 +19164,7 @@
         "voice": "voice"
       }
     },
+    "agentHubPeekOutsideWorkspace": "Agent Peek files must be inside the target workspace.",
     "startup": {
       "webHostUnreachable": {
         "title": "Couldn't reach your Orca host",

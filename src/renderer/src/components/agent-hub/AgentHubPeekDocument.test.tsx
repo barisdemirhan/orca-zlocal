@@ -46,13 +46,18 @@ const notebook = JSON.stringify({
 })
 type FileKind = Extract<AgentHubPeekContent, { filePath: string }>['kind']
 
-function showFile(kind: FileKind, content: string, filePath = '/workspace/preview.txt') {
+function showFile(
+  kind: FileKind,
+  content: string,
+  filePath = '/workspace/preview.txt',
+  location: { line?: number; column?: number } = {}
+) {
   readFile.mockResolvedValue({ content, isBinary: false })
   const onUnavailable = vi.fn()
   const onContentSize = vi.fn()
   const result = render(
     <AgentHubPeekFile
-      content={{ kind, filePath, connectionId: null }}
+      content={{ kind, filePath, connectionId: null, ...location }}
       onContentSize={onContentSize}
       onUnavailable={onUnavailable}
     />
@@ -76,6 +81,31 @@ afterEach(() => {
 })
 
 describe('read-only Peek documents', () => {
+  it.each([
+    [120, 120],
+    [999, 160]
+  ])(
+    'scrolls to and highlights line %i, clamping to the document at %i',
+    async (line, expected) => {
+      const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView')
+      try {
+        const content = Array.from(
+          { length: 160 },
+          (_, index) => `const line${index + 1} = true`
+        ).join('\n')
+        showFile('text', content, '/workspace/main.ts', { line, column: 5 })
+        const target = await screen.findByText(`const line${expected} = true`)
+        await waitFor(() => expect(scroll.mock.contexts).toContain(target.parentElement))
+        expect(target.parentElement?.className).toContain('bg-emerald-500/10')
+        expect(
+          screen.getByText(`const line${expected - 1} = true`).parentElement?.className
+        ).not.toContain('bg-emerald-500/10')
+      } finally {
+        scroll.mockRestore()
+      }
+    }
+  )
+
   it('keeps code visible when a syntax tokenizer cannot load', async () => {
     monacoEditor.colorize.mockRejectedValueOnce(new Error('Tokenizer unavailable'))
     const shown = showFile('text', 'const readable = true', '/workspace/main.ts')
@@ -131,7 +161,8 @@ describe('read-only Peek documents', () => {
 
   it('shows saved notebook cells and sanitized outputs without edit or execution controls', async () => {
     const shown = showFile('notebook', notebook, '/workspace/report.ipynb')
-    await screen.findByRole('heading', { name: 'Saved report' })
+    // The notebook viewer is lazy-loaded and can exceed the 1s default under parallel load.
+    await screen.findByRole('heading', { name: 'Saved report' }, { timeout: 5000 })
     expect(screen.getByText('print("saved result")')).toBeTruthy()
     expect(screen.getByText('saved result')).toBeTruthy()
     const output = screen.getByTitle('Notebook HTML output')
@@ -168,7 +199,6 @@ describe('read-only Peek documents', () => {
   it.each([
     ['text', `${'x'.repeat(1000)}\n`.repeat(600)],
     ['text', 'x'.repeat(20001)],
-    ['text', '\n'.repeat(4000)],
     ['csv', 'x'.repeat(512 * 1024 + 1)],
     [
       'notebook',

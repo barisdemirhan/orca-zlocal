@@ -64,6 +64,8 @@ export function handleTerminalFileLink(
         }
       : {}),
     worktreePath: deps.worktreePath,
+    line,
+    column,
     event,
     openInWorkspace: () => openDetectedFilePath(filePath, line, column, deps),
     openExternally: () =>

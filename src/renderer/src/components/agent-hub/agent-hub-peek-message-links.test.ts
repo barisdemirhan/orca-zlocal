@@ -55,7 +55,7 @@ it('offers the pages and peekable files an agent message points to, once each', 
   const message = [
     'Storybook: http://127.0.0.1:6007, and again http://127.0.0.1:6007.',
     'Contact sheet: ~/Documents/Agents/Artifacts/northwind/contact-tr.png',
-    'Changed docs/review.pdf; see docs/review.pdf',
+    'Changed src/app/main.ts and docs/review.pdf; see docs/review.pdf',
     'Read docs/report.md'
   ].join('\n')
 
@@ -66,6 +66,33 @@ it('offers the pages and peekable files an agent message points to, once each', 
     ['image', '/Users/dev/Documents/Agents/Artifacts/northwind/contact-tr.png'],
     ['pdf', '/Users/dev/projects/northwind/docs/review.pdf'],
     ['markdown', '/Users/dev/projects/northwind/docs/report.md']
+  ])
+})
+
+it('keeps previewable documents ahead of source files before limiting message chips', () => {
+  const worktree: Worktree = { ...makeWorktree(), path: '/workspace', hostId: 'local' }
+  useAppStore.setState({
+    repos: [makeRepo()],
+    worktreesByRepo: { [worktree.repoId]: [worktree] }
+  })
+  const items = agentHubPeekItemsInMessage(
+    [
+      'src/a.ts',
+      'src/b.ts',
+      'src/c.ts',
+      'src/d.ts',
+      'docs/image.png',
+      'docs/report.pdf',
+      'docs/notes.md',
+      'docs/demo.html'
+    ].join('\n'),
+    worktree
+  )
+  expect(items.map((item) => item.location)).toEqual([
+    '/workspace/docs/image.png',
+    '/workspace/docs/report.pdf',
+    '/workspace/docs/notes.md',
+    '/workspace/docs/demo.html'
   ])
 })
 

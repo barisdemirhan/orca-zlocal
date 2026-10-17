@@ -10,6 +10,8 @@ export type AgentHubPeekContent =
       connectionId: string | null
       readContext?: RuntimeFileReadArgs
       initialAnchor?: string | null
+      line?: number | null
+      column?: number | null
     }
 
 /** One thing to look at, with the ways out the place it was found offers. */

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { userNamedFileAccess } from '@/lib/local-file-access'
@@ -117,10 +117,14 @@ export function AgentHubPeekFile({
   const state: LoadState = load.key === key ? load.state : { status: 'loading' }
   const readyFile = state.status === 'ready' ? state.file : null
   const documentKind = isAgentHubPeekDocumentKind(content.kind) ? content.kind : null
-  const tooLarge =
-    readyFile !== null &&
-    isAgentHubPeekDocumentKind(content.kind) &&
-    !canRenderAgentHubPeekDocument(content.kind, readyFile.content)
+  const documentContent = readyFile?.content
+  const tooLarge = useMemo(
+    () =>
+      documentContent !== undefined &&
+      documentKind !== null &&
+      !canRenderAgentHubPeekDocument(documentKind, documentContent),
+    [documentContent, documentKind]
+  )
   const unreadable =
     readyFile !== null &&
     (content.kind === 'markdown' || documentKind !== null

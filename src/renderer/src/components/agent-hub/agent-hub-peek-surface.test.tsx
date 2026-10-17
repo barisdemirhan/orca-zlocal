@@ -1,5 +1,5 @@
 /** @vitest-environment happy-dom */
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -23,10 +23,15 @@ import { agentHubPeekGeometry } from './agent-hub-peek-geometry'
 import { closeAgentHubPeek, openAgentHubPeek, readAgentHubPeek } from './agent-hub-peek-store'
 import type { MarkdownPreviewProps } from '../editor/markdown-preview-types'
 import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
+import type * as TerminalFileOpenRouting from '../terminal-pane/terminal-file-open-routing'
+import { handleTerminalFileLink } from '../terminal-pane/terminal-file-link-actions'
 import { closeLeftoverAgentHubPeekPages } from './agent-hub-peek-pages'
 
 const markdownPreview = vi.hoisted(() => vi.fn())
-vi.mock('../terminal-pane/terminal-file-open-routing', () => ({ openDetectedFilePath: vi.fn() }))
+vi.mock('../terminal-pane/terminal-file-open-routing', async (importOriginal) => {
+  const actual = await importOriginal<typeof TerminalFileOpenRouting>()
+  return { ...actual, openDetectedFilePath: vi.fn() }
+})
 vi.mock('@/runtime/runtime-file-read-client', async (importOriginal) => {
   const actual = await importOriginal<typeof RuntimeFileClient>()
   return { ...actual, readRuntimeFileContent: vi.fn() }
@@ -261,6 +266,60 @@ describe('Peek Markdown', () => {
 })
 
 describe('Peek file ownership', () => {
+  it.each([
+    ['local', false],
+    ['ssh:workhost-ssh', true],
+    ['runtime:workhost', false]
+  ] as const)(
+    'keeps a mirror source link location on %s, folder=%s, through Open in editor',
+    async (hostId, folder) => {
+      const worktreeId = seedOwner(hostId, folder)
+      readFile.mockResolvedValue({ content: 'source preview', isBinary: false })
+      render(
+        <TooltipProvider>
+          <AgentHubPeek />
+        </TooltipProvider>
+      )
+      const mirror = document.createElement('div')
+      mirror.dataset.agentHubMirror = ''
+      mirror.dataset.agentHubMirrorKey = 'source-mirror'
+      document.body.append(mirror)
+      try {
+        const event = new MouseEvent('click', {
+          metaKey: navigator.userAgent.includes('Mac'),
+          ctrlKey: !navigator.userAgent.includes('Mac')
+        })
+        Object.defineProperty(event, 'target', { value: mirror })
+        const deps = {
+          worktreeId,
+          worktreePath: '/workspace',
+          ...(hostId === 'runtime:workhost' ? { runtimeEnvironmentId: 'workhost' } : {})
+        }
+        act(() => {
+          expect(handleTerminalFileLink('/workspace/src/main.ts', 120, 5, event, deps)).toBe(true)
+        })
+        await screen.findByText('source preview')
+        expect(readAgentHubPeek()?.history[0]?.content).toMatchObject({
+          kind: 'text',
+          filePath: '/workspace/src/main.ts',
+          line: 120,
+          column: 5
+        })
+        expect(openDetectedFilePath).not.toHaveBeenCalled()
+        fireEvent.click(screen.getByRole('button', { name: 'Open in editor' }))
+        expect(readAgentHubPeek()).toBeNull()
+        expect(openDetectedFilePath).toHaveBeenCalledExactlyOnceWith(
+          '/workspace/src/main.ts',
+          120,
+          5,
+          deps
+        )
+      } finally {
+        mirror.remove()
+      }
+    }
+  )
+
   it.each([
     ['preview.png', 'local', false, null, undefined],
     ['preview.png', 'ssh:workhost-ssh', false, null, 'workhost-ssh'],

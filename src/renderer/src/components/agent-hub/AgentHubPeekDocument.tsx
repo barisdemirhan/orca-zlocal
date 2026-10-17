@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { detectLanguage } from '@/lib/language-detect'
 import {
   CsvViewer,
@@ -28,6 +28,18 @@ export function AgentHubPeekDocument({
     () => (file.kind === 'text' ? content.split(/\r\n|\r|\n/) : []),
     [content, file.kind]
   )
+  const textRef = useRef<HTMLDivElement>(null)
+  const line =
+    file.kind === 'text' && file.line != null && Number.isSafeInteger(file.line) && file.line > 0
+      ? Math.min(file.line, lines.length)
+      : 0
+  useLayoutEffect(() => {
+    if (line > 0) {
+      textRef.current?.firstElementChild?.children
+        .item(line - 1)
+        ?.scrollIntoView({ block: 'center', inline: 'nearest' })
+    }
+  }, [cacheKey, line, lines])
   switch (file.kind) {
     case 'csv':
       return (
@@ -52,13 +64,16 @@ export function AgentHubPeekDocument({
       return <IpynbPreview key={cacheKey} content={content} />
     case 'text':
       return (
-        <div className="h-full min-h-0 overflow-auto bg-editor-surface scrollbar-editor">
+        <div
+          ref={textRef}
+          className="h-full min-h-0 overflow-auto bg-editor-surface scrollbar-editor"
+        >
           <MonacoCodeExcerpt
             key={cacheKey}
             lines={lines}
             firstLineNumber={1}
-            highlightedStartLine={0}
-            highlightedEndLine={0}
+            highlightedStartLine={line}
+            highlightedEndLine={line}
             language={detectLanguage(file.filePath)}
           />
         </div>

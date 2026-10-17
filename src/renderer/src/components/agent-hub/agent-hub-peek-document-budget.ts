@@ -25,9 +25,7 @@ export function canRenderAgentHubPeekDocument(
   }
   if (kind === 'text') {
     const lines = content.split(/\r\n|\r|\n/)
-    return (
-      lines.length <= 4000 && lines.every((line) => line.length <= MAX_TOKENIZATION_LINE_LENGTH)
-    )
+    return lines.every((line) => line.length <= MAX_TOKENIZATION_LINE_LENGTH)
   }
   if (kind === 'notebook') {
     try {

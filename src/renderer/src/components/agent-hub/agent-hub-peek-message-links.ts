@@ -17,7 +17,7 @@ export function agentHubPeekItemsInMessage(text: string, worktree: Worktree): Ag
   const items: AgentHubPeekItem[] = []
   const seen = new Set<string>()
   const add = (item: AgentHubPeekItem | null): void => {
-    if (item && !seen.has(item.location) && items.length < MAX_MESSAGE_PEEKS) {
+    if (item && !seen.has(item.location)) {
       seen.add(item.location)
       items.push(item)
     }
@@ -54,13 +54,23 @@ export function agentHubPeekItemsInMessage(text: string, worktree: Worktree): Ag
           worktreeId: worktree.id,
           worktreePath: worktree.path,
           onPairedRuntime,
+          line: resolved.line,
+          column: resolved.column,
           event: undefined,
-          openInWorkspace: () => openDetectedFilePath(filePath, null, null, deps),
+          openInWorkspace: () =>
+            openDetectedFilePath(filePath, resolved.line, resolved.column, deps),
           openExternally: () =>
-            openDetectedFilePath(filePath, null, null, { ...deps, openWithSystemDefault: true })
+            openDetectedFilePath(filePath, resolved.line, resolved.column, {
+              ...deps,
+              openWithSystemDefault: true
+            })
         })
       )
     }
   }
+  const priority = (item: AgentHubPeekItem): number =>
+    ['web', 'image', 'pdf', 'markdown'].includes(item.content.kind) ? 0 : 1
   return items
+    .sort((first, second) => priority(first) - priority(second))
+    .slice(0, MAX_MESSAGE_PEEKS)
 }

@@ -35,6 +35,8 @@ export type AgentHubPeekLinkSource = {
   onPairedRuntime: boolean
   sourceOwner?: HttpLinkSourceOwner
   worktreePath?: string
+  line?: number | null
+  column?: number | null
   event: MouseEvent | undefined
   openInWorkspace: () => void
   openExternally: (() => void) | null
@@ -121,6 +123,8 @@ export function agentHubPeekFileItem(
       kind,
       filePath,
       connectionId: sshConnectionId,
+      ...(source.line != null ? { line: source.line } : {}),
+      ...(source.column != null ? { column: source.column } : {}),
       readContext: {
         target: context.target,
         worktreeId: source.worktreeId,
