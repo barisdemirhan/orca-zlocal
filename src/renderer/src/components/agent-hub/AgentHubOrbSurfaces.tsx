@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react'
+import { agentHubOrbPillShown } from './agent-hub-orb-sphere-action'
 import { useAppStore } from '@/store'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubOrbButton } from './AgentHubOrbButton'
@@ -44,10 +45,13 @@ export function useAgentHubOrbSurfaces(
     configuredPlacement === 'hidden'
       ? configuredPlacement
       : 'floating'
+  // Why: the status-bar Orb follows the "Agent Hub" menu item; unchecked means no status-bar Orb.
   const placement =
     preferredPlacement === 'dock' && preferences.placement === 'status-bar'
       ? 'statusBar'
-      : preferredPlacement
+      : preferredPlacement === 'statusBar' && preferences.placement !== 'status-bar'
+        ? 'hidden'
+        : preferredPlacement
   const statusRef = useRef<HTMLSpanElement>(null)
   const floatingRef = useRef<HTMLDivElement>(null)
   const orbAnchorRef =
@@ -88,8 +92,7 @@ export function useAgentHubOrbSurfaces(
     [panelOpen, chatVisible, hidden, belongsToCurrentOrb]
   )
   const inbox = agentHubInboxRequests(requests)
-  const pillVisible =
-    orb.state.kind !== 'off' && orb.state.kind !== 'idle' && !inbox.some(belongsToCurrentOrb)
+  const pillVisible = agentHubOrbPillShown(orb.state.kind) && !inbox.some(belongsToCurrentOrb)
   const counts = agentHubCounts(
     { ...lists, needsYou: hubLists.needsYou },
     inbox.filter((item) => !ownsRequest(item)).length,

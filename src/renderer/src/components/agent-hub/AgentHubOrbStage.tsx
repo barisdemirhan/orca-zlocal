@@ -25,6 +25,8 @@ export function AgentHubOrbStage({
   request,
   requestVisible,
   notice,
+  sphereLabel,
+  onSphereClick,
   ...sphere
 }: AgentHubOrbSphereProps & {
   embedded: boolean
@@ -35,8 +37,12 @@ export function AgentHubOrbStage({
   request: ReactNode
   requestVisible: boolean
   notice?: string
+  /** What a click on the sphere does, as words; the sphere is a plain image without it. */
+  sphereLabel?: string
+  onSphereClick?: () => void
 }): React.JSX.Element {
   const inlineRef = useRef<HTMLDivElement>(null)
+  const pressedAt = useRef<{ x: number; y: number } | null>(null)
   const [container] = useState(() => document.createElement('div'))
   const {
     geometry,
@@ -99,15 +105,51 @@ export function AgentHubOrbStage({
           >
             {request}
           </div>
-          <div className="agent-hub-orb-art" onPointerDown={(event) => beginGesture('move', event)}>
+          <div
+            className="agent-hub-orb-art"
+            onPointerDown={(event) => {
+              pressedAt.current = { x: event.clientX, y: event.clientY }
+              beginGesture('move', event)
+            }}
+            onClick={(event) => {
+              const pressed = pressedAt.current
+              pressedAt.current = null
+              // Why: a drag ends in a click on the captured element; only a press that stayed put acts.
+              const dragged =
+                pressed !== null &&
+                Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y) > 4
+              if (
+                embedded ||
+                !onSphereClick ||
+                dragged ||
+                (event.target instanceof Element &&
+                  event.target.closest('[data-agent-hub-orb-resize]'))
+              ) {
+                return
+              }
+              onSphereClick()
+            }}
+          >
             <div className="agent-hub-orb-art-sphere">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex size-full">
-                    <AgentHubOrbSphere {...sphere} />
-                  </span>
+                  {!embedded && onSphereClick && sphereLabel ? (
+                    <button
+                      type="button"
+                      aria-label={sphereLabel}
+                      className="inline-flex size-full cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    >
+                      <AgentHubOrbSphere {...sphere} />
+                    </button>
+                  ) : (
+                    <span className="inline-flex size-full">
+                      <AgentHubOrbSphere {...sphere} />
+                    </span>
+                  )}
                 </TooltipTrigger>
-                <TooltipContent>{sphere.label}</TooltipContent>
+                <TooltipContent>
+                  {!embedded && sphereLabel ? sphereLabel : sphere.label}
+                </TooltipContent>
               </Tooltip>
             </div>
             {!embedded && !compact ? (

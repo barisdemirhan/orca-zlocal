@@ -25,6 +25,7 @@ import {
   useAgentHubOrbSessionRequests
 } from './agent-hub-orb-request-owner'
 import { AgentHubOrbStage } from './AgentHubOrbStage'
+import { agentHubOrbSphereAction } from './agent-hub-orb-sphere-action'
 import { AgentHubOrbControls } from './AgentHubOrbControls'
 import { AgentHubOrbConversationHeader } from './AgentHubOrbConversationHeader'
 import { agentHubOrbPresentation } from './agent-hub-orb-presentation'
@@ -157,7 +158,42 @@ export function AgentHubOrbConversation({
     }
   }
   const settingsLabel = translate('auto.agentHub.orb.settings', 'Orb settings')
+  const dictate = () => {
+    void voice.prepareDictation().then((ready) => {
+      if (!ready) {
+        return
+      }
+      useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
+      requestAnimationFrame(toggleAgentHubOrb)
+    })
+  }
   const agent = conversation?.agent ?? tabAgent
+  const sphereAction = agentHubOrbSphereAction({
+    liveActive: live,
+    dictating,
+    canStartLive: agent === 'codex' && !busy && voice.capability !== 'checking' && voice.canStart,
+    canDictate: !busy && voice.connection !== 'stopping'
+  })
+  const sphereLabels = {
+    'end-live': translate('auto.agentHub.orb.endLiveVoice', 'End live voice'),
+    'finish-dictation': translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation'),
+    'start-live': translate('auto.agentHub.orb.startLiveVoice', 'Start live voice'),
+    dictate: translate('agentHub.card.dictate', 'Dictate'),
+    'show-chat': translate('auto.agentHub.orb.showConversation', 'Show conversation')
+  }
+  const onSphereClick = () => {
+    if (sphereAction === 'end-live') {
+      void voice.stopLive()
+    } else if (sphereAction === 'finish-dictation') {
+      dispatchDictationControl('stop')
+    } else if (sphereAction === 'start-live') {
+      void voice.startLive()
+    } else if (sphereAction === 'dictate') {
+      dictate()
+    } else {
+      useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
+    }
+  }
   return (
     <section
       aria-label={translate('auto.agentHub.orb.title', 'Orb')}
@@ -250,6 +286,8 @@ export function AgentHubOrbConversation({
         compact={compact}
         visible={visible && chatVisible}
         requestVisible={requestVisible}
+        sphereLabel={sphereLabels[sphereAction]}
+        onSphereClick={onSphereClick}
         notice={
           voice.reason ??
           (agent === 'codex' && voice.capability === 'unsupported'
@@ -288,15 +326,7 @@ export function AgentHubOrbConversation({
                 .switchToText()
                 .then(() => useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false }))
             }}
-            onDictate={() => {
-              void voice.prepareDictation().then((ready) => {
-                if (!ready) {
-                  return
-                }
-                useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
-                requestAnimationFrame(toggleAgentHubOrb)
-              })
-            }}
+            onDictate={dictate}
             onStopDictation={() => dispatchDictationControl('stop')}
             onCancelDictation={cancelDictation}
             onHistory={() => setView('history')}
