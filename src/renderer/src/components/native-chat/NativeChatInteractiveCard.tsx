@@ -36,6 +36,8 @@ export function NativeChatInteractiveCard({
   onAnswerInTerminal,
   shouldFocus = false,
   answerInputRef,
+  answerTextareaRef,
+  answerAccessory,
   layout,
   highlightRecommended,
   controlRef,
@@ -54,6 +56,9 @@ export function NativeChatInteractiveCard({
   /** Forwarded to the question card's free-text row so pane-level Paste keeps
    *  a target while the composer is unmounted. */
   answerInputRef?: React.RefObject<HTMLInputElement | null>
+  answerTextareaRef?: React.RefObject<HTMLTextAreaElement | null>
+  /** Forwarded to the question card's free-text row. */
+  answerAccessory?: React.ReactNode
   layout?: 'composer' | 'embedded'
   highlightRecommended?: boolean
   /** Number-key answers: option N of a question, or approval choice N. */
@@ -154,6 +159,8 @@ export function NativeChatInteractiveCard({
         isSubmitting={submitting}
         isCancelling={cancelling}
         answerInputRef={answerInputRef}
+        answerTextareaRef={answerTextareaRef}
+        answerAccessory={answerAccessory}
         layout={layout}
         highlightRecommended={highlightRecommended}
         controlRef={questionControlRef}

@@ -1,10 +1,16 @@
 import { ImeInput } from '@/lib/ime-text-field'
 import { Textarea } from '@/components/ui/textarea'
-import { useImperativeHandle, useRef, useState, type Ref, type RefObject } from 'react'
+import {
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+  type RefObject
+} from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
-import { Badge } from '@/components/ui/badge'
 import type { AskAnswerSelection } from '../../../../shared/native-chat-ask-answer'
 import type { AskPrompt } from '../../../../shared/native-chat/input/native-chat-ask-types'
 import { NativeChatPromptCollapseToggle } from './NativeChatPromptCollapse'
@@ -20,7 +26,7 @@ import {
   askTypedText,
   toggleAskOption
 } from '../../../../shared/native-chat-ask-card-rules'
-import { splitRecommendedOptionLabel } from './native-chat-option-label'
+import { NativeChatQuestionOptionRow } from './NativeChatQuestionOptionRow'
 
 export type NativeChatQuestionCardControl = {
   /** Number-key answer: picks an option; a single-select pick also advances or submits. */
@@ -45,6 +51,10 @@ export type NativeChatQuestionCardProps = {
   /** Exposes the free-text row so pane-level Paste can target it while the
    *  card replaces the composer. */
   answerInputRef?: RefObject<HTMLInputElement | null>
+  /** The multiline free-text field, for hosts whose answerAccessory targets it. */
+  answerTextareaRef?: RefObject<HTMLTextAreaElement | null>
+  /** Rendered inside the free-text row, after the field (e.g. a dictation mic). */
+  answerAccessory?: ReactNode
   /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
   layout?: 'composer' | 'embedded'
   /** Show a trailing "(Recommended)" in an option label as a badge instead. */
@@ -74,6 +84,8 @@ export function NativeChatQuestionCard({
   onCollapse,
   shouldFocus = false,
   answerInputRef,
+  answerTextareaRef,
+  answerAccessory,
   layout = 'composer',
   highlightRecommended = false,
   controlRef
@@ -311,9 +323,11 @@ export function NativeChatQuestionCard({
             </button>
           </div>
 
+          {/* Scroll only kicks in on long option lists; the sleek scrollbar rides
+              the card's right edge instead of crowding the choices. */}
           <div className="max-h-[50vh] divide-y divide-border/60 overflow-y-auto border-t border-border scrollbar-sleek">
             {q.options.map((opt, i) => (
-              <OptionRow
+              <NativeChatQuestionOptionRow
                 key={`${i}:${opt.label}`}
                 badge={String(i + 1)}
                 initialFocus={i === 0}
@@ -346,6 +360,7 @@ export function NativeChatQuestionCard({
                   {freeTextInput?.multiline ? (
                     <Textarea
                       data-native-chat-prompt-card-focus-target={fieldTakesFocus}
+                      ref={answerTextareaRef}
                       disabled={isSubmitting}
                       value={otherText[index]}
                       onChange={(e) => setOther(index, e.target.value)}
@@ -382,6 +397,7 @@ export function NativeChatQuestionCard({
                       )}
                     />
                   )}
+                  {answerAccessory}
                 </>
               ) : (
                 <span className="flex-1" />
@@ -412,75 +428,5 @@ export function NativeChatQuestionCard({
         ) : null}
       </div>
     </div>
-  )
-}
-
-function OptionRow({
-  badge,
-  initialFocus,
-  label: rawLabel,
-  highlightRecommended,
-  description,
-  selected,
-  disabled,
-  onSelect
-}: {
-  badge: string
-  initialFocus: boolean
-  label: string
-  highlightRecommended: boolean
-  description?: string
-  selected: boolean
-  disabled: boolean
-  onSelect: () => void
-}): React.JSX.Element {
-  const { label, recommended } = highlightRecommended
-    ? splitRecommendedOptionLabel(rawLabel)
-    : { label: rawLabel, recommended: false }
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onSelect}
-      aria-pressed={selected}
-      data-native-chat-prompt-card-focus-target={initialFocus || undefined}
-      className={cn(
-        'group/option flex w-full items-start gap-3 px-3.5 py-2.5 text-left text-foreground transition-colors focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none',
-        selected
-          ? 'bg-accent text-accent-foreground'
-          : 'hover:bg-accent hover:text-accent-foreground'
-      )}
-    >
-      <span
-        className={cn(
-          'flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-medium',
-          selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-        )}
-      >
-        {selected ? <Check className="size-3.5" strokeWidth={3} /> : badge}
-      </span>
-      <span className="min-w-0">
-        <span className="block break-words text-sm">
-          {label}
-          {recommended ? (
-            <Badge variant="secondary" className="ml-2 align-middle">
-              {translate('components.native-chat.question.recommended', 'Recommended')}
-            </Badge>
-          ) : null}
-        </span>
-        {description ? (
-          <span
-            className={cn(
-              'block break-words text-xs',
-              selected
-                ? 'text-accent-foreground'
-                : 'text-muted-foreground group-hover/option:text-accent-foreground group-focus/option:text-accent-foreground'
-            )}
-          >
-            {description}
-          </span>
-        ) : null}
-      </span>
-    </button>
   )
 }

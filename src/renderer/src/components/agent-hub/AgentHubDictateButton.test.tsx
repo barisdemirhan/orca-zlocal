@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { Profiler } from 'react'
+import { Profiler, createRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { getDefaultSettings, getDefaultVoiceSettings } from '../../../../shared/constants'
@@ -263,4 +263,18 @@ it('returns the running indicator to the app when the reply field goes away', ()
 
   expect(screen.getByTestId('dictation-indicator').textContent).toContain('Listening')
   expect(useAppStore.getState().dictationState).toBe('listening')
+})
+
+it('focuses the multiline answer field when the single-line one is not mounted', () => {
+  const inputRef = createRef<HTMLInputElement>()
+  const textareaRef = createRef<HTMLTextAreaElement>()
+  render(
+    <TooltipProvider>
+      <textarea ref={textareaRef} aria-label="Answer" />
+      <HubDictateButton compact targetInputRef={inputRef} targetTextareaRef={textareaRef} />
+    </TooltipProvider>
+  )
+  fireEvent.click(screen.getByRole('button', { name: /^Dictate/ }))
+  expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Answer' }))
+  expect(actions).toEqual(['toggle'])
 })

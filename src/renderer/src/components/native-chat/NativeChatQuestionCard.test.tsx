@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, createRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NativeChatQuestionCard } from './NativeChatQuestionCard'
@@ -618,5 +618,31 @@ describe('NativeChatQuestionCard', () => {
 
     expect(event.defaultPrevented).toBe(false)
     expect(onAnswer).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { field: 'input', multiline: false },
+    { field: 'textarea', multiline: true }
+  ])('puts the answer accessory in the $field answer row', ({ field, multiline }) => {
+    const inputRef = createRef<HTMLInputElement>()
+    const textareaRef = createRef<HTMLTextAreaElement>()
+    act(() => {
+      root.render(
+        <NativeChatQuestionCard
+          prompt={tabsOrSpaces}
+          onAnswer={() => {}}
+          onCancel={() => {}}
+          freeTextInputs={[{ multiline }]}
+          answerInputRef={inputRef}
+          answerTextareaRef={textareaRef}
+          answerAccessory={<button type="button">Mic</button>}
+        />
+      )
+    })
+    const answerField = container.querySelector(field)
+    const mic = [...container.querySelectorAll('button')].find((b) => b.textContent === 'Mic')
+    expect(answerField).not.toBeNull()
+    expect(mic?.parentElement).toBe(answerField?.parentElement)
+    expect(multiline ? textareaRef.current : inputRef.current).toBe(answerField)
   })
 })

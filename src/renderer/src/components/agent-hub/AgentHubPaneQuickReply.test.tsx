@@ -59,19 +59,24 @@ vi.mock('../native-chat/NativeChatInteractiveCard', async () => {
       card,
       onDismiss,
       controlRef,
-      answerInputRef
+      answerInputRef,
+      answerAccessory
     }: {
       card: { prompt: { questions: { question: string }[] } }
       onDismiss: () => void
       controlRef: React.Ref<{ chooseOption: (index: number) => boolean }>
       answerInputRef?: React.RefObject<HTMLInputElement | null>
+      answerAccessory?: React.ReactNode
     }) => {
       useImperativeHandle(controlRef, () => ({ chooseOption: fullCard.chooseOption }))
       fullCard.dismiss = onDismiss
       return (
         <div data-testid="full-card">
           {card.prompt.questions.map((question) => question.question).join(' / ')}
-          <input ref={answerInputRef} aria-label="Full card answer" />
+          <div data-testid="full-card-answer-row">
+            <input ref={answerInputRef} aria-label="Full card answer" />
+            {answerAccessory}
+          </div>
         </div>
       )
     }
@@ -241,6 +246,12 @@ it('dictates only into the full card answer, and refuses while that field is dis
   pane.terminal.focus()
   renderPortals(pane)
   const input = screen.getByRole<HTMLInputElement>('textbox', { name: 'Full card answer' })
+  // The mic belongs to the answer field's row, not a separate strip under the card.
+  expect(
+    screen
+      .getByTestId('full-card-answer-row')
+      .contains(screen.getByRole('button', { name: 'Dictate' }))
+  ).toBe(true)
   const onControl = vi.fn(() => expect(document.activeElement).toBe(input))
   document.addEventListener(DICTATION_CONTROL_EVENT, onControl)
   try {

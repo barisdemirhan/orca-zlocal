@@ -18,11 +18,14 @@ import { isDictationRunning } from './agent-hub-mirror-mic-state'
 export function HubDictateButton({
   compact = false,
   disabled = false,
-  targetInputRef
+  targetInputRef,
+  targetTextareaRef
 }: {
   compact?: boolean
   disabled?: boolean
   targetInputRef?: RefObject<HTMLInputElement | null>
+  /** Multiline field of the same row; used when the single-line one is not mounted. */
+  targetTextareaRef?: RefObject<HTMLTextAreaElement | null>
 }): React.JSX.Element | null {
   const voiceEnabled = useAppStore((s) => s.settings?.voice?.enabled === true)
   const micMode = useAppStore((s) => normalizeAgentHubMicMode(s.settings?.agentHubMicMode))
@@ -84,9 +87,10 @@ export function HubDictateButton({
         if (running) {
           return
         }
-        const input = targetInputRef
-          ? targetInputRef.current
-          : event.currentTarget.form?.querySelector('input')
+        const input =
+          targetInputRef || targetTextareaRef
+            ? (targetInputRef?.current ?? targetTextareaRef?.current)
+            : event.currentTarget.form?.querySelector('input')
         if (!input || input.disabled) {
           return
         }
