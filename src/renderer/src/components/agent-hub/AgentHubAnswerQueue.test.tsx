@@ -24,6 +24,7 @@ import { useAgentHubAnswerQueueState } from './agent-hub-answer-queue-store'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
 import { agentHubLocation } from './agent-hub-pane-target'
 import { agentHubAskRequest } from './agent-hub-request-test-fixtures'
+import { AGENT_HUB_CARD_KEY_GUARD_MS } from './use-agent-hub-quick-answer'
 
 const send = vi.hoisted(() => ({
   sendAnswer: vi.fn<NativeChatInteractiveSend['sendAnswer']>(() => ({ settleAfterMs: 800 })),
@@ -268,11 +269,13 @@ it('uses native number-key choices, advances only after delivery, and restores f
     ]
   })
   mount([first])
+  advance(AGENT_HUB_CARD_KEY_GUARD_MS)
   fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '2', repeat: true })
   expect(currentDialog().textContent).not.toContain('Pick the checks')
   fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '2' })
   expect(currentDialog().textContent).toContain('Pick the checks')
   expect(send.sendAnswer).not.toHaveBeenCalled()
+  advance(AGENT_HUB_CARD_KEY_GUARD_MS)
   fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '1' })
   fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '2' })
   fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: 'Enter' })
@@ -296,8 +299,34 @@ it('uses native number-key choices, advances only after delivery, and restores f
   input.remove()
 })
 
+it('ignores answer keys right after opening and after the card changes, but not Escape', () => {
+  mount([thread(), thread(PANE_KEY_2, 'Choose a region?', 2000)])
+  fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '1' })
+  advance(100)
+  expect(send.sendAnswer).not.toHaveBeenCalled()
+  advance(AGENT_HUB_CARD_KEY_GUARD_MS)
+  fireEvent.click(screen.getByRole('button', { name: 'Later' }))
+  advance()
+  expect(currentDialog().textContent).toContain('Choose a region?')
+  fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '1' })
+  advance(100)
+  expect(send.sendAnswer).not.toHaveBeenCalled()
+  advance(AGENT_HUB_CARD_KEY_GUARD_MS)
+  fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '1' })
+  advance(500)
+  expect(send.sendAnswer).toHaveBeenCalledOnce()
+})
+
+it('closes on Escape immediately after opening', () => {
+  mount([thread()])
+  fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: 'Escape' })
+  advance()
+  expect(screen.queryByRole('dialog')).toBeNull()
+})
+
 it('keeps a failed delivery available for retry', () => {
   mount([thread()])
+  advance(AGENT_HUB_CARD_KEY_GUARD_MS)
   fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '1' })
   advance(500)
   act(() => send.sendAnswer.mock.calls[0]?.[2]?.(false))
@@ -369,6 +398,7 @@ it('keeps a remote question and disables sending while its host is unverifiable'
   view.rerender(queueView([]))
   expect(currentDialog().textContent).toContain('Choose a release?')
   expect(currentDialog().textContent).toContain('unverifiable')
+  advance(AGENT_HUB_CARD_KEY_GUARD_MS)
   fireEvent.keyDown(document.activeElement ?? currentDialog(), { key: '1' })
   advance(500)
   expect(send.sendAnswer).not.toHaveBeenCalled()

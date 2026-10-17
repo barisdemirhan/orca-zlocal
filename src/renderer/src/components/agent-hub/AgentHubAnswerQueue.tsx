@@ -14,6 +14,7 @@ import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
+import { AGENT_HUB_CARD_KEY_GUARD_MS } from './use-agent-hub-quick-answer'
 import { useAgentHubAnswerQueueController } from './agent-hub-answer-queue-controller'
 import { useAgentHubAnswerQueueSource } from './agent-hub-answer-queue-source'
 import { isAnswerQueueEditable } from './agent-hub-answer-queue'
@@ -88,6 +89,13 @@ export function AgentHubAnswerQueue(props: Props): React.JSX.Element | null {
     }, 200)
     return () => clearTimeout(timer)
   }, [current, displayed, controller.open])
+  const shownAt = useRef(0)
+  const dialogOpen = controller.open && !inSettings
+  const shownId = displayed?.id
+  useEffect(() => {
+    // A just-opened or just-swapped card is unread, so a keystroke meant for the terminal must not answer it.
+    shownAt.current = Date.now()
+  }, [dialogOpen, shownId])
   if (!enabled) {
     return null
   }
@@ -121,7 +129,7 @@ export function AgentHubAnswerQueue(props: Props): React.JSX.Element | null {
         ) : null
       )}
       <Dialog
-        open={controller.open && !inSettings}
+        open={dialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             controller.close()
@@ -175,6 +183,9 @@ export function AgentHubAnswerQueue(props: Props): React.JSX.Element | null {
                 event.preventDefault()
                 event.stopPropagation()
                 controller.later()
+                return
+              }
+              if (Date.now() - shownAt.current < AGENT_HUB_CARD_KEY_GUARD_MS) {
                 return
               }
               if (
