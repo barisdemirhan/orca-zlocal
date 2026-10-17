@@ -14,7 +14,9 @@
       "tabs": "Tabs"
     },
     "mic": {
+      "dictate": "Dictate",
       "dictateAndImprove": "Dictate and improve",
+      "improve": "Dictate and improve",
       "mode": "Microphone action",
       "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available."
     },
@@ -37,6 +39,23 @@
     },
     "row": {
       "sendToHub": "Send to the hub"
+    },
+    "shortcuts": {
+      "arrangeMirrors": "Arrange mirrors",
+      "canvas": "Canvas",
+      "dictation": "Dictation",
+      "dockMirrors": "Park or restore mirrors",
+      "focusMirror": "Focus or unfocus the active canvas mirror",
+      "hub": "Hub",
+      "jumpToMirror": "Jump to the active mirror’s workspace",
+      "mirrors": "Mirrors",
+      "nextWaiting": "Jump to the next waiting agent",
+      "notSet": "Not set",
+      "popOut": "Pop out the active agent",
+      "set": "Set shortcut",
+      "setAction": "Set shortcut for {{action}}",
+      "toggle": "Open or close the hub",
+      "toggleCanvas": "Open or leave the canvas"
     },
     "tabToggle": {
       "off": "Pop this terminal out when you leave the tab",
@@ -102,6 +121,13 @@
     }
   },
   "auto": {
+    "agentHub": {
+      "orb": {
+        "comingLater": "Coming later",
+        "speakReplies": "Speak replies",
+        "talkShortcut": "Talk shortcut"
+      }
+    },
     "components": {
       "GitHubItemDialog": {
         "filesViewed_one": "{{viewed}} / {{count}} file viewed",
