@@ -8,7 +8,8 @@ import {
   Minimize2,
   MoreHorizontal,
   Square,
-  VolumeX
+  VolumeX,
+  X
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
@@ -206,18 +207,22 @@ export function AgentHubOrbControls({
           <DropdownMenuItem disabled={busy} onSelect={onSettings}>
             {translate('auto.agentHub.orb.settings', 'Orb settings')}
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={onCompact}>
-            <Minimize2 />
-            {compact
-              ? translate('auto.agentHub.orb.expand', 'Expand Orb')
-              : translate('auto.agentHub.orb.minimize', 'Minimize Orb')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onClose}>
-            {translate('auto.agentHub.orb.closeOrb', 'Close Orb')}
-          </DropdownMenuItem>
+          {!compact ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onCompact}>
+                <Minimize2 />
+                {translate('auto.agentHub.orb.minimize', 'Minimize Orb')}
+              </DropdownMenuItem>
+            </>
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+      {orbView ? (
+        <OrbControl label={translate('auto.agentHub.orb.closeOrb', 'Close Orb')} onClick={onClose}>
+          <X />
+        </OrbControl>
+      ) : null}
     </span>
   )
 }

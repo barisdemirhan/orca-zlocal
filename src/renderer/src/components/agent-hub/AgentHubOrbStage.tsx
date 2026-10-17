@@ -19,6 +19,7 @@ import './agent-hub-orb-stage.css'
 export function AgentHubOrbStage({
   embedded,
   compact,
+  live = false,
   visible,
   controls,
   request,
@@ -28,6 +29,7 @@ export function AgentHubOrbStage({
 }: AgentHubOrbSphereProps & {
   embedded: boolean
   compact: boolean
+  live?: boolean
   visible: boolean
   controls: ReactNode
   request: ReactNode
@@ -44,7 +46,7 @@ export function AgentHubOrbStage({
     requestRef,
     beginGesture,
     resizeKey
-  } = useAgentHubOrbGeometry({ embedded, compact, requestVisible })
+  } = useAgentHubOrbGeometry({ embedded, compact, live, requestVisible })
   useLayoutEffect(() => {
     const target = embedded ? inlineRef.current : document.body
     if (target && container.parentElement !== target) {
@@ -76,51 +78,6 @@ export function AgentHubOrbStage({
           style={style}
           hidden={!visible}
         >
-          <div className="agent-hub-orb-art" onPointerDown={(event) => beginGesture('move', event)}>
-            <div className="agent-hub-orb-art-sphere">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex size-full">
-                    <AgentHubOrbSphere {...sphere} />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{sphere.label}</TooltipContent>
-              </Tooltip>
-            </div>
-            <span className="agent-hub-orb-resize" data-agent-hub-orb-resize>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    className="cursor-nwse-resize touch-none"
-                    role="slider"
-                    aria-label={label}
-                    aria-valuemin={geometry.minimum}
-                    aria-valuemax={geometry.maximum}
-                    aria-valuenow={geometry.diameter}
-                    aria-valuetext={translate('auto.agentHub.orb.sizePixels', '{{value0}} pixels', {
-                      value0: geometry.diameter
-                    })}
-                    onPointerDown={(event) => beginGesture('resize', event)}
-                    onKeyDown={resizeKey}
-                  >
-                    <MoveDiagonal2 aria-hidden />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{label}</TooltipContent>
-              </Tooltip>
-            </span>
-          </div>
-          <div ref={controlsRef} data-agent-hub-orb-controls className="agent-hub-orb-controls">
-            {controls}
-          </div>
-          {notice ? (
-            <p role="status" className="max-w-full pt-2 text-center text-xs text-muted-foreground">
-              {notice}
-            </p>
-          ) : null}
           <div
             ref={bindRequest}
             data-agent-hub-orb-request-host
@@ -141,6 +98,62 @@ export function AgentHubOrbStage({
             }
           >
             {request}
+          </div>
+          <div className="agent-hub-orb-art" onPointerDown={(event) => beginGesture('move', event)}>
+            <div className="agent-hub-orb-art-sphere">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex size-full">
+                    <AgentHubOrbSphere {...sphere} />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{sphere.label}</TooltipContent>
+              </Tooltip>
+            </div>
+            {!embedded && !compact ? (
+              <span className="agent-hub-orb-resize" data-agent-hub-orb-resize>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon-sm"
+                      className="cursor-nwse-resize touch-none"
+                      role="slider"
+                      aria-label={label}
+                      aria-valuemin={geometry.minimum}
+                      aria-valuemax={geometry.maximum}
+                      aria-valuenow={geometry.diameter}
+                      aria-valuetext={translate(
+                        'auto.agentHub.orb.sizePixels',
+                        '{{value0}} pixels',
+                        {
+                          value0: geometry.diameter
+                        }
+                      )}
+                      onPointerDown={(event) => beginGesture('resize', event)}
+                      onKeyDown={resizeKey}
+                    >
+                      <MoveDiagonal2 aria-hidden />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{label}</TooltipContent>
+                </Tooltip>
+              </span>
+            ) : null}
+          </div>
+          <div data-agent-hub-orb-controls className="min-w-0 max-w-xs">
+            <div ref={controlsRef} className="agent-hub-orb-controls">
+              {controls}
+            </div>
+            {notice ? (
+              <p
+                role="status"
+                className="mt-1 max-w-full rounded-md bg-muted px-2 py-1 text-center text-xs text-muted-foreground"
+              >
+                {notice}
+              </p>
+            ) : null}
           </div>
         </div>,
         container

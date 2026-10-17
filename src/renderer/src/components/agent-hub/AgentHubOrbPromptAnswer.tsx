@@ -40,8 +40,27 @@ export function AgentHubOrbPromptAnswer({
       ? !isNewerApprovalSubject(body.subject)
       : !body.questions && !body.freeTextInput
   const options = simple ? body.options : []
-  const allowIndex = options.findIndex((option) => option.permissionKind === 'allow_once')
-  const denyIndex = options.findIndex((option) => option.permissionKind === 'reject_once')
+  const typedAllowIndex = options.findIndex((option) => option.permissionKind === 'allow_once')
+  const typedDenyIndex = options.findIndex((option) => option.permissionKind === 'reject_once')
+  const allowIndex =
+    typedAllowIndex !== -1
+      ? typedAllowIndex
+      : options.findIndex(
+          (option) =>
+            option.permissionKind === undefined &&
+            /^(allow|approve|yes)(?:[ ,]+(?:once|this time|just this once))?[.!]?$/i.test(
+              option.label.trim()
+            )
+        )
+  const denyIndex =
+    typedDenyIndex !== -1
+      ? typedDenyIndex
+      : options.findIndex(
+          (option) =>
+            option.permissionKind === undefined &&
+            (/^(deny|reject|decline|cancel|abort)([-_]|$)/i.test(option.id) ||
+              /^(deny|reject|decline|cancel|abort|no)\b/i.test(option.label.trim()))
+        )
   const submit = (action: () => Promise<unknown>, index: number | null): boolean => {
     if (sending.current) {
       return false

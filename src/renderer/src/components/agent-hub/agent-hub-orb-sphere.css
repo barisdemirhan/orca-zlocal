@@ -159,7 +159,7 @@
   --agent-hub-orb-tone: var(--agent-orb-listening);
 }
 .agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking'] {
-  --agent-hub-orb-tone: var(--primary);
+  --agent-hub-orb-tone: var(--muted-foreground);
 }
 .agent-hub-orb-sphere[data-agent-hub-orb-phase='speaking'] {
   --agent-hub-orb-tone: var(--foreground);

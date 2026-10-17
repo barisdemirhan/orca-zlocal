@@ -25,10 +25,12 @@ type OrbGesture = {
 export function useAgentHubOrbGeometry({
   embedded,
   compact,
+  live = false,
   requestVisible
 }: {
   embedded: boolean
   compact: boolean
+  live?: boolean
   requestVisible: boolean
 }) {
   const preferredDiameter = useAgentHubOrbPanel((s) => s.preferredDiameter)
@@ -67,13 +69,13 @@ export function useAgentHubOrbGeometry({
   })
   const inlineMaximum = Math.max(
     32,
-    Math.min(128, measurements.inlineWidth - measurements.controlsWidth - 48)
+    Math.min(live ? 128 : 40, measurements.inlineWidth - measurements.controlsWidth - 48)
   )
   const geometry = embedded
     ? {
         ...layout.orb,
         diameter: Math.min(preferredDiameter, inlineMaximum),
-        minimum: Math.min(128, inlineMaximum),
+        minimum: inlineMaximum,
         maximum: inlineMaximum
       }
     : layout.orb
@@ -153,7 +155,7 @@ export function useAgentHubOrbGeometry({
       if (cancel) {
         useAgentHubOrbPanel.setState({
           stagePosition: active.position,
-          preferredDiameter: active.preferredDiameter
+          ...(active.mode === 'resize' ? { preferredDiameter: active.preferredDiameter } : {})
         })
       }
       if (active.element.hasPointerCapture(active.pointerId)) {
@@ -213,7 +215,7 @@ export function useAgentHubOrbGeometry({
       document.removeEventListener('keydown', escape, true)
       cancel()
     }
-  }, [])
+  }, [embedded, compact])
 
   return {
     geometry,
@@ -225,7 +227,8 @@ export function useAgentHubOrbGeometry({
       if (
         event.button !== 0 ||
         gesture.current ||
-        (embedded && mode === 'move') ||
+        embedded ||
+        (compact && mode === 'resize') ||
         !claimAgentHubOrbGesture(gesture, event.pointerId)
       ) {
         return
@@ -246,7 +249,7 @@ export function useAgentHubOrbGeometry({
       event.currentTarget.setPointerCapture(event.pointerId)
     },
     resizeKey: (event: React.KeyboardEvent<HTMLElement>): void => {
-      if (gesture.current) {
+      if (embedded || compact || gesture.current) {
         return
       }
       const step = event.shiftKey ? 24 : 8

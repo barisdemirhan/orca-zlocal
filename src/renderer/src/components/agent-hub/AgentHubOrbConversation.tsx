@@ -57,6 +57,10 @@ export function AgentHubOrbConversation({
     (s) => s.nativeRequestVisible || s.nativeRequestPending
   )
   const showChat = chatVisible && presentation === 'chat' && !compact
+  const live =
+    voice.connection === 'connecting' ||
+    voice.connection === 'live' ||
+    voice.connection === 'stopping'
   const dictation = useAgentHubDictationSession()
   const dictationState = useAppStore((s) => s.dictationState)
   const dictating = Boolean(
@@ -148,25 +152,27 @@ export function AgentHubOrbConversation({
       aria-label={translate('auto.agentHub.orb.title', 'Orb')}
       className="flex h-[min(640px,calc(100vh-96px))] min-h-0 flex-col"
     >
-      <AgentHubOrbConversationHeader
-        history={history}
-        settingsView={showSettings}
-        chatVisible={chatVisible}
-        busy={busy}
-        agentLabel={
-          agent
-            ? `${structuredAgentLabel(agent)} · ${conversation?.model ?? translate('auto.agentHub.orb.agentDefault', 'Agent default')}`
-            : null
-        }
-        onBack={() => setView('chat')}
-        onHistory={() => setView('history')}
-        onSettings={() => setView('settings')}
-        onNew={() => {
-          void reopen()
-        }}
-        onMinimize={() => useAgentHubOrbPanel.setState({ compact: true })}
-        onClose={closeAgentHubOrbPanel}
-      />
+      {showChat || !chatVisible ? (
+        <AgentHubOrbConversationHeader
+          history={history}
+          settingsView={showSettings}
+          chatVisible={chatVisible}
+          busy={busy}
+          agentLabel={
+            agent
+              ? `${structuredAgentLabel(agent)} · ${conversation?.model ?? translate('auto.agentHub.orb.agentDefault', 'Agent default')}`
+              : null
+          }
+          onBack={() => setView('chat')}
+          onHistory={() => setView('history')}
+          onSettings={() => setView('settings')}
+          onNew={() => {
+            void reopen()
+          }}
+          onMinimize={() => useAgentHubOrbPanel.setState({ compact: true })}
+          onClose={closeAgentHubOrbPanel}
+        />
+      ) : null}
       {error || failure ? (
         <div
           role="status"
@@ -220,10 +226,16 @@ export function AgentHubOrbConversation({
           <AgentHubSettingsOrbSection settings={settings} updateSettings={updateSettings} />
         </section>
       ) : null}
+      <div
+        ref={setAgentHubOrbDestination}
+        data-agent-hub-orb-chat-tab-id={tabId}
+        className={showChat ? 'relative min-h-0 flex-1 overflow-hidden' : 'hidden'}
+      />
       <AgentHubOrbStage
         {...visual}
         inputMuted={voice.input === 'muted'}
         embedded={showChat}
+        live={live}
         compact={compact}
         visible={visible && chatVisible}
         requestVisible={requestVisible}
@@ -284,11 +296,6 @@ export function AgentHubOrbConversation({
             onClose={closeAgentHubOrbPanel}
           />
         }
-      />
-      <div
-        ref={setAgentHubOrbDestination}
-        data-agent-hub-orb-chat-tab-id={tabId}
-        className={showChat ? 'relative min-h-0 flex-1 overflow-hidden' : 'hidden'}
       />
     </section>
   )

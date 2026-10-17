@@ -7,6 +7,7 @@ import {
 import { clampAgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { useViewportSize } from './use-viewport-size'
 import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
+import { getDefaultFloatingTerminalTriggerPosition } from '../floating-terminal/floating-terminal-trigger-position'
 
 const ORB_SIZE = { width: 48, height: 48 }
 type Position = { x: number; y: number }
@@ -40,7 +41,10 @@ export function useAgentHubOrbPosition() {
     clamp(
       saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)
         ? saved
-        : { x: window.innerWidth - 72, y: window.innerHeight - 104 }
+        : {
+            x: getDefaultFloatingTerminalTriggerPosition().left - ORB_SIZE.width - 12,
+            y: window.innerHeight - 104
+          }
     )
   )
   const drag = useRef<Drag | null>(null)

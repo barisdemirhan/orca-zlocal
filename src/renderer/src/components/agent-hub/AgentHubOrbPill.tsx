@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useNow } from '@/hooks/use-now'
 import { useAppStore } from '@/store'
@@ -15,14 +16,26 @@ import { placeBesideAnchor, type AgentHubAlertSide } from './AgentHubAlertStack'
 import { useAnchorBinding } from './use-anchor-binding'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 
-function Listening(): React.JSX.Element {
+function Elapsed(): React.JSX.Element {
   const [startedAt] = useState(Date.now)
+  const elapsed = Math.max(0, Math.floor((useNow(1000) - startedAt) / 1000))
+  return (
+    <span
+      role="timer"
+      aria-live="off"
+      className="font-mono text-xs text-muted-foreground tabular-nums"
+    >
+      {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}
+    </span>
+  )
+}
+
+function Listening(): React.JSX.Element {
   const phase = useAppStore((s) =>
     s.dictationState === 'starting' || s.dictationState === 'listening'
       ? s.dictationState
       : 'finishing'
   )
-  const elapsed = Math.max(0, Math.floor((useNow(1000) - startedAt) / 1000))
   useEffect(() => {
     const cancel = (event: KeyboardEvent): void => {
       if (
@@ -51,9 +64,7 @@ function Listening(): React.JSX.Element {
         stopActionId="agentHub.toggleOrb"
         stopHint={translate('auto.agentHub.orb.toSend', 'to send')}
       />
-      <span role="timer" className="font-mono text-xs text-muted-foreground tabular-nums">
-        {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}
-      </span>
+      <Elapsed />
     </>
   )
 }
@@ -72,61 +83,77 @@ export function AgentHubOrbPillContent({
   if (state.kind === 'idle' || state.kind === 'off') {
     return null
   }
+  const label =
+    state.kind === 'working'
+      ? translate('auto.agentHub.orb.working', 'Working')
+      : state.kind === 'done'
+        ? translate('auto.agentHub.orb.done', 'Completed')
+        : state.kind === 'listening'
+          ? translate('auto.agentHub.orb.listening', 'Listening')
+          : translate('auto.agentHub.orb.needsAnswer', 'Waiting for your answer')
+  const tooltip =
+    state.kind === 'working'
+      ? state.command
+        ? `${label} · ${state.command}`
+        : label
+      : state.kind === 'done'
+        ? state.summary
+        : undefined
   return (
-    <div
-      data-agent-hub-orb-pill={state.kind}
-      data-agent-hub-alert-stack
-      role="status"
-      className="flex max-w-[min(32rem,calc(100vw-1rem))] flex-wrap items-center gap-2 rounded-xl border border-border bg-popover px-3 py-2 text-popover-foreground shadow-floating data-[agent-hub-orb-pill=working]:w-80"
-    >
-      <AgentHubOrbMark state={state} />
-      {state.kind === 'listening' ? (
-        <Listening />
-      ) : state.kind === 'working' ? (
-        <button
-          type="button"
-          className="min-w-0 flex-1 truncate text-left text-xs"
-          onClick={onOpen}
+    <Tooltip open={tooltip ? undefined : false}>
+      <TooltipTrigger asChild>
+        <div
+          data-agent-hub-orb-pill={state.kind}
+          data-agent-hub-alert-stack
+          className="flex max-w-[min(32rem,calc(100vw-1rem))] flex-wrap items-center gap-2 rounded-xl border border-border bg-popover px-3 py-2 text-popover-foreground shadow-floating"
         >
-          {translate('auto.agentHub.orb.working', 'Working')}
-          {state.command ? (
-            <>
-              {' '}
-              · <span className="font-mono">{state.command}</span>
-            </>
+          <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+            {label}
+          </span>
+          <AgentHubOrbMark state={state} />
+          {state.kind === 'listening' ? (
+            <Listening />
+          ) : state.kind === 'working' ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              aria-label={translate('auto.agentHub.orb.showConversation', 'Show conversation')}
+              onClick={onOpen}
+            >
+              <Elapsed key={sessionId} />
+            </Button>
+          ) : state.kind === 'done' ? (
+            <Button type="button" variant="ghost" size="xs" onClick={onOpen}>
+              {translate('auto.agentHub.orb.open', 'Open')}
+            </Button>
+          ) : state.kind === 'needsYou' ? (
+            state.request.kind === 'request' ? (
+              <AgentHubOrbRequestAnswer
+                key={state.request.item.request.requestId}
+                attention={state.request}
+                onOpen={onOpen}
+              />
+            ) : state.request.kind === 'prompt' ? (
+              <AgentHubOrbPromptAnswer
+                key={`${sessionId}:${state.request.item.itemId}:${state.request.item.revision}`}
+                attention={state.request}
+                sessionId={sessionId}
+                readState={readState}
+                onOpen={onOpen}
+              />
+            ) : (
+              <AgentHubOrbTerminalAnswer
+                key={state.request.thread.paneKey}
+                attention={state.request}
+                onOpen={onOpen}
+              />
+            )
           ) : null}
-        </button>
-      ) : state.kind === 'done' ? (
-        <>
-          <span className="min-w-0 flex-1 truncate text-sm">{state.summary}</span>
-          <Button type="button" variant="ghost" size="xs" onClick={onOpen}>
-            {translate('auto.agentHub.orb.open', 'Open')}
-          </Button>
-        </>
-      ) : state.kind === 'needsYou' ? (
-        state.request.kind === 'request' ? (
-          <AgentHubOrbRequestAnswer
-            key={state.request.item.request.requestId}
-            attention={state.request}
-            onOpen={onOpen}
-          />
-        ) : state.request.kind === 'prompt' ? (
-          <AgentHubOrbPromptAnswer
-            key={`${sessionId}:${state.request.item.itemId}:${state.request.item.revision}`}
-            attention={state.request}
-            sessionId={sessionId}
-            readState={readState}
-            onOpen={onOpen}
-          />
-        ) : (
-          <AgentHubOrbTerminalAnswer
-            key={state.request.thread.paneKey}
-            attention={state.request}
-            onOpen={onOpen}
-          />
-        )
-      ) : null}
-    </div>
+        </div>
+      </TooltipTrigger>
+      {tooltip ? <TooltipContent>{tooltip}</TooltipContent> : null}
+    </Tooltip>
   )
 }
 
