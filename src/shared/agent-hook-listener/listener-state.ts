@@ -62,7 +62,10 @@ export type HookListenerState = {
   /** Lead session_id changes retire replaced-conversation claims even without SessionStart (/clear/relaunch/resume). */
   claudeSessionOwnerByPaneKey: Map<string, string>
   claudeHumanPromptContextByPaneKey: Map<string, ClaudeHumanPromptContext>
-  geminiPermissionByPaneKey: Map<string, { sessionId?: string; toolCallId?: string }>
+  geminiPermissionByPaneKey: Map<
+    string,
+    { sessionId?: string; toolCallId?: string; toolName?: string }
+  >
   /** Live thread-spawn children per Codex pane. */
   codexSubagentRosterByPaneKey: Map<string, CodexSubagentRoster>
   /** Incremental parent/child rollout cursors for Codex collaboration v2. */

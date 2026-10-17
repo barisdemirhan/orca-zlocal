@@ -135,7 +135,7 @@ describe('Codex approval ownership', () => {
     expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
   })
 
-  it('does not hide an approval when its newer policy lies outside the bounded lookback', () => {
+  it('retains the known reviewer when no policy is found within the bounded lookback', () => {
     const transcriptPath = writeRollout({ reviewer: 'auto_review' })
     expect(permissionRequest(transcriptPath)?.payload.state).toBe('working')
     appendRollout(transcriptPath, { type: 'turn_context', payload: { approvals_reviewer: 'user' } })
@@ -143,7 +143,18 @@ describe('Codex approval ownership', () => {
       type: 'response_item',
       payload: { output: 'x'.repeat(8 * 1024 * 1024 + 1) }
     })
-    expect(permissionRequest(transcriptPath)?.payload.state).toBe('waiting')
+    expect(permissionRequest(transcriptPath)?.payload.state).toBe('working')
+  })
+
+  it('keeps auto-reviewed approvals working after a large burst with no reviewer update', () => {
+    const transcriptPath = writeRollout({ reviewer: 'auto_review' })
+    expect(permissionRequest(transcriptPath)?.payload.state).toBe('working')
+    appendRollout(transcriptPath, {
+      type: 'response_item',
+      payload: { output: 'x'.repeat(9 * 1024 * 1024) }
+    })
+    expect(permissionRequest(transcriptPath)?.payload.state).toBe('working')
+    expect(permissionRequest(transcriptPath)?.payload.interactivePrompt).toBeUndefined()
   })
 
   it('reconciles reviewer ownership before a child-first auto-reviewed approval', () => {

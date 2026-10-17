@@ -15,6 +15,7 @@ export type ClaudeHumanPromptContext = {
   sessionId?: string
   activeToolIds: Set<string>
   elicitation?: { serverName: string; elicitationId?: string }
+  permissionWithoutActiveTool?: boolean
 }
 
 /** Only visible notifications claim a wait; Elicitation hooks may be answered by another hook. */
@@ -118,6 +119,8 @@ export function normalizeClaudeHumanNotification(
     }
     const activeTool =
       context.activeToolIds.size === 1 ? context.activeToolIds.values().next().value : undefined
+    context.permissionWithoutActiveTool =
+      kind === 'permission_prompt' && context.activeToolIds.size === 0
     setClaudeMainAgentTurnState(state, paneKey, {
       state: 'waiting',
       ...(agentId ? { waitingAgentId: agentId } : {}),
@@ -167,17 +170,23 @@ export function normalizeClaudeHumanNotification(
     if (eventName === 'PreToolUse' && payload.tool_name === 'AskUserQuestion') {
       return undefined
     }
-    if (
-      !ownsWait ||
-      !isPostTool ||
-      !lead?.waitingToolUseId ||
-      toolUseId !== lead.waitingToolUseId
-    ) {
+    const completedWait =
+      isPostTool &&
+      (wait.kind === 'elicitation_dialog'
+        ? !wait.serverName
+        : lead?.waitingToolUseId !== undefined && toolUseId === lead.waitingToolUseId)
+    const resumedUncorrelatedPermission =
+      wait.kind === 'permission_prompt' &&
+      context.permissionWithoutActiveTool &&
+      (isPreTool || isPostTool)
+    if (!ownsWait || (!completedWait && !resumedUncorrelatedPermission)) {
       return buildClaudeCachedLeadStatusPayload(state, eventName, paneKey, payload)
     }
   } else {
     return undefined
   }
+  context.elicitation = undefined
+  context.permissionWithoutActiveTool = undefined
   setClaudeMainAgentTurnState(state, paneKey, lead?.stateBeforeWait ?? { state: 'working' })
   resolveToolState(state, paneKey, clearActiveToolFieldsUpdate(), { resetOnNewTurn: false })
   return buildClaudeCachedLeadStatusPayload(state, eventName, paneKey, payload)

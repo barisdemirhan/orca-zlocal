@@ -23,9 +23,17 @@ export function normalizeGeminiEvent(
     if (hookPayload.notification_type !== 'ToolPermission' || (owner && sessionId !== owner)) {
       return null
     }
+    const details = hookPayload.details
+    const detailToolName =
+      typeof details === 'object' && details !== null && 'tool_name' in details
+        ? details.tool_name
+        : undefined
     state.geminiPermissionByPaneKey.set(paneKey, {
       sessionId,
-      toolCallId: readString(hookPayload, 'tool_call_id')
+      toolCallId: readString(hookPayload, 'tool_call_id'),
+      toolName:
+        readString(hookPayload, 'tool_name') ??
+        (typeof detailToolName === 'string' ? detailToolName : undefined)
     })
   } else if (eventName === 'BeforeAgent' || eventName === 'AfterAgent') {
     const pending = state.geminiPermissionByPaneKey.get(paneKey)
@@ -36,20 +44,24 @@ export function normalizeGeminiEvent(
   } else {
     const pending = state.geminiPermissionByPaneKey.get(paneKey)
     if (pending) {
+      const toolName = readString(hookPayload, 'tool_name') ?? readString(hookPayload, 'name')
+      const toolCallId = readString(hookPayload, 'tool_call_id')
       if (
-        (eventName === 'AfterTool' || eventName === 'PostToolUse') &&
-        pending.toolCallId &&
-        pending.toolCallId === readString(hookPayload, 'tool_call_id') &&
-        pending.sessionId === sessionId
+        (eventName === 'BeforeTool' ||
+          eventName === 'AfterTool' ||
+          eventName === 'PreToolUse' ||
+          eventName === 'PostToolUse') &&
+        pending.sessionId === sessionId &&
+        (!pending.toolName || !toolName || pending.toolName === toolName) &&
+        (!pending.toolCallId || !toolCallId || pending.toolCallId === toolCallId)
       ) {
         state.geminiPermissionByPaneKey.delete(paneKey)
       } else {
-        // Tool names alone cannot identify which parallel permission was answered.
         return null
       }
     }
   }
-  // Why: Gemini CLI's native pre-tool event is BeforeTool; PreToolUse/PostToolUse still accepted for legacy Antigravity-compatible payloads.
+  // Gemini uses BeforeTool/AfterTool; legacy hooks use PreToolUse/PostToolUse.
   const stateName =
     eventName === 'Notification'
       ? 'waiting'
