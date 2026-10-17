@@ -6,30 +6,36 @@ import { useAppStore } from '@/store'
 import { agentHubActiveTarget } from './agent-hub-active-target'
 import { registerAgentHubCommands, type AgentHubCommands } from './agent-hub-commands'
 import { popOutAgentHubTab } from './agent-hub-tab-popout'
-import { useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { readAgentHubMirrors, toggleAgentHubMirrorFocus } from './agent-hub-mirror-store'
+import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 export function useAgentHubMirrorCommands(
   commands: Omit<AgentHubCommands, 'focusMirror' | 'popOut' | 'jumpToMirror'>,
   jump: (target: AgentHubPaneTarget) => void
 ): void {
-  const canvasOpen = useAgentHubCanvasOpen()
   useEffect(
     () =>
       registerAgentHubCommands({
         ...commands,
         nextMirrorTab: () => cycleAgentHubMirrorTab(1),
         previousMirrorTab: () => cycleAgentHubMirrorTab(-1),
-        focusMirror:
-          canvasOpen && commands.arrangeMirrors
-            ? () => {
-                const front = readAgentHubMirrors().windows.at(-1)
-                if (front) {
-                  toggleAgentHubMirrorFocus(front.id)
-                }
+        // Mirrors focus over the workspace as well as the canvas, so the chord follows any open mirror.
+        focusMirror: commands.arrangeMirrors
+          ? () => {
+              const id = readAgentHubMirrorFocus() ?? readAgentHubMirrors().windows.at(-1)?.id
+              if (!id) {
+                return
               }
-            : null,
+              toggleAgentHubMirrorFocus(id)
+              if (readAgentHubMirrorFocus() === id) {
+                document
+                  .querySelector(`[data-agent-hub-mirror-key="${CSS.escape(id)}"]`)
+                  ?.querySelector<HTMLElement>('.xterm-helper-textarea')
+                  ?.focus()
+              }
+            }
+          : null,
         popOut: () => {
           const target = agentHubActiveTarget(useAppStore.getState())
           if (target) {
@@ -47,6 +53,6 @@ export function useAgentHubMirrorCommands(
             }
           : null
       }),
-    [commands, canvasOpen, jump]
+    [commands, jump]
   )
 }

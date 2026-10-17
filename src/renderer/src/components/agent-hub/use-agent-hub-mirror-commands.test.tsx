@@ -30,7 +30,7 @@ afterEach(() => {
   resetAgentHubMirrorsForTest()
 })
 
-it('focuses/unfocuses the front canvas mirror and falls through outside the canvas', () => {
+it.each([false, true])('focuses/unfocuses the front mirror with canvas open=%s', (canvas) => {
   const worktree = makeWorktree()
   const target = {
     worktree,
@@ -54,8 +54,9 @@ it('focuses/unfocuses the front canvas mirror and falls through outside the canv
     return null
   }
   render(<Hub />)
-  expect(getAgentHubCommands()?.focusMirror).toBeNull()
-  act(openAgentHubCanvas)
+  if (canvas) {
+    act(openAgentHubCanvas)
+  }
   act(() => getAgentHubCommands()?.focusMirror?.())
   expect(readAgentHubMirrorFocus()).toBe(mirrorWindowIdFor('tab-1:leaf'))
   act(() => getAgentHubCommands()?.focusMirror?.())
