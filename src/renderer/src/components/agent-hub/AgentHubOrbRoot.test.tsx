@@ -71,6 +71,7 @@ vi.mock('./AgentHubShortcutsDialog', () => ({ AgentHubShortcutsDialog: () => nul
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimBackdrop: () => null }))
 vi.mock('./AgentHubMirrorFocusShade', () => ({ AgentHubWorkspaceFocusShade: () => null }))
 vi.mock('./AgentHubPeek', () => ({ AgentHubPeek: () => null }))
+vi.mock('./AgentHubAnswerQueue', () => ({ AgentHubAnswerQueue: () => null }))
 vi.mock('./AgentHubDictationPaneTag', () => ({ AgentHubDictationPaneTag: () => null }))
 vi.mock('./AgentHubDock', () => ({
   AgentHubDock: ({
