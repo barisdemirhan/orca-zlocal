@@ -95,7 +95,8 @@ const NOT_DONE: Record<AgentSessionWriteKind, AgentSessionWriteNoticeSentence> =
   clear: 'notDoneCommand',
   compact: 'notDoneCommand',
   goal: 'notDoneGoalChangeIncomplete',
-  'queued-edit': 'notDoneQueuedEdit'
+  'queued-edit': 'notDoneQueuedEdit',
+  voice: 'notDoneVoice'
 }
 
 function codeOf(failure: AgentSessionWriteFailure): string {
