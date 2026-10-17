@@ -260,7 +260,7 @@ export function createAgentHubOrbSessionManager(
 ): AgentHubOrbSessionManager {
   const manager = new AgentHubOrbSessionManager(
     runtime,
-    () => store?.getSettings() ?? {},
+    () => store?.getSettings?.() ?? {},
     (cwd) => {
       if (!store?.updateSettings) {
         throw new Error('runtime_unavailable')
@@ -268,7 +268,8 @@ export function createAgentHubOrbSessionManager(
       store.updateSettings({ agentHubOrbCwd: cwd }, { notifyListeners: true })
     }
   )
-  let permission = normalizeAgentHubOrbSettings(store?.getSettings() ?? {}).permission
+  // Why: partial stores (tests, early boot) have no getSettings.
+  let permission = normalizeAgentHubOrbSettings(store?.getSettings?.() ?? {}).permission
   let enabled = runtime.isAgentHubEnabled()
   store?.onSettingsChanged?.(() => {
     const next = normalizeAgentHubOrbSettings(store.getSettings()).permission

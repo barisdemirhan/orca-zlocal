@@ -6,7 +6,7 @@ import { HEADLESS_RUNTIME_WINDOW_ID } from '../../shared/runtime-session-contrac
 import { parsePaneKey } from '../../shared/stable-pane-id'
 import { parseWorkspaceKey } from '../../shared/workspace-scope'
 import { getRepoIdFromWorktreeId } from '../../shared/worktree/id'
-import { OrcaRuntimeWithMigrationCatalog } from './orca-runtime-migration-catalog'
+import { OrcaRuntimeWithAgentHub } from './orca-runtime-agent-hub'
 import { getRuntimeDesktopSurface } from './runtime-desktop-surface'
 import type { AgentStatusStoreView } from './sidebar-inputs/workspace-activity-facts-producer'
 import { subscribeHookStatusTitles } from './terminal/layout/hook-status-title-subscription'
@@ -15,8 +15,11 @@ import {
   type TerminalAgentWorkspaceLabels
 } from './terminal-agent-phone-push'
 
-/** All hosts/builds own transition detection and windowless phone pushes. */
-export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithMigrationCatalog {
+/**
+ * Owns the runtime's agent transition detector, and the phone push it drives while no window
+ * runs here. Both run on every host and in every build.
+ */
+export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithAgentHub {
   readonly agentTransitions = new AgentTransitionDetector({
     resolveTabWorktreeId: (tabId) => this.tabs.get(tabId)?.worktreeId,
     subscribeToPtyExit: (ptyId, listener) => this.subscribeToPtyExit(ptyId, listener),
@@ -62,7 +65,7 @@ export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithMig
     this.connectorCloud = cloud
   }
 
-  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithMigrationCatalog>) {
+  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithAgentHub>) {
     super(...args)
     this.agentTransitions.subscribe((change) => this.terminalAgentPhonePush.observe(change))
   }
