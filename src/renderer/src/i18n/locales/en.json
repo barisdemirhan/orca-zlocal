@@ -19131,6 +19131,7 @@
         "noConversations": "No conversations found",
         "historyHint": "Click to reopen. Each conversation keeps its own agent and continues where it stopped.",
         "historyFailed": "Could not load conversations. Try again.",
+        "openDenyKeys": "Open ↵ / Deny esc",
         "codexVoiceUnsupported": "This Codex version does not support Live voice.",
         "codexVoiceUsageLimit": "Codex Live voice is unavailable because an account usage limit was reached.",
         "codexVoiceAccessDenied": "Codex refused Live voice. Check the current account and workspace access.",

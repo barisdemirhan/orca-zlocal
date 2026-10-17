@@ -21,7 +21,7 @@ export function AgentHubOrbMark({
     >
       <AgentHubOrbSphere
         decorative
-        label="Orb"
+        label={translate('auto.agentHub.orb.title', 'Orb')}
         phase={
           state.kind === 'working'
             ? 'thinking'

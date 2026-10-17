@@ -149,14 +149,9 @@ export function AgentHubOrbPromptAnswer({
       />
       {body.kind === 'approval' && options.length > 0 ? (
         <span className="text-xs text-muted-foreground">
-          {allowIndex !== -1 ? (
-            translate('auto.agentHub.orb.approvalKeys', 'Allow ↵ / Deny esc')
-          ) : (
-            <>
-              {translate('auto.agentHub.orb.open', 'Open')} ↵ /{' '}
-              {translate('components.native-chat.approval.deny', 'Deny')} esc
-            </>
-          )}
+          {allowIndex !== -1
+            ? translate('auto.agentHub.orb.approvalKeys', 'Allow ↵ / Deny esc')
+            : translate('auto.agentHub.orb.openDenyKeys', 'Open ↵ / Deny esc')}
         </span>
       ) : null}
       {options.length === 0 ? (
