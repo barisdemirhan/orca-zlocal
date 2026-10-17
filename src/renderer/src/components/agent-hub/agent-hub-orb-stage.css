@@ -9,12 +9,15 @@
   user-select: none;
 }
 
+/* Why: the floating sphere has no card; only its pieces take pointer events so empty corners stay clickable. */
 .agent-hub-orb-stage[data-embedded='false'] {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  background: var(--popover);
+  pointer-events: none;
   color: var(--popover-foreground);
-  box-shadow: var(--shadow-floating);
+}
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-art,
+.agent-hub-orb-stage[data-embedded='false'] [data-agent-hub-orb-controls],
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-request-host {
+  pointer-events: auto;
 }
 
 .agent-hub-orb-art {
@@ -39,6 +42,26 @@
   display: flex;
   right: 25px;
   bottom: 10px;
+}
+/* Why: floating controls sit in a small translucent pill that shows on hover or focus, so keyboard users reach them. */
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-controls,
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-resize {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.agent-hub-orb-stage[data-embedded='false']:hover .agent-hub-orb-controls,
+.agent-hub-orb-stage[data-embedded='false']:focus-within .agent-hub-orb-controls,
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-controls:has([aria-expanded='true']),
+.agent-hub-orb-stage[data-embedded='false']:hover .agent-hub-orb-resize,
+.agent-hub-orb-stage[data-embedded='false']:focus-within .agent-hub-orb-resize {
+  opacity: 1;
+}
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-controls {
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--popover) 72%, transparent);
+  backdrop-filter: blur(12px);
 }
 .agent-hub-orb-controls {
   display: flex;
@@ -83,6 +106,15 @@
 .agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-request-host {
   grid-column: 1 / -1;
   width: 100%;
+  box-shadow: none;
+}
+
+/* Why: the request card is the one surface; the host's own border and background would nest a box in a box. */
+.agent-hub-orb-request-host [data-native-chat-approval-card],
+.agent-hub-orb-request-host [data-agent-hub-request-card] {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
 }
 
