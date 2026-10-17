@@ -122,6 +122,7 @@ function populate(loaded: LoadedWorkspaceLayout): LoadedWorkspaceLayout {
   fill(loaded, 'carried.activeConnectionIdsAtShutdown', ['target-1', 'target-2'])
   fill(loaded, 'carried.browserUrlHistory', [{ url: 'a' }, { url: 'b' }])
   fill(loaded, 'carried.workspaceDocHistory', [{ path: 'a' }, { path: 'b' }])
+  fill(loaded, 'carried.terminalSpawnedByPaneKey', { 'tab-b:leaf-b': { paneKey: 'tab-a:leaf-a' } })
   fill(loaded, 'carried.clientHostedBrowserCloseIntentsByEnvironment', {
     env: ['page-1', 'page-2']
   })

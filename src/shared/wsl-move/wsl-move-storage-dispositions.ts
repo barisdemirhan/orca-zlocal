@@ -24,6 +24,10 @@ export const LOCAL_STORAGE_MODULE_DISPOSITIONS: Record<string, WslMoveFieldDispo
     item: 72,
     note: 'CSV column widths and PDF scale, keyed by worktree id, runtime and file path.'
   },
+  'src/renderer/src/components/agent-hub/agent-hub-session-snapshot.ts': notApplicableDisposition(
+    62,
+    'Saved Agent Hub windows; restore resolves live worktrees and tabs and drops entries it cannot find.'
+  ),
   'src/renderer/src/components/native-chat/native-chat-composer-draft-journal.ts':
     notApplicableDisposition(45, 'Keyed by session id.'),
   'src/renderer/src/components/native-chat/native-chat-composer-draft-storage.ts':
