@@ -184,7 +184,7 @@ describe('unhandled provider frame journal fallback', () => {
     const row = unhandledProviderFrameJournalItem('codex', kind, failedHook)
     expect(row).toMatchObject({
       classification: 'error-surface',
-      body: { text: 'codex · notification:hook/completed', tone: 'error' }
+      body: { text: 'Codex Stop hook failed: hook exited with code 127', tone: 'error' }
     })
     expect(row?.body.providerFrame?.payload.head).toBe(JSON.stringify(failedHook))
   })

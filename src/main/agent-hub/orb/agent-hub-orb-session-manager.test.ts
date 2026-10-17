@@ -185,7 +185,7 @@ describe('Orb conversations on the structured host', () => {
         delete state.host.deps.modelCatalog
       }
       const first = await manager.open()
-      expect(state.store.getRecord(first.sessionId)?.options).toEqual({})
+      expect(state.store.getRecord(first.sessionId)?.options).toBeUndefined()
       expect(state.acquire.mock.calls[0]?.[0].options?.model).toBeUndefined()
       expect(settings.agentHubOrbModel).toBeNull()
       expect(probe).not.toHaveBeenCalled()
@@ -395,8 +395,9 @@ describe('Orb conversations on the structured host', () => {
       origin: 'agent-hub-orb',
       location: { workspaceId: FLOATING_TERMINAL_WORKTREE_ID, workspaceKind: 'folder' },
       launchDirectory: state.root,
-      options: {}
+      permissionMode: 'ask'
     })
+    expect(records[0]?.options).toBeUndefined()
     const snapshot = await state.host.journalSnapshot(first.sessionId)
     expect(snapshot.submissions).toHaveLength(1)
     expect(JSON.stringify(snapshot.items)).toContain(AGENT_HUB_ORB_OPENING_PROMPT)

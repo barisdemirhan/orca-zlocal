@@ -24,7 +24,7 @@ describe('paired runtime browser network tunnel', () => {
   it('returns page command results on the exact authenticated attach connection', async () => {
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-browser-command-'))
     resources.push(() => rmSync(userDataPath, { recursive: true, force: true }))
-    const runtime = new OrcaRuntimeService({} as never)
+    const runtime = new OrcaRuntimeService({ getSettings: () => ({}) } as never)
     const rpc = new OrcaRuntimeRpcServer({
       runtime,
       userDataPath,
@@ -105,7 +105,7 @@ describe('paired runtime browser network tunnel', () => {
   it('commits same-runtime reconciliation placement after a real paired command result', async () => {
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-browser-reconciliation-'))
     resources.push(() => rmSync(userDataPath, { recursive: true, force: true }))
-    const runtime = new OrcaRuntimeService({} as never)
+    const runtime = new OrcaRuntimeService({ getSettings: () => ({}) } as never)
     const rpc = new OrcaRuntimeRpcServer({
       runtime,
       userDataPath,
@@ -201,7 +201,7 @@ describe('paired runtime browser network tunnel', () => {
 
     const userDataPath = mkdtempSync(join(tmpdir(), 'orca-browser-tunnel-'))
     resources.push(() => rmSync(userDataPath, { recursive: true, force: true }))
-    const runtime = new OrcaRuntimeService({} as never)
+    const runtime = new OrcaRuntimeService({ getSettings: () => ({}) } as never)
     const rpc = new OrcaRuntimeRpcServer({
       runtime,
       userDataPath,

@@ -150,8 +150,12 @@ it.each(['agent', 'model'] as const)(
     expect(next.sessionId).not.toBe(first.sessionId)
     expect(state.store.getRecord(next.sessionId)).toMatchObject({
       provider: setting === 'agent' ? 'claude' : 'codex',
-      options: setting === 'agent' ? {} : { model: 'new-model' }
+      permissionMode: 'ask',
+      ...(setting === 'agent' ? {} : { options: { model: 'new-model' } })
     })
+    if (setting === 'agent') {
+      expect(state.store.getRecord(next.sessionId)?.options).toBeUndefined()
+    }
     expect((await manager.list()).map((entry) => entry.sessionId)).toContain(first.sessionId)
     expect(state.host.getSessionTabId(first.sessionId)).toBeNull()
   }
@@ -176,8 +180,12 @@ it.each(['agent', 'model'] as const)(
     expect(next.sessionId).not.toBe(first.sessionId)
     expect(state.store.getRecord(next.sessionId)).toMatchObject({
       provider: selection === 'agent' ? 'claude' : 'codex',
-      options: selection === 'agent' ? {} : { model: 'new-model' }
+      permissionMode: 'ask',
+      ...(selection === 'agent' ? {} : { options: { model: 'new-model' } })
     })
+    if (selection === 'agent') {
+      expect(state.store.getRecord(next.sessionId)?.options).toBeUndefined()
+    }
     expect(state.host.getSessionTabId(first.sessionId)).toBeNull()
   }
 )

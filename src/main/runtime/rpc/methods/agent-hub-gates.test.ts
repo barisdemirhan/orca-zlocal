@@ -75,15 +75,19 @@ it('refuses Orb methods on disabled hosts and paired desktops before session cre
       clientKind: 'runtime'
     }
     for (const method of AGENT_HUB_ORB_METHODS) {
-      expect(
-        await dispatcher.dispatch(
-          { id: 'orb', authToken: 'desktop', method: method.name, params: {} },
-          {
-            caller: ctx.caller,
-            clientKind: ctx.clientKind
-          }
-        )
-      ).toMatchObject({ ok: false, error: { code: 'disabled' } })
+      const response = await dispatcher.dispatch(
+        { id: 'orb', authToken: 'desktop', method: method.name, params: {} },
+        {
+          caller: ctx.caller,
+          clientKind: ctx.clientKind
+        }
+      )
+      // A disabled host still lets its own desktop close a leftover Orb.
+      if (!enabled && method.name === 'agentHub.orb.close') {
+        expect(response).not.toMatchObject({ error: { code: 'disabled' } })
+        continue
+      }
+      expect(response).toMatchObject({ ok: false, error: { code: 'disabled' } })
     }
   }
 })
