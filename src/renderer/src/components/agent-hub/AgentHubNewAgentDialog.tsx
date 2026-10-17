@@ -241,6 +241,7 @@ function AgentHubNewAgentDialogBody({
             onOpenManageAgents={openAgentSettings}
             defaultAgent={defaultAgent}
             allowBlankTerminal={false}
+            emptyLabel={translate('agentHub.mirror.noAgents', 'No available agents')}
             allowNarrowTrigger
             triggerClassName="h-9 w-full min-w-0 border-input text-sm focus:border-ring focus:ring-[3px] focus:ring-ring/50"
             onTriggerEnter={createDisabled ? undefined : submit}

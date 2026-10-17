@@ -48,6 +48,8 @@ type AgentComboboxProps = AgentComboboxSelectionProps & {
   /** Let the parent submit on Enter from the closed trigger instead of opening the picker. */
   onTriggerEnter?: () => void
   allowNarrowTrigger?: boolean
+  /** Replaces the unselected trigger label, and the empty-list message when there are no agents. */
+  emptyLabel?: string
   /** Clearing is separate from selecting Blank Terminal. */
   clearSelection?: {
     cleared: boolean
@@ -71,6 +73,7 @@ export default function AgentCombobox({
   triggerClassName,
   onTriggerEnter,
   allowNarrowTrigger = false,
+  emptyLabel,
   clearSelection,
   surfaceRows,
   ...selection
@@ -296,12 +299,13 @@ export default function AgentCombobox({
                   <AgentIconLabel
                     icon={<Terminal className="size-3.5" />}
                     label={
-                      allowBlankTerminal
+                      (agents.length === 0 ? emptyLabel : undefined) ??
+                      (allowBlankTerminal
                         ? blankText
                         : translate(
                             'components.agentSessionContinuation.selectAgent',
                             'Select an Agent'
-                          )
+                          ))
                     }
                   />
                 )}
@@ -339,10 +343,11 @@ export default function AgentCombobox({
             />
             <CommandList>
               <CommandEmpty>
-                {translate(
-                  'auto.components.agent.AgentCombobox.579c768bde',
-                  'No agents match your search.'
-                )}
+                {(agents.length === 0 ? emptyLabel : undefined) ??
+                  translate(
+                    'auto.components.agent.AgentCombobox.579c768bde',
+                    'No agents match your search.'
+                  )}
               </CommandEmpty>
               {blankMatchesQuery
                 ? renderAgentComboboxItem({
