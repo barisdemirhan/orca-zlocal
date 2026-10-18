@@ -73,7 +73,7 @@ export function AgentHubSettingsOrbSection({
     }
   }
   return (
-    <section className="space-y-3">
+    <section className="@container space-y-3">
       <SettingsSubsectionHeader
         title={translate('auto.agentHub.settings.orb', 'Orb')}
         description={translate(
@@ -172,6 +172,8 @@ export function AgentHubSettingsOrbSection({
         }
       />
       <SettingsRow
+        // Why: four modes do not fit beside the label in the Orb panel and covered it.
+        className="flex-col items-stretch @xl:flex-row @xl:items-center"
         label={approvalsLabel}
         description={
           !supportsAsk
