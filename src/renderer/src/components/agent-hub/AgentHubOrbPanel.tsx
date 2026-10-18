@@ -126,6 +126,7 @@ export function AgentHubOrbPanel({
           }}
           {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
           data-agent-hub-orb-panel
+          data-agent-hub-orb-only={orbOnly ? '' : undefined}
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
           onEscapeKeyDown={(event) => {

@@ -14,6 +14,10 @@
   pointer-events: none;
   color: var(--popover-foreground);
 }
+/* Why: Radix's positioning wrapper still hit-tests while the panel is hidden, and over the sphere it reads as an outside click. */
+[data-radix-popper-content-wrapper]:has(> [data-agent-hub-orb-only]) {
+  pointer-events: none;
+}
 .agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-art,
 .agent-hub-orb-stage[data-embedded='false'] [data-agent-hub-orb-controls],
 .agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-request-host {
