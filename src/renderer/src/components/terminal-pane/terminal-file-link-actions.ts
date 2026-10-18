@@ -219,6 +219,7 @@ export function buildFileLinkActions(
         )
       : {
           primary: {
+            shortcut: peekRow?.shortcut === 'primary' ? null : 'primary',
             label: worktreeRoot
               ? translate(
                   'auto.components.terminal.pane.TerminalLinkActionPopover.switchWorkspace',

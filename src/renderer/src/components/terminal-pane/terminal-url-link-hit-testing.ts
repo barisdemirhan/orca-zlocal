@@ -106,20 +106,25 @@ export function handleTerminalHttpLink(
   }
 
   const peek = agentHubPeekUrlAction(url, peekSource)
+  const actions = buildHttpLinkActions(
+    deps.actionDestinations,
+    (destination) =>
+      openRoutedHttpLink(url, { ...deps, modifierHeld: false, forceDestination: destination }),
+    {
+      ...deps,
+      url,
+      openInSourceGroup: () =>
+        openRoutedHttpLink(url, { ...deps, forceDestination: 'orca', openInSourceGroup: true })
+    }
+  )
   return requestTerminalLinkAction(event, deps.linkActionContext, {
     destination: deps.actionDestination ?? url,
     kind: 'url',
-    ...buildHttpLinkActions(
-      deps.actionDestinations,
-      (destination) =>
-        openRoutedHttpLink(url, { ...deps, modifierHeld: false, forceDestination: destination }),
-      {
-        ...deps,
-        url,
-        openInSourceGroup: () =>
-          openRoutedHttpLink(url, { ...deps, forceDestination: 'orca', openInSourceGroup: true })
-      }
-    ),
+    ...actions,
+    primary: {
+      ...actions.primary,
+      shortcut: peek?.shortcut === 'primary' ? (actions.alternate ? null : 'alternate') : 'primary'
+    },
     ...(peek ? { secondaryActions: [peek] } : {})
   })
 }

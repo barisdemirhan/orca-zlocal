@@ -28,10 +28,11 @@ function ActionRow({
   onRun: () => void
 }): React.JSX.Element {
   const isMac = navigator.userAgent.includes('Mac')
+  const actionShortcut = action.shortcut === undefined ? shortcut : action.shortcut
   const keys =
-    shortcut === 'alternate'
-      ? ['⇧', isMac ? '⌘' : 'Ctrl', 'Click']
-      : shortcut === 'primary'
+    actionShortcut === 'alternate'
+      ? [isMac ? '⇧' : 'Shift', isMac ? '⌘' : 'Ctrl', 'Click']
+      : actionShortcut === 'primary'
         ? [isMac ? '⌘' : 'Ctrl', 'Click']
         : null
 

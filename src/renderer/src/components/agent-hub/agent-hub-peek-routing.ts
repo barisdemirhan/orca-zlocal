@@ -280,6 +280,7 @@ export function agentHubPeekUrlAction(
     ? {
         icon: PictureInPicture2,
         label: translate('agentHub.peek.action', 'Peek'),
+        shortcut: mirrorKeyOf(source.event) === null ? null : 'primary',
         run: () => openPeekUrlWithFeedback(url, source)
       }
     : null
@@ -289,13 +290,22 @@ export function agentHubPeekFileAction(
   filePath: string,
   source: AgentHubPeekLinkSource
 ): LinkAction | null {
-  return peekEnabled(source) && agentHubPeekFileKind(filePath) && agentHubPeekSourceRoute(source)
-    ? {
-        icon: PictureInPicture2,
-        label: translate('agentHub.peek.action', 'Peek'),
-        run: () => {
-          openAgentHubPeekFile(filePath, source)
-        }
-      }
-    : null
+  const route =
+    peekEnabled(source) && agentHubPeekFileKind(filePath) ? agentHubPeekSourceRoute(source) : null
+  if (!route) {
+    return null
+  }
+  return {
+    icon: PictureInPicture2,
+    label: translate('agentHub.peek.action', 'Peek'),
+    shortcut:
+      mirrorKeyOf(source.event) !== null &&
+      (getConnectionIdForFile(source.worktreeId, filePath) !== undefined ||
+        route.runtimeEnvironmentId)
+        ? 'primary'
+        : null,
+    run: () => {
+      openAgentHubPeekFile(filePath, source)
+    }
+  }
 }
