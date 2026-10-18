@@ -61,7 +61,8 @@ describe('Codex native realtime on a structured conversation', () => {
       threadId: THREAD_ID,
       realtimeSessionId: OWNER.voiceSessionId,
       outputModality: 'audio',
-      transport: { type: 'webrtc', sdp: SDP }
+      transport: { type: 'webrtc', sdp: SDP },
+      version: 'v3'
     })
     expect(
       rig.events.filter((event) => event.type === 'voice').map((event) => event.event.type)
@@ -78,6 +79,29 @@ describe('Codex native realtime on a structured conversation', () => {
         .map((call) => call.method)
     ).toEqual(['thread/start'])
     expect(rig.connection.closeCount).toBe(0)
+  })
+
+  it('retries once without a realtime version when Codex does not know v3', async () => {
+    const rig = await setup()
+    rig.codex.routes['thread/realtime/start'] = (params) => {
+      if (params?.version === 'v3') {
+        throw new CodexAppServerRequestError(
+          'thread/realtime/start',
+          -32600,
+          'codex app-server thread/realtime/start failed: Invalid request: unknown variant `v3`, expected `v1` or `v2`'
+        )
+      }
+      return {}
+    }
+    expect(await rig.adapter.startVoice(INPUT)).toEqual({
+      ok: true,
+      value: { ...OWNER, state: 'connecting' }
+    })
+    expect(
+      rig.connection.calls
+        .filter((call) => call.method === 'thread/realtime/start')
+        .map((call) => call.params?.version ?? null)
+    ).toEqual(['v3', null])
   })
 
   it('keeps an ambiguous start and stop owned, refuses overlap, and accepts closure without replay', async () => {

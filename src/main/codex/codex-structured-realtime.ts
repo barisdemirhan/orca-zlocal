@@ -36,6 +36,10 @@ export function codexVoiceFailureMessage(error: unknown): string {
   return 'Codex Live voice could not connect. Try again after the connection has closed.'
 }
 
+function isUnknownRealtimeVersion(error: unknown): boolean {
+  return isCodexAppServerRequestError(error) && /unknown variant `v3`/.test(error.message)
+}
+
 /** One voice attempt at a time on the conversation's existing provider connection. */
 export class CodexStructuredRealtime {
   private attempt: VoiceAttempt | undefined
@@ -95,17 +99,28 @@ export class CodexStructuredRealtime {
       items: new Map()
     }
     this.attempt = attempt
+    const params = {
+      threadId: this.threadId,
+      realtimeSessionId: input.voiceSessionId,
+      outputModality: 'audio',
+      transport: { type: 'webrtc', sdp: input.sdp }
+    }
     try {
-      await this.connection.request(
-        'thread/realtime/start',
-        {
-          threadId: this.threadId,
-          realtimeSessionId: input.voiceSessionId,
-          outputModality: 'audio',
-          transport: { type: 'webrtc', sdp: input.sdp }
-        },
-        { timeoutMs: this.timeoutMs }
-      )
+      try {
+        // Why: codex-cli 0.163 WebRTC calls fail on its v1 default ("AVAS requires OpenAI-Alpha") and v2.
+        await this.connection.request(
+          'thread/realtime/start',
+          { ...params, version: 'v3' },
+          { timeoutMs: this.timeoutMs }
+        )
+      } catch (error) {
+        if (!isUnknownRealtimeVersion(error) || attempt.started) {
+          throw error
+        }
+        await this.connection.request('thread/realtime/start', params, {
+          timeoutMs: this.timeoutMs
+        })
+      }
     } catch (error) {
       if (
         (isCodexAppServerRequestError(error) || error instanceof CodexAppServerUnsupportedError) &&
