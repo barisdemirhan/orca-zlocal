@@ -18797,6 +18797,7 @@
         "expand": "Expandir Orb",
         "options": "Opciones de Orb",
         "switchToText": "Cambiar a texto",
+        "mode": "Modo del Orb",
         "minimize": "Minimizar Orb",
         "closeOrb": "Cerrar Orb",
         "voiceUnavailable": "La voz en vivo no está disponible en este host.",

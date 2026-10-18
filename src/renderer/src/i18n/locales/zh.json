@@ -18325,6 +18325,7 @@
         "expand": "展开 Orb",
         "options": "Orb 选项",
         "switchToText": "切换到文字",
+        "mode": "Orb 模式",
         "minimize": "最小化 Orb",
         "closeOrb": "关闭 Orb",
         "voiceUnavailable": "此主机不支持实时语音。",

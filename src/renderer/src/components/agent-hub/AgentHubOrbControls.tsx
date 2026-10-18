@@ -1,6 +1,7 @@
 import {
   AudioLines,
   Circle,
+  Keyboard,
   Maximize2,
   MessageSquare,
   Mic,
@@ -14,6 +15,7 @@ import {
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,6 +54,29 @@ function OrbControl({
           {children}
         </Button>
       </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+type OrbMode = 'live' | 'dictate' | 'text'
+
+function OrbModeItem({
+  mode,
+  label,
+  disabled,
+  children
+}: {
+  mode: OrbMode
+  label: string
+  disabled?: boolean
+  children: ReactNode
+}): React.JSX.Element {
+  return (
+    <Tooltip>
+      <ToggleGroupItem value={mode} disabled={disabled} asChild>
+        <TooltipTrigger aria-label={label}>{children}</TooltipTrigger>
+      </ToggleGroupItem>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   )
@@ -101,8 +126,14 @@ export function AgentHubOrbControls({
   const starting = voice.capability === 'checking'
   const endLabel = translate('auto.agentHub.orb.endLiveVoice', 'End live voice')
   const startLabel = translate('auto.agentHub.orb.startLiveVoice', 'Start live voice')
-  const chatLabel = translate('auto.agentHub.orb.showConversation', 'Show conversation')
   const orbLabel = translate('auto.agentHub.orb.orbView', 'Orb view')
+  const mode: OrbMode | '' = live
+    ? 'live'
+    : dictating
+      ? 'dictate'
+      : !orbView && voice.textMode
+        ? 'text'
+        : ''
   const muteLabel =
     voice.input === 'muted'
       ? translate('auto.agentHub.orb.unmuteMicrophone', 'Unmute microphone')
@@ -114,21 +145,70 @@ export function AgentHubOrbControls({
       data-agent-hub-orb-voice-input={voice.input}
       data-agent-hub-orb-voice-output={voice.output}
     >
+      <ToggleGroup
+        type="single"
+        size="sm"
+        variant="outline"
+        aria-label={translate('auto.agentHub.orb.mode', 'Orb mode')}
+        value={mode}
+        onValueChange={(next) => {
+          // Pressing the active mode again leaves it: Live ends, dictation sends, text returns to the Orb.
+          if (next === 'live') {
+            void voice.startLive()
+          } else if (next === 'dictate') {
+            void (live ? voice.stopLive() : Promise.resolve()).then(onDictate)
+          } else if (next === 'text') {
+            onText()
+          } else if (mode === 'live') {
+            void voice.stopLive()
+          } else if (mode === 'dictate') {
+            onStopDictation()
+          } else if (mode === 'text') {
+            onShowOrb()
+          }
+        }}
+      >
+        {codex ? (
+          <OrbModeItem
+            mode="live"
+            label={live ? endLabel : startLabel}
+            disabled={
+              voice.connection === 'stopping' ||
+              (!live && (busy || dictating || starting || !voice.canStart))
+            }
+          >
+            <AudioLines />
+          </OrbModeItem>
+        ) : null}
+        <OrbModeItem
+          mode="dictate"
+          label={
+            dictating
+              ? translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation')
+              : translate('agentHub.card.dictate', 'Dictate')
+          }
+          disabled={!dictating && (busy || voice.connection === 'stopping')}
+        >
+          <Mic />
+        </OrbModeItem>
+        <OrbModeItem
+          mode="text"
+          label={
+            mode === 'text'
+              ? orbLabel
+              : translate('auto.agentHub.orb.switchToText', 'Switch to text')
+          }
+        >
+          <Keyboard />
+        </OrbModeItem>
+      </ToggleGroup>
       {dictating ? (
-        <>
-          <OrbControl
-            label={translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation')}
-            onClick={onStopDictation}
-          >
-            <Square />
-          </OrbControl>
-          <OrbControl
-            label={translate('auto.agentHub.orb.cancelDictation', 'Cancel dictation')}
-            onClick={onCancelDictation}
-          >
-            <MicOff />
-          </OrbControl>
-        </>
+        <OrbControl
+          label={translate('auto.agentHub.orb.cancelDictation', 'Cancel dictation')}
+          onClick={onCancelDictation}
+        >
+          <MicOff />
+        </OrbControl>
       ) : live ? (
         <>
           <OrbControl
@@ -157,20 +237,19 @@ export function AgentHubOrbControls({
             </OrbControl>
           ) : null}
         </>
-      ) : codex ? (
+      ) : null}
+      {orbView && live ? (
         <OrbControl
-          label={startLabel}
-          disabled={busy || starting || !voice.canStart}
-          onClick={() => {
-            void voice.startLive()
-          }}
+          label={translate('auto.agentHub.orb.showConversation', 'Show conversation')}
+          onClick={onShowChat}
         >
-          <AudioLines />
+          <MessageSquare />
+        </OrbControl>
+      ) : !orbView && mode !== 'text' ? (
+        <OrbControl label={orbLabel} onClick={onShowOrb}>
+          <Circle />
         </OrbControl>
       ) : null}
-      <OrbControl label={orbView ? chatLabel : orbLabel} onClick={orbView ? onShowChat : onShowOrb}>
-        {orbView ? <MessageSquare /> : <Circle />}
-      </OrbControl>
       {compact ? (
         <OrbControl label={translate('auto.agentHub.orb.expand', 'Expand Orb')} onClick={onCompact}>
           <Maximize2 />
@@ -188,16 +267,6 @@ export function AgentHubOrbControls({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="bottom">
-          <DropdownMenuItem onSelect={onText}>
-            {translate('auto.agentHub.orb.switchToText', 'Switch to text')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            disabled={busy || dictating || voice.connection === 'stopping'}
-            onSelect={onDictate}
-          >
-            {translate('agentHub.card.dictate', 'Dictate')}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem disabled={busy} onSelect={onHistory}>
             {translate('auto.agentHub.orb.pastConversations', 'Past conversations')}
           </DropdownMenuItem>

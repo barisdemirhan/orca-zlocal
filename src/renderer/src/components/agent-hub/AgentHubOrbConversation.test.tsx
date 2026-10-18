@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { useAppStore } from '@/store'
 import { AgentHubOrbConversation } from './AgentHubOrbConversation'
 import {
   closeAgentHubOrbPanel,
@@ -12,6 +13,8 @@ import {
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 import { orbAsk } from './agent-hub-orb-test-fixtures'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
+import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
+import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -72,6 +75,8 @@ function stage(): HTMLElement {
   return element
 }
 beforeEach(() => {
+  vi.clearAllMocks()
+  useAppStore.setState({ dictationState: 'idle' })
   clearAgentHubRequestHost('local')
   closeAgentHubOrbPanel()
   showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'orb-tab', resumed: false })
@@ -106,6 +111,40 @@ it('keeps the retained chat above a slim Orb row and expands only during live vo
   rerender(conversation())
   expect(stage().style.getPropertyValue('--orb-diameter')).toBe('40px')
   expect(useAgentHubOrbPanel.getState().preferredDiameter).toBe(280)
+})
+
+it('stops its own dictation when text is selected and keeps the same chat destination', async () => {
+  const stopTracking = trackAgentHubDictationOrigin()
+  const actions: unknown[] = []
+  const control = (event: Event) => {
+    if (event instanceof CustomEvent) {
+      actions.push(event.detail)
+    }
+  }
+  document.addEventListener(DICTATION_CONTROL_EVENT, control)
+  try {
+    render(conversation())
+    const destination = useAgentHubOrbPanel.getState().destination
+    if (!destination) {
+      throw new Error('Expected retained chat destination')
+    }
+    const draft = document.createElement('textarea')
+    draft.value = 'Already typed'
+    destination.append(draft)
+    draft.focus()
+    act(() => useAppStore.setState({ dictationState: 'listening' }))
+    await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
+    expect(actions).toEqual(['stop'])
+    expect(voice.switchToText).toHaveBeenCalledOnce()
+    act(() => useAppStore.setState({ dictationState: 'idle' }))
+    expect(screen.getByRole('radio', { name: 'Orb view', checked: true })).toBeTruthy()
+    expect(useAgentHubOrbPanel.getState().destination).toBe(destination)
+    expect(draft.value).toBe('Already typed')
+  } finally {
+    act(() => useAppStore.setState({ dictationState: 'idle' }))
+    stopTracking()
+    document.removeEventListener(DICTATION_CONTROL_EVENT, control)
+  }
 })
 
 it('keeps the inline request host before the sphere and controls', () => {

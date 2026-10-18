@@ -60,7 +60,7 @@ test('Orb resizes by pointer and keyboard without losing its draft, including re
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
   const composer = panel.locator('[contenteditable="true"]')
   await composer.fill('Draft survives visual resize')
-  await orcaPage.getByRole('button', { name: 'Orb view', exact: true }).click()
+  await orcaPage.getByRole('radio', { name: 'Orb view', exact: true }).click()
   const stage = orcaPage.locator('[data-agent-hub-orb-stage]')
   const size = stage.getByRole('slider', { name: 'Orb size', exact: true })
   await expect(size).toBeVisible()
@@ -119,7 +119,7 @@ test('Orb resizes by pointer and keyboard without losing its draft, including re
     body: await orcaPage.screenshot(),
     contentType: 'image/png'
   })
-  await orcaPage.getByRole('button', { name: 'Show conversation', exact: true }).click()
+  await orcaPage.getByRole('radio', { name: 'Switch to text', exact: true }).click()
   await expect(composer).toBeVisible()
   await expect(composer).toHaveText('Draft survives visual resize')
 })
@@ -137,8 +137,8 @@ test('native approval follows the Orb on all four sides and remains answerable i
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
   await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
-  await orcaPage.getByRole('button', { name: 'Orb view', exact: true }).click()
-  await orcaPage.getByRole('button', { name: 'Start live voice', exact: true }).click()
+  await orcaPage.getByRole('radio', { name: 'Orb view', exact: true }).click()
+  await orcaPage.getByRole('radio', { name: 'Start live voice', exact: true }).click()
   await expect(orcaPage.getByRole('button', { name: 'Mute microphone', exact: true })).toBeEnabled()
   const stage = orcaPage.locator('[data-agent-hub-orb-stage]')
   const size = stage.getByRole('slider', { name: 'Orb size', exact: true })

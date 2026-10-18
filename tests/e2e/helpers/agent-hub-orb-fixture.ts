@@ -59,15 +59,16 @@ export async function configureOrb(
 }
 
 export async function showOrbConversation(page: Page): Promise<void> {
-  await expect(page.getByRole('button', { name: /^(Show conversation|Orb view)$/ })).toBeVisible()
-  const conversation = page.getByRole('button', { name: 'Show conversation', exact: true })
-  if (await conversation.isVisible()) {
-    await conversation.click()
+  await expect(page.locator('[data-agent-hub-orb-stage]')).toBeVisible()
+  const chat = page.locator('[data-agent-hub-orb-chat-tab-id]')
+  if (!(await chat.isVisible())) {
+    const conversation = page.getByRole('button', { name: 'Show conversation', exact: true })
+    await ((await conversation.isVisible()) ? conversation.click() : switchOrbToText(page))
   }
-  await expect(page.getByRole('button', { name: 'Orb view', exact: true })).toBeVisible()
+  await expect(chat).toBeVisible()
 }
 
 export async function switchOrbToText(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Orb options', exact: true }).click()
-  await page.getByRole('menuitem', { name: 'Switch to text', exact: true }).click()
+  await page.getByRole('radio', { name: 'Switch to text', exact: true }).click()
+  await expect(page.getByRole('radio', { name: 'Orb view', exact: true })).toBeChecked()
 }

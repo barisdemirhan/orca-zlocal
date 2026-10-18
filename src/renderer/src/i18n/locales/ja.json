@@ -18325,6 +18325,7 @@
         "expand": "Orb を展開",
         "options": "Orb のオプション",
         "switchToText": "テキストに切り替え",
+        "mode": "Orb モード",
         "minimize": "Orb を最小化",
         "closeOrb": "Orb を閉じる",
         "voiceUnavailable": "このホストではライブ音声を利用できません。",

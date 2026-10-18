@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import {
   AgentHubOrbComposerContext,
+  finishAgentHubOrbDictationForText,
   toggleAgentHubOrb,
   useAgentHubOrbComposerBinding
 } from './agent-hub-orb-composer'
@@ -90,6 +91,38 @@ it('opens when closed, then targets Orb dictation and sends only after the final
   expect(mocks.send).toHaveBeenCalledOnce()
 })
 
+it('finishes dictation into the text draft without sending and keeps later dictation submission enabled', async () => {
+  showAgentHubOrbPanel({ sessionId: 'session', tabId: 'orb-tab', resumed: false })
+  render(
+    <AgentHubOrbComposerContext value="orb-tab">
+      <Composer />
+    </AgentHubOrbComposerContext>
+  )
+  act(toggleAgentHubOrb)
+  act(() => useAppStore.setState({ dictationState: 'listening' }))
+  act(() => finishAgentHubOrbDictationForText('orb-tab'))
+  expect(actions).toEqual(['start', 'stop'])
+  const input = screen.getByRole('textbox')
+  if (!(input instanceof HTMLTextAreaElement)) {
+    throw new Error('Expected native composer input')
+  }
+  input.value = 'Final transcript kept for editing'
+  act(() => useAppStore.setState({ dictationState: 'idle' }))
+  await act(async () => {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+  })
+  expect(input.value).toBe('Final transcript kept for editing')
+  expect(mocks.send).not.toHaveBeenCalled()
+  act(toggleAgentHubOrb)
+  act(() => useAppStore.setState({ dictationState: 'listening' }))
+  act(toggleAgentHubOrb)
+  act(() => useAppStore.setState({ dictationState: 'idle' }))
+  await act(async () => {
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+  })
+  expect(mocks.send).toHaveBeenCalledOnce()
+})
+
 it('does not stop another field, submit a cancelled recording, or send after the panel closes', async () => {
   showAgentHubOrbPanel({ sessionId: 'session', tabId: 'orb-tab', resumed: false })
   render(
@@ -101,6 +134,7 @@ it('does not stop another field, submit a cancelled recording, or send after the
   document.body.append(other)
   other.focus()
   act(() => useAppStore.setState({ dictationState: 'listening' }))
+  act(() => finishAgentHubOrbDictationForText('orb-tab'))
   act(toggleAgentHubOrb)
   expect(actions).toEqual([])
   act(() => useAppStore.setState({ dictationState: 'idle' }))

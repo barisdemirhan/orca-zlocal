@@ -17,8 +17,28 @@ import { openAgentHubOrb } from './agent-hub-orb-open'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 
 export const AgentHubOrbComposerContext = createContext<string | null>(null)
-type OrbComposer = { input: RefObject<NativeChatComposerInput | null>; send: () => void }
+type OrbComposer = {
+  input: RefObject<NativeChatComposerInput | null>
+  send: () => void
+  finishWithoutSending: () => void
+}
 const composers = new Map<string, OrbComposer>()
+
+export function finishAgentHubOrbDictationForText(tabId: string | undefined): void {
+  if (
+    !tabId ||
+    readAgentHubDictationSession()?.pane?.tabId !== tabId ||
+    !isDictationRunning(useAppStore.getState().dictationState)
+  ) {
+    return
+  }
+  const composer = composers.get(tabId)
+  if (composer) {
+    composer.finishWithoutSending()
+  } else {
+    dispatchDictationControl('stop')
+  }
+}
 
 export function useAgentHubOrbComposerDictation() {
   const tabId = useContext(AgentHubOrbComposerContext)
@@ -46,10 +66,21 @@ export function useAgentHubOrbComposerBinding(
     if (!tabId) {
       return
     }
-    const composer = { input, send: () => sendRef.current() }
-    composers.set(tabId, composer)
     let pendingSend = false
     let frame: number | null = null
+    const composer = {
+      input,
+      send: () => sendRef.current(),
+      finishWithoutSending: () => {
+        dispatchDictationControl('stop')
+        pendingSend = false
+        if (frame !== null) {
+          cancelAnimationFrame(frame)
+          frame = null
+        }
+      }
+    }
+    composers.set(tabId, composer)
     const control = (event: Event) => {
       if (!(event instanceof CustomEvent)) {
         return

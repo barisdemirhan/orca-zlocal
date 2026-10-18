@@ -94,7 +94,11 @@ describe('read-only Peek documents', () => {
           (_, index) => `const line${index + 1} = true`
         ).join('\n')
         showFile('text', content, '/workspace/main.ts', { line, column: 5 })
-        const target = await screen.findByText(`const line${expected} = true`)
+        const target = await screen.findByText(
+          `const line${expected} = true`,
+          {},
+          { timeout: 10000 }
+        )
         await waitFor(() => expect(scroll.mock.contexts).toContain(target.parentElement))
         expect(target.parentElement?.className).toContain('bg-emerald-500/10')
         expect(
@@ -147,7 +151,7 @@ describe('read-only Peek documents', () => {
     'uses a read-only table with the correct delimiter for %s',
     async (filePath, content, delimiter) => {
       const shown = showFile('csv', content, filePath)
-      await screen.findByText('2 rows')
+      await screen.findByText('2 rows', {}, { timeout: 10000 })
       expect(screen.getByText('2 columns')).toBeTruthy()
       expect(screen.getByRole('combobox').textContent).toContain(delimiter)
       fireEvent.doubleClick(shown.container)
@@ -161,8 +165,8 @@ describe('read-only Peek documents', () => {
 
   it('shows saved notebook cells and sanitized outputs without edit or execution controls', async () => {
     const shown = showFile('notebook', notebook, '/workspace/report.ipynb')
-    // The notebook viewer is lazy-loaded and can exceed the 1s default under parallel load.
-    await screen.findByRole('heading', { name: 'Saved report' }, { timeout: 5000 })
+    // Lazy viewers can take several seconds to import under background scheduling.
+    await screen.findByRole('heading', { name: 'Saved report' }, { timeout: 10000 })
     expect(screen.getByText('print("saved result")')).toBeTruthy()
     expect(screen.getByText('saved result')).toBeTruthy()
     const output = screen.getByTitle('Notebook HTML output')
@@ -184,7 +188,9 @@ describe('read-only Peek documents', () => {
 
   it('contains a malformed notebook in Peek instead of unmounting the surrounding UI', async () => {
     const shown = showFile('notebook', '{"cells":false}', '/workspace/bad.ipynb')
-    expect((await screen.findByRole('alert')).textContent).toContain('Unable to render notebook')
+    expect((await screen.findByRole('alert', {}, { timeout: 10000 })).textContent).toContain(
+      'Unable to render notebook'
+    )
     expect(shown.onUnavailable).not.toHaveBeenCalled()
   })
 

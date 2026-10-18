@@ -18325,6 +18325,7 @@
         "expand": "Orb 확장",
         "options": "Orb 옵션",
         "switchToText": "텍스트로 전환",
+        "mode": "Orb 모드",
         "minimize": "Orb 최소화",
         "closeOrb": "Orb 닫기",
         "voiceUnavailable": "이 호스트에서는 라이브 음성을 사용할 수 없습니다.",

@@ -30,7 +30,7 @@ import { AgentHubOrbControls } from './AgentHubOrbControls'
 import { AgentHubOrbConversationHeader } from './AgentHubOrbConversationHeader'
 import { agentHubOrbPresentation } from './agent-hub-orb-presentation'
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
-import { toggleAgentHubOrb } from './agent-hub-orb-composer'
+import { finishAgentHubOrbDictationForText, toggleAgentHubOrb } from './agent-hub-orb-composer'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
 import { AgentHubRequestCard } from './AgentHubRequestCard'
 import { AgentHubOrbRequestReceipt } from './AgentHubOrbRequestReceipt'
@@ -322,6 +322,7 @@ export function AgentHubOrbConversation({
             onShowOrb={() => useAgentHubOrbPanel.setState({ presentation: 'orb', compact: false })}
             onCompact={() => useAgentHubOrbPanel.setState({ compact: !compact })}
             onText={() => {
+              finishAgentHubOrbDictationForText(tabId)
               void voice
                 .switchToText()
                 .then(() => useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false }))

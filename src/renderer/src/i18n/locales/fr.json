@@ -19017,6 +19017,7 @@
         "expand": "Développer Orb",
         "options": "Options d’Orb",
         "switchToText": "Passer au texte",
+        "mode": "Mode de l'Orb",
         "minimize": "Réduire Orb",
         "closeOrb": "Fermer Orb",
         "voiceUnavailable": "La voix en direct n’est pas disponible sur cet hôte.",

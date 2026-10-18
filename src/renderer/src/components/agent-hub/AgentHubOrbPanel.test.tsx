@@ -148,7 +148,7 @@ const requestPresentation: AgentHubRequestPresentation = {
   target: null,
   location: { project: 'Orca', group: null, workspace: null }
 }
-function show(chat = true) {
+async function show(chat = true) {
   showAgentHubOrbPanel({ sessionId: 'current', tabId: 'tab-current', resumed: false })
   const rendered = render(
     <TooltipProvider>
@@ -162,7 +162,13 @@ function show(chat = true) {
     </TooltipProvider>
   )
   if (chat) {
-    fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
+    await act(async () => {
+      fireEvent.click(
+        mocks.voice.connection === 'off'
+          ? screen.getByRole('radio', { name: 'Switch to text' })
+          : screen.getByRole('button', { name: 'Show conversation' })
+      )
+    })
   }
   return rendered
 }
@@ -225,7 +231,7 @@ it('keeps the retained chat and its model picker open until an actual outside in
       <button>Outside</button>
     </TooltipProvider>
   )
-  await user.click(screen.getByRole('button', { name: 'Show conversation' }))
+  await user.click(screen.getByRole('radio', { name: 'Switch to text' }))
   const draft = await screen.findByRole('textbox', { name: 'Chat draft' })
   const trigger = screen.getByRole('button', { name: /Model.*Opus/ })
   await user.click(trigger)
@@ -254,12 +260,13 @@ it('keeps the retained chat and its model picker open until an actual outside in
 })
 
 it('opens a quiet Orb before revealing the same conversation and its model above the bottom centre', async () => {
-  show(false)
+  await show(false)
   expect(screen.getByRole('img', { name: 'Ready' })).toBeTruthy()
   expect(mocks.voice.startLive).not.toHaveBeenCalled()
   const panel = () => document.querySelector('[data-agent-hub-orb-panel]')
   expect(panel()?.hasAttribute('data-agent-hub-orb-only')).toBe(true)
-  fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
+  await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
+  expect(mocks.voice.switchToText).toHaveBeenCalledOnce()
   expect(await screen.findByText('Codex · gpt-model')).toBeTruthy()
   expect(panel()?.hasAttribute('data-agent-hub-orb-only')).toBe(false)
   expect(screen.getByText(/Mic worker ·/)).toBeTruthy()
@@ -296,7 +303,7 @@ it.each(['connecting', 'live', 'stopping'] as const)(
   async (connection) => {
     mocks.voice.connection = connection
     const user = userEvent.setup()
-    const { rerender } = show()
+    const { rerender } = await show()
     const outside = document.createElement('button')
     outside.textContent = 'Workspace'
     document.body.append(outside)
@@ -331,7 +338,7 @@ it('keeps an Orb approval open on Escape and still closes from the surrounding p
     operation: { kind: 'mirror', action: 'close' }
   }
   applyAgentHubDelivery('local', request)
-  show(false)
+  await show(false)
   const answer = await screen.findByRole('button', { name: 'Deny' })
   fireEvent.keyDown(answer, { key: 'Escape' })
   expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
@@ -343,7 +350,7 @@ it('keeps an Orb approval open on Escape and still closes from the surrounding p
 })
 
 it('reopens from history with one resume call and creates New by closing then opening', async () => {
-  show()
+  await show()
   await screen.findByText('Codex · gpt-model')
   fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
   fireEvent.click(screen.getByRole('button', { name: /Old question/ }))
@@ -370,7 +377,7 @@ it.each(['orb', 'other'] as const)(
     }
     const stopTracking = trackAgentHubDictationOrigin()
     document.addEventListener(DICTATION_CONTROL_EVENT, listener)
-    show()
+    await show()
     await screen.findByText('Codex · gpt-model')
     const terminal = document.createElement('div')
     terminal.dataset.terminalTabId = 'other-worker'
@@ -424,7 +431,7 @@ it('edits the shared Orb settings without losing the retained draft or conversat
     )
   }
   mocks.open.mockResolvedValue({ sessionId: 'current', resumed: false })
-  show()
+  await show()
   render(<RetainedDraft />)
   await screen.findByText('Codex · gpt-model')
   const draft = screen.getByRole('textbox', { name: 'Chat draft' })
@@ -487,7 +494,7 @@ it('reopening leaves another pane recording and cancels only the Orb recording i
   try {
     other.focus()
     act(() => useAppStore.setState({ dictationState: 'listening' }))
-    show()
+    await show()
     await screen.findByText('Codex · gpt-model')
     fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
     fireEvent.click(screen.getByRole('button', { name: /Old question/ }))
@@ -516,7 +523,7 @@ it('reopening leaves another pane recording and cancels only the Orb recording i
 })
 
 it('retries a failed New action without misreporting it as a history load failure', async () => {
-  show()
+  await show()
   await screen.findByText('Codex · gpt-model')
   fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
   mocks.close.mockRejectedValueOnce({
@@ -533,7 +540,7 @@ it('retries a failed New action without misreporting it as a history load failur
 })
 
 it('applies debounced saved settings serially to an open Orb and does not reopen a closed panel', async () => {
-  show()
+  await show()
   await screen.findByText('Codex · gpt-model')
   expect(mocks.open).not.toHaveBeenCalled()
   let finishFirst: ((session: AgentHubOrbSession) => void) | undefined
@@ -602,7 +609,7 @@ it.each([
         result: { answer: 'Other', index: null, by: 'human', desktop: 'device' }
       })
     }
-    show(false)
+    await show(false)
     expect(screen.queryByText('Answer received')).toBeNull()
     act(() => applyAgentHubDelivery('local', request))
     expect(screen.getByRole('img', { name: 'Waiting for your answer' })).toBeTruthy()
