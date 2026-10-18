@@ -154,7 +154,6 @@ it.each(['dock', 'statusBar', 'floating'] as const)(
         settings: {
           ...settings,
           agentHubOrbPlacement: placement,
-          ...(placement === 'statusBar' ? { agentHubPlacement: 'status-bar' as const } : {}),
           agentHubDockAutoHide: false
         },
         dictationState: 'listening'
@@ -323,7 +322,7 @@ it('falls back to the existing hub status item when an Orb dock has no hub dock'
   expect(screen.queryByTestId('dock')).toBeNull()
 })
 
-it('hides the status-bar Orb while the hub is docked, and hidden placement still responds to its command', () => {
+it('shows status-bar Orb even with docked hub, and hidden placement still responds to its command', () => {
   const settings = useAppStore.getState().settings
   if (!settings) {
     throw new Error('Expected settings')
@@ -332,7 +331,7 @@ it('hides the status-bar Orb while the hub is docked, and hidden placement still
     settings: { ...settings, agentHubOrbPlacement: 'statusBar', agentHubDockAutoHide: false }
   })
   show()
-  expect(screen.queryByRole('button', { name: 'Talk to Orb · Not set' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Talk to Orb · Not set' })).toBeTruthy()
   expect(screen.getByTestId('dock').dataset.orb).toBe('false')
   act(() =>
     useAppStore.setState({

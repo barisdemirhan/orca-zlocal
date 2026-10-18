@@ -88,7 +88,11 @@ export function useAgentHubOrbGeometry({
     const measure = (): void => {
       frame = 0
       const controlsWidth = controlsRef.current?.scrollWidth || 170
-      const requestHeight = requestRef.current?.scrollHeight ?? 240
+      const request = requestRef.current
+      // Why: scrollHeight leaves out the borders, so a max-height from it alone always overflows.
+      const requestHeight = request
+        ? request.scrollHeight + request.offsetHeight - request.clientHeight
+        : 240
       const inlineWidth =
         shellRef.current?.parentElement?.clientWidth || Math.min(480, window.innerWidth - 32)
       const currentDiameter = Number.parseFloat(

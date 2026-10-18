@@ -308,6 +308,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
         requestPresentationOf={requestPresentationOf}
         onJump={jump}
       />
+      {docked && !inSettings ? orb.statusButton : null}
       <Popover open={open && !orb.panelOpen && !inSettings} onOpenChange={setPopoverOpen}>
         {docked ? (
           dockHidden ? null : (

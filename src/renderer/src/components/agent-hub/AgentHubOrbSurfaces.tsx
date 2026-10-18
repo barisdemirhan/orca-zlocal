@@ -45,13 +45,10 @@ export function useAgentHubOrbSurfaces(
     configuredPlacement === 'hidden'
       ? configuredPlacement
       : 'floating'
-  // Why: the status-bar Orb follows the "Agent Hub" menu item; unchecked means no status-bar Orb.
   const placement =
     preferredPlacement === 'dock' && preferences.placement === 'status-bar'
       ? 'statusBar'
-      : preferredPlacement === 'statusBar' && preferences.placement !== 'status-bar'
-        ? 'hidden'
-        : preferredPlacement
+      : preferredPlacement
   const statusRef = useRef<HTMLSpanElement>(null)
   const floatingRef = useRef<HTMLDivElement>(null)
   const orbAnchorRef =
