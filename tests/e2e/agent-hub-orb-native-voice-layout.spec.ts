@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs'
 import type { Locator, Page } from '@stablyai/playwright-test'
 import { expect } from './helpers/orca-app'
-import { configureOrb, showOrbConversation, switchOrbToText } from './helpers/agent-hub-orb-fixture'
+import {
+  configureOrb,
+  revealOrbLiveControls,
+  showOrbConversation,
+  showOrbStage,
+  switchOrbToText
+} from './helpers/agent-hub-orb-fixture'
 import { test } from './helpers/agent-hub-orb-native-voice-fixture'
 import { waitForSessionReady } from './helpers/store'
 
@@ -60,7 +66,7 @@ test('Orb resizes by pointer and keyboard without losing its draft, including re
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
   const composer = panel.locator('[contenteditable="true"]')
   await composer.fill('Draft survives visual resize')
-  await orcaPage.getByRole('radio', { name: 'Orb view', exact: true }).click()
+  await showOrbStage(orcaPage)
   const stage = orcaPage.locator('[data-agent-hub-orb-stage]')
   const size = stage.getByRole('slider', { name: 'Orb size', exact: true })
   await expect(size).toBeVisible()
@@ -137,8 +143,9 @@ test('native approval follows the Orb on all four sides and remains answerable i
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
   await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
-  await orcaPage.getByRole('radio', { name: 'Orb view', exact: true }).click()
+  await showOrbStage(orcaPage)
   await orcaPage.getByRole('radio', { name: 'Start live voice', exact: true }).click()
+  await revealOrbLiveControls(orcaPage)
   await expect(orcaPage.getByRole('button', { name: 'Mute microphone', exact: true })).toBeEnabled()
   const stage = orcaPage.locator('[data-agent-hub-orb-stage]')
   const size = stage.getByRole('slider', { name: 'Orb size', exact: true })
@@ -172,9 +179,7 @@ test('native approval follows the Orb on all four sides and remains answerable i
   await allow.click()
   await expect(allow).toHaveCount(0)
   const receipt = card.locator('[data-native-chat-receipt="approval"]')
-  await expect(receipt).toBeVisible()
-  await expect(receipt).toContainText('Resolved')
-  await expect(receipt).toContainText('Allow')
+  await expect(receipt).toHaveCount(0)
   await switchOrbToText(orcaPage)
   await expect(panel.getByText('Native approval response received', { exact: true })).toHaveCount(1)
   const responses: { id?: string; result?: { decision?: string } }[] = readFileSync(

@@ -378,3 +378,100 @@
 [data-agent-hub-orb-mark='small'] .agent-hub-orb-halo {
   display: none;
 }
+
+/* The silhouette remains readable when motion is paused or the Orb is small. */
+.agent-hub-orb-sphere::after {
+  content: '';
+  position: absolute;
+  inset: -4%;
+  border: 1px solid color-mix(in srgb, var(--agent-hub-orb-tone) 60%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='off']::after,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='connecting']::after {
+  border-style: dashed;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='connecting'],
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='dictating'],
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='transcribing'],
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='muted'] {
+  --agent-hub-orb-tone: var(--agent-orb-listening);
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking'] {
+  --agent-hub-orb-tone: color-mix(in srgb, var(--agent-orb-listening) 32%, var(--muted-foreground));
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking'] .agent-hub-orb-globe,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking']::after {
+  border-radius: 28%;
+  transform: rotate(45deg) scale(0.88);
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking'] .agent-hub-orb-globe {
+  animation: none;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='request'] .agent-hub-orb-globe,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='request']::after {
+  border-radius: 50% 50% 50% 18%;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='approval'] {
+  --agent-hub-orb-tone: var(--status-warning);
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='approval'] .agent-hub-orb-globe,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='approval']::after {
+  border-radius: 28%;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='dictating'] .agent-hub-orb-globe,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='dictating']::after,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='transcribing'] .agent-hub-orb-globe,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='transcribing']::after {
+  border-radius: 38%;
+  transform: scaleX(0.8);
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='dictating'] .agent-hub-orb-globe,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='transcribing'] .agent-hub-orb-globe {
+  animation: none;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='speaking'] .agent-hub-orb-globe {
+  border-radius: 44% 56% 60% 40% / 54% 43% 57% 46%;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='speaking']::after,
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='listening']::after {
+  border-width: 3px;
+  border-style: double;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='error']::after {
+  border-style: dashed;
+  border-bottom-color: transparent;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='error'] .agent-hub-orb-globe {
+  border-radius: 40% 40% 30% 30%;
+}
+.agent-hub-orb-sphere[data-agent-hub-orb-phase='stopping']::after {
+  border-top-color: transparent;
+  transform: scale(0.8);
+}
+.agent-hub-orb-sphere[data-input-speaking='true'] .agent-hub-orb-ribbons {
+  opacity: 1;
+}
+.agent-hub-orb-record-mark {
+  position: absolute;
+  inset: 43%;
+  border-radius: 50%;
+  background: var(--foreground);
+}
+.agent-hub-orb-mute-marks {
+  position: absolute;
+  display: flex;
+  gap: 2px;
+  right: -4%;
+  bottom: -4%;
+}
+.agent-hub-orb-mute-marks svg {
+  width: 12px;
+  height: 12px;
+  padding: 1px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--popover);
+  color: var(--popover-foreground);
+}

@@ -15,6 +15,7 @@ export function createAgentHubOrbCli(): {
   emitVoiceItem: (text: string, role?: 'user' | 'assistant') => void
   emitLateVoiceEvents: () => void
   askVoiceApproval: () => void
+  askVoiceQuestion: () => void
   cleanup: () => void
 } {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'orca-orb-cli-'))
@@ -59,6 +60,7 @@ export function createAgentHubOrbCli(): {
     emitVoiceItem: (text, role = 'user') => controlVoice({ type: 'item', text, role }),
     emitLateVoiceEvents: () => controlVoice({ type: 'late' }),
     askVoiceApproval: () => controlVoice({ type: 'approval' }),
+    askVoiceQuestion: () => controlVoice({ type: 'question' }),
     cleanup: () => rmSync(directory, { recursive: true, force: true })
   }
 }

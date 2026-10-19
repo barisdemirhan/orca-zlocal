@@ -14,6 +14,7 @@ export class AgentHubOrbVoiceMedia {
   private audio: HTMLAudioElement | null = null
   private readonly capture = new MicrophoneCaptureSession(true)
   private outputEnabled = false
+  private outputMuted = false
   private speaking = false
   private meterContext: AudioContext | null = null
   private meterSource: MediaStreamAudioSourceNode | null = null
@@ -115,9 +116,17 @@ export class AgentHubOrbVoiceMedia {
     }
     this.outputEnabled = enabled
     if (this.audio) {
-      this.audio.muted = !enabled
+      this.audio.muted = !enabled || this.outputMuted
     }
     if (!enabled) {
+      this.publishOutput(false)
+    }
+  }
+
+  setOutputMuted(muted: boolean): void {
+    this.outputMuted = muted
+    this.setOutputEnabled(this.outputEnabled)
+    if (muted) {
       this.publishOutput(false)
     }
   }
@@ -213,7 +222,9 @@ export class AgentHubOrbVoiceMedia {
       if (samples.some((sample) => Math.abs(sample) > 0.01)) {
         lastAudioAt = performance.now()
       }
-      this.publishOutput(this.outputEnabled && performance.now() - lastAudioAt < 180)
+      this.publishOutput(
+        this.outputEnabled && !this.outputMuted && performance.now() - lastAudioAt < 180
+      )
       this.meterFrame = requestAnimationFrame(measure)
     }
     this.meterFrame = requestAnimationFrame(measure)

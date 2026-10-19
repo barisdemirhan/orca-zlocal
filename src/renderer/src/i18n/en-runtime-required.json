@@ -123,10 +123,19 @@
   "auto": {
     "agentHub": {
       "orb": {
+        "answerReceived": "Answer received",
         "ask": "Ask",
+        "awayAnswerReceived": "Answered by your away settings",
         "comingLater": "Coming later",
+        "dismissReceipt": "Dismiss",
+        "dismissRequestOutcome": "Dismiss request outcome",
         "free": "Act freely",
+        "requestClosed": "Request closed",
+        "requestDenied": "Request denied",
+        "requestExpired": "Request expired",
+        "requestNoLongerAvailable": "This request was answered elsewhere or is no longer available.",
         "speakReplies": "Speak replies",
+        "stopSpeaking": "Stop speaking",
         "talkShortcut": "Talk shortcut"
       }
     },

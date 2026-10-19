@@ -40,6 +40,7 @@ export async function configureOrb(
 ) {
   await page.evaluate(
     async ({ cwd, placement, model }) => {
+      await window.api.starNag.disable()
       await window.__store?.getState().updateSettings({
         uiLanguage: 'en',
         theme: 'dark',
@@ -49,6 +50,8 @@ export async function configureOrb(
         agentHubOrbAgent: 'codex',
         agentHubOrbModel: model,
         agentHubOrbPermission: 'ask',
+        agentHubOrbDefaultAction: 'text',
+        agentHubOrbAlternateAction: 'text',
         agentHubOrbPlacement: placement,
         agentHubOrbPosition: { x: Math.round(window.innerWidth * 0.65), y: 220 },
         floatingTerminalCwd: cwd
@@ -59,8 +62,10 @@ export async function configureOrb(
 }
 
 export async function showOrbConversation(page: Page): Promise<void> {
-  await expect(page.locator('[data-agent-hub-orb-stage]')).toBeVisible()
   const chat = page.locator('[data-agent-hub-orb-chat-tab-id]')
+  await expect(
+    page.locator('[data-agent-hub-orb-stage]:visible, [data-agent-hub-orb-chat-tab-id]:visible')
+  ).toBeVisible()
   if (!(await chat.isVisible())) {
     const conversation = page.getByRole('button', { name: 'Show conversation', exact: true })
     await ((await conversation.isVisible()) ? conversation.click() : switchOrbToText(page))
@@ -69,6 +74,40 @@ export async function showOrbConversation(page: Page): Promise<void> {
 }
 
 export async function switchOrbToText(page: Page): Promise<void> {
-  await page.getByRole('radio', { name: 'Switch to text', exact: true }).click()
-  await expect(page.getByRole('radio', { name: 'Orb view', exact: true })).toBeChecked()
+  const text = page.getByRole('radio', { name: 'Switch to text', exact: true })
+  if (await text.isVisible()) {
+    await text.click()
+  } else {
+    const orb = page.locator('[data-agent-hub-orb-composer-trigger]')
+    if (await orb.isVisible()) {
+      await orb.hover()
+      const stop = page.getByRole('button', { name: 'End live voice', exact: true })
+      if (await stop.isVisible()) {
+        await stop.click()
+      }
+    }
+  }
+  await expect(page.locator('[data-agent-hub-orb-chat-tab-id]')).toBeVisible()
+}
+
+export async function showOrbStage(page: Page): Promise<void> {
+  const stage = page.locator('[data-agent-hub-orb-stage]')
+  if (!(await stage.isVisible())) {
+    await page.getByRole('button', { name: 'Minimize Orb', exact: true }).click()
+  }
+  const expand = stage.getByRole('button', { name: 'Expand Orb', exact: true })
+  if (await expand.isVisible()) {
+    await expand.click()
+  }
+  await expect(stage).toBeVisible()
+}
+
+export async function revealOrbLiveControls(page: Page): Promise<void> {
+  const orb = page.locator('[data-agent-hub-orb-composer-trigger]')
+  await ((await orb.isVisible())
+    ? orb.hover()
+    : page.locator('[data-agent-hub-orb-stage] .agent-hub-orb-art').hover())
+  const stop = page.getByRole('button', { name: 'End live voice', exact: true })
+  await expect(stop).toHaveCount(1)
+  await expect(stop).toBeVisible()
 }

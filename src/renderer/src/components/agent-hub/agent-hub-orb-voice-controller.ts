@@ -1,5 +1,4 @@
 import type { AgentSessionVoiceEvent } from '../../../../shared/agent-session-voice'
-import { createBrowserUuid } from '@/lib/browser-uuid'
 import type { AgentSessionVoiceClient } from '@/runtime/agent-session-voice-client'
 import type { StructuredAgentSessionHostCapabilityState } from '@/runtime/structured-agent-session-host-capability'
 import { microphoneCaptureIsBusy } from '../dictation/microphone-capture-lease'
@@ -8,12 +7,13 @@ import {
   agentHubOrbVoiceStartFailure
 } from './agent-hub-orb-voice-failure'
 import { AgentHubOrbVoiceMedia } from './agent-hub-orb-voice-media'
-import { AgentHubOrbVoicePlayback } from './agent-hub-orb-voice-playback'
 import {
   EMPTY_ORB_VOICE_SNAPSHOT,
   type AgentHubOrbVoiceSnapshot
 } from './agent-hub-orb-voice-state'
 import {
+  createAgentHubOrbVoiceAttempt,
+  startAgentHubOrbVoiceAttempt,
   stopAgentHubOrbVoiceAttempt,
   deliverAgentHubOrbVoiceEvent,
   type AgentHubOrbVoiceAttempt as Attempt
@@ -157,30 +157,24 @@ export class AgentHubOrbVoiceController {
           this.publish({ output: speaking ? 'speaking' : 'silent' })
         }
       },
-      onSpeech: (phase, itemId) => attempt.playback.inputSpeech(phase, itemId),
+      onSpeech: (phase, itemId) => {
+        if (this.attempt?.generation === generation && !this.attempt.dead) {
+          this.publish({
+            inputSpeaking: phase === 'started' && this.snapshot.input === 'listening'
+          })
+          attempt.playback.inputSpeech(phase, itemId)
+        }
+      },
       onFailure: (reason) => this.fail(generation, agentHubOrbVoiceMediaFailure(reason))
     })
-    let signalReady = (): void => {}
-    const subscriptionReady = new Promise<void>((resolve) => {
-      signalReady = resolve
-    })
-    const attempt: Attempt = {
-      voiceSessionId: createBrowserUuid(),
-      generation,
-      media,
-      playback: new AgentHubOrbVoicePlayback((enabled) => media.setOutputEnabled(enabled)),
-      dead: false,
-      started: false,
-      ready: false,
-      remoteClosed: false,
-      subscriptionReady,
-      signalReady
-    }
+    const attempt = createAgentHubOrbVoiceAttempt(generation, media)
     this.attempt = attempt
     this.publish({
       connection: 'connecting',
       input: 'muted',
       output: 'silent',
+      outputMuted: false,
+      inputSpeaking: false,
       textMode: false,
       reason: undefined
     })
@@ -189,26 +183,13 @@ export class AgentHubOrbVoiceController {
       25_000
     )
     try {
-      const subscription = await this.client.subscribe(
+      await startAgentHubOrbVoiceAttempt(
         attempt,
+        this.client,
+        this.microphonePreference,
         (event) => this.accept(attempt, event),
         () => this.fail(generation, 'The voice host connection was lost.')
       )
-      attempt.unsubscribe = subscription.unsubscribe
-      if (attempt.dead) {
-        subscription.unsubscribe()
-        return
-      }
-      await attempt.subscriptionReady
-      if (attempt.dead) {
-        return
-      }
-      const sdp = await media.createOffer(this.microphonePreference())
-      if (attempt.dead || sdp === null) {
-        return
-      }
-      attempt.start = this.client.start(attempt, sdp)
-      await attempt.start
     } catch (error) {
       const failure = agentHubOrbVoiceStartFailure(error)
       if (failure.mediaUnsupported) {
@@ -248,7 +229,7 @@ export class AgentHubOrbVoiceController {
     }
     void this.stopLive().then(() => {
       if (this.generation === generation) {
-        this.publish({ connection: 'error', reason })
+        this.publish({ connection: 'error', reason, textMode: true })
       }
     })
   }
@@ -266,7 +247,7 @@ export class AgentHubOrbVoiceController {
     attempt.signalReady()
     clearTimeout(attempt.timeout)
     attempt.localStop = attempt.media.stop()
-    this.publish({ connection: 'stopping', input: 'muted', output: 'silent' })
+    this.publish({ connection: 'stopping', input: 'muted', output: 'silent', inputSpeaking: false })
     const stopping = this.finishStop(attempt).finally(() => {
       if (this.stopping === stopping) {
         this.stopping = null
@@ -297,7 +278,18 @@ export class AgentHubOrbVoiceController {
       return
     }
     this.attempt.media.setMuted(muted)
-    this.publish({ input: muted ? 'muted' : 'listening' })
+    this.publish({
+      input: muted ? 'muted' : 'listening',
+      ...(muted ? { inputSpeaking: false } : {})
+    })
+  }
+
+  readonly muteOutput = (muted: boolean): void => {
+    if (!this.attempt || this.attempt.dead || this.snapshot.connection !== 'live') {
+      return
+    }
+    this.attempt.media.setOutputMuted(muted)
+    this.publish({ outputMuted: muted })
   }
 
   readonly stopSpeaking = (): void => {

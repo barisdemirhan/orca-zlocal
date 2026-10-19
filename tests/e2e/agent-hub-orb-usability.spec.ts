@@ -1,5 +1,5 @@
 import { expect } from './helpers/orca-app'
-import { configureOrb } from './helpers/agent-hub-orb-fixture'
+import { configureOrb, revealOrbLiveControls, showOrbStage } from './helpers/agent-hub-orb-fixture'
 import { observeVoiceDevice, test } from './helpers/agent-hub-orb-native-voice-fixture'
 import { pressShortcut } from './helpers/shortcuts'
 import { waitForSessionReady } from './helpers/store'
@@ -28,6 +28,7 @@ test('Orb opens its chosen action, stays open and remembers its resized size', a
   const stage = orcaPage.locator('[data-agent-hub-orb-stage]')
   const size = stage.getByRole('slider', { name: 'Orb size', exact: true })
   await launcher.click()
+  await revealOrbLiveControls(orcaPage)
   await expect(stage.getByRole('button', { name: 'Mute microphone', exact: true })).toBeEnabled()
   await expect.poll(async () => (await observeVoiceDevice(orcaPage)).captures).toBe(1)
   await expect(size).toHaveAttribute('aria-valuenow', '128')
@@ -49,7 +50,7 @@ test('Orb opens its chosen action, stays open and remembers its resized size', a
   await expect(panel).toBeVisible()
   await expect(composer).toHaveText('Unsent text stays while working elsewhere')
   expect((await observeVoiceDevice(orcaPage)).captures).toBe(1)
-  await stage.getByRole('radio', { name: 'Orb view', exact: true }).click()
+  await showOrbStage(orcaPage)
   await expect(size).toHaveAttribute('aria-valuenow', '136')
   for (const theme of ['dark', 'light'] as const) {
     await orcaPage.evaluate(async (theme) => {
@@ -68,6 +69,7 @@ test('Orb opens its chosen action, stays open and remembers its resized size', a
   await expect(panel).toHaveCount(0)
 
   await pressShortcut(orcaPage, 'Space', { shift: true })
+  await revealOrbLiveControls(orcaPage)
   await expect(stage.getByRole('button', { name: 'Mute microphone', exact: true })).toBeEnabled()
   await expect.poll(async () => (await observeVoiceDevice(orcaPage)).captures).toBe(2)
   await expect(size).toHaveAttribute('aria-valuenow', '136')

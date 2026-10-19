@@ -2,7 +2,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
-import type { AgentJournalRenderItem } from '../../../../shared/agent-session-journal-types'
 import {
   closeAgentHubOrbPanel,
   setAgentHubOrbRequestDestination,
@@ -14,24 +13,6 @@ afterEach(() => {
   cleanup()
   closeAgentHubOrbPanel()
 })
-
-function approval(resolved = false): AgentJournalRenderItem {
-  return {
-    itemId: 'approval',
-    revision: resolved ? 2 : 1,
-    sequence: 1,
-    observedAt: 1000,
-    body: {
-      kind: 'approval',
-      title: 'Run the check?',
-      detail: null,
-      options: [{ id: 'allow', label: 'Allow once' }],
-      resolution: resolved
-        ? { state: 'resolved', selectedOptionId: 'allow', resolvedBy: 'desktop', resolvedAt: 2000 }
-        : { state: 'pending', selectedOptionId: null, resolvedBy: null, resolvedAt: null }
-    }
-  }
-}
 
 it('moves the same pending answer field without losing the draft and ignores a different session', () => {
   showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'tab', resumed: false })
@@ -70,88 +51,4 @@ it('keeps a normal Chat View answer inline and does not set Orb pending state', 
   )
   expect(view.container.contains(screen.getByRole('textbox', { name: 'Chat answer' }))).toBe(true)
   expect(useAgentHubOrbPanel.getState().nativeRequestPending).toBe(false)
-})
-
-it('shows a receipt only after the canonical host resolution and dismisses only its presentation', () => {
-  showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'tab', resumed: false })
-  const host = document.body.appendChild(document.createElement('div'))
-  setAgentHubOrbRequestDestination(host)
-  const pending = approval()
-  const view = render(
-    <NativeChatOrbPromptSlot tabId="tab" sessionId="orb" pending journalItems={[pending]}>
-      <span>Waiting for an answer</span>
-    </NativeChatOrbPromptSlot>
-  )
-  view.rerender(
-    <NativeChatOrbPromptSlot tabId="tab" sessionId="orb" pending={false} journalItems={[pending]}>
-      {null}
-    </NativeChatOrbPromptSlot>
-  )
-  expect(host.querySelector('[data-native-chat-receipt]')).toBeNull()
-  const resolved = approval(true)
-  view.rerender(
-    <NativeChatOrbPromptSlot tabId="tab" sessionId="orb" pending={false} journalItems={[resolved]}>
-      {null}
-    </NativeChatOrbPromptSlot>
-  )
-  expect(host.querySelector('[data-native-chat-receipt="approval"]')).not.toBeNull()
-  expect(screen.getByText('Allow once')).toBeDefined()
-  expect(useAgentHubOrbPanel.getState()).toMatchObject({
-    nativeRequestPending: false,
-    nativeRequestVisible: true
-  })
-  fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
-  expect(host.querySelector('[data-native-chat-receipt]')).toBeNull()
-  expect(useAgentHubOrbPanel.getState().nativeRequestVisible).toBe(false)
-  host.remove()
-})
-
-it.each([true, false])(
-  'does not revive resolved history, including a delayed history read',
-  (loaded) => {
-    showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'tab', resumed: true })
-    const host = document.body.appendChild(document.createElement('div'))
-    setAgentHubOrbRequestDestination(host)
-    const resolved = approval(true)
-    const prompt = (items: readonly AgentJournalRenderItem[]) => (
-      <NativeChatOrbPromptSlot tabId="tab" sessionId="orb" pending={false} journalItems={items}>
-        {null}
-      </NativeChatOrbPromptSlot>
-    )
-    const view = render(prompt(loaded ? [resolved] : []))
-    view.rerender(prompt([resolved]))
-    expect(host.querySelector('[data-native-chat-receipt]')).toBeNull()
-    expect(useAgentHubOrbPanel.getState().nativeRequestVisible).toBe(false)
-    host.remove()
-  }
-)
-
-it('ends a receipt when the same retained conversation is closed and reopened', () => {
-  showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'tab', resumed: false })
-  const host = document.body.appendChild(document.createElement('div'))
-  setAgentHubOrbRequestDestination(host)
-  const view = render(
-    <NativeChatOrbPromptSlot tabId="tab" sessionId="orb" pending journalItems={[approval()]}>
-      <input aria-label="Current answer" />
-    </NativeChatOrbPromptSlot>
-  )
-  view.rerender(
-    <NativeChatOrbPromptSlot
-      tabId="tab"
-      sessionId="orb"
-      pending={false}
-      journalItems={[approval(true)]}
-    >
-      {null}
-    </NativeChatOrbPromptSlot>
-  )
-  expect(host.querySelector('[data-native-chat-receipt="approval"]')).not.toBeNull()
-  act(() => {
-    closeAgentHubOrbPanel()
-    showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'tab', resumed: true })
-    setAgentHubOrbRequestDestination(host)
-  })
-  expect(host.querySelector('[data-native-chat-receipt]')).toBeNull()
-  expect(useAgentHubOrbPanel.getState().nativeRequestVisible).toBe(false)
-  host.remove()
 })

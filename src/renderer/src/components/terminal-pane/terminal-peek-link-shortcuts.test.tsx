@@ -4,6 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LinkActionPopover } from '@/components/link-actions/LinkActionPopover'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { registerHttpLinkStoreAccessor } from '@/lib/http-link-routing'
+import type { LinkActionRequest } from '@/components/link-actions/link-action-request'
+import {
+  handleNativeChatWebLink,
+  nativeChatWebPeekSource
+} from '../native-chat/native-chat-web-link-actions'
 import { handleTerminalFileLink } from './terminal-file-link-actions'
 import { handleTerminalHttpLink } from './terminal-url-link-hit-testing'
 import type {
@@ -88,7 +93,7 @@ function captureActions(): {
   }
 }
 
-function showActions(request: TerminalLinkActionRequest): void {
+function showActions(request: LinkActionRequest): void {
   render(
     <TooltipProvider>
       <LinkActionPopover request={request} onClose={vi.fn()} />
@@ -120,6 +125,43 @@ afterEach(() => {
 })
 
 describe('terminal Peek shortcut labels', () => {
+  it.each([
+    ['Macintosh', { metaKey: true }, '⌘'],
+    ['Windows NT 10.0', { ctrlKey: true }, 'Ctrl'],
+    ['Linux', { ctrlKey: true }, 'Ctrl']
+  ] as const)(
+    'opens Orb chat Peek and labels the actual destinations on %s',
+    (userAgent, modifier, label) => {
+      vi.stubGlobal('navigator', { userAgent })
+      const requests: LinkActionRequest[] = []
+      const url = 'https://example.com/orb-chat'
+      const source = { worktreeId: 'wt-1', sourceOwner: { kind: 'local' } as const }
+      const deps = {
+        ...source,
+        destinations: { primary: 'system', alternate: 'orca' } as const,
+        actionsEnabled: true,
+        restoreFocus: vi.fn(),
+        request: (request: LinkActionRequest) => requests.push(request),
+        peekSource: nativeChatWebPeekSource(url, source, linkClick(false), true)
+      }
+      handleNativeChatWebLink(linkClick(false), url, deps)
+      showActions(requests[0])
+      const peek = screen.getByRole('button', { name: /Peek/ })
+      expect(within(peek).getByText(label)).toBeTruthy()
+      expect(
+        within(screen.getByRole('button', { name: /Orca Browser/ })).queryByText('Click')
+      ).toBeNull()
+      fireEvent.click(peek)
+      expect(readAgentHubPeek()?.history[0]).toMatchObject({ location: url, fromOrb: true })
+      closeAgentHubPeek()
+      handleNativeChatWebLink(linkClick(false, modifier), url, deps)
+      expect(readAgentHubPeek()?.history[0]?.location).toBe(url)
+      closeAgentHubPeek()
+      handleNativeChatWebLink(linkClick(false, { ...modifier, shiftKey: true }), url, deps)
+      expect(readAgentHubPeek()).toBeNull()
+      expect(mocks.openUrl).toHaveBeenCalledWith(url)
+    }
+  )
   it.each([
     ['Macintosh', { metaKey: true }, 'orca', 'system', '⌘', '⇧'],
     ['Windows NT 10.0', { ctrlKey: true }, 'system', 'orca', 'Ctrl', 'Shift'],

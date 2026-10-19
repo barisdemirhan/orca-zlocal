@@ -418,7 +418,8 @@ it.each(['live', 'dictate'] as const)(
       })
       expect(useAgentHubOrbPanel.getState().launchRequest?.action).toBe(action)
       if (action === 'dictate') {
-        await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Orb view' })))
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Minimize Orb' })))
+        await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Expand Orb' })))
       }
       await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
       await act(async () => {
@@ -430,7 +431,7 @@ it.each(['live', 'dictate'] as const)(
         mocks.call.mock.calls.filter((call) => call[1] === 'agentSession.startVoice')
       ).toHaveLength(0)
       expect(actions).toEqual([])
-      expect(screen.getByRole('radio', { name: 'Orb view', checked: true })).toBeTruthy()
+      expect(screen.queryByRole('radio', { name: 'Orb view' })).toBeNull()
       expect(useAgentHubOrbPanel.getState().presentation).toBe('chat')
     } finally {
       const owner = readAgentHubOrbVoice('tab-a')

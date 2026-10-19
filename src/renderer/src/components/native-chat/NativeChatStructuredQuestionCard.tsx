@@ -13,7 +13,8 @@ export function NativeChatStructuredQuestionCard({
   onCancel,
   isSubmitting,
   shouldFocus,
-  answerInputRef
+  answerInputRef,
+  multiline = false
 }: {
   questions: readonly AgentJournalQuestion[]
   onAnswer: (response: AgentSessionPromptResponse) => void
@@ -21,13 +22,18 @@ export function NativeChatStructuredQuestionCard({
   isSubmitting?: boolean
   shouldFocus?: boolean
   answerInputRef?: RefObject<HTMLInputElement | null>
+  multiline?: boolean
 }): React.JSX.Element {
   const card = structuredQuestionCard(questions)
   return (
     <NativeChatQuestionCard
+      layout={multiline ? 'embedded' : 'composer'}
       prompt={card.prompt}
       allowOther={card.allowOther}
-      freeTextInputs={card.freeTextInputs}
+      freeTextInputs={card.freeTextInputs.map((input) => ({
+        ...input,
+        multiline: input?.multiline ?? multiline
+      }))}
       onAnswer={(selections) => {
         const answers = structuredQuestionAnswers(questions, selections)
         if (answers) {

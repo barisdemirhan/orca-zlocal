@@ -3,7 +3,7 @@ import { expect } from './helpers/orca-app'
 import { configureOrb, showOrbConversation, test } from './helpers/agent-hub-orb-fixture'
 import { waitForSessionReady } from './helpers/store'
 
-test('Orb repairs an unavailable saved model, keeps startup diagnostics quiet and recovers a rejected turn', async ({
+test('Orb refuses an unavailable saved model, keeps startup diagnostics quiet and recovers a rejected turn', async ({
   orcaPage,
   seededRepoPath,
   orbCli
@@ -14,6 +14,15 @@ test('Orb repairs an unavailable saved model, keeps startup diagnostics quiet an
 
   await orcaPage.getByRole('button', { name: /^Talk to Orb/ }).click()
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
+  await expect(
+    orcaPage.getByText(
+      'The selected Codex model is unavailable for this account. Choose a model in Orb settings.',
+      { exact: true }
+    )
+  ).toBeVisible()
+  await expect(panel).toHaveCount(0)
+  await configureOrb(orcaPage, seededRepoPath, 'statusBar', 'orb-e2e-a')
+  await orcaPage.getByRole('button', { name: /^Talk to Orb/ }).click()
   await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
   await expect(panel.locator('header')).toContainText('Codex · orb-e2e-a')
@@ -250,7 +259,7 @@ test('saved model and approval settings replace idle Orb while past conversation
   await orcaPage.getByRole('option', { name: 'GPT-5.6 Sol', exact: true }).click()
   const freely = orbSettings
     .getByRole('radiogroup', { name: 'Approvals', exact: true })
-    .getByRole('radio', { name: 'Act freely', exact: true })
+    .getByRole('radio', { name: 'Full access', exact: true })
   await freely.click()
   await expect(freely).toHaveAttribute('aria-checked', 'true')
   await testInfo.attach('orb-in-panel-settings', {

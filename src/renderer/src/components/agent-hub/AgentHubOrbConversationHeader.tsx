@@ -45,7 +45,8 @@ export function AgentHubOrbConversationHeader({
   onSettings,
   onNew,
   onMinimize,
-  onClose
+  onClose,
+  requestAction
 }: {
   history: boolean
   settingsView: boolean
@@ -58,6 +59,7 @@ export function AgentHubOrbConversationHeader({
   onNew: () => void
   onMinimize: () => void
   onClose: () => void
+  requestAction?: ReactNode
 }): React.JSX.Element {
   const historyLabel = translate('auto.agentHub.orb.pastConversations', 'Past conversations')
   const settingsLabel = translate('auto.agentHub.orb.settings', 'Orb settings')
@@ -85,6 +87,7 @@ export function AgentHubOrbConversationHeader({
       ) : (
         <span className="flex-1" />
       )}
+      {requestAction}
       {history ? (
         <Button type="button" variant="outline" size="xs" disabled={busy} onClick={onNew}>
           {newLabel}

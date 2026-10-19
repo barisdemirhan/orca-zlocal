@@ -4,10 +4,8 @@ import { agentHubOrbPillShown, agentHubOrbSphereAction } from './agent-hub-orb-s
 const idle = { liveActive: false, dictating: false, canStartLive: false, canDictate: false }
 
 describe('agentHubOrbSphereAction', () => {
-  it('prefers ending Live, then finishing dictation', () => {
-    expect(agentHubOrbSphereAction({ ...idle, liveActive: true, canStartLive: true })).toBe(
-      'end-live'
-    )
+  it('ignores an active Live click and keeps finishing dictation explicit', () => {
+    expect(agentHubOrbSphereAction({ ...idle, liveActive: true, canStartLive: true })).toBe('none')
     expect(agentHubOrbSphereAction({ ...idle, dictating: true, canDictate: true })).toBe(
       'finish-dictation'
     )

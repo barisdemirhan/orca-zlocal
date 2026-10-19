@@ -145,6 +145,7 @@ beforeEach(() => {
 })
 afterEach(async () => {
   await controller.stopLive()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -196,6 +197,47 @@ it('keeps a later Text choice when the earlier Live capability check finishes la
   expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
   await starting
   expect(controller.getSnapshot()).toMatchObject({ connection: 'off', textMode: true })
+})
+
+it('keeps speaker mute through later speech without muting the microphone or ending Live', async () => {
+  const elements = vi.spyOn(document, 'createElement')
+  await start()
+  const peer = Peer.instances[0]
+  if (!peer) {
+    throw new Error('Expected a voice peer')
+  }
+  peer.connect()
+  event({ type: 'started' })
+  event({ type: 'sdp', sdp: 'fixture answer' })
+  await waitFor(() => expect(controller.getSnapshot().connection).toBe('live'))
+  const audio = elements.mock.results.flatMap((result) =>
+    result.type === 'return' && result.value instanceof HTMLAudioElement ? [result.value] : []
+  )[0]
+  if (!audio) {
+    throw new Error('Expected the real media playback element')
+  }
+  const speak = (itemId: string) => {
+    for (const phase of ['started', 'stopped']) {
+      peer.channel.onmessage?.(
+        new MessageEvent('message', {
+          data: JSON.stringify({ type: `input_audio_buffer.speech_${phase}`, item_id: itemId })
+        })
+      )
+    }
+  }
+  speak('first-input')
+  expect(audio.muted).toBe(false)
+  controller.muteOutput(true)
+  speak('next-input')
+  expect(audio.muted).toBe(true)
+  expect(track.enabled).toBe(true)
+  expect(controller.getSnapshot()).toMatchObject({ connection: 'live', outputMuted: true })
+  controller.muteInput(true)
+  controller.muteOutput(false)
+  expect(audio.muted).toBe(false)
+  expect(track.enabled).toBe(false)
+  expect(client.stop).not.toHaveBeenCalled()
+  elements.mockRestore()
 })
 
 it.each(['failed', 'closed'])(

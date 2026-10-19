@@ -3,8 +3,9 @@ import type {
   AgentSessionVoiceEvent
 } from '../../../../shared/agent-session-voice'
 import type { AgentSessionVoiceClient } from '@/runtime/agent-session-voice-client'
+import { createBrowserUuid } from '@/lib/browser-uuid'
 import type { AgentHubOrbVoiceMedia } from './agent-hub-orb-voice-media'
-import type { AgentHubOrbVoicePlayback } from './agent-hub-orb-voice-playback'
+import { AgentHubOrbVoicePlayback } from './agent-hub-orb-voice-playback'
 
 export type AgentHubOrbVoiceAttempt = AgentSessionVoiceOwner & {
   media: AgentHubOrbVoiceMedia
@@ -19,6 +20,53 @@ export type AgentHubOrbVoiceAttempt = AgentSessionVoiceOwner & {
   start?: Promise<unknown>
   timeout?: ReturnType<typeof setTimeout>
   localStop?: Promise<void>
+}
+
+export function createAgentHubOrbVoiceAttempt(
+  generation: number,
+  media: AgentHubOrbVoiceMedia
+): AgentHubOrbVoiceAttempt {
+  let signalReady = (): void => {}
+  const subscriptionReady = new Promise<void>((resolve) => {
+    signalReady = resolve
+  })
+  return {
+    voiceSessionId: createBrowserUuid(),
+    generation,
+    media,
+    playback: new AgentHubOrbVoicePlayback((enabled) => media.setOutputEnabled(enabled)),
+    dead: false,
+    started: false,
+    ready: false,
+    remoteClosed: false,
+    subscriptionReady,
+    signalReady
+  }
+}
+
+export async function startAgentHubOrbVoiceAttempt(
+  attempt: AgentHubOrbVoiceAttempt,
+  client: AgentSessionVoiceClient,
+  microphonePreference: () => { deviceId?: string | null; label?: string | null },
+  onEvent: (event: AgentSessionVoiceEvent) => void,
+  onDisconnect: () => void
+): Promise<void> {
+  const subscription = await client.subscribe(attempt, onEvent, onDisconnect)
+  attempt.unsubscribe = subscription.unsubscribe
+  if (attempt.dead) {
+    subscription.unsubscribe()
+    return
+  }
+  await attempt.subscriptionReady
+  if (attempt.dead) {
+    return
+  }
+  const sdp = await attempt.media.createOffer(microphonePreference())
+  if (attempt.dead || sdp === null) {
+    return
+  }
+  attempt.start = client.start(attempt, sdp)
+  await attempt.start
 }
 
 export function deliverAgentHubOrbVoiceEvent(

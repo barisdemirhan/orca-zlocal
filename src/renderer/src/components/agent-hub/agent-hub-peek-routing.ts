@@ -37,7 +37,9 @@ export type AgentHubPeekLinkSource = {
   worktreePath?: string
   line?: number | null
   column?: number | null
-  event: MouseEvent | undefined
+  event: Pick<MouseEvent, 'target'> | undefined
+  previewOnModifier?: boolean
+  fromOrb?: boolean
   openInWorkspace: () => void
   openExternally: (() => void) | null
 }
@@ -50,7 +52,7 @@ function peekEnabled(source: AgentHubPeekLinkSource): boolean {
   )
 }
 
-function mirrorKeyOf(event: MouseEvent | undefined): string | null {
+function mirrorKeyOf(event: Pick<MouseEvent, 'target'> | undefined): string | null {
   return event?.target instanceof Element ? agentHubMirrorWindowIdOf(event.target) : null
 }
 
@@ -68,6 +70,7 @@ export function agentHubPeekUrlItem(
     title: agentHubPeekPageTitle(url),
     location: url,
     mirrorKey: mirrorKeyOf(source.event),
+    fromOrb: source.fromOrb,
     openInWorkspace: source.openInWorkspace,
     openExternally: source.openExternally
   }
@@ -145,6 +148,7 @@ export function agentHubPeekFileItem(
     title: filePath.split(/[/\\]/).pop() || filePath,
     location: filePath,
     mirrorKey: mirrorKeyOf(source.event),
+    fromOrb: source.fromOrb,
     openInWorkspace: source.openInWorkspace,
     openExternally: source.openExternally
   }
@@ -243,7 +247,7 @@ export function openAgentHubPeekFile(
 
 /** A direct click in a mirror peeks instead of leaving the mirror for the workspace. */
 export function peekTerminalUrlFromMirror(url: string, source: AgentHubPeekLinkSource): boolean {
-  if (!peekEnabled(source) || mirrorKeyOf(source.event) === null) {
+  if (!peekEnabled(source) || (!source.previewOnModifier && mirrorKeyOf(source.event) === null)) {
     return false
   }
   if (
@@ -263,7 +267,7 @@ export function peekTerminalFileFromMirror(
   filePath: string,
   source: AgentHubPeekLinkSource
 ): boolean {
-  return peekEnabled(source) && mirrorKeyOf(source.event) !== null
+  return peekEnabled(source) && (source.previewOnModifier || mirrorKeyOf(source.event) !== null)
     ? openAgentHubPeekFile(filePath, source)
     : false
 }
@@ -280,7 +284,7 @@ export function agentHubPeekUrlAction(
     ? {
         icon: PictureInPicture2,
         label: translate('agentHub.peek.action', 'Peek'),
-        shortcut: mirrorKeyOf(source.event) === null ? null : 'primary',
+        shortcut: source.previewOnModifier || mirrorKeyOf(source.event) !== null ? 'primary' : null,
         run: () => openPeekUrlWithFeedback(url, source)
       }
     : null
@@ -299,7 +303,7 @@ export function agentHubPeekFileAction(
     icon: PictureInPicture2,
     label: translate('agentHub.peek.action', 'Peek'),
     shortcut:
-      mirrorKeyOf(source.event) !== null &&
+      (source.previewOnModifier || mirrorKeyOf(source.event) !== null) &&
       (getConnectionIdForFile(source.worktreeId, filePath) !== undefined ||
         route.runtimeEnvironmentId)
         ? 'primary'

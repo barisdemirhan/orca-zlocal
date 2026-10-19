@@ -22278,7 +22278,16 @@
       "modelsLoading": "Loading available models…",
       "modelsUnavailable": "Could not load available models. Open the model menu to retry.",
       "modelUnavailable": "Unavailable",
-      "settingsApply": "Agent, model and approval changes start a new conversation when Orb is idle. Past conversations keep their agent and model."
+      "settingsApply": "Agent, model and approval changes start a new conversation when Orb is idle. Past conversations keep their agent and model.",
+      "liveActive": "Live voice on",
+      "unmuteSpeaker": "Unmute Orb",
+      "muteSpeaker": "Mute Orb",
+      "requestTitle": "Orb is waiting for you",
+      "answerLater": "Answer later",
+      "requestDescription": "Your answer will return to this Orb conversation.",
+      "needsApproval": "Waiting for your approval",
+      "taskFailed": "The task could not complete.",
+      "transcribing": "Preparing dictated text…"
     }
   },
   "workspace": {

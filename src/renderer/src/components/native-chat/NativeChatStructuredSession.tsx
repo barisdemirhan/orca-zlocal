@@ -2,11 +2,9 @@ import { useNativeChatHandOff } from './use-native-chat-hand-off'
 import { cn } from '@/lib/utils'
 import { NATIVE_CHAT_APPEARANCE_ROOT_CLASS } from './native-chat-appearance-style'
 import { useNativeChatStoreAppearanceStyle } from './use-native-chat-store-appearance-style'
-import { useRef, useState } from 'react'
-import { agentSessionPromptQuestions } from '../../../../shared/agent-session-question-answer'
+import { useContext, useRef, useState } from 'react'
 import { structuredAgentSessionPaneKey } from '../../../../shared/structured-agent-session-projection'
 import { useStructuredChatLiveSession } from './use-structured-chat-live-session'
-import { NativeChatApprovalCard } from './NativeChatApprovalCard'
 import { NativeChatComposer, type NativeChatComposerHandle } from './NativeChatComposer'
 import type { NativeChatOptionPickerRequest } from './native-chat-composer-types'
 import { structuredAgentSessionDraftScopeKey } from './native-chat-composer-draft-store'
@@ -17,7 +15,7 @@ import { NativeChatMessageList } from './NativeChatMessageList'
 import { NativeChatContextClearFade } from './NativeChatContextClearFade'
 import { useStructuredNativeChatSubmitReveal } from './use-structured-native-chat-submit-reveal'
 import { useStructuredPromptResponseHold } from './use-structured-prompt-response-hold'
-import { NativeChatStructuredQuestionCard } from './NativeChatStructuredQuestionCard'
+import { NativeChatStructuredPromptCard } from './NativeChatStructuredPromptCard'
 import { NativeChatStructuredAsyncQuestion } from './NativeChatStructuredAsyncQuestion'
 import { selectNativeChatViewState, structuredChatHistoryPhase } from './native-chat-view-state'
 import { useNativeChatRootInputRouting } from './use-native-chat-root-input-routing'
@@ -47,7 +45,6 @@ import { useNativeChatRewindHost } from './use-native-chat-rewind-host'
 import { NativeChatRewindContext } from './native-chat-rewind-context'
 import { NativeChatQueuedMessageList } from './NativeChatQueuedMessageList'
 import { nativeChatStructuredStopControls } from './native-chat-structured-stop-controls'
-import { chatApprovalFromJournal } from '../../../../shared/native-chat-interactive-prompt'
 import { useAppStore } from '../../store'
 import { structuredAgentLabel } from '@/lib/structured-agent-session-launch-label'
 import { useNativeChatStructuredComposerTransport } from './use-native-chat-structured-composer-transport'
@@ -68,10 +65,13 @@ import {
   useNativeChatClaudeSignIn
 } from './native-chat-claude-sign-in'
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
+import { NativeChatPresentationContext } from './native-chat-presentation-context'
+import { AgentHubOrbComposerState } from '../agent-hub/AgentHubOrbComposerState'
 
 export function NativeChatStructuredSession(
   props: Omit<NativeChatStructuredViewProps, 'mode'>
 ): React.JSX.Element {
+  const orb = useContext(NativeChatPresentationContext) === 'orb'
   const ownerWorktreeId = useNativeChatTabOwnerWorktreeId(props.tabId)
   const fileLinkContext = useNativeChatFileLinkContext(props.tabId)
   const provisionalLaunch = useNativeChatProvisionalLaunch(ownerWorktreeId, props.sessionId)
@@ -184,11 +184,11 @@ export function NativeChatStructuredSession(
   const prompt = controller.prompts[0] ?? null
   // Unknown prompts leave the composer usable; a send starts a turn whose cancel can resolve them.
   const promptsUnanswerable = pendingPromptsAllUnanswerableHere(controller.prompts)
-  const composerShown = (prompt === null || promptsUnanswerable) && readFailure?.final !== true
+  const composerShown =
+    (orb || prompt === null || promptsUnanswerable) && readFailure?.final !== true
   // An owned prompt keeps its card; otherwise a missing program leaves the composer disabled.
   const installLayout = viewState.kind === 'empty' ? 'hero' : 'strip'
   const install = useNativeChatInstallSlot(props, agentLabel, installLayout)
-  const approval = prompt?.body.kind === 'approval' ? chatApprovalFromJournal(prompt.body) : null
   const cancelPrompt = () => {
     if (prompt && (controller.turnId || props.agent === 'pi')) {
       void controller.cancel(controller.turnId ?? undefined, {
@@ -367,53 +367,53 @@ export function NativeChatStructuredSession(
             tabId={props.tabId}
             sessionId={props.sessionId}
             pending={prompt !== null}
-            journalItems={controller.journalItems}
-            host={props.target.kind === 'local' ? 'local' : props.target.environmentId}
+            requestId={prompt?.itemId}
+            appearanceStyle={appearanceStyle}
           >
             {composerShown ? null : <NativeChatPromptSlotNotices notices={notices} />}
-            {prompt && approval ? (
-              <NativeChatApprovalCard
+            {prompt ? (
+              <NativeChatStructuredPromptCard
+                multiline={orb}
                 key={`${prompt.itemId}:${prompt.revision}`}
-                approval={approval}
-                onChoose={(optionId) =>
-                  void promptResponse.respond(prompt, { kind: 'option', optionId })
-                }
-                isSubmitting={promptResponse.holds(prompt)}
-                onCancel={cancelPrompt}
-                shouldFocus={!promptsUnanswerable && props.isVisible && props.isFocusedGroup}
-                {...fileLinkProps}
-              />
-            ) : null}
-            {prompt && questionBody ? (
-              <NativeChatStructuredQuestionCard
-                key={`${prompt.itemId}:${prompt.revision}`}
-                questions={agentSessionPromptQuestions(questionBody)}
+                prompt={prompt}
                 onAnswer={(response) => void promptResponse.respond(prompt, response)}
                 isSubmitting={promptResponse.holds(prompt)}
                 onCancel={cancelPrompt}
-                shouldFocus={!promptsUnanswerable && props.isVisible && props.isFocusedGroup}
+                shouldFocus={
+                  !orb && !promptsUnanswerable && props.isVisible && props.isFocusedGroup
+                }
                 answerInputRef={questionAnswerInputRef}
+                onLinkClick={onLinkClick}
               />
             ) : null}
           </NativeChatOrbPromptSlot>
           {prompt ? null : <NativeChatStructuredAsyncQuestion {...asyncQuestion} />}
           {composerShown && <NativeChatInstallSlot slot={install.slot} agentLabel={agentLabel} />}
           {composerShown ? (
-            <NativeChatComposer
-              ref={composerRef}
-              terminalTabId={props.tabId}
-              paneKey={paneKey}
-              draftScopeKey={structuredAgentSessionDraftScopeKey(props.sessionId)}
-              targetPtyId={null}
-              agent={props.agent}
-              {...stopControls.composer}
-              unavailableHint={install.unavailableHint}
-              steerQueued={stopControls.stopping ? undefined : submits.queuedMessages.steerNewest}
-              structuredTransport={transport}
-              launchSeed={{ ...launchDraftSignal, ownsTabWideLaunchDraft: true }}
-              notices={notices}
-              recallSource={{ messages: session.messages, withoutImageMarkers: true }}
-            />
+            <AgentHubOrbComposerState
+              enabled={orb}
+              sessionId={props.sessionId}
+              items={controller.journalItems}
+              prompts={controller.prompts}
+              working={controller.isWorking}
+              latestTurn={controller.latestTurn}
+            >
+              <NativeChatComposer
+                ref={composerRef}
+                terminalTabId={props.tabId}
+                paneKey={paneKey}
+                draftScopeKey={structuredAgentSessionDraftScopeKey(props.sessionId)}
+                targetPtyId={null}
+                agent={props.agent}
+                {...stopControls.composer}
+                unavailableHint={install.unavailableHint}
+                steerQueued={stopControls.stopping ? undefined : submits.queuedMessages.steerNewest}
+                structuredTransport={transport}
+                launchSeed={{ ...launchDraftSignal, ownsTabWideLaunchDraft: true }}
+                notices={notices}
+                recallSource={{ messages: session.messages, withoutImageMarkers: true }}
+              />
+            </AgentHubOrbComposerState>
           ) : null}
         </>
       )}

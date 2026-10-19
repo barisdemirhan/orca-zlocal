@@ -80,7 +80,7 @@ export function AgentHubOrbPillContent({
   readState: StructuredAgentSessionState
   onOpen: () => void
 }): React.JSX.Element | null {
-  if (state.kind === 'idle' || state.kind === 'off') {
+  if (state.kind === 'idle' || state.kind === 'off' || state.kind === 'error') {
     return null
   }
   const label =

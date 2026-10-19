@@ -14,10 +14,12 @@ function controls(overrides: Partial<Controls> = {}): Controls {
       connection: 'off',
       input: 'listening',
       output: 'silent',
+      outputMuted: false,
       textMode: true,
       startLive: vi.fn(async () => {}),
       stopLive: vi.fn(async () => {}),
       muteInput: vi.fn(),
+      muteOutput: vi.fn(),
       stopSpeaking: vi.fn(),
       switchToText: vi.fn(async () => {}),
       prepareDictation: vi.fn(async () => true)
@@ -80,13 +82,13 @@ it('starts Live or opens text directly and returns to the Orb when text is press
 })
 
 it.each(['connecting', 'live'] as const)(
-  'ends %s Live when its selected mode is pressed again',
+  'keeps %s Live when its selected mode is pressed again',
   (connection) => {
     const props = controls({ busy: true })
     props.voice.connection = connection
     render(view(props))
-    fireEvent.click(screen.getByRole('radio', { name: 'End live voice', checked: true }))
-    expect(props.voice.stopLive).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByRole('radio', { name: 'Live voice on', checked: true }))
+    expect(props.voice.stopLive).not.toHaveBeenCalled()
     expect(props.voice.startLive).not.toHaveBeenCalled()
   }
 )
@@ -134,10 +136,7 @@ it('keeps conversation viewing and microphone controls separate from switching L
   fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
   expect(props.onShowChat).toHaveBeenCalledOnce()
   expect(props.onText).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', { name: 'Mute microphone' }))
-  expect(props.voice.muteInput).toHaveBeenCalledWith(true)
-  fireEvent.click(screen.getByRole('button', { name: 'Stop speaking' }))
-  expect(props.voice.stopSpeaking).toHaveBeenCalledOnce()
+  expect(screen.queryByRole('button', { name: 'Mute microphone' })).toBeNull()
   fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' }))
   expect(props.onText).toHaveBeenCalledOnce()
 })
@@ -149,7 +148,7 @@ it('offers dictation and text for other agents and prevents voice overlap while 
   expect(screen.getByRole('radio', { name: 'Dictate' }).hasAttribute('disabled')).toBe(false)
   props.voice.connection = 'stopping'
   rerender(view({ ...props, codex: true }))
-  expect(screen.getByRole('radio', { name: 'End live voice' }).hasAttribute('disabled')).toBe(true)
+  expect(screen.getByRole('radio', { name: 'Live voice on' }).hasAttribute('disabled')).toBe(true)
   expect(screen.getByRole('radio', { name: 'Dictate' }).hasAttribute('disabled')).toBe(true)
   fireEvent.click(screen.getByRole('radio', { name: 'Dictate' }))
   expect(props.onDictate).not.toHaveBeenCalled()

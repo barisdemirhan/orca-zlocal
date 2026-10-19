@@ -144,6 +144,13 @@ describe('Orb state', () => {
         items: [reply],
         latestTurn: { ...latestTurn, turn: { ...latestTurn.turn, outcome: 'failure' } }
       })
+    ).toEqual({ kind: 'error' })
+    expect(
+      deriveAgentHubOrbState({
+        ...base,
+        items: [reply],
+        latestTurn: { ...latestTurn, turn: { ...latestTurn.turn, outcome: undefined } }
+      })
     ).toEqual({ kind: 'idle' })
   })
   it('does not announce an earlier reply while a new message awaits a response', () => {

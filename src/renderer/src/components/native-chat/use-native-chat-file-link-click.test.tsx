@@ -207,7 +207,13 @@ describe('tool and edit-card file activation', () => {
       null,
       null,
       expect.objectContaining({ worktreeId: 'wt-1' }),
-      { kind: 'local' }
+      { kind: 'local' },
+      expect.objectContaining({
+        worktreeId: 'wt-1',
+        sourceOwner: { kind: 'local' },
+        openInWorkspace: expect.any(Function),
+        openExternally: expect.any(Function)
+      })
     )
     expect(request).toHaveBeenCalledOnce()
     expect(mocks.openDetectedFilePath).not.toHaveBeenCalled()
@@ -424,7 +430,13 @@ describe('useNativeChatFileLinkClick', () => {
         12,
         null,
         expect.objectContaining({ worktreeId: 'wt-1', onOpenFailure: expect.any(Function) }),
-        { kind: 'local' }
+        { kind: 'local' },
+        expect.objectContaining({
+          worktreeId: 'wt-1',
+          sourceOwner: { kind: 'local' },
+          openInWorkspace: expect.any(Function),
+          openExternally: expect.any(Function)
+        })
       )
       expect(request).toHaveBeenCalledWith(expect.objectContaining(rows))
     })

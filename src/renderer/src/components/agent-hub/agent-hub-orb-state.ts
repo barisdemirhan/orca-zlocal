@@ -7,10 +7,11 @@ import {
 } from '../../../../shared/execution-host'
 import { toolInputCommand } from '../../../../shared/native-chat-tool-summary'
 import { agentSessionCurrentContextRows } from '../../../../shared/agent-session-context-clear'
+import { readAgentJournalTurnOutcome } from '../../../../shared/agent-session-turn-record'
 import {
   pendingStructuredSessionPrompts,
   type StructuredPromptItem
-} from '../native-chat/structured-agent-session-message-projection'
+} from '../../../../shared/structured-agent-session-message-projection'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubInboxRequest } from './agent-hub-requests-store'
 
@@ -26,7 +27,7 @@ export type AgentHubOrbAttention =
   | { kind: 'prompt'; item: StructuredPromptItem }
   | { kind: 'terminal'; thread: AgentPaneThread }
 export type AgentHubOrbState =
-  | { kind: 'off' | 'idle' | 'listening' }
+  | { kind: 'off' | 'idle' | 'listening' | 'error' }
   | { kind: 'working'; command?: string }
   | { kind: 'needsYou'; request: AgentHubOrbAttention }
   | { kind: 'done'; summary: string; expiresAt: number }
@@ -47,8 +48,8 @@ export function agentHubOrbThread(thread: AgentPaneThread, tabId: string | undef
 
 export function deriveAgentHubOrbState(args: {
   sessionId: string | null
-  items: AgentJournalRenderItem[]
-  currentRequests?: AgentJournalRenderItem[]
+  items: readonly AgentJournalRenderItem[]
+  currentRequests?: readonly AgentJournalRenderItem[]
   working: boolean
   listening: boolean
   requests: readonly AgentHubInboxRequest[]
@@ -103,6 +104,9 @@ export function deriveAgentHubOrbState(args: {
       ...(command ? { command: command.replace(/\s+/g, ' ').slice(0, 80) } : {})
     }
   }
+  if (readAgentJournalTurnOutcome(args.latestTurn?.turn) === 'failure') {
+    return { kind: 'error' }
+  }
   const reply = items.findLast(
     (item) => !item.agentId && item.body.kind === 'message' && item.body.role === 'assistant'
   )
@@ -113,7 +117,7 @@ export function deriveAgentHubOrbState(args: {
       .trim()
     const summary = text.split(/\r?\n/)[0]?.trim()
     const turn = args.latestTurn?.turn
-    if (turn && (turn.state !== 'completed' || (turn.outcome && turn.outcome !== 'success'))) {
+    if (turn && (turn.state !== 'completed' || readAgentJournalTurnOutcome(turn) !== 'success')) {
       return { kind: 'idle' }
     }
     if (

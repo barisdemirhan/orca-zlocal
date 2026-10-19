@@ -8,8 +8,6 @@ import {
   MicOff,
   Minimize2,
   MoreHorizontal,
-  Square,
-  VolumeX,
   X
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -126,7 +124,6 @@ export function AgentHubOrbControls({
     voice.connection === 'connecting' ||
     voice.connection === 'stopping'
   const starting = voice.capability === 'checking'
-  const endLabel = translate('auto.agentHub.orb.endLiveVoice', 'End live voice')
   const startLabel = translate('auto.agentHub.orb.startLiveVoice', 'Start live voice')
   const orbLabel = translate('auto.agentHub.orb.orbView', 'Orb view')
   const mode: OrbMode | '' = live
@@ -136,10 +133,6 @@ export function AgentHubOrbControls({
       : !orbView && voice.textMode
         ? 'text'
         : ''
-  const muteLabel =
-    voice.input === 'muted'
-      ? translate('auto.agentHub.orb.unmuteMicrophone', 'Unmute microphone')
-      : translate('auto.agentHub.orb.muteMicrophone', 'Mute microphone')
   return (
     <span
       className="contents"
@@ -156,15 +149,13 @@ export function AgentHubOrbControls({
         value={mode}
         onValueChange={(next) => {
           onModeChange()
-          // Pressing the active mode again leaves it: Live ends, dictation sends, text returns to the Orb.
+          // An active Live choice is inert; only its explicit stop control ends the call.
           if (next === 'live') {
             void voice.startLive()
           } else if (next === 'dictate') {
             void (live ? voice.stopLive() : Promise.resolve()).then(onDictate)
           } else if (next === 'text') {
             onText()
-          } else if (mode === 'live') {
-            void voice.stopLive()
           } else if (mode === 'dictate') {
             onStopDictation()
           } else if (mode === 'text') {
@@ -175,7 +166,7 @@ export function AgentHubOrbControls({
         {codex ? (
           <OrbModeItem
             mode="live"
-            label={live ? endLabel : startLabel}
+            label={live ? translate('agentHub.orb.liveActive', 'Live voice on') : startLabel}
             disabled={
               voice.connection === 'stopping' ||
               (!live && (busy || dictating || starting || !voice.canStart))
@@ -213,34 +204,6 @@ export function AgentHubOrbControls({
         >
           <MicOff />
         </OrbControl>
-      ) : live ? (
-        <>
-          <OrbControl
-            label={muteLabel}
-            pressed={voice.input === 'muted'}
-            disabled={voice.connection !== 'live'}
-            onClick={() => voice.muteInput(voice.input !== 'muted')}
-          >
-            {voice.input === 'muted' ? <MicOff /> : <Mic />}
-          </OrbControl>
-          <OrbControl
-            label={endLabel}
-            disabled={voice.connection === 'stopping'}
-            onClick={() => {
-              void voice.stopLive()
-            }}
-          >
-            <Square />
-          </OrbControl>
-          {voice.output === 'speaking' ? (
-            <OrbControl
-              label={translate('auto.agentHub.orb.stopSpeaking', 'Stop speaking')}
-              onClick={voice.stopSpeaking}
-            >
-              <VolumeX />
-            </OrbControl>
-          ) : null}
-        </>
       ) : null}
       {orbView && live ? (
         <OrbControl

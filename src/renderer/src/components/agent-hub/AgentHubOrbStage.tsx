@@ -22,6 +22,7 @@ export function AgentHubOrbStage({
   live = false,
   visible,
   controls,
+  sphereControls,
   request,
   requestVisible,
   notice,
@@ -34,6 +35,7 @@ export function AgentHubOrbStage({
   live?: boolean
   visible: boolean
   controls: ReactNode
+  sphereControls?: ReactNode
   request: ReactNode
   requestVisible: boolean
   notice?: string
@@ -108,6 +110,12 @@ export function AgentHubOrbStage({
           <div
             className="agent-hub-orb-art"
             onPointerDown={(event) => {
+              if (
+                event.target instanceof Element &&
+                event.target.closest('[data-agent-hub-orb-live-controls]')
+              ) {
+                return
+              }
               pressedAt.current = { x: event.clientX, y: event.clientY }
               beginGesture('move', event)
             }}
@@ -123,13 +131,18 @@ export function AgentHubOrbStage({
                 !onSphereClick ||
                 dragged ||
                 (event.target instanceof Element &&
-                  event.target.closest('[data-agent-hub-orb-resize]'))
+                  event.target.closest(
+                    '[data-agent-hub-orb-resize], [data-agent-hub-orb-live-controls]'
+                  ))
               ) {
                 return
               }
               onSphereClick()
             }}
           >
+            {sphereControls ? (
+              <div className="agent-hub-orb-hover-controls">{sphereControls}</div>
+            ) : null}
             <div className="agent-hub-orb-art-sphere">
               <Tooltip>
                 <TooltipTrigger asChild>

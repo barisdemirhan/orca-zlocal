@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -42,10 +42,12 @@ const voice: AgentHubOrbVoiceValue = {
   connection: 'off',
   input: 'listening',
   output: 'silent',
+  outputMuted: false,
   textMode: true,
   startLive: vi.fn(async () => {}),
   stopLive: vi.fn(async () => {}),
   muteInput: vi.fn(),
+  muteOutput: vi.fn(),
   stopSpeaking: vi.fn(),
   switchToText: vi.fn(async () => {}),
   prepareDictation: vi.fn(async () => true)
@@ -92,28 +94,20 @@ afterEach(() => {
   clearAgentHubRequestHost('local')
 })
 
-it('keeps the retained chat above a slim Orb row and expands only during live voice', () => {
+it('keeps the retained chat without a separate Orb strip in every Live phase', () => {
   const { rerender } = render(conversation())
   const destination = useAgentHubOrbPanel.getState().destination
-  if (!destination) {
-    throw new Error('Expected chat destination')
-  }
-  expect(
-    destination.compareDocumentPosition(stage()) & Node.DOCUMENT_POSITION_FOLLOWING
-  ).toBeTruthy()
-  expect(stage().style.getPropertyValue('--orb-diameter')).toBe('40px')
-  expect(screen.queryByRole('slider', { name: 'Orb size' })).toBeNull()
+  expect(destination).not.toBeNull()
+  expect(document.querySelector('[data-agent-hub-orb-stage]')).toBeNull()
   for (const connection of ['connecting', 'live', 'stopping'] as const) {
     rerender(conversation({ ...voice, connection, textMode: false }))
-    expect(stage().style.getPropertyValue('--orb-diameter')).toBe('128px')
+    expect(document.querySelector('[data-agent-hub-orb-stage]')).toBeNull()
     expect(useAgentHubOrbPanel.getState().destination).toBe(destination)
   }
-  rerender(conversation())
-  expect(stage().style.getPropertyValue('--orb-diameter')).toBe('40px')
-  expect(useAgentHubOrbPanel.getState().preferredDiameter).toBe(280)
 })
 
 it('stops its own dictation when text is selected and keeps the same chat destination', async () => {
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
   const stopTracking = trackAgentHubDictationOrigin()
   const actions: unknown[] = []
   const control = (event: Event) => {
@@ -137,7 +131,7 @@ it('stops its own dictation when text is selected and keeps the same chat destin
     expect(actions).toEqual(['stop'])
     expect(voice.switchToText).toHaveBeenCalledOnce()
     act(() => useAppStore.setState({ dictationState: 'idle' }))
-    expect(screen.getByRole('radio', { name: 'Orb view', checked: true })).toBeTruthy()
+    expect(document.querySelector('[data-agent-hub-orb-stage]')).toBeNull()
     expect(useAgentHubOrbPanel.getState().destination).toBe(destination)
     expect(draft.value).toBe('Already typed')
   } finally {
@@ -149,6 +143,7 @@ it('stops its own dictation when text is selected and keeps the same chat destin
 
 it('does not cancel a newer panel launch from an older conversation control', async () => {
   showAgentHubOrbPanel({ sessionId: 'newer-orb', tabId: 'newer-tab', resumed: false }, 'live')
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
   const pending = useAgentHubOrbPanel.getState().launchRequest
   const sequence = useAgentHubOrbPanel.getState().launchSequence
   render(conversation())
@@ -157,19 +152,15 @@ it('does not cancel a newer panel launch from an older conversation control', as
   expect(useAgentHubOrbPanel.getState().launchSequence).toBe(sequence)
 })
 
-it('keeps the inline request host before the sphere and controls', () => {
-  useAgentHubOrbPanel.setState({ nativeRequestPending: true })
+it('places a pending request above the retained chat in a modal', () => {
+  useAgentHubOrbPanel.setState({ nativeRequestPending: true, nativeRequestId: 'ask' })
   render(conversation())
-  const request = useAgentHubOrbPanel.getState().requestDestination
-  if (!request) {
-    throw new Error('Expected inline request destination')
-  }
-  const sphere = within(stage()).getByRole('img')
-  expect(request.hidden).toBe(false)
-  expect(request.compareDocumentPosition(sphere) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.getByRole('dialog')).toBeTruthy()
+  expect(document.querySelector('[data-agent-hub-orb-stage]')).toBeNull()
 })
 
-it('keeps voice availability messages inside the control strip', () => {
+it('keeps voice availability messages inside the floating control strip', () => {
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
   render(conversation({ ...voice, reason: 'Native voice support will be checked when started.' }))
   const status = screen.getByRole('status')
   const controls = stage().querySelector('[data-agent-hub-orb-controls]')
@@ -178,7 +169,7 @@ it('keeps voice availability messages inside the control strip', () => {
   expect(useAgentHubOrbPanel.getState().destination?.contains(status)).toBe(false)
 })
 
-it('shows only Hub request outcomes answered while this Orb panel was open', () => {
+it('removes a resolved Hub question without leaving an answer receipt', async () => {
   const old = orbAsk('orb')
   applyAgentHubDelivery('local', old)
   applyAgentHubDelivery('local', { ...old, kind: 'closed', reason: 'responded' })
@@ -191,7 +182,8 @@ it('shows only Hub request outcomes answered while this Orb panel was open', () 
   act(() => {
     applyAgentHubDelivery('local', { ...current, kind: 'closed', reason: 'responded' })
   })
-  expect(document.querySelector('[data-agent-hub-orb-request-receipt="responded"]')).not.toBeNull()
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+  expect(document.querySelector('[data-agent-hub-orb-request-receipt]')).toBeNull()
   act(() => {
     closeAgentHubOrbPanel()
     showAgentHubOrbPanel({ sessionId: 'orb', tabId: 'orb-tab', resumed: true })

@@ -26,7 +26,13 @@ import { useAgentHubOrbLaunch } from './use-agent-hub-orb-launch'
 export type AgentHubOrbVoiceValue = AgentHubOrbVoiceSnapshot &
   Pick<
     AgentHubOrbVoiceController,
-    'startLive' | 'stopLive' | 'muteInput' | 'stopSpeaking' | 'switchToText' | 'prepareDictation'
+    | 'startLive'
+    | 'stopLive'
+    | 'muteInput'
+    | 'muteOutput'
+    | 'stopSpeaking'
+    | 'switchToText'
+    | 'prepareDictation'
   >
 const LOCAL_TARGET = { kind: 'local' } as const
 const emptySubscribe = (): (() => void) => () => {}
@@ -126,6 +132,7 @@ export function useAgentHubOrbVoice(
       startLive: controller?.startLive ?? nothing,
       stopLive: controller?.stopLive ?? nothing,
       muteInput: controller?.muteInput ?? (() => {}),
+      muteOutput: controller?.muteOutput ?? (() => {}),
       stopSpeaking: controller?.stopSpeaking ?? (() => {}),
       switchToText: controller?.switchToText ?? nothing,
       prepareDictation: async () =>

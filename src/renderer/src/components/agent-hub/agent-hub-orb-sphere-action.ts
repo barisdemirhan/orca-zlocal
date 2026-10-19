@@ -1,5 +1,5 @@
 export type AgentHubOrbSphereAction =
-  | 'end-live'
+  | 'none'
   | 'finish-dictation'
   | 'start-live'
   | 'dictate'
@@ -13,7 +13,7 @@ export function agentHubOrbSphereAction(state: {
   canDictate: boolean
 }): AgentHubOrbSphereAction {
   if (state.liveActive) {
-    return 'end-live'
+    return 'none'
   }
   if (state.dictating) {
     return 'finish-dictation'

@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { expect } from './helpers/orca-app'
-import { configureOrb, showOrbConversation, switchOrbToText } from './helpers/agent-hub-orb-fixture'
+import {
+  configureOrb,
+  revealOrbLiveControls,
+  showOrbConversation,
+  switchOrbToText
+} from './helpers/agent-hub-orb-fixture'
 import { observeVoiceDevice, test } from './helpers/agent-hub-orb-native-voice-fixture'
 import { waitForSessionReady } from './helpers/store'
 
@@ -33,9 +38,9 @@ test('native Live keeps one conversation, restores its draft and ignores late me
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
   await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
-  const composer = panel.locator('[contenteditable="true"]')
+  const composer = panel.locator('[contenteditable]')
   await composer.fill('Preserved draft before native Live')
-  const start = orcaPage.getByRole('radio', { name: 'Start live voice', exact: true })
+  const start = panel.locator('[data-agent-hub-orb-composer-trigger]')
   await expect(start).toBeEnabled()
   const environment = await orcaPage.evaluate(() => ({
     secureContext: window.isSecureContext,
@@ -60,10 +65,12 @@ test('native Live keeps one conversation, restores its draft and ignores late me
     playbackStarts: 0
   })
   await start.click()
+  await revealOrbLiveControls(orcaPage)
   const mute = orcaPage.getByRole('button', { name: 'Mute microphone', exact: true })
   await expect(mute).toBeEnabled()
   await expect(orcaPage.getByRole('button', { name: 'End live voice', exact: true })).toBeVisible()
-  await expect(composer).not.toBeVisible()
+  await expect(composer).toBeVisible()
+  await expect(composer).toHaveAttribute('contenteditable', 'false')
   expect(await observeVoiceDevice(orcaPage)).toMatchObject({
     captures: 1,
     liveTracks: 1,
@@ -135,7 +142,7 @@ test('a microphone denial leaves the same conversation and draft available for t
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
   await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
-  const composer = panel.locator('[contenteditable="true"]')
+  const composer = panel.locator('[contenteditable]')
   await composer.fill('Draft survives denied microphone')
   await orcaPage.evaluate(() => {
     if (!window.__orcaNativeVoiceDevice) {
@@ -143,14 +150,13 @@ test('a microphone denial leaves the same conversation and draft available for t
     }
     window.__orcaNativeVoiceDevice.denyMicrophone = true
   })
-  const start = orcaPage.getByRole('radio', { name: 'Start live voice', exact: true })
+  const start = panel.locator('[data-agent-hub-orb-composer-trigger]')
   await expect(start).toBeEnabled()
   await start.click()
-  await expect(orcaPage.locator('[data-agent-hub-orb-stage]').getByRole('status')).toContainText(
-    /microphone|permission/i
-  )
-  await switchOrbToText(orcaPage)
-  await expect(composer).toBeVisible()
+  await expect(
+    panel.getByRole('status').filter({ hasText: /microphone|permission/i })
+  ).toContainText(/microphone|permission/i)
+  await expect(composer).toBeEditable()
   await expect(composer).toHaveText('Draft survives denied microphone')
   await composer.fill('Orb lifecycle after microphone denial')
   await panel.getByRole('button', { name: 'Send', exact: true }).click()
@@ -188,15 +194,16 @@ test('minimizing keeps Live connected while hiding stops media without cancellin
   const panel = orcaPage.locator('[data-agent-hub-orb-panel]')
   await showOrbConversation(orcaPage)
   await expect(panel.getByText('Orb fixture ready', { exact: true })).toBeVisible()
-  const composer = panel.locator('[contenteditable="true"]')
+  const composer = panel.locator('[contenteditable]')
   await composer.fill('Orb lifecycle geometry control')
   await panel.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(panel.getByRole('button', { name: 'Stop the agent', exact: true })).toBeVisible()
   await composer.fill('Draft survives hiding live Orb')
   try {
-    const start = orcaPage.getByRole('radio', { name: 'Start live voice', exact: true })
+    const start = panel.locator('[data-agent-hub-orb-composer-trigger]')
     await expect(start).toBeEnabled()
     await start.click()
+    await revealOrbLiveControls(orcaPage)
     await expect(
       orcaPage.getByRole('button', { name: 'Mute microphone', exact: true })
     ).toBeEnabled()
@@ -209,6 +216,7 @@ test('minimizing keeps Live connected while hiding stops media without cancellin
     await expect(
       panel.getByRole('button', { name: 'Close', exact: true, includeHidden: true })
     ).not.toBeVisible()
+    await revealOrbLiveControls(orcaPage)
     await expect(stage.getByRole('button', { name: 'End live voice', exact: true })).toBeVisible()
     expect(await observeVoiceDevice(orcaPage)).toMatchObject({
       captures: 1,

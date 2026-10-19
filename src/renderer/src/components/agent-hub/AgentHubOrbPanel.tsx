@@ -74,7 +74,7 @@ export function AgentHubOrbPanel({
           sideOffset={docked ? 12 : 8}
           collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
           surface="panel"
-          className="flex w-132 max-w-[calc(100vw-2rem)] flex-col"
+          className="z-[47] flex w-132 max-w-[calc(100vw-2rem)] flex-col"
           style={{
             maxHeight: 'var(--radix-popover-content-available-height)',
             visibility: orbOnly ? 'hidden' : undefined,

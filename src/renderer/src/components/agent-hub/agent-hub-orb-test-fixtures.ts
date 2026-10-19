@@ -1,5 +1,5 @@
 import type { AgentJournalRenderItem } from '../../../../shared/agent-session-journal-types'
-import type { StructuredPromptItem } from '../native-chat/structured-agent-session-message-projection'
+import type { StructuredPromptItem } from '../../../../shared/structured-agent-session-message-projection'
 import { agentHubAskRequest } from './agent-hub-request-test-fixtures'
 
 export function orbAsk(sessionId = 'orb-session') {

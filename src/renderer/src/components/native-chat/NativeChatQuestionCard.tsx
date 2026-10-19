@@ -239,6 +239,19 @@ export function NativeChatQuestionCard({
       }
     : undefined
 
+  const expandedAnswer = layout === 'embedded' && freeTextInput?.multiline
+  const multilineField = (
+    <Textarea
+      data-native-chat-prompt-card-focus-target={fieldTakesFocus}
+      ref={answerTextareaRef}
+      rows={expandedAnswer ? 8 : undefined}
+      disabled={isSubmitting}
+      value={otherText[index]}
+      onChange={(e) => setOther(index, e.target.value)}
+      onClick={autoAdvance.cancel}
+      placeholder={answerPlaceholder}
+    />
+  )
   return (
     <div
       ref={cardRef}
@@ -339,7 +352,9 @@ export function NativeChatQuestionCard({
                 onSelect={() => pickOption(i)}
               />
             ))}
-            <div className="flex items-center gap-3 px-3.5 py-2.5">
+            <div
+              className={cn('flex items-center gap-3 px-3.5 py-2.5', expandedAnswer && 'flex-wrap')}
+            >
               {questionAllowsOther ? (
                 <>
                   <span
@@ -358,15 +373,11 @@ export function NativeChatQuestionCard({
                   </span>
                   {/* Deliver free text verbatim as a tool result; composer slash commands and autocomplete do not apply. */}
                   {freeTextInput?.multiline ? (
-                    <Textarea
-                      data-native-chat-prompt-card-focus-target={fieldTakesFocus}
-                      ref={answerTextareaRef}
-                      disabled={isSubmitting}
-                      value={otherText[index]}
-                      onChange={(e) => setOther(index, e.target.value)}
-                      onClick={autoAdvance.cancel}
-                      placeholder={answerPlaceholder}
-                    />
+                    expandedAnswer ? (
+                      <div className="order-first w-full min-w-0">{multilineField}</div>
+                    ) : (
+                      multilineField
+                    )
                   ) : (
                     <ImeInput
                       ref={answerInputRef}
@@ -408,6 +419,7 @@ export function NativeChatQuestionCard({
                 onClick={() => confirm()}
                 className={cn(
                   'shrink-0 whitespace-nowrap rounded-md px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:opacity-50',
+                  expandedAnswer && 'ml-auto',
                   currentAnswered
                     ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'

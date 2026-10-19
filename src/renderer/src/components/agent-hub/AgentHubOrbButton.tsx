@@ -5,6 +5,8 @@ import { AgentHubShortcut } from './AgentHubShortcut'
 import { DockButton, DOCK_BUTTON } from './AgentHubDockParts'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 import { AgentHubOrbSphere } from './AgentHubOrbSphere'
+import { agentHubOrbPresentation } from './agent-hub-orb-presentation'
+import { EMPTY_ORB_VOICE_SNAPSHOT } from './agent-hub-orb-voice-state'
 import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
 import { agentHubOrbActionLabel } from './agent-hub-orb-action-label'
@@ -25,18 +27,7 @@ export function AgentHubOrbMark({
     >
       <AgentHubOrbSphere
         decorative
-        label={translate('auto.agentHub.orb.title', 'Orb')}
-        phase={
-          state.kind === 'working'
-            ? 'thinking'
-            : state.kind === 'needsYou'
-              ? 'request'
-              : state.kind === 'done'
-                ? 'result'
-                : state.kind === 'listening'
-                  ? 'listening'
-                  : 'idle'
-        }
+        {...agentHubOrbPresentation(state, EMPTY_ORB_VOICE_SNAPSHOT, state.kind === 'needsYou')}
       />
     </span>
   )

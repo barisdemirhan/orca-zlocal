@@ -1,0 +1,117 @@
+import { useContext, useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { translate } from '@/i18n/i18n'
+import { AgentHubOrbComposerStateContext } from './AgentHubOrbComposerState'
+import { AgentHubOrbSphere } from './AgentHubOrbSphere'
+import { AgentHubOrbLiveControls } from './AgentHubOrbLiveControls'
+import { useAgentHubOrbVoiceContext } from './agent-hub-orb-voice-context'
+import { agentHubOrbPresentation } from './agent-hub-orb-presentation'
+import { useAgentHubOrbComposerDictation } from './agent-hub-orb-composer'
+import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+
+export function AgentHubOrbComposerOrb(): React.JSX.Element {
+  const { controller, snapshot: voice } = useAgentHubOrbVoiceContext()
+  const state = useContext(AgentHubOrbComposerStateContext)
+  const chatVisible = useAgentHubOrbPanel(
+    (panel) =>
+      Boolean(panel.session) && panel.chatVisible && panel.presentation === 'chat' && !panel.compact
+  )
+  const { phase: dictation } = useAgentHubOrbComposerDictation()
+  const [open, setOpen] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const controlsRef = useRef<HTMLDivElement>(null)
+  const live = ['connecting', 'live', 'stopping'].includes(voice.connection)
+  const visual = agentHubOrbPresentation(
+    state,
+    voice,
+    state.kind === 'needsYou',
+    dictation === 'finishing' ? 'stopping' : dictation
+  )
+  const label = live
+    ? visual.label
+    : translate('auto.agentHub.orb.startLiveVoice', 'Start live voice')
+  const reveal = () => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+    }
+    setOpen(true)
+  }
+  const hide = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 180)
+  }
+  useEffect(() => {
+    if (state.kind === 'needsYou') {
+      setOpen(false)
+    }
+  }, [state.kind])
+  useEffect(
+    () => () => {
+      if (closeTimer.current) {
+        clearTimeout(closeTimer.current)
+      }
+    },
+    []
+  )
+  return (
+    <Popover open={open && live && chatVisible} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          data-agent-hub-orb-composer-trigger
+          aria-label={label}
+          disabled={!live && (!controller || !voice.canStart || Boolean(dictation))}
+          onPointerEnter={reveal}
+          onPointerLeave={hide}
+          onFocus={reveal}
+          onKeyDown={(event) => {
+            if (live && event.key === 'ArrowUp') {
+              event.preventDefault()
+              reveal()
+              requestAnimationFrame(() => controlsRef.current?.querySelector('button')?.focus())
+            }
+          }}
+          onClick={(event) => {
+            event.preventDefault()
+            if (!live && event.detail <= 1) {
+              void controller?.startLive()
+            }
+          }}
+        >
+          <span className="inline-flex size-8">
+            <AgentHubOrbSphere
+              {...visual}
+              inputMuted={live && voice.input === 'muted'}
+              outputMuted={live && voice.outputMuted}
+              inputSpeaking={voice.inputSpeaking}
+            />
+          </span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        ref={controlsRef}
+        side="top"
+        align="end"
+        className="w-auto"
+        onPointerEnter={reveal}
+        onPointerLeave={hide}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        {controller ? (
+          <AgentHubOrbLiveControls
+            voice={{
+              ...voice,
+              muteInput: controller.muteInput,
+              muteOutput: controller.muteOutput,
+              stopLive: controller.stopLive
+            }}
+            onStop={() => void controller.switchToText()}
+          />
+        ) : null}
+      </PopoverContent>
+    </Popover>
+  )
+}

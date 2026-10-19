@@ -266,9 +266,7 @@ export function NativeChatComposerField({
   return (
     <div
       className="shrink-0 bg-chat-canvas"
-      hidden={voiceHoldsInput}
-      inert={voiceHoldsInput}
-      data-agent-hub-orb-composer-hidden={voiceHoldsInput || undefined}
+      data-agent-hub-orb-live-input={voiceHoldsInput || undefined}
     >
       <div className="px-3 pt-2 pb-4 sm:px-4">
         <div className="relative mx-auto w-full max-w-(--chat-content-max-width)">
@@ -304,6 +302,11 @@ export function NativeChatComposerField({
             )}
             className="mb-1.5"
           />
+          {orbTabId && voice.snapshot.reason ? (
+            <p role="status" className="mb-1.5 text-xs text-chat-foreground-faint">
+              {voice.snapshot.reason}
+            </p>
+          ) : null}
           <div
             className={cn(
               // Use a constant container border so focus changes cannot flash it.
@@ -370,6 +373,7 @@ export function NativeChatComposerField({
             <div className="flex flex-wrap items-center gap-2 pt-0.5">
               <NativeChatComposerActions
                 editSession={editSession}
+                hasContent={draft.trim().length > 0 || imageAttachments.length > 0}
                 attachDisabled={attachDisabled}
                 dictationDisabled={dictationDisabled}
                 sendDisabled={sendButtonDisabled}

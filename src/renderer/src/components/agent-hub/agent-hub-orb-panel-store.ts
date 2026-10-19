@@ -27,6 +27,7 @@ type OrbPanelState = {
   requestDestination: HTMLElement | null
   nativeRequestPending: boolean
   nativeRequestVisible: boolean
+  nativeRequestId: string | null
 }
 
 export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
@@ -43,7 +44,8 @@ export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   stagePosition: null,
   requestDestination: null,
   nativeRequestPending: false,
-  nativeRequestVisible: false
+  nativeRequestVisible: false,
+  nativeRequestId: null
 }))
 
 export function showAgentHubOrbPanel(
@@ -72,7 +74,8 @@ export function showAgentHubOrbPanel(
           presentation: 'orb',
           compact: false,
           nativeRequestPending: false,
-          nativeRequestVisible: false
+          nativeRequestVisible: false,
+          nativeRequestId: null
         }
       : {})
   })
@@ -89,7 +92,8 @@ export function closeAgentHubOrbPanel(): void {
     compact: false,
     requestDestination: null,
     nativeRequestPending: false,
-    nativeRequestVisible: false
+    nativeRequestVisible: false,
+    nativeRequestId: null
   })
 }
 

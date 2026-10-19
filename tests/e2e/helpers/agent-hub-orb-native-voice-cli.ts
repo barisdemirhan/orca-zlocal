@@ -28,6 +28,17 @@ if (process.env.ORCA_E2E_ORB_CLI_REALTIME_CONTROL) {
         notify('thread/realtime/sdp', { threadId: voiceThreadId, sdp: 'v=0\r\ns=orca-e2e-voice-answer\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' })
         completedVoiceItem('Late canonical voice reply', 'assistant')
       }
+      if (event.type === 'question' && voiceSessionId) {
+        notify('turn/started', { threadId: voiceThreadId, turn: { id: 'voice-question-turn', status: 'inProgress' } })
+        send({ id: 'orb-modal-question', method: 'item/tool/requestUserInput', params: {
+          threadId: voiceThreadId, turnId: 'voice-question-turn', itemId: 'voice-question',
+          questions: [
+            { id: 'period', header: 'Period', question: 'Which measurement period?', options: [{ label: 'Monthly' }, { label: 'Weekly' }] },
+            { id: 'details', header: 'Details', question: 'Describe the measurement in detail', options: [] },
+            { id: 'sources', header: 'Sources', question: 'Which source should be checked first?', options: Array.from({ length: 10 }, (_, i) => ({ label: 'Source ' + (i + 1) })) }
+          ]
+        } })
+      }
       if (event.type === 'approval' && voiceSessionId) {
         notify('turn/started', { threadId: voiceThreadId, turn: { id: 'voice-approval-turn', status: 'inProgress' } })
         notify('item/started', { threadId: voiceThreadId, turnId: 'voice-approval-turn', item: {
@@ -43,6 +54,15 @@ if (process.env.ORCA_E2E_ORB_CLI_REALTIME_CONTROL) {
 }
 
 function handleVoiceApprovalResponse(message) {
+  if (message.id === 'orb-modal-question' && !message.method) {
+    const scope = { threadId: voiceThreadId, turnId: 'voice-question-turn' }
+    const item = { id: 'orb-modal-question-result', type: 'agentMessage', text: 'Native question response received' }
+    notify('item/started', { ...scope, item })
+    notify('item/completed', { ...scope, item })
+    notify('turn/completed', { threadId: voiceThreadId, turn: { id: scope.turnId, status: 'completed', items: [item] } })
+    notify('thread/status/changed', { threadId: voiceThreadId, status: { type: 'idle' } })
+    return true
+  }
   if (message.id === 'voice-layout-approval' && !message.method) {
     const scope = { threadId: voiceThreadId, turnId: 'voice-approval-turn' }
     notify('item/completed', { ...scope, item: {

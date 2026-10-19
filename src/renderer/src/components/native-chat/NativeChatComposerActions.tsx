@@ -15,6 +15,7 @@ import { NativeChatContextUsageRing } from './NativeChatContextUsageRing'
 import { useContext } from 'react'
 import { AgentHubOrbComposerContext } from '../agent-hub/agent-hub-orb-composer'
 import { AgentHubOrbComposerMic } from '../agent-hub/AgentHubOrbComposerMic'
+import { AgentHubOrbComposerOrb } from '../agent-hub/AgentHubOrbComposerOrb'
 import type { NativeChatContextUsageSummary } from './native-chat-context-usage-summary'
 import type { NativeChatOptionPickerRequest } from './native-chat-composer-types'
 
@@ -48,6 +49,7 @@ export type NativeChatComposerActionsProps = {
   contextUsage?: NativeChatContextUsageSummary | null
   /** The chat's agent, whose permission modes the picker describes. */
   agent?: string
+  hasContent?: boolean
 }
 
 // Memoized: typing re-renders the composer per keystroke, and these controls rarely change with it.
@@ -74,7 +76,8 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
   onExitGoalMode,
   contextUsage,
   focusComposer,
-  agent
+  agent,
+  hasContent = true
 }: NativeChatComposerActionsProps): React.JSX.Element {
   useUiLanguageRevision()
   const orbTabId = useContext(AgentHubOrbComposerContext)
@@ -219,7 +222,8 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
             {translate('common.cancel', 'Cancel')}
           </Button>
         ) : null}
-        {sendReason ? (
+        {orbTabId ? <AgentHubOrbComposerOrb /> : null}
+        {orbTabId && !hasContent && !isWorking ? null : sendReason ? (
           <Tooltip>
             <TooltipTrigger asChild>
               {/* A disabled button gets no pointer events, so the wrapper carries the hover. */}

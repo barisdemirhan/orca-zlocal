@@ -557,7 +557,7 @@ describe('notice rows', () => {
     const disclosure = screen.getByText('MCP connection details').closest('details')
 
     expect(disclosure).not.toHaveAttribute('open')
-    expect(disclosure).toHaveClass('text-muted-foreground')
+    expect(disclosure).toHaveClass('text-chat-foreground-faint')
     expect(disclosure?.querySelector('summary')).not.toHaveTextContent(text)
     expect(disclosure?.querySelector('pre')).toHaveTextContent(body.providerFrame!.payload.head)
     expect(container.querySelector('p')).toBeNull()

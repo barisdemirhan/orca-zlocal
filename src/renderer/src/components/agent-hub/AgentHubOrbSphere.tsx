@@ -1,5 +1,13 @@
 import { useId } from 'react'
-import { Check, CircleAlert, MicOff } from 'lucide-react'
+import {
+  Check,
+  CircleAlert,
+  MicOff,
+  ShieldCheck,
+  VolumeX,
+  HelpCircle,
+  AlignLeft
+} from 'lucide-react'
 import './agent-hub-orb-sphere.css'
 
 export type AgentHubOrbPhase =
@@ -13,11 +21,17 @@ export type AgentHubOrbPhase =
   | 'error'
   | 'connecting'
   | 'stopping'
+  | 'approval'
+  | 'dictating'
+  | 'transcribing'
+  | 'off'
 
 export type AgentHubOrbSphereProps = {
   phase: AgentHubOrbPhase
   label: string
   inputMuted?: boolean
+  outputMuted?: boolean
+  inputSpeaking?: boolean
   outcome?: 'success' | 'error'
   decorative?: boolean
 }
@@ -26,6 +40,8 @@ export function AgentHubOrbSphere({
   phase,
   label,
   inputMuted = false,
+  outputMuted = false,
+  inputSpeaking = false,
   outcome = 'success',
   decorative = false
 }: AgentHubOrbSphereProps): React.JSX.Element {
@@ -37,6 +53,8 @@ export function AgentHubOrbSphere({
       className="agent-hub-orb-sphere"
       data-agent-hub-orb-phase={phase}
       data-input-muted={inputMuted}
+      data-output-muted={outputMuted}
+      data-input-speaking={inputSpeaking}
       data-outcome={outcome}
       role={decorative ? undefined : 'img'}
       aria-label={decorative ? undefined : label}
@@ -79,13 +97,28 @@ export function AgentHubOrbSphere({
         </svg>
         <span className="agent-hub-orb-shade" />
         <span className="agent-hub-orb-glint" />
-        {phase === 'muted' ? <MicOff className="agent-hub-orb-state-icon" aria-hidden /> : null}
+        {phase === 'request' ? (
+          <HelpCircle className="agent-hub-orb-state-icon" aria-hidden />
+        ) : null}
+        {phase === 'approval' ? (
+          <ShieldCheck className="agent-hub-orb-state-icon" aria-hidden />
+        ) : null}
+        {phase === 'dictating' ? <span className="agent-hub-orb-record-mark" /> : null}
+        {phase === 'transcribing' ? (
+          <AlignLeft className="agent-hub-orb-state-icon" aria-hidden />
+        ) : null}
         {phase === 'error' || (phase === 'result' && outcome === 'error') ? (
           <CircleAlert className="agent-hub-orb-state-icon" aria-hidden />
         ) : phase === 'result' ? (
           <Check className="agent-hub-orb-state-icon" aria-hidden />
         ) : null}
       </span>
+      {inputMuted || outputMuted ? (
+        <span className="agent-hub-orb-mute-marks" aria-hidden>
+          {outputMuted ? <VolumeX /> : null}
+          {inputMuted ? <MicOff /> : null}
+        </span>
+      ) : null}
     </span>
   )
 }

@@ -44,7 +44,7 @@ export function readNativeChatContextMenuTarget(
     ?.getAttribute('data-native-chat-message-id')
   return {
     quoteText: quotable?.text ?? null,
-    link: href ? nativeChatLinkActions(href, linkContext) : null,
+    link: href ? nativeChatLinkActions(href, linkContext, { target }) : null,
     codeText:
       element
         ?.closest('[data-native-chat-code-block]')

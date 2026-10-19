@@ -126,3 +126,24 @@
 .agent-hub-orb-request-host[hidden] {
   display: none;
 }
+
+.agent-hub-orb-hover-controls {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+.agent-hub-orb-art:hover .agent-hub-orb-hover-controls,
+.agent-hub-orb-art:focus-within .agent-hub-orb-hover-controls {
+  opacity: 1;
+  pointer-events: auto;
+}

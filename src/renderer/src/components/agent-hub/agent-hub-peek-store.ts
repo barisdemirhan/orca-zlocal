@@ -25,6 +25,7 @@ export type AgentHubPeekContent =
 export type AgentHubPeekItem = {
   /** Agent-opened previews leave keyboard input with its current owner. */
   preserveKeyboardFocus?: boolean
+  fromOrb?: boolean
   content: AgentHubPeekContent
   worktreeId: string
   title: string

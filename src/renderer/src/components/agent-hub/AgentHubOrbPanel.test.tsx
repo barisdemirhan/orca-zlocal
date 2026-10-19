@@ -35,10 +35,12 @@ const mocks = vi.hoisted(() => {
     connection: 'off' as const,
     input: 'listening' as const,
     output: 'silent' as const,
+    outputMuted: false,
     textMode: true,
     startLive: vi.fn(async () => {}),
     stopLive: vi.fn(async () => {}),
     muteInput: vi.fn(),
+    muteOutput: vi.fn(),
     stopSpeaking: vi.fn(),
     switchToText: vi.fn(async () => {}),
     prepareDictation: vi.fn(async () => false)
@@ -605,7 +607,7 @@ it.each([
   ['denied_by_user', 'Request denied'],
   ['already_resolved', 'This request was answered elsewhere or is no longer available.']
 ] as const)(
-  'shows the actual %s outcome only after host closure and dismisses only its presentation',
+  'removes a %s request only after host closure without leaving a receipt',
   async (reason, message) => {
     const request = orbAsk('current')
     for (const [host, item] of [
@@ -641,9 +643,8 @@ it.each([
             : {})
         })
       )
-      expect(screen.getByText(message)).toBeTruthy()
+      expect(screen.queryByText(message)).toBeNull()
       expect(screen.queryByText('Which approach?')).toBeNull()
-      fireEvent.click(screen.getByRole('button', { name: 'Dismiss request outcome' }))
       expect(screen.queryByText(message)).toBeNull()
       expect(respond).toHaveBeenCalledOnce()
     } finally {
