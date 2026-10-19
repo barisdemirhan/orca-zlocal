@@ -65,6 +65,14 @@ function codexFailureMessage(error: unknown): string | null {
   }
 }
 
+export function agentHubOrbVoiceMediaFailure(
+  reason: 'input-lost' | 'connection-lost' | 'playback-blocked'
+): string {
+  return reason === 'input-lost'
+    ? 'The microphone disconnected.'
+    : 'The live voice connection ended. Try again.'
+}
+
 export function agentHubOrbVoiceStartFailure(error: unknown): {
   reason: string
   mediaUnsupported: boolean

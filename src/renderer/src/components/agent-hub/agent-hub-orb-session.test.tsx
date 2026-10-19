@@ -5,6 +5,7 @@ import { useAppStore } from '@/store'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
 import type { AgentHubOrbSession } from '../../../../shared/agent-hub-orb'
 import { useAgentHubOrb } from './agent-hub-orb-session'
+import { openAgentHubOrb } from './agent-hub-orb-open'
 import {
   closeAgentHubOrbPanel,
   showAgentHubOrbPanel,
@@ -49,6 +50,7 @@ vi.mock('./agent-hub-requests-store', () => ({
 vi.mock('./agent-hub-orb-open', () => ({ openAgentHubOrb: vi.fn() }))
 
 beforeEach(() => {
+  vi.mocked(openAgentHubOrb).mockReset()
   mocks.current.mockReset().mockResolvedValue({ sessionId: 'current', resumed: false })
   closeAgentHubOrbPanel()
   useAgentHubOrbPanel.setState({ opening: false })
@@ -57,6 +59,24 @@ beforeEach(() => {
     configurable: true,
     value: { agentHub: { orb: { current: mocks.current } } }
   })
+})
+
+it('opens the configured alternate without changing the next normal action', async () => {
+  useAppStore.setState({
+    settings: createGlobalSettingsFixture({
+      agentHubOrbAgent: 'codex',
+      agentHubOrbDefaultAction: 'live',
+      agentHubOrbAlternateAction: 'text'
+    })
+  })
+  const { result } = renderHook(() => useAgentHubOrb([]))
+  await act(async () => {
+    await result.current.openOrb(true)
+    await result.current.openOrb()
+  })
+  expect(openAgentHubOrb).toHaveBeenNthCalledWith(1, undefined, false, 'text')
+  expect(openAgentHubOrb).toHaveBeenNthCalledWith(2, undefined, false, 'live')
+  expect(useAppStore.getState().settings?.agentHubOrbDefaultAction).toBe('live')
 })
 afterEach(() => {
   cleanup()

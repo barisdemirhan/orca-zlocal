@@ -147,6 +147,16 @@ it('stops its own dictation when text is selected and keeps the same chat destin
   }
 })
 
+it('does not cancel a newer panel launch from an older conversation control', async () => {
+  showAgentHubOrbPanel({ sessionId: 'newer-orb', tabId: 'newer-tab', resumed: false }, 'live')
+  const pending = useAgentHubOrbPanel.getState().launchRequest
+  const sequence = useAgentHubOrbPanel.getState().launchSequence
+  render(conversation())
+  await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
+  expect(useAgentHubOrbPanel.getState().launchRequest).toBe(pending)
+  expect(useAgentHubOrbPanel.getState().launchSequence).toBe(sequence)
+})
+
 it('keeps the inline request host before the sphere and controls', () => {
   useAgentHubOrbPanel.setState({ nativeRequestPending: true })
   render(conversation())

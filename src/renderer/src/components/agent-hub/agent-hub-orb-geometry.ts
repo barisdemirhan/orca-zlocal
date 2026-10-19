@@ -1,7 +1,7 @@
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 
-export const AGENT_HUB_ORB_DEFAULT_DIAMETER = 218
 export const AGENT_HUB_ORB_MIN_DIAMETER = 128
+export const AGENT_HUB_ORB_DEFAULT_DIAMETER = AGENT_HUB_ORB_MIN_DIAMETER
 export const AGENT_HUB_ORB_MAX_DIAMETER = 360
 export const AGENT_HUB_ORB_CARD_GAP = 14
 

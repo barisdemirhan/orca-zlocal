@@ -22475,6 +22475,14 @@
       "unavailable": "Impossible d’ouvrir ce lien."
     },
     "orb": {
+      "defaultAction": "Ouvrir Orb en mode",
+      "defaultActionHint": "Utilisé par le bouton Orb et le raccourci.",
+      "alternateAction": "Action de {{modifier}}+clic",
+      "alternateActionHint": "Ouvre ce mode sans changer l’action par défaut.",
+      "liveAction": "En direct",
+      "textAction": "Texte",
+      "microphoneBusy": "Le microphone est déjà utilisé par un autre enregistrement.",
+      "modifierClickHint": "{{modifier}}+clic · {{action}}",
       "modelsLoading": "Chargement des modèles disponibles…",
       "modelsUnavailable": "Impossible de charger les modèles disponibles. Ouvrez le menu des modèles pour réessayer.",
       "modelUnavailable": "Indisponible",

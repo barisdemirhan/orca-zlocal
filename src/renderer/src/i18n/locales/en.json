@@ -22267,6 +22267,14 @@
       "waiting": "{{count}} waiting"
     },
     "orb": {
+      "defaultAction": "Open Orb with",
+      "defaultActionHint": "Used by the Orb button and shortcut.",
+      "alternateAction": "{{modifier}}-click action",
+      "alternateActionHint": "Opens this mode without changing the default action.",
+      "liveAction": "Live",
+      "textAction": "Text",
+      "microphoneBusy": "The microphone is already in use by another recording.",
+      "modifierClickHint": "{{modifier}}-click · {{action}}",
       "modelsLoading": "Loading available models…",
       "modelsUnavailable": "Could not load available models. Open the model menu to retry.",
       "modelUnavailable": "Unavailable",

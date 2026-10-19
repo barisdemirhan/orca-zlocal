@@ -18,6 +18,7 @@ import {
   SettingsSubsectionHeader
 } from '../settings/SettingsFormControls'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
+import { AgentHubSettingsOrbActions } from './AgentHubSettingsOrbActions'
 
 export function AgentHubSettingsOrbSection({
   settings,
@@ -81,6 +82,7 @@ export function AgentHubSettingsOrbSection({
           'Agent, model and approval changes start a new conversation when Orb is idle. Past conversations keep their agent and model.'
         )}
       />
+      <AgentHubSettingsOrbActions settings={settings} updateSettings={updateSettings} />
       <SettingsRow
         label={agentLabel}
         control={

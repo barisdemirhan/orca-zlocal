@@ -201,7 +201,7 @@ describe('Orb pill', () => {
     vi.setSystemTime(100_000)
     show({ kind: 'listening' })
     expect(document.querySelector('[data-agent-hub-dictate=listening]')).toBeTruthy()
-    expect(screen.getByText('Not set')).toBeTruthy()
+    expect(screen.getByText('Space')).toBeTruthy()
     expect(screen.getByText('to send')).toBeTruthy()
     const field = document.createElement('textarea')
     document.body.append(field)

@@ -92,6 +92,7 @@ export function AgentHubOrbControls({
   onShowChat,
   onShowOrb,
   onCompact,
+  onModeChange,
   onText,
   onDictate,
   onStopDictation,
@@ -110,6 +111,7 @@ export function AgentHubOrbControls({
   onShowChat: () => void
   onShowOrb: () => void
   onCompact: () => void
+  onModeChange: () => void
   onText: () => void
   onDictate: () => void
   onStopDictation: () => void
@@ -148,10 +150,12 @@ export function AgentHubOrbControls({
       <ToggleGroup
         type="single"
         size="sm"
-        variant="outline"
+        variant="segmented"
+        spacing={0.5}
         aria-label={translate('auto.agentHub.orb.mode', 'Orb mode')}
         value={mode}
         onValueChange={(next) => {
+          onModeChange()
           // Pressing the active mode again leaves it: Live ends, dictation sends, text returns to the Orb.
           if (next === 'live') {
             void voice.startLive()

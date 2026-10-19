@@ -97,12 +97,12 @@ describe('buildShortcutRowVisibility', () => {
   })
 })
 
-it('lists the unassigned Orb under Agent Hub and lets assigned mirror tabs run in terminals', () => {
+it('lists the Orb quick-access shortcut under Agent Hub and lets assigned mirror tabs run in terminals', () => {
   const groups = groupDefinitions([])
   const result = buildShortcutRowVisibility({ ...baseOptions, groups, agentHubEnabled: true })
   const orb = result.shortcutRows.find((row) => row.item.id === 'agentHub.toggleOrb')
   expect(orb?.groupTitle).toBe('Agent Hub')
-  expect(orb?.effective).toEqual([])
+  expect(orb?.effective).toEqual(['Mod+Shift+Space'])
   for (const id of [
     'agentHub.toggleOrb',
     'agentHub.nextMirrorTab',

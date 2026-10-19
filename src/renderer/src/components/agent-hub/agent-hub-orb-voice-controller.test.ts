@@ -178,6 +178,26 @@ it('starts only after the click and stream ready, and reports live only after na
   })
 })
 
+it('keeps a later Text choice when the earlier Live capability check finishes late', async () => {
+  await waitFor(() => expect(controller.getSnapshot().capability).toBe('supported'))
+  let finishCheck: (() => void) | undefined
+  vi.mocked(client.capability).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishCheck = () => resolve({ supported: true, accountAccess: 'unchecked' })
+      })
+  )
+  const starting = controller.startLive()
+  await waitFor(() => expect(controller.getSnapshot().capability).toBe('checking'))
+  await controller.switchToText()
+  finishCheck?.()
+  await waitFor(() => expect(controller.getSnapshot().capability).toBe('supported'))
+  expect(client.subscribe).not.toHaveBeenCalled()
+  expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
+  await starting
+  expect(controller.getSnapshot()).toMatchObject({ connection: 'off', textMode: true })
+})
+
 it.each(['failed', 'closed'])(
   'keeps Live through a temporary disconnection and stops on %s',
   async (terminalState) => {

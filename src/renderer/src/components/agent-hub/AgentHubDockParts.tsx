@@ -164,7 +164,7 @@ export function DockButton({
   /** For a button that switches something on and off. */
   pressed?: boolean
   preserveFocus?: boolean
-  onClick: () => void
+  onClick: React.MouseEventHandler<HTMLButtonElement>
   children: React.ReactNode
 }): React.JSX.Element {
   const button = (

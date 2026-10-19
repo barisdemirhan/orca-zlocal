@@ -66,7 +66,7 @@ vi.mock('./AgentHubPopover', async () => {
   return { AgentHubPopoverContent: () => <PopoverContent data-testid="hub-panel" /> }
 })
 vi.mock('./AgentHubOrbPanel', () => ({ AgentHubOrbPanel: () => null }))
-vi.mock('./agent-hub-orb-composer', () => ({ toggleAgentHubOrb: mocks.open }))
+vi.mock('./agent-hub-orb-composer', () => ({ activateAgentHubOrb: mocks.open }))
 vi.mock('./AgentHubShortcutsDialog', () => ({ AgentHubShortcutsDialog: () => null }))
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimBackdrop: () => null }))
 vi.mock('./AgentHubMirrorFocusShade', () => ({ AgentHubWorkspaceFocusShade: () => null }))
@@ -118,6 +118,7 @@ beforeEach(() => {
   }
   useAppStore.setState({
     dictationState: 'idle',
+    keybindings: { 'agentHub.toggleOrb': [] },
     settings: {
       ...settings,
       agentHubPlacement: 'dock',

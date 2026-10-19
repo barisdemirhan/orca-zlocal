@@ -11,7 +11,7 @@ export function AgentHubFloatingOrb({
   anchorRef: React.RefObject<HTMLDivElement | null>
   state: AgentHubOrbState
   disabled: boolean
-  onOpen: () => void
+  onOpen: (alternate?: boolean) => void
 }): React.JSX.Element {
   const { position, onPointerDown, onClickCapture } = useAgentHubOrbPosition()
   return (

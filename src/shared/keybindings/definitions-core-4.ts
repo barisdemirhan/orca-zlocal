@@ -48,7 +48,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'orb', 'voice', 'talk'],
-    defaultBindings: platformBindings([]),
+    defaultBindings: platformBindings(['Mod+Shift+Space']),
     allowInTerminal: true
   },
   {

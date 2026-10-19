@@ -21752,6 +21752,14 @@
       "unavailable": "이 링크를 열 수 없습니다."
     },
     "orb": {
+      "defaultAction": "Orb 열기 모드",
+      "defaultActionHint": "Orb 버튼과 단축키에 사용합니다.",
+      "alternateAction": "{{modifier}}+클릭 동작",
+      "alternateActionHint": "기본 동작을 바꾸지 않고 이 모드를 엽니다.",
+      "liveAction": "라이브",
+      "textAction": "텍스트",
+      "microphoneBusy": "다른 녹음에서 마이크를 사용 중입니다.",
+      "modifierClickHint": "{{modifier}}+클릭 · {{action}}",
       "modelsLoading": "사용 가능한 모델을 불러오는 중…",
       "modelsUnavailable": "사용 가능한 모델을 불러오지 못했습니다. 모델 메뉴를 열어 다시 시도하세요.",
       "modelUnavailable": "사용 불가",

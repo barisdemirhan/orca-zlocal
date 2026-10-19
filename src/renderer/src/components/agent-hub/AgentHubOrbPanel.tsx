@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { useMemo, useState, type RefObject } from 'react'
 import { Popover, PopoverAnchor, PopoverArrow, PopoverContent } from '@/components/ui/popover'
 import { useAppStore } from '@/store'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
@@ -23,33 +23,6 @@ export function agentHubOrbAnchorRect(anchor: HTMLElement | null): DOMRect {
   )
 }
 
-function isOrbChatInteraction(target: EventTarget | null): boolean {
-  const panel = useAgentHubOrbPanel.getState()
-  if (!(target instanceof Node)) {
-    return false
-  }
-  const destinations = [
-    panel.destination,
-    panel.requestDestination,
-    document.querySelector('[data-agent-hub-orb-stage]')
-  ]
-  // Retained chat portals keep their React ancestry outside this popover.
-  return destinations.some((destination) => {
-    if (!destination) {
-      return false
-    }
-    return (
-      destination.contains(target) ||
-      [...destination.querySelectorAll('[aria-controls]')].some((trigger) =>
-        trigger
-          .getAttribute('aria-controls')
-          ?.split(/\s+/)
-          .some((id) => destination.ownerDocument.getElementById(id)?.contains(target))
-      )
-    )
-  })
-}
-
 export function AgentHubOrbPanel({
   anchorRef,
   side,
@@ -68,28 +41,11 @@ export function AgentHubOrbPanel({
   requestPresentationOf: (host: string, request: AgentHubRequestBase) => AgentHubRequestPresentation
 }): React.JSX.Element | null {
   const session = useAgentHubOrbPanel((s) => s.session)
-  const sessionId = session?.sessionId
   const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
   const presentation = useAgentHubOrbPanel((s) => s.presentation)
   const compact = useAgentHubOrbPanel((s) => s.compact)
   const voice = useAgentHubOrbVoice(session, !hidden && chatVisible)
   const orbOnly = chatVisible && (presentation === 'orb' || compact)
-  const ownedPointerDowns = useRef(new WeakSet<Event>())
-  useEffect(() => {
-    const owned = new WeakSet<Event>()
-    ownedPointerDowns.current = owned
-    if (!sessionId || hidden) {
-      return
-    }
-    const recordOwnership = (event: PointerEvent): void => {
-      // Selection clears aria-controls before Radix dispatches its deferred outside event.
-      if (isOrbChatInteraction(event.target)) {
-        owned.add(event)
-      }
-    }
-    document.addEventListener('pointerdown', recordOwnership, true)
-    return () => document.removeEventListener('pointerdown', recordOwnership, true)
-  }, [sessionId, hidden])
   useAgentHubOrbSettingsSync(session !== null)
   const [anchored, setAnchored] = useState(false)
   useAnchorBinding(anchorRef, side, () => {
@@ -153,18 +109,7 @@ export function AgentHubOrbPanel({
               cancelDictation()
             }
           }}
-          onInteractOutside={(event) => {
-            if (
-              voice.connection === 'connecting' ||
-              voice.connection === 'live' ||
-              voice.connection === 'stopping' ||
-              ownedPointerDowns.current.has(event.detail.originalEvent) ||
-              isOrbChatInteraction(event.target) ||
-              (event.target instanceof Node && anchorRef.current?.contains(event.target))
-            ) {
-              event.preventDefault()
-            }
-          }}
+          onInteractOutside={(event) => event.preventDefault()}
         >
           <AgentHubOrbConversation
             sessionId={session.sessionId}

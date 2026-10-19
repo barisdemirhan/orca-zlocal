@@ -3,7 +3,10 @@ import { createBrowserUuid } from '@/lib/browser-uuid'
 import type { AgentSessionVoiceClient } from '@/runtime/agent-session-voice-client'
 import type { StructuredAgentSessionHostCapabilityState } from '@/runtime/structured-agent-session-host-capability'
 import { microphoneCaptureIsBusy } from '../dictation/microphone-capture-lease'
-import { agentHubOrbVoiceStartFailure } from './agent-hub-orb-voice-failure'
+import {
+  agentHubOrbVoiceMediaFailure,
+  agentHubOrbVoiceStartFailure
+} from './agent-hub-orb-voice-failure'
 import { AgentHubOrbVoiceMedia } from './agent-hub-orb-voice-media'
 import { AgentHubOrbVoicePlayback } from './agent-hub-orb-voice-playback'
 import {
@@ -21,6 +24,7 @@ export class AgentHubOrbVoiceController {
   private readonly listeners = new Set<() => void>()
   private hostCapability: StructuredAgentSessionHostCapabilityState = 'unknown'
   private generation = 0
+  private startRequest = 0
   private visible = true
   private attempt: Attempt | null = null
   private stopping: Promise<void> | null = null
@@ -123,8 +127,10 @@ export class AgentHubOrbVoiceController {
         return
       }
     }
+    const startRequest = ++this.startRequest
     await this.checkCapability()
     if (
+      startRequest !== this.startRequest ||
       !this.visible ||
       this.hostCapability !== 'supported' ||
       this.snapshot.capability === 'unsupported' ||
@@ -152,13 +158,7 @@ export class AgentHubOrbVoiceController {
         }
       },
       onSpeech: (phase, itemId) => attempt.playback.inputSpeech(phase, itemId),
-      onFailure: (reason) =>
-        this.fail(
-          generation,
-          reason === 'input-lost'
-            ? 'The microphone disconnected.'
-            : 'The live voice connection ended. Try again.'
-        )
+      onFailure: (reason) => this.fail(generation, agentHubOrbVoiceMediaFailure(reason))
     })
     let signalReady = (): void => {}
     const subscriptionReady = new Promise<void>((resolve) => {
@@ -254,6 +254,7 @@ export class AgentHubOrbVoiceController {
   }
 
   readonly stopLive = (): Promise<void> => {
+    ++this.startRequest
     if (this.stopping) {
       return this.stopping
     }

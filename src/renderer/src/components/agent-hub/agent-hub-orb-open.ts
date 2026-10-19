@@ -5,6 +5,7 @@ import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { findStructuredAgentSessionTab } from '@/lib/structured-agent-session-tab-activation'
 import { refreshLocalStructuredSessionTabs } from '@/runtime/local-structured-session-tabs-sync/inventory-refresh'
 import type { AgentHubOrbOpenParams } from '../../../../shared/agent-hub-orb'
+import type { AgentHubOrbAction } from '../../../../shared/agent-hub-settings'
 import { normalizeAgentHubOrbSettings } from '../../../../shared/agent-hub-orb-settings'
 import { showAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
@@ -17,7 +18,8 @@ async function open(
   params: AgentHubOrbOpenParams | undefined,
   preserveVisibility: boolean,
   closeGeneration: number,
-  hostOpened: () => void
+  hostOpened: () => void,
+  action?: AgentHubOrbAction
 ): Promise<boolean> {
   try {
     const session = await window.api.agentHub.orb.open(params)
@@ -48,7 +50,7 @@ async function open(
         useAgentHubOrbPanel.setState({ session: { ...session, tabId: tab.id } })
       }
     } else {
-      showAgentHubOrbPanel({ ...session, tabId: tab.id })
+      showAgentHubOrbPanel({ ...session, tabId: tab.id }, action)
     }
     return true
   } catch (error) {
@@ -71,7 +73,8 @@ async function open(
 
 export function openAgentHubOrb(
   params?: AgentHubOrbOpenParams,
-  preserveVisibility = false
+  preserveVisibility = false,
+  action?: AgentHubOrbAction
 ): Promise<boolean> {
   const closeGeneration = useAgentHubOrbPanel.getState().closeGeneration
   const settings = normalizeAgentHubOrbSettings(useAppStore.getState().settings ?? {})
@@ -84,6 +87,7 @@ export function openAgentHubOrb(
     modelSetting: settings.model,
     permission: settings.permission,
     preserveVisibility,
+    action,
     closeGeneration
   })
   if (opening && openingCanJoin && openingKey === key) {
@@ -91,11 +95,17 @@ export function openAgentHubOrb(
   }
   const next = (opening ?? Promise.resolve())
     .then(() =>
-      open(params, preserveVisibility, closeGeneration, () => {
-        if (opening === next) {
-          openingCanJoin = false
-        }
-      })
+      open(
+        params,
+        preserveVisibility,
+        closeGeneration,
+        () => {
+          if (opening === next) {
+            openingCanJoin = false
+          }
+        },
+        action
+      )
     )
     .finally(() => {
       if (opening === next) {

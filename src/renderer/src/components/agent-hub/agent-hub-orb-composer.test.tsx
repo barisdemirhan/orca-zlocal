@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { act, cleanup, render, screen } from '@testing-library/react'
-import { useRef } from 'react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { useRef, useSyncExternalStore } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import {
@@ -13,6 +13,8 @@ import { closeAgentHubOrbPanel, showAgentHubOrbPanel } from './agent-hub-orb-pan
 import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
 import { cancelDictation } from './agent-hub-dictation-cancel'
 import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
+import { AgentHubOrbVoiceController } from './agent-hub-orb-voice-controller'
+import { useAgentHubOrbLaunch } from './use-agent-hub-orb-launch'
 
 const mocks = vi.hoisted(() => ({ open: vi.fn(), send: vi.fn() }))
 vi.mock('./agent-hub-orb-open', () => ({ openAgentHubOrb: mocks.open }))
@@ -25,14 +27,20 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-function Composer() {
+function Composer({ disabled = false }: { disabled?: boolean }) {
   const input = useRef<HTMLTextAreaElement>(null)
-  useAgentHubOrbComposerBinding(input, mocks.send)
+  useAgentHubOrbComposerBinding(input, mocks.send, !disabled)
   return (
     <div data-agent-hub-orb-chat-tab-id="orb-tab">
-      <textarea ref={input} aria-label="Orb draft" />
+      <textarea ref={input} aria-label="Orb draft" disabled={disabled} />
     </div>
   )
+}
+let controller: AgentHubOrbVoiceController
+function LaunchControl() {
+  const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot)
+  useAgentHubOrbLaunch(controller, snapshot, true)
+  return null
 }
 let stopTracking: () => void
 let actions: string[]
@@ -55,6 +63,19 @@ beforeEach(() => {
   actions = []
   stopTracking = trackAgentHubDictationOrigin()
   document.addEventListener(DICTATION_CONTROL_EVENT, control)
+  controller = new AgentHubOrbVoiceController(
+    { sessionId: 'session', tabId: 'orb-tab', agent: 'codex', hostKey: 'local' },
+    {
+      capability: vi.fn(async () => ({
+        supported: true as const,
+        accountAccess: 'unchecked' as const
+      })),
+      subscribe: vi.fn(async () => ({ unsubscribe: () => {} })),
+      start: vi.fn(async (owner) => ({ ...owner, state: 'connecting' as const })),
+      stop: vi.fn(async (owner) => ({ ...owner, state: 'off' as const }))
+    },
+    () => ({})
+  )
 })
 afterEach(() => {
   document.removeEventListener(DICTATION_CONTROL_EVENT, control)
@@ -95,12 +116,15 @@ it('finishes dictation into the text draft without sending and keeps later dicta
   showAgentHubOrbPanel({ sessionId: 'session', tabId: 'orb-tab', resumed: false })
   render(
     <AgentHubOrbComposerContext value="orb-tab">
+      <LaunchControl />
       <Composer />
     </AgentHubOrbComposerContext>
   )
   act(toggleAgentHubOrb)
   act(() => useAppStore.setState({ dictationState: 'listening' }))
-  act(() => finishAgentHubOrbDictationForText('orb-tab'))
+  await act(async () =>
+    showAgentHubOrbPanel({ sessionId: 'session', tabId: 'orb-tab', resumed: false }, 'text')
+  )
   expect(actions).toEqual(['start', 'stop'])
   const input = screen.getByRole('textbox')
   if (!(input instanceof HTMLTextAreaElement)) {
@@ -121,6 +145,36 @@ it('finishes dictation into the text draft without sending and keeps later dicta
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
   })
   expect(mocks.send).toHaveBeenCalledOnce()
+})
+
+it('starts a requested Dictate launch once its retained composer is ready and leaves another recording alone', async () => {
+  showAgentHubOrbPanel({ sessionId: 'session', tabId: 'orb-tab', resumed: false }, 'dictate')
+  const view = (phase: 'absent' | 'disabled' | 'enabled') => (
+    <AgentHubOrbComposerContext value="orb-tab">
+      <LaunchControl />
+      {phase !== 'absent' ? <Composer disabled={phase === 'disabled'} /> : null}
+    </AgentHubOrbComposerContext>
+  )
+  const { rerender } = render(view('absent'))
+  expect(actions).toEqual([])
+  await act(async () => rerender(view('disabled')))
+  expect(actions).toEqual([])
+  rerender(view('enabled'))
+  await waitFor(() => expect(actions).toEqual(['start']))
+  rerender(view('enabled'))
+  expect(actions).toEqual(['start'])
+  act(() => useAppStore.setState({ dictationState: 'idle' }))
+  const other = document.createElement('input')
+  document.body.append(other)
+  other.focus()
+  act(() => {
+    useAppStore.setState({ dictationState: 'listening' })
+    showAgentHubOrbPanel({ sessionId: 'session', tabId: 'orb-tab', resumed: false }, 'dictate')
+  })
+  expect(actions).toEqual(['start'])
+  expect(document.activeElement).toBe(other)
+  act(() => useAppStore.setState({ dictationState: 'idle' }))
+  other.remove()
 })
 
 it('does not stop another field, submit a cancelled recording, or send after the panel closes', async () => {

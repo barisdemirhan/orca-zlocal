@@ -5,7 +5,7 @@ import {
   offeredChatPermissionModes,
   type AgentChatPermissionMode
 } from './agent-chat-permission-mode'
-import type { AgentHubSettings } from './agent-hub-settings'
+import type { AgentHubOrbAction, AgentHubSettings } from './agent-hub-settings'
 import { isStructuredAgentId } from './agent-session-provider-handle'
 
 export const AGENT_HUB_ORB_PI_PERMISSION_REASON =
@@ -68,4 +68,17 @@ export function normalizeAgentHubOrbSettings(settings: AgentHubSettings) {
     permission: agentHubOrbChosenMode(settings.agentHubOrbPermission),
     cwd: typeof settings.agentHubOrbCwd === 'string' ? settings.agentHubOrbCwd.trim() || null : null
   }
+}
+
+export function agentHubOrbLaunchAction(
+  settings: AgentHubSettings | null | undefined,
+  alternate = false
+): AgentHubOrbAction {
+  const action = alternate
+    ? settings?.agentHubOrbAlternateAction
+    : settings?.agentHubOrbDefaultAction
+  if (action === 'live' || action === 'dictate' || action === 'text') {
+    return action
+  }
+  return alternate ? 'text' : settings?.agentHubOrbAgent === 'codex' ? 'live' : 'dictate'
 }

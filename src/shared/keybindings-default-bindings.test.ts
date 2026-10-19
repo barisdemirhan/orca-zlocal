@@ -13,6 +13,29 @@ import type { KeybindingActionId } from './keybindings'
 import { ALL_TUI_AGENTS } from './tui-agent-display-names'
 
 describe('keybindings', () => {
+  it.each(['darwin', 'linux', 'win32'] as const)(
+    'opens Orb on Mod+Shift+Space on %s and preserves explicit overrides',
+    (platform) => {
+      expect(getEffectiveKeybindingsForAction('agentHub.toggleOrb', platform)).toEqual([
+        'Mod+Shift+Space'
+      ])
+      expect(
+        getEffectiveKeybindingsForAction('agentHub.toggleOrb', platform, {
+          'agentHub.toggleOrb': []
+        })
+      ).toEqual([])
+      expect(
+        getEffectiveKeybindingsForAction('agentHub.toggleOrb', platform, {
+          'agentHub.toggleOrb': ['Mod+F8']
+        })
+      ).toEqual(['Mod+F8'])
+      expect(
+        findKeybindingConflicts(platform).filter((conflict) =>
+          conflict.actionIds.includes('agentHub.toggleOrb')
+        )
+      ).toEqual([])
+    }
+  )
   it('defines a default shortcut for opening markdown notes', () => {
     expect(getEffectiveKeybindingsForAction('tab.openMarkdown', 'darwin')).toEqual(['Mod+Shift+O'])
     expect(formatKeybindingList(['Mod+Shift+O'], 'darwin')).toBe('⌘⇧O')

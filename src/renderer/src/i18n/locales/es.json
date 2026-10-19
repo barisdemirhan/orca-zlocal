@@ -22475,6 +22475,14 @@
       "unavailable": "No se pudo abrir este enlace."
     },
     "orb": {
+      "defaultAction": "Abrir Orb con",
+      "defaultActionHint": "Se usa con el botón de Orb y el atajo.",
+      "alternateAction": "Acción de {{modifier}}+clic",
+      "alternateActionHint": "Abre este modo sin cambiar la acción predeterminada.",
+      "liveAction": "En vivo",
+      "textAction": "Texto",
+      "microphoneBusy": "El micrófono ya está en uso por otra grabación.",
+      "modifierClickHint": "{{modifier}}+clic · {{action}}",
       "modelsLoading": "Cargando modelos disponibles…",
       "modelsUnavailable": "No se pudieron cargar los modelos disponibles. Abre el menú de modelos para reintentar.",
       "modelUnavailable": "No disponible",

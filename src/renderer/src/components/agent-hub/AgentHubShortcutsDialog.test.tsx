@@ -81,6 +81,7 @@ describe('Agent Hub shortcuts help', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
   it('edits an unbound action from the dock menu without leaving the dialog', async () => {
+    useAppStore.setState({ keybindings: { 'agentHub.toggleOrb': [] } })
     mount()
     fireEvent.pointerDown(screen.getByRole('button', { name: 'More' }), {
       button: 0,

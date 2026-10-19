@@ -21,6 +21,7 @@ import {
 } from './agent-hub-orb-voice-state'
 import { registerAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
+import { useAgentHubOrbLaunch } from './use-agent-hub-orb-launch'
 
 export type AgentHubOrbVoiceValue = AgentHubOrbVoiceSnapshot &
   Pick<
@@ -118,6 +119,7 @@ export function useAgentHubOrbVoice(
     controller?.getSnapshot ?? emptyVoice,
     emptyVoice
   )
+  useAgentHubOrbLaunch(controller, snapshot, visible)
   return useMemo(
     () => ({
       ...snapshot,

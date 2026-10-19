@@ -5,6 +5,9 @@ import { AgentHubShortcut } from './AgentHubShortcut'
 import { DockButton, DOCK_BUTTON } from './AgentHubDockParts'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 import { AgentHubOrbSphere } from './AgentHubOrbSphere'
+import { getShortcutPlatform } from '@/lib/shortcut-platform'
+import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
+import { agentHubOrbActionLabel } from './agent-hub-orb-action-label'
 
 export function AgentHubOrbMark({
   state,
@@ -48,11 +51,12 @@ export function AgentHubOrbButton({
 }: {
   state: AgentHubOrbState
   side: 'top' | 'bottom' | 'left' | 'right'
-  onOpen: () => void
+  onOpen: (alternate?: boolean) => void
   disabled?: boolean
   floating?: boolean
 }): React.JSX.Element {
   const bindings = useAppStore((s) => s.keybindings)
+  const settings = useAppStore((s) => s.settings)
   const shortcut = formatOptionalShortcutLabel('agentHub.toggleOrb', bindings)
   const notSet = translate('auto.agentHub.orb.notSet', 'Not set')
   const talk = disabled
@@ -62,9 +66,18 @@ export function AgentHubOrbButton({
     <DockButton
       label={`${talk} · ${shortcut ?? notSet}`}
       hint={
-        <>
-          {talk} · {shortcut ? <AgentHubShortcut actionId="agentHub.toggleOrb" /> : notSet}
-        </>
+        <span className="flex flex-col gap-1">
+          <span className="flex items-center gap-2">
+            {talk} · {agentHubOrbActionLabel(agentHubOrbLaunchAction(settings))} ·
+            {shortcut ? <AgentHubShortcut actionId="agentHub.toggleOrb" /> : notSet}
+          </span>
+          <span>
+            {translate('agentHub.orb.modifierClickHint', '{{modifier}}-click · {{action}}', {
+              modifier: getShortcutPlatform() === 'darwin' ? '⌘' : 'Ctrl',
+              action: agentHubOrbActionLabel(agentHubOrbLaunchAction(settings, true))
+            })}
+          </span>
+        </span>
       }
       side={side}
       className={
@@ -74,7 +87,9 @@ export function AgentHubOrbButton({
       }
       disabled={disabled}
       preserveFocus
-      onClick={onOpen}
+      onClick={(event) =>
+        onOpen(getShortcutPlatform() === 'darwin' ? event.metaKey : event.ctrlKey)
+      }
     >
       <AgentHubOrbMark state={state} large={floating} />
     </DockButton>

@@ -20,7 +20,7 @@ import type { AgentHubLists } from './agent-hub-lists'
 import { useAgentHubOrb } from './agent-hub-orb-session'
 import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { AgentHubOrbPanel } from './AgentHubOrbPanel'
-import { toggleAgentHubOrb } from './agent-hub-orb-composer'
+import { activateAgentHubOrb } from './agent-hub-orb-composer'
 
 export function useAgentHubOrbSurfaces(
   threads: readonly AgentPaneThread[],
@@ -56,15 +56,18 @@ export function useAgentHubOrbSurfaces(
   const orbSide = placement === 'floating' || placement === 'statusBar' ? 'top' : side
   const { openOrb } = orb
   const open = useCallback(() => {
-    void openOrb()
+    void openOrb(false, false)
   }, [openOrb])
-  const togglePanel = useCallback(() => {
-    if (useAgentHubOrbPanel.getState().session) {
-      closeAgentHubOrbPanel()
-    } else {
-      void openOrb()
-    }
-  }, [openOrb])
+  const togglePanel = useCallback(
+    (alternate = false) => {
+      if (useAgentHubOrbPanel.getState().session && !alternate) {
+        closeAgentHubOrbPanel()
+      } else {
+        void openOrb(alternate)
+      }
+    },
+    [openOrb]
+  )
   const hubLists = useMemo(
     () => ({
       ...lists,
@@ -162,6 +165,6 @@ export function useAgentHubOrbSurfaces(
     panelOpen,
     open,
     panel,
-    toggle: toggleAgentHubOrb
+    toggle: activateAgentHubOrb
   }
 }

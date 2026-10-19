@@ -328,7 +328,7 @@ export const NativeChatComposerPane = forwardRef<NativeChatComposerHandle, Nativ
         setNotice,
         sendMessage
       })
-    useAgentHubOrbComposerBinding(textareaRef, send)
+    useAgentHubOrbComposerBinding(textareaRef, send, !disabled)
 
     const interrupt = useNativeChatComposerInterrupt({
       inert: inputOwnedByCard,

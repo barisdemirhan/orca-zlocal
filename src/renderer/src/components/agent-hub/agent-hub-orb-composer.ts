@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useRef, type RefObject } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+  type RefObject
+} from 'react'
 import { useAppStore } from '@/store'
 import type { NativeChatComposerInput } from '../native-chat/native-chat-composer-input'
 import {
@@ -15,14 +22,36 @@ import { startAgentHubDictation } from './agent-hub-dictation-improve'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { openAgentHubOrb } from './agent-hub-orb-open'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
+import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
 
 export const AgentHubOrbComposerContext = createContext<string | null>(null)
 type OrbComposer = {
   input: RefObject<NativeChatComposerInput | null>
+  ready: () => boolean
   send: () => void
   finishWithoutSending: () => void
 }
 const composers = new Map<string, OrbComposer>()
+const composerListeners = new Set<() => void>()
+const notifyComposers = (): void => {
+  for (const listener of composerListeners) {
+    listener()
+  }
+}
+const subscribeComposers = (listener: () => void): (() => void) => {
+  composerListeners.add(listener)
+  return () => {
+    composerListeners.delete(listener)
+  }
+}
+
+export function useAgentHubOrbComposerReady(tabId: string | undefined): boolean {
+  return useSyncExternalStore(
+    subscribeComposers,
+    () => Boolean(tabId && composers.get(tabId)?.ready()),
+    () => false
+  )
+}
 
 export function finishAgentHubOrbDictationForText(tabId: string | undefined): void {
   if (
@@ -57,11 +86,15 @@ export function useAgentHubOrbComposerDictation() {
 
 export function useAgentHubOrbComposerBinding(
   input: RefObject<NativeChatComposerInput | null>,
-  send: () => void
+  send: () => void,
+  enabled = true
 ): void {
   const tabId = useContext(AgentHubOrbComposerContext)
   const sendRef = useRef(send)
   sendRef.current = send
+  const enabledRef = useRef(enabled)
+  enabledRef.current = enabled
+  useEffect(notifyComposers, [enabled])
   useEffect(() => {
     if (!tabId) {
       return
@@ -70,6 +103,7 @@ export function useAgentHubOrbComposerBinding(
     let frame: number | null = null
     const composer = {
       input,
+      ready: () => enabledRef.current && input.current !== null && !input.current.disabled,
       send: () => sendRef.current(),
       finishWithoutSending: () => {
         dispatchDictationControl('stop')
@@ -81,6 +115,7 @@ export function useAgentHubOrbComposerBinding(
       }
     }
     composers.set(tabId, composer)
+    notifyComposers()
     const control = (event: Event) => {
       if (!(event instanceof CustomEvent)) {
         return
@@ -128,9 +163,43 @@ export function useAgentHubOrbComposerBinding(
       unsubscribe()
       if (composers.get(tabId) === composer) {
         composers.delete(tabId)
+        notifyComposers()
       }
     }
   }, [input, tabId])
+}
+
+export function activateAgentHubOrb(): void {
+  const panel = useAgentHubOrbPanel.getState()
+  if (
+    panel.session?.tabId &&
+    readAgentHubDictationSession()?.pane?.tabId === panel.session.tabId &&
+    isDictationRunning(useAppStore.getState().dictationState)
+  ) {
+    toggleAgentHubOrb()
+    return
+  }
+  void openAgentHubOrb(undefined, false, agentHubOrbLaunchAction(useAppStore.getState().settings))
+}
+
+export function startAgentHubOrbComposerDictation(tabId: string): boolean {
+  const panel = useAgentHubOrbPanel.getState()
+  const state = useAppStore.getState()
+  const input = composers.get(tabId)?.input.current
+  if (
+    panel.session?.tabId !== tabId ||
+    !panel.chatVisible ||
+    isDictationRunning(state.dictationState) ||
+    !input ||
+    input.disabled ||
+    state.settings?.voice?.enabled !== true ||
+    !state.settings.voice.sttModel
+  ) {
+    return false
+  }
+  input.focus()
+  startAgentHubDictation(normalizeAgentHubMicMode(state.settings.agentHubMicMode) === 'improve')
+  return true
 }
 
 export function toggleAgentHubOrb(): void {
@@ -162,15 +231,5 @@ export function toggleAgentHubOrb(): void {
     })
     return
   }
-  const input = composers.get(panel.session.tabId)?.input.current
-  if (
-    !input ||
-    input.disabled ||
-    state.settings?.voice?.enabled !== true ||
-    !state.settings.voice.sttModel
-  ) {
-    return
-  }
-  input.focus()
-  startAgentHubDictation(normalizeAgentHubMicMode(state.settings.agentHubMicMode) === 'improve')
+  startAgentHubOrbComposerDictation(panel.session.tabId)
 }

@@ -1,5 +1,14 @@
 // @vitest-environment happy-dom
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor
+} from '@testing-library/react'
+import { useRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { AgentHubOrbSession } from '../../../../shared/agent-hub-orb'
 import type { AgentSessionVoiceOwner } from '../../../../shared/agent-session-voice'
@@ -14,6 +23,13 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import { useStructuredAgentSessionMutate } from '../native-chat/use-structured-agent-session-mutate'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 import { useAgentHubOrbVoice } from './use-agent-hub-orb-voice'
+import { openAgentHubOrb } from './agent-hub-orb-open'
+import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { AgentHubOrbConversation } from './AgentHubOrbConversation'
+import { AgentHubOrbComposerContext, useAgentHubOrbComposerBinding } from './agent-hub-orb-composer'
+import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 
 type VoiceParams = AgentSessionVoiceOwner & {
   envelope: { sessionId: string; expectedRuntimeFence: number }
@@ -22,7 +38,10 @@ const mocks = vi.hoisted(() => {
   const state: {
     unifiedTabsByWorktree: Record<string, Tab[]>
     runtimeStatusByEnvironmentId: Map<string, RuntimeEnvironmentStatus>
-    settings: { activeRuntimeEnvironmentId: string | null }
+    settings: {
+      activeRuntimeEnvironmentId: string | null
+      voice?: { enabled: boolean; sttModel: string }
+    }
     dictationState: 'idle'
   } = {
     unifiedTabsByWorktree: {},
@@ -47,7 +66,7 @@ const mocks = vi.hoisted(() => {
 vi.mock('@/store', () => ({
   useAppStore: Object.assign(
     (selector: (state: typeof mocks.state) => unknown) => selector(mocks.state),
-    { getState: () => mocks.state }
+    { getState: () => mocks.state, subscribe: () => () => {} }
   )
 }))
 vi.mock('@/runtime/runtime-rpc-client', () => ({ callRuntimeRpc: mocks.call }))
@@ -62,6 +81,35 @@ vi.mock('../native-chat/structured-agent-session-read-owner', () => ({
     getSnapshot: mocks.snapshot
   })
 }))
+vi.mock('./agent-hub-orb-conversations', () => ({
+  useAgentHubOrbConversations: () => ({ conversations: [], error: null, refresh: vi.fn() })
+}))
+
+function LaunchConversation() {
+  const voice = useAgentHubOrbVoice(session, true)
+  return (
+    <TooltipProvider>
+      <AgentHubOrbConversation
+        sessionId="session-a"
+        tabId="tab-a"
+        state={{ kind: 'idle' }}
+        voice={voice}
+        visible
+        requestPresentationOf={() => ({
+          title: 'Orb',
+          targetTitle: 'Orb',
+          target: null,
+          location: { project: 'Orca', group: null, workspace: null }
+        })}
+      />
+    </TooltipProvider>
+  )
+}
+function LaunchComposer({ disabled }: { disabled: boolean }) {
+  const input = useRef<HTMLTextAreaElement>(null)
+  useAgentHubOrbComposerBinding(input, () => {}, !disabled)
+  return <textarea ref={input} disabled={disabled} aria-label="Orb draft" />
+}
 
 class Track extends EventTarget {
   enabled = true
@@ -144,6 +192,7 @@ function subscribe(
 }
 beforeEach(() => {
   vi.clearAllMocks()
+  closeAgentHubOrbPanel()
   track = new Track()
   Peer.instances = []
   mocks.state.unifiedTabsByWorktree = { workspace: [tab()] }
@@ -192,6 +241,7 @@ beforeEach(() => {
   vi.stubGlobal('MediaStream', Stream)
   vi.stubGlobal('isSecureContext', true)
   vi.stubGlobal('navigator', {
+    userAgent: 'Linux',
     mediaDevices: { getUserMedia: vi.fn(async () => new MediaStream()) },
     locks: {
       request: async (
@@ -205,6 +255,7 @@ beforeEach(() => {
   Object.defineProperty(window, 'api', {
     configurable: true,
     value: {
+      agentHub: { orb: { open: vi.fn(async () => session) } },
       runtime: { call: vi.fn(), subscribe },
       runtimeEnvironments: {
         call: vi.fn(),
@@ -226,6 +277,7 @@ beforeEach(() => {
 })
 afterEach(async () => {
   cleanup()
+  closeAgentHubOrbPanel()
   await Promise.resolve()
   if (apiDescriptor) {
     Object.defineProperty(window, 'api', apiDescriptor)
@@ -272,6 +324,126 @@ function expectOldStop(target: RuntimeClientTarget): void {
         ])
   ])
 }
+
+it('starts Live from the first Orb launch after publication and joins repeated launches', async () => {
+  mocks.state.unifiedTabsByWorktree = {
+    [FLOATING_TERMINAL_WORKTREE_ID]: [{ ...tab(), worktreeId: FLOATING_TERMINAL_WORKTREE_ID }]
+  }
+  const { result } = renderHook(() => useAgentHubOrbVoice(session, true))
+  await waitFor(() => expect(result.current.capability).toBe('supported'))
+  await act(async () => {
+    await openAgentHubOrb(undefined, false, 'live')
+  })
+  await waitFor(() =>
+    expect(
+      mocks.call.mock.calls.filter((call) => call[1] === 'agentSession.startVoice')
+    ).toHaveLength(1)
+  )
+  await act(async () => {
+    await openAgentHubOrb(undefined, false, 'live')
+  })
+  expect(
+    mocks.call.mock.calls.filter((call) => call[1] === 'agentSession.startVoice')
+  ).toHaveLength(1)
+  const controller = readAgentHubOrbVoice('tab-a')
+  if (!controller) {
+    throw new Error('Expected launched voice owner')
+  }
+  await act(async () => {
+    answerStart()
+    await controller.stopLive()
+  })
+})
+
+it('does not start a queued Live launch when the user closes Orb during its capability check', async () => {
+  mocks.state.unifiedTabsByWorktree = {
+    [FLOATING_TERMINAL_WORKTREE_ID]: [{ ...tab(), worktreeId: FLOATING_TERMINAL_WORKTREE_ID }]
+  }
+  let checked: (() => void) | undefined
+  mocks.call.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        checked = () => resolve({ supported: true, accountAccess: 'unchecked' })
+      })
+  )
+  const { result } = renderHook(() => useAgentHubOrbVoice(session, true))
+  await waitFor(() => expect(result.current.capability).toBe('checking'))
+  await act(async () => {
+    await openAgentHubOrb(undefined, false, 'live')
+    closeAgentHubOrbPanel()
+    checked?.()
+  })
+  await waitFor(() => expect(result.current.capability).toBe('supported'))
+  expect(
+    mocks.call.mock.calls.filter((call) => call[1] === 'agentSession.startVoice')
+  ).toHaveLength(0)
+  expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
+})
+
+it.each(['live', 'dictate'] as const)(
+  'keeps a manual Text choice after a queued %s launch becomes ready',
+  async (action) => {
+    mocks.state.unifiedTabsByWorktree = {
+      [FLOATING_TERMINAL_WORKTREE_ID]: [{ ...tab(), worktreeId: FLOATING_TERMINAL_WORKTREE_ID }]
+    }
+    mocks.state.settings.voice = { enabled: true, sttModel: 'test-model' }
+    let finishCheck: (() => void) | undefined
+    if (action === 'live') {
+      mocks.call.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishCheck = () => resolve({ supported: true, accountAccess: 'unchecked' })
+          })
+      )
+    }
+    const actions: unknown[] = []
+    const control = (event: Event) => {
+      if (event instanceof CustomEvent) {
+        actions.push(event.detail)
+      }
+    }
+    document.addEventListener(DICTATION_CONTROL_EVENT, control)
+    const view = (disabled: boolean) => (
+      <>
+        <LaunchConversation />
+        <AgentHubOrbComposerContext value="tab-a">
+          <LaunchComposer disabled={disabled} />
+        </AgentHubOrbComposerContext>
+      </>
+    )
+    try {
+      const { rerender } = render(view(true))
+      await act(async () => {
+        await openAgentHubOrb(undefined, false, action)
+      })
+      expect(useAgentHubOrbPanel.getState().launchRequest?.action).toBe(action)
+      if (action === 'dictate') {
+        await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Orb view' })))
+      }
+      await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
+      await act(async () => {
+        finishCheck?.()
+        rerender(view(false))
+      })
+      expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled()
+      expect(
+        mocks.call.mock.calls.filter((call) => call[1] === 'agentSession.startVoice')
+      ).toHaveLength(0)
+      expect(actions).toEqual([])
+      expect(screen.getByRole('radio', { name: 'Orb view', checked: true })).toBeTruthy()
+      expect(useAgentHubOrbPanel.getState().presentation).toBe('chat')
+    } finally {
+      const owner = readAgentHubOrbVoice('tab-a')
+      cleanup()
+      finishCheck?.()
+      if (mocks.call.mock.calls.some((call) => call[1] === 'agentSession.startVoice')) {
+        answerStart()
+      }
+      await owner?.stopLive()
+      document.removeEventListener(DICTATION_CONTROL_EVENT, control)
+    }
+  }
+)
 
 it.each(['hide', 'unmount'] as const)(
   'stops its acquired native voice after %s disables the real hook while start is in flight',

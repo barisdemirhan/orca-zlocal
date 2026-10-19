@@ -13,6 +13,8 @@ export type AgentHubDefaultTab = 'inbox' | 'running' | 'agents' | 'all'
 
 export type AgentHubMicMode = 'dictate' | 'improve'
 
+export type AgentHubOrbAction = 'live' | 'dictate' | 'text'
+
 export type AgentHubAnswerQueueOpening = 'automatically' | 'shortcut'
 
 export type AgentHubDockSize = 'small' | 'medium' | 'large'
@@ -43,6 +45,9 @@ export type AgentHubSettings = {
   agentHubOrbCwd?: string | null
   agentHubOrbPlacement?: 'floating' | 'dock' | 'statusBar' | 'hidden'
   agentHubOrbPosition?: { x: number; y: number }
+  agentHubOrbDiameter?: number
+  agentHubOrbDefaultAction?: AgentHubOrbAction
+  agentHubOrbAlternateAction?: AgentHubOrbAction
   agentHubOrbSpeakReplies?: boolean
   /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */
   agentHubMicMode?: AgentHubMicMode

@@ -147,6 +147,19 @@ it('keeps approvals and their warning independent of Orb placement', () => {
   expect(screen.queryByText(warning)).toBeNull()
 })
 
+it('saves the normal and modifier-click Orb actions independently', () => {
+  useAppStore.setState({ settings: createGlobalSettingsFixture({ agentHubOrbAgent: 'codex' }) })
+  render(<Pane />)
+  const normal = screen.getByRole('radiogroup', { name: 'Open Orb with' })
+  const alternate = screen.getByRole('radiogroup', { name: /-click action$/ })
+  expect(within(normal).getByRole('radio', { name: 'Live', checked: true })).toBeTruthy()
+  expect(within(alternate).getByRole('radio', { name: 'Text', checked: true })).toBeTruthy()
+  fireEvent.click(within(normal).getByRole('radio', { name: 'Dictate' }))
+  fireEvent.click(within(alternate).getByRole('radio', { name: 'Live' }))
+  expect(useAppStore.getState().settings?.agentHubOrbDefaultAction).toBe('dictate')
+  expect(useAppStore.getState().settings?.agentHubOrbAlternateAction).toBe('live')
+})
+
 it('offers the modes Codex supports and selects Approve for me before any choice', () => {
   useAppStore.setState({
     settings: createGlobalSettingsFixture({
@@ -264,7 +277,10 @@ it('edits Orb and Hub shortcuts in the modal through the shared recorder and rel
     }
   )
   await waitFor(() =>
-    expect(useAppStore.getState().keybindings['agentHub.toggleOrb']).toEqual(['Mod+F8'])
+    expect(useAppStore.getState().keybindings['agentHub.toggleOrb']).toEqual([
+      'Mod+Shift+Space',
+      'Mod+F8'
+    ])
   )
   expect(window.api.ui.setShortcutRecorderFocused).toHaveBeenLastCalledWith(false)
   fireEvent.click(screen.getByRole('button', { name: 'Add shortcut for Toggle Agent Hub' }))

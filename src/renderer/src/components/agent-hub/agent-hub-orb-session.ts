@@ -15,6 +15,7 @@ import {
 } from './agent-hub-orb-state'
 import { openAgentHubOrb } from './agent-hub-orb-open'
 import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
 
 export function useAgentHubOrb(threads: readonly AgentPaneThread[]) {
   const [session, setSession] = useState<AgentHubOrbSession | null>(null)
@@ -116,9 +117,16 @@ export function useAgentHubOrb(threads: readonly AgentPaneThread[]) {
     const timer = setTimeout(() => setNow(Date.now()), Math.max(0, expiresAt - Date.now()))
     return () => clearTimeout(timer)
   }, [expiresAt])
-  const openOrb = useCallback(async () => {
-    await openAgentHubOrb()
-    await refresh()
-  }, [refresh])
+  const openOrb = useCallback(
+    async (alternate = false, activate = true) => {
+      await openAgentHubOrb(
+        undefined,
+        false,
+        activate ? agentHubOrbLaunchAction(useAppStore.getState().settings, alternate) : undefined
+      )
+      await refresh()
+    },
+    [refresh]
+  )
   return { state, session, openOrb, readState: read.state }
 }

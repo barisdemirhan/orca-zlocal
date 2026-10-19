@@ -173,7 +173,7 @@ async function show(chat = true) {
   return rendered
 }
 
-it('keeps the retained chat and its model picker open until an actual outside interaction', async () => {
+it('keeps the retained chat and its model picker open until explicitly closed', async () => {
   const user = userEvent.setup()
   const setOption = vi.fn().mockResolvedValue(undefined)
   const model: SessionOptionDescriptor = {
@@ -256,6 +256,11 @@ it('keeps the retained chat and its model picker open until an actual outside in
   // The combined picker stays open after a model pick; only effort closes it.
   expect(document.activeElement).toBe(screen.getByRole('combobox'))
   await user.click(screen.getByRole('button', { name: 'Outside' }))
+  fireEvent.blur(window)
+  expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
+  expect(screen.getByRole('textbox', { name: 'Chat draft' })).toBe(draft)
+  expect(draft).toMatchObject({ value: 'unsent draft' })
+  await user.click(screen.getByRole('button', { name: /^Close\b/ }))
   await waitFor(() => expect(useAgentHubOrbPanel.getState().session).toBeNull())
 })
 
@@ -298,12 +303,12 @@ it('opens a quiet Orb before revealing the same conversation and its model above
   expect(mocks.close).not.toHaveBeenCalled()
 })
 
-it.each(['connecting', 'live', 'stopping'] as const)(
-  'keeps the panel open on outside interactions while Live is %s',
+it.each(['off', 'connecting', 'live', 'stopping'] as const)(
+  'keeps the Orb open across outside focus and Live %s until Escape',
   async (connection) => {
     mocks.voice.connection = connection
     const user = userEvent.setup()
-    const { rerender } = await show()
+    const { rerender } = await show(connection !== 'off')
     const outside = document.createElement('button')
     outside.textContent = 'Workspace'
     document.body.append(outside)
@@ -324,6 +329,12 @@ it.each(['connecting', 'live', 'stopping'] as const)(
         </TooltipProvider>
       )
       await user.click(outside)
+      expect(document.activeElement).toBe(outside)
+      fireEvent.blur(window)
+      expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
+      fireEvent.keyDown(document.querySelector('[data-agent-hub-orb-panel]') ?? document.body, {
+        key: 'Escape'
+      })
       await waitFor(() => expect(useAgentHubOrbPanel.getState().session).toBeNull())
     } finally {
       outside.remove()

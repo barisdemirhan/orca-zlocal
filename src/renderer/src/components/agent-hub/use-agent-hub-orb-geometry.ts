@@ -3,12 +3,14 @@ import { useAppStore } from '@/store'
 import {
   AGENT_HUB_ORB_MAX_DIAMETER,
   AGENT_HUB_ORB_MIN_DIAMETER,
+  fitAgentHubOrb,
   layoutAgentHubOrb,
   type AgentHubOrbSide
 } from './agent-hub-orb-geometry'
 import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
+import { useAgentHubOrbDiameter } from './use-agent-hub-orb-diameter'
 
 type OrbGesture = {
   mode: 'move' | 'resize'
@@ -33,7 +35,7 @@ export function useAgentHubOrbGeometry({
   live?: boolean
   requestVisible: boolean
 }) {
-  const preferredDiameter = useAgentHubOrbPanel((s) => s.preferredDiameter)
+  const { preferredDiameter, rememberDiameter } = useAgentHubOrbDiameter()
   const dockPlacement = useAppStore(
     (s) =>
       `${s.settings?.agentHubDockPosition?.edge}:${s.settings?.agentHubDockPosition?.offset}:${s.settings?.agentHubDockSize}`
@@ -51,17 +53,23 @@ export function useAgentHubOrbGeometry({
     inlineWidth: 480,
     heightOverhead: 116
   }))
-  const position = savedPosition ?? {
-    x: (measurements.bounds.left + measurements.bounds.right - 324) / 2,
-    y: (measurements.bounds.top + measurements.bounds.bottom - 334) / 2
-  }
-  const layout = layoutAgentHubOrb({
-    position,
+  const fit = {
     preferredDiameter,
     bounds: measurements.bounds,
     controlsWidth: measurements.controlsWidth,
     heightOverhead: measurements.heightOverhead,
-    compact,
+    compact
+  }
+  const initialSize = fitAgentHubOrb({
+    ...fit,
+    position: { x: measurements.bounds.left, y: measurements.bounds.top }
+  })
+  const layout = layoutAgentHubOrb({
+    ...fit,
+    position: savedPosition ?? {
+      x: (measurements.bounds.left + measurements.bounds.right - initialSize.width) / 2,
+      y: (measurements.bounds.top + measurements.bounds.bottom - initialSize.height) / 2
+    },
     ...(requestVisible && !embedded
       ? { requestSize: { width: 320, height: Math.min(480, measurements.requestHeight) } }
       : {}),
@@ -161,6 +169,11 @@ export function useAgentHubOrbGeometry({
           stagePosition: active.position,
           ...(active.mode === 'resize' ? { preferredDiameter: active.preferredDiameter } : {})
         })
+      } else if (active.mode === 'resize') {
+        const diameter = useAgentHubOrbPanel.getState().preferredDiameter
+        if (diameter !== active.preferredDiameter) {
+          rememberDiameter(diameter)
+        }
       }
       if (active.element.hasPointerCapture(active.pointerId)) {
         active.element.releasePointerCapture(active.pointerId)
@@ -219,7 +232,7 @@ export function useAgentHubOrbGeometry({
       document.removeEventListener('keydown', escape, true)
       cancel()
     }
-  }, [embedded, compact])
+  }, [embedded, compact, rememberDiameter])
 
   return {
     geometry,
@@ -272,9 +285,9 @@ export function useAgentHubOrbGeometry({
       }
       event.preventDefault()
       event.stopPropagation()
-      useAgentHubOrbPanel.setState({
-        preferredDiameter: Math.max(AGENT_HUB_ORB_MIN_DIAMETER, Math.min(geometry.maximum, next))
-      })
+      const diameter = Math.max(AGENT_HUB_ORB_MIN_DIAMETER, Math.min(geometry.maximum, next))
+      useAgentHubOrbPanel.setState({ preferredDiameter: diameter })
+      rememberDiameter(diameter)
     }
   }
 }

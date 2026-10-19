@@ -30,6 +30,7 @@ function controls(overrides: Partial<Controls> = {}): Controls {
     onShowChat: vi.fn(),
     onShowOrb: vi.fn(),
     onCompact: vi.fn(),
+    onModeChange: vi.fn(),
     onText: vi.fn(),
     onDictate: vi.fn(),
     onStopDictation: vi.fn(),

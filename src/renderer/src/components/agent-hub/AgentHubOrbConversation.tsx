@@ -6,6 +6,7 @@ import { useAppStore } from '@/store'
 import {
   useAgentHubOrbPanel,
   closeAgentHubOrbPanel,
+  cancelAgentHubOrbLaunch,
   setAgentHubOrbDestination
 } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbConversations } from './agent-hub-orb-conversations'
@@ -73,6 +74,7 @@ export function AgentHubOrbConversation({
   )
   const [secondaryView, setSecondaryView] = useState<'history' | 'settings'>('history')
   const setView = (view: 'chat' | 'history' | 'settings') => {
+    cancelAgentHubOrbLaunch(sessionId, tabId)
     if (view !== 'chat') {
       void voice.stopLive()
       setSecondaryView(view)
@@ -116,6 +118,7 @@ export function AgentHubOrbConversation({
     if (busy) {
       return
     }
+    cancelAgentHubOrbLaunch(sessionId, tabId)
     setBusy(true)
     setFailure(null)
     if (
@@ -182,6 +185,7 @@ export function AgentHubOrbConversation({
     'show-chat': translate('auto.agentHub.orb.showConversation', 'Show conversation')
   }
   const onSphereClick = () => {
+    cancelAgentHubOrbLaunch(sessionId, tabId)
     if (sphereAction === 'end-live') {
       void voice.stopLive()
     } else if (sphereAction === 'finish-dictation') {
@@ -316,11 +320,16 @@ export function AgentHubOrbConversation({
             compact={compact}
             busy={busy}
             dictating={dictating}
-            onShowChat={() =>
+            onShowChat={() => {
+              cancelAgentHubOrbLaunch(sessionId, tabId)
               useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
-            }
-            onShowOrb={() => useAgentHubOrbPanel.setState({ presentation: 'orb', compact: false })}
+            }}
+            onShowOrb={() => {
+              cancelAgentHubOrbLaunch(sessionId, tabId)
+              useAgentHubOrbPanel.setState({ presentation: 'orb', compact: false })
+            }}
             onCompact={() => useAgentHubOrbPanel.setState({ compact: !compact })}
+            onModeChange={() => cancelAgentHubOrbLaunch(sessionId, tabId)}
             onText={() => {
               finishAgentHubOrbDictationForText(tabId)
               void voice

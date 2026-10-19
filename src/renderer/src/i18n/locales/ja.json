@@ -21752,6 +21752,14 @@
       "unavailable": "このリンクを開けませんでした。"
     },
     "orb": {
+      "defaultAction": "Orbを開くモード",
+      "defaultActionHint": "Orbボタンとショートカットで使用します。",
+      "alternateAction": "{{modifier}}+クリックの動作",
+      "alternateActionHint": "既定の動作を変えずにこのモードを開きます。",
+      "liveAction": "ライブ",
+      "textAction": "テキスト",
+      "microphoneBusy": "マイクは別の録音で使用中です。",
+      "modifierClickHint": "{{modifier}}+クリック · {{action}}",
       "modelsLoading": "利用可能なモデルを読み込み中…",
       "modelsUnavailable": "利用可能なモデルを読み込めませんでした。モデルメニューを開いて再試行してください。",
       "modelUnavailable": "利用不可",

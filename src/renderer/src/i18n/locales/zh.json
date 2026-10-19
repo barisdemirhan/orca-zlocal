@@ -21753,6 +21753,14 @@
       "unavailable": "无法打开此链接。"
     },
     "orb": {
+      "defaultAction": "打开Orb的模式",
+      "defaultActionHint": "用于Orb按钮和快捷键。",
+      "alternateAction": "{{modifier}}+点击操作",
+      "alternateActionHint": "打开此模式，不更改默认操作。",
+      "liveAction": "实时",
+      "textAction": "文字",
+      "microphoneBusy": "麦克风正被另一个录音使用。",
+      "modifierClickHint": "{{modifier}}+点击 · {{action}}",
       "modelsLoading": "正在加载可用模型…",
       "modelsUnavailable": "无法加载可用模型。请打开模型菜单重试。",
       "modelUnavailable": "不可用",
