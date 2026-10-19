@@ -33,7 +33,7 @@ export class CodexStructuredVoiceAdapter {
     if (this.sessions.get(input.sessionId) !== session || session.ended) {
       return { ok: false, rejected: 'This chat changed owner. Reopen it before starting Live.' }
     }
-    if (!session.realtimeTimelineReady) {
+    if (!session.realtimeTimelineReady && !session.realtimeTimelineUnsupported) {
       const timeline = await readCodexRealtimeTimeline(
         session.connection,
         session.threadId,
@@ -42,26 +42,28 @@ export class CodexStructuredVoiceAdapter {
       if (this.sessions.get(input.sessionId) !== session || session.ended) {
         return { ok: false, rejected: 'This chat changed owner. Reopen it before starting Live.' }
       }
-      if (timeline.status !== 'ready') {
+      if (timeline.status === 'unsupported') {
+        // Live uses the acquired thread; an optional history API may be advertised but unimplemented.
+        session.realtimeTimelineUnsupported = true
+      } else if (timeline.status !== 'ready') {
         return {
           ok: false,
           rejected:
-            timeline.status === 'unsupported'
-              ? 'This Codex version does not support canonical Live history.'
-              : timeline.status === 'limit'
-                ? 'This conversation is too long for Live voice. Start a new Orb conversation.'
-                : 'Codex Live history could not be verified. Try again.'
+            timeline.status === 'limit'
+              ? 'This conversation is too long for Live voice. Start a new Orb conversation.'
+              : 'Codex Live history could not be verified. Try again.'
         }
+      } else {
+        const admission = session.translator?.restoreTimeline?.(
+          session.threadId,
+          timeline.entries,
+          true
+        )
+        if (admission && !admission.accepted) {
+          return { ok: false, rejected: 'Codex Live history could not be restored. Try again.' }
+        }
+        session.realtimeTimelineReady = true
       }
-      const admission = session.translator?.restoreTimeline?.(
-        session.threadId,
-        timeline.entries,
-        true
-      )
-      if (admission && !admission.accepted) {
-        return { ok: false, rejected: 'Codex Live history could not be restored. Try again.' }
-      }
-      session.realtimeTimelineReady = true
     }
     session.realtime ??= new CodexStructuredRealtime(
       session.connection,
@@ -96,6 +98,14 @@ export class CodexStructuredVoiceAdapter {
   }
 
   holds = (sessionId: string): boolean => this.sessions.get(sessionId)?.realtime?.holdsWork === true
+
+  appendText: NonNullable<StructuredAgentSessionAdapter['appendVoiceText']> = async (input) => {
+    const session = this.sessions.get(input.sessionId)
+    if (!session || session.ended || session.fence !== input.fence) {
+      return false
+    }
+    return session.realtime?.appendText(input) ?? false
+  }
 
   capability: NonNullable<StructuredAgentSessionAdapter['readVoiceCapability']> = (sessionId) => {
     const session = this.sessions.get(sessionId)

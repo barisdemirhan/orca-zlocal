@@ -73,7 +73,12 @@ export function deliverAgentHubOrbVoiceEvent(
   sessionId: string,
   attempt: AgentHubOrbVoiceAttempt,
   event: AgentSessionVoiceEvent,
-  callbacks: { started: () => void; closed: () => void; failed: (error: unknown) => void }
+  callbacks: {
+    started: () => void
+    closed: () => void
+    failed: (error: unknown) => void
+    transcript?: (event: Extract<AgentSessionVoiceEvent, { type: 'transcript' }>) => void
+  }
 ): void {
   if (
     event.sessionId !== sessionId ||
@@ -95,6 +100,7 @@ export function deliverAgentHubOrbVoiceEvent(
       void attempt.media.applyAnswer(event.sdp).catch(callbacks.failed)
     } else if (event.type === 'transcript') {
       attempt.playback.accept(event)
+      callbacks.transcript?.(event)
     } else if (event.type === 'error') {
       callbacks.failed(new Error(event.message))
     }
@@ -122,4 +128,14 @@ async function verifyNativeStop(
   } catch {
     return attempt.remoteClosed
   }
+}
+export function promoteAgentHubOrbVoiceAttempt(
+  attempt: AgentHubOrbVoiceAttempt,
+  promote: () => void
+): void {
+  if (!attempt.started || !attempt.ready || attempt.dead) {
+    return
+  }
+  clearTimeout(attempt.timeout)
+  promote()
 }

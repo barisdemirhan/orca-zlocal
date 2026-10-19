@@ -1,13 +1,5 @@
 import { useId } from 'react'
-import {
-  Check,
-  CircleAlert,
-  MicOff,
-  ShieldCheck,
-  VolumeX,
-  HelpCircle,
-  AlignLeft
-} from 'lucide-react'
+import { Check, Minus, MicOff, ShieldCheck, VolumeX, HelpCircle, AlignLeft } from 'lucide-react'
 import './agent-hub-orb-sphere.css'
 
 export type AgentHubOrbPhase =
@@ -97,21 +89,20 @@ export function AgentHubOrbSphere({
         </svg>
         <span className="agent-hub-orb-shade" />
         <span className="agent-hub-orb-glint" />
-        {phase === 'request' ? (
-          <HelpCircle className="agent-hub-orb-state-icon" aria-hidden />
-        ) : null}
-        {phase === 'approval' ? (
-          <ShieldCheck className="agent-hub-orb-state-icon" aria-hidden />
-        ) : null}
-        {phase === 'dictating' ? <span className="agent-hub-orb-record-mark" /> : null}
-        {phase === 'transcribing' ? (
-          <AlignLeft className="agent-hub-orb-state-icon" aria-hidden />
-        ) : null}
-        {phase === 'error' || (phase === 'result' && outcome === 'error') ? (
-          <CircleAlert className="agent-hub-orb-state-icon" aria-hidden />
-        ) : phase === 'result' ? (
-          <Check className="agent-hub-orb-state-icon" aria-hidden />
-        ) : null}
+        {[
+          { key: 'request', icon: HelpCircle, active: phase === 'request' },
+          { key: 'approval', icon: ShieldCheck, active: phase === 'approval' },
+          { key: 'transcribing', icon: AlignLeft, active: phase === 'transcribing' },
+          {
+            key: 'error',
+            icon: Minus,
+            active: phase === 'error' || (phase === 'result' && outcome === 'error')
+          },
+          { key: 'success', icon: Check, active: phase === 'result' && outcome !== 'error' }
+        ].map(({ key, icon: Icon, active }) => (
+          <Icon key={key} className="agent-hub-orb-state-icon" data-active={active} aria-hidden />
+        ))}
+        <span className="agent-hub-orb-record-mark" data-active={phase === 'dictating'} />
       </span>
       {inputMuted || outputMuted ? (
         <span className="agent-hub-orb-mute-marks" aria-hidden>

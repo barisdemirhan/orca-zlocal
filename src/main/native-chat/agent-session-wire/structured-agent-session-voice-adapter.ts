@@ -5,6 +5,9 @@ import type {
 } from '../../../shared/agent-session-voice'
 
 export type StructuredAgentSessionVoiceAdapter = {
+  appendVoiceText?(
+    input: AgentSessionVoiceOwner & { sessionId: string; fence: number; text: string }
+  ): Promise<boolean>
   startVoice?(
     input: AgentSessionVoiceOwner & { sessionId: string; fence: number; sdp: string }
   ): Promise<{ ok: true; value: AgentSessionVoiceResult } | { ok: false; rejected: string }>

@@ -112,6 +112,8 @@ export class DaemonRequestRouter {
       case 'signal':
         this.options.host.signal(request.payload.sessionId, request.payload.signal)
         return {}
+      case 'terminalSuspension':
+        return this.options.host.terminalSuspension(request.payload.sessionId, request.payload)
       case 'detach':
         this.options.attachments.detachSessionForClient(request.payload.sessionId, clientId)
         this.options.log.log('session-detached', { sessionId: request.payload.sessionId })

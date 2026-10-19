@@ -1,4 +1,5 @@
-import { Moon, Play } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Loader2, Moon, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import type { SpawnDeferralReason } from '../../../../shared/host-spawn-admission'
@@ -32,18 +33,31 @@ function sleepingReasonDetail(reason: SpawnDeferralReason): string {
 export function TerminalSleepingPaneOverlay({
   reason,
   onResume,
-  onResumeAutomaticRestores
+  onResumeAutomaticRestores,
+  presentation
 }: {
   reason: SpawnDeferralReason
+  presentation?: {
+    title: string
+    detail: string
+    action: string
+    pending: boolean
+    disabled: boolean
+    error?: string
+  }
   onResume: () => void
   /** Present only when the host can clear its pause. */
   onResumeAutomaticRestores?: () => void
 }): React.JSX.Element {
   return (
     <div
-      className="absolute inset-0 z-40 flex cursor-pointer items-center justify-center bg-background/70 p-4"
+      className={cn(
+        'absolute inset-0 z-40 flex items-center justify-center bg-background/70 p-4',
+        !presentation && 'cursor-pointer'
+      )}
       data-terminal-sleeping-pane={reason}
-      onClick={onResume}
+      onClick={presentation ? undefined : onResume}
+      data-agent-hub-pane-sleep={presentation ? true : undefined}
     >
       <div
         role="status"
@@ -51,18 +65,30 @@ export function TerminalSleepingPaneOverlay({
       >
         <div className="flex items-center gap-3">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground">
-            <Moon className="size-4" />
+            {presentation?.pending ? (
+              <Loader2 className="size-4 animate-spin motion-reduce:animate-none" />
+            ) : (
+              <Moon className="size-4" />
+            )}
           </div>
           <div className="min-w-0 flex-1 space-y-1">
             <div className="text-sm font-medium text-foreground">
-              {translate(
-                'auto.components.terminal.pane.TerminalSleepingPaneOverlay.title',
-                'Sleeping — click to resume'
-              )}
+              {presentation?.title ??
+                translate(
+                  'auto.components.terminal.pane.TerminalSleepingPaneOverlay.title',
+                  'Sleeping — click to resume'
+                )}
             </div>
-            <div className="text-xs text-muted-foreground">{sleepingReasonDetail(reason)}</div>
+            <div className="text-xs text-muted-foreground">
+              {presentation?.detail ?? sleepingReasonDetail(reason)}
+            </div>
           </div>
         </div>
+        {presentation?.error ? (
+          <p role="alert" className="text-xs text-destructive">
+            {presentation.error}
+          </p>
+        ) : null}
         <div className="flex justify-end gap-2">
           {onResumeAutomaticRestores ? (
             <Button
@@ -84,6 +110,7 @@ export function TerminalSleepingPaneOverlay({
           <Button
             type="button"
             size="sm"
+            disabled={presentation?.disabled}
             onClick={(event) => {
               // Why: the pane-wide click below would resume a second time.
               event.stopPropagation()
@@ -91,10 +118,11 @@ export function TerminalSleepingPaneOverlay({
             }}
           >
             <Play />
-            {translate(
-              'auto.components.terminal.pane.TerminalSleepingPaneOverlay.resume',
-              'Resume'
-            )}
+            {presentation?.action ??
+              translate(
+                'auto.components.terminal.pane.TerminalSleepingPaneOverlay.resume',
+                'Resume'
+              )}
           </Button>
         </div>
       </div>

@@ -37,6 +37,11 @@ import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 
 import { agentHubOrbErrorMessage } from './agent-hub-orb-error'
+import { AgentHubOrbFocusStatus } from './AgentHubOrbFocusStatus'
+import { AgentHubOrbFollowNotices } from './AgentHubOrbFollowNotices'
+import { useAgentHubOrbFollowDelivery } from './use-agent-hub-orb-follow-delivery'
+import { openAgentHubMirrors } from './agent-hub-mirror-store'
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 export function AgentHubOrbConversation({
   sessionId,
   tabId,
@@ -65,6 +70,10 @@ export function AgentHubOrbConversation({
     voice.connection === 'connecting' ||
     voice.connection === 'live' ||
     voice.connection === 'stopping'
+  useAgentHubOrbFollowDelivery(tabId, voice.connection === 'live')
+  const openFollowTarget = (target: AgentHubPaneTarget): void => {
+    openAgentHubMirrors([target])
+  }
   const dictation = useAgentHubDictationSession()
   const dictationState = useAppStore((s) => s.dictationState)
   const dictating = Boolean(
@@ -261,6 +270,8 @@ export function AgentHubOrbConversation({
           </Button>
         </div>
       ) : null}
+      <AgentHubOrbFocusStatus onOpenTarget={openFollowTarget} />
+      <AgentHubOrbFollowNotices onOpenTarget={openFollowTarget} />
       {chatVisible && conversation ? (
         <p className="shrink-0 truncate px-3 pt-2 text-xs text-muted-foreground">
           {conversation.title} ·{' '}
@@ -296,6 +307,7 @@ export function AgentHubOrbConversation({
       {!showChat ? (
         <AgentHubOrbStage
           {...visual}
+          caption={live ? voice.caption : undefined}
           inputMuted={live && voice.input === 'muted'}
           outputMuted={live && voice.outputMuted}
           inputSpeaking={voice.inputSpeaking}

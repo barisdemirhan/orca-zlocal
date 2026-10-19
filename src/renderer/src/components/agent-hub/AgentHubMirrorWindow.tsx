@@ -1,3 +1,4 @@
+import { AgentHubPaneSleepOverlay } from './AgentHubPaneSleepOverlay'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { Button } from '@/components/ui/button'
 import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selection-focus'
@@ -292,8 +293,11 @@ export function AgentHubMirrorWindow({
         role="tabpanel"
         id={agentHubMirrorPanelId(windowId)}
         aria-labelledby={windowState ? agentHubMirrorTabId(windowState.activeTabId) : undefined}
-        className="flex min-h-0 flex-1 flex-col"
+        className="relative flex min-h-0 flex-1 flex-col"
       >
+        {surface === 'preview' || surface === 'in-workspace' ? (
+          <AgentHubPaneSleepOverlay target={shownTarget} />
+        ) : null}
         {family && familyBarShown ? (
           <AgentHubMirrorFamilyTabs
             family={family}

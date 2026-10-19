@@ -50,6 +50,7 @@ export type NativeChatComposerActionsProps = {
   /** The chat's agent, whose permission modes the picker describes. */
   agent?: string
   hasContent?: boolean
+  interactionDisabled?: boolean
 }
 
 // Memoized: typing re-renders the composer per keystroke, and these controls rarely change with it.
@@ -77,7 +78,8 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
   contextUsage,
   focusComposer,
   agent,
-  hasContent = true
+  hasContent = true,
+  interactionDisabled = false
 }: NativeChatComposerActionsProps): React.JSX.Element {
   useUiLanguageRevision()
   const orbTabId = useContext(AgentHubOrbComposerContext)
@@ -130,6 +132,20 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
     </Button>
   )
 
+  const sendAction = sendReason ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A disabled button gets no pointer events, so the wrapper carries the hover. */}
+        <span className="inline-flex">{sendButton}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={4}>
+        {sendReason}
+      </TooltipContent>
+    </Tooltip>
+  ) : (
+    sendButton
+  )
+
   return (
     <div className="flex w-full items-center justify-between gap-2 text-chat-foreground-faint">
       <div className="flex min-w-0 items-center gap-0.5">
@@ -152,6 +168,7 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
           </TooltipContent>
         </Tooltip>
         <NativeChatComposerPermissionPicker
+          disabled={interactionDisabled}
           surface={sessionOptionsSurface}
           snapshot={sessionOptionsSnapshot}
           {...(agent ? { agent } : {})}
@@ -161,13 +178,19 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
       <div className="ml-auto flex items-center gap-1.5">
         {/* Keep option pickers beside the session actions they affect. */}
         <NativeChatSessionOptionPickers
+          disabled={interactionDisabled}
           surface={sessionOptionsSurface}
           snapshot={sessionOptionsSnapshot}
           isWorking={isWorking}
           pickerRequest={sessionOptionsPickerRequest}
           focusComposer={focusComposer}
         />
-        {contextUsage ? <NativeChatContextUsageRing usage={contextUsage} /> : null}
+        {contextUsage ? (
+          <NativeChatContextUsageRing
+            key={interactionDisabled ? 'dictation' : 'composer'}
+            usage={contextUsage}
+          />
+        ) : null}
         {orbTabId ? (
           <AgentHubOrbComposerMic disabled={dictationDisabled} />
         ) : (
@@ -223,18 +246,17 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
           </Button>
         ) : null}
         {orbTabId ? <AgentHubOrbComposerOrb /> : null}
-        {orbTabId && !hasContent && !isWorking ? null : sendReason ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {/* A disabled button gets no pointer events, so the wrapper carries the hover. */}
-              <span className="inline-flex">{sendButton}</span>
-            </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={4}>
-              {sendReason}
-            </TooltipContent>
-          </Tooltip>
+        {orbTabId ? (
+          <span
+            className="agent-hub-orb-send-slot"
+            data-visible={hasContent || isWorking}
+            aria-hidden={!hasContent && !isWorking}
+            inert={!hasContent && !isWorking}
+          >
+            {sendAction}
+          </span>
         ) : (
-          sendButton
+          sendAction
         )}
       </div>
     </div>

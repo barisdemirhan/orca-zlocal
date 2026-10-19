@@ -90,7 +90,10 @@ export function installSessionReconcileDispose(session: ConnectPanePtySession): 
       session.ptySizeReassertion.request({ fit: false })
     },
     // Why: mobile wake reaches this pane while it's hidden on the desktop, so consume only the armed hibernation wake — no size/foreground reads.
-    wakeHibernatedAgentIfArmed(claimedProviderSessions) {
+    wakeHibernatedAgentIfArmed(claimedProviderSessions, targetPaneKey) {
+      if (targetPaneKey && targetPaneKey !== session.cacheKey) {
+        return null
+      }
       if (session.hibernatedWakeInFlightClaimKey) {
         if (claimedProviderSessions?.has(session.hibernatedWakeInFlightClaimKey)) {
           return null
@@ -98,7 +101,7 @@ export function installSessionReconcileDispose(session: ConnectPanePtySession): 
         claimedProviderSessions?.add(session.hibernatedWakeInFlightClaimKey)
         return session.hibernatedWakeInFlightClaimKey
       }
-      const consumedClaimKey = session.consumeHibernatedAgentWake(claimedProviderSessions)
+      const consumedClaimKey = session.consumeHibernatedAgentWake(claimedProviderSessions, true)
       if (consumedClaimKey) {
         return consumedClaimKey
       }

@@ -144,6 +144,7 @@ function populate(loaded: LoadedWorkspaceLayout): LoadedWorkspaceLayout {
     record('launchConfig', { agentArgs: '', agentEnv: {} })
     record('restoreOnTabOpenOnly', true)
   }
+  fill(loaded, 'leaf.sleeping.wakeOnRequestOnly', true)
   fill(loaded, 'carried.unplacedSleepingRecords', {
     'tab-elsewhere:x': { paneKey: 'tab-elsewhere:x', worktreeId: 'repo-9::/gone', prompt: 'p' }
   })

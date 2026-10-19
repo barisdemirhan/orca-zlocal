@@ -25,6 +25,9 @@ vi.mock('@/store', async () => {
       activeWorktreeId: null,
       tabsByWorktree: {},
       terminalLayoutsByTabId: {},
+      ptyIdsByTabId: {},
+      sleepingAgentSessionsByPaneKey: {},
+      agentStatusByPaneKey: {},
       dictationState: 'idle'
     }))
   }

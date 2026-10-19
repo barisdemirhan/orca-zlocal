@@ -1,3 +1,4 @@
+import type { TerminalSuspensionRequest } from './daemon-terminal-suspension-protocol'
 import type {
   AsyncIoHealthRequest,
   FullDiskAccessStatusRequest,
@@ -267,6 +268,7 @@ export type DaemonRequest =
   | SetSessionBackgroundRequest
   | KillRequest
   | SignalRequest
+  | TerminalSuspensionRequest
   | ListSessionsRequest
   | ShutdownIfIdleRequest
   | DetachRequest

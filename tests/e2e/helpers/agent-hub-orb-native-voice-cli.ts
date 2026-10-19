@@ -9,6 +9,8 @@ function completedVoiceItem(text, role) {
   voiceTimeline.push({ type: 'realtime', position: voiceTimeline.length, item })
   voiceTimelines.set(voiceThreadId, voiceTimeline)
   const payload = { threadId: voiceThreadId, item }
+  notify('thread/realtime/item/started', { threadId: voiceThreadId, item: { ...item, text: '' } })
+  notify('thread/realtime/item/transcript/delta', { threadId: voiceThreadId, itemId: item.id, delta: text })
   notify('thread/realtime/item/completed', payload)
   notify('thread/realtime/item/completed', payload)
 }
@@ -94,6 +96,8 @@ function handleRealtimeRequest(message, reply) {
       reply({})
       setTimeout(() => notify('thread/realtime/closed', { threadId: params.threadId, reason: null }), 10)
       return
+    case 'thread/realtime/appendText':
+      return reply({})
     case 'thread/timeline/list':
       return reply({ data: voiceTimelines.get(params.threadId) ?? [], nextCursor: null, activeRealtimeSessionAtPageStart: null })
   }

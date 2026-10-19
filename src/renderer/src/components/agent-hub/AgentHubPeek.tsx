@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { cn } from '@/lib/utils'
 import { ArrowLeft, Expand, ExternalLink, Minus, PanelTop, Shrink, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
@@ -118,8 +117,7 @@ function SourceButton({
 
 /**
  * A large, passing look at a page or file an agent pointed to: no minimizing, no restoring, one
- * at a time. The mirrors behind it sit in shadow and a click there closes it; the hub, its
- * tray and alerts stay usable over it, as do Esc and ✕.
+ * at a time. Normal and focused mirrors sit behind its shade; a click there, Esc or ✕ closes it.
  */
 export function AgentHubPeek(): React.JSX.Element | null {
   const peek = useAgentHubPeek()
@@ -204,11 +202,8 @@ export function AgentHubPeek(): React.JSX.Element | null {
         // Why preventDefault: a click on the shade must not pull focus off the terminal typed in.
         onMouseDown={(event) => event.preventDefault()}
         onPointerDown={closeAgentHubPeek}
-        // Why z-[46] before the box: over mirrors (44) and floating workspace (45), under Peek.
-        className={cn(
-          'fixed inset-x-0 top-0 bg-black/45 animate-in duration-200 fade-in-0 motion-reduce:animate-none!',
-          item.fromOrb ? 'z-[48]' : 'z-[46]'
-        )}
+        // Peek clears focused mirrors (47), while dialogs and menus keep their higher layers.
+        className="fixed inset-x-0 top-0 z-[48] bg-black/45 animate-in duration-200 fade-in-0 motion-reduce:animate-none!"
       />
       <div
         ref={rootRef}
@@ -224,11 +219,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
             closeAgentHubPeek()
           }
         }}
-        // Why z-[46]: over mirrors (44) and floating workspace (45), under the tray (47) and alerts (48).
-        className={cn(
-          'fixed flex flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none',
-          item.fromOrb ? 'z-[48]' : 'z-[46]'
-        )}
+        className="fixed z-[48] flex flex-col overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-floating outline-none"
         style={{ left: box.left, top: box.top, width: box.width, height: box.height }}
       >
         <header className="flex h-10.5 shrink-0 items-center gap-2 border-b border-border pr-1.5 pl-2">

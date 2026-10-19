@@ -14,6 +14,7 @@ import { translate } from '@/i18n/i18n'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
 import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
+import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
 import './agent-hub-orb-stage.css'
 
 export function AgentHubOrbStage({
@@ -26,6 +27,7 @@ export function AgentHubOrbStage({
   request,
   requestVisible,
   notice,
+  caption,
   sphereLabel,
   onSphereClick,
   ...sphere
@@ -39,12 +41,14 @@ export function AgentHubOrbStage({
   request: ReactNode
   requestVisible: boolean
   notice?: string
+  caption?: string
   /** What a click on the sphere does, as words; the sphere is a plain image without it. */
   sphereLabel?: string
   onSphereClick?: () => void
 }): React.JSX.Element {
   const inlineRef = useRef<HTMLDivElement>(null)
   const pressedAt = useRef<{ x: number; y: number } | null>(null)
+  const [captionsOpen, setCaptionsOpen] = useState(true)
   const [container] = useState(() => document.createElement('div'))
   const {
     geometry,
@@ -112,7 +116,9 @@ export function AgentHubOrbStage({
             onPointerDown={(event) => {
               if (
                 event.target instanceof Element &&
-                event.target.closest('[data-agent-hub-orb-live-controls]')
+                event.target.closest(
+                  '[data-agent-hub-orb-live-controls], [data-agent-hub-orb-interactive]'
+                )
               ) {
                 return
               }
@@ -132,7 +138,7 @@ export function AgentHubOrbStage({
                 dragged ||
                 (event.target instanceof Element &&
                   event.target.closest(
-                    '[data-agent-hub-orb-resize], [data-agent-hub-orb-live-controls]'
+                    '[data-agent-hub-orb-resize], [data-agent-hub-orb-live-controls], [data-agent-hub-orb-interactive]'
                   ))
               ) {
                 return
@@ -144,26 +150,33 @@ export function AgentHubOrbStage({
               <div className="agent-hub-orb-hover-controls">{sphereControls}</div>
             ) : null}
             <div className="agent-hub-orb-art-sphere">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {!embedded && onSphereClick && sphereLabel ? (
-                    <button
-                      type="button"
-                      aria-label={sphereLabel}
-                      className="inline-flex size-full cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                      <AgentHubOrbSphere {...sphere} />
-                    </button>
-                  ) : (
-                    <span className="inline-flex size-full">
-                      <AgentHubOrbSphere {...sphere} />
-                    </span>
-                  )}
-                </TooltipTrigger>
-                <TooltipContent>
-                  {!embedded && sphereLabel ? sphereLabel : sphere.label}
-                </TooltipContent>
-              </Tooltip>
+              <AgentHubOrbSpeechBubble
+                open={captionsOpen}
+                onOpenChange={setCaptionsOpen}
+                text={caption ?? ''}
+                speakerLabel="Orb"
+              >
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {!embedded && onSphereClick && sphereLabel ? (
+                      <button
+                        type="button"
+                        aria-label={sphereLabel}
+                        className="inline-flex size-full cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                      >
+                        <AgentHubOrbSphere {...sphere} />
+                      </button>
+                    ) : (
+                      <span className="inline-flex size-full">
+                        <AgentHubOrbSphere {...sphere} />
+                      </span>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {!embedded && sphereLabel ? sphereLabel : sphere.label}
+                  </TooltipContent>
+                </Tooltip>
+              </AgentHubOrbSpeechBubble>
             </div>
             {!embedded && !compact ? (
               <span className="agent-hub-orb-resize" data-agent-hub-orb-resize>

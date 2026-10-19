@@ -33,6 +33,7 @@ let voiceLive = false
 const acquire = vi.fn<StructuredAgentSessionAdapter['acquire']>()
 const startVoice = vi.fn<NonNullable<StructuredAgentSessionAdapter['startVoice']>>()
 const stopVoice = vi.fn<NonNullable<StructuredAgentSessionAdapter['stopVoice']>>()
+const appendVoiceText = vi.fn(async () => true)
 const closeSession = vi.fn(async () => true)
 const cancelTurn = vi.fn(async () => ({ cancelled: true }))
 
@@ -92,6 +93,7 @@ function publish(
 
 beforeEach(async () => {
   voiceLive = false
+  appendVoiceText.mockReset().mockResolvedValue(true)
   acquire.mockReset().mockImplementation(async ({ fence, spawnToken }) => ({
     acquisitionGeneration: 'provider-generation',
     process: { hostId: 'local', pid: 4242, processStartTimeMs: 1_700_000_000_000, spawnToken },
@@ -124,6 +126,7 @@ beforeEach(async () => {
     acquire,
     startVoice,
     stopVoice,
+    appendVoiceText,
     closeSession,
     holdsVoice: () => voiceLive,
     readVoiceCapability: async () => ({ supported: true, accountAccess: 'unchecked' }),
@@ -148,6 +151,38 @@ afterEach(async () => {
 })
 
 describe('voice at the structured host mutation boundary', () => {
+  it('delivers opted-in context only to the exact live caller and never repeats a recorded delivery', async () => {
+    subscribe()
+    expect((await rig.host.voice.start(CALLER, startParams())).ok).toBe(true)
+    const fields = { ...OWNER, text: 'Selected agent has an unanswered decision.' }
+    const params = { ...fields, envelope: envelope('agentSession.appendVoiceText', fields) }
+    expect(await rig.host.voice.appendText(CALLER, params)).toMatchObject({
+      ok: true,
+      value: { applied: true }
+    })
+    await rig.host.voice.appendText(CALLER, params)
+    expect(appendVoiceText).toHaveBeenCalledTimes(1)
+    const stranger = { ...CALLER, callerKey: 'another-window' }
+    expect(
+      (
+        await rig.host.voice.appendText(stranger, {
+          ...fields,
+          envelope: envelope('agentSession.appendVoiceText', fields)
+        })
+      ).ok
+    ).toBe(false)
+    await rig.host.voice.stop(CALLER, stopParams())
+    expect(
+      (
+        await rig.host.voice.appendText(CALLER, {
+          ...fields,
+          envelope: envelope('agentSession.appendVoiceText', fields)
+        })
+      ).ok
+    ).toBe(false)
+    expect(appendVoiceText).toHaveBeenCalledTimes(1)
+    expect(cancelTurn).not.toHaveBeenCalled()
+  })
   it('requires a matching signalling subscriber and preserves a pending approval when stopping voice', async () => {
     expect((await rig.host.voice.start(CALLER, startParams())).ok).toBe(false)
     expect(startVoice).not.toHaveBeenCalled()

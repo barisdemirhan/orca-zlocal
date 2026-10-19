@@ -1,3 +1,5 @@
+import { createOrbVoiceContext } from './agent-hub-orb-context-delivery'
+import { checkAgentHubOrbVoiceCapability } from './agent-hub-orb-voice-capability'
 import type { AgentSessionVoiceEvent } from '../../../../shared/agent-session-voice'
 import type { AgentSessionVoiceClient } from '@/runtime/agent-session-voice-client'
 import type { StructuredAgentSessionHostCapabilityState } from '@/runtime/structured-agent-session-host-capability'
@@ -7,12 +9,15 @@ import {
   agentHubOrbVoiceStartFailure
 } from './agent-hub-orb-voice-failure'
 import { AgentHubOrbVoiceMedia } from './agent-hub-orb-voice-media'
+import { AgentHubOrbVoiceCaptions } from './agent-hub-orb-voice-captions'
 import {
   EMPTY_ORB_VOICE_SNAPSHOT,
+  nextAgentHubOrbVoiceSnapshot,
   type AgentHubOrbVoiceSnapshot
 } from './agent-hub-orb-voice-state'
 import {
   createAgentHubOrbVoiceAttempt,
+  promoteAgentHubOrbVoiceAttempt,
   startAgentHubOrbVoiceAttempt,
   stopAgentHubOrbVoiceAttempt,
   deliverAgentHubOrbVoiceEvent,
@@ -30,12 +35,21 @@ export class AgentHubOrbVoiceController {
   private stopping: Promise<void> | null = null
   private checking: Promise<void> | null = null
   private mediaSupported = true
+  private readonly captions = new AgentHubOrbVoiceCaptions((caption) => this.publish({ caption }))
+
+  readonly context: ReturnType<typeof createOrbVoiceContext>
 
   constructor(
     readonly owner: { sessionId: string; tabId: string; hostKey: string; agent: string },
     private readonly client: AgentSessionVoiceClient,
     private readonly microphonePreference: () => { deviceId?: string | null; label?: string | null }
-  ) {}
+  ) {
+    this.context = createOrbVoiceContext(client, () => ({
+      sessionId: this.owner.sessionId,
+      attempt: this.attempt,
+      live: this.snapshot.connection === 'live'
+    }))
+  }
 
   readonly getSnapshot = (): AgentHubOrbVoiceSnapshot => this.snapshot
   readonly subscribe = (listener: () => void): (() => void) => {
@@ -46,16 +60,11 @@ export class AgentHubOrbVoiceController {
   }
 
   private publish(change: Partial<AgentHubOrbVoiceSnapshot>): void {
-    const next = { ...this.snapshot, ...change }
-    this.snapshot = {
-      ...next,
-      canStart:
-        this.hostCapability === 'supported' &&
-        this.owner.agent === 'codex' &&
-        this.mediaSupported &&
-        next.capability !== 'unsupported' &&
-        next.capability !== 'checking'
-    }
+    this.snapshot = nextAgentHubOrbVoiceSnapshot(
+      this.snapshot,
+      change,
+      this.hostCapability === 'supported' && this.owner.agent === 'codex' && this.mediaSupported
+    )
     for (const listener of this.listeners) {
       listener()
     }
@@ -88,23 +97,13 @@ export class AgentHubOrbVoiceController {
       return Promise.resolve()
     }
     this.publish({ capability: 'checking', reason: undefined })
-    const checking = this.client
-      .capability()
-      .then((result) => {
-        this.publish({
-          capability:
-            result.supported === null ? 'unknown' : result.supported ? 'supported' : 'unsupported',
-          reason: result.supported ? undefined : result.reason
-        })
-      })
-      .catch(() => {
-        this.publish({ capability: 'error', reason: 'Could not check live voice. Try again.' })
-      })
-      .finally(() => {
-        if (this.checking === checking) {
-          this.checking = null
-        }
-      })
+    const checking = checkAgentHubOrbVoiceCapability(this.client, (change) =>
+      this.publish(change)
+    ).finally(() => {
+      if (this.checking === checking) {
+        this.checking = null
+      }
+    })
     this.checking = checking
     return checking
   }
@@ -169,12 +168,14 @@ export class AgentHubOrbVoiceController {
     })
     const attempt = createAgentHubOrbVoiceAttempt(generation, media)
     this.attempt = attempt
+    this.captions.reset()
     this.publish({
       connection: 'connecting',
       input: 'muted',
       output: 'silent',
       outputMuted: false,
       inputSpeaking: false,
+      caption: undefined,
       textMode: false,
       reason: undefined
     })
@@ -202,19 +203,17 @@ export class AgentHubOrbVoiceController {
     }
   }
 
-  private promote(attempt: Attempt): void {
-    if (!attempt.started || !attempt.ready || attempt.dead) {
-      return
-    }
-    clearTimeout(attempt.timeout)
-    this.publish({ connection: 'live', input: 'listening' })
-  }
+  private promote = (attempt: Attempt): void =>
+    promoteAgentHubOrbVoiceAttempt(attempt, () =>
+      this.publish({ connection: 'live', input: 'listening' })
+    )
 
   private accept(attempt: Attempt, event: AgentSessionVoiceEvent): void {
     if (this.attempt !== attempt) {
       return
     }
     deliverAgentHubOrbVoiceEvent(this.owner.sessionId, attempt, event, {
+      transcript: (transcript) => this.captions.accept(transcript),
       started: () => this.promote(attempt),
       closed: () => {
         void this.stopLive()
@@ -244,10 +243,17 @@ export class AgentHubOrbVoiceController {
       return Promise.resolve()
     }
     attempt.dead = true
+    this.captions.reset()
     attempt.signalReady()
     clearTimeout(attempt.timeout)
     attempt.localStop = attempt.media.stop()
-    this.publish({ connection: 'stopping', input: 'muted', output: 'silent', inputSpeaking: false })
+    this.publish({
+      connection: 'stopping',
+      input: 'muted',
+      output: 'silent',
+      inputSpeaking: false,
+      caption: undefined
+    })
     const stopping = this.finishStop(attempt).finally(() => {
       if (this.stopping === stopping) {
         this.stopping = null

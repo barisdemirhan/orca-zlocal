@@ -1,9 +1,10 @@
-import { AGENT_HUB_COMMAND_ACTION_IDS } from '@/components/agent-hub/agent-hub-command-handlers'
+import * as hubCommands from '@/components/agent-hub/agent-hub-command-handlers'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { canShowRightSidebarForView } from '@/lib/right-sidebar-visibility'
 import { getSelectedTextForFileSearch } from '../lib/file-search-selection'
+import { fileSearchClaimsTextKey } from '@/lib/file-search-shortcut-policy'
 import { registerAppCommandDispatcher } from '@/lib/app-command-dispatch'
 import { executePluginCommand } from '@/lib/plugin-command-execution'
 import {
@@ -187,6 +188,15 @@ export function useGlobalKeybindings(args: {
           terminalShortcutPolicy
         })
       ) {
+        // Orb voice chords still fire from text fields, where every other app shortcut yields.
+        if (fileSearchClaimsTextKey(input)) {
+          const handlers = createAppCommandHandlers(state, input, context)
+          for (const actionId of hubCommands.AGENT_HUB_ORB_VOICE_ACTION_IDS) {
+            if (matchShortcut(actionId) && handlers.get(actionId)?.()) {
+              return
+            }
+          }
+        }
         return
       }
 
@@ -223,7 +233,7 @@ export function useGlobalKeybindings(args: {
       if (matchShortcut('view.plugins') && handlers.get('view.plugins')?.()) {
         return
       }
-      for (const actionId of AGENT_HUB_COMMAND_ACTION_IDS) {
+      for (const actionId of hubCommands.AGENT_HUB_COMMAND_ACTION_IDS) {
         if (matchShortcut(actionId) && handlers.get(actionId)?.()) {
           return
         }

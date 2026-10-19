@@ -9,6 +9,7 @@ import { useAgentHubOrbVoiceContext } from './agent-hub-orb-voice-context'
 import { agentHubOrbPresentation } from './agent-hub-orb-presentation'
 import { useAgentHubOrbComposerDictation } from './agent-hub-orb-composer'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
 
 export function AgentHubOrbComposerOrb(): React.JSX.Element {
   const { controller, snapshot: voice } = useAgentHubOrbVoiceContext()
@@ -19,8 +20,10 @@ export function AgentHubOrbComposerOrb(): React.JSX.Element {
   )
   const { phase: dictation } = useAgentHubOrbComposerDictation()
   const [open, setOpen] = useState(false)
+  const [captionsOpen, setCaptionsOpen] = useState(true)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const controlsRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const live = ['connecting', 'live', 'stopping'].includes(voice.connection)
   const visual = agentHubOrbPresentation(
     state,
@@ -38,7 +41,17 @@ export function AgentHubOrbComposerOrb(): React.JSX.Element {
     setOpen(true)
   }
   const hide = () => {
-    closeTimer.current = setTimeout(() => setOpen(false), 180)
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current)
+    }
+    closeTimer.current = setTimeout(() => {
+      if (
+        !controlsRef.current?.contains(document.activeElement) &&
+        document.activeElement !== triggerRef.current
+      ) {
+        setOpen(false)
+      }
+    }, 220)
   }
   useEffect(() => {
     if (state.kind === 'needsYou') {
@@ -54,64 +67,78 @@ export function AgentHubOrbComposerOrb(): React.JSX.Element {
     []
   )
   return (
-    <Popover open={open && live && chatVisible} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          data-agent-hub-orb-composer-trigger
-          aria-label={label}
-          disabled={!live && (!controller || !voice.canStart || Boolean(dictation))}
+    <AgentHubOrbSpeechBubble
+      compact
+      open={captionsOpen}
+      onOpenChange={setCaptionsOpen}
+      text={live && chatVisible ? (voice.caption ?? '') : ''}
+      speakerLabel="Orb"
+    >
+      <Popover open={open && live && chatVisible} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            ref={triggerRef}
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            data-agent-hub-orb-composer-trigger
+            aria-label={label}
+            disabled={!live && (!controller || !voice.canStart || Boolean(dictation))}
+            onPointerEnter={reveal}
+            onPointerLeave={hide}
+            onFocus={reveal}
+            onBlur={hide}
+            onKeyDown={(event) => {
+              if (live && event.key === 'ArrowUp') {
+                event.preventDefault()
+                reveal()
+                requestAnimationFrame(() => controlsRef.current?.querySelector('button')?.focus())
+              }
+            }}
+            onClick={(event) => {
+              event.preventDefault()
+              if (!live && event.detail <= 1) {
+                void controller?.startLive()
+              }
+            }}
+          >
+            <span className="inline-flex size-8">
+              <AgentHubOrbSphere
+                {...visual}
+                inputMuted={live && voice.input === 'muted'}
+                outputMuted={live && voice.outputMuted}
+                inputSpeaking={voice.inputSpeaking}
+              />
+            </span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          data-agent-hub-orb-composer-controls
+          respectReducedMotion
+          ref={controlsRef}
+          side="top"
+          align="end"
+          className="w-auto"
           onPointerEnter={reveal}
           onPointerLeave={hide}
-          onFocus={reveal}
-          onKeyDown={(event) => {
-            if (live && event.key === 'ArrowUp') {
-              event.preventDefault()
-              reveal()
-              requestAnimationFrame(() => controlsRef.current?.querySelector('button')?.focus())
-            }
-          }}
-          onClick={(event) => {
-            event.preventDefault()
-            if (!live && event.detail <= 1) {
-              void controller?.startLive()
-            }
-          }}
+          onFocusCapture={reveal}
+          onBlurCapture={hide}
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          onCloseAutoFocus={(event) => event.preventDefault()}
         >
-          <span className="inline-flex size-8">
-            <AgentHubOrbSphere
-              {...visual}
-              inputMuted={live && voice.input === 'muted'}
-              outputMuted={live && voice.outputMuted}
-              inputSpeaking={voice.inputSpeaking}
+          {controller ? (
+            <AgentHubOrbLiveControls
+              voice={{
+                ...voice,
+                muteInput: controller.muteInput,
+                muteOutput: controller.muteOutput,
+                stopLive: controller.stopLive
+              }}
+              onStop={() => void controller.switchToText()}
             />
-          </span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        ref={controlsRef}
-        side="top"
-        align="end"
-        className="w-auto"
-        onPointerEnter={reveal}
-        onPointerLeave={hide}
-        onOpenAutoFocus={(event) => event.preventDefault()}
-        onCloseAutoFocus={(event) => event.preventDefault()}
-      >
-        {controller ? (
-          <AgentHubOrbLiveControls
-            voice={{
-              ...voice,
-              muteInput: controller.muteInput,
-              muteOutput: controller.muteOutput,
-              stopLive: controller.stopLive
-            }}
-            onStop={() => void controller.switchToText()}
-          />
-        ) : null}
-      </PopoverContent>
-    </Popover>
+          ) : null}
+        </PopoverContent>
+      </Popover>
+    </AgentHubOrbSpeechBubble>
   )
 }

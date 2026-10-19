@@ -1,6 +1,6 @@
 import { adoptMaterializedRuntimePtySpawn } from './spawn-early'
 import { createRuntimePtySpawnState } from './spawn-state'
-import { localProvider } from '../provider/registry'
+import { localProvider, getProviderForPty } from '../provider/registry'
 import {
   getLocalAutomaticWorkStatus,
   localTerminalLimit,
@@ -46,6 +46,9 @@ export function installPtyRuntimeController(deps: PtyRuntimeControllerDeps): voi
   const { runtime, adoptStablePane, requestSerializedBuffer } = deps
 
   runtime?.setPtyController({
+    terminalSuspension: (id, options) =>
+      getProviderForPty(id).terminalSuspension?.(id, options) ??
+      Promise.resolve({ state: 'unsupported' }),
     claimStablePaneCreate: (args) => {
       const paneKey = makePaneKey(args.tabId, args.leafId)
       const ownerKey = makePaneSpawnReservationKey(args.worktreeId, args.connectionId, paneKey)

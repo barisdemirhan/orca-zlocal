@@ -32,6 +32,11 @@ import { executeAgentHubPeek } from './agent-hub-request-peek'
 import { readAgentHubRequests } from './agent-hub-requests-store'
 import { paneTargetFromThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import type { AgentHubLists } from './agent-hub-lists'
+import {
+  useAgentHubOrbFocusStore,
+  agentHubOrbFocusTargetCurrent,
+  type AgentHubOrbFocusTarget
+} from './agent-hub-orb-focus-store'
 
 type Context = { threads: readonly AgentPaneThread[]; lists: AgentHubLists }
 
@@ -51,6 +56,14 @@ function readStatus(host: string, context: Context): AgentHubStatus {
     return [...panes.values()]
   }
   const mirrors = readAgentHubMirrors()
+  const focus = useAgentHubOrbFocusStore.getState()
+  const focusPane = (item: AgentHubOrbFocusTarget | null): AgentHubPane | null =>
+    item?.terminalHandle &&
+    item.target.paneKey &&
+    agentHubOrbFocusTargetCurrent(item) &&
+    agentHubRequestHost(state, item.target.worktree) === host
+      ? { paneKey: item.target.paneKey, terminalHandle: item.terminalHandle }
+      : null
   const stored = readAgentHubRequests().get(host)
   const waiting = new Map(
     collect(
@@ -71,7 +84,15 @@ function readStatus(host: string, context: Context): AgentHubStatus {
     parked: collect(
       mirrors.chips.flatMap((chip) => chip.window.tabs.map((tab) => tab.viewing ?? tab.target))
     ),
-    waiting: [...waiting.values()]
+    waiting: [...waiting.values()],
+    ...(focus.pinned || focus.watches.size
+      ? {
+          orbFocus: {
+            pinned: focusPane(focus.pinned),
+            following: [...focus.watches.values()].flatMap((item) => focusPane(item) ?? [])
+          }
+        }
+      : {})
   }
 }
 

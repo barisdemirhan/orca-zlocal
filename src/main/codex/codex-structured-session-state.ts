@@ -157,6 +157,7 @@ export type CodexSession = {
   threadId: string
   realtime?: CodexStructuredRealtime
   realtimeTimelineReady?: boolean
+  realtimeTimelineUnsupported?: boolean
   historyMode?: 'legacy' | 'paginated'
   /** Provider facts from this acquisition, not another copy of the chat's selected mode. */
   permissions?: {

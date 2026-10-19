@@ -83,6 +83,7 @@ vi.mock('./TerminalSessionStateSaveFailureDialog', () => ({
 vi.mock('@/components/link-actions/LinkActionPopover', () => ({ LinkActionPopover: () => null }))
 vi.mock('./TerminalAgentSessionForkDialog', () => ({ TerminalAgentSessionForkDialog: () => null }))
 vi.mock('./SessionRestoredBannerPortals', () => ({ SessionRestoredBannerPortals: () => null }))
+vi.mock('./TerminalPaneSleepingPortals', () => ({ TerminalPaneSleepingPortals: () => null }))
 vi.mock('./TerminalQuickCommandEditorDialog', () => ({
   TerminalQuickCommandEditorDialog: () => null
 }))

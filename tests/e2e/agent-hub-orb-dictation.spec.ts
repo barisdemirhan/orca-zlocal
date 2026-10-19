@@ -59,6 +59,9 @@ test('Orb centers dictation over its dimmed composer without losing the draft', 
   const draft = 'Orb lifecycle microphone overlay marker'
   await composer.fill(draft)
   await composer.focus()
+  const modelPicker = panel.getByRole('button', { name: /^Model / })
+  await modelPicker.click()
+  await expect(modelPicker).toHaveAttribute('aria-expanded', 'true')
   const overlay = panel.locator('[data-agent-hub-orb-dictation]')
   try {
     // Capture phases are synthetic; the actual Orb composer and dictation controls stay mounted.
@@ -66,7 +69,18 @@ test('Orb centers dictation over its dimmed composer without losing the draft', 
     await expect(overlay).toBeVisible()
     await expect(overlay).toHaveAttribute('data-agent-hub-orb-dictation', 'starting')
     await expect(overlay.getByRole('status')).toHaveText('Starting mic…')
+    await expect(modelPicker).toHaveAttribute('aria-expanded', 'false')
     await expectCenteredDictation(overlay)
+    await composer.evaluate((element) => element.focus())
+    await expect(composer).not.toBeFocused()
+    await expect(composer.click({ trial: true, timeout: 700 })).rejects.toThrow()
+    await expect(
+      panel.getByRole('button', { name: 'Send', exact: true }).click({ trial: true, timeout: 700 })
+    ).rejects.toThrow()
+    await orcaPage.keyboard.press('Tab')
+    expect(await composer.evaluate((element) => element.contains(document.activeElement))).toBe(
+      false
+    )
     await orcaPage.evaluate(() => window.__store?.getState().setDictationState('listening'))
     await expect(overlay).toHaveAttribute('data-agent-hub-orb-dictation', 'listening')
     await expect(overlay.getByRole('status')).toHaveText('Listening')
@@ -108,6 +122,8 @@ test('Orb centers dictation over its dimmed composer without losing the draft', 
       window.__store?.setState({ dictationState: 'idle', partialTranscript: '' })
     )
     await expect(overlay).toHaveCount(0)
+    await composer.focus()
+    await expect(composer).toBeFocused()
     await expect(composer).toHaveText(draft)
     await expect(panel.getByText(`Reply: ${draft}`, { exact: true })).toHaveCount(0)
     await panel.getByRole('button', { name: 'Send', exact: true }).click()

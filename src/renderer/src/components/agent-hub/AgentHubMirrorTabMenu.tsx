@@ -1,3 +1,7 @@
+import { AgentHubOrbFollowAction } from './AgentHubOrbFollowAction'
+import { useAgentHubPaneSleepConfirmation } from './agent-hub-pane-sleep-confirmation'
+import { AgentHubPaneSleepAction } from './AgentHubPaneSleepAction'
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { Pin, PinOff, X } from 'lucide-react'
 import { useRef } from 'react'
 import { translate } from '@/i18n/i18n'
@@ -67,6 +71,7 @@ function Destination({
 export function AgentHubMirrorTabMenu({
   windowId,
   entryId,
+  target,
   onReveal,
   onShowInSidebar,
   onClose,
@@ -76,6 +81,7 @@ export function AgentHubMirrorTabMenu({
 }: {
   windowId: string
   entryId: string
+  target?: AgentHubPaneTarget
   /** Jumps to the terminal in its workspace; absent for a window's only tab (its header has it). */
   onReveal?: () => void
   onShowInSidebar?: () => void
@@ -126,6 +132,11 @@ export function AgentHubMirrorTabMenu({
         data-agent-hub-no-tab-drop
         respectReducedMotion
         onCloseAutoFocus={(event) => {
+          if (useAgentHubPaneSleepConfirmation.getState().target) {
+            event.preventDefault()
+            keyboardOrigin.current = null
+            return
+          }
           if (keyboardOrigin.current) {
             event.preventDefault()
             if (keyboardOrigin.current.isConnected) {
@@ -144,6 +155,21 @@ export function AgentHubMirrorTabMenu({
         }}
         onEscapeKeyDown={(event) => event.stopPropagation()}
       >
+        {target ? (
+          <AgentHubPaneSleepAction
+            target={target}
+            appearance="menu"
+            isOpeningClick={openingClick.isOpeningClick}
+            returnFocus={() => document.getElementById(agentHubMirrorTabId(entryId))}
+          />
+        ) : null}
+        {target ? (
+          <AgentHubOrbFollowAction
+            target={target}
+            appearance="menu"
+            isOpeningClick={openingClick.isOpeningClick}
+          />
+        ) : null}
         <ContextMenuSub>
           <ContextMenuSubTrigger disabled={!destinations.length}>
             {translate('agentHub.mirror.moveToMirror', 'Move to mirror')}

@@ -1,3 +1,7 @@
+import type {
+  TerminalSuspensionOptions,
+  TerminalSuspensionResult
+} from '../../shared/terminal-suspension'
 import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-decision-gates'
 import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
@@ -20,6 +24,17 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCa
     this,
     this.store
   )
+
+  async terminalSuspension(
+    terminal: string,
+    options: TerminalSuspensionOptions
+  ): Promise<TerminalSuspensionResult> {
+    const leaf = this.resolveLiveLeafForHandle(terminal)
+    if (!leaf?.ptyId) {
+      return { state: 'unverifiable' }
+    }
+    return this.ptyController?.terminalSuspension?.(leaf.ptyId, options) ?? { state: 'unsupported' }
+  }
 
   readonly agentHub = new AgentHubLedger(
     (event) => this.emitClientEvent({ type: 'agentHub', event }),

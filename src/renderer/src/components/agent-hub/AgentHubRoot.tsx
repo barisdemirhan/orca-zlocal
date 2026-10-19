@@ -1,7 +1,11 @@
+import { useAgentHubGroupLabels } from './use-agent-hub-group-labels'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
+import { AGENT_HUB_ORB_VOICE_COMMANDS } from './agent-hub-orb-voice-commands'
+import { AgentHubPaneSleepConfirmationHost } from './AgentHubPaneSleepConfirmation'
+import { useAgentHubOrbFollow } from './use-agent-hub-orb-follow'
 import { useNow } from '@/hooks/use-now'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { Popover, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover'
@@ -62,14 +66,6 @@ import { useAgentHubOrbSurfaces } from './AgentHubOrbSurfaces'
 import { closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbPanelExclusion } from './agent-hub-orb-panel-exclusion'
 
-function useGroupNameById(): ReadonlyMap<string, string> {
-  const projectGroups = useAppStore((s) => s.projectGroups)
-  return useMemo(
-    () => new Map(projectGroups.map((group) => [group.id, group.name])),
-    [projectGroups]
-  )
-}
-
 export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Element {
   const preferences = useAgentHubPreferences()
   const anchorRef = useRef<HTMLElement>(null)
@@ -88,6 +84,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const lineage = useMemo(() => buildAgentHubLineage(threads, now), [threads, now])
   const finishedMaxAgeMs = preferences.finishedClearMinutes * 60_000
   const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
+  useAgentHubOrbFollow(lists)
   const orb = useAgentHubOrbSurfaces(threads, lists, anchorRef, preferences, inSettings)
   const { ownsRequest } = orb
   useAgentHubAlerts(orb.hubLists, preferences)
@@ -96,7 +93,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const acknowledgeAgents = useAppStore((s) => s.acknowledgeAgents)
   const updateSettings = useAppStore((s) => s.updateSettings)
   useAgentHubFocusedPaneOutline(preferences.focusedPaneOutline && !inSettings)
-  const groupNameById = useGroupNameById()
+  const groupNameById = useAgentHubGroupLabels()
   const hostLabels = useAgentHubHostLabels()
   const locationOf = (target: Pick<AgentHubPaneTarget, 'worktree' | 'repo'>): AgentHubLocation =>
     agentHubLocation(target, groupNameById, hostLabels)
@@ -242,6 +239,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
     {
       toggle: () => (openRef.current ? setOpen(false) : openHub()),
       toggleOrb: orb.toggle,
+      ...AGENT_HUB_ORB_VOICE_COMMANDS,
       jumpToNextWaiting,
       toggleMirrors,
       toggleCanvas: preferences.canvas ? toggleAgentHubCanvas : null,
@@ -301,6 +299,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
 
   return (
     <>
+      <AgentHubPaneSleepConfirmationHost />
       <AgentHubShortcutsDialog />
       <AgentHubAnswerQueue
         threads={threads}

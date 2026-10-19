@@ -153,6 +153,53 @@ describe('shutdownWorktreeTerminals (sleep) — agent status hygiene', () => {
     expect(dropByWorktree).not.toHaveBeenCalled()
   })
 
+  it('explicitly sleeps a working agent in one pane and requires its own wake', async () => {
+    const store = createTestStore()
+    const wt = 'repo1::/path/wt1'
+    const leafId = '11111111-1111-4111-8111-111111111111'
+    const paneKey = `tab-1:${leafId}`
+    seedStore(store, {
+      worktreesByRepo: { repo1: [makeWorktree({ id: wt, repoId: 'repo1', path: '/path/wt1' })] },
+      tabsByWorktree: {
+        [wt]: [makeTab({ id: 'tab-1', worktreeId: wt, title: 'Codex', ptyId: 'pty-agent' })]
+      },
+      terminalLayoutsByTabId: {
+        'tab-1': {
+          root: { type: 'leaf', leafId },
+          activeLeafId: leafId,
+          expandedLeafId: null,
+          ptyIdsByLeafId: { [leafId]: 'pty-agent' }
+        }
+      },
+      ptyIdsByTabId: { 'tab-1': ['pty-agent'] }
+    })
+    store
+      .getState()
+      .setAgentStatus(
+        paneKey,
+        { state: 'working', prompt: 'Preserve this task', agentType: 'codex' },
+        'Codex',
+        { updatedAt: Date.now(), stateStartedAt: Date.now() },
+        { tabId: 'tab-1', worktreeId: wt },
+        { providerSession: { key: 'session_id', id: 'working-session' } }
+      )
+    await store.getState().shutdownCompletedAgentPaneForHibernation(wt, {
+      paneKey,
+      tabId: 'tab-1',
+      leafId,
+      ptyId: 'pty-agent',
+      manual: true
+    })
+    expect(mockApi.pty.kill).toHaveBeenCalledExactlyOnceWith('pty-agent', { keepHistory: true })
+    expect(store.getState().sleepingAgentSessionsByPaneKey[paneKey]).toMatchObject({
+      state: 'working',
+      wakeOnRequestOnly: true,
+      providerSession: { id: 'working-session' },
+      prompt: 'Preserve this task'
+    })
+    expect(store.getState().ptyIdsByTabId['tab-1']).toEqual([])
+  })
+
   it('aborts pane hibernation without side effects when no resume record can be captured', async () => {
     // No capturable resume record means the pane could never wake, so shutdown throws before any suppression or kill.
     const store = createTestStore()

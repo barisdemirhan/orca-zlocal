@@ -33,7 +33,15 @@ import {
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   return {
-    useAppStore: create(() => ({ keybindings: {}, tabsByWorktree: {}, setTabCustomTitle: vi.fn() }))
+    useAppStore: create(() => ({
+      keybindings: {},
+      tabsByWorktree: {},
+      setTabCustomTitle: vi.fn(),
+      terminalLayoutsByTabId: {},
+      ptyIdsByTabId: {},
+      sleepingAgentSessionsByPaneKey: {},
+      agentStatusByPaneKey: {}
+    }))
   }
 })
 vi.mock('./AgentHubMirrorAddButton', () => ({ AgentHubMirrorAddButton: () => null }))

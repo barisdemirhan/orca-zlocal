@@ -3,6 +3,33 @@ import { platformBindings } from './definitions-support'
 
 export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
+    id: 'agentHub.orb.toggleLive',
+    title: 'Toggle Orb Live voice',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'live', 'voice'],
+    defaultBindings: platformBindings(['Mod+Shift+L']),
+    allowInTerminal: true
+  },
+  {
+    id: 'agentHub.orb.toggleMicrophone',
+    title: 'Mute or unmute Orb microphone',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'microphone', 'mute'],
+    defaultBindings: platformBindings(['Mod+Shift+U']),
+    allowInTerminal: true
+  },
+  {
+    id: 'agentHub.orb.toggleSpeaker',
+    title: 'Mute or unmute Orb speaker',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'speaker', 'mute'],
+    defaultBindings: platformBindings(['Mod+Shift+S']),
+    allowInTerminal: true
+  },
+  {
     id: 'chat.find',
     title: 'Find in chat',
     group: 'Chat',

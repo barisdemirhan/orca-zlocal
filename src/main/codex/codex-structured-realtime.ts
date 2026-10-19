@@ -137,6 +137,34 @@ export class CodexStructuredRealtime {
     return { ok: true, value: this.result(attempt, 'connecting') }
   }
 
+  async appendText(input: AgentSessionVoiceOwner & { text: string }): Promise<boolean> {
+    const attempt = this.attempt
+    if (
+      !attempt ||
+      !this.matches(input, attempt) ||
+      attempt.state !== 'live' ||
+      !attempt.started ||
+      !input.text.trim() ||
+      input.text.length > 8192
+    ) {
+      return false
+    }
+    try {
+      await this.connection.request(
+        'thread/realtime/appendText',
+        {
+          threadId: this.threadId,
+          text: input.text,
+          role: 'user'
+        },
+        { timeoutMs: this.timeoutMs }
+      )
+      return this.attempt === attempt && attempt.state === 'live'
+    } catch {
+      return false
+    }
+  }
+
   async stop(owner: AgentSessionVoiceOwner): Promise<AgentSessionVoiceResult> {
     const attempt = this.attempt
     if (!attempt || !this.matches(owner, attempt) || attempt.state === 'off') {
@@ -211,7 +239,8 @@ export class CodexStructuredRealtime {
           role,
           phase: 'delta',
           itemId,
-          hasText: params.delta.trim().length > 0
+          hasText: params.delta.trim().length > 0,
+          ...(role === 'assistant' ? { text: params.delta.slice(0, 8192) } : {})
         })
       }
       return
@@ -249,7 +278,10 @@ export class CodexStructuredRealtime {
       role: item.role,
       phase,
       itemId: item.id,
-      hasText: 'text' in item && typeof item.text === 'string' && item.text.trim().length > 0
+      hasText: 'text' in item && typeof item.text === 'string' && item.text.trim().length > 0,
+      ...(item.role === 'assistant' && 'text' in item && typeof item.text === 'string'
+        ? { text: item.text.slice(0, 8192) }
+        : {})
     })
   }
 

@@ -184,6 +184,9 @@ export class DaemonPtyRouter implements IPtyProvider {
     await this.adapterFor(id).sendSignal(id, signal)
   }
 
+  terminalSuspension: NonNullable<IPtyProvider['terminalSuspension']> = (id, options) =>
+    this.adapterFor(id).terminalSuspension(id, options)
+
   async getCwd(id: string): Promise<string> {
     return this.adapterFor(id).getCwd(id)
   }

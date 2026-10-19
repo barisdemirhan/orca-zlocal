@@ -18,3 +18,6 @@ export const StartVoiceParams = z
   })
   .strict()
 export const StopVoiceParams = z.object({ envelope: MutationEnvelope, ...VoiceOwner }).strict()
+export const AppendVoiceTextParams = z
+  .object({ envelope: MutationEnvelope, ...VoiceOwner, text: z.string().trim().min(1).max(8192) })
+  .strict()

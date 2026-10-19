@@ -24,6 +24,7 @@ import type {
   StructuredAgentSessionVoiceStartObserver
 } from '../components/native-chat/use-structured-agent-session-mutate'
 import { structuredSessionOperationId } from '../components/native-chat/structured-agent-session-operation-id'
+import { appendAgentSessionVoiceText } from './agent-session-voice-text-client'
 
 export class AgentSessionVoiceRefusal extends Error {}
 
@@ -129,6 +130,29 @@ export function createAgentSessionVoiceClient(
     return result.value
   }
   return {
+    appendText: async (owner: AgentSessionVoiceOwner, text: string): Promise<boolean> => {
+      const current = cleanup
+      if (
+        !current ||
+        current.fence === null ||
+        current.stopping ||
+        !current.connected ||
+        current.voiceSessionId !== owner.voiceSessionId ||
+        current.generation !== owner.generation ||
+        !current.transport.current()
+      ) {
+        return false
+      }
+      const applied = await appendAgentSessionVoiceText(
+        target,
+        sessionId,
+        current.fence,
+        owner,
+        text,
+        current.transport.options
+      )
+      return cleanup === current && current.connected && current.transport.current() && applied
+    },
     capability: () =>
       callStructuredAgentSession<AgentSessionVoiceCapability>(
         target,

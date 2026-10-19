@@ -1,5 +1,8 @@
 import { beginTerminalHostFencedTermination } from './terminal-host-fenced-termination'
 import type { PtyFencedTerminationRequest } from '../../shared/pty-fenced-termination'
+import type { TerminalSuspensionOptions } from '../../shared/terminal-suspension'
+import { reapTerminalHostSession } from './terminal-host-session-reaper'
+import { changeTerminalHostSuspension } from './terminal-host-suspension'
 import type { Session } from './session'
 import type { PtyProcessInspectionOptions } from '../providers/pty-process-inspection'
 import type { SessionInfo, TakePendingOutputResult, TerminalSnapshot } from './types'
@@ -200,19 +203,15 @@ export class TerminalHost {
   }
 
   // Reap the emulator so dead sessions do not retain scrollback for the daemon’s lifetime.
-  private reapSession(sessionId: string): void {
-    const session = this.sessions.get(sessionId)
-    if (!session || session.isAlive) {
-      return
-    }
-    session.dispose()
-    this.sessions.delete(sessionId)
-    this.onSessionReaped?.(sessionId)
-  }
+  private reapSession = (sessionId: string): void =>
+    reapTerminalHostSession(this.sessions, sessionId, this.onSessionReaped)
 
   signal(sessionId: string, sig: string): void {
     getAliveTerminalHostSession(this.sessions, sessionId).signal(sig)
   }
+
+  terminalSuspension = (sessionId: string, options: TerminalSuspensionOptions) =>
+    changeTerminalHostSuspension(this.sessions, sessionId, options)
 
   detach(sessionId: string, token: symbol): void {
     this.detachClients([{ sessionId, token }])

@@ -113,7 +113,8 @@ export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
     kind: z.literal('status'),
     mirrors: z.array(pane).max(500),
     parked: z.array(pane).max(500),
-    waiting: z.array(pane).max(500)
+    waiting: z.array(pane).max(500),
+    orbFocus: z.object({ pinned: pane.nullable(), following: z.array(pane).max(500) }).optional()
   }),
   z.object({ kind: z.literal('consent'), decision: z.enum(['once', 'session', 'deny']) }),
   z.object({

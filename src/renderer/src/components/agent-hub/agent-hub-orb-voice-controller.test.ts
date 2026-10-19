@@ -84,6 +84,14 @@ function event(
     | { type: 'error'; message: string }
     | { type: 'closed'; reason?: string }
     | { type: 'sdp'; sdp: string }
+    | {
+        type: 'transcript'
+        role: 'user' | 'assistant'
+        phase: 'started' | 'delta' | 'done'
+        itemId: string
+        hasText: boolean
+        text?: string
+      }
 ): void {
   if (!voiceOwner || !receive) {
     throw new Error('Voice subscription is not open')
@@ -124,6 +132,7 @@ beforeEach(() => {
     }
   })
   client = {
+    appendText: vi.fn(async () => true),
     capability: vi.fn(async () => ({
       supported: true as const,
       accountAccess: 'unchecked' as const
@@ -528,6 +537,31 @@ it.each([
     expect(client.start).not.toHaveBeenCalled()
   }
 )
+
+it('streams bounded captions only for the current assistant item and clears them when Live ends', async () => {
+  await start()
+  const transcript = {
+    type: 'transcript',
+    role: 'assistant',
+    itemId: 'caption-1',
+    hasText: true
+  } as const
+  event({ ...transcript, phase: 'started', text: '' })
+  event({ ...transcript, phase: 'delta', text: 'Checking ' })
+  event({ ...transcript, phase: 'delta', text: 'the source.' })
+  expect(controller.getSnapshot().caption).toBe('Checking the source.')
+  event({ ...transcript, itemId: 'older-item', phase: 'done', text: 'Stale answer' })
+  expect(controller.getSnapshot().caption).toBe('Checking the source.')
+  event({ ...transcript, phase: 'done', text: 'Verified answer' })
+  event({ ...transcript, phase: 'delta', text: ' late delta' })
+  expect(controller.getSnapshot().caption).toBe('Verified answer')
+  event({ ...transcript, itemId: 'caption-2', phase: 'started' })
+  event({ ...transcript, itemId: 'caption-2', phase: 'delta', text: 'x'.repeat(9000) })
+  expect(controller.getSnapshot().caption).toHaveLength(8192)
+  await controller.stopLive()
+  event({ ...transcript, itemId: 'caption-2', phase: 'done', text: 'After stop' })
+  expect(controller.getSnapshot().caption).toBeUndefined()
+})
 
 it('waits for the browser unlock before transferring Live capture to the existing dictation capture path', async () => {
   let browserUnlock: (() => void) | undefined

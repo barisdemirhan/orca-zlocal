@@ -22,6 +22,9 @@ export type AgentSessionVoiceStopParams = AgentSessionVoiceOwner & {
   envelope: AgentSessionMutationEnvelope
 }
 
+export type AgentSessionVoiceTextParams = AgentSessionVoiceStopParams & { text: string }
+export type AgentSessionVoiceTextResult = AgentSessionVoiceOwner & { applied: boolean }
+
 export type AgentSessionVoiceResult = AgentSessionVoiceOwner & {
   state: 'connecting' | 'off' | 'unverifiable'
 }
@@ -39,6 +42,8 @@ export type AgentSessionVoiceEvent = AgentSessionVoiceOwner & { sessionId: strin
         phase: 'started' | 'delta' | 'done'
         itemId: string
         hasText: boolean
+        /** Optional live assistant captions; older hosts send activity alone. Never replayed. */
+        text?: string
       }
   )
 

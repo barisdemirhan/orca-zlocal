@@ -335,3 +335,10 @@ export const AgentTeamsPrepareLaunch = z.object({
   env: z.record(z.string(), z.string()).optional(),
   prepareAuth: z.boolean().optional()
 })
+export const TerminalSuspension = z
+  .object({
+    terminal: z.string().min(1),
+    suspended: z.boolean().optional(),
+    expectedIncarnationId: z.string().min(1).optional()
+  })
+  .strict()

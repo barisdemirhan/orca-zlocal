@@ -59,6 +59,7 @@ describe('agent hub shortcut suggestions', () => {
         KEYBINDING_DEFINITIONS.filter(
           (item) =>
             item.id.startsWith('agentHub.') &&
+            !item.id.startsWith('agentHub.orb.') &&
             item.id !== 'agentHub.toggleOrb' &&
             item.id !== 'agentHub.openAnswerQueue'
         ).map((item) => item.id)

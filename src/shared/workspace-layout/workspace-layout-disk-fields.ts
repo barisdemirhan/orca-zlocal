@@ -244,7 +244,9 @@ const SLEEPING = {
   connectionId: resumeRecord('connectionId'),
   launchConfig: resumeRecord('launchConfig'),
   origin: resumeRecord('origin'),
-  restoreOnTabOpenOnly: resumeRecord('restoreOnTabOpenOnly')
+  restoreOnTabOpenOnly: resumeRecord('restoreOnTabOpenOnly'),
+  // Manual sleep only; a quit capture never waits for a request.
+  wakeOnRequestOnly: paneRecord('leaf.sleeping.wakeOnRequestOnly')
 } as const satisfies Record<keyof SleepingAgentSessionRecord, DiskFieldWritten>
 
 const INCARNATION = {

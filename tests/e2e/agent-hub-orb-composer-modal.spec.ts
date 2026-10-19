@@ -28,21 +28,22 @@ test('Orb uses its composer for Live and preserves deferred long answers through
   await expect(panel.getByRole('button', { name: 'Orb options', exact: true })).toHaveCount(0)
   const orb = panel.locator('[data-agent-hub-orb-composer-trigger]')
   await expect(orb).toBeEnabled()
-  await expect(panel.getByRole('button', { name: 'Send', exact: true })).toHaveCount(0)
+  await expect(panel.getByRole('button', { name: 'Send', exact: true })).not.toBeVisible()
   await composer.fill('   ')
   await composer.press('Enter')
   expect((await observeVoiceDevice(orcaPage)).captures).toBe(0)
   await composer.fill('Unsent text survives an Orb question')
   await expect(panel.getByRole('button', { name: 'Send', exact: true })).toBeVisible()
-  const actions = await panel
-    .getByRole('button', { name: 'Send', exact: true })
-    .evaluate((send) => {
-      const sphere = document.querySelector('[data-agent-hub-orb-composer-trigger]')
-      return Boolean(
-        sphere && sphere.getBoundingClientRect().right <= send.getBoundingClientRect().left
-      )
-    })
-  expect(actions).toBe(true)
+  await expect
+    .poll(() =>
+      panel.getByRole('button', { name: 'Send', exact: true }).evaluate((send) => {
+        const sphere = document.querySelector('[data-agent-hub-orb-composer-trigger]')
+        return Boolean(
+          sphere && sphere.getBoundingClientRect().right <= send.getBoundingClientRect().left
+        )
+      })
+    )
+    .toBe(true)
   await orb.click()
   await expect.poll(async () => (await observeVoiceDevice(orcaPage)).connectedPeers).toBe(1)
   await orb.click()

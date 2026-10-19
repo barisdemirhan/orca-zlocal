@@ -7,6 +7,7 @@ import { resolveTerminalPasteRuntime } from '../terminal-paste-runtime'
 import { CLIENT_PLATFORM } from '@/lib/new-workspace'
 import { recordPaneWakeThroughLayoutOwner } from '@/store/terminals/terminal-sleep-layout-owner'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../shared/layout-owner-switch'
+import { clearPaneSpawnDeferral, setPaneSpawnDeferral } from '@/lib/pane-spawn-deferral-registry'
 
 import { shouldKeepHiddenStartupRendererQueriesLive } from './hidden-startup-renderer-query'
 import { createForegroundImmediateBudget } from './foreground-output-budgets'
@@ -57,6 +58,7 @@ export function bindDeferredColdRestoreAndSnapshot(session: ConnectPanePtySessio
     startup: ColdRestoreAgentResumeStartup | null
   ): void => {
     if (startup && !startup.useLiveEntry && startup.sleepingRecordEntry) {
+      clearPaneSpawnDeferral(session.cacheKey)
       // Record main’s wake before dropping the record; record-only consumption would leave nothing for main to resume.
       if (ORCA_LAYOUT_OWNER_IS_MAIN) {
         recordPaneWakeThroughLayoutOwner(
@@ -92,6 +94,25 @@ export function bindDeferredColdRestoreAndSnapshot(session: ConnectPanePtySessio
     if (startup?.resumeSource?.cancelled) {
       return Promise.resolve(null)
     }
+    if (startup?.sleepingRecordEntry?.record.wakeOnRequestOnly && !options.manualWake) {
+      setPaneSpawnDeferral(session.cacheKey, {
+        reason: 'paused',
+        manual: true,
+        resume: () => {
+          if (
+            !session.disposed &&
+            session.getSleepingRecordForPane(useAppStore.getState())?.record ===
+              startup.sleepingRecordEntry?.record &&
+            !session.transport.getPtyId()
+          ) {
+            void session
+              .startFreshColdRestoreAgentResume(startup, { ...options, manualWake: true })
+              .catch(() => {})
+          }
+        }
+      })
+      return Promise.resolve(null)
+    }
     const mainPane = mainResumedSleepPane(session, startup)
     if (mainPane && startup?.sleepingRecordEntry) {
       return attachToMainResumedSleepPane(session, mainPane, startup, options, automatic)
@@ -114,7 +135,8 @@ export function bindDeferredColdRestoreAndSnapshot(session: ConnectPanePtySessio
       ? Promise.resolve(null)
       : session.spawnColdRestoreAgentResume(startup, options)
   // Visibility wake runs from the outer binding after this deferred-connect closure returns.
-  session.wakeHibernatedAgentPane = () => session.spawnColdRestoreAgentResume()
+  session.wakeHibernatedAgentPane = () =>
+    session.spawnColdRestoreAgentResume(undefined, { manualWake: true })
   const isStartupPasteTargetCurrent = (ptyId: string | null): boolean =>
     !session.disposed &&
     session.deps.paneTransportsRef.current.get(session.pane.id) === session.transport &&

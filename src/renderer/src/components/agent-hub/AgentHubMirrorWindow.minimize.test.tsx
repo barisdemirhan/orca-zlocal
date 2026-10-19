@@ -27,7 +27,17 @@ vi.mock('./agent-hub-close-agent', () => ({ closeAgentHubAgent: closeAgent }))
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
-  return { useAppStore: create(() => ({ settings: {}, keybindings: {}, tabsByWorktree: {} })) }
+  return {
+    useAppStore: create(() => ({
+      settings: {},
+      keybindings: {},
+      tabsByWorktree: {},
+      terminalLayoutsByTabId: {},
+      ptyIdsByTabId: {},
+      sleepingAgentSessionsByPaneKey: {},
+      agentStatusByPaneKey: {}
+    }))
+  }
 })
 vi.mock('./use-agent-hub-live-pty', () => ({ useAgentHubLivePty: () => null }))
 vi.mock('./use-mirror-window-geometry', async () => {

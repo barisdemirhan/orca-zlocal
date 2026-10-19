@@ -45,13 +45,17 @@ export function AgentHubOrbLiveControls({
     }
   ]
   return (
-    <div data-agent-hub-orb-live-controls className="flex items-center gap-1">
+    <div
+      data-agent-hub-orb-live-controls
+      data-agent-hub-orb-interactive
+      className="flex items-center gap-1"
+    >
       {controls.map(({ id, label, icon: Icon, disabled, pressed, run }) => (
         <Tooltip key={id}>
           <TooltipTrigger asChild>
             <Button
               type="button"
-              variant="ghost"
+              variant={pressed ? 'secondary' : 'ghost'}
               size="icon-sm"
               aria-label={label}
               aria-pressed={pressed}

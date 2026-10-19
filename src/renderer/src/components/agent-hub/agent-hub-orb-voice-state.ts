@@ -7,6 +7,7 @@ export type AgentHubOrbVoiceSnapshot = {
   inputSpeaking?: boolean
   textMode: boolean
   canStart: boolean
+  caption?: string
   reason?: string
 }
 
@@ -18,4 +19,16 @@ export const EMPTY_ORB_VOICE_SNAPSHOT: AgentHubOrbVoiceSnapshot = {
   outputMuted: false,
   textMode: true,
   canStart: false
+}
+
+export function nextAgentHubOrbVoiceSnapshot(
+  current: AgentHubOrbVoiceSnapshot,
+  change: Partial<AgentHubOrbVoiceSnapshot>,
+  supported: boolean
+): AgentHubOrbVoiceSnapshot {
+  const next = { ...current, ...change }
+  return {
+    ...next,
+    canStart: supported && next.capability !== 'unsupported' && next.capability !== 'checking'
+  }
 }

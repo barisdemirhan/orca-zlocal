@@ -1,3 +1,5 @@
+import { AgentHubOrbFollowAction } from './AgentHubOrbFollowAction'
+import { AgentHubPaneSleepAction } from './AgentHubPaneSleepAction'
 import { Button } from '@/components/ui/button'
 import { Minus, PictureInPicture2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
@@ -37,6 +39,12 @@ export function AgentHubMirrorHeaderControls({
   const minimizeLabel = translate('agentHub.mirror.minimize', 'Minimize')
   return (
     <div className="flex shrink-0 items-center gap-0.5">
+      {showJump ? (
+        <>
+          <AgentHubPaneSleepAction target={target} />
+          <AgentHubOrbFollowAction target={target} />
+        </>
+      ) : null}
       <AgentHubDimToggle appearance="mirror" />
       <AgentHubMirrorMicButton target={target} reachable={reachable} />
       {showJump ? <AgentHubMirrorJumpButton onReveal={onReveal} /> : null}

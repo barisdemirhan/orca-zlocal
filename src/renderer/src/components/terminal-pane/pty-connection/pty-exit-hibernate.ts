@@ -27,7 +27,7 @@ import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../shared/layout-owner-sw
 // Why live+done arms too: kept from #16308's wake-sweep widening; hibernation itself only writes worktree-sleep notes.
 export function noteArmsHibernatedPaneWake(record: SleepingAgentSessionRecord): boolean {
   return (
-    record.state === 'done' &&
+    (record.state === 'done' || record.wakeOnRequestOnly === true) &&
     record.origin !== 'quit' &&
     !(record.origin === 'live' && agentTurnEndedUncleanly(record))
   )
@@ -79,28 +79,58 @@ export function installPtyExitHibernate(session: ConnectPanePtySession): void {
             .find((candidate) => candidate.id !== session.pane.id && hasPtyBinding(candidate.id))
             ?.id ?? null)
     if (targetPaneId !== null) {
-      // Retain newborn split failures for diagnostics, moving focus to a sibling with a live PTY.
+      // Why: when a newborn split PTY dies before output/input, the pane stays
+      // mounted for diagnostics; move live focus to the sibling that still owns a PTY.
       session.manager.setActivePane(targetPaneId, {
         focus: session.deps.isActiveRef.current && session.deps.isVisibleRef.current
       })
     }
   }
 
-  // Deduplicate direct reconcile and transport exits by PTY ID; a later replacement ID must retain its own exit handling.
+  // Why: the transport's own exit handler (pty-transport.ts) normally makes
+  // onExit run-at-most-once by clearing connected/ptyId + unregistering BEFORE
+  // calling it. reconcileIfSessionMissing drives onExit directly (bypassing that),
+  // so this guards the body so reconcile and any racing real/synthetic pty:exit
+  // for the same id close the pane exactly once. Scoped to the exiting ptyId
+  // (not a bare boolean): an intentional suppressed restart keeps the pane
+  // mounted and rebinds to a NEW ptyId, and that replacement's later real exit
+  // must still run — a one-shot boolean would strand the pane on rebind.
   session.handledExitPtyId = null
-  // Only genuine fresh, never-typed PTYs keep startup errors visible; dead reattached sessions must still close normally.
+  // Why: tracks the ptyId of a genuine fresh spawn — onPtySpawn fires only for
+  // fresh spawns, never reattach/coldRestore (pty-transport.ts). Lets the
+  // sole-pane exit branch tell "this newborn shell died on its own" from "a
+  // reattached persisted session was already dead", so a failing .envrc/direnv
+  // on a brand-new worktree keeps its dead terminal visible instead of bouncing
+  // the user to Landing.
   session.spawnedFreshPtyId = null
-  // Suppressed hidden hibernation exits still owe a wake; retain the exact PTY/record so a later session cannot be adopted.
+  // Why: hibernation suppresses its kill's exit while the pane is hidden, so
+  // onExit must not tear the pane down — but the pane still owes the user a
+  // wake. Remember the hibernated PTY and record; the visibility-resume hook
+  // consumes both and cannot adopt a later record of a different session.
   session.hibernatedWakeTarget = null
   session.wakeHibernatedAgentPane = null
-  // Latch mobile wakes between record write and kill-exit arming; mobile never reveals the desktop to retry the lost edge.
+  // Why: a mobile wake can land after the sleeping record is written but
+  // before the suppressed kill exit arms the wake target. The phone never
+  // reveals the desktop pane, so without a latch the edge-triggered wake would
+  // be dropped and the phone left on a frozen terminal.
   session.pendingHibernatedWakeTarget = null
-  // Claim the provider session throughout async replacement spawn so repeated mobile activation cannot duplicate resume.
+  // Why: transport.connect settles asynchronously. Repeated mobile activation
+  // must keep claiming this provider session until the replacement PTY either
+  // exists (and clears the sleep record) or the spawn fails and can be retried.
   session.hibernatedWakeInFlightClaimKey = null
-  // Share guarded wake consumption between reveal and arm-time visibility checks so a reveal racing kill resumes exactly once.
-  session.consumeHibernatedAgentWake = (claimedProviderSessions?: Set<string>): string | null => {
+  // Why: reveal is the normal wake trigger, but a reveal that lands *during* the
+  // in-flight hibernation kill runs noteVisibilityResume before onExit arms the
+  // wake. Sharing the guarded consume lets both the reveal hook and the
+  // arm-time foreground check resume the pane exactly once.
+  session.consumeHibernatedAgentWake = (
+    claimedProviderSessions?: Set<string>,
+    explicit = false
+  ): string | null => {
     const target = session.hibernatedWakeTarget
     if (!target || session.disposed) {
+      return null
+    }
+    if (target.record.wakeOnRequestOnly && !explicit) {
       return null
     }
     if (session.deps.paneTransportsRef.current.get(session.pane.id) !== session.transport) {
@@ -245,9 +275,12 @@ export function installPtyExitHibernate(session: ConnectPanePtySession): void {
           session.pendingHibernatedWakeTarget = null
         }
         if (session.deps.isVisibleRef.current || pendingWakeMatches) {
-          // Consume wake after exit if reveal/mobile activation already raced arming; a second user event must not be required.
+          // Why: a reveal (or a mobile wake) that raced this kill already ran
+          // before the exit landed, so it saw nothing armed. Consume the wake
+          // now (deferred off the exit handler) so the pane still resumes
+          // without needing a second hide/reveal or wake event.
           queueMicrotask(() => {
-            session.consumeHibernatedAgentWake()
+            session.consumeHibernatedAgentWake(undefined, pendingWakeMatches)
           })
         }
       } else if (session.pendingHibernatedWakeTarget?.ptyId === ptyId) {

@@ -38,6 +38,46 @@ async function setup(routes: Parameters<typeof fakeCodex>[0] = {}) {
 }
 
 describe('Codex native realtime on a structured conversation', () => {
+  it('appends selected context to the live acquired thread without starting a turn or replaying after close', async () => {
+    const rig = await setup()
+    const input = { ...INPUT, text: 'A selected agent needs a decision.' }
+    expect(await rig.adapter.appendVoiceText(input)).toBe(false)
+    await rig.adapter.startVoice(INPUT)
+    rig.connection.handlers.onNotification?.('thread/realtime/started', {
+      threadId: THREAD_ID,
+      realtimeSessionId: OWNER.voiceSessionId
+    })
+    expect(await rig.adapter.appendVoiceText(input)).toBe(true)
+    expect(await rig.adapter.appendVoiceText({ ...input, generation: 2 })).toBe(false)
+    await rig.adapter.stopVoice(INPUT)
+    expect(await rig.adapter.appendVoiceText(input)).toBe(false)
+    expect(
+      rig.connection.calls.filter((call) => call.method === 'thread/realtime/appendText')
+    ).toMatchObject([{ params: { threadId: THREAD_ID, role: 'user', text: input.text } }])
+    expect(rig.connection.calls.filter((call) => call.method === 'turn/start')).toHaveLength(0)
+  })
+  it('keeps the acquired conversation usable for Live when Codex 0.163 has not implemented timeline/list', async () => {
+    const rig = await setup({
+      'thread/timeline/list': () => {
+        throw new CodexAppServerUnsupportedError('thread/timeline/list is not supported yet')
+      }
+    })
+    const openedThreads = rig.connection.calls.filter(
+      (call) => call.method === 'thread/start'
+    ).length
+    expect(await rig.adapter.startVoice(INPUT)).toEqual({
+      ok: true,
+      value: { ...OWNER, state: 'connecting' }
+    })
+    expect(
+      rig.connection.calls.filter((call) => call.method === 'thread/realtime/start')
+    ).toMatchObject([{ params: { threadId: THREAD_ID } }])
+    expect(rig.codex.connections).toHaveLength(1)
+    expect(rig.connection.calls.filter((call) => call.method === 'thread/start')).toHaveLength(
+      openedThreads
+    )
+  })
+
   it('starts and stops voice on the acquired thread without another connection, seed or turn interrupt', async () => {
     const rig = await setup()
     rig.codex.routes['thread/realtime/start'] = () => {

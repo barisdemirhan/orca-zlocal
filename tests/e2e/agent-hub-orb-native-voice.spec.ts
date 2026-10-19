@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs'
+import type { Locator } from '@stablyai/playwright-test'
 import { expect } from './helpers/orca-app'
 import {
   configureOrb,
   revealOrbLiveControls,
   showOrbConversation,
+  showOrbStage,
   switchOrbToText
 } from './helpers/agent-hub-orb-fixture'
 import { observeVoiceDevice, test } from './helpers/agent-hub-orb-native-voice-fixture'
@@ -23,6 +25,22 @@ function readRequests(ledger: string): CodexRequest[] {
     .trim()
     .split('\n')
     .map((line) => JSON.parse(line))
+}
+
+async function expectCaptionsClearControls(captions: Locator, controls: Locator): Promise<void> {
+  await expect
+    .poll(async () => {
+      const [bubble, buttons] = await Promise.all([captions.boundingBox(), controls.boundingBox()])
+      return Boolean(
+        bubble &&
+        buttons &&
+        (bubble.x + bubble.width <= buttons.x ||
+          bubble.x >= buttons.x + buttons.width ||
+          bubble.y + bubble.height <= buttons.y ||
+          bubble.y >= buttons.y + buttons.height)
+      )
+    })
+    .toBe(true)
 }
 
 test('native Live keeps one conversation, restores its draft and ignores late media after stopping', async ({
@@ -85,7 +103,34 @@ test('native Live keeps one conversation, restores its draft and ignores late me
   await unmute.click()
   await expect(mute).toBeVisible()
   orbCli.emitVoiceItem('Native spoken answer', 'assistant')
+  const captions = orcaPage.locator('[data-agent-hub-orb-captions][data-state="open"]')
+  await expect(captions).toContainText('Native spoken answer')
+  const bounds = await captions.boundingBox()
+  expect(bounds?.x).toBeGreaterThanOrEqual(0)
+  expect(bounds?.y).toBeGreaterThanOrEqual(0)
+  await captions.getByRole('button', { name: 'Hide captions', exact: true }).click()
+  await expect(captions).not.toBeVisible()
+  await orcaPage.getByRole('button', { name: 'Show captions', exact: true }).click()
+  await expect(captions).toContainText('Native spoken answer')
+  await showOrbStage(orcaPage)
+  await orcaPage.setViewportSize({ width: 390, height: 700 })
+  await expect(captions).toBeVisible()
+  await expect(captions).toHaveAttribute('data-side', /top|bottom/)
+  await expect
+    .poll(async () => (await captions.boundingBox())?.width ?? 0)
+    .toBeGreaterThanOrEqual(240)
+  const stageControls = orcaPage.locator('[data-agent-hub-orb-stage] [data-agent-hub-orb-controls]')
+  await expectCaptionsClearControls(captions, stageControls)
+  expect((await observeVoiceDevice(orcaPage)).connectedPeers).toBe(1)
+  await testInfo.attach('native-voice-captions-narrow', {
+    body: await orcaPage.screenshot(),
+    contentType: 'image/png'
+  })
+  await orcaPage.setViewportSize({ width: 1280, height: 900 })
+  await expectCaptionsClearControls(captions, stageControls)
+  await showOrbConversation(orcaPage)
   await switchOrbToText(orcaPage)
+  await expect(captions).not.toBeVisible()
   await expect(composer).toBeVisible()
   await expect(composer).toHaveText('Preserved draft before native Live')
   await expect(panel.getByText('Native spoken question', { exact: true })).toHaveCount(1)

@@ -89,6 +89,12 @@ function makeActiveTerminalState(tabId: string, worktreeId = 'wt-1'): Record<str
 }
 
 describe('resumeSleepingAgentSessionsForWorktree', () => {
+  it('keeps an explicitly slept pane parked during workspace activation', () => {
+    const record = makeRecord({ origin: 'worktree-sleep', wakeOnRequestOnly: true })
+    useAppStore.setState({ sleepingAgentSessionsByPaneKey: { [record.paneKey]: record } })
+    expect(resumeSleepingAgentSessionsForWorktree('wt-1')).toBe(0)
+    expect(useAppStore.getState().sleepingAgentSessionsByPaneKey[record.paneKey]).toBe(record)
+  })
   it('resumes quit-captured records when no preserved pane can own recovery', () => {
     const record = makeRecord({ origin: 'quit' })
     useAppStore.setState({

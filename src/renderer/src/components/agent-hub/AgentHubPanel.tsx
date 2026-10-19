@@ -1,3 +1,4 @@
+import { useAgentHubSortedTree } from './use-agent-hub-sorted-tree'
 import { registerAgentHubSelectedTarget } from './agent-hub-active-target'
 import { AgentHubShortcutsButton } from './AgentHubShortcutsDialog'
 import {
@@ -59,17 +60,9 @@ import {
   type AgentHubTerminalRow
 } from './agent-hub-terminal-tree'
 import { useHeldAgentHubTree } from './use-held-agent-hub-tree'
-import { sortAgentHubTerminalTree, type AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
-import {
-  filterAgentHubTerminalTree,
-  filterAgentHubTerminalTreeRows,
-  isAgentHubTreeNarrowed,
-  visibleAgentHubTreeRows
-} from './agent-hub-terminal-tree-view'
-import {
-  useAgentHubWindowFilterRowTest,
-  type AgentHubWindowFilter
-} from './agent-hub-window-filter'
+import type { AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
+import { isAgentHubTreeNarrowed, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
+import type { AgentHubWindowFilter } from './agent-hub-window-filter'
 
 export type AgentHubOpenRequest = {
   target: AgentHubPaneTarget
@@ -155,7 +148,6 @@ export function AgentHubPanel({
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [query, setQuery] = useState('')
   const [windowFilter, setWindowFilter] = useState<AgentHubWindowFilter>('any')
-  const windowRowTest = useAgentHubWindowFilterRowTest(windowFilter)
   const [collapseOverrides, setCollapseOverrides] = useState<ReadonlyMap<string, boolean>>(
     () => new Map()
   )
@@ -187,14 +179,12 @@ export function AgentHubPanel({
   const agentTree = useMemo(() => agentOnlyAgentHubTree(tree), [tree])
   const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
   const listsTerminals = tab === 'agents' || tab === 'all'
-  // Why sort after filtering: a group stands where its best listed workspace does.
-  const sortedTree = useMemo(() => {
-    const matched = filterAgentHubTerminalTree(tab === 'agents' ? agentTree : tree, query)
-    return sortAgentHubTerminalTree(
-      windowRowTest ? filterAgentHubTerminalTreeRows(matched, windowRowTest) : matched,
-      treeOrder
-    )
-  }, [tab, agentTree, tree, query, treeOrder, windowRowTest])
+  const sortedTree = useAgentHubSortedTree(
+    tab === 'agents' ? agentTree : tree,
+    query,
+    treeOrder,
+    windowFilter
+  )
   const filteredTree = useHeldAgentHubTree(
     sortedTree,
     `${tab}\u0000${treeOrder.sortBy}\u0000${query}\u0000${windowFilter}`

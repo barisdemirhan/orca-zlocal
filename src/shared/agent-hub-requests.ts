@@ -73,6 +73,8 @@ export type AgentHubStatus = {
   mirrors: AgentHubPane[]
   parked: AgentHubPane[]
   waiting: AgentHubPane[]
+  /** Optional user-selected Orb context; older clients may ignore it. Never grants input authority. */
+  orbFocus?: { pinned: AgentHubPane | null; following: AgentHubPane[] }
 }
 
 export type AgentHubResponse =

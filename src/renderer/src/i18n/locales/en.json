@@ -22282,6 +22282,8 @@
       "liveActive": "Live voice on",
       "unmuteSpeaker": "Unmute Orb",
       "muteSpeaker": "Mute Orb",
+      "showCaptions": "Show captions",
+      "hideCaptions": "Hide captions",
       "requestTitle": "Orb is waiting for you",
       "answerLater": "Answer later",
       "requestDescription": "Your answer will return to this Orb conversation.",

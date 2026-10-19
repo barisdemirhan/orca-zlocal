@@ -54,6 +54,7 @@ import {
 import { spawnLocalPty } from './local-pty-spawn'
 import { cancelAllPendingLocalPtySpawns } from './local-pty-spawn-state'
 import { killAllLocalPtys, killOrphanedLocalPtys, shutdownLocalPty } from './local-pty-termination'
+import { changePosixPtySuspension } from '../daemon/pty-subprocess/posix-suspension'
 
 export type { LocalPtyProviderOptions } from './local-pty-provider-types'
 export {
@@ -63,6 +64,23 @@ export {
 } from './local-pty-termination'
 
 export class LocalPtyProvider implements IPtyProvider {
+  terminalSuspension: NonNullable<IPtyProvider['terminalSuspension']> = async (id, options) => {
+    const proc = ptyProcesses.get(id)
+    const incarnationId = ptyIncarnations.get(id)
+    if (
+      !proc ||
+      !incarnationId ||
+      (options.suspended !== undefined && options.expectedIncarnationId !== incarnationId)
+    ) {
+      return { state: 'unverifiable' }
+    }
+    const state = await changePosixPtySuspension(
+      proc.pid,
+      () => ptyProcesses.get(id) === proc && ptyIncarnations.get(id) === incarnationId,
+      options.suspended
+    )
+    return { state, incarnationId }
+  }
   private opts: LocalPtyProviderOptions
 
   constructor(opts: LocalPtyProviderOptions = {}) {

@@ -12,7 +12,7 @@ export function AgentHubOrbComposerDictationOverlay(): React.JSX.Element | null 
   return (
     <div
       data-agent-hub-orb-dictation={phase}
-      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/50 @container/hub-dictation"
+      className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/50 @container/hub-dictation"
     >
       <AgentHubDictationPill
         phase={phase}

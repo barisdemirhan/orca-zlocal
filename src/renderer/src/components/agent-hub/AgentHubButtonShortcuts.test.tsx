@@ -19,7 +19,16 @@ import { AgentHubThreadHoverCard } from './AgentHubThreadHoverCard'
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const keybindings: KeybindingOverrides = {}
-  return { useAppStore: create(() => ({ keybindings })) }
+  return {
+    useAppStore: create(() => ({
+      keybindings,
+      terminalLayoutsByTabId: {},
+      ptyIdsByTabId: {},
+      sleepingAgentSessionsByPaneKey: {},
+      agentStatusByPaneKey: {},
+      tabsByWorktree: {}
+    }))
+  }
 })
 vi.mock('./AgentHubMirrorMicButton', () => ({ AgentHubMirrorMicButton: () => null }))
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimToggle: () => null }))

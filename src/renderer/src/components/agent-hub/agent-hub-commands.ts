@@ -1,6 +1,9 @@
 export type AgentHubCommands = {
   openAnswerQueue?: (() => void) | null
   toggleOrb?: (() => void) | null
+  toggleOrbLive?: (() => void) | null
+  toggleOrbMicrophone?: (() => void) | null
+  toggleOrbSpeaker?: (() => void) | null
   nextMirrorTab?: (() => void) | null
   previousMirrorTab?: (() => void) | null
   focusMirror: (() => void) | null

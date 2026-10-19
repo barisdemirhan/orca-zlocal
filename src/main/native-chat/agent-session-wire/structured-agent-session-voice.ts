@@ -1,3 +1,4 @@
+import { invalidAgentSessionVoiceOperation as invalid } from './structured-agent-session-voice-refusal'
 import {
   agentSessionVoiceStartFields,
   agentSessionVoiceStopFields,
@@ -6,9 +7,9 @@ import {
   type AgentSessionVoiceOwner,
   type AgentSessionVoiceResult,
   type AgentSessionVoiceStartParams,
-  type AgentSessionVoiceStopParams
+  type AgentSessionVoiceStopParams,
+  type AgentSessionVoiceTextParams
 } from '../../../shared/agent-session-voice'
-import { refuse } from '../../../shared/agent-session-wire-refusals'
 import type { StructuredAgentSessionCaller } from './structured-agent-session-host-types'
 import {
   mutateStructuredAgentSession,
@@ -22,6 +23,10 @@ import {
 } from './structured-agent-session-ready-operation'
 import { codexVoiceTargetCapability } from './structured-agent-session-voice-capability'
 import type { MutationPlan } from './structured-agent-session-mutation-plans'
+import {
+  appendStructuredVoiceText,
+  ownsVoiceTextAttempt
+} from './structured-agent-session-voice-text'
 
 type Subscriber = AgentSessionVoiceOwner & {
   id: string
@@ -42,13 +47,6 @@ export type StructuredAgentSessionVoiceProviderEvent = {
   fence: number
   acquisitionGeneration: string
   event: AgentSessionVoiceEvent
-}
-
-function invalid(message: string) {
-  return {
-    ok: false as const,
-    refusal: refuse('agent_session_operation_invalid', { reason: 'providerRejected' }, message)
-  }
 }
 
 /** Ephemeral signalling addressed to the caller that owns one exact voice attempt. */
@@ -203,6 +201,14 @@ export class StructuredAgentSessionVoice {
       openForProviderWrite(context, params.envelope)
     )
   }
+
+  appendText = (caller: VoiceCaller, params: AgentSessionVoiceTextParams) =>
+    appendStructuredVoiceText(this.context(), caller, params, (fence) => {
+      return (
+        ownsVoiceTextAttempt(this.active.get(params.envelope.sessionId), params, caller, fence) &&
+        this.hasSubscriber(params.envelope.sessionId, params, caller)
+      )
+    })
 
   publish = (input: StructuredAgentSessionVoiceProviderEvent): void => {
     const context = this.context()

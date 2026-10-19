@@ -72,7 +72,7 @@ export function createTerminalPaneHibernationActions(
         worktreeId,
         {
           paneKeys,
-          captureMode: 'completed-agent-hibernation'
+          captureMode: opts.manual ? 'manual-worktree-sleep' : 'completed-agent-hibernation'
         }
       )
       const retainedCompletionEvidence = collectHibernatedCompletionEvidenceForWorktree(
@@ -83,6 +83,9 @@ export function createTerminalPaneHibernationActions(
       if (!sleepingAgentSessionRecords[opts.paneKey]) {
         // Why: killing the PTY with no persisted resume record strands the pane unwakeable; abort instead of hibernating unrecoverably.
         throw new Error('agent_hibernation_capture_missing')
+      }
+      if (opts.manual) {
+        sleepingAgentSessionRecords[opts.paneKey].wakeOnRequestOnly = true
       }
       const capture = shutdownBufferCaptures.get(opts.tabId)
       if (capture) {

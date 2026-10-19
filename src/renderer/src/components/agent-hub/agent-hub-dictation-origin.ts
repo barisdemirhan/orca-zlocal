@@ -22,8 +22,18 @@ function setSession(next: AgentHubDictationSession | null): void {
 
 /** The pane dictation would insert into: the focused terminal, as the dictation feature reads it. */
 export function readFocusedTerminalPane(): AgentHubDictationPane | null {
-  const active = document.activeElement
+  let active = document.activeElement
   if (active instanceof HTMLElement) {
+    const portal = active.closest<HTMLElement>(
+      '[data-slot="popover-content"], [data-slot="dropdown-menu-content"]'
+    )
+    // Portalled composer menus keep their owner through Radix's aria-controls link.
+    if (portal?.id) {
+      active =
+        [...document.querySelectorAll<HTMLElement>('[aria-controls]')].find(
+          (trigger) => trigger.getAttribute('aria-controls') === portal.id
+        ) ?? active
+    }
     const orb = active.closest<HTMLElement>('[data-agent-hub-orb-chat-tab-id]')
     if (orb?.dataset.agentHubOrbChatTabId) {
       return { tabId: orb.dataset.agentHubOrbChatTabId, leafId: null }

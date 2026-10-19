@@ -29,7 +29,7 @@ import type { NativeChatComposerGoalMode } from './use-native-chat-composer-subm
 import { translate } from '@/i18n/i18n'
 import { useNativeChatComposerDraftUnsaved } from './use-native-chat-draft-unsaved'
 import { useLatestHandler } from '@/lib/use-latest-handler'
-import { AgentHubOrbComposerContext } from '../agent-hub/agent-hub-orb-composer'
+import { AgentHubOrbComposerContext, useAgentHubOrbComposerDictation } from '../agent-hub/agent-hub-orb-composer'
 import { AgentHubOrbComposerDictationOverlay } from '../agent-hub/AgentHubOrbComposerDictationOverlay'
 import { useAgentHubOrbVoiceContext } from '../agent-hub/agent-hub-orb-voice-context'
 
@@ -173,6 +173,8 @@ export function NativeChatComposerField({
   agent
 }: NativeChatComposerFieldProps): React.JSX.Element {
   const orbTabId = useContext(AgentHubOrbComposerContext)
+  const { phase: dictationPhase } = useAgentHubOrbComposerDictation()
+  const dictationLocked = dictationPhase !== null
   const voice = useAgentHubOrbVoiceContext()
   const voiceHoldsInput = voice.controller !== null && !voice.snapshot.textMode
   const draftNotSaved = useNativeChatComposerDraftUnsaved(draftScopeKey)
@@ -270,7 +272,7 @@ export function NativeChatComposerField({
     >
       <div className="px-3 pt-2 pb-4 sm:px-4">
         <div className="relative mx-auto w-full max-w-(--chat-content-max-width)">
-          {autocomplete.mode === 'slash' ? (
+          {!dictationLocked && autocomplete.mode === 'slash' ? (
             <NativeChatPickerMenu
               autocomplete={autocomplete}
               activeIndex={activeSuggestion}
@@ -279,7 +281,7 @@ export function NativeChatComposerField({
               onRetry={onRetrySkills}
             />
           ) : null}
-          {autocomplete.mode === 'mention' ? (
+          {!dictationLocked && autocomplete.mode === 'mention' ? (
             <NativeChatMentionMenu
               mention={mentionFiles}
               activeIndex={activeSuggestion}
@@ -317,86 +319,89 @@ export function NativeChatComposerField({
               '[contain:paint]'
             )}
           >
-            {imageAttachments.length > 0 ? (
-              <div className="mb-2 flex flex-wrap gap-2 px-1 pt-1.5">
-                {imageAttachments.map((attachment, index) => (
-                  <NativeChatImageAttachmentPreview
-                    key={attachment.id}
-                    attachment={attachment}
-                    hostEnvironmentId={attachmentEnvironmentId}
-                    number={numberImages ? index + 1 : undefined}
-                    onRemove={onRemoveImageAttachment}
-                  />
-                ))}
-              </div>
-            ) : null}
-            <NativeChatPromptEditor
-              key={draftScopeKey}
-              scopeKey={draftScopeKey}
-              imageRow={imageRow}
-              inputRef={textareaRef}
-              initialValue={draft}
-              disabled={disabled}
-              onChange={editorChange}
-              onKeyDownCapture={editorKeyDownCapture}
-              onKeyUp={editorKeyUp}
-              onBlur={editorBlur}
-              onCompositionStart={editorCompositionStart}
-              onCompositionEnd={editorCompositionEnd}
-              onPasteCapture={editorPaste}
-              onSelect={editorSelect}
-              aria-expanded={autocomplete.mode !== 'none'}
-              aria-controls={autocomplete.mode !== 'none' ? pickerListboxId : undefined}
-              aria-activedescendant={
-                optionCount > 0
-                  ? `${pickerListboxId}-option-${Math.min(activeSuggestion, optionCount - 1)}`
-                  : undefined
-              }
-              placeholder={
-                editSession
-                  ? translate('components.native-chat.queuedMessages.editMessage', 'Edit message')
-                  : goalMode?.active
-                    ? translate(
-                        'components.native-chat.goal.placeholder',
-                        'Describe your goal, define measurable outcomes for best results'
-                      )
-                    : (unavailableHint ?? nativeChatComposerPlaceholder(hasPty, canSend, afterStop))
-              }
-              // Let layout handle wrapping and touch targets; scroll after eight lines without JavaScript measurement.
-              className={cn(
-                'min-h-12 w-full bg-transparent px-2 py-1 text-sm text-chat-foreground-strong outline-none pointer-coarse:min-h-14',
-                'max-h-[calc(8lh+0.5rem)] overflow-y-auto scrollbar-sleek',
-                // Why: the editor is a contenteditable, which `:disabled` never matches.
-                'placeholder:text-chat-foreground-faint [&[contenteditable=false]]:cursor-not-allowed [&[contenteditable=false]]:opacity-50'
-              )}
-            />
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              <NativeChatComposerActions
-                editSession={editSession}
-                hasContent={draft.trim().length > 0 || imageAttachments.length > 0}
-                attachDisabled={attachDisabled}
-                dictationDisabled={dictationDisabled}
-                sendDisabled={sendButtonDisabled}
-                sendBlockedReason={sendBlockedReason}
-                draftNotSaved={draftNotSaved}
-                isWorking={isWorking}
-                isStopping={isStopping}
-                isDictating={isDictating}
-                isDictationHoldMode={isDictationHoldMode}
-                onAttach={attach}
-                onDictationToggle={dictationToggle}
-                onDictationHoldStart={dictationHoldStart}
-                onDictationHoldEnd={dictationHoldEnd}
-                onSend={send}
-                onStop={onStop ? stop : undefined}
-                sessionOptionsSurface={sessionOptionsSurface}
-                sessionOptionsSnapshot={sessionOptionsSnapshot}
-                contextUsage={contextUsage}
-                sessionOptionsPickerRequest={sessionOptionsPickerRequest}
-                focusComposer={focusComposer}
-                onExitGoalMode={goalMode?.active ? exitGoalMode : undefined}
-                {...(agent ? { agent } : {})}
+            <div inert={dictationLocked} data-native-chat-dictation-lock={dictationLocked || undefined}>
+              {imageAttachments.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-2 px-1 pt-1.5">
+                  {imageAttachments.map((attachment, index) => (
+                    <NativeChatImageAttachmentPreview
+                      key={attachment.id}
+                      attachment={attachment}
+                      hostEnvironmentId={attachmentEnvironmentId}
+                      number={numberImages ? index + 1 : undefined}
+                      onRemove={onRemoveImageAttachment}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              <NativeChatPromptEditor
+                key={draftScopeKey}
+                scopeKey={draftScopeKey}
+                imageRow={imageRow}
+                inputRef={textareaRef}
+                initialValue={draft}
+                disabled={disabled}
+                onChange={editorChange}
+                onKeyDownCapture={editorKeyDownCapture}
+                onKeyUp={editorKeyUp}
+                onBlur={editorBlur}
+                onCompositionStart={editorCompositionStart}
+                onCompositionEnd={editorCompositionEnd}
+                onPasteCapture={editorPaste}
+                onSelect={editorSelect}
+                aria-expanded={autocomplete.mode !== 'none'}
+                aria-controls={autocomplete.mode !== 'none' ? pickerListboxId : undefined}
+                aria-activedescendant={
+                  optionCount > 0
+                    ? `${pickerListboxId}-option-${Math.min(activeSuggestion, optionCount - 1)}`
+                    : undefined
+                }
+                placeholder={
+                  editSession
+                    ? translate('components.native-chat.queuedMessages.editMessage', 'Edit message')
+                    : goalMode?.active
+                      ? translate(
+                          'components.native-chat.goal.placeholder',
+                          'Describe your goal, define measurable outcomes for best results'
+                        )
+                      : (unavailableHint ?? nativeChatComposerPlaceholder(hasPty, canSend, afterStop))
+                }
+                // Let layout handle wrapping and touch targets; scroll after eight lines without JavaScript measurement.
+                className={cn(
+                  'min-h-12 w-full bg-transparent px-2 py-1 text-sm text-chat-foreground-strong outline-none pointer-coarse:min-h-14',
+                  'max-h-[calc(8lh+0.5rem)] overflow-y-auto scrollbar-sleek',
+                  // Why: the editor is a contenteditable, which `:disabled` never matches.
+                  'placeholder:text-chat-foreground-faint [&[contenteditable=false]]:cursor-not-allowed [&[contenteditable=false]]:opacity-50'
+                )}
               />
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                <NativeChatComposerActions
+                  editSession={editSession}
+                  hasContent={draft.trim().length > 0 || imageAttachments.length > 0}
+                  attachDisabled={attachDisabled}
+                  dictationDisabled={dictationDisabled}
+                  sendDisabled={sendButtonDisabled}
+                  sendBlockedReason={sendBlockedReason}
+                  draftNotSaved={draftNotSaved}
+                  isWorking={isWorking}
+                  isStopping={isStopping}
+                  isDictating={isDictating}
+                  isDictationHoldMode={isDictationHoldMode}
+                  onAttach={attach}
+                  onDictationToggle={dictationToggle}
+                  onDictationHoldStart={dictationHoldStart}
+                  onDictationHoldEnd={dictationHoldEnd}
+                  interactionDisabled={dictationLocked}
+                  onSend={send}
+                  onStop={onStop ? stop : undefined}
+                  sessionOptionsSurface={sessionOptionsSurface}
+                  sessionOptionsSnapshot={sessionOptionsSnapshot}
+                  contextUsage={contextUsage}
+                  sessionOptionsPickerRequest={sessionOptionsPickerRequest}
+                  focusComposer={focusComposer}
+                  onExitGoalMode={goalMode?.active ? exitGoalMode : undefined}
+                  {...(agent ? { agent } : {})}
+                />
+              </div>
             </div>
             {orbTabId ? <AgentHubOrbComposerDictationOverlay /> : null}
           </div>

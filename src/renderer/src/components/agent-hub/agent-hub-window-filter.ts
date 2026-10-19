@@ -1,3 +1,4 @@
+import { isAgentHubTargetSleeping, useAgentHubSleepingTargetTest } from './agent-hub-pane-sleep'
 import { useMemo, useSyncExternalStore } from 'react'
 import { translate } from '@/i18n/i18n'
 import { agentHubMirrorSourceKey, type AgentHubMirrorState } from './agent-hub-mirror-membership'
@@ -6,11 +7,11 @@ import {
   subscribeAgentHubMirrors,
   type AgentHubMirrorPresence
 } from './agent-hub-mirror-store'
-import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
+import { paneTargetFromTerminalRow, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'
 
 /** Which terminals the Agents and All terminals lists show, by where their mirror stands. */
-export type AgentHubWindowFilter = 'any' | 'open' | 'minimized' | 'none'
+export type AgentHubWindowFilter = 'any' | 'open' | 'minimized' | 'none' | 'sleeping'
 
 type AgentHubWindowFilterOption = {
   id: AgentHubWindowFilter
@@ -29,6 +30,12 @@ const ANY_WINDOW: AgentHubWindowFilterOption = {
 
 export const AGENT_HUB_WINDOW_FILTERS: readonly AgentHubWindowFilterOption[] = [
   ANY_WINDOW,
+  {
+    id: 'sleeping',
+    presence: 'any',
+    label: () => translate('agentHub.sleep.group', 'Sleeping'),
+    emptyLabel: () => translate('agentHub.sleep.empty', 'No sleeping terminals')
+  },
   {
     id: 'open',
     presence: 'window',
@@ -59,8 +66,12 @@ export function agentHubWindowFilterOption(
 /** The row test for a filter; undefined when it lets every row through. */
 export function agentHubWindowFilterRowTest(
   filter: AgentHubWindowFilter,
-  mirrors: AgentHubMirrorState
+  mirrors: AgentHubMirrorState,
+  isSleeping: (target: AgentHubPaneTarget) => boolean = isAgentHubTargetSleeping
 ): ((row: AgentHubTerminalRow) => boolean) | undefined {
+  if (filter === 'sleeping') {
+    return (row) => isSleeping(paneTargetFromTerminalRow(row))
+  }
   const { presence } = agentHubWindowFilterOption(filter)
   if (presence === 'any') {
     return undefined
@@ -84,11 +95,17 @@ export function agentHubWindowFilterRowTest(
 export function useAgentHubWindowFilterRowTest(
   filter: AgentHubWindowFilter
 ): ((row: AgentHubTerminalRow) => boolean) | undefined {
+  const isSleeping = useAgentHubSleepingTargetTest()
   const mirrors = useSyncExternalStore(subscribeAgentHubMirrors, () =>
-    filter === 'any' ? null : readAgentHubMirrors()
+    filter === 'any' || filter === 'sleeping' ? null : readAgentHubMirrors()
   )
   return useMemo(
-    () => (mirrors ? agentHubWindowFilterRowTest(filter, mirrors) : undefined),
-    [filter, mirrors]
+    () =>
+      filter === 'sleeping'
+        ? (row: AgentHubTerminalRow) => isSleeping(paneTargetFromTerminalRow(row))
+        : mirrors
+          ? agentHubWindowFilterRowTest(filter, mirrors)
+          : undefined,
+    [filter, mirrors, isSleeping]
   )
 }

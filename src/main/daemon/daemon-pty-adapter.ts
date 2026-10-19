@@ -4,6 +4,10 @@ import {
   type PtyFencedTerminationOutcome
 } from '../../shared/pty-fenced-termination'
 import { FENCED_TERMINATION_PROTOCOL_VERSION } from './daemon-protocol-version'
+import type {
+  TerminalSuspensionOptions,
+  TerminalSuspensionResult
+} from '../../shared/terminal-suspension'
 import { emitPtyListeners, createPtyExitPayload } from './daemon-pty-listener-emission'
 import type { DaemonPtyRouterExitEvent } from './daemon-pty-router-events'
 import { logWslPaneDiagnostic } from './daemon-wsl-diagnostic-log'
@@ -28,6 +32,16 @@ import { observeDaemonAsyncIoHealth } from './daemon-async-io-telemetry-event'
 import { sameEndpointIdentity } from './daemon-endpoint-incarnation'
 
 export class DaemonPtyAdapter extends DaemonPtyDaemonRecovery implements IPtyProvider {
+  async terminalSuspension(
+    id: string,
+    options: TerminalSuspensionOptions
+  ): Promise<TerminalSuspensionResult> {
+    try {
+      return await this.client.request('terminalSuspension', { sessionId: id, ...options }, 5_000)
+    } catch (error) {
+      return { state: isUnknownRequestTypeError(error) ? 'unsupported' : 'unverifiable' }
+    }
+  }
   constructor(opts: DaemonPtyAdapterOptions) {
     super(opts)
     // Registered after the base listener, which marks the sessions awaiting recovery first.

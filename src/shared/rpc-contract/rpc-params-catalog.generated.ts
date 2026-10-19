@@ -623,6 +623,7 @@ import {
 } from './structured-agent-session-queued-edit-params'
 import { RenameParams } from './structured-agent-session-rename-params'
 import {
+  AppendVoiceTextParams,
   StartVoiceParams,
   StopVoiceParams,
   SubscribeVoiceParams,
@@ -658,6 +659,7 @@ import {
   TerminalSetViewerColors,
   TerminalSplit,
   TerminalStopExact,
+  TerminalSuspension,
   TerminalViewClaudeAgent,
   TerminalWait
 } from './terminal-unary-params'
@@ -782,6 +784,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentHub.status': AgentHubPresenceParams,
   'agentSession.acknowledgeAttention': AcknowledgeAttentionParams,
   'agentSession.agents': AgentsParams,
+  'agentSession.appendVoiceText': AppendVoiceTextParams,
   'agentSession.cancel': CancelParams,
   'agentSession.close': OptionsParams,
   'agentSession.commands': OptionsParams,
@@ -1494,6 +1497,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'terminal.stopExact': TerminalStopExact,
   'terminal.subscribe': TerminalSubscribe,
   'terminal.subscribeClaudeAgentViews': null,
+  'terminal.suspension': TerminalSuspension,
   'terminal.unsubscribe': TerminalUnsubscribe,
   'terminal.updateViewport': TerminalUpdateViewport,
   'terminal.viewClaudeAgent': TerminalViewClaudeAgent,

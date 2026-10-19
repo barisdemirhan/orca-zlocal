@@ -2,6 +2,7 @@ import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../../../shared
 import { agentSessionRefusalError } from '../../../../shared/agent-session-wire-refusals'
 import {
   StartVoiceParams,
+  AppendVoiceTextParams,
   StopVoiceParams,
   SubscribeVoiceParams,
   VoiceCapabilityParams
@@ -35,6 +36,16 @@ function voiceCaller(ctx: RpcContext) {
 }
 
 export const STRUCTURED_AGENT_SESSION_VOICE_METHODS = [
+  defineMethod({
+    name: 'agentSession.appendVoiceText',
+    permission: 'workspace',
+    params: AppendVoiceTextParams,
+    handler: async (params, ctx) => {
+      requireVoiceClient(ctx)
+      const host = await requireInstalledStructuredHost(ctx, params.envelope.sessionId)
+      return host.voice.appendText(voiceCaller(ctx), params)
+    }
+  }),
   defineMethod({
     name: 'agentSession.voiceCapability',
     permission: 'workspace',

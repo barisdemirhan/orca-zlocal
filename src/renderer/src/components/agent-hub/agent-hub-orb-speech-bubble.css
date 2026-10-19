@@ -1,0 +1,51 @@
+.agent-hub-orb-caption-anchor {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+}
+.agent-hub-orb-caption-anchor[data-compact='true'] {
+  width: auto;
+  height: auto;
+  flex: none;
+}
+.agent-hub-orb-caption-toggle {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  pointer-events: auto;
+  animation: agent-hub-orb-caption-reveal 220ms ease both;
+}
+.agent-hub-orb-caption-content {
+  width: 100%;
+  max-height: min(16rem, var(--radix-popover-content-available-height));
+  display: flex;
+  flex-direction: column;
+  user-select: text;
+}
+.agent-hub-orb-caption-text {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@keyframes agent-hub-orb-caption-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .agent-hub-orb-caption-toggle {
+    animation: none;
+  }
+}
+
+[data-agent-hub-orb-captions] {
+  background-color: color-mix(in srgb, var(--popover) 72%, transparent);
+  backdrop-filter: blur(12px);
+  animation-duration: 240ms;
+}

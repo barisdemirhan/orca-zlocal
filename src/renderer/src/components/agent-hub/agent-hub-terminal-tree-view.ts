@@ -1,3 +1,4 @@
+import { AGENT_HUB_SLEEPING_GROUP } from './agent-hub-sleeping-groups'
 import {
   countRows,
   type AgentHubGroupNode,
@@ -109,7 +110,10 @@ export function isAgentHubGroupCollapsed(
   if (narrowed) {
     return false
   }
-  return overrides.get(group.key) ?? group.agentRowCount === 0
+  return (
+    overrides.get(group.key) ??
+    (group.key !== AGENT_HUB_SLEEPING_GROUP && group.agentRowCount === 0)
+  )
 }
 
 /** Children start folded; a search or filter unfolds every match. */

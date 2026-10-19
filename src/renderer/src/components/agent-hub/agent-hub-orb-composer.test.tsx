@@ -66,6 +66,7 @@ beforeEach(() => {
   controller = new AgentHubOrbVoiceController(
     { sessionId: 'session', tabId: 'orb-tab', agent: 'codex', hostKey: 'local' },
     {
+      appendText: vi.fn(async () => true),
       capability: vi.fn(async () => ({
         supported: true as const,
         accountAccess: 'unchecked' as const

@@ -16,11 +16,18 @@ import {
   TerminalHandle,
   TerminalReveal,
   TerminalSplit,
-  TerminalWait
+  TerminalWait,
+  TerminalSuspension
 } from '../../../../../shared/rpc-contract/terminal-unary-params'
 import { TerminalResizeForClient } from '../../../../../shared/rpc-contract/terminal-stream-params'
 
 export const TERMINAL_LIFECYCLE_METHODS = [
+  defineMethod({
+    name: 'terminal.suspension',
+    permission: 'workspace',
+    params: TerminalSuspension,
+    handler: (params, { runtime }) => runtime.terminalSuspension(params.terminal, params)
+  }),
   defineMethod({
     name: 'terminal.wait',
     permission: 'workspace',

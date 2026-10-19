@@ -134,6 +134,9 @@ export class StructuredAgentSessionAdapterRouter implements StructuredAgentSessi
     this.owner(input.sessionId).startVoice?.(input) ??
     Promise.resolve({ ok: false, rejected: 'Live voice is unavailable for this provider.' })
 
+  appendVoiceText: NonNullable<StructuredAgentSessionAdapter['appendVoiceText']> = (input) =>
+    this.liveOwnerOrNull(input.sessionId)?.appendVoiceText?.(input) ?? Promise.resolve(false)
+
   stopVoice: NonNullable<StructuredAgentSessionAdapter['stopVoice']> = (input) =>
     this.liveOwnerOrNull(input.sessionId)?.stopVoice?.(input) ??
     Promise.resolve({

@@ -2,6 +2,10 @@ import type {
   PtyFencedTerminationRequest,
   PtyFencedTerminationOutcome
 } from '../../shared/pty-fenced-termination'
+import type {
+  TerminalSuspensionOptions,
+  TerminalSuspensionResult
+} from '../../shared/terminal-suspension'
 import type { SpawnIntent } from '../../shared/host-spawn-admission'
 import type { TuiAgent } from '../../shared/tui-agent'
 import type { AgentWorkspaceTrustSpawnRequest } from '../../shared/agent-workspace-trust-spawn-request'
@@ -118,6 +122,10 @@ export type { PtyProcessInfo, PtySpawnResult }
 type PtyProbeOptions = { signal?: AbortSignal }
 
 export type IPtyProvider = {
+  terminalSuspension?(
+    id: string,
+    options: TerminalSuspensionOptions
+  ): Promise<TerminalSuspensionResult>
   /** SSH providers only: the relay session generation that registered them. */
   readonly providerGeneration?: number
   requestHostRpc?: (

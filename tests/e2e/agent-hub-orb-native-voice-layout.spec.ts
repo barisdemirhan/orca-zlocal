@@ -110,6 +110,17 @@ test('Orb resizes by pointer and keyboard without losing its draft, including re
           }).length
       )
     )
+    .toBe(0)
+  await orcaPage.emulateMedia({ reducedMotion: 'no-preference' })
+  await expect
+    .poll(() =>
+      stage.evaluate(
+        (element) =>
+          element
+            .getAnimations({ subtree: true })
+            .filter((animation) => animation.playState === 'running').length
+      )
+    )
     .toBeGreaterThan(0)
   const sphere = stage.getByRole('img')
   const renderedMotion = () =>
@@ -121,10 +132,39 @@ test('Orb resizes by pointer and keyboard without losing its draft, including re
     )
   const beforeMotion = await renderedMotion()
   await expect.poll(renderedMotion).not.toEqual(beforeMotion)
+  const surface = sphere.locator('.agent-hub-orb-globe')
+  const continuousMotion = await surface.evaluateHandle((element) => {
+    const animation = element
+      .getAnimations()
+      .find((animation) => animation.effect?.getTiming().iterations === Infinity)
+    if (!animation) {
+      throw new Error('Orb has no continuous surface motion')
+    }
+    return animation
+  })
+  const beforeLiveTime = await continuousMotion.evaluate((animation) =>
+    Number(animation.currentTime)
+  )
   await testInfo.attach('native-orb-resize-reduced-motion', {
     body: await orcaPage.screenshot(),
     contentType: 'image/png'
   })
+  await orcaPage.getByRole('radio', { name: 'Start live voice', exact: true }).click()
+  await expect(sphere).toHaveAttribute('data-agent-hub-orb-phase', 'listening')
+  expect(
+    await surface.evaluate(
+      (element, animation) => element.getAnimations().includes(animation),
+      continuousMotion
+    )
+  ).toBe(true)
+  await expect
+    .poll(() => continuousMotion.evaluate((animation) => Number(animation.currentTime)))
+    .toBeGreaterThan(beforeLiveTime)
+  await testInfo.attach('native-orb-continuous-live-motion', {
+    body: await orcaPage.screenshot(),
+    contentType: 'image/png'
+  })
+  await continuousMotion.dispose()
   await orcaPage.getByRole('radio', { name: 'Switch to text', exact: true }).click()
   await expect(composer).toBeVisible()
   await expect(composer).toHaveText('Draft survives visual resize')
