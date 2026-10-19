@@ -19,30 +19,30 @@ beforeEach(() => {
 })
 
 describe('callHostRoute', () => {
-  it('calls the route target with the pairing revision captured before the call', async () => {
-    callRuntimeRpc.mockResolvedValue({ ok: true })
-    const signal = new AbortController().signal
+  it.each([
+    ['folderWorkspace.update', { id: 'f' }],
+    ['agentHub.progress', { text: 'Reviewing the change' }]
+  ] as const)(
+    'calls %s on its route target with the pairing revision captured before the call',
+    async (method, params) => {
+      callRuntimeRpc.mockResolvedValue({ ok: true })
+      const signal = new AbortController().signal
 
-    await expect(
-      callHostRoute(
-        route,
-        'folderWorkspace.update',
-        { id: 'f' },
-        { timeoutMs: 5, signal, expectedEnvironmentRuntimeId: 'runtime-a' }
-      )
-    ).resolves.toEqual({ ok: true })
-    expect(callRuntimeRpc).toHaveBeenCalledWith(
-      route.target,
-      'folderWorkspace.update',
-      { id: 'f' },
-      {
+      await expect(
+        callHostRoute(route, method, params, {
+          timeoutMs: 5,
+          signal,
+          expectedEnvironmentRuntimeId: 'runtime-a'
+        })
+      ).resolves.toEqual({ ok: true })
+      expect(callRuntimeRpc).toHaveBeenCalledWith(route.target, method, params, {
         timeoutMs: 5,
         signal,
         expectedEnvironmentRuntimeId: 'runtime-a',
         expectedEnvironmentPairingRevision: 7
-      }
-    )
-  })
+      })
+    }
+  )
 
   it('reports a reply from a replaced runtime as unverifiable instead of applying it', async () => {
     callRuntimeRpc.mockImplementation(async () => {

@@ -12,6 +12,10 @@ export function shouldPollHookTranscript(
   if (source === 'codex') {
     return (
       hasCodexTranscriptSubagents(state, event.paneKey) ||
+      Boolean(
+        state.codexSubagentTranscriptByPaneKey.get(event.paneKey)?.pendingApprovalPathsByAgentId
+          .size
+      ) ||
       (state.codexLeadStateByPaneKey.get(event.paneKey)?.state !== 'done' &&
         Boolean(state.codexSubagentTranscriptByPaneKey.get(event.paneKey)?.parent.filePath))
     )
@@ -29,8 +33,12 @@ export function hookTranscriptWatchPath(
   source: AgentHookSource,
   paneKey: string
 ): string | undefined {
-  return source === 'codex' && !hasCodexTranscriptSubagents(state, paneKey)
-    ? state.codexSubagentTranscriptByPaneKey.get(paneKey)?.parent.filePath
+  const transcript = state.codexSubagentTranscriptByPaneKey.get(paneKey)
+  const hasChildApproval =
+    transcript &&
+    Array.from(transcript.pendingApprovalPathsByAgentId.keys()).some((id) => id !== undefined)
+  return source === 'codex' && !hasCodexTranscriptSubagents(state, paneKey) && !hasChildApproval
+    ? transcript?.parent.filePath
     : undefined
 }
 
@@ -67,6 +75,8 @@ export function transcriptPollUpdate<T extends AgentHookEventPayload>(
   return {
     ...polled,
     hasExplicitPrompt: undefined,
-    hookEventName: replayedStop ? 'Stop' : undefined
+    hookEventName: replayedStop ? 'Stop' : undefined,
+    // A poll publishes the host's aggregate, not another event from the last child.
+    ...(source === 'codex' ? { toolAgentId: undefined, toolAgentType: undefined } : {})
   }
 }

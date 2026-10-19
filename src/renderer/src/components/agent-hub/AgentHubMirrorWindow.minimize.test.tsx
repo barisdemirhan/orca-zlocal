@@ -174,7 +174,7 @@ it('lands immediately when the animation API throws', () => {
   expect(land).toHaveBeenCalledOnce()
 })
 
-it('moves Jump into each tab menu, restores it for a singleton and closes the container', async () => {
+it('moves per-agent actions into tab menus, restores the singleton header and closes the mirror', async () => {
   vi.useFakeTimers({ toFake: ['performance'] })
   const reveal = vi.fn()
   openAgentHubMirror({ ...target('first'), agentType: 'codex' })
@@ -241,6 +241,24 @@ it('moves Jump into each tab menu, restores it for a singleton and closes the co
     addAgentHubMirrorTab(windowId, { ...target('second'), agentType: 'codex' })
   })
   expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
+  await act(async () => {
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'Close mirror' }))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  expect(screen.queryByRole('menuitem', { name: 'Close agent' })).toBeNull()
+  fireEvent.contextMenu(screen.getByRole('tab', { name: 'first, idle' }))
+  const closeInactiveAgent = await screen.findByRole('menuitem', { name: 'Close agent' })
+  act(() => vi.advanceTimersByTime(400))
+  fireEvent.click(closeInactiveAgent)
+  expect(closeAgent).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({
+      tab: expect.objectContaining({ id: 'first' }),
+      paneKey: 'first:leaf'
+    }),
+    'idle'
+  )
+  expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
+  closeAgent.mockClear()
   fireEvent.contextMenu(screen.getByRole('tab', { name: 'first, idle' }))
   fireEvent.click(
     await screen.findByRole('menuitem', { name: 'Jump to this terminal in its workspace' })

@@ -1,4 +1,4 @@
-import { Pin, PinOff } from 'lucide-react'
+import { Pin, PinOff, X } from 'lucide-react'
 import { useRef } from 'react'
 import { translate } from '@/i18n/i18n'
 import {
@@ -28,6 +28,7 @@ import { readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { agentHubMirrorTabCapReason } from './agent-hub-mirror-tab-actions'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useMenuOpeningClickGuard } from './use-menu-opening-click-guard'
 
 function Destination({
   window,
@@ -69,6 +70,8 @@ export function AgentHubMirrorTabMenu({
   onReveal,
   onShowInSidebar,
   onClose,
+  onCloseAgent,
+  isAgent = false,
   children
 }: {
   windowId: string
@@ -77,16 +80,19 @@ export function AgentHubMirrorTabMenu({
   onReveal?: () => void
   onShowInSidebar?: () => void
   onClose: () => void
+  onCloseAgent?: () => void
+  isAgent?: boolean
   children: React.ReactNode
 }): React.JSX.Element {
   const { windows } = useAgentHubMirrors()
+  const openingClick = useMenuOpeningClickGuard()
   const keyboardOrigin = useRef<HTMLElement | null>(null)
   const isPinned =
     windows.find((window) => window.id === windowId)?.tabs.find((tab) => tab.id === entryId)
       ?.isPinned === true
   const destinations = windows.filter((window) => window.id !== windowId)
   return (
-    <ContextMenu>
+    <ContextMenu onOpenChange={openingClick.noteOpenChange}>
       <ContextMenuTrigger
         asChild
         onKeyDown={(event) => {
@@ -191,6 +197,22 @@ export function AgentHubMirrorTabMenu({
             ? translate('auto.components.tab.bar.SortableTabContextMenu.417722e9c2', 'Unpin Tab')
             : translate('auto.components.tab.bar.SortableTabContextMenu.60f958ec75', 'Pin Tab')}
         </ContextMenuItem>
+        {onCloseAgent ? (
+          <ContextMenuItem
+            onSelect={(event) => {
+              if (openingClick.isOpeningClick()) {
+                event.preventDefault()
+                return
+              }
+              onCloseAgent()
+            }}
+          >
+            <X />
+            {isAgent
+              ? translate('agentHub.row.closeAgent', 'Close agent')
+              : translate('agentHub.row.closeShell', 'Close terminal')}
+          </ContextMenuItem>
+        ) : null}
         <ContextMenuItem disabled={isPinned} onSelect={() => !isPinned && onClose()}>
           {translate('agentHub.mirror.closeTab', 'Close tab')}
         </ContextMenuItem>

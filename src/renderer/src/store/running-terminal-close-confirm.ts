@@ -7,6 +7,8 @@ export type RunningTerminalCloseConfirmRequest = {
   terminalTabId: string
   tabLabel: string
   copyKind: CloseTerminalDialogCopyKind
+  /** Whether the running-terminal opt-out may also accept this request. */
+  allowSkipConfirm?: boolean
   onConfirm: () => void
   onCancel?: () => void
 }
@@ -15,18 +17,21 @@ export type RunningTerminalCloseConfirmState = {
   runningTerminalCloseConfirm: RunningTerminalCloseConfirmRequest | null
   requestRunningTerminalCloseConfirm: (request: RunningTerminalCloseConfirmRequest) => void
   confirmRunningTerminalClose: () => void
-  /** Opting out accepts visible and queued requests; no disabled confirmation may remain waiting. */
+  /** Accepts opt-out eligible requests, leaving explicit agent confirmations pending. */
   confirmAllRunningTerminalCloses: () => void
   dismissRunningTerminalClose: () => void
 }
 
-/** Merge duplicate tab requests so both initiating surfaces receive callbacks. */
+/** Folds a duplicate request for the same tab into the pending one instead of dropping it,
+ *  so two surfaces closing the same tab both get their callback. */
 function mergeRequests(
   pending: RunningTerminalCloseConfirmRequest,
   duplicate: RunningTerminalCloseConfirmRequest
 ): RunningTerminalCloseConfirmRequest {
   return {
     ...pending,
+    copyKind: duplicate.copyKind === 'agent' ? 'agent' : pending.copyKind,
+    allowSkipConfirm: pending.allowSkipConfirm !== false && duplicate.allowSkipConfirm !== false,
     onConfirm: () => {
       pending.onConfirm()
       duplicate.onConfirm()
@@ -101,10 +106,18 @@ export const useRunningTerminalCloseConfirmStore = create<RunningTerminalCloseCo
         return
       }
       const pending = [get().runningTerminalCloseConfirm, ...queuedRequests.splice(0)]
-      set({ runningTerminalCloseConfirm: null })
-      // No guard to arm: the queue is empty, so there is no next prompt to mis-click.
+      const required = pending.filter(
+        (request): request is RunningTerminalCloseConfirmRequest =>
+          request?.allowSkipConfirm === false
+      )
+      const next = required.shift() ?? null
+      queuedRequests.push(...required)
+      set({ runningTerminalCloseConfirm: next })
+      guardNextAction(next !== null)
       for (const request of pending) {
-        request?.onConfirm()
+        if (request && request.allowSkipConfirm !== false) {
+          request.onConfirm()
+        }
       }
     },
 

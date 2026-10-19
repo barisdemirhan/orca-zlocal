@@ -23,6 +23,7 @@ import { claimAgentHubMirrorGesture } from './agent-hub-mirror-gesture'
 import { AgentHubMirrorTabMenu } from './AgentHubMirrorTabMenu'
 import { AgentHubThreadHoverCard } from './AgentHubThreadHoverCard'
 import { useAgentHubProgress } from './use-agent-hub-progress'
+import { closeAgentHubAgent } from './agent-hub-close-agent'
 import {
   showAgentHubFamilyBar,
   toggleAgentHubFamilyBar,
@@ -161,6 +162,16 @@ export function AgentHubMirrorTab({
       onReveal={actions.onJump}
       onShowInSidebar={actions.onShowInSidebar}
       onClose={onClose}
+      isAgent={thread !== null || tab.target.agentType !== null}
+      onCloseAgent={
+        closable
+          ? () =>
+              closeAgentHubAgent(
+                { ...tab.target, agentType: thread?.agentType ?? tab.target.agentType },
+                kind
+              )
+          : undefined
+      }
     >
       <div
         ref={draggable.setNodeRef}

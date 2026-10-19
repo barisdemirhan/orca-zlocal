@@ -55,11 +55,13 @@ export function closeAgentHubAgent(
   }
 
   const skipConfirm = useAppStore.getState().settings?.skipCloseTerminalWithRunningProcessConfirm
-  if ((kind === 'work' || kind === 'ask') && skipConfirm !== true) {
+  const isAgent = target.agentType !== null
+  if (isAgent || ((kind === 'work' || kind === 'ask') && skipConfirm !== true)) {
     useRunningTerminalCloseConfirmStore.getState().requestRunningTerminalCloseConfirm({
       terminalTabId: tabId,
       tabLabel: target.title,
       copyKind: 'agent',
+      allowSkipConfirm: !isAgent,
       onConfirm: () => close(true)
     })
     return

@@ -17,6 +17,7 @@ export type CloseTerminalDialogCopyKind = 'command' | 'agent' | 'chat-agent'
 export default function CloseTerminalDialog({
   open,
   copyKind = 'command',
+  allowDontAskAgain = true,
   tabLabel,
   subjectKey,
   onCancel,
@@ -24,6 +25,7 @@ export default function CloseTerminalDialog({
 }: {
   open: boolean
   copyKind?: CloseTerminalDialogCopyKind
+  allowDontAskAgain?: boolean
   /** Name off-focus tab-strip/middle-click targets; omit for focused-pane keyboard closes. */
   tabLabel?: string
   /** Changing queued subject clears the previous tab’s opt-out without reopening the dialog. */
@@ -66,6 +68,7 @@ export default function CloseTerminalDialog({
       <DialogContent className="max-w-sm" showCloseButton={false}>
         <CloseTerminalDialogBody
           copyKind={copyKind}
+          allowDontAskAgain={allowDontAskAgain}
           trimmedTabLabel={trimmedTabLabel}
           checkboxId={checkboxId}
           dontAskAgain={dontAskAgain}
@@ -81,6 +84,7 @@ export default function CloseTerminalDialog({
 // Keep translation and element construction behind the dialog portal's mount boundary.
 function CloseTerminalDialogBody({
   copyKind,
+  allowDontAskAgain,
   trimmedTabLabel,
   checkboxId,
   dontAskAgain,
@@ -89,6 +93,7 @@ function CloseTerminalDialogBody({
   onConfirm
 }: {
   copyKind: CloseTerminalDialogCopyKind
+  allowDontAskAgain: boolean
   trimmedTabLabel: string | undefined
   checkboxId: string
   dontAskAgain: boolean
@@ -142,21 +147,23 @@ function CloseTerminalDialogBody({
           {trimmedTabLabel}
         </p>
       ) : null}
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id={checkboxId}
-          checked={dontAskAgain}
-          onCheckedChange={(checked) => setDontAskAgain(checked === true)}
-        />
-        <Label htmlFor={checkboxId} className="text-xs font-normal text-muted-foreground">
-          {isChat
-            ? translate('auto.components.confirmation.dialog.92bac3217e', "Don't ask again")
-            : translate(
-                'auto.components.terminal.pane.CloseTerminalDialog.dont_ask_again',
-                "Don't ask again for running terminals"
-              )}
-        </Label>
-      </div>
+      {allowDontAskAgain ? (
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id={checkboxId}
+            checked={dontAskAgain}
+            onCheckedChange={(checked) => setDontAskAgain(checked === true)}
+          />
+          <Label htmlFor={checkboxId} className="text-xs font-normal text-muted-foreground">
+            {isChat
+              ? translate('auto.components.confirmation.dialog.92bac3217e', "Don't ask again")
+              : translate(
+                  'auto.components.terminal.pane.CloseTerminalDialog.dont_ask_again',
+                  "Don't ask again for running terminals"
+                )}
+          </Label>
+        </div>
+      ) : null}
       <DialogFooter className="gap-2">
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
           {translate('auto.components.terminal.pane.CloseTerminalDialog.1d1a7a9c1f', 'Cancel')}
@@ -166,7 +173,7 @@ function CloseTerminalDialogBody({
           variant="destructive"
           size="sm"
           autoFocus
-          onClick={() => onConfirm(dontAskAgain)}
+          onClick={() => onConfirm(allowDontAskAgain && dontAskAgain)}
         >
           {isAgent
             ? translate(

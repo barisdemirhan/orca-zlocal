@@ -131,6 +131,42 @@ describe('running terminal close confirmation store', () => {
     expect(useRunningTerminalCloseConfirmStore.getState().runningTerminalCloseConfirm).toBeNull()
   })
 
+  it('keeps a stricter queued agent close pending when command prompts are opted out', () => {
+    const store = useRunningTerminalCloseConfirmStore.getState()
+    const command = vi.fn()
+    const agent = vi.fn()
+    const duplicate = vi.fn()
+    const otherCommand = vi.fn()
+    store.requestRunningTerminalCloseConfirm(request('command', command))
+    store.requestRunningTerminalCloseConfirm(request('agent', agent))
+    store.requestRunningTerminalCloseConfirm({
+      ...request('agent', duplicate),
+      copyKind: 'agent',
+      allowSkipConfirm: false
+    })
+    store.requestRunningTerminalCloseConfirm(request('other-command', otherCommand))
+
+    store.confirmAllRunningTerminalCloses()
+    expect(command).toHaveBeenCalledOnce()
+    expect(otherCommand).toHaveBeenCalledOnce()
+    expect(agent).not.toHaveBeenCalled()
+    expect(duplicate).not.toHaveBeenCalled()
+    expect(
+      useRunningTerminalCloseConfirmStore.getState().runningTerminalCloseConfirm
+    ).toMatchObject({
+      terminalTabId: 'agent',
+      copyKind: 'agent',
+      allowSkipConfirm: false
+    })
+    store.confirmRunningTerminalClose()
+    expect(agent).not.toHaveBeenCalled()
+    advancePastGuard()
+    store.confirmRunningTerminalClose()
+    expect(agent).toHaveBeenCalledOnce()
+    expect(duplicate).toHaveBeenCalledOnce()
+    expect(useRunningTerminalCloseConfirmStore.getState().runningTerminalCloseConfirm).toBeNull()
+  })
+
   it('is inert when there is nothing to confirm', () => {
     const store = useRunningTerminalCloseConfirmStore.getState()
 

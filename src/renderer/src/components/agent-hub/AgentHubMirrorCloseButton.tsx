@@ -17,27 +17,31 @@ export function AgentHubMirrorCloseButton({
 }: {
   isAgent: boolean
   onClose: () => void
-  onCloseAgent: () => void
+  onCloseAgent?: () => void
 }): React.JSX.Element {
   const openingClick = useMenuOpeningClickGuard()
   const label = translate('agentHub.mirror.close', 'Close mirror')
+  const control = (
+    <AgentHubActionTooltip label={label}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        className="text-muted-foreground hover:text-foreground"
+        aria-label={label}
+        onClick={onClose}
+      >
+        <X className="size-3.5" />
+      </Button>
+    </AgentHubActionTooltip>
+  )
+  if (!onCloseAgent) {
+    return control
+  }
   return (
     <ContextMenu onOpenChange={openingClick.noteOpenChange}>
       <ContextMenuTrigger asChild>
-        <span className="contents">
-          <AgentHubActionTooltip label={label}>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              className="text-muted-foreground hover:text-foreground"
-              aria-label={label}
-              onClick={onClose}
-            >
-              <X className="size-3.5" />
-            </Button>
-          </AgentHubActionTooltip>
-        </span>
+        <span className="contents">{control}</span>
       </ContextMenuTrigger>
       <ContextMenuContent data-agent-hub-mirror-close-menu>
         <ContextMenuItem

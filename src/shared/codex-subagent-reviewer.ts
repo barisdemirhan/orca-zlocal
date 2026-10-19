@@ -15,6 +15,7 @@ const REVIEWER_CURSOR_MAX_PATHS = 64
 const REVIEWER_LOOKBACK_MAX_BYTES = 8 * 1024 * 1024
 const REVIEWER_LOOKBACK_CHUNK_BYTES = 64 * 1024
 const REVIEWER_RECORD_MAX_BYTES = 256 * 1024
+const TURN_REVIEWED_TOOLS = new Set(['Bash', 'write_stdin', 'apply_patch', 'request_permissions'])
 const reviewerCacheByCursor = new WeakMap<
   JsonlCursor,
   { filePath: string | undefined; offset: number; reviewer: CodexApprovalsReviewer | undefined }
@@ -23,7 +24,14 @@ const reviewerCacheByCursor = new WeakMap<
 /** Codex's `approvals_reviewer`: `user` is a human, `auto_review` is Codex's own review agent. */
 export type CodexApprovalsReviewer = 'user' | 'auto_review'
 
-function normalizedTranscriptPath(transcriptPath: string | undefined): string | undefined {
+/** MCP actions can override the turn reviewer without changing its saved settings. */
+export function codexApprovalUsesTurnReviewer(toolName: string | undefined): boolean {
+  return toolName !== undefined && TURN_REVIEWED_TOOLS.has(toolName)
+}
+
+export function normalizeCodexTranscriptPath(
+  transcriptPath: string | undefined
+): string | undefined {
   const normalizedPath = transcriptPath?.trim()
   return normalizedPath && isAbsolute(normalizedPath) && extname(normalizedPath) === '.jsonl'
     ? normalizedPath
@@ -150,7 +158,7 @@ export function codexTurnApprovalsAreAutoReviewed(
   state: CodexSubagentTranscriptState | undefined,
   transcriptPath?: string
 ): boolean {
-  const normalizedPath = normalizedTranscriptPath(transcriptPath)
+  const normalizedPath = normalizeCodexTranscriptPath(transcriptPath)
   if (!state || !normalizedPath) {
     return false
   }
@@ -166,7 +174,7 @@ export function reconcileCodexSubagentReviewer(
   state: CodexSubagentTranscriptState,
   transcriptPath: string | undefined
 ): void {
-  const normalizedPath = normalizedTranscriptPath(transcriptPath)
+  const normalizedPath = normalizeCodexTranscriptPath(transcriptPath)
   if (!normalizedPath) {
     return
   }

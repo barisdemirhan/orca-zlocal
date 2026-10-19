@@ -277,7 +277,15 @@ export function AgentHubMirrorWindow({
           onMinimize={minimizeAlone}
           onClose={() => leave(onClose)}
           isAgent={thread !== null || target.agentType !== null}
-          onCloseAgent={() => closeAgentHubAgent(target, activeKind)}
+          onCloseAgent={
+            (windowState?.tabs.length ?? 1) === 1
+              ? () =>
+                  closeAgentHubAgent(
+                    { ...target, agentType: thread?.agentType ?? target.agentType },
+                    activeKind
+                  )
+              : undefined
+          }
         />
       </header>
       <div

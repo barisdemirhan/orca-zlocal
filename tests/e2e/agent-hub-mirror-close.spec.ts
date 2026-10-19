@@ -1,6 +1,6 @@
 import { test, expect } from './helpers/orca-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
-import { waitForActivePanePtyId } from './helpers/terminal'
+import { waitForActivePaneHookDescriptor, waitForActivePanePtyId } from './helpers/terminal'
 
 test('mirror dismissal preserves sources and mirror pins cannot veto authoritative source closure', async ({
   orcaPage
@@ -110,4 +110,141 @@ test('mirror dismissal preserves sources and mirror pins cannot veto authoritati
   await expect(pinnedMirror).toHaveCount(0)
   await expect(companionTab).toBeVisible()
   await expect(companionMirrorTab).toBeVisible()
+})
+
+test('agent close confirmation follows the list and the owning mirror tab without closing its sibling', async ({
+  orcaPage,
+  electronApp
+}, testInfo) => {
+  await waitForSessionReady(orcaPage)
+  expect(
+    await electronApp.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().every((window) => !window.isVisible() && !window.isFocused())
+    )
+  ).toBe(true)
+  const worktreeId = await waitForActiveWorktree(orcaPage)
+  await ensureTerminalVisible(orcaPage)
+  await orcaPage.evaluate(async () => {
+    await window.__store?.getState().updateSettings({
+      uiLanguage: 'en',
+      experimentalAgentHub: true,
+      agentHubPlacement: 'status-bar',
+      agentHubDefaultTab: 'agents',
+      agentHubTabAutoPopout: true,
+      agentHubAlertSound: false,
+      agentHubFloatingDimMode: 'off',
+      skipCloseTerminalWithRunningProcessConfirm: true
+    })
+  })
+  const agents: { tabId: string; title: string; ptyId: string }[] = []
+  for (const agentType of ['codex', 'claude'] as const) {
+    const title = `Confirmed close ${agentType}`
+    const tabId = await orcaPage.evaluate(
+      ({ worktreeId, title }) => {
+        const state = window.__store?.getState()
+        if (!state) {
+          throw new Error('Store unavailable')
+        }
+        const tab = state.createTab(worktreeId)
+        state.setTabCustomTitle(tab.id, title)
+        return tab.id
+      },
+      { worktreeId, title }
+    )
+    const descriptor = await waitForActivePaneHookDescriptor(orcaPage)
+    const ptyId = await waitForActivePanePtyId(orcaPage)
+    await orcaPage.evaluate(
+      ({ descriptor, agentType, title, tabId }) => {
+        window.__store
+          ?.getState()
+          .setAgentStatus(
+            descriptor.paneKey,
+            { state: 'done', prompt: title, agentType },
+            title,
+            undefined,
+            { worktreeId: descriptor.worktreeId, tabId }
+          )
+      },
+      { descriptor, agentType, title, tabId }
+    )
+    agents.push({ tabId, title, ptyId })
+  }
+  const [first, second] = agents
+  if (!first || !second) {
+    throw new Error('Two agent panes are required')
+  }
+  const source = (id: string) => orcaPage.locator(`[data-tab-id="${id}"]`)
+  const dialog = orcaPage.getByRole('dialog', { name: 'Stop this agent?', exact: true })
+  await orcaPage.locator('button[data-open][aria-label="Agents"]').click()
+  const row = orcaPage.locator('[data-agent-hub-row]').filter({ hasText: first.title })
+  await row.hover()
+  await row.getByRole('button', { name: 'Close agent', exact: true }).click()
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText(first.title)
+  await expect(dialog.getByRole('checkbox')).toHaveCount(0)
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await expect(dialog).toHaveCount(0)
+  await expect(source(first.tabId)).toBeVisible()
+  expect(
+    await orcaPage.evaluate(
+      ({ tabId, ptyId }) => window.__store?.getState().ptyIdsByTabId[tabId]?.includes(ptyId),
+      first
+    )
+  ).toBe(true)
+  await orcaPage.keyboard.press('Escape')
+
+  await source(first.tabId).getByRole('button', { name: 'Pop out', exact: true }).click()
+  const openedMirror = orcaPage.locator('[data-agent-hub-mirror]').filter({
+    has: orcaPage.getByRole('tab', { name: new RegExp(first.title) })
+  })
+  await expect(openedMirror).toBeVisible()
+  const mirrorKey = await openedMirror.getAttribute('data-agent-hub-mirror-key')
+  if (!mirrorKey) {
+    throw new Error('Mirror identity unavailable')
+  }
+  const mirror = orcaPage.locator(`[data-agent-hub-mirror-key="${mirrorKey}"]`)
+  await mirror.getByRole('button', { name: 'Close mirror', exact: true }).click({ button: 'right' })
+  await expect(orcaPage.getByRole('menuitem', { name: 'Close agent', exact: true })).toBeVisible()
+  await orcaPage.keyboard.press('Escape')
+  await source(second.tabId).getByRole('button', { name: 'Pop out', exact: true }).click()
+  const secondTab = orcaPage.getByRole('tab', { name: new RegExp(second.title) })
+  await secondTab.click({ button: 'right' })
+  await orcaPage.getByRole('menuitem', { name: 'Move to mirror', exact: true }).hover()
+  await orcaPage.getByRole('menuitem', { name: new RegExp(first.title) }).click()
+  await expect(mirror.getByRole('tab')).toHaveCount(2)
+  await secondTab.click()
+  await mirror.getByRole('button', { name: 'Close mirror', exact: true }).click({ button: 'right' })
+  await expect(orcaPage.getByRole('menuitem', { name: 'Close agent', exact: true })).toHaveCount(0)
+  await mirror.getByRole('tab', { name: new RegExp(first.title) }).click({ button: 'right' })
+  const closeAgent = orcaPage.getByRole('menuitem', { name: 'Close agent', exact: true })
+  await expect(closeAgent).toBeVisible()
+  await testInfo.attach('inactive-agent-tab-close-menu', {
+    body: await orcaPage.screenshot(),
+    contentType: 'image/png'
+  })
+  await orcaPage.waitForTimeout(400)
+  await closeAgent.click()
+  await expect(dialog).toBeVisible()
+  await expect(dialog).toContainText(first.title)
+  await expect(source(first.tabId)).toBeVisible()
+  await expect(source(second.tabId)).toBeVisible()
+  await testInfo.attach('agent-close-confirmation', {
+    body: await orcaPage.screenshot(),
+    contentType: 'image/png'
+  })
+  await dialog.getByRole('button', { name: 'Stop Agent', exact: true }).click()
+  await expect(source(first.tabId)).toHaveCount(0)
+  await expect(source(second.tabId)).toBeVisible()
+  await expect(mirror.getByRole('tab')).toHaveCount(1)
+  await mirror.getByRole('button', { name: 'Close mirror', exact: true }).click({ button: 'right' })
+  await expect(orcaPage.getByRole('menuitem', { name: 'Close agent', exact: true })).toBeVisible()
+  await orcaPage.keyboard.press('Escape')
+  await mirror.getByRole('button', { name: 'Close mirror', exact: true }).click()
+  await expect(mirror).toHaveCount(0)
+  await expect(source(second.tabId)).toBeVisible()
+  expect(
+    await electronApp.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().every((window) => !window.isVisible() && !window.isFocused())
+    )
+  ).toBe(true)
 })

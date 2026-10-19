@@ -30,7 +30,7 @@ export function AgentHubMirrorHeaderControls({
   onReveal: () => void
   onMinimize: () => void
   onClose: () => void
-  onCloseAgent: () => void
+  onCloseAgent?: () => void
   isAgent: boolean
 }): React.JSX.Element {
   const dockLabel = translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')

@@ -22,7 +22,9 @@ function advancePastGuard(): void {
 }
 
 async function renderDialog(
-  request: Partial<RunningTerminalCloseConfirmRequest> & { onConfirm: () => void },
+  request: Partial<RunningTerminalCloseConfirmRequest> & {
+    onConfirm: () => void
+  },
   updateSettings: AppState['updateSettings']
 ): Promise<void> {
   useAppStore.setState({ updateSettings })
@@ -132,6 +134,33 @@ describe('RunningTerminalCloseDialog', () => {
       skipCloseTerminalWithRunningProcessConfirm: true
     })
     expect(onConfirm).toHaveBeenCalledTimes(1)
+  })
+
+  it('requires explicit agent confirmation and lets Cancel preserve the agent', async () => {
+    const onConfirm = vi.fn()
+    const updateSettings = vi.fn().mockResolvedValue(undefined)
+    const request = {
+      copyKind: 'agent' as const,
+      allowSkipConfirm: false,
+      onConfirm
+    }
+    await renderDialog(request, updateSettings)
+    expect(document.body.textContent).toContain('Stop this agent?')
+    expect(document.body.querySelector('[role="checkbox"]')).toBeNull()
+    await act(async () => getButton('Cancel').click())
+    expect(onConfirm).not.toHaveBeenCalled()
+    expect(useRunningTerminalCloseConfirmStore.getState().runningTerminalCloseConfirm).toBeNull()
+
+    await act(async () => {
+      useRunningTerminalCloseConfirmStore.getState().requestRunningTerminalCloseConfirm({
+        terminalTabId: 'tab-1',
+        tabLabel: 'dev server',
+        ...request
+      })
+    })
+    await act(async () => getButton('Stop Agent').click())
+    expect(onConfirm).toHaveBeenCalledOnce()
+    expect(updateSettings).not.toHaveBeenCalled()
   })
 
   // Async process probes can overlap the synchronous pinned queue; only one modal/focus trap may open.

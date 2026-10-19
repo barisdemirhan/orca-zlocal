@@ -1,4 +1,4 @@
-import { basename, dirname, extname, isAbsolute, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 import {
   readJsonlCursor,
@@ -12,7 +12,10 @@ import { reconcileCodexTranscriptTurn, type CodexTranscriptTurn } from './codex-
 
 import { isCodexStatusTranscriptLine } from './codex-status-transcript-line'
 
-import { resolveCodexApprovalsReviewer } from './codex-subagent-reviewer'
+import {
+  normalizeCodexTranscriptPath,
+  resolveCodexApprovalsReviewer
+} from './codex-subagent-reviewer'
 import type { CodexApprovalsReviewer } from './codex-subagent-reviewer'
 
 import {
@@ -44,6 +47,8 @@ export type CodexSubagentTranscriptState = {
   reviewerCursorsByPath: Map<string, JsonlCursor>
   /** Reviewer ownership discovered from child rollouts, keyed by their bounded cursor paths. */
   reviewersByPath: Map<string, CodexApprovalsReviewer>
+  /** Active approval rollout per owner; undefined identifies the root agent. */
+  pendingApprovalPathsByAgentId: Map<string | undefined, string>
   /** Who resolves this turn's approvals in the parent rollout. */
   approvalsReviewer?: CodexApprovalsReviewer
 }
@@ -152,13 +157,6 @@ function readChildModel(records: JsonRecord[]): string | undefined {
   return model
 }
 
-function normalizedTranscriptPath(transcriptPath: string | undefined): string | undefined {
-  const normalizedPath = transcriptPath?.trim()
-  return normalizedPath && isAbsolute(normalizedPath) && extname(normalizedPath) === '.jsonl'
-    ? normalizedPath
-    : undefined
-}
-
 function readTurnEnd(
   recordValue: JsonRecord
 ): { turnId: string; end: 'completed' | 'failed' } | undefined {
@@ -196,7 +194,8 @@ export function createCodexSubagentTranscriptState(): CodexSubagentTranscriptSta
     turnEnds: new Map(),
     subagents: new Map(),
     reviewerCursorsByPath: new Map(),
-    reviewersByPath: new Map()
+    reviewersByPath: new Map(),
+    pendingApprovalPathsByAgentId: new Map()
   }
 }
 
@@ -218,7 +217,7 @@ export function reconcileCodexSubagentTranscript(
   roster: CodexSubagentRoster,
   transcriptPath: string | undefined
 ): boolean {
-  const normalizedPath = normalizedTranscriptPath(transcriptPath)
+  const normalizedPath = normalizeCodexTranscriptPath(transcriptPath)
   if (!normalizedPath) {
     return false
   }
@@ -234,6 +233,7 @@ export function reconcileCodexSubagentTranscript(
     state.subagents.clear()
     state.reviewerCursorsByPath.clear()
     state.reviewersByPath.clear()
+    state.pendingApprovalPathsByAgentId.clear()
     // Why: a different rollout is a different session, so its predecessor's reviewer is void.
     state.approvalsReviewer = undefined
   }

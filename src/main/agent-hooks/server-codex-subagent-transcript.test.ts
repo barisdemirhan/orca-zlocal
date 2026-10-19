@@ -44,6 +44,84 @@ describe('AgentHookServer Codex subagent transcript polling', () => {
     vi.useRealTimers()
   })
 
+  it('publishes successive approval ownership changes without another hook', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'agent-hook-codex-approval-'))
+    dirs.push(dir)
+    const parentPath = join(dir, 'rollout-parent.jsonl')
+    const childPath = join(dir, 'rollout-child.jsonl')
+    const unknownReviewer = line({ type: 'turn_context', payload: {} })
+    writeFileSync(parentPath, unknownReviewer)
+    writeFileSync(childPath, unknownReviewer)
+    const server = new AgentHookServer()
+    await server.start({ env: 'production' })
+    try {
+      const env = server.buildPtyEnv()
+      const postApproval = (transcriptPath: string, agentId?: string): Promise<Response> =>
+        fetch(`http://127.0.0.1:${env.ORCA_AGENT_HOOK_PORT}/hook/codex`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Orca-Agent-Hook-Token': env.ORCA_AGENT_HOOK_TOKEN
+          },
+          body: JSON.stringify({
+            paneKey: PANE_KEY,
+            tabId: 'tab-1',
+            worktreeId: 'wt-1',
+            payload: {
+              hook_event_name: 'PermissionRequest',
+              session_id: agentId ?? 'root-session',
+              transcript_path: transcriptPath,
+              tool_name: 'Bash',
+              tool_input: { command: 'python3 report.py' },
+              ...(agentId ? { agent_id: agentId, agent_type: 'worker' } : {})
+            }
+          })
+        })
+      expect((await postApproval(parentPath)).status).toBe(204)
+      expect((await postApproval(childPath, CHILD_ID)).status).toBe(204)
+      expect(server.getStatusSnapshot()[0]).toMatchObject({
+        state: 'waiting',
+        mainAgent: { state: 'waiting' },
+        subagents: [{ id: CHILD_ID, state: 'waiting' }]
+      })
+      expect(server.getStatusSnapshot()[0]?.interactivePrompt).toContain('python3 report.py')
+
+      const autoReviewer = line({
+        type: 'event_msg',
+        payload: {
+          type: 'thread_settings_applied',
+          thread_settings: { approvals_reviewer: 'auto_review' }
+        }
+      })
+      appendFileSync(parentPath, autoReviewer)
+      await vi.waitFor(
+        () => {
+          expect(server.getStatusSnapshot()[0]).toMatchObject({
+            state: 'waiting',
+            mainAgent: { state: 'working' },
+            subagents: [{ id: CHILD_ID, state: 'waiting' }]
+          })
+          expect(server.getStatusSnapshot()[0]?.interactivePrompt).toBeUndefined()
+        },
+        { timeout: 3_000, interval: 50 }
+      )
+
+      appendFileSync(childPath, autoReviewer)
+      await vi.waitFor(
+        () => {
+          expect(server.getStatusSnapshot()[0]).toMatchObject({
+            state: 'working',
+            mainAgent: { state: 'working' },
+            subagents: [{ id: CHILD_ID, state: 'working' }]
+          })
+        },
+        { timeout: 3_000, interval: 50 }
+      )
+    } finally {
+      server.stop()
+    }
+  })
+
   it('publishes rollout-only children and removes them after their task completes', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'agent-hook-codex-subagent-'))
     dirs.push(dir)

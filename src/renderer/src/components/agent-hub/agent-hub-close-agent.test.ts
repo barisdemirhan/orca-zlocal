@@ -71,6 +71,28 @@ beforeEach(() => {
 })
 
 describe('closeAgentHubAgent', () => {
+  it.each([
+    ['idle', false],
+    ['done', false],
+    ['idle', true],
+    ['done', true]
+  ] as const)('confirms an explicit %s agent close even with terminal opt-out %s', (kind, skip) => {
+    mocks.settings.skipCloseTerminalWithRunningProcessConfirm = skip
+    closeAgentHubAgent({ ...target(LEAF_A), agentType: 'codex' }, kind)
+    expect(mocks.closeTerminalTab).not.toHaveBeenCalled()
+    expect(mocks.ptyKill).not.toHaveBeenCalled()
+    const [request] = mocks.requestConfirm.mock.calls[0] ?? []
+    expect(request).toMatchObject({
+      terminalTabId: 'tab-1',
+      copyKind: 'agent',
+      allowSkipConfirm: false
+    })
+    request.onConfirm()
+    expect(mocks.closeTerminalTab).toHaveBeenCalledExactlyOnceWith('tab-1', {
+      skipRunningProcessConfirm: true
+    })
+  })
+
   it.each(['idle', 'done', null] as const)(
     'keeps the normal process guard for a %s tab',
     (kind) => {
