@@ -16,6 +16,7 @@ import {
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import type { AgentHubRequest } from '../../../../shared/agent-hub-requests'
 import { agentHubRequestBase } from './agent-hub-request-test-fixtures'
+import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import { buildAgentHubLists } from './agent-hub-lists'
 import { executeAgentHubRequest } from './agent-hub-request-executor'
 import { findAgentHubRequestTarget } from './agent-hub-request-target'
@@ -60,6 +61,7 @@ const threads = agentHubThreadsFor([
 const base = agentHubRequestBase()
 const target = { ...base.target, paneKey: PANE_KEY_2, terminalHandle: 'term-2' }
 const presence = vi.fn(async () => ({ present: true, idleMinutes: 0.5 }))
+const orbCurrent = vi.fn(async () => ({ sessionId: 'orb-1' }))
 const context = { threads, lists: buildAgentHubLists(threads) }
 const run = (request: AgentHubRequest, host = 'local') =>
   executeAgentHubRequest(host, request, context)
@@ -92,7 +94,11 @@ beforeEach(() => {
   )
   vi.stubGlobal('cancelAnimationFrame', clearTimeout)
   Object.defineProperty(window, 'api', {
-    value: { notifications: { getDesktopPresence: presence }, shell: { openUrl: vi.fn() } },
+    value: {
+      notifications: { getDesktopPresence: presence },
+      shell: { openUrl: vi.fn() },
+      agentHub: { orb: { current: orbCurrent } }
+    },
     configurable: true
   })
   releasePeek = registerAgentHubPeekHost()
@@ -105,6 +111,7 @@ afterEach(() => {
   resetAgentHubMirrorsForTest()
   clearAgentHubRequestHost('local')
   clearAgentHubRequestHost('workhost')
+  useAgentHubOrbAwarenessStore.setState({ snapshot: null })
   useAppStore.setState(initial)
   vi.unstubAllGlobals()
   vi.clearAllMocks()
@@ -381,6 +388,16 @@ describe('Agent Hub non-card actions', () => {
       present: true,
       idleMinutes: 0.5
     })
+  })
+
+  it('shares Orb awareness only with the current Orb session', async () => {
+    const snapshot = { observedAt: 1, totalAgents: 0, truncated: false, agents: [], notices: [] }
+    useAgentHubOrbAwarenessStore.setState({ snapshot })
+    const orbCaller = { ...base.caller, kind: 'orb' as const, sessionId: 'orb-1' }
+    const status = (caller: typeof base.caller) => run({ ...base, caller, kind: 'status' })
+    expect(await status(base.caller)).not.toHaveProperty('orbAwareness')
+    expect(await status({ ...orbCaller, sessionId: 'stale' })).not.toHaveProperty('orbAwareness')
+    expect(await status(orbCaller)).toHaveProperty('orbAwareness', snapshot)
   })
 
   it('resolves equal pane keys by host and unwraps paired terminal handles', () => {

@@ -28,6 +28,7 @@ import { registryEntryMatchesStatus } from './agent-status-launch-config'
 import { findAgentPaneWorktreeId, getTabIdFromPaneKey } from './agent-status-pane-key-tab-binding'
 import { mergeCurrentOrchestrationContext } from './agent-status-orchestration-context'
 import { deriveAgentStatusLiveFacts } from './agent-status-live-facts'
+import { findWorktreeById } from './worktree-helpers'
 import { liveEntryChildFields } from './agent-status-live-entry-children'
 import {
   canReuseStatusProviderSession,
@@ -157,10 +158,18 @@ export function buildAgentStatusLiveEntry(
     payloadMergedOrchestration ??
     runtimeMergedOrchestration ??
     (payload.state === 'done' ? existing?.orchestration : undefined)
-  const canReuseExistingProviderSession = canReuseStatusProviderSession(existing, {
-    agentType: identity.agentType,
-    state: payload.state
-  })
+  // Mirrored rows keep the host's checkpoint across a new turn; only a host frame replaces it.
+  const hostOwnedWorktree = findWorktreeById(
+    state.worktreesByRepo,
+    routing?.worktreeId ?? existing?.worktreeId ?? ''
+  )
+  const canReuseExistingProviderSession =
+    canReuseStatusProviderSession(existing, {
+      agentType: identity.agentType,
+      state: payload.state
+    }) ||
+    (existing?.agentType === identity.agentType &&
+      hostOwnedWorktree?.runtimeOwnerEnvironmentId !== undefined)
   const providerSession =
     metadata?.providerSession ??
     (canReuseExistingProviderSession ? existing.providerSession : undefined)

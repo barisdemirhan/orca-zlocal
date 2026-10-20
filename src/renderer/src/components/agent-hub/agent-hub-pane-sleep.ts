@@ -29,7 +29,13 @@ export type AgentHubPaneSleepPhase =
   | 'sleeping-pending'
   | 'waking'
   | 'unverifiable'
-type Operation = { phase: 'sleeping-pending' | 'waking' | 'unverifiable'; error?: string }
+// 'failed' keeps a precondition error without overriding the derived awake/sleeping phase.
+type Operation = {
+  phase: 'sleeping-pending' | 'waking' | 'unverifiable' | 'failed'
+  error?: string
+}
+const isHostConfirmationFailure = (message: string): boolean =>
+  /unverifiable|could not be verified/i.test(message)
 const operations = new Map<string, Operation>()
 const listeners = new Set<() => void>()
 const subscribe = (listener: () => void): (() => void) => {
@@ -101,7 +107,10 @@ async function runOperation(target: AgentHubPaneTarget, wake: boolean): Promise<
     operations.delete(key)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'The operation could not be verified.'
-    operations.set(key, { phase: 'unverifiable', error: message })
+    operations.set(key, {
+      phase: isHostConfirmationFailure(message) ? 'unverifiable' : 'failed',
+      error: message
+    })
     throw error
   } finally {
     notify()
@@ -119,8 +128,9 @@ export function useAgentHubPaneSleep(target: AgentHubPaneTarget) {
   const unverifiable = useAppStore(
     (state) => resolveWorkspaceTerminalHostAuthority(state, target.worktree.id) === 'unverifiable'
   )
+  const settledPhase = operation?.phase === 'failed' ? undefined : operation?.phase
   const phase: AgentHubPaneSleepPhase =
-    operation?.phase ?? (unverifiable ? 'unverifiable' : sleeping ? 'sleeping' : 'awake')
+    settledPhase ?? (unverifiable ? 'unverifiable' : sleeping ? 'sleeping' : 'awake')
   const reason = sleeping ? undefined : agentHubPaneSleepReason(target)
   return {
     phase,

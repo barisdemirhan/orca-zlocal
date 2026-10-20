@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { runtimeEnvironmentSupportsCapability } from '@/runtime/runtime-rpc-client'
 import { AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
@@ -25,6 +26,44 @@ export function agentHubSleepPaneKey(target: AgentHubPaneTarget): string | null 
   }
   const leaf = useAppStore.getState().terminalLayoutsByTabId[target.tab.id]?.activeLeafId
   return leaf ? makePaneKey(target.tab.id, leaf) : null
+}
+
+const MANUAL_SLEEP_HOST_UPDATE_REASON =
+  'Update Orca on the execution host before using manual pane sleep.'
+
+/** The disabled reason once a remote execution host is known to lack manual pane sleep. */
+export function useAgentHubManualSleepHostReason(target: AgentHubPaneTarget): string | undefined {
+  const environmentId = useAppStore((state) => {
+    if (!target.agentType) {
+      return null
+    }
+    const owner = resolveRuntimeOwnerForWorktree(state, target.worktree.id)
+    return owner.kind === 'runtime' ? owner.environmentId : null
+  })
+  const [unsupported, setUnsupported] = useState<string | null>(null)
+  useEffect(() => {
+    if (!environmentId) {
+      return
+    }
+    let cancelled = false
+    void runtimeEnvironmentSupportsCapability(
+      environmentId,
+      AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY
+    ).then(
+      (supported) => {
+        if (!cancelled) {
+          setUnsupported(supported ? null : environmentId)
+        }
+      },
+      () => {}
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [environmentId])
+  return environmentId && unsupported === environmentId
+    ? MANUAL_SLEEP_HOST_UPDATE_REASON
+    : undefined
 }
 
 export function agentHubPaneSleepReason(target: AgentHubPaneTarget): string | undefined {
@@ -61,6 +100,11 @@ export async function sleepAgentHubPane(target: AgentHubPaneTarget): Promise<voi
   }
   if (!target.agentType) {
     const result = await changeAgentHubTerminalSuspension(target, true)
+    if (result.state === 'unsupported') {
+      throw new Error(
+        'This execution host does not support terminal suspension. Update Orca there.'
+      )
+    }
     if (result.state !== 'suspended') {
       throw new Error(
         'Terminal suspension could not be verified. Recheck the execution host before retrying.'
@@ -90,7 +134,7 @@ export async function sleepAgentHubPane(target: AgentHubPaneTarget): Promise<voi
       AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY
     ))
   ) {
-    throw new Error('Update Orca on the execution host before using manual pane sleep.')
+    throw new Error(MANUAL_SLEEP_HOST_UPDATE_REASON)
   }
   await state.shutdownCompletedAgentPaneForHibernation(target.worktree.id, {
     paneKey,

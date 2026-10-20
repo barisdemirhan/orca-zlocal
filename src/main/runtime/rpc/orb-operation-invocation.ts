@@ -64,7 +64,7 @@ export async function invokeWithOrbProtection<T>(
   if (!target) {
     return invoke(context.signal)
   }
-  operations.assertWritable(target)
+  operations.assertWritable(target, isOrb ? sessionId : undefined)
   // Other agents retain their existing caller path. Only the current Orb can start Orb protection.
   if (!sessionId || !isOrb) {
     return invoke(context.signal)

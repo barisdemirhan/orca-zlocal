@@ -11,7 +11,7 @@ const target = { kind: 'terminal', ptyId: 'pty', paneKey: 'pane', terminalHandle
 
 it('protects only the active target and releases on completion or failure using the existing progress envelope', async () => {
   const events: AgentHubProgress[] = []
-  const operations = new AgentHubOrbOperations((event) => events.push(event))
+  const operations = new AgentHubOrbOperations((event) => events.push(event), 0)
   const done = Promise.withResolvers<void>()
   const pending = operations.run('orb', target, 'terminal.send', async () => done.promise)
   expect(operations.canWrite(target)).toBe(false)
@@ -71,7 +71,7 @@ it('stops a real chunked terminal write before any next chunk or Enter after the
 })
 
 it('keeps a newer operation protected when the cancelled operation finally returns', async () => {
-  const operations = new AgentHubOrbOperations(vi.fn())
+  const operations = new AgentHubOrbOperations(vi.fn(), 0)
   const oldDone = Promise.withResolvers<void>()
   const old = operations.run('orb', target, 'terminal.send', async () => {
     await oldDone.promise
@@ -108,4 +108,31 @@ it('expires orphan protection without confusing native sessions with terminal pa
   expect(operations.snapshot()).toEqual([])
   done.resolve()
   await pending
+})
+
+it("holds the lease between an Orb turn's writes and releases it after the idle grace", async () => {
+  vi.useFakeTimers()
+  const events: AgentHubProgress[] = []
+  const operations = new AgentHubOrbOperations((event) => events.push(event))
+  await operations.run('orb', target, 'terminal.send', async () => 'text')
+  expect(operations.canWrite(target)).toBe(false)
+  expect(() => operations.assertWritable(target, 'another-orb')).toThrow('orb_target_busy')
+  await vi.advanceTimersByTimeAsync(1_000)
+  const [lease] = operations.snapshot()
+  await operations.run('orb', target, 'terminal.send', async () => 'enter')
+  expect(operations.snapshot()).toHaveLength(1)
+  expect(operations.snapshot()[0]!.requestId).toBe(lease!.requestId)
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(operations.canWrite(target)).toBe(false)
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(operations.canWrite(target)).toBe(true)
+  expect(events.at(-1)).toMatchObject({ text: null, orbOperation: { active: false } })
+})
+
+it('lets the user take control during the idle grace', async () => {
+  vi.useFakeTimers()
+  const operations = new AgentHubOrbOperations(vi.fn())
+  await operations.run('orb', target, 'terminal.send', async () => 'text')
+  expect(operations.release(operations.snapshot()[0]!.requestId)).toBe(true)
+  expect(operations.canWrite(target)).toBe(true)
 })

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { useCallback, useEffect } from 'react'
 import { useAppStore } from '@/store'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
+import { hasRuntimeRpcErrorCode } from '@/runtime/runtime-rpc-result'
 import type { TerminalSuspensionResult } from '../../../../shared/terminal-suspension'
 import { resolveAgentHubTargetTerminal } from './agent-hub-target-terminal'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
@@ -50,8 +51,11 @@ export async function changeAgentHubTerminalSuspension(
       },
       { timeoutMs: 7_000 }
     )
-  } catch {
-    result = { state: 'unverifiable' }
+  } catch (error) {
+    // An older host lacks terminal.suspension; that is a capability gap, not lost contact.
+    result = hasRuntimeRpcErrorCode(error, 'method_not_found')
+      ? { state: 'unsupported' }
+      : { state: 'unverifiable' }
   }
   if (resolveAgentHubPtyId(useAppStore.getState(), target.tab.id, target.paneKey) === ptyId) {
     useSuspensions.setState((current) => ({ entries: new Map(current.entries).set(key, result) }))

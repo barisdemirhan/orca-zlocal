@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { useAgentHubManualSleepHostReason } from './agent-hub-pane-sleep-operations'
 import { useAgentHubPaneSleep } from './agent-hub-pane-sleep'
 import { useAgentHubPaneSleepConfirmation } from './agent-hub-pane-sleep-confirmation'
 
@@ -20,7 +21,13 @@ export function AgentHubPaneSleepAction({
   isOpeningClick?: () => boolean
   returnFocus?: () => HTMLElement | null
 }): React.JSX.Element {
-  const state = useAgentHubPaneSleep(target)
+  const sleepState = useAgentHubPaneSleep(target)
+  const hostReason = useAgentHubManualSleepHostReason(target)
+  // Order: host unverifiable, host lacks manual sleep, then the pane's own reason.
+  const state =
+    hostReason && sleepState.phase === 'awake'
+      ? { ...sleepState, canSleep: false, reason: hostReason }
+      : sleepState
   const [error, setError] = useState<string | null>(null)
   const sleeping = state.phase === 'sleeping'
   const pending = state.phase === 'sleeping-pending' || state.phase === 'waking'
@@ -89,7 +96,7 @@ export function AgentHubPaneSleepAction({
           <Button
             type="button"
             variant="ghost"
-            size={appearance === 'row' && sleeping ? 'xs' : 'icon-xs'}
+            size="icon-xs"
             disabled={disabled}
             aria-label={label}
             aria-description={detail}
@@ -100,7 +107,6 @@ export function AgentHubPaneSleepAction({
             }}
           >
             {icon}
-            {appearance === 'row' && sleeping ? label : null}
           </Button>
         </span>
       </TooltipTrigger>

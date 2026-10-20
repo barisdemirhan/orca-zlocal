@@ -6,11 +6,23 @@ import type {
 } from '../../../shared/agent-hub-orb-operation'
 import type { AgentHubProgress } from '../../../shared/agent-hub-requests'
 
+type Timer = ReturnType<typeof setTimeout> | NodeJS.Timeout
 type Lease = {
   operation: AgentHubOrbOperation
   controller: AbortController
-  timer: ReturnType<typeof setTimeout> | NodeJS.Timeout
+  timer: Timer
   event: AgentHubProgress
+  /** Set between writes of one Orb turn; only the owning Orb session may write meanwhile. */
+  idleTimer?: Timer
+}
+// Keeps the lease across text -> Enter and consecutive sends so the user cannot slip input in.
+export const ORB_OPERATION_IDLE_GRACE_MS = 1_750
+const ORPHAN_LEASE_MS = 120_000
+const unref = (timer: Timer): Timer => {
+  if (typeof timer !== 'number') {
+    timer.unref()
+  }
+  return timer
 }
 const registries = new WeakMap<object, AgentHubOrbOperations>()
 export function registerOrbOperations(runtime: object, operations: AgentHubOrbOperations): void {
@@ -34,13 +46,17 @@ export class AgentHubOrbOperations {
   private readonly active = new Map<string, Lease>()
   private readonly current = new AsyncLocalStorage<Lease>()
 
-  constructor(private readonly publish: (event: AgentHubProgress) => void) {}
+  constructor(
+    private readonly publish: (event: AgentHubProgress) => void,
+    private readonly idleGraceMs = ORB_OPERATION_IDLE_GRACE_MS
+  ) {}
 
   snapshot(): AgentHubProgress[] {
     return [...this.active.values()].map((lease) => lease.event)
   }
 
-  assertWritable(target: AgentHubOrbOperationTarget): void {
+  /** `ownerSessionId` lets the Orb that holds an idle lease continue writing during its grace. */
+  assertWritable(target: AgentHubOrbOperationTarget, ownerSessionId?: string): void {
     const caller = this.current.getStore()
     if (
       caller &&
@@ -51,7 +67,8 @@ export class AgentHubOrbOperations {
       throw new Error('orb_operation_cancelled: The user took control. Do not retry automatically.')
     }
     for (const lease of this.active.values()) {
-      if (sameTarget(lease.operation.target, target) && caller !== lease) {
+      const ownIdle = lease.idleTimer !== undefined && lease.operation.sessionId === ownerSessionId
+      if (sameTarget(lease.operation.target, target) && caller !== lease && !ownIdle) {
         throw new Error('orb_target_busy: Orb is working here. Take control before writing.')
       }
     }
@@ -73,7 +90,26 @@ export class AgentHubOrbOperations {
     action: (signal: AbortSignal) => T | Promise<T>,
     signal?: AbortSignal
   ): Promise<T> {
-    this.assertWritable(target)
+    this.assertWritable(target, sessionId)
+    const lease = this.renewIdle(sessionId, target) ?? this.start(sessionId, target, method)
+    const cancel = () => this.release(lease.operation.id)
+    signal?.addEventListener('abort', cancel, { once: true })
+    try {
+      if (signal?.aborted) {
+        cancel()
+      }
+      return await this.current.run(lease, async () => {
+        this.assertWritable(target)
+        const leaseSignal = lease.controller.signal
+        return action(signal ? AbortSignal.any([signal, leaseSignal]) : leaseSignal)
+      })
+    } finally {
+      signal?.removeEventListener('abort', cancel)
+      this.settle(lease, signal?.aborted === true)
+    }
+  }
+
+  private start(sessionId: string, target: AgentHubOrbOperationTarget, method: string): Lease {
     const operation: AgentHubOrbOperation = {
       id: randomUUID(),
       sessionId,
@@ -81,14 +117,13 @@ export class AgentHubOrbOperations {
       method,
       active: true
     }
-    const controller = new AbortController()
     const now = Date.now()
     const paneKey = `orb-operation:${operation.id}`
     const lease: Lease = {
       operation,
-      controller,
-      // Orphan recovery only; normal release follows the actual operation's completion.
-      timer: setTimeout(() => this.release(operation.id), 120_000),
+      controller: new AbortController(),
+      // Orphan recovery only; normal release follows the operation's idle grace.
+      timer: unref(setTimeout(() => this.release(operation.id), ORPHAN_LEASE_MS)),
       event: {
         kind: 'progress',
         requestId: operation.id,
@@ -100,30 +135,45 @@ export class AgentHubOrbOperations {
         },
         target: { paneKey, terminalHandle: paneKey },
         createdAt: now,
-        expiresAt: now + 120_000,
+        expiresAt: now + ORPHAN_LEASE_MS,
         text: 'Orb is working here',
         orbOperation: operation
       }
     }
-    if (typeof lease.timer !== 'number') {
-      lease.timer.unref()
-    }
-    const cancel = () => this.release(operation.id)
     this.active.set(operation.id, lease)
-    signal?.addEventListener('abort', cancel, { once: true })
-    try {
-      this.publish(lease.event)
-      if (signal?.aborted) {
-        cancel()
+    this.publish(lease.event)
+    return lease
+  }
+
+  /** Reuses the Orb's own lease that is waiting out its idle grace on the same target. */
+  private renewIdle(sessionId: string, target: AgentHubOrbOperationTarget): Lease | undefined {
+    for (const lease of this.active.values()) {
+      if (
+        lease.idleTimer !== undefined &&
+        lease.operation.sessionId === sessionId &&
+        sameTarget(lease.operation.target, target)
+      ) {
+        clearTimeout(lease.idleTimer)
+        lease.idleTimer = undefined
+        clearTimeout(lease.timer)
+        lease.timer = unref(setTimeout(() => this.release(lease.operation.id), ORPHAN_LEASE_MS))
+        lease.event = { ...lease.event, expiresAt: Date.now() + ORPHAN_LEASE_MS }
+        this.publish(lease.event)
+        return lease
       }
-      return await this.current.run(lease, async () => {
-        this.assertWritable(target)
-        return action(signal ? AbortSignal.any([signal, controller.signal]) : controller.signal)
-      })
-    } finally {
-      signal?.removeEventListener('abort', cancel)
-      this.release(operation.id)
     }
+    return undefined
+  }
+
+  private settle(lease: Lease, aborted: boolean): void {
+    if (this.active.get(lease.operation.id) !== lease) {
+      return
+    }
+    if (aborted || this.idleGraceMs <= 0) {
+      this.release(lease.operation.id)
+      return
+    }
+    lease.idleTimer = unref(setTimeout(() => this.release(lease.operation.id), this.idleGraceMs))
   }
 
   release(id: string): boolean {
@@ -133,6 +183,7 @@ export class AgentHubOrbOperations {
     }
     this.active.delete(id)
     clearTimeout(lease.timer)
+    clearTimeout(lease.idleTimer)
     lease.controller.abort()
     this.publish({
       ...lease.event,

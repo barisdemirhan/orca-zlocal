@@ -93,3 +93,14 @@ it('reports loss of contact as unverifiable without attempting a signal', async 
   })
   expect(call).toHaveBeenCalledOnce()
 })
+
+it('reports an old host without terminal.suspension as unsupported, not unverifiable', async () => {
+  seed()
+  call.mockResolvedValueOnce({ terminal: { handle: 'host-handle', ptyId: 'raw-pty' } })
+  call.mockRejectedValueOnce(
+    Object.assign(new Error('Unknown method'), { code: 'method_not_found' })
+  )
+  await expect(changeAgentHubTerminalSuspension(target, true)).resolves.toEqual({
+    state: 'unsupported'
+  })
+})

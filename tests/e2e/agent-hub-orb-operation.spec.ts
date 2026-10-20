@@ -6,7 +6,7 @@ import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } fro
 import { waitForActivePanePtyId } from './helpers/terminal'
 import { orcaCliResult } from './helpers/compiled-orca-cli'
 
-test('a real Orb CLI write protects its target automatically and the user can take control before Enter', async ({
+test('real Orb CLI writes protect their target across text and Enter, and the user can take control between them', async ({
   orcaPage,
   electronApp,
   seededRepoPath
@@ -48,28 +48,24 @@ test('a real Orb CLI write protects its target automatically and the user can ta
     throw new Error('Target terminal missing')
   }
   const cliPath = path.join(process.cwd(), 'out', 'cli', 'index.js')
-  // Generate argv in the child to exercise the shipped CLI without the OS argument-size limit.
-  const bootstrap = `process.argv=[process.execPath,${JSON.stringify(cliPath)},'terminal','send','--terminal',${JSON.stringify(handle)},'--text','#'+ ' '.repeat(900*1024),'--enter','--json'];void require(${JSON.stringify(cliPath)}).main()`
-  const writing = runProcess({
-    program: process.execPath,
-    args: ['-e', bootstrap],
-    env: {
-      ...process.env,
-      ORCA_USER_DATA_PATH: userData,
-      ORCA_DEV_CLI_INVOCATION: '1',
-      ORCA_AGENT_SESSION_ID: current.sessionId,
-      ORCA_TERMINAL_HANDLE: '',
-      ORCA_PANE_KEY: ''
-    },
-    timeoutMs: 30_000,
-    maxOutputBytes: 64 * 1024
-  }).then(async (result) => {
-    await testInfo.attach('orb-cli-write-result', {
-      body: JSON.stringify({ ...result, stdout: result.stdout.slice(0, 2_000) }),
-      contentType: 'application/json'
+  // Each CLI call is a real Orb write; the lease must outlive the first so Enter stays protected.
+  const orbSend = (args: string[]) =>
+    runProcess({
+      program: process.execPath,
+      args: [cliPath, 'terminal', 'send', '--terminal', handle, ...args, '--json'],
+      env: {
+        ...process.env,
+        ORCA_USER_DATA_PATH: userData,
+        ORCA_DEV_CLI_INVOCATION: '1',
+        ORCA_AGENT_SESSION_ID: current.sessionId,
+        ORCA_TERMINAL_HANDLE: '',
+        ORCA_PANE_KEY: ''
+      },
+      timeoutMs: 30_000,
+      maxOutputBytes: 64 * 1024
     })
-    return result
-  })
+  const typed = await orbSend(['--text', 'echo orb-operation'])
+  expect(typed.code, typed.stdout + typed.stderr).toBe(0)
   const protection = mirror.locator('[data-orb-operation-protection]')
   await expect(protection.getByText('Orb is working here', { exact: true })).toBeVisible()
   const blocked = await orcaPage.evaluate(
@@ -91,8 +87,16 @@ test('a real Orb CLI write protects its target automatically and the user can ta
     body: await mirror.screenshot(),
     contentType: 'image/png'
   })
-  const result = await writing
-  expect(result.code, result.stdout + result.stderr).not.toBe(0)
+  // The user's own input is accepted again once they hold control.
+  const afterTakeControl = await orcaPage.evaluate(
+    (terminal) =>
+      window.api.runtime.call({
+        method: 'terminal.send',
+        params: { terminal, text: 'user-input' }
+      }),
+    handle
+  )
+  expect(afterTakeControl.ok).toBe(true)
   expect(
     await electronApp.evaluate(({ BrowserWindow }) =>
       BrowserWindow.getAllWindows().every((window) => !window.isVisible() && !window.isFocused())

@@ -36,7 +36,7 @@ import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 
 type Context = { threads: readonly AgentPaneThread[]; lists: AgentHubLists }
 
-function readStatus(host: string, context: Context): AgentHubStatus {
+function readStatus(host: string, context: Context, includeAwareness: boolean): AgentHubStatus {
   const state = useAppStore.getState()
   const collect = (targets: readonly AgentHubPaneTarget[]): AgentHubPane[] => {
     const panes = new Map<string, AgentHubPane>()
@@ -52,7 +52,7 @@ function readStatus(host: string, context: Context): AgentHubStatus {
     return [...panes.values()]
   }
   const mirrors = readAgentHubMirrors()
-  const awareness = useAgentHubOrbAwarenessStore.getState().snapshot
+  const awareness = includeAwareness ? useAgentHubOrbAwarenessStore.getState().snapshot : null
   const stored = readAgentHubRequests().get(host)
   const waiting = new Map(
     collect(
@@ -202,8 +202,15 @@ export async function executeAgentHubRequest(
         await executeAgentHubPeek(host, request.link, target)
         break
       }
-      case 'status':
-        return { kind: 'status', ...readStatus(host, context) }
+      case 'status': {
+        // Awareness spans every host; only the current Orb session may read it.
+        const orbSessionId =
+          request.caller.kind === 'orb' && request.caller.sessionId
+            ? (await window.api.agentHub.orb.current().catch(() => null))?.sessionId
+            : undefined
+        const isOrb = Boolean(orbSessionId) && orbSessionId === request.caller.sessionId
+        return { kind: 'status', ...readStatus(host, context, isOrb) }
+      }
       case 'presence': {
         const presence = await window.api.notifications.getDesktopPresence()
         if (!presence) {
