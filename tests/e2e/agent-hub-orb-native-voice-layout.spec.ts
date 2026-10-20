@@ -111,60 +111,29 @@ test('Orb resizes by pointer and keyboard without losing its draft, including re
       )
     )
     .toBe(0)
-  await orcaPage.emulateMedia({ reducedMotion: 'no-preference' })
-  await expect
-    .poll(() =>
-      stage.evaluate(
-        (element) =>
-          element
-            .getAnimations({ subtree: true })
-            .filter((animation) => animation.playState === 'running').length
-      )
-    )
-    .toBeGreaterThan(0)
+  // The Orb stays alive under Reduce Motion: its canvas keeps repainting.
   const sphere = stage.getByRole('img')
-  const renderedMotion = () =>
-    sphere.evaluate((element) =>
-      element.getAnimations({ subtree: true }).map((animation) => {
-        const target = animation.effect instanceof KeyframeEffect ? animation.effect.target : null
-        return target instanceof Element ? getComputedStyle(target).transform : null
-      })
-    )
-  const beforeMotion = await renderedMotion()
-  await expect.poll(renderedMotion).not.toEqual(beforeMotion)
-  const surface = sphere.locator('.agent-hub-orb-globe')
-  const continuousMotion = await surface.evaluateHandle((element) => {
-    const animation = element
-      .getAnimations()
-      .find((animation) => animation.effect?.getTiming().iterations === Infinity)
-    if (!animation) {
-      throw new Error('Orb has no continuous surface motion')
-    }
-    return animation
-  })
-  const beforeLiveTime = await continuousMotion.evaluate((animation) =>
-    Number(animation.currentTime)
-  )
+  const canvasFrame = () =>
+    sphere.locator('canvas').evaluate((canvas) => {
+      if (!(canvas instanceof HTMLCanvasElement)) {
+        throw new Error('Orb has no canvas')
+      }
+      return canvas.toDataURL()
+    })
+  const beforeMotion = await canvasFrame()
+  await expect.poll(canvasFrame).not.toEqual(beforeMotion)
   await testInfo.attach('native-orb-resize-reduced-motion', {
     body: await orcaPage.screenshot(),
     contentType: 'image/png'
   })
   await orcaPage.getByRole('radio', { name: 'Start live voice', exact: true }).click()
   await expect(sphere).toHaveAttribute('data-agent-hub-orb-phase', 'listening')
-  expect(
-    await surface.evaluate(
-      (element, animation) => element.getAnimations().includes(animation),
-      continuousMotion
-    )
-  ).toBe(true)
-  await expect
-    .poll(() => continuousMotion.evaluate((animation) => Number(animation.currentTime)))
-    .toBeGreaterThan(beforeLiveTime)
+  const liveFrame = await canvasFrame()
+  await expect.poll(canvasFrame).not.toEqual(liveFrame)
   await testInfo.attach('native-orb-continuous-live-motion', {
     body: await orcaPage.screenshot(),
     contentType: 'image/png'
   })
-  await continuousMotion.dispose()
   await orcaPage.getByRole('radio', { name: 'Switch to text', exact: true }).click()
   await expect(composer).toBeVisible()
   await expect(composer).toHaveText('Draft survives visual resize')

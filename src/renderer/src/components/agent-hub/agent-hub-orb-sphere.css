@@ -1,317 +1,43 @@
-@property --agent-hub-orb-tone {
-  syntax: '<color>';
-  inherits: true;
-  initial-value: transparent;
-}
-
+/* The organism is drawn on a canvas that fills the sphere box. */
 .agent-hub-orb-sphere {
-  --agent-hub-orb-tone: var(--ring);
   position: relative;
   display: inline-grid;
   width: 100%;
   height: 100%;
   place-items: center;
   pointer-events: none;
-  transition: --agent-hub-orb-tone 1100ms ease;
 }
 
-.agent-hub-orb-halo {
-  position: absolute;
-  inset: -12%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--agent-hub-orb-tone) 14%, transparent),
-    transparent 69%
-  );
-  filter: blur(12px);
-}
-
-.agent-hub-orb-globe {
-  position: relative;
+.agent-hub-orb-canvas {
   display: block;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  isolation: isolate;
-  border-radius: 48% 52% 49% 51% / 51% 47% 53% 49%;
-  background: radial-gradient(
-    ellipse at 29% 23%,
-    color-mix(in srgb, var(--agent-hub-orb-tone) 58%, var(--foreground)),
-    color-mix(in srgb, var(--agent-hub-orb-tone) 62%, var(--secondary)) 31%,
-    color-mix(in srgb, var(--agent-hub-orb-tone) 32%, var(--card)) 65%,
-    var(--background) 100%
-  );
-  scale: 1;
-  transition:
-    scale 1200ms ease,
-    opacity 900ms ease;
-  /* A single timeline survives phase changes, so the surface never snaps back. */
-  animation: agent-hub-orb-breathe 7s ease-in-out infinite;
 }
 
-.agent-hub-orb-depth {
-  position: absolute;
-  inset: -25%;
-  background: conic-gradient(
-    from 20deg,
-    transparent 8%,
-    color-mix(in srgb, var(--foreground) 18%, transparent) 23%,
-    transparent 35%,
-    color-mix(in srgb, var(--agent-hub-orb-tone) 32%, transparent) 48%,
-    transparent 63%,
-    color-mix(in srgb, var(--muted-foreground) 20%, transparent) 80%,
-    transparent
-  );
-  filter: blur(11px);
-  animation: agent-hub-orb-depth 13s ease-in-out infinite alternate;
-}
-
-.agent-hub-orb-flow {
-  position: absolute;
-  inset: -24%;
-  border-radius: 39% 61% 45% 55%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 5%,
-    color-mix(in srgb, var(--foreground) 34%, transparent) 17%,
-    color-mix(in srgb, var(--agent-hub-orb-tone) 42%, transparent) 27%,
-    transparent 42%,
-    color-mix(in srgb, var(--foreground) 10%, transparent) 52%,
-    transparent 63%,
-    color-mix(in srgb, var(--agent-hub-orb-tone) 26%, transparent) 76%,
-    transparent
-  );
-  filter: blur(12px);
-  mix-blend-mode: screen;
-  opacity: 0.65;
-  transition: opacity 1000ms ease;
-  animation: agent-hub-orb-flow 11s ease-in-out infinite alternate;
-}
-
-.agent-hub-orb-flow-b {
-  inset: -5% -40%;
-  filter: blur(20px);
-  opacity: 0.45;
-  animation-direction: alternate-reverse;
-  animation-delay: -5.5s;
-}
-
-.agent-hub-orb-ribbons {
-  position: absolute;
-  inset: -12%;
-  width: 124%;
-  height: 124%;
-  opacity: 0.22;
-  scale: 1 0.48;
-  rotate: -15deg;
-  animation: agent-hub-orb-current 6s ease-in-out infinite alternate;
-  transition:
-    opacity 900ms ease,
-    scale 1200ms ease,
-    rotate 1400ms ease;
-}
-
-.agent-hub-orb-grain {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  mix-blend-mode: soft-light;
-  opacity: 0.12;
-}
-
-.agent-hub-orb-shade,
-.agent-hub-orb-glint {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    ellipse at 35% 28%,
-    transparent 27%,
-    color-mix(in srgb, var(--background) 12%, transparent) 57%,
-    color-mix(in srgb, var(--background) 68%, transparent) 95%
-  );
-}
-
-.agent-hub-orb-glint {
-  inset: 5%;
-  opacity: 0.5;
-  background: radial-gradient(
-    ellipse at 31% 21%,
-    color-mix(in srgb, var(--foreground) 42%, transparent),
-    transparent 32%
-  );
-}
-
-.agent-hub-orb-state-icon {
-  position: absolute;
-  inset: 43%;
-  width: 14%;
-  height: 14%;
-  color: var(--foreground);
-  opacity: 0;
-  scale: 0.85;
-  transition:
-    opacity 500ms ease,
-    scale 700ms ease;
-}
-.agent-hub-orb-state-icon[data-active='true'] {
-  opacity: 0.85;
-  scale: 1;
-}
-
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='listening'],
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='connecting'],
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='dictating'],
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='transcribing'] {
-  --agent-hub-orb-tone: var(--agent-orb-listening);
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking'] {
-  --agent-hub-orb-tone: color-mix(in srgb, var(--agent-orb-listening) 32%, var(--muted-foreground));
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='speaking'] {
-  --agent-hub-orb-tone: var(--foreground);
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='request'] {
-  --agent-hub-orb-tone: var(--agent-question-text);
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='approval'] {
-  --agent-hub-orb-tone: var(--status-warning);
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='result'] {
-  --agent-hub-orb-tone: var(--status-success);
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='error'],
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='result'][data-outcome='error'] {
-  --agent-hub-orb-tone: color-mix(in srgb, var(--destructive) 42%, var(--muted-foreground));
-}
-
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking'] .agent-hub-orb-globe {
-  scale: 0.97 1.025;
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='speaking'] .agent-hub-orb-globe {
-  scale: 1.025 0.98;
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='dictating'] .agent-hub-orb-globe,
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='transcribing'] .agent-hub-orb-globe {
-  scale: 0.96 1.03;
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='listening'] .agent-hub-orb-ribbons,
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='dictating'] .agent-hub-orb-ribbons {
-  opacity: 0.6;
-  scale: 1 0.85;
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='thinking'] .agent-hub-orb-ribbons,
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='transcribing'] .agent-hub-orb-ribbons {
-  opacity: 0.45;
-  rotate: 28deg;
-  scale: 1 0.65;
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='speaking'] .agent-hub-orb-ribbons {
-  opacity: 0.75;
-  scale: 1 1.06;
-  rotate: -4deg;
-}
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='muted'] .agent-hub-orb-globe,
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='off'] .agent-hub-orb-globe,
-.agent-hub-orb-sphere[data-agent-hub-orb-phase='stopping'] .agent-hub-orb-globe {
-  opacity: 0.6;
-  scale: 0.97;
-}
-.agent-hub-orb-sphere[data-input-speaking='true'] .agent-hub-orb-flow {
-  opacity: 1;
-}
-.agent-hub-orb-sphere[data-input-speaking='true'] .agent-hub-orb-ribbons {
-  opacity: 0.9;
-  scale: 1 1.12;
-}
-
-.agent-hub-orb-record-mark {
-  position: absolute;
-  inset: 47%;
-  border-radius: 50%;
-  background: var(--foreground);
-  opacity: 0;
-  transition: opacity 500ms ease;
-}
-.agent-hub-orb-record-mark[data-active='true'] {
-  opacity: 0.8;
-}
 .agent-hub-orb-mute-marks {
   position: absolute;
   display: flex;
-  gap: 2px;
-  right: -4%;
-  bottom: -4%;
-}
-.agent-hub-orb-mute-marks svg {
-  width: 12px;
-  height: 12px;
-  padding: 1px;
+  align-items: center;
+  gap: var(--spacing);
+  left: 50%;
+  bottom: 10%;
+  translate: -50% 0;
+  padding: var(--spacing) calc(var(--spacing) * 1.5);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--popover);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--popover) 85%, transparent);
   color: var(--popover-foreground);
 }
-
-@keyframes agent-hub-orb-breathe {
-  0%,
-  100% {
-    transform: scale(0.99) rotate(-2deg);
-    border-radius: 48% 52% 49% 51% / 51% 47% 53% 49%;
-  }
-  50% {
-    transform: scale(1.02) rotate(2deg);
-    border-radius: 52% 48% 46% 54% / 48% 53% 47% 52%;
-  }
+.agent-hub-orb-mute-marks svg {
+  width: 14px;
+  height: 14px;
 }
-@keyframes agent-hub-orb-depth {
-  from {
-    transform: rotate(-18deg);
-  }
-  to {
-    transform: rotate(24deg);
-  }
+[data-agent-hub-orb-composer-trigger] .agent-hub-orb-mute-marks {
+  bottom: -2px;
+  gap: 2px;
+  padding: 2px;
 }
-@keyframes agent-hub-orb-flow {
-  from {
-    transform: rotate(-30deg) scale(0.92) skewX(-12deg);
-  }
-  50% {
-    transform: rotate(35deg) scale(1.08) skewX(15deg);
-  }
-  to {
-    transform: rotate(85deg) scale(0.96) skewX(-8deg);
-  }
-}
-@keyframes agent-hub-orb-current {
-  from {
-    transform: translate(-2%, -2%) rotate(-4deg);
-  }
-  to {
-    transform: translate(2%, 2%) rotate(4deg);
-  }
-}
-
-/* Blur is proportional to the mark at composer size, without a rectangular halo. */
-[data-agent-hub-orb-mark='small'] .agent-hub-orb-halo,
-[data-agent-hub-orb-composer-trigger] .agent-hub-orb-halo {
-  display: none;
-}
-[data-agent-hub-orb-composer-trigger] .agent-hub-orb-flow {
-  filter: blur(3px);
-}
-[data-agent-hub-orb-composer-trigger] .agent-hub-orb-depth {
-  filter: blur(2px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .agent-hub-orb-sphere,
-  .agent-hub-orb-sphere * {
-    animation: none;
-    transition: none;
-  }
+[data-agent-hub-orb-composer-trigger] .agent-hub-orb-mute-marks svg {
+  width: 8px;
+  height: 8px;
 }
 
 .agent-hub-orb-send-slot {
@@ -344,10 +70,4 @@
   .agent-hub-orb-send-slot {
     transition: none;
   }
-}
-
-[data-agent-hub-orb-composer-trigger] .agent-hub-orb-state-icon {
-  inset: calc(50% - 6px);
-  width: 12px;
-  height: 12px;
 }

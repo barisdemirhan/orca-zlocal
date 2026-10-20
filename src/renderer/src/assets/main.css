@@ -95,6 +95,8 @@
   --color-agent-working: var(--agent-working);
   --color-agent-question-text: var(--agent-question-text);
   --color-agent-orb-listening: var(--agent-orb-listening);
+  --color-agent-orb-working: var(--agent-orb-working);
+  --color-agent-orb-attention: var(--agent-orb-attention);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -242,6 +244,8 @@
   /* The working-state yellow every agent working/monitoring glyph paints. */
   --agent-working: var(--color-yellow-500);
   --agent-orb-listening: var(--color-blue-600);
+  --agent-orb-working: var(--color-indigo-600);
+  --agent-orb-attention: var(--color-sky-600);
   /* Legible weight for text/glyphs on a tinted --agent-question surface. */
   --agent-question-text: var(--color-orange-700);
   /* Keep PR-state hues stable across theme changes. */
@@ -354,6 +358,8 @@
   --ai-action-accent: var(--color-violet-400);
   --agent-question: var(--color-orange-500);
   --agent-orb-listening: var(--color-blue-400);
+  --agent-orb-working: var(--color-indigo-400);
+  --agent-orb-attention: var(--color-sky-300);
   --agent-question-text: var(--color-orange-300);
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;

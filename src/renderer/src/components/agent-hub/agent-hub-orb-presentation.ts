@@ -1,7 +1,7 @@
 import { translate } from '@/i18n/i18n'
 import type { DictationState } from '../../../../shared/speech-types'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
-import type { AgentHubOrbPhase } from './AgentHubOrbSphere'
+import type { AgentHubOrbPhase } from './agent-hub-orb-phase'
 import type { AgentHubOrbVoiceSnapshot } from './agent-hub-orb-voice-state'
 
 export function agentHubOrbPresentation(
@@ -9,7 +9,8 @@ export function agentHubOrbPresentation(
   voice: AgentHubOrbVoiceSnapshot,
   hasRequest: boolean,
   dictation?: DictationState | null,
-  approval = false
+  approval = false,
+  attention = false
 ): { phase: AgentHubOrbPhase; label: string } {
   let phase: AgentHubOrbPhase = 'idle'
   const needsApproval =
@@ -29,12 +30,12 @@ export function agentHubOrbPresentation(
     phase = 'dictating'
   } else if (dictation === 'stopping') {
     phase = 'transcribing'
-  } else if (voice.output === 'speaking' && !voice.outputMuted) {
+  } else if (voice.output === 'speaking') {
     phase = 'speaking'
   } else if (state.kind === 'working') {
     phase = 'thinking'
-  } else if (voice.connection === 'live' && voice.input === 'muted') {
-    phase = 'muted'
+  } else if (attention) {
+    phase = 'attention'
   } else if (voice.connection === 'live' || state.kind === 'listening') {
     phase = 'listening'
   } else if (state.kind === 'done') {
@@ -48,7 +49,7 @@ export function agentHubOrbPresentation(
     listening: translate('auto.agentHub.orb.listening', 'Listening'),
     thinking: translate('auto.agentHub.orb.working', 'Working'),
     speaking: translate('auto.agentHub.orb.speaking', 'Speaking'),
-    muted: translate('auto.agentHub.orb.muted', 'Microphone muted; live voice remains connected.'),
+    attention: translate('agentHub.orb.attention', 'An agent sent an update'),
     request: translate('auto.agentHub.orb.needsAnswer', 'Waiting for your answer'),
     approval: translate('agentHub.orb.needsApproval', 'Waiting for your approval'),
     result: translate('auto.agentHub.orb.done', 'Completed'),
@@ -62,12 +63,15 @@ export function agentHubOrbPresentation(
     dictating: translate('agentHub.card.dictate', 'Dictate'),
     transcribing: translate('agentHub.orb.transcribing', 'Preparing dictated text…')
   }
+  const mutedLive = voice.connection === 'live' && voice.input === 'muted'
   const label =
     phase === 'speaking' && voice.input === 'muted'
       ? translate(
           'auto.agentHub.orb.speakingMuted',
           'Speaking. Microphone muted; live voice remains connected.'
         )
-      : labels[phase]
+      : mutedLive && phase === 'listening'
+        ? translate('auto.agentHub.orb.muted', 'Microphone muted; live voice remains connected.')
+        : labels[phase]
   return { phase, label }
 }
