@@ -22,13 +22,13 @@ it('sets no mode for an agent whose chats offer none', () => {
   expect(agentHubOrbPermissionOptions(settings, 'pi')).toEqual({})
 })
 
-it('defaults a never-chosen Orb to Approve for me, else Full access', () => {
+it('defaults a never-chosen Orb to Approve for me, else Ask', () => {
   const settings = createGlobalSettingsFixture()
   expect(agentHubOrbPermissionMode(settings, 'codex', true)).toBe('auto')
   expect(agentHubOrbPermissionMode(settings, 'claude', true)).toBe('auto')
-  expect(agentHubOrbPermissionMode(settings, 'claude', false)).toBe('full-access')
+  expect(agentHubOrbPermissionMode(settings, 'claude', false)).toBe('ask')
   expect(agentHubOrbPermissionOptions(settings, 'grok')).toEqual({
-    permissionMode: 'full-access'
+    permissionMode: 'ask'
   })
 })
 
