@@ -2,7 +2,8 @@ import { defineMethod, type RpcContext } from '../core'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
 import {
   AgentHubOrbOpenParamsSchema,
-  AgentHubOrbListParamsSchema
+  AgentHubOrbListParamsSchema,
+  AgentHubOrbReleaseOperationParamsSchema
 } from '../../../../shared/agent-hub-orb-params'
 import { requireStructuredCapability } from './structured-agent-session-gate'
 
@@ -48,5 +49,16 @@ export const AGENT_HUB_ORB_METHODS = [
     permission: 'workspace',
     params: AgentHubOrbListParamsSchema,
     handler: (params, ctx) => orbFor(ctx).list(params.limit)
+  }),
+  defineMethod({
+    name: 'agentHub.orb.releaseOperation',
+    permission: 'workspace',
+    params: AgentHubOrbReleaseOperationParamsSchema,
+    handler: (params, ctx) => {
+      if (ctx.caller?.kind !== 'desktop' && ctx.caller?.kind !== 'paired-device') {
+        throw new AgentHubError('invalid_argument', 'Take control from the target pane.')
+      }
+      return { released: ctx.runtime.agentHub.orbOperations.release(params.operationId) }
+    }
   })
 ] as const

@@ -30,6 +30,10 @@ import {
 import { AgentModelCatalogStore } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
 import { createAgentModelCatalogService } from '../../native-chat/agent-model-catalog/agent-model-catalog-service'
 import type { AgentModelCatalogProbe } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
+import {
+  AgentHubOrbOperations,
+  registerOrbOperations
+} from '../../runtime/agent-hub/agent-hub-orb-operations'
 
 let state: ReturnType<typeof hostTestState>
 let settings: ReturnType<typeof createGlobalSettingsFixture>
@@ -288,6 +292,34 @@ describe('Orb conversations on the structured host', () => {
     )
     expect(manager.current()?.sessionId).toBe(active.sessionId)
     expect(state.host.getSessionTabId(previous.sessionId)).toBeNull()
+  })
+
+  it('keeps operation protection on a refused close and releases it after a verified Orb close', async () => {
+    const current = await manager.open()
+    const operations = new AgentHubOrbOperations(vi.fn())
+    registerOrbOperations(runtime, operations)
+    const done = Promise.withResolvers<void>()
+    const target = { kind: 'session', sessionId: 'target-chat' } as const
+    const pending = operations.run(
+      current.sessionId,
+      target,
+      'agentSession.send',
+      async () => done.promise
+    )
+    try {
+      vi.mocked(runtime.closeMobileSessionTab).mockResolvedValueOnce(
+        refusedMobileSessionTabClose('stale-publication')
+      )
+      await expect(manager.close()).rejects.toMatchObject({ code: 'invalid_argument' })
+      expect(operations.canWrite(target)).toBe(false)
+      await manager.close()
+      expect(operations.canWrite(target)).toBe(true)
+      expect(operations.snapshot()).toEqual([])
+    } finally {
+      done.resolve()
+      await pending
+      operations.dispose()
+    }
   })
 
   it('serializes an opening, close, and next opening instead of returning the conversation being closed', async () => {

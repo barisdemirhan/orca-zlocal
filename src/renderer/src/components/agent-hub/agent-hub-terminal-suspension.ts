@@ -4,7 +4,7 @@ import { useAppStore } from '@/store'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
 import type { TerminalSuspensionResult } from '../../../../shared/terminal-suspension'
 import { resolveAgentHubTargetTerminal } from './agent-hub-target-terminal'
-import { agentHubOrbTargetKey } from './agent-hub-orb-focus-store'
+import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { resolveAgentHubPtyId, type AgentHubPaneTarget } from './agent-hub-pane-target'
 
 const useSuspensions = create<{ entries: ReadonlyMap<string, TerminalSuspensionResult> }>(() => ({
@@ -13,7 +13,13 @@ const useSuspensions = create<{ entries: ReadonlyMap<string, TerminalSuspensionR
 const pending = new Map<string, Promise<TerminalSuspensionResult>>()
 function keyFor(target: AgentHubPaneTarget): string {
   const ptyId = resolveAgentHubPtyId(useAppStore.getState(), target.tab.id, target.paneKey)
-  return `${agentHubOrbTargetKey(target)}:${ptyId}`
+  const leaf = useAppStore.getState().terminalLayoutsByTabId[target.tab.id]?.activeLeafId
+  return JSON.stringify([
+    getWorktreeHostIdentity(target.worktree),
+    target.tab.id,
+    target.paneKey ?? leaf,
+    ptyId
+  ])
 }
 export const readAgentHubTerminalSuspension = (
   target: AgentHubPaneTarget

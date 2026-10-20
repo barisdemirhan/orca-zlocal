@@ -37,9 +37,8 @@ import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 
 import { agentHubOrbErrorMessage } from './agent-hub-orb-error'
-import { AgentHubOrbFocusStatus } from './AgentHubOrbFocusStatus'
 import { AgentHubOrbFollowNotices } from './AgentHubOrbFollowNotices'
-import { useAgentHubOrbFollowDelivery } from './use-agent-hub-orb-follow-delivery'
+import { useAgentHubOrbAwarenessDelivery } from './use-agent-hub-orb-awareness-delivery'
 import { openAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 export function AgentHubOrbConversation({
@@ -70,7 +69,7 @@ export function AgentHubOrbConversation({
     voice.connection === 'connecting' ||
     voice.connection === 'live' ||
     voice.connection === 'stopping'
-  useAgentHubOrbFollowDelivery(tabId, voice.connection === 'live')
+  useAgentHubOrbAwarenessDelivery(tabId, voice)
   const openFollowTarget = (target: AgentHubPaneTarget): void => {
     openAgentHubMirrors([target])
   }
@@ -270,7 +269,6 @@ export function AgentHubOrbConversation({
           </Button>
         </div>
       ) : null}
-      <AgentHubOrbFocusStatus onOpenTarget={openFollowTarget} />
       <AgentHubOrbFollowNotices onOpenTarget={openFollowTarget} />
       {chatVisible && conversation ? (
         <p className="shrink-0 truncate px-3 pt-2 text-xs text-muted-foreground">

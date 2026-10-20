@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { AgentHubOrbOperationSchema } from '../agent-hub-orb-operation'
 import type { AgentHubDelivery, AgentHubEvent, AgentHubSnapshot } from '../agent-hub-requests'
 
 const pane = z.object({ paneKey: z.string(), terminalHandle: z.string() })
@@ -65,7 +66,11 @@ export const AgentHubEventSchema: z.ZodType<AgentHubEvent> = z.discriminatedUnio
   base.extend(arrange.shape),
   base.extend(canvas.shape),
   base.extend({ kind: z.literal('consent'), operation }),
-  base.extend({ kind: z.literal('progress'), text: z.string().nullable() }),
+  base.extend({
+    kind: z.literal('progress'),
+    text: z.string().nullable(),
+    orbOperation: AgentHubOrbOperationSchema.optional()
+  }),
   base.extend({
     kind: z.literal('closed'),
     requestId: z.union([z.string().uuid(), z.string().regex(/^gate_/)]),

@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo } from 'react'
+import { AgentHubOrbSessionOperationGuard } from '../agent-hub/AgentHubOrbOperationOverlay'
 import { useShallow } from 'zustand/react/shallow'
 import type { Tab, TabGroup } from '../../../../shared/tab-types'
 import { useAppStore } from '@/store'
@@ -69,16 +70,21 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
       <AgentHubOrbComposerContext value={destination ? tab.id : null}>
         <NativeChatPresentationContext value={destination ? 'orb' : 'chat'}>
           <AgentHubOrbVoiceContext value={voice}>
-            <NativeChatView
-              mode="structured"
-              tabId={tab.id}
-              groupId={destination ? undefined : groupId}
+            <AgentHubOrbSessionOperationGuard
+              host={target.kind === 'environment' ? target.environmentId : 'local'}
               sessionId={tab.entityId}
-              agent={tab.agentSessionAgent}
-              isVisible={destination ? chatVisible : isActive}
-              isFocusedGroup={destination ? chatVisible : isFocusedGroup}
-              target={target}
-            />
+            >
+              <NativeChatView
+                mode="structured"
+                tabId={tab.id}
+                groupId={destination ? undefined : groupId}
+                sessionId={tab.entityId}
+                agent={tab.agentSessionAgent}
+                isVisible={destination ? chatVisible : isActive}
+                isFocusedGroup={destination ? chatVisible : isFocusedGroup}
+                target={target}
+              />
+            </AgentHubOrbSessionOperationGuard>
           </AgentHubOrbVoiceContext>
         </NativeChatPresentationContext>
       </AgentHubOrbComposerContext>

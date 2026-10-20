@@ -75,6 +75,9 @@ it('refuses Orb methods on disabled hosts and paired desktops before session cre
       clientKind: 'runtime'
     }
     for (const method of AGENT_HUB_ORB_METHODS) {
+      if (method.name === 'agentHub.orb.releaseOperation') {
+        continue
+      }
       const response = await dispatcher.dispatch(
         { id: 'orb', authToken: 'desktop', method: method.name, params: {} },
         {
@@ -91,6 +94,54 @@ it('refuses Orb methods on disabled hosts and paired desktops before session cre
     }
   }
 })
+
+it.each([{ kind: 'desktop' }, { kind: 'paired-device', deviceId: 'remote-desktop' }] as const)(
+  'lets a human $kind take control even after Orb is disabled',
+  async (caller) => {
+    vi.spyOn(state.runtime, 'isAgentHubEnabled').mockReturnValue(false)
+    const dispatcher = new RpcDispatcher({
+      runtime: state.runtime,
+      methods: eraseRpcMethods(AGENT_HUB_ORB_METHODS)
+    })
+    const done = Promise.withResolvers<void>()
+    const operations = state.runtime.agentHub.orbOperations
+    const target = { kind: 'session', sessionId: 'target-chat' } as const
+    const pending = operations.run(
+      'orb-session',
+      target,
+      'agentSession.send',
+      async () => done.promise
+    )
+    try {
+      const operationId = operations.snapshot()[0]!.requestId
+      const refused = await dispatcher.dispatch(
+        {
+          id: 'agent',
+          authToken: 'desktop',
+          method: 'agentHub.orb.releaseOperation',
+          params: { operationId }
+        },
+        { caller: { kind: 'local-cli' }, clientKind: 'runtime' }
+      )
+      expect(refused).toMatchObject({ ok: false, error: { code: 'invalid_argument' } })
+      expect(operations.canWrite(target)).toBe(false)
+      const result = await dispatcher.dispatch(
+        {
+          id: 'human',
+          authToken: 'desktop',
+          method: 'agentHub.orb.releaseOperation',
+          params: { operationId }
+        },
+        { caller, clientKind: 'runtime' }
+      )
+      expect(result).toMatchObject({ ok: true, result: { released: true } })
+      expect(operations.canWrite(target)).toBe(true)
+    } finally {
+      done.resolve()
+      await pending
+    }
+  }
+)
 
 it('publishes persisted create, resolve and timeout changes, restoring only pending gates to capable desktops', () => {
   const capable = subscribe(true)

@@ -8,6 +8,7 @@ import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-s
 import type { OrchestrationDb } from './orchestration/db'
 import { OrcaRuntimeWithMigrationCatalog } from './orca-runtime-migration-catalog'
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
+import { registerOrbOperations } from './agent-hub/agent-hub-orb-operations'
 import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
 import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
 import type { TerminalSurfaceCloseTarget } from '../../shared/terminal-surface-close-target'
@@ -171,6 +172,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCa
 
   constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithMigrationCatalog>) {
     super(...args)
+    registerOrbOperations(this, this.agentHub.orbOperations)
     this.paneSpawnLineage = new RuntimePaneSpawnLineage({
       read: () => this.store?.getWorkspaceSession?.(),
       write: (session) => this.store?.setWorkspaceSession?.(session),

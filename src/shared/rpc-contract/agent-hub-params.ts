@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { AgentHubOrbAwarenessSchema } from '../agent-hub-orb-awareness'
 
 export const AGENT_HUB_DEFAULT_ASK_TIMEOUT_MS = 30 * 60_000
 export const AGENT_HUB_MAX_ASK_TIMEOUT_MS = 24 * 60 * 60_000
@@ -114,7 +115,8 @@ export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
     mirrors: z.array(pane).max(500),
     parked: z.array(pane).max(500),
     waiting: z.array(pane).max(500),
-    orbFocus: z.object({ pinned: pane.nullable(), following: z.array(pane).max(500) }).optional()
+    orbFocus: z.object({ pinned: pane.nullable(), following: z.array(pane).max(500) }).optional(),
+    orbAwareness: AgentHubOrbAwarenessSchema.optional()
   }),
   z.object({ kind: z.literal('consent'), decision: z.enum(['once', 'session', 'deny']) }),
   z.object({

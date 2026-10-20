@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom'
+import { AgentHubOrbOperationOverlay } from '../agent-hub/AgentHubOrbOperationOverlay'
 import { focusTerminalTabSurface } from '@/lib/focus-terminal-tab-surface'
 import CodexRestartChip from '../CodexRestartChip'
 import { CodexSharedServerBanner } from './CodexSharedServerBanner'
@@ -220,6 +221,30 @@ export function TerminalPaneMobileDriverPortals({
           pane.container,
           `mobile-driver-banner-${pane.id}`
         )
+      })}
+    </>
+  )
+}
+
+export function TerminalPaneOrbOperationPortals({
+  controller
+}: {
+  controller: TerminalPaneController
+}): React.JSX.Element {
+  return (
+    <>
+      {controller.managedPanes.map((pane) => {
+        const ptyId = controller.paneTransportsRef.current.get(pane.id)?.getPtyId()
+        return ptyId
+          ? createPortal(
+              <AgentHubOrbOperationOverlay
+                ptyId={ptyId}
+                paneKey={`${controller.tabId}:${pane.leafId}`}
+              />,
+              pane.container,
+              `orb-operation-${pane.id}`
+            )
+          : null
       })}
     </>
   )

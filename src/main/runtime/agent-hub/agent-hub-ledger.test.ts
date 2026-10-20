@@ -117,6 +117,49 @@ describe('Agent Hub ledger', () => {
     await expect(retried).resolves.toEqual({ mirrors: [], parked: [], waiting: [] })
   })
 
+  it('returns optional global Orb awareness in status while accepting older desktop responses', async () => {
+    const orbAwareness = {
+      observedAt: Date.now(),
+      totalAgents: 1,
+      truncated: false,
+      agents: [
+        {
+          host: 'remote',
+          paneKey: 'other',
+          title: 'Lume',
+          workspace: '/lume',
+          agent: 'codex',
+          state: 'waiting',
+          since: 1
+        }
+      ],
+      notices: [
+        {
+          id: 'ask',
+          host: 'remote',
+          paneKey: 'other',
+          title: 'Lume',
+          kind: 'decision' as const,
+          text: 'Which option? A or B?'
+        }
+      ]
+    }
+    const answer = ledger.status(caller, caller)
+    ledger.respond(
+      latest('status').requestId,
+      { kind: 'status', mirrors: [], parked: [], waiting: [], orbAwareness },
+      'A'
+    )
+    await expect(answer).resolves.toMatchObject({ orbAwareness })
+    const legacy = ledger.status(caller, caller)
+    ledger.respond(
+      latest('status').requestId,
+      { kind: 'status', mirrors: [], parked: [], waiting: [] },
+      'A'
+    )
+    await expect(legacy).resolves.toEqual({ mirrors: [], parked: [], waiting: [] })
+  })
+
   it('limits Orb notifications by session identity while keeping pane buckets separate', () => {
     const orb = { ...caller, kind: 'orb' as const, sessionId: 'codex_orb' }
     for (let index = 0; index < 6; index += 1) {

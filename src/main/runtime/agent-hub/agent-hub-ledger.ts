@@ -18,26 +18,11 @@ import { AgentHubError } from './agent-hub-error'
 import { AgentHubRateLimits, agentHubCallerRateKey } from './agent-hub-rate-limits'
 import { AgentHubPendingRequests } from './agent-hub-pending-requests'
 import { AgentHubProgressLines } from './agent-hub-progress'
-
-export function agentHubTargetNeedsConsent(
-  caller: AgentHubCaller,
-  target: AgentHubPane,
-  parentOf: (paneKey: string) => string | undefined = () => undefined
-): boolean {
-  const seen = new Set<string>()
-  for (let pane: string | undefined = target.paneKey; pane; pane = parentOf(pane)) {
-    if (pane === caller.paneKey) {
-      return false
-    }
-    if (seen.has(pane)) {
-      break
-    }
-    seen.add(pane)
-  }
-  return true
-}
+import { AgentHubOrbOperations } from './agent-hub-orb-operations'
+import { agentHubTargetNeedsConsent } from './agent-hub-target-consent'
 
 export class AgentHubLedger {
+  readonly orbOperations: AgentHubOrbOperations
   private readonly desktops = new Map<string, number>()
   private readonly sessionGrants = new Set<string>()
   private readonly rates: AgentHubRateLimits
@@ -52,6 +37,7 @@ export class AgentHubLedger {
     this.rates = new AgentHubRateLimits(now)
     this.requests = new AgentHubPendingRequests(now, publish)
     this.progress = new AgentHubProgressLines(now, publish)
+    this.orbOperations = new AgentHubOrbOperations(publish)
   }
 
   registerDesktop(desktop: string): () => void {
@@ -73,7 +59,10 @@ export class AgentHubLedger {
   }
 
   snapshot(): AgentHubSnapshot {
-    return { requests: this.requests.snapshot(), progress: this.progress.snapshot() }
+    return {
+      requests: this.requests.snapshot(),
+      progress: [...this.progress.snapshot(), ...this.orbOperations.snapshot()]
+    }
   }
 
   notify(
@@ -194,7 +183,12 @@ export class AgentHubLedger {
     if (response.kind !== 'status') {
       throw new AgentHubError('invalid_argument', 'Invalid status response')
     }
-    return { mirrors: response.mirrors, parked: response.parked, waiting: response.waiting }
+    return {
+      mirrors: response.mirrors,
+      parked: response.parked,
+      waiting: response.waiting,
+      ...(response.orbAwareness ? { orbAwareness: response.orbAwareness } : {})
+    }
   }
 
   async operate(
@@ -235,9 +229,20 @@ export class AgentHubLedger {
       ...this.base(caller, target, AGENT_HUB_UI_TIMEOUT_MS),
       ...operation
     }
-    this.requests.create(request, this.desktops.keys())
-    await this.requests.wait(request.requestId, signal)
-    return { requestId: request.requestId }
+    const execute = async (operationSignal?: AbortSignal) => {
+      this.requests.create(request, this.desktops.keys())
+      await this.requests.wait(request.requestId, operationSignal)
+      return { requestId: request.requestId }
+    }
+    return caller.kind === 'orb' && caller.sessionId
+      ? this.orbOperations.run(
+          caller.sessionId,
+          { kind: 'pane', ...target },
+          `agentHub.${operation.kind}`,
+          execute,
+          signal
+        )
+      : execute(signal)
   }
 
   respond(
@@ -253,6 +258,7 @@ export class AgentHubLedger {
   }
 
   dispose(): void {
+    this.orbOperations.dispose()
     this.progress.dispose()
     this.requests.dispose()
     this.desktops.clear()

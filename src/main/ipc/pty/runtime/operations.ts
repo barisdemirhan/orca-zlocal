@@ -1,4 +1,5 @@
 import { isRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
+import { readOrbOperations } from '../../../runtime/agent-hub/agent-hub-orb-operations'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import type { IPtyProvider } from '../../../providers/pty-provider-contract'
 import { LocalPtyProvider } from '../../../providers/local-pty-provider'
@@ -38,6 +39,12 @@ export function writePtyFromRuntimeController(
   inputKind: TerminalInputKind,
   options?: { waitForSettlement: true }
 ): boolean | WriteSettlement | Promise<WriteSettlement> {
+  if (deps.runtime && inputKind !== 'query-reply') {
+    const protection = readOrbOperations(deps.runtime)
+    if (protection && !protection.canWrite({ kind: 'terminal', ptyId, terminalHandle: ptyId })) {
+      return options?.waitForSettlement ? writeRefused('provider_refused_write') : false
+    }
+  }
   const observeAcceptedInput = (): void => {
     if (isDrivingInputKind(inputKind) && ptyOwnership.get(ptyId) === LOCAL_EXECUTION_HOST_ID) {
       deps.runtime?.observeClaudeTerminalEvidence?.(ptyId, { kind: 'input', data })

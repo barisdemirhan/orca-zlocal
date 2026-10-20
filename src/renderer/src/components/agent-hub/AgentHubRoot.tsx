@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { AGENT_HUB_ORB_VOICE_COMMANDS } from './agent-hub-orb-voice-commands'
 import { AgentHubPaneSleepConfirmationHost } from './AgentHubPaneSleepConfirmation'
-import { useAgentHubOrbFollow } from './use-agent-hub-orb-follow'
+import { useAgentHubOrbAwareness } from './use-agent-hub-orb-awareness'
 import { useNow } from '@/hooks/use-now'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { Popover, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover'
@@ -84,7 +84,7 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
   const lineage = useMemo(() => buildAgentHubLineage(threads, now), [threads, now])
   const finishedMaxAgeMs = preferences.finishedClearMinutes * 60_000
   const lists = useAgentHubLists(threads, now, finishedMaxAgeMs, lineage)
-  useAgentHubOrbFollow(lists)
+  useAgentHubOrbAwareness(threads, lists)
   const orb = useAgentHubOrbSurfaces(threads, lists, anchorRef, preferences, inSettings)
   const { ownsRequest } = orb
   useAgentHubAlerts(orb.hubLists, preferences)

@@ -6,6 +6,7 @@ import { isTerminalQueryReply } from '../../../../../shared/terminal-query-reply
 import { safeFitAndThen } from '@/lib/pane-manager/pane-tree-ops'
 import { getFitOverrideForPty } from '@/lib/pane-manager/mobile-fit-overrides'
 import { isPtyLocked } from '@/lib/pane-manager/mobile-driver-state'
+import { dropProtectedPtyInput } from './pty-input-protection'
 import { getAppliedSizeReadE2eDelayMs } from '../pty-applied-size-read-e2e-delay'
 import { createPtySizeReassertion } from '../pty-size-reassertion'
 import { isPaneReplaying } from '../replay-guard'
@@ -53,9 +54,8 @@ export function installPtyInputForward(session: ConnectPanePtySession): void {
       session.clearPendingTerminalInputIntent()
       return
     }
-    // Mobile driver lock withholds desktop input until explicit Take back restores input and dimensions.
-    if (currentPtyId && isPtyLocked(currentPtyId)) {
-      session.clearPendingTerminalInputIntent()
+    // Mobile ownership and Orb protection block input; protocol replies passed above.
+    if (dropProtectedPtyInput(session, currentPtyId)) {
       return
     }
     if (

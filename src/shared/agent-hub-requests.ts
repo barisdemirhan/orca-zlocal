@@ -1,3 +1,6 @@
+import type { AgentHubOrbAwareness } from './agent-hub-orb-awareness'
+import type { AgentHubOrbOperation } from './agent-hub-orb-operation'
+
 export type AgentHubPane = { paneKey: string; terminalHandle: string }
 export type AgentHubCaller = AgentHubPane & {
   kind?: 'pane' | 'orb'
@@ -60,7 +63,12 @@ export type AgentHubRequest = AgentHubRequestBase &
     | { kind: 'consent'; operation: AgentHubOperation }
   )
 
-export type AgentHubProgress = AgentHubRequestBase & { kind: 'progress'; text: string | null }
+export type AgentHubProgress = AgentHubRequestBase & {
+  kind: 'progress'
+  text: string | null
+  /** Optional on the existing event envelope so older clients can keep reading progress. */
+  orbOperation?: AgentHubOrbOperation
+}
 export type AgentHubAnswer = {
   answer: string
   index: number | null
@@ -75,6 +83,8 @@ export type AgentHubStatus = {
   waiting: AgentHubPane[]
   /** Optional user-selected Orb context; older clients may ignore it. Never grants input authority. */
   orbFocus?: { pinned: AgentHubPane | null; following: AgentHubPane[] }
+  /** Current host-sourced status facts. Optional for independently updated peers. */
+  orbAwareness?: AgentHubOrbAwareness
 }
 
 export type AgentHubResponse =

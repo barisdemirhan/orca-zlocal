@@ -25,7 +25,6 @@ vi.mock('./AgentHubMirrorMicButton', () => ({ AgentHubMirrorMicButton: () => nul
 vi.mock('./AgentHubDimToggle', () => ({ AgentHubDimToggle: () => null }))
 vi.mock('./AgentHubMirrorFocusButton', () => ({ AgentHubMirrorFocusButton: () => null }))
 vi.mock('./AgentHubPaneSleepAction', () => ({ AgentHubPaneSleepAction: () => null }))
-vi.mock('./AgentHubOrbFollowAction', () => ({ AgentHubOrbFollowAction: () => null }))
 vi.mock('./agent-hub-mirror-store', () => ({
   requestAgentHubMirrorsDock: vi.fn(),
   agentHubMirrorWindowCap: () => 4

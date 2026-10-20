@@ -1,5 +1,6 @@
 import { agentPromptObservationSignal } from './agent-prompt-signals'
 import type { RuntimeTerminalWriteOptions } from '../../runtime-terminal-writer'
+import { protectOrbTerminalWriteOptions } from './orb-terminal-write-options'
 import type { WriteSettlement } from '../../../../shared/pty-write-settlement'
 import type { RuntimeLeafRecord } from '../../runtime-terminal-state-records'
 import type { RuntimeTerminalPromptDelivery } from '../../../../shared/runtime-terminal-send-contract'
@@ -158,7 +159,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
         pty.pty.ptyId,
         action,
         payload,
-        options
+        protectOrbTerminalWriteOptions(this, handle, options)
       )
       return {
         handle,
@@ -185,7 +186,12 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
       throw new Error('terminal_not_writable')
     }
 
-    const writeSettlement = await this.writeTerminalAction(leaf.ptyId, action, payload, options)
+    const writeSettlement = await this.writeTerminalAction(
+      leaf.ptyId,
+      action,
+      payload,
+      protectOrbTerminalWriteOptions(this, handle, options)
+    )
 
     return {
       handle,
@@ -242,10 +248,16 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
         async () => {
           this.assertLiveTerminalHandleTargetsPty(handle, pty.pty.ptyId)
           this.assertAgentPromptGeneration(pty.pty.ptyId, generation)
-          return await this.writeTerminalAgentPrompt(handle, pty.pty.ptyId, generation, payload, {
-            ...options,
-            promptForSchedule: prompt
-          })
+          return await this.writeTerminalAgentPrompt(
+            handle,
+            pty.pty.ptyId,
+            generation,
+            payload,
+            protectOrbTerminalWriteOptions(this, handle, {
+              ...options,
+              promptForSchedule: prompt
+            })
+          )
         }
       )
       const bytesWritten = Buffer.byteLength(payload, 'utf8') + delivery.submits
@@ -274,10 +286,16 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
     const delivery = await this.serializeAgentPromptSubmission(leaf.ptyId, generation, async () => {
       this.assertLiveTerminalHandleTargetsPty(handle, leaf.ptyId!)
       this.assertAgentPromptGeneration(leaf.ptyId!, generation)
-      return await this.writeTerminalAgentPrompt(handle, leaf.ptyId!, generation, payload, {
-        ...options,
-        promptForSchedule: prompt
-      })
+      return await this.writeTerminalAgentPrompt(
+        handle,
+        leaf.ptyId!,
+        generation,
+        payload,
+        protectOrbTerminalWriteOptions(this, handle, {
+          ...options,
+          promptForSchedule: prompt
+        })
+      )
     })
     const bytesWritten = Buffer.byteLength(payload, 'utf8') + delivery.submits
     return {

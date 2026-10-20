@@ -14,3 +14,16 @@ export function createOrchestrationCompatibilityEnvelope(
     orchestrationCompatibilityEvidence: agentSessionId ? { ...evidence, agentSessionId } : evidence
   }
 }
+
+export function runtimeMethodCompatibilityEnvelope(
+  method: string,
+  envelope: RuntimeOrchestrationEnvelope,
+  requestId?: string
+): RuntimeOrchestrationEnvelope {
+  const sessionWrite =
+    (method === 'terminal.send' || method === 'agentSession.send') &&
+    envelope.orchestrationCompatibilityEvidence?.agentSessionId
+  return method.startsWith('orchestration.') || sessionWrite
+    ? { ...envelope, compatibilityInvocationId: requestId ?? envelope.compatibilityInvocationId }
+    : {}
+}

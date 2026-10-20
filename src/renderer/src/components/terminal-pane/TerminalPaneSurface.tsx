@@ -23,6 +23,7 @@ import { TerminalPaneSleepingPortals } from './TerminalPaneSleepingPortals'
 import {
   TerminalPaneCodexRestartPortals,
   TerminalPaneMobileDriverPortals,
+  TerminalPaneOrbOperationPortals,
   TerminalPaneProcessExitPortals,
   TerminalPaneRecoveryPortals,
   TerminalPaneSshReconnectPortals
@@ -391,6 +392,7 @@ export function TerminalPaneSurface({
       <TerminalPaneRecoveryPortals controller={controller} />
       <TerminalPaneSleepingPortals controller={controller} />
       <TerminalPaneMobileDriverPortals controller={controller} />
+      <TerminalPaneOrbOperationPortals controller={controller} />
       <CloseTerminalDialog
         open={pendingCloseConfirmation !== null}
         copyKind={pendingCloseConfirmation?.copyKind}

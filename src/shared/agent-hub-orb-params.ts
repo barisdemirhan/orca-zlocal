@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { isStructuredAgentId } from './agent-session-provider-handle'
 
+export const AgentHubOrbReleaseOperationParamsSchema = z.object({ operationId: z.string().uuid() })
+
 export const AgentHubOrbOpenParamsSchema = z
   .object({
     resume: z.object({ sessionId: z.string().min(1).max(512) }).optional(),

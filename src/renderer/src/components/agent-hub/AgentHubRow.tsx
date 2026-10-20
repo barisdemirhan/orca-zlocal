@@ -1,4 +1,3 @@
-import { AgentHubOrbFollowAction } from './AgentHubOrbFollowAction'
 import { AgentHubPaneSleepAction } from './AgentHubPaneSleepAction'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { ArrowUpRight, CheckCheck, Plus } from 'lucide-react'
@@ -97,10 +96,7 @@ export function AgentHubRow({
       <span className="flex shrink-0 items-center gap-2 font-mono text-[11px] text-muted-foreground/70">
         {chips}
         {!selectionMode && mirrorTarget ? (
-          <>
-            <AgentHubPaneSleepAction target={mirrorTarget} appearance="row" />
-            <AgentHubOrbFollowAction target={mirrorTarget} appearance="row" />
-          </>
+          <AgentHubPaneSleepAction target={mirrorTarget} appearance="row" />
         ) : null}
         {time ? (
           <span className="group-hover/row:hidden group-data-[selected=true]/row:hidden">

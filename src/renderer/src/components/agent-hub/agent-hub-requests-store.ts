@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import type { AgentHubOrbOperation } from '../../../../shared/agent-hub-orb-operation'
 import type {
   AgentHubDelivery,
   AgentHubAnswer,
@@ -24,6 +25,7 @@ export type AgentHubRequestAnswerState = {
 }
 /** Each host owns its request IDs and pane keys; equal IDs on other hosts stay independent. */
 export type AgentHubHostRequests = {
+  orbOperations: ReadonlyMap<string, AgentHubOrbOperation>
   pendingGates: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'gate' }>>
   pendingAsks: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'ask' }>>
   pendingConsents: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'consent' }>>
@@ -37,6 +39,7 @@ export type AgentHubRequestsState = ReadonlyMap<AgentHubRequestHost, AgentHubHos
 
 function emptyHost(): AgentHubHostRequests {
   return {
+    orbOperations: new Map(),
     pendingGates: new Map(),
     pendingAsks: new Map(),
     pendingConsents: new Map(),
@@ -80,6 +83,15 @@ export function reduceAgentHubRequests(
     return next
   }
   const previous = state.get(host) ?? emptyHost()
+  if (event.kind === 'progress' && event.orbOperation) {
+    const orbOperations = new Map(previous.orbOperations)
+    if (event.orbOperation.active) {
+      orbOperations.set(event.orbOperation.id, event.orbOperation)
+    } else {
+      orbOperations.delete(event.orbOperation.id)
+    }
+    return new Map(state).set(host, { ...previous, orbOperations })
+  }
   const pendingGates = new Map(previous.pendingGates)
   const pendingAsks = new Map(previous.pendingAsks)
   const pendingConsents = new Map(previous.pendingConsents)
@@ -149,6 +161,7 @@ export function reduceAgentHubRequests(
       return state
   }
   return new Map(state).set(host, {
+    orbOperations: previous.orbOperations,
     pendingGates,
     pendingAsks,
     pendingConsents,

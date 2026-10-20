@@ -1,4 +1,3 @@
-import { AgentHubOrbFollowAction } from './AgentHubOrbFollowAction'
 import { useAgentHubPaneSleepConfirmation } from './agent-hub-pane-sleep-confirmation'
 import { AgentHubPaneSleepAction } from './AgentHubPaneSleepAction'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -161,13 +160,6 @@ export function AgentHubMirrorTabMenu({
             appearance="menu"
             isOpeningClick={openingClick.isOpeningClick}
             returnFocus={() => document.getElementById(agentHubMirrorTabId(entryId))}
-          />
-        ) : null}
-        {target ? (
-          <AgentHubOrbFollowAction
-            target={target}
-            appearance="menu"
-            isOpeningClick={openingClick.isOpeningClick}
           />
         ) : null}
         <ContextMenuSub>

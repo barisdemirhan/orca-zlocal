@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { useAgentHubOrbFollowStore } from './agent-hub-orb-follow-store'
+import { orbAwarenessTarget, useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 export function AgentHubOrbFollowNotices({
@@ -8,9 +8,9 @@ export function AgentHubOrbFollowNotices({
 }: {
   onOpenTarget: (target: AgentHubPaneTarget) => void
 }): React.JSX.Element | null {
-  const notices = useAgentHubOrbFollowStore((s) => s.notices)
-  const delivery = useAgentHubOrbFollowStore((s) => s.delivery)
-  if (!notices.length) {
+  const snapshot = useAgentHubOrbAwarenessStore((s) => s.snapshot)
+  const delivery = useAgentHubOrbAwarenessStore((s) => s.delivery)
+  if (!snapshot?.notices.length) {
     return null
   }
   return (
@@ -18,13 +18,22 @@ export function AgentHubOrbFollowNotices({
       className="scrollbar-sleek max-h-32 shrink-0 overflow-y-auto border-b px-3 py-2 text-xs"
       aria-live="polite"
     >
-      {notices.map((notice) => (
+      {snapshot.notices.map((notice) => (
         <div key={notice.id} className="flex items-start gap-2 py-1">
           <p className="min-w-0 flex-1 text-muted-foreground">
-            <span className="font-medium text-foreground">{notice.target.title}</span> ·{' '}
-            {notice.text}
+            <span className="font-medium text-foreground">{notice.title}</span> · {notice.text}
           </p>
-          <Button variant="ghost" size="xs" onClick={() => onOpenTarget(notice.target)}>
+          <Button
+            variant="ghost"
+            size="xs"
+            disabled={!orbAwarenessTarget(notice.host, notice.paneKey)}
+            onClick={() => {
+              const target = orbAwarenessTarget(notice.host, notice.paneKey)
+              if (target) {
+                onOpenTarget(target)
+              }
+            }}
+          >
             {translate('common.open', 'Open')}
           </Button>
         </div>

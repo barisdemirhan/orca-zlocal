@@ -5,6 +5,7 @@ import type { StructuredAgentSessionHost } from '../../native-chat/agent-session
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { structuredSessionCloseSettled } from '../../runtime/structured-worker-authority'
+import { readOrbOperations } from '../../runtime/agent-hub/agent-hub-orb-operations'
 
 export async function closeAgentHubOrbSession(
   runtime: Pick<OrcaRuntimeService, 'closeMobileSessionTab' | 'publishStructuredAgentSessionTab'>,
@@ -44,6 +45,14 @@ export async function closeAgentHubOrbSession(
         }
       }
       throw error
+    }
+  }
+  if (structuredSessionCloseSettled(current.sessionId)) {
+    const operations = readOrbOperations(runtime)
+    for (const event of operations?.snapshot() ?? []) {
+      if (event.orbOperation?.sessionId === current.sessionId) {
+        operations?.release(event.orbOperation.id)
+      }
     }
   }
 }
