@@ -27,6 +27,7 @@ import { agentHubOrbSphereAction } from './agent-hub-orb-sphere-action'
 import { AgentHubOrbControls } from './AgentHubOrbControls'
 import { AgentHubOrbConversationHeader } from './AgentHubOrbConversationHeader'
 import { agentHubOrbPresentation } from './agent-hub-orb-presentation'
+import { useAgentHubOrbAttention } from './agent-hub-orb-attention'
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 import { finishAgentHubOrbDictationForText, toggleAgentHubOrb } from './agent-hub-orb-composer'
 import { dispatchDictationControl } from '../dictation/dictation-control-events'
@@ -105,6 +106,7 @@ export function AgentHubOrbConversation({
         .find((tab) => tab.id === tabId)?.agentSessionAgent
   )
   const requestState = useAgentHubRequests()
+  const attention = useAgentHubOrbAttention()
   const requests = agentHubInboxRequests(requestState).filter((item) =>
     agentHubCurrentOrbRequest(item, { host: 'local', sessionId })
   )
@@ -116,7 +118,8 @@ export function AgentHubOrbConversation({
     voice,
     hasRequest,
     dictating ? dictationState : null,
-    currentRequest?.request.kind === 'gate' || currentRequest?.request.kind === 'consent'
+    currentRequest?.request.kind === 'gate' || currentRequest?.request.kind === 'consent',
+    attention
   )
   const requestCard = currentRequest ? (
     <AgentHubRequestCard

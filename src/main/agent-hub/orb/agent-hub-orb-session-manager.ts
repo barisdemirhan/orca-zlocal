@@ -1,7 +1,9 @@
 import {
   agentHubOrbAutoModeSupported,
+  agentHubOrbPermissionMode,
   agentHubOrbPermissionOptions
 } from './agent-hub-orb-permission-settings'
+import type { AgentChatPermissionMode } from '../../../shared/agent-chat-permission-mode'
 import { stat } from 'node:fs/promises'
 import { isAbsolute } from 'node:path'
 import {
@@ -52,6 +54,7 @@ export class AgentHubOrbSessionManager {
   private openingKey: string | undefined
   private operations: Promise<void> = Promise.resolve()
   private active: AgentHubOrbSession | null = null
+  private appliedMode: AgentChatPermissionMode | null = null
   private selectedSettings: ReturnType<typeof normalizeAgentHubOrbSettings> | null = null
 
   constructor(
@@ -129,6 +132,12 @@ export class AgentHubOrbSessionManager {
     }
     await closeAgentHubOrbSession(this.runtime, host, current)
     this.active = null
+    this.appliedMode = null
+  }
+
+  /** Access rank of the mode the open chat was created with; null when unknown. */
+  appliedAccessRank(): number | null {
+    return this.appliedMode ? ORB_ACCESS_RANK[this.appliedMode] : null
   }
 
   async list(limit = 30): Promise<AgentHubOrbConversation[]> {
@@ -185,6 +194,8 @@ export class AgentHubOrbSessionManager {
       await requireIdleAgentHubOrbSession(host, this.runtime.agentHub, current.sessionId)
     }
     if (previous) {
+      // Why: a resumed chat keeps the mode it was created with, which this process never saw.
+      this.appliedMode = null
       const resumed = await replaceAgentHubOrbSession(
         this.runtime,
         host,
@@ -205,6 +216,7 @@ export class AgentHubOrbSessionManager {
       return this.finishOpen(host, resumed, settings)
     }
     const model = params.model === undefined ? settings.model : params.model
+    const autoSupported = await agentHubOrbAutoModeSupported(host.deps.modelCatalog, agent, model)
     const { prepared } = await prepareAgentHubOrbSessionCreate({
       runtime: this.runtime,
       host,
@@ -212,13 +224,10 @@ export class AgentHubOrbSessionManager {
       agent,
       model,
       cwd,
-      permissionOptions: agentHubOrbPermissionOptions(
-        this.getSettings(),
-        agent,
-        await agentHubOrbAutoModeSupported(host.deps.modelCatalog, agent, model)
-      )
+      permissionOptions: agentHubOrbPermissionOptions(this.getSettings(), agent, autoSupported)
     })
     this.requireEnabled()
+    const appliedMode = agentHubOrbPermissionMode(this.getSettings(), agent, autoSupported)
     const created = await replaceAgentHubOrbSession(
       this.runtime,
       host,
@@ -226,6 +235,7 @@ export class AgentHubOrbSessionManager {
       prepared.attachParams.envelope.sessionId,
       () => commitAgentHubOrbSessionCreate({ runtime: this.runtime, caller, prepared })
     )
+    this.appliedMode = appliedMode
     return this.finishOpen(host, created, settings)
   }
 
@@ -261,7 +271,7 @@ export class AgentHubOrbSessionManager {
   }
 }
 
-// Why: a choice never made resolves to Approve for me or Full access, so it ranks with Approve for me.
+// Why: a choice never made resolves to Approve for me or Ask, so it ranks at most with Approve for me.
 const ORB_ACCESS_RANK = {
   ask: 0,
   'accept-edits': 1,
@@ -294,7 +304,9 @@ export function createAgentHubOrbSessionManager(
   let enabled = runtime.isAgentHubEnabled()
   store?.onSettingsChanged?.(() => {
     const next = normalizeAgentHubOrbSettings(store.getSettings()).permission
-    const restrict = agentHubOrbAccessRank(next) < agentHubOrbAccessRank(permission)
+    // Why: with no choice the next chat gets Approve for me at most; compare against what the open chat really runs.
+    const applied = manager.appliedAccessRank() ?? agentHubOrbAccessRank(permission)
+    const restrict = agentHubOrbAccessRank(next) < applied
     const nextEnabled = runtime.isAgentHubEnabled()
     const disabled = enabled && !nextEnabled
     permission = next

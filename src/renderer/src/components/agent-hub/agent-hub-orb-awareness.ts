@@ -1,4 +1,5 @@
 import type { AppState } from '@/store/types'
+import type { AgentHubRequest } from '../../../../shared/agent-hub-requests'
 import type { AgentHubOrbAwareness } from '../../../../shared/agent-hub-orb-awareness'
 import type { RateLimitState } from '../../../../shared/rate-limit-types'
 import {
@@ -18,6 +19,14 @@ import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-
 export type OrbAwarenessProjection = {
   snapshot: AgentHubOrbAwareness
   targets: ReadonlyMap<string, AgentHubPaneTarget>
+}
+
+// Only ask/gate/consent need an answer; a needs-you notify is an update.
+function orbNoticeKind(request: AgentHubRequest): AgentHubOrbAwareness['notices'][number]['kind'] {
+  if (request.kind !== 'notify') {
+    return 'decision'
+  }
+  return request.level === 'done' ? 'result' : 'info'
 }
 
 export function collectAgentHubOrbAwareness(input: {
@@ -71,7 +80,9 @@ export function collectAgentHubOrbAwareness(input: {
       request.kind === 'ask' || request.kind === 'gate'
         ? `${request.question}\n${request.options.map((option, index) => `${index + 1}. ${option}`).join('\n')}`
         : request.kind === 'notify'
-          ? request.text
+          ? request.level === 'needs-you'
+            ? `Update from the agent, no answer needed: ${request.text}`
+            : request.text
           : 'An explicit permission request is waiting in Agent Hub.'
     const id = JSON.stringify(['request', host, request.requestId])
     requested.add(targetKey)
@@ -83,7 +94,7 @@ export function collectAgentHubOrbAwareness(input: {
         0,
         320
       ),
-      kind: request.kind === 'notify' && request.level === 'done' ? 'result' : 'decision',
+      kind: orbNoticeKind(request),
       text: text.slice(0, 2_400)
     })
   }

@@ -21418,7 +21418,8 @@
   },
   "common": {
     "retry": "Retry",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "open": "Open"
   },
   "terminal": {
     "sessionSaveFailure": {
@@ -22245,7 +22246,8 @@
       "peekLink": "peek at {{link}}",
       "arrangeMirrors": "arrange mirrors",
       "openCanvas": "open the canvas",
-      "closeCanvas": "close the canvas"
+      "closeCanvas": "close the canvas",
+      "regardingAgent": "Regarding {{agent}}"
     },
     "answerQueue": {
       "answeredElsewhere": "Answered elsewhere",
@@ -22289,7 +22291,36 @@
       "requestDescription": "Your answer will return to this Orb conversation.",
       "needsApproval": "Waiting for your approval",
       "taskFailed": "The task could not complete.",
-      "transcribing": "Preparing dictated text…"
+      "transcribing": "Preparing dictated text…",
+      "operation": {
+        "working": "Orb is working here",
+        "takeControl": "Take control",
+        "unverifiable": "Control could not be verified. Reconnect and try again."
+      },
+      "attention": "An agent sent an update"
+    },
+    "follow": {
+      "openNotice": "Open {{title}}",
+      "deliveryUnverifiable": "Live delivery could not be verified. Review the current agent here."
+    },
+    "sleep": {
+      "waking": "Waking…",
+      "pending": "Putting to sleep…",
+      "unverifiable": "Host unavailable",
+      "wake": "Wake",
+      "action": "Sleep",
+      "wakeFailed": "Could not wake this pane. Try again.",
+      "failed": "Could not put this pane to sleep. Try again.",
+      "agentTitle": "Put this agent to sleep?",
+      "terminalTitle": "Pause this terminal?",
+      "agentDetail": "The session is saved and the agent stops. Wake it here to resume the saved session. Work in progress will be interrupted.",
+      "terminalDetail": "Processes pause and stop using CPU. Memory stays allocated. Wake this terminal to continue the same processes.",
+      "group": "Sleeping",
+      "verifyDetail": "Reconnect to the execution host to verify this pane’s state.",
+      "transitionDetail": "Waiting for the execution host to confirm the change…",
+      "savedDetail": "The agent session is saved. Wake it here to resume.",
+      "pausedDetail": "Processes are paused. CPU use has stopped; memory is retained.",
+      "empty": "No sleeping terminals"
     }
   },
   "workspace": {

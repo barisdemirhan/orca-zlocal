@@ -40,7 +40,7 @@ export function agentHubOrbOfferedModes(
       : ['full-access']
 }
 
-/** The mode Orb's chat runs: the user's choice, else Approve for me, else Full access, else Ask.
+/** The mode Orb's chat runs: the user's choice, else Approve for me, else Ask; never Full access without an explicit choice.
  *  Null for an agent whose chats offer no modes. */
 export function resolveAgentHubOrbMode(
   agent: string,
@@ -55,7 +55,7 @@ export function resolveAgentHubOrbMode(
     return effectiveChatPermissionMode(support, chosen, autoSupported)
   }
   const offered = offeredChatPermissionModes(support, autoSupported)
-  return offered.includes('auto') ? 'auto' : offered.includes('full-access') ? 'full-access' : 'ask'
+  return offered.includes('auto') ? 'auto' : 'ask'
 }
 
 export function normalizeAgentHubOrbSettings(settings: AgentHubSettings) {

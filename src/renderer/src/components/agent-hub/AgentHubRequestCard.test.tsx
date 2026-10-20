@@ -133,6 +133,30 @@ it('shows provenance, recommendation and location, sends once to its host and wa
   typing.remove()
 })
 
+it('shows the agent a request is about and both locations, with the host once', () => {
+  receive(agentHubAskRequest())
+  const { container } = render(
+    <Inbox
+      requestPresentationOf={() => ({
+        ...presentation,
+        related: {
+          title: 'Review terminal',
+          agentType: 'claude',
+          location: { group: null, project: 'Other', workspace: 'main', host: 'workhost' }
+        }
+      })}
+    />
+  )
+  expect(screen.getByText('Regarding @claude')).toBeTruthy()
+  expect(screen.getByText('Review terminal')).toBeTruthy()
+  const text = container.textContent ?? ''
+  expect(text).toContain('Orca')
+  expect(text).toContain('feature')
+  expect(text).toContain('Other')
+  expect(text).toContain('main')
+  expect(text.match(/workhost/g)).toHaveLength(1)
+})
+
 it('toggles accessible multiple choices and sends sorted one-based indices only on Send', async () => {
   const ask = agentHubAskRequest({ multi: true })
   receive(ask)
@@ -285,6 +309,53 @@ it.each(['local', 'workhost'])(
       kind: 'consent',
       decision: 'once'
     })
+  }
+)
+
+it.each(['local', 'workhost'])(
+  'shows the verified related agent and workspace separately from Orb on %s',
+  (host) => {
+    const target = agentHubThreadsFor([{ paneKey: PANE_KEY, state: 'working', at: 1 }])[0]
+    target.paneTitle = 'Source task terminal'
+    target.worktree = {
+      ...target.worktree,
+      hostId: 'local',
+      ...(host === 'local' ? {} : { runtimeOwnerEnvironmentId: host })
+    }
+    const ask = agentHubAskRequest({
+      caller: {
+        kind: 'orb',
+        sessionId: 'orb-session',
+        paneKey: 'orb:orb-session',
+        terminalHandle: 'orb:orb-session',
+        title: 'Orb'
+      },
+      target: { paneKey: target.paneKey, terminalHandle: 'source-terminal' }
+    })
+    act(() => applyAgentHubDelivery(host, ask))
+    render(
+      <Inbox
+        requestPresentationOf={(requestHost, request) =>
+          agentHubRequestPresentation(
+            useAppStore.getState(),
+            [target],
+            requestHost,
+            request,
+            () => ({
+              group: 'Source group',
+              project: 'Source project',
+              workspace: 'feature/source',
+              host
+            })
+          )
+        }
+      />
+    )
+    expect(screen.getByText('@Orb asks')).toBeTruthy()
+    expect(screen.getByText('Source task terminal')).toBeTruthy()
+    expect(screen.getByText(/Source project/)).toBeTruthy()
+    expect(screen.getByText(/feature\/source/)).toBeTruthy()
+    expect(screen.queryByText('@claude asks')).toBeNull()
   }
 )
 

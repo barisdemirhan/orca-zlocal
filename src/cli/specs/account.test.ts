@@ -79,6 +79,10 @@ describe('account command specs', () => {
     expect(suggestions).not.toContain('account remove')
   })
 
+  it('documents rate limits in account list help', () => {
+    expect(spec('account list').notes?.join(' ')).toContain('rateLimits')
+  })
+
   it('rejects an unregistered account deletion verb', () => {
     expect(() =>
       validateCommandAndFlags(ACCOUNT_COMMAND_SPECS, {

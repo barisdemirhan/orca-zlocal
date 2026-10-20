@@ -1,0 +1,94 @@
+// @vitest-environment happy-dom
+import { useState } from 'react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
+
+vi.mock('./use-agent-hub-orb-caption-side', () => ({
+  useAgentHubOrbCaptionSide: () => ({ side: 'right', sideOffset: 12 })
+}))
+
+function Caption({ text }: { text: string }): React.JSX.Element {
+  const [open, setOpen] = useState(true)
+  return (
+    <TooltipProvider>
+      <AgentHubOrbSpeechBubble open={open} onOpenChange={setOpen} text={text} speakerLabel="Orb">
+        <button>Live Orb</button>
+      </AgentHubOrbSpeechBubble>
+    </TooltipProvider>
+  )
+}
+
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
+
+it('hides idle speech after one minute and lets the pointer keep it available', () => {
+  vi.useFakeTimers()
+  render(<Caption text="Read this spoken response" />)
+  const visible = () => screen.queryByText('Read this spoken response') !== null
+  act(() => vi.advanceTimersByTime(59_999))
+  expect(visible()).toBe(true)
+  act(() => vi.advanceTimersByTime(1))
+  expect(visible()).toBe(false)
+  const orb = screen.getByRole('button', { name: 'Live Orb' })
+  fireEvent.pointerEnter(orb)
+  expect(visible()).toBe(true)
+  act(() => vi.advanceTimersByTime(120_000))
+  expect(visible()).toBe(true)
+  fireEvent.pointerLeave(orb)
+  act(() => vi.advanceTimersByTime(30_000))
+  const bubble = screen
+    .getByText('Read this spoken response')
+    .closest('[data-agent-hub-orb-captions]')!
+  fireEvent.pointerEnter(bubble)
+  act(() => vi.advanceTimersByTime(120_000))
+  expect(visible()).toBe(true)
+  fireEvent.pointerLeave(bubble)
+  act(() => vi.advanceTimersByTime(59_999))
+  expect(visible()).toBe(true)
+  act(() => vi.advanceTimersByTime(1))
+  expect(visible()).toBe(false)
+})
+
+it('starts a fresh minute for new speech while preserving an explicit Hide captions choice', () => {
+  vi.useFakeTimers()
+  const { rerender } = render(<Caption text="First response" />)
+  act(() => vi.advanceTimersByTime(45_000))
+  rerender(<Caption text="Second response" />)
+  act(() => vi.advanceTimersByTime(45_000))
+  expect(screen.queryByText('Second response')).not.toBeNull()
+  act(() => vi.advanceTimersByTime(15_000))
+  expect(screen.queryByText('Second response')).toBeNull()
+  rerender(<Caption text="" />)
+  rerender(<Caption text="Second response" />)
+  expect(screen.queryByText('Second response')).not.toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Hide captions' }))
+  rerender(<Caption text="Third response" />)
+  fireEvent.pointerEnter(screen.getByRole('button', { name: 'Live Orb' }))
+  expect(screen.queryByText('Third response')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Show captions' }))
+  expect(screen.queryByText('Third response')).not.toBeNull()
+})
+
+it('lets captions expire again after the bubble closed under a resting pointer', () => {
+  vi.useFakeTimers()
+  render(<Caption text="Sticky response" />)
+  const bubble = screen.getByText('Sticky response').closest('[data-agent-hub-orb-captions]')!
+  fireEvent.pointerEnter(bubble)
+  fireEvent.click(screen.getByRole('button', { name: 'Hide captions' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Show captions' }))
+  act(() => vi.advanceTimersByTime(60_000))
+  expect(screen.queryByText('Sticky response')).toBeNull()
+})
+
+it('offers Show captions after the idle timeout and restores them from the keyboard', () => {
+  vi.useFakeTimers()
+  render(<Caption text="Timed out response" />)
+  act(() => vi.advanceTimersByTime(60_000))
+  expect(screen.queryByText('Timed out response')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Show captions' }))
+  expect(screen.queryByText('Timed out response')).not.toBeNull()
+})

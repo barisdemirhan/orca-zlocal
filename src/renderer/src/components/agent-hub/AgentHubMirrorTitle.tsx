@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
+import { isImeOwnedKeyboardEvent } from '@/lib/ime-composition-keyboard-event'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 /** The tab's own name when the user gave it one, else the title the hub derived. */
@@ -52,6 +53,9 @@ export function AgentHubMirrorTitle({
       onKeyDown={(event) => {
         // Why stop: Esc and Enter here belong to the field, not to the window or the terminal.
         event.stopPropagation()
+        if (isImeOwnedKeyboardEvent(event)) {
+          return
+        }
         if (event.key === 'Enter') {
           commit(event.currentTarget.value)
         } else if (event.key === 'Escape') {

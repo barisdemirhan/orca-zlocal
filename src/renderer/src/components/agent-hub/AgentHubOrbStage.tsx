@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -49,6 +50,7 @@ export function AgentHubOrbStage({
   const inlineRef = useRef<HTMLDivElement>(null)
   const pressedAt = useRef<{ x: number; y: number } | null>(null)
   const [captionsOpen, setCaptionsOpen] = useState(true)
+  const [captionEngaged, setCaptionEngaged] = useState(false)
   const [container] = useState(() => document.createElement('div'))
   const {
     geometry,
@@ -59,6 +61,12 @@ export function AgentHubOrbStage({
     beginGesture,
     resizeKey
   } = useAgentHubOrbGeometry({ embedded, compact, live, requestVisible })
+  // Why: a hidden stage never sends pointerleave, which would keep captions engaged.
+  useEffect(() => {
+    if (!visible) {
+      setCaptionEngaged(false)
+    }
+  }, [visible])
   useLayoutEffect(() => {
     const target = embedded ? inlineRef.current : document.body
     if (target && container.parentElement !== target) {
@@ -113,6 +121,8 @@ export function AgentHubOrbStage({
           </div>
           <div
             className="agent-hub-orb-art"
+            onPointerEnter={() => setCaptionEngaged(true)}
+            onPointerLeave={() => setCaptionEngaged(false)}
             onPointerDown={(event) => {
               if (
                 event.target instanceof Element &&
@@ -152,9 +162,10 @@ export function AgentHubOrbStage({
             <div className="agent-hub-orb-art-sphere">
               <AgentHubOrbSpeechBubble
                 open={captionsOpen}
+                engaged={captionEngaged}
                 onOpenChange={setCaptionsOpen}
                 text={caption ?? ''}
-                speakerLabel="Orb"
+                speakerLabel={translate('auto.agentHub.orb.title', 'Orb')}
               >
                 <Tooltip>
                   <TooltipTrigger asChild>

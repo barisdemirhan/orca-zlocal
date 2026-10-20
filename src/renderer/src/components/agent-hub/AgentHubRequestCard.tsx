@@ -9,7 +9,7 @@ import { translate } from '@/i18n/i18n'
 import { HubOptionList, HubReplyField } from './AgentHubAnswerBody'
 import { AgentHubPeekChips } from './AgentHubPeekChips'
 import { HubAvatar } from './AgentHubStateMarks'
-import { HubCrumb } from './AgentHubInlineLabels'
+import { AgentHubRequestSource } from './AgentHubRequestSource'
 import type { AgentHubCardControl } from './AgentHubAttentionCard'
 import { answerAgentHubRequest } from './agent-hub-request-answer'
 import {
@@ -52,10 +52,6 @@ export function AgentHubRequestCard({
     request.caller.kind === 'orb'
       ? translate('auto.agentHub.orb.title', 'Orb')
       : (request.caller.agentType ?? 'agent')
-  const showCallerTitle =
-    presentation.title !== presentation.location.project ||
-    presentation.location.group ||
-    presentation.location.workspace
   const send = (result: Parameters<typeof answerAgentHubRequest>[2]): void => {
     void answerAgentHubRequest(host, request.requestId, result)
   }
@@ -129,15 +125,12 @@ export function AgentHubRequestCard({
               {translate('agentHub.requests.decisionGate', 'Decision gate')}
             </Badge>
           ) : null}
-          {showCallerTitle ? (
-            <div className="truncate text-xs text-muted-foreground">{presentation.title}</div>
-          ) : null}
           {request.kind === 'gate' ? (
             <div className="truncate text-xs text-muted-foreground">
               {request.runTitle} · {request.taskTitle}
             </div>
           ) : null}
-          <HubCrumb location={presentation.location} />
+          <AgentHubRequestSource presentation={presentation} />
         </div>
       </div>
       {compact && (request.kind === 'ask' || request.kind === 'gate') ? (

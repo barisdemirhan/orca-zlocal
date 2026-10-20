@@ -1,10 +1,11 @@
-import { useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Captions, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAgentHubOrbCaptionSide } from './use-agent-hub-orb-caption-side'
+import { useAgentHubOrbCaptionVisibility } from './use-agent-hub-orb-caption-visibility'
 import './agent-hub-orb-speech-bubble.css'
 
 export type AgentHubOrbSpeechBubbleProps = {
@@ -14,7 +15,11 @@ export type AgentHubOrbSpeechBubbleProps = {
   speakerLabel?: string
   children: ReactNode
   compact?: boolean
+  engaged?: boolean
 }
+
+const isCaptionToggle = (target: EventTarget): boolean =>
+  target instanceof Element && target.closest('.agent-hub-orb-caption-toggle') !== null
 
 export function AgentHubOrbSpeechBubble({
   open,
@@ -22,23 +27,62 @@ export function AgentHubOrbSpeechBubble({
   text,
   speakerLabel,
   children,
-  compact = false
+  compact = false,
+  engaged = false
 }: AgentHubOrbSpeechBubbleProps): React.JSX.Element {
   const reopenRef = useRef<HTMLButtonElement>(null)
   const restoreFocus = useRef(false)
+  const [anchorHovered, setAnchorHovered] = useState(false)
+  const [anchorFocused, setAnchorFocused] = useState(false)
+  const [bubbleHovered, setBubbleHovered] = useState(false)
+  const [bubbleFocused, setBubbleFocused] = useState(false)
   const hasText = text.trim().length > 0
+  const { visible, restore } = useAgentHubOrbCaptionVisibility({
+    open,
+    text,
+    engaged: engaged || anchorHovered || anchorFocused || bubbleHovered || bubbleFocused
+  })
+  // Why: a bubble that closes under the pointer or focus never sends pointerleave or blur.
+  useEffect(() => {
+    if (!visible) {
+      setBubbleHovered(false)
+      setBubbleFocused(false)
+    }
+  }, [visible])
   const { anchorRef, contentRef, textRef, side, sideOffset } = useAgentHubOrbCaptionSide({
-    open: open && hasText,
+    open: visible,
     compact
   })
   const showLabel = translate('agentHub.orb.showCaptions', 'Show captions')
   const hideLabel = translate('agentHub.orb.hideCaptions', 'Hide captions')
+  const changeOpen = (next: boolean): void => {
+    if (!next) {
+      setBubbleHovered(false)
+      setBubbleFocused(false)
+    }
+    if (next) {
+      restore()
+    }
+    onOpenChange(next)
+  }
   return (
-    <Popover open={open && hasText} onOpenChange={onOpenChange} modal={false}>
+    <Popover open={visible} onOpenChange={changeOpen} modal={false}>
       <PopoverAnchor asChild>
-        <span ref={anchorRef} className="agent-hub-orb-caption-anchor" data-compact={compact}>
+        <span
+          ref={anchorRef}
+          className="agent-hub-orb-caption-anchor"
+          data-compact={compact}
+          onPointerEnter={() => setAnchorHovered(true)}
+          onPointerLeave={() => setAnchorHovered(false)}
+          onFocusCapture={(event) => {
+            if (!isCaptionToggle(event.target)) {
+              setAnchorFocused(true)
+            }
+          }}
+          onBlurCapture={() => setAnchorFocused(false)}
+        >
           {children}
-          {!open && hasText ? (
+          {!visible && hasText ? (
             <span className="agent-hub-orb-caption-toggle" data-agent-hub-orb-interactive>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -49,7 +93,7 @@ export function AgentHubOrbSpeechBubble({
                     size="icon-xs"
                     aria-label={showLabel}
                     aria-expanded={false}
-                    onClick={() => onOpenChange(true)}
+                    onClick={() => changeOpen(true)}
                   >
                     <Captions />
                   </Button>
@@ -69,6 +113,14 @@ export function AgentHubOrbSpeechBubble({
         collisionPadding={16}
         respectReducedMotion
         className="w-80 max-w-[var(--radix-popover-content-available-width)]"
+        onPointerEnter={() => setBubbleHovered(true)}
+        onPointerLeave={() => setBubbleHovered(false)}
+        onFocusCapture={() => setBubbleFocused(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) {
+            setBubbleFocused(false)
+          }
+        }}
         onOpenAutoFocus={(event) => event.preventDefault()}
         onCloseAutoFocus={(event) => {
           event.preventDefault()
@@ -95,7 +147,7 @@ export function AgentHubOrbSpeechBubble({
                   aria-label={hideLabel}
                   onClick={() => {
                     restoreFocus.current = true
-                    onOpenChange(false)
+                    changeOpen(false)
                   }}
                 >
                   <X />

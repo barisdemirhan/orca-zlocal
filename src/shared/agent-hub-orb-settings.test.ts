@@ -51,8 +51,8 @@ describe('Orb settings', () => {
   it.each([
     ['codex', true, 'auto'],
     ['claude', true, 'auto'],
-    ['claude', false, 'full-access'],
-    ['grok', false, 'full-access'],
+    ['claude', false, 'ask'],
+    ['grok', false, 'ask'],
     ['pi', false, null]
   ] as const)('defaults %s (auto supported: %s) to %s when never chosen', (agent, auto, mode) => {
     expect(resolveAgentHubOrbMode(agent, null, auto)).toBe(mode)

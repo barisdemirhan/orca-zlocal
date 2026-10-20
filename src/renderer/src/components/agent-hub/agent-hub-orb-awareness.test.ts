@@ -96,3 +96,30 @@ it('preserves unverifiable work instead of turning lost evidence into a finished
   expect(result.snapshot.agents[0]?.state).toBe('unverifiable')
   expect(result.snapshot.notices).toEqual([])
 })
+
+it('classifies a needs-you notify as an info update, not a decision', () => {
+  const threads = agentHubThreadsFor([{ paneKey: PANE_KEY, state: 'working', at: 1_000 }])
+  const requests = reduceAgentHubRequests(new Map(), 'local', {
+    requestId: '22222222-2222-4222-8222-222222222222',
+    caller: { paneKey: PANE_KEY, terminalHandle: 'same-handle' },
+    target: { paneKey: PANE_KEY, terminalHandle: 'same-handle' },
+    createdAt: 1_000,
+    expiresAt: 5_000,
+    kind: 'notify',
+    level: 'needs-you',
+    sound: false,
+    links: [],
+    text: 'TEST-3: Dikkat bildirimi denemesi'
+  })
+  const { snapshot } = collectAgentHubOrbAwareness({
+    state: useAppStore.getState(),
+    threads,
+    lists: buildAgentHubLists(threads),
+    requests,
+    remoteLimits: new Map(),
+    now: 3_000
+  })
+  expect(snapshot.notices).toHaveLength(1)
+  expect(snapshot.notices[0]?.kind).toBe('info')
+  expect(snapshot.notices[0]?.text).toContain('TEST-3')
+})

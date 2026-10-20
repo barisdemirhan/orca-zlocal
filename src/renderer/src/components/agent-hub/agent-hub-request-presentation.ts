@@ -14,6 +14,11 @@ export type AgentHubRequestPresentation = {
   targetTitle: string
   location: AgentHubLocation
   target: AgentHubPaneTarget | null
+  related?: {
+    title: string
+    agentType: string | null
+    location: AgentHubLocation
+  }
 }
 
 export function agentHubRequestPresentation(
@@ -30,6 +35,15 @@ export function agentHubRequestPresentation(
     title,
     targetTitle: target?.title ?? request.target.terminalHandle,
     target: caller,
+    ...(request.caller.kind === 'orb' && target
+      ? {
+          related: {
+            title: target.title,
+            agentType: target.agentType,
+            location: locationOf(target)
+          }
+        }
+      : {}),
     location: caller
       ? locationOf(caller)
       : {

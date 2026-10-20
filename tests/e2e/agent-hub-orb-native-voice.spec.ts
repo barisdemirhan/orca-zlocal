@@ -86,6 +86,13 @@ test('native Live keeps one conversation, restores its draft and ignores late me
   await revealOrbLiveControls(orcaPage)
   const mute = orcaPage.getByRole('button', { name: 'Mute microphone', exact: true })
   await expect(mute).toBeEnabled()
+  await mute.focus()
+  const muteHint = orcaPage.getByRole('tooltip').filter({ hasText: 'Mute microphone' })
+  await expect(muteHint).toContainText('U')
+  await testInfo.attach('orb-live-shortcut-tooltip', {
+    body: await orcaPage.screenshot(),
+    contentType: 'image/png'
+  })
   await expect(orcaPage.getByRole('button', { name: 'End live voice', exact: true })).toBeVisible()
   await expect(composer).toBeVisible()
   await expect(composer).toHaveAttribute('contenteditable', 'false')
@@ -102,9 +109,35 @@ test('native Live keeps one conversation, restores its draft and ignores late me
   expect(await observeVoiceDevice(orcaPage)).toMatchObject({ enabledTracks: 0, connectedPeers: 1 })
   await unmute.click()
   await expect(mute).toBeVisible()
+  orbCli.emitVoiceItem(
+    ['```sh', `geometry-fixture-command ${'long-command-argument/'.repeat(50)}`, '```'].join('\n'),
+    'assistant'
+  )
+  await expect(panel.locator('[data-native-chat-root]')).toContainText('geometry-fixture-command')
   orbCli.emitVoiceItem('Native spoken answer', 'assistant')
   const captions = orcaPage.locator('[data-agent-hub-orb-captions][data-state="open"]')
+  await expect(captions).toHaveCount(0)
+  await showOrbStage(orcaPage)
   await expect(captions).toContainText('Native spoken answer')
+  await revealOrbLiveControls(orcaPage)
+  await orcaPage.getByRole('button', { name: 'Mute Orb', exact: true }).click()
+  await mute.click()
+  await orcaPage.mouse.move(0, 0)
+  await orcaPage.getByRole('button', { name: /^Talk to Orb/ }).focus()
+  const muteMarks = orcaPage.locator('[data-agent-hub-orb-stage] .agent-hub-orb-mute-marks')
+  await expect(muteMarks.locator('svg')).toHaveCount(2)
+  await expect(muteMarks).toBeVisible()
+  await expect
+    .poll(() =>
+      orcaPage
+        .locator('.agent-hub-orb-hover-controls')
+        .evaluate((element) => getComputedStyle(element).opacity)
+    )
+    .toBe('0')
+  await testInfo.attach('orb-muted-status-without-hover', {
+    body: await orcaPage.screenshot(),
+    contentType: 'image/png'
+  })
   const bounds = await captions.boundingBox()
   expect(bounds?.x).toBeGreaterThanOrEqual(0)
   expect(bounds?.y).toBeGreaterThanOrEqual(0)
@@ -112,7 +145,6 @@ test('native Live keeps one conversation, restores its draft and ignores late me
   await expect(captions).not.toBeVisible()
   await orcaPage.getByRole('button', { name: 'Show captions', exact: true }).click()
   await expect(captions).toContainText('Native spoken answer')
-  await showOrbStage(orcaPage)
   await orcaPage.setViewportSize({ width: 390, height: 700 })
   await expect(captions).toBeVisible()
   await expect(captions).toHaveAttribute('data-side', /top|bottom/)
@@ -129,6 +161,24 @@ test('native Live keeps one conversation, restores its draft and ignores late me
   await orcaPage.setViewportSize({ width: 1280, height: 900 })
   await expectCaptionsClearControls(captions, stageControls)
   await showOrbConversation(orcaPage)
+  await expect(captions).toHaveCount(0)
+  await expect
+    .poll(() =>
+      panel.locator('[data-agent-hub-orb-chat-tab-id]').evaluate((host) => {
+        const chat = host.querySelector('[data-native-chat-root]')
+        if (!chat) {
+          return false
+        }
+        const outer = host.getBoundingClientRect()
+        const inner = chat.getBoundingClientRect()
+        return inner.width > 0 && inner.left >= outer.left - 1 && inner.right <= outer.right + 1
+      })
+    )
+    .toBe(true)
+  await testInfo.attach('orb-live-chat-long-content-fit', {
+    body: await panel.screenshot(),
+    contentType: 'image/png'
+  })
   await switchOrbToText(orcaPage)
   await expect(captions).not.toBeVisible()
   await expect(composer).toBeVisible()

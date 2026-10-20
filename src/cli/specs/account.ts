@@ -25,7 +25,8 @@ export const ACCOUNT_COMMAND_SPECS: CommandSpec[] = [
     usage: 'orca account list [--agent opencode|devin] [--json]',
     allowedFlags: [...LOCAL_COMMAND_FLAGS, 'agent'],
     notes: [
-      'Lists the accounts on this machine. `--environment` / `--pairing-code` are rejected rather than ignored; run it on the host whose accounts you want to see.'
+      'Lists the accounts on this machine. `--environment` / `--pairing-code` are rejected rather than ignored; run it on the host whose accounts you want to see.',
+      '`--json` also includes `rateLimits`: the last known quota and rate-limit windows per provider (not force-refreshed). Use it to answer quota questions.'
     ],
     examples: ['orca account list']
   },

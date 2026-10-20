@@ -26,6 +26,9 @@ export function AgentHubOrbFollowNotices({
           <Button
             variant="ghost"
             size="xs"
+            aria-label={translate('agentHub.follow.openNotice', 'Open {{title}}', {
+              title: notice.title
+            })}
             disabled={!orbAwarenessTarget(notice.host, notice.paneKey)}
             onClick={() => {
               const target = orbAwarenessTarget(notice.host, notice.paneKey)

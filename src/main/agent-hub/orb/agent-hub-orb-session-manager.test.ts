@@ -594,6 +594,15 @@ describe('Orb conversations on the structured host', () => {
     expect(settings.agentHubOrbPermission).toBe('ask')
   })
 
+  it('keeps a chat that never had a choice open when Full access is chosen later', async () => {
+    delete settings.agentHubOrbPermission
+    const current = await manager.open()
+    settings.agentHubOrbPermission = 'free'
+    notifySettings()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(state.host.getSessionTabId(current.sessionId)).not.toBeNull()
+  })
+
   it('republishes a committed Orb after an unconfirmed tab publication without attaching twice', async () => {
     const attach = vi.spyOn(state.host, 'attach')
     vi.spyOn(runtime, 'publishStructuredAgentSessionTab').mockRejectedValueOnce(
