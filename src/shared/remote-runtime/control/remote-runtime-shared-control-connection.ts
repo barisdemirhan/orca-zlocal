@@ -11,7 +11,7 @@ import { SharedControlReconnectScheduler } from './remote-runtime-shared-control
 import { requestSharedControl } from '../requests/remote-runtime-shared-control-requests'
 import { SharedControlRetiredRequestIds } from '../requests/remote-runtime-shared-control-retired-request-ids'
 import { SharedControlReadyStableResetTimer } from './remote-runtime-shared-control-stability'
-import * as sharedControlState from './remote-runtime-shared-control-state'
+import { rejectSharedControlReadyWaiters } from './remote-runtime-shared-control-state'
 import { closeSharedControlSocket, LOCAL_CLOSE } from './remote-runtime-shared-control-socket-close'
 import { startSharedControlSubscription } from '../requests/remote-runtime-shared-control-subscription-start'
 import { SharedControlSocketGeneration } from './remote-runtime-shared-control-socket-generation'
@@ -81,9 +81,7 @@ export class RemoteRuntimeSharedControlConnection {
         }),
       retireRequestId: (requestId) => this.retiredRequestIds.retire(requestId),
       signal
-    }).then((response) =>
-      retainRemoteRuntimeClientCapabilityUpdate(this.options, method, params, response)
-    )
+    }).then(retainRemoteRuntimeClientCapabilityUpdate<TResult>(this.options, method, params))
   }
   async subscribe<TResult>(
     method: string,
@@ -169,10 +167,7 @@ export class RemoteRuntimeSharedControlConnection {
 
   private open(): void {
     if (this.intentionallyClosed) {
-      sharedControlState.rejectSharedControlReadyWaiters(
-        this.readyWaiters,
-        remoteRuntimeUnavailableError()
-      )
+      rejectSharedControlReadyWaiters(this.readyWaiters, remoteRuntimeUnavailableError())
       return
     }
     this.reconnect.clear()

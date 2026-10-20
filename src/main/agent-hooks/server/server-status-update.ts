@@ -21,6 +21,7 @@ import {
 import { isForeignTurnHook } from './server-foreign-turn-hook'
 import { resolveCancelVerdictLatch } from './server-cancel-verdict-latch'
 import { AgentHookServerStatusApplication } from './server-status-application'
+import { resolveStatusIdentityPayload } from './server-status-identity-payload'
 import { claimsPaneAfterExit } from './agent-exit-evidence'
 
 export abstract class AgentHookServerStatusUpdate extends AgentHookServerStatusApplication {
@@ -173,46 +174,11 @@ export abstract class AgentHookServerStatusUpdate extends AgentHookServerStatusA
       previous?.payload,
       codexRosterAuthority
     )
-    const previousCodexRoot =
-      stateReconciledPayload.payload.agentType === 'codex' &&
-      stateReconciledPayload.toolAgentId &&
-      previous?.payload.agentType === 'codex'
-        ? previous
-        : undefined
-    const preservedProviderSession = !stateReconciledPayload.providerSession
-      ? previousCodexRoot?.providerSession
-      : undefined
-    const preservedRootModel = !stateReconciledPayload.payload.model
-      ? previousCodexRoot?.payload.model
-      : undefined
-    // Relay restart loses root context; child hooks must not erase persisted resume/model identity.
-    const rootContextPreservingPayload =
-      preservedProviderSession || preservedRootModel
-        ? {
-            ...stateReconciledPayload,
-            ...(preservedProviderSession ? { providerSession: preservedProviderSession } : {}),
-            payload: preservedRootModel
-              ? { ...stateReconciledPayload.payload, model: preservedRootModel }
-              : stateReconciledPayload.payload
-          }
-        : stateReconciledPayload
-    const identityResolvedPayload =
-      identity.agentType === rootContextPreservingPayload.payload.agentType
-        ? rootContextPreservingPayload
-        : {
-            ...rootContextPreservingPayload,
-            payload: {
-              ...rootContextPreservingPayload.payload,
-              agentType: identity.agentType,
-              // A nested agent's model belongs to that agent, not the pane's active owner.
-              ...(identity.inheritedFromActivePane
-                ? {
-                    model: previous?.payload.model,
-                    modelSwitchCommand: previous?.payload.modelSwitchCommand
-                  }
-                : {})
-            }
-          }
+    const identityResolvedPayload = resolveStatusIdentityPayload(
+      stateReconciledPayload,
+      previous,
+      identity
+    )
     const attachedPayload = attachClaudePermissionToolUseId(previous, identityResolvedPayload)
     // Resolve cancellation before permission holds adopt a replayed main-agent observation.
     const latch = resolveCancelVerdictLatch(previous, attachedPayload, Date.now())

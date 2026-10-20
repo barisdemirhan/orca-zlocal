@@ -13,6 +13,10 @@ import {
   isTerminalTabStripDropTarget,
   resolveTerminalTabStripDropTarget
 } from './terminal-pane-tab-detach'
+import {
+  closeTerminalPaneForRequest,
+  type TerminalPaneCloseRequest
+} from './terminal-pane-close-request'
 import { clearPaneTerminalError } from './terminal-error-accumulation'
 import type { TerminalPaneBindingController } from './use-terminal-pane-layout-bindings'
 import { retireUnboundIpcTerminalPane } from './retire-unbound-ipc-terminal-pane'
@@ -206,21 +210,11 @@ export function useTerminalPaneCloseActions(controller: TerminalPaneBindingContr
   )
 
   const closeActivePane = useCallback(
-    (request?: { leafId?: string; confirm?: boolean }): boolean => {
-      const manager = managerRef.current
-      const paneId = request?.leafId
-        ? manager?.getNumericIdForLeaf(request.leafId)
-        : (manager?.getActivePane() ?? manager?.getPanes()[0])?.id
-      if (paneId === null || paneId === undefined) {
-        return false
-      }
-      if (request?.confirm === false) {
-        executeClosePane(paneId)
-      } else {
-        handleRequestClosePane(paneId)
-      }
-      return true
-    },
+    (request?: TerminalPaneCloseRequest): boolean =>
+      closeTerminalPaneForRequest(managerRef.current, request, {
+        executeClosePane,
+        requestClosePane: handleRequestClosePane
+      }),
     [executeClosePane, handleRequestClosePane, managerRef]
   )
   useEffect(

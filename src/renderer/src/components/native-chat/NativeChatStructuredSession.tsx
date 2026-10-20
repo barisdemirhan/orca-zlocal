@@ -64,6 +64,7 @@ import {
   NativeChatClaudeSignInContext,
   useNativeChatClaudeSignIn
 } from './native-chat-claude-sign-in'
+import { cancelStructuredPrompt } from './native-chat-structured-prompt-cancel'
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { AgentHubOrbComposerState } from '../agent-hub/AgentHubOrbComposerState'
@@ -189,14 +190,7 @@ export function NativeChatStructuredSession(
   // An owned prompt keeps its card; otherwise a missing program leaves the composer disabled.
   const installLayout = viewState.kind === 'empty' ? 'hero' : 'strip'
   const install = useNativeChatInstallSlot(props, agentLabel, installLayout)
-  const cancelPrompt = () => {
-    if (prompt && (controller.turnId || props.agent === 'pi')) {
-      void controller.cancel(controller.turnId ?? undefined, {
-        itemId: prompt.itemId,
-        expectedRevision: prompt.revision
-      })
-    }
-  }
+  const cancelPrompt = () => cancelStructuredPrompt(prompt, controller, props.agent)
   const rootInput = useNativeChatRootInputRouting({
     tabId: props.tabId,
     rootRef,

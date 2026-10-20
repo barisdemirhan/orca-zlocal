@@ -31,19 +31,9 @@ import {
   selectAppRootSurfaceTelemetryOptedIn,
   selectAppRootSurfaceVoiceEnabled
 } from './app-root-surface-settings'
+import { AgentHubRootSurfaces } from './AgentHubRootSurfaces'
 import type { FloatingWorkspacePanelState } from './use-floating-workspace-panel'
 import type { OnboardingGate } from './use-onboarding-and-feature-tips'
-
-const AgentHubShortcutInitialization = lazy(() =>
-  import('../components/agent-hub/use-agent-hub-shortcut-initialization').then((module) => ({
-    default: module.AgentHubShortcutInitialization
-  }))
-)
-const AgentHubRequestConsumerSurface = lazy(() =>
-  import('../components/agent-hub/AgentHubRequestConsumerSurface').then((module) => ({
-    default: module.AgentHubRequestConsumerSurface
-  }))
-)
 
 const QuickOpen = lazy(() => import('../components/QuickOpen'))
 const WorkspaceCleanupDialog = lazy(
@@ -138,7 +128,6 @@ export const AppRootSurfaces = memo(function AppRootSurfaces(props: {
   const voiceEnabled = useAppStore(selectAppRootSurfaceVoiceEnabled)
   const petEnabled = useAppStore(selectAppRootSurfacePetEnabled)
   const telemetryOptedIn = useAppStore(selectAppRootSurfaceTelemetryOptedIn)
-  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   const statusBarVisible = useAppStore((s) => s.statusBarVisible)
   const persistedUIReady = useAppStore((s) => s.persistedUIReady)
   const petVisible = useAppStore((s) => s.petVisible)
@@ -154,12 +143,7 @@ export const AppRootSurfaces = memo(function AppRootSurfaces(props: {
 
   return (
     <>
-      {agentHubEnabled ? (
-        <Suspense fallback={null}>
-          <AgentHubShortcutInitialization />
-          <AgentHubRequestConsumerSurface />
-        </Suspense>
-      ) : null}
+      <AgentHubRootSurfaces />
       {floatingWorkspace.shouldMountPanel ? (
         <Suspense fallback={null}>
           <OverlayBoundary

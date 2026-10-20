@@ -30,7 +30,10 @@ import { useNativeChatComposerAppMenuSelection } from './use-native-chat-compose
 import { useNativeChatComposerSubmit } from './use-native-chat-composer-submit'
 import { useNativeChatComposerCommandPicker } from './use-native-chat-composer-command-picker'
 import { useAgentHubOrbComposerBinding } from '../agent-hub/agent-hub-orb-composer'
-import { useAgentHubOrbVoiceContext } from '../agent-hub/agent-hub-orb-voice-context'
+import {
+  useNativeChatComposerVoiceGatedSend,
+  useNativeChatComposerVoiceHoldsInput
+} from './use-native-chat-composer-orb-voice-gate'
 
 /** Send through the chat’s structured transport or verified PTY route, with agent-aware autocomplete and image handling. */
 export const NativeChatComposerPane = forwardRef<NativeChatComposerHandle, NativeChatComposerProps>(
@@ -65,8 +68,7 @@ export const NativeChatComposerPane = forwardRef<NativeChatComposerHandle, Nativ
     },
     ref
   ): React.JSX.Element {
-    const orbVoice = useAgentHubOrbVoiceContext()
-    const voiceHoldsInput = orbVoice.controller !== null && !orbVoice.snapshot.textMode
+    const voiceHoldsInput = useNativeChatComposerVoiceHoldsInput()
     // Own drafts and attachments by pane/conversation so reconnect PTY replacement and UI mode changes cannot discard unsent input.
     const imeEnterGesture = useImeEnterGestureOwnership()
     const { draft, setDraft, flushDraftAppends } = useNativeChatDraft(
@@ -305,12 +307,7 @@ export const NativeChatComposerPane = forwardRef<NativeChatComposerHandle, Nativ
       setDraft,
       setCaret
     })
-    const sendMessage = useCallback(() => {
-      if (orbVoice.controller && !orbVoice.controller.getSnapshot().textMode) {
-        return
-      }
-      submit()
-    }, [orbVoice.controller, submit])
+    const sendMessage = useNativeChatComposerVoiceGatedSend(submit)
 
     const { send, chooseEditItem, fieldOverrides, dispatchPickerCommand } =
       useNativeChatComposerEditSession({

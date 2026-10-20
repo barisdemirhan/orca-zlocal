@@ -30,6 +30,7 @@ import type { HookListenerState } from '../listener-state'
 import { resolvePrompt, resolveToolState } from '../prompt-fields'
 import { extractToolFields, isNewTurnEvent } from '../provider-event-routing'
 import { readString } from '../tool-input-preview'
+import { resolveCodexApprovalOwnedState } from './codex-approval-owned-state'
 import {
   codexHookEventState,
   codexMainAgentStatusForPayload,
@@ -145,30 +146,6 @@ export function normalizeCodexSubagentLifecycleEvent(
     state.codexSubagentTranscriptByPaneKey.get(paneKey)?.subagents.delete(agentId)
   }
   return buildCodexChildDrivenStatusPayload(state, eventName, paneKey, hookPayload)
-}
-
-/** Codex PermissionRequest precedes reviewer/user decisions; suppress reviewer-owned waiting (STA-7698). request_user_input still blocks a human on PreToolUse (#9861). */
-function resolveCodexApprovalOwnedState(
-  state: HookListenerState,
-  eventName: unknown,
-  paneKey: string,
-  transcriptPath: string | undefined,
-  stateName: 'working' | 'waiting' | 'done',
-  toolName: string | undefined
-): 'working' | 'waiting' | 'done' {
-  if (
-    stateName !== 'waiting' ||
-    eventName !== 'PermissionRequest' ||
-    !codexApprovalUsesTurnReviewer(toolName)
-  ) {
-    return stateName
-  }
-  return codexTurnApprovalsAreAutoReviewed(
-    state.codexSubagentTranscriptByPaneKey.get(paneKey),
-    transcriptPath
-  )
-    ? 'working'
-    : stateName
 }
 
 export function normalizeCodexEvent(

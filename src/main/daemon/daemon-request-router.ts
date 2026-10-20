@@ -11,6 +11,7 @@ import type { DaemonSessionBackgroundRouting } from './daemon-session-background
 import { recordDaemonStreamBacklogEvent } from './daemon-stream-backlog-probe'
 import type { DaemonStreamDataBatcher } from './daemon-stream-data-batcher'
 import type { DaemonTerminalAdmission } from './daemon-terminal-admission'
+import { inspectProcessForRequest } from './daemon-inspect-process-request'
 import { DaemonHealthRequests } from './daemon-health-requests'
 import type { TerminalHistorySeedTransferRegistry } from './terminal-history-seed-transfer-registry'
 import type { TerminalHost } from './terminal-host'
@@ -124,18 +125,8 @@ export class DaemonRequestRouter {
         return {
           foregroundProcess: this.options.host.getForegroundProcess(request.payload.sessionId)
         }
-      case 'inspectProcess': {
-        const options = {
-          ...(request.payload.expectedIncarnationId
-            ? { expectedIncarnationId: request.payload.expectedIncarnationId }
-            : {}),
-          ...(request.payload.steadyState === true ? { steadyState: true } : {}),
-          ...(request.payload.ignoreDetached === true ? { ignoreDetached: true } : {})
-        }
-        return Object.keys(options).length > 0
-          ? this.options.host.inspectProcess(request.payload.sessionId, options)
-          : this.options.host.inspectProcess(request.payload.sessionId)
-      }
+      case 'inspectProcess':
+        return inspectProcessForRequest(this.options.host, request.payload)
       case 'confirmForegroundProcess':
         return {
           foregroundProcess: await this.options.host.confirmForegroundProcess(
