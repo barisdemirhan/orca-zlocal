@@ -22,6 +22,10 @@ import { startAgentHubDictation } from './agent-hub-dictation-improve'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { openAgentHubOrb } from './agent-hub-orb-open'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
+import {
+  agentHubOrbVoiceCommandAvailable,
+  runAgentHubOrbVoiceCommand
+} from './agent-hub-orb-voice-commands'
 import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
 
 export const AgentHubOrbComposerContext = createContext<string | null>(null)
@@ -178,6 +182,17 @@ export function activateAgentHubOrb(): void {
   ) {
     toggleAgentHubOrb()
     return
+  }
+  // Once the Orb is open, its chord turns Live on and off; a call still connecting is left alone.
+  if (panel.session?.tabId) {
+    if (agentHubOrbVoiceCommandAvailable('toggleOrbLive')) {
+      runAgentHubOrbVoiceCommand('toggleOrbLive')
+      return
+    }
+    const connection = readAgentHubOrbVoice(panel.session.tabId)?.getSnapshot().connection
+    if (connection === 'connecting' || connection === 'stopping') {
+      return
+    }
   }
   void openAgentHubOrb(undefined, false, agentHubOrbLaunchAction(useAppStore.getState().settings))
 }

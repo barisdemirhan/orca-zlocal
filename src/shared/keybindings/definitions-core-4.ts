@@ -8,7 +8,8 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['orb', 'live', 'voice'],
-    defaultBindings: platformBindings(['Alt+Shift+L']),
+    // Unbound: once the Orb is open, its own chord (agentHub.toggleOrb) toggles Live.
+    defaultBindings: platformBindings([]),
     allowInTerminal: true
   },
   {
@@ -17,7 +18,26 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['orb', 'microphone', 'mute'],
-    defaultBindings: platformBindings(['Alt+Shift+U']),
+    // Alt+Shift+D splits the terminal down outside the Mac.
+    defaultBindings: {
+      darwin: ['Alt+Shift+D'],
+      linux: ['Alt+Shift+U'],
+      win32: ['Alt+Shift+U']
+    },
+    allowInTerminal: true
+  },
+  {
+    id: 'agentHub.orb.toggleConversation',
+    title: 'Show Orb conversation or minimize Orb',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'conversation', 'chat', 'minimize'],
+    // Alt+Shift+W is the suggested next-waiting chord outside the Mac.
+    defaultBindings: {
+      darwin: ['Alt+Shift+W'],
+      linux: ['Alt+Shift+K'],
+      win32: ['Alt+Shift+K']
+    },
     allowInTerminal: true
   },
   {

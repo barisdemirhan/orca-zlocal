@@ -21,6 +21,7 @@ const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
   'agentHub.orb.toggleLive',
   'agentHub.orb.toggleMicrophone',
   'agentHub.orb.toggleSpeaker',
+  'agentHub.orb.toggleConversation',
   'agentHub.toggle',
   'agentHub.openAnswerQueue',
   'agentHub.nextWaiting',

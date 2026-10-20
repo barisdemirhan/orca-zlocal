@@ -1,7 +1,10 @@
 import { agentHubMirrorTabCommandAvailable } from './agent-hub-mirror-tab-command'
 import type { KeybindingActionId } from '../../../../shared/keybindings'
 import { getAgentHubCommands, type AgentHubCommands } from './agent-hub-commands'
-import { agentHubOrbVoiceCommandAvailable } from './agent-hub-orb-voice-commands'
+import {
+  agentHubOrbConversationCommandAvailable,
+  agentHubOrbVoiceCommandAvailable
+} from './agent-hub-orb-voice-commands'
 
 const ACTIONS = [
   ['agentHub.openAnswerQueue', 'openAnswerQueue'],
@@ -9,6 +12,7 @@ const ACTIONS = [
   ['agentHub.orb.toggleLive', 'toggleOrbLive'],
   ['agentHub.orb.toggleMicrophone', 'toggleOrbMicrophone'],
   ['agentHub.orb.toggleSpeaker', 'toggleOrbSpeaker'],
+  ['agentHub.orb.toggleConversation', 'toggleOrbConversation'],
   ['agentHub.toggle', 'toggle'],
   ['agentHub.nextWaiting', 'jumpToNextWaiting'],
   ['agentHub.dockMirrors', 'toggleMirrors'],
@@ -22,8 +26,9 @@ const ACTIONS = [
 ] as const satisfies readonly (readonly [KeybindingActionId, keyof AgentHubCommands])[]
 
 export const AGENT_HUB_COMMAND_ACTION_IDS = ACTIONS.map(([actionId]) => actionId)
-export const AGENT_HUB_ORB_VOICE_ACTION_IDS = AGENT_HUB_COMMAND_ACTION_IDS.filter((id) =>
-  id.startsWith('agentHub.orb.')
+// Orb chords also run from text fields, so the Orb composer can start Live or switch views.
+export const AGENT_HUB_ORB_VOICE_ACTION_IDS = AGENT_HUB_COMMAND_ACTION_IDS.filter(
+  (id) => id === 'agentHub.toggleOrb' || id.startsWith('agentHub.orb.')
 )
 
 export function agentHubCommandHandlers(
@@ -38,6 +43,9 @@ export function agentHubCommandHandlers(
           command === 'toggleOrbSpeaker') &&
         !agentHubOrbVoiceCommandAvailable(command)
       ) {
+        return false
+      }
+      if (command === 'toggleOrbConversation' && !agentHubOrbConversationCommandAvailable()) {
         return false
       }
       if (

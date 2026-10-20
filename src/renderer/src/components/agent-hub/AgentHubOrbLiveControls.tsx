@@ -17,7 +17,7 @@ export function AgentHubOrbLiveControls({
   const controls = [
     {
       id: 'stop',
-      actionId: 'agentHub.orb.toggleLive',
+      actionId: 'agentHub.toggleOrb',
       label: translate('auto.agentHub.orb.endLiveVoice', 'End live voice'),
       icon: Square,
       disabled: voice.connection === 'stopping',

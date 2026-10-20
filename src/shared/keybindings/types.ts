@@ -46,6 +46,7 @@ export type KeybindingActionId =
   | 'agentHub.orb.toggleLive'
   | 'agentHub.orb.toggleMicrophone'
   | 'agentHub.orb.toggleSpeaker'
+  | 'agentHub.orb.toggleConversation'
   | 'agentHub.toggle'
   | 'agentHub.openAnswerQueue'
   | 'agentHub.nextWaiting'

@@ -1,36 +1,35 @@
 import { ArrowLeft, History, Minimize2, Plus, Settings, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 
 function HeaderAction({
   label,
+  actionId,
   disabled,
   onClick,
   children
 }: {
   label: string
+  actionId?: string
   disabled?: boolean
   onClick: () => void
   children: ReactNode
 }): React.JSX.Element {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={label}
-          disabled={disabled}
-          onClick={onClick}
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <AgentHubActionTooltip label={label} actionId={actionId}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        {children}
+      </Button>
+    </AgentHubActionTooltip>
   )
 }
 
@@ -110,6 +109,7 @@ export function AgentHubOrbConversationHeader({
       {chatVisible ? (
         <HeaderAction
           label={translate('auto.agentHub.orb.minimize', 'Minimize Orb')}
+          actionId="agentHub.orb.toggleConversation"
           onClick={onMinimize}
         >
           <Minimize2 />

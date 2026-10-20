@@ -36,6 +36,27 @@ describe('keybindings', () => {
       ).toEqual([])
     }
   )
+  it.each([
+    ['darwin', 'Alt+Shift+D', 'Alt+Shift+W'],
+    ['linux', 'Alt+Shift+U', 'Alt+Shift+K'],
+    ['win32', 'Alt+Shift+U', 'Alt+Shift+K']
+  ] as const)(
+    'keeps Orb Live on the Orb chord and binds mic and conversation on %s',
+    (platform, microphone, conversation) => {
+      expect(getEffectiveKeybindingsForAction('agentHub.orb.toggleLive', platform)).toEqual([])
+      expect(getEffectiveKeybindingsForAction('agentHub.orb.toggleMicrophone', platform)).toEqual([
+        microphone
+      ])
+      expect(getEffectiveKeybindingsForAction('agentHub.orb.toggleConversation', platform)).toEqual(
+        [conversation]
+      )
+      expect(
+        findKeybindingConflicts(platform).filter((conflict) =>
+          conflict.actionIds.some((id) => id.startsWith('agentHub.orb.'))
+        )
+      ).toEqual([])
+    }
+  )
   it('defines a default shortcut for opening markdown notes', () => {
     expect(getEffectiveKeybindingsForAction('tab.openMarkdown', 'darwin')).toEqual(['Mod+Shift+O'])
     expect(formatKeybindingList(['Mod+Shift+O'], 'darwin')).toBe('⌘⇧O')

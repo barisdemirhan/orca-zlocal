@@ -22,38 +22,38 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
+import { AgentHubActionTooltip, AgentHubShortcut } from './AgentHubShortcut'
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 
 function OrbControl({
   label,
+  actionId,
   children,
   onClick,
   disabled,
   pressed
 }: {
   label: string
+  actionId?: string
   children: ReactNode
   onClick: () => void
   disabled?: boolean
   pressed?: boolean
 }): React.JSX.Element {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={label}
-          aria-pressed={pressed}
-          disabled={disabled}
-          onClick={onClick}
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <AgentHubActionTooltip label={label} actionId={actionId}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label={label}
+        aria-pressed={pressed}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        {children}
+      </Button>
+    </AgentHubActionTooltip>
   )
 }
 
@@ -62,11 +62,13 @@ type OrbMode = 'live' | 'dictate' | 'text'
 function OrbModeItem({
   mode,
   label,
+  actionId,
   disabled,
   children
 }: {
   mode: OrbMode
   label: string
+  actionId?: string
   disabled?: boolean
   children: ReactNode
 }): React.JSX.Element {
@@ -75,7 +77,12 @@ function OrbModeItem({
       <ToggleGroupItem value={mode} disabled={disabled} asChild>
         <TooltipTrigger aria-label={label}>{children}</TooltipTrigger>
       </ToggleGroupItem>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent>
+        <span className="flex items-center gap-2">
+          {label}
+          <AgentHubShortcut actionId={actionId} />
+        </span>
+      </TooltipContent>
     </Tooltip>
   )
 }
@@ -167,6 +174,7 @@ export function AgentHubOrbControls({
           <OrbModeItem
             mode="live"
             label={live ? translate('agentHub.orb.liveActive', 'Live voice on') : startLabel}
+            actionId="agentHub.toggleOrb"
             disabled={
               voice.connection === 'stopping' ||
               (!live && (busy || dictating || starting || !voice.canStart))
@@ -208,6 +216,7 @@ export function AgentHubOrbControls({
       {orbView && live ? (
         <OrbControl
           label={translate('auto.agentHub.orb.showConversation', 'Show conversation')}
+          actionId="agentHub.orb.toggleConversation"
           onClick={onShowChat}
         >
           <MessageSquare />

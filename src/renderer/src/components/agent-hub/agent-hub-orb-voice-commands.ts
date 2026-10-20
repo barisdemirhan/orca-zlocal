@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
-import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { cancelAgentHubOrbLaunch, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import type { AgentHubOrbVoiceController } from './agent-hub-orb-voice-controller'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 
@@ -8,7 +8,28 @@ export type AgentHubOrbVoiceCommand = 'toggleOrbLive' | 'toggleOrbMicrophone' | 
 export const AGENT_HUB_ORB_VOICE_COMMANDS = {
   toggleOrbLive: () => runAgentHubOrbVoiceCommand('toggleOrbLive'),
   toggleOrbMicrophone: () => runAgentHubOrbVoiceCommand('toggleOrbMicrophone'),
-  toggleOrbSpeaker: () => runAgentHubOrbVoiceCommand('toggleOrbSpeaker')
+  toggleOrbSpeaker: () => runAgentHubOrbVoiceCommand('toggleOrbSpeaker'),
+  toggleOrbConversation: toggleAgentHubOrbConversation
+}
+
+/** History and settings views have no conversation to toggle. */
+export function agentHubOrbConversationCommandAvailable(): boolean {
+  const panel = useAgentHubOrbPanel.getState()
+  return Boolean(panel.session && panel.chatVisible)
+}
+
+/** Shows the conversation, or minimizes the Orb when the conversation is showing. */
+export function toggleAgentHubOrbConversation(): void {
+  const panel = useAgentHubOrbPanel.getState()
+  if (!panel.session || !agentHubOrbConversationCommandAvailable()) {
+    return
+  }
+  if (panel.presentation === 'chat' && !panel.compact) {
+    useAgentHubOrbPanel.setState({ compact: true })
+    return
+  }
+  cancelAgentHubOrbLaunch(panel.session.sessionId, panel.session.tabId)
+  useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
 }
 
 export function agentHubOrbVoiceCommandAvailable(command: AgentHubOrbVoiceCommand): boolean {
