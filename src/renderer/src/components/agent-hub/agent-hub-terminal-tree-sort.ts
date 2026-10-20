@@ -3,7 +3,10 @@ import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings
 import type { Repo } from '../../../../shared/repo-types'
 import { AGENT_STATUS_STALE_AFTER_MS } from '../../../../shared/agent-status-types'
 import type { Worktree } from '../../../../shared/worktree/types'
-import { buildWorktreeComparator, sortWorktreesSmart } from '../sidebar/smart-sort'
+import {
+  buildWorktreeComparator,
+  sortWorktreesSmart
+} from '../../../../shared/sidebar-list/smart-sort'
 import { agentHubIndicatorKind, agentHubStateSince } from './agent-hub-lists'
 import type {
   AgentHubGroupNode,

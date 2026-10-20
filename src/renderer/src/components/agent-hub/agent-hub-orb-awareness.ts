@@ -13,7 +13,7 @@ import { agentHubInboxRequests, type AgentHubRequestsState } from './agent-hub-r
 import { agentHubRequestHost, findAgentHubRequestTarget } from './agent-hub-request-target'
 import { paneTargetFromThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import { agentHubOrbQuotaNotices } from './agent-hub-orb-quota-notices'
-import { resolveRuntimeOwnerForWorktree } from '@/lib/worktree-runtime-owner'
+import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
 
 export type OrbAwarenessProjection = {
@@ -136,7 +136,7 @@ export function collectAgentHubOrbAwareness(input: {
       continue
     }
     const owner = toAgentHibernationRuntimeOwner(
-      resolveRuntimeOwnerForWorktree(state, thread.worktree.id),
+      resolveTerminalPtyOwner(state, thread.worktree.id),
       []
     )
     const usage =

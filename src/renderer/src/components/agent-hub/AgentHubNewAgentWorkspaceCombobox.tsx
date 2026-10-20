@@ -18,7 +18,10 @@ import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { getIndexedRepoMap } from '@/store/worktree-repo-index'
 import { getWorktreeExecutionHostId } from '../../../../shared/execution-host'
-import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
+import {
+  getWorktreeHostIdentity,
+  type HostScopedWorktreeKey
+} from '../../../../shared/worktree/host-qualified-identity'
 import type { Worktree } from '../../../../shared/worktree/types'
 
 function WorkspaceLabel({ worktree }: { worktree: Worktree }): React.JSX.Element {
@@ -53,8 +56,8 @@ export function AgentHubNewAgentWorkspaceCombobox({
   disabled
 }: {
   worktrees: readonly Worktree[]
-  value: string
-  onValueChange: (identity: string) => void
+  value: HostScopedWorktreeKey
+  onValueChange: (identity: HostScopedWorktreeKey) => void
   disabled: boolean
 }): React.JSX.Element {
   const [open, setOpen] = useState(false)

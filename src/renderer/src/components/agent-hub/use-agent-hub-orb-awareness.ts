@@ -8,7 +8,7 @@ import { useAgentHubRequests } from './agent-hub-requests-store'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import { collectAgentHubOrbAwareness } from './agent-hub-orb-awareness'
-import { resolveRuntimeOwnerForWorktree } from '@/lib/worktree-runtime-owner'
+import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
 
 /** Reads the existing host feeds; no agent-selection state or per-agent polling. */
@@ -38,7 +38,7 @@ export function useAgentHubOrbAwareness(
               ...new Set(
                 threads.flatMap((thread) => {
                   const owner = toAgentHibernationRuntimeOwner(
-                    resolveRuntimeOwnerForWorktree(useAppStore.getState(), thread.worktree.id),
+                    resolveTerminalPtyOwner(useAppStore.getState(), thread.worktree.id),
                     []
                   )
                   return owner.kind === 'runtime' ? [owner.environmentId] : []

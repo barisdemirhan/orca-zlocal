@@ -73,7 +73,7 @@ describe('Codex approval ownership learned after its hook', () => {
   }
 
   function poll(original: AgentHookEventPayload): AgentHookEventPayload {
-    const polled = pollCodexTranscriptStatus(state, original)
+    const polled = pollCodexTranscriptStatus(state, original, { paneKey: PANE_KEY }, 'production')
     if (!polled) {
       throw new Error('Expected the Codex transcript poll to retain the pane')
     }

@@ -4,7 +4,7 @@ import { useAppStore } from '@/store'
 import { launchAgentBackgroundSession } from '@/lib/launch-agent-background-session'
 import { getAgentCatalog } from '@/lib/agent-catalog'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
-import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
+import { runtimeEnvironmentIdWithLegacyFallbackUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { makePaneKey, parsePaneKey } from '../../../../shared/stable-pane-id'
 import { toWebTerminalSurfaceTabId } from '../../../../shared/terminal-surface-id'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
@@ -28,7 +28,10 @@ async function resolveLaunchedMirrorPane(
   if (pane?.tabId !== launchedTabId) {
     return null
   }
-  const environmentId = getRuntimeEnvironmentIdForWorktree(useAppStore.getState(), worktreeId)
+  const environmentId = runtimeEnvironmentIdWithLegacyFallbackUnlessTwin(
+    useAppStore.getState(),
+    worktreeId
+  )
   // Why: a runtime host's tab reaches this client as web-terminal-<hostTabId> one sync later,
   // replacing the reserved local tab; tracking the reserved id would be pruned as closed.
   const tabId = environmentId ? toWebTerminalSurfaceTabId(launchedTabId) : launchedTabId

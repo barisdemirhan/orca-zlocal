@@ -1,5 +1,4 @@
 import { projectCodexSessionOptions } from './codex-structured-service-tier'
-import { readCodexAcquisitionOptionsFrom } from './codex-acquisition-options'
 import * as codexRewind from './codex-structured-rewind'
 import type { AgentSessionBackgroundTaskState } from '../../shared/agent-session-wire'
 import type {
@@ -330,7 +329,6 @@ export class CodexStructuredSessionAdapter implements StructuredAgentSessionAdap
   projectOptions = (sessionId: string, options: Readonly<Record<string, string>>) =>
     projectCodexSessionOptions(this.sessions.get(sessionId), options)
 
-  readAcquisitionOptions = readCodexAcquisitionOptionsFrom((sessionId) => this.session(sessionId))
 
   closeSession: NonNullable<StructuredAgentSessionAdapter['closeSession']> = (...args) =>
     this.teardown.close(...args)

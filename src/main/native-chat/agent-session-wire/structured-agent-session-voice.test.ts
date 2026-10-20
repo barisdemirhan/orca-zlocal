@@ -124,6 +124,7 @@ beforeEach(async () => {
   cancelTurn.mockClear()
   const adapter: StructuredAgentSessionAdapter = {
     acquire,
+    open: async () => ({ reportedOptions: { model: '' } }),
     startVoice,
     stopVoice,
     appendVoiceText,

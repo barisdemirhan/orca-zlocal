@@ -3,6 +3,7 @@ import { cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import type * as Rpc from '@/runtime/runtime-rpc-client'
 import type * as Owner from '@/lib/worktree-runtime-owner'
+import type * as Route from '@/lib/terminal-worktree-route'
 import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
 import { useAgentHubManualSleepHostReason } from './agent-hub-pane-sleep-operations'
 
@@ -13,7 +14,11 @@ vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
 }))
 vi.mock('@/lib/worktree-runtime-owner', async (original) => ({
   ...(await original<typeof Owner>()),
-  resolveRuntimeOwnerForWorktree: () => ({ kind: 'runtime', environmentId: 'old-host' })
+  runtimeEnvironmentIdWithLegacyFallbackUnlessTwin: () => 'old-host'
+}))
+vi.mock('@/lib/terminal-worktree-route', async (original) => ({
+  ...(await original<typeof Route>()),
+  resolveTerminalPtyOwner: () => ({ kind: 'runtime', environmentId: 'old-host' })
 }))
 afterEach(() => {
   cleanup()

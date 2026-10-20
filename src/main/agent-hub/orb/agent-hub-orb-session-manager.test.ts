@@ -99,6 +99,7 @@ beforeEach(() => {
       settings.experimentalAgentHub === true && settings.agentHubAgentControl !== false,
     ensureStructuredAgentSessionHost: async () => {},
     getAgentProviderSessionRows: () => [],
+    resolveStructuredAgentSessionLocalWorkspacePath: async () => null,
     resolveStructuredAgentSessionCreateIntent: vi.fn<
       ConstructorParameters<
         typeof AgentHubOrbSessionManager

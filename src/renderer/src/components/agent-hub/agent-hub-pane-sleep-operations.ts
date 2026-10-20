@@ -5,7 +5,8 @@ import { AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY } from '../../../../shared/agent
 import { parsePaneKey, makePaneKey } from '../../../../shared/stable-pane-id'
 import { collectSleepingAgentSessionRecordsForWorktree } from '@/store/slices/agent-status'
 import { resolveWorkspaceTerminalHostAuthority } from '@/lib/workspace-terminal-host-authority'
-import { resolveRuntimeOwnerForWorktree } from '@/lib/worktree-runtime-owner'
+import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
+import { runtimeEnvironmentIdWithLegacyFallbackUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
 import { toRuntimePtyId } from '@/lib/agent-hibernation-pane-eligibility'
 import { requestBackgroundTerminalWorktreeMount } from '../terminal/background-terminal-worktree-mount'
@@ -37,8 +38,7 @@ export function useAgentHubManualSleepHostReason(target: AgentHubPaneTarget): st
     if (!target.agentType) {
       return null
     }
-    const owner = resolveRuntimeOwnerForWorktree(state, target.worktree.id)
-    return owner.kind === 'runtime' ? owner.environmentId : null
+    return runtimeEnvironmentIdWithLegacyFallbackUnlessTwin(state, target.worktree.id)
   })
   const [unsupported, setUnsupported] = useState<string | null>(null)
   useEffect(() => {
@@ -119,10 +119,9 @@ export async function sleepAgentHubPane(target: AgentHubPaneTarget): Promise<voi
   if (!paneKey || !pane || !ptyId) {
     throw new Error('The selected pane changed. Try again.')
   }
-  const owner = toAgentHibernationRuntimeOwner(
-    resolveRuntimeOwnerForWorktree(state, target.worktree.id),
-    [ptyId]
-  )
+  const owner = toAgentHibernationRuntimeOwner(resolveTerminalPtyOwner(state, target.worktree.id), [
+    ptyId
+  ])
   if (owner.kind === 'unresolved') {
     throw new Error('The execution host is unverifiable.')
   }

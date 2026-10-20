@@ -54,7 +54,9 @@ async function resolveAgentHubOrbModel(input: {
 export async function prepareAgentHubOrbSessionCreate(input: {
   runtime: Pick<
     OrcaRuntimeService,
-    'resolveStructuredAgentSessionCreateIntent' | 'getAgentProviderSessionRows'
+    | 'resolveStructuredAgentSessionCreateIntent'
+    | 'getAgentProviderSessionRows'
+    | 'resolveStructuredAgentSessionLocalWorkspacePath'
   >
   host: StructuredAgentSessionHost
   caller: StructuredAgentSessionCaller

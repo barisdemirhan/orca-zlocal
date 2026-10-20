@@ -628,6 +628,7 @@ describe('CodexStructuredSessionAdapter.dispatch', () => {
         expect(current.models.find((model) => model.id === 'gpt-6.1-sol')?.description).toContain(
           'not in this account’s model list'
         )
+        // Re-picking the model the resumed thread reported keeps it; only other unlisted models are refused.
         await expect(
           adapter.setOption({
             sessionId: 'session-1',
@@ -635,7 +636,10 @@ describe('CodexStructuredSessionAdapter.dispatch', () => {
             value: 'gpt-6.1-sol',
             fence: 7
           })
-        ).rejects.toThrow('does not offer model gpt-6.1-sol')
+        ).resolves.toMatchObject({ model: 'gpt-6.1-sol' })
+        await expect(
+          adapter.setOption({ sessionId: 'session-1', key: 'model', value: 'gpt-gone', fence: 7 })
+        ).rejects.toThrow('does not offer model gpt-gone')
       }
 
       await adapter.setOption({ sessionId: 'session-1', key: 'model', value: 'gpt-5', fence: 7 })

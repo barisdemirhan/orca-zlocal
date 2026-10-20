@@ -63,6 +63,7 @@ beforeEach(() => {
     isAgentHubEnabled: () => true,
     ensureStructuredAgentSessionHost: async () => {},
     getAgentProviderSessionRows: () => [],
+    resolveStructuredAgentSessionLocalWorkspacePath: async () => null,
     resolveStructuredAgentSessionCreateIntent: async (params) => ({
       envelope: { ...params.envelope, expectedRuntimeFence: null, payloadFingerprint: '' },
       location: {

@@ -2,6 +2,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type * as Rpc from '@/runtime/runtime-rpc-client'
 import type * as Owner from '@/lib/worktree-runtime-owner'
+import type * as Route from '@/lib/terminal-worktree-route'
 import type * as Authority from '@/lib/workspace-terminal-host-authority'
 import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
 import { makeWorkingEntryWithoutHistory } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -15,7 +16,11 @@ vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
 }))
 vi.mock('@/lib/worktree-runtime-owner', async (original) => ({
   ...(await original<typeof Owner>()),
-  resolveRuntimeOwnerForWorktree: () => ({ kind: 'runtime', environmentId: 'old-host' })
+  runtimeEnvironmentIdWithLegacyFallbackUnlessTwin: () => 'old-host'
+}))
+vi.mock('@/lib/terminal-worktree-route', async (original) => ({
+  ...(await original<typeof Route>()),
+  resolveTerminalPtyOwner: () => ({ kind: 'runtime', environmentId: 'old-host' })
 }))
 vi.mock('@/lib/workspace-terminal-host-authority', async (original) => ({
   ...(await original<typeof Authority>()),

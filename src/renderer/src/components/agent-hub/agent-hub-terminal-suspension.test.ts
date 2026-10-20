@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type * as Rpc from '@/runtime/runtime-rpc-client'
-import type * as Owner from '@/lib/worktree-runtime-owner'
+import type * as Route from '@/lib/terminal-worktree-route'
 import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
 import { changeAgentHubTerminalSuspension } from './agent-hub-terminal-suspension'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -11,9 +11,9 @@ vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
   ...(await original<typeof Rpc>()),
   callRuntimeRpc: call
 }))
-vi.mock('@/lib/worktree-runtime-owner', async (original) => ({
-  ...(await original<typeof Owner>()),
-  resolveRuntimeOwnerForWorktree: () => ({ kind: 'non-runtime' })
+vi.mock('@/lib/terminal-worktree-route', async (original) => ({
+  ...(await original<typeof Route>()),
+  resolveTerminalPtyOwner: () => ({ kind: 'non-runtime' })
 }))
 const initial = useAppStore.getState()
 const leaf = '11111111-1111-4111-8111-111111111111'

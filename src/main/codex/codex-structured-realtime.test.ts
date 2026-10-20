@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { CodexAppServerRequestError } from './app-server/codex-app-server-request-error'
 import { CodexAppServerUnsupportedError } from './codex-app-server-session'
 import {
+  acquireReadyCodexForTest,
   adapterFor,
   fakeCodex,
   identityFor,
@@ -29,7 +30,11 @@ async function setup(routes: Parameters<typeof fakeCodex>[0] = {}) {
   })
   const events: CodexStructuredSessionEvent[] = []
   adapter = adapterFor(codex, {}, events)
-  await adapter.acquire({ identity: identityFor('session-1'), fence: 7, spawnToken: 'spawn-1' })
+  await acquireReadyCodexForTest(adapter, {
+    identity: identityFor('session-1'),
+    fence: 7,
+    spawnToken: 'spawn-1'
+  })
   const connection = codex.connections[0]
   if (!connection) {
     throw new Error('Expected the acquired provider connection')
@@ -177,7 +182,7 @@ describe('Codex native realtime on a structured conversation', () => {
       state: 'off'
     })
     expect(rig.connection.calls.some((call) => call.method === 'thread/realtime/stop')).toBe(false)
-    await rig.adapter.acquire({
+    await acquireReadyCodexForTest(rig.adapter, {
       identity: identityFor('session-1'),
       fence: 8,
       spawnToken: 'spawn-2'
@@ -224,7 +229,7 @@ describe('Codex native realtime on a structured conversation', () => {
     expect(await rig.adapter.startVoice(INPUT)).toMatchObject({ ok: false })
     expect(rig.connection.calls.some((call) => call.method === 'thread/realtime/start')).toBe(false)
     expect(await rig.adapter.readVoiceCapability('at-rest')).toMatchObject({ supported: null })
-    await rig.adapter.acquire({
+    await acquireReadyCodexForTest(rig.adapter, {
       identity: identityFor('session-1'),
       fence: 8,
       spawnToken: 'spawn-2'

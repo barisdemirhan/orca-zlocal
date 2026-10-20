@@ -178,13 +178,13 @@ export abstract class OrcaRuntimeWithResolveWorktreeRemovalTarget extends OrcaRu
       ...sessions.flatMap((session) =>
         Object.values(session?.tabsByWorktree ?? {})
           .flat()
-          .filter((tab) => runtimeWorktreeIdsEqual(tab.worktreeId, worktreeId))
+          .filter((tab) => worktreeIdsEqual(tab.worktreeId, worktreeId))
           .map((tab) => tab.id)
       ),
       ...sessions.flatMap((session) =>
         Object.values(session?.unifiedTabs ?? {})
           .flat()
-          .filter((tab) => runtimeWorktreeIdsEqual(tab.worktreeId, worktreeId))
+          .filter((tab) => worktreeIdsEqual(tab.worktreeId, worktreeId))
           .map((tab) => tab.id)
       ),
       ...(!preservesSameIdOwner

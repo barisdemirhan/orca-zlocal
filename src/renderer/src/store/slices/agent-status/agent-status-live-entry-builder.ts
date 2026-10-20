@@ -163,13 +163,15 @@ export function buildAgentStatusLiveEntry(
     state.worktreesByRepo,
     routing?.worktreeId ?? existing?.worktreeId ?? ''
   )
+  const hostKeepsProviderSession =
+    existing?.agentType === identity.agentType &&
+    hostOwnedWorktree?.runtimeOwnerEnvironmentId !== undefined
   const canReuseExistingProviderSession =
+    hostKeepsProviderSession ||
     canReuseStatusProviderSession(existing, {
       agentType: identity.agentType,
       state: payload.state
-    }) ||
-    (existing?.agentType === identity.agentType &&
-      hostOwnedWorktree?.runtimeOwnerEnvironmentId !== undefined)
+    })
   const providerSession =
     metadata?.providerSession ??
     (canReuseExistingProviderSession ? existing.providerSession : undefined)

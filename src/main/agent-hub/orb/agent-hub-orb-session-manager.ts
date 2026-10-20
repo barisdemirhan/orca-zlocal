@@ -45,6 +45,7 @@ type OrbRuntime = Pick<
   | 'ensureStructuredAgentSessionHost'
   | 'resolveStructuredAgentSessionCreateIntent'
   | 'getAgentProviderSessionRows'
+  | 'resolveStructuredAgentSessionLocalWorkspacePath'
   | 'publishStructuredAgentSessionTab'
   | 'closeMobileSessionTab'
 > & { agentHub: Pick<OrcaRuntimeService['agentHub'], 'snapshot'> }

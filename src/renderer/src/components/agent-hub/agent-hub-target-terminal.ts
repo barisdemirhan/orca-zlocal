@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
-import { resolveRuntimeOwnerForWorktree } from '@/lib/worktree-runtime-owner'
+import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
 import type { RuntimeTerminalResolvePane } from '../../../../shared/runtime-types'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
@@ -17,10 +17,9 @@ export async function resolveAgentHubTargetTerminal(
   expectedPtyId: string
 ): Promise<{ transport: RuntimeClientTarget; terminal: string }> {
   const state = useAppStore.getState()
-  const owner = toAgentHibernationRuntimeOwner(
-    resolveRuntimeOwnerForWorktree(state, target.worktree.id),
-    [expectedPtyId]
-  )
+  const owner = toAgentHibernationRuntimeOwner(resolveTerminalPtyOwner(state, target.worktree.id), [
+    expectedPtyId
+  ])
   if (
     owner.kind === 'unresolved' ||
     resolveAgentHubPtyId(state, target.tab.id, target.paneKey) !== expectedPtyId

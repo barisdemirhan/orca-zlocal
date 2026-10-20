@@ -1,6 +1,6 @@
 import type { AppState } from '@/store/types'
 import { resolveOpenTabOccupantAgent } from '@/lib/open-tab-occupant-agent'
-import { resolveRuntimePaneTitleForLeaf } from '@/lib/runtime-pane-title-leaf-id'
+import { resolveRuntimePaneTitleForLeaf } from '../../../../shared/runtime-pane-title-leaf-id'
 import { hasRemoteRuntimePtyForTab } from '@/lib/tab-agent-remote-pty-selector'
 import { worktreeUsesRemoteConnection } from '@/store/terminals/terminal-workspace-routing'
 import { isTerminalLeafId, makePaneKey } from '../../../../shared/stable-pane-id'
