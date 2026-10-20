@@ -1,6 +1,7 @@
 import { useAgentHubSortedTree } from './use-agent-hub-sorted-tree'
 import { registerAgentHubSelectedTarget } from './agent-hub-active-target'
 import { AgentHubShortcutsButton } from './AgentHubShortcutsDialog'
+import { AgentHubSettingsButton } from './AgentHubSettingsButton'
 import {
   agentHubInboxRequests,
   agentHubAwayAnswerCount,
@@ -323,6 +324,7 @@ export function AgentHubPanel({
           }}
         />
         <AgentHubShortcutsButton />
+        <AgentHubSettingsButton onOpened={onClose} />
         <button
           type="button"
           tabIndex={-1}

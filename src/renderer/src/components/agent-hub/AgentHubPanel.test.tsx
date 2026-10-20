@@ -7,6 +7,7 @@ import { act, createRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import {
@@ -269,6 +270,21 @@ describe('AgentHubPanel terminal sort', () => {
     })
 
     expect(handlers.onSortChange).toHaveBeenCalledWith('recent')
+  })
+})
+
+describe('AgentHubPanel header settings button', () => {
+  it('opens Agent Hub settings and closes the hub', () => {
+    const { handlers } = renderPanel()
+    const button = container.querySelector('button[aria-label="Open Agent Hub settings"]')
+    if (!button) {
+      throw new Error('no settings button in the header')
+    }
+    act(() => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+    const state = useAppStore.getState()
+    expect(state.settingsNavigationTarget).toEqual({ pane: 'agentHub', repoId: null })
+    expect(state.activeView).toBe('settings')
+    expect(handlers.onClose).toHaveBeenCalledTimes(1)
   })
 })
 

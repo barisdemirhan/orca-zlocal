@@ -3,6 +3,7 @@ import { Bell, BellOff, Ellipsis, Keyboard, PanelBottom, Settings } from 'lucide
 import { agentHubShortcutsLabel } from './AgentHubShortcutsDialog'
 import { openAgentHubShortcuts } from './agent-hub-shortcuts-dialog'
 import { useAppStore } from '@/store'
+import { useOpenAgentHubSettings } from './AgentHubSettingsButton'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,8 +64,7 @@ export function AgentHubDockMenu({
   buttonClassName: string
 }): React.JSX.Element {
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
-  const openSettingsPage = useAppStore((s) => s.openSettingsPage)
+  const openAgentHubSettings = useOpenAgentHubSettings()
   const side = agentHubDockPopoverSide(edge)
   return (
     <DropdownMenu modal={false} onOpenChange={onOpenChange}>
@@ -141,15 +141,7 @@ export function AgentHubDockMenu({
           <Keyboard />
           {agentHubShortcutsLabel()}
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={() => {
-            openSettingsTarget({
-              pane: 'agentHub',
-              repoId: null
-            })
-            openSettingsPage()
-          }}
-        >
+        <DropdownMenuItem onSelect={openAgentHubSettings}>
           <Settings />
           {translate('agentHub.dock.settings', 'Agent Hub settings…')}
         </DropdownMenuItem>
