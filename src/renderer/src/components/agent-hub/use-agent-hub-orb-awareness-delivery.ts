@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { useAppStore } from '@/store'
+import { isDictationRunning } from './agent-hub-mirror-mic-state'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 import type { AgentHubOrbVoiceSnapshot } from './agent-hub-orb-voice-state'
@@ -9,6 +11,8 @@ export function useAgentHubOrbAwarenessDelivery(
   voice: AgentHubOrbVoiceSnapshot
 ): void {
   const snapshot = useAgentHubOrbAwarenessStore((state) => state.snapshot)
+  // Updates wait out a dictation; Orb is muted for it and would answer into the user's speech.
+  const dictating = useAppStore((state) => isDictationRunning(state.dictationState))
   const delivery = useRef<OrbAwarenessDelivery | null>(null)
   useEffect(() => {
     const stream = new OrbAwarenessDelivery((state) =>
@@ -28,9 +32,9 @@ export function useAgentHubOrbAwarenessDelivery(
         ? {
             context: controller.context,
             snapshot,
-            busy: Boolean(voice.inputSpeaking || voice.output === 'speaking')
+            busy: Boolean(dictating || voice.inputSpeaking || voice.output === 'speaking')
           }
         : null
     )
-  }, [tabId, snapshot, voice.connection, voice.inputSpeaking, voice.output])
+  }, [tabId, snapshot, dictating, voice.connection, voice.inputSpeaking, voice.output])
 }

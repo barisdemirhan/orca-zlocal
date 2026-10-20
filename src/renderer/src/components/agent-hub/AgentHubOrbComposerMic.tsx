@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { toggleAgentHubOrb, useAgentHubOrbComposerDictation } from './agent-hub-orb-composer'
+import { useAgentHubOrbVoiceContext } from './agent-hub-orb-voice-context'
 
 export function AgentHubOrbComposerMic({
   disabled
@@ -10,8 +11,10 @@ export function AgentHubOrbComposerMic({
   disabled: boolean
 }): React.JSX.Element | null {
   const { session, phase } = useAgentHubOrbComposerDictation()
+  const voice = useAgentHubOrbVoiceContext()
   const label = translate('agentHub.card.dictate', 'Dictate')
-  return phase ? null : (
+  // Live voice already hears the user; dictating would only end it.
+  return phase || (voice.controller && !voice.snapshot.textMode) ? null : (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button

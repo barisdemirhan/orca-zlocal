@@ -30,6 +30,14 @@ import {
   agentHubMirrorWindows
 } from './agent-hub-mirror-membership'
 import { AgentHubMirrorNewAgent } from './AgentHubMirrorNewAgent'
+import { Button } from '@/components/ui/button'
+import {
+  agentHubPickerProjectKeys,
+  agentHubPickerProjects,
+  filterAgentHubTreeByProjects
+} from './agent-hub-picker-project-filter'
+import { AgentHubPickerProjectFilter } from './AgentHubPickerProjectFilter'
+import { useAgentHubHostLabels } from './use-agent-hub-host-labels'
 
 const PICKER_TAB_ID = 'agent-hub-picker'
 const PICKER_SECTIONS = ['agents', 'all'] as const
@@ -78,15 +86,49 @@ export function AgentHubMirrorPickerBody({
     [lineage.parentOf, threads, mirrors]
   )
   const tree = useAgentHubTerminalTree(threads, true, parentOf)
-  const available = useMemo(() => availableAgentHubPickerTree(tree, mirrors), [tree, mirrors])
+  const hostLabels = useAgentHubHostLabels()
+  // From the full tree, so the window's own projects stay listed even with nothing left to add.
+  const projects = useMemo(() => agentHubPickerProjects(tree, hostLabels), [tree, hostLabels])
+  // Seeded from this window's tabs once per open; the popover unmounts on close.
+  const [chosenProjects, setChosenProjects] = useState<ReadonlySet<string>>(() =>
+    agentHubPickerProjectKeys(mirror?.tabs.map((tab) => tab.target.worktree) ?? [])
+  )
+  const projectKeys = useMemo(
+    () => new Set(projects.filter((project) => chosenProjects.has(project.key)).map((p) => p.key)),
+    [projects, chosenProjects]
+  )
+  const changeProjects = (next: ReadonlySet<string>): void => {
+    setChosenProjects(next)
+    setSelectedKey(null)
+  }
+  const unfiltered = useMemo(() => availableAgentHubPickerTree(tree, mirrors), [tree, mirrors])
+  const available = useMemo(
+    () => filterAgentHubTreeByProjects(unfiltered, projectKeys),
+    [unfiltered, projectKeys]
+  )
   const agentTree = useMemo(() => agentOnlyAgentHubTree(available), [available])
   const sectionTree = section === 'agents' ? agentTree : available
   const order = useAgentHubTreeOrder(sectionTree, sortBy)
-  const sorted = useMemo(
-    () => sortAgentHubTerminalTree(filterAgentHubTerminalTree(sectionTree, query), order),
-    [sectionTree, query, order]
+  const queried = useMemo(
+    () => filterAgentHubTerminalTree(sectionTree, query),
+    [sectionTree, query]
   )
-  const groups = useHeldAgentHubTree(sorted, `${section}\u0000${sortBy}\u0000${query}`)
+  const sorted = useMemo(() => sortAgentHubTerminalTree(queried, order), [queried, order])
+  const groups = useHeldAgentHubTree(
+    sorted,
+    `${section}\u0000${sortBy}\u0000${query}\u0000${[...projectKeys].join('\u0001')}`
+  )
+  const outsideCount = useMemo(() => {
+    if (projectKeys.size === 0) {
+      return 0
+    }
+    const all = section === 'agents' ? agentOnlyAgentHubTree(unfiltered) : unfiltered
+    return countRows(filterAgentHubTerminalTree(all, query)) - countRows(queried)
+  }, [projectKeys, section, unfiltered, query, queried])
+  const showAllProjects = (): void => {
+    changeProjects(new Set())
+    searchRef.current?.focus()
+  }
   const rows = visibleAgentHubTreeRows(groups, collapsed, isAgentHubTreeNarrowed(query), expanded)
   const now = useNow(30_000)
   const totalCount = countRows(sectionTree)
@@ -199,6 +241,45 @@ export function AgentHubMirrorPickerBody({
             setCollapsed((current) => new Map(current).set(group.key, value))
           }
           emptyLabel={translate('agentHub.mirror.noneAvailable', 'No terminals available to add')}
+          filterBar={
+            <AgentHubPickerProjectFilter
+              projects={projects}
+              selected={projectKeys}
+              onChange={changeProjects}
+              onClosed={() => searchRef.current?.focus()}
+            />
+          }
+          emptyState={
+            projectKeys.size > 0 ? (
+              <div
+                data-agent-hub-project-empty
+                className="flex flex-col items-center gap-2.5 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground"
+              >
+                <b className="text-[13px] font-medium text-foreground/85">
+                  {translate(
+                    'agentHub.mirror.projectFilter.empty',
+                    'Nothing else to add in these projects'
+                  )}
+                </b>
+                <div className="flex items-center gap-2">
+                  {homeWorktree ? (
+                    <AgentHubMirrorNewAgent
+                      worktree={homeWorktree}
+                      pending={pending}
+                      onStart={onStart}
+                      onOpenDialog={onOpenNewAgent}
+                    />
+                  ) : null}
+                  <Button type="button" variant="outline" size="xs" onClick={showAllProjects}>
+                    {translate(
+                      'agentHub.mirror.projectFilter.showAllProjects',
+                      'Show all projects'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : undefined
+          }
           selectedKey={rows.some((row) => row.key === selectedKey) ? selectedKey : null}
           now={now}
           lineage={lineage}
@@ -219,6 +300,24 @@ export function AgentHubMirrorPickerBody({
           onPopout={onAdd}
           onJump={onAdd}
         />
+        {outsideCount > 0 && groups.length > 0 ? (
+          <div
+            data-agent-hub-project-outside
+            className="flex items-center justify-center gap-1 pt-2 text-xs text-muted-foreground"
+          >
+            {translate(
+              'agentHub.mirror.projectFilter.outside',
+              '{{value0}} more outside the filter',
+              {
+                value0: outsideCount
+              }
+            )}
+            <span aria-hidden>·</span>
+            <Button type="button" variant="link" size="xs" onClick={showAllProjects}>
+              {translate('agentHub.mirror.projectFilter.showAll', 'Show all')}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   )

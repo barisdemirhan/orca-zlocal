@@ -21944,7 +21944,20 @@
       "moveToMirror": "Move to mirror",
       "moveUnavailable": "This terminal is no longer available to move.",
       "tabLabel": "{{value0}}, {{value1}}",
-      "dictationStopKey": "to stop"
+      "dictationStopKey": "to stop",
+      "projectFilter": {
+        "label": "Projects",
+        "remove": "Remove {{value0}} from the filter",
+        "add": "Project",
+        "all": "All projects",
+        "search": "Search projects…",
+        "noMatch": "No projects match.",
+        "clear": "Clear filter",
+        "empty": "Nothing else to add in these projects",
+        "showAllProjects": "Show all projects",
+        "outside": "{{value0}} more outside the filter",
+        "showAll": "Show all"
+      }
     },
     "title": "Agents",
     "tab": {
@@ -22297,7 +22310,8 @@
         "takeControl": "Take control",
         "unverifiable": "Control could not be verified. Reconnect and try again."
       },
-      "attention": "An agent sent an update"
+      "attention": "An agent sent an update",
+      "liveHoldsInput": "Live voice is on. Stop it to type."
     },
     "follow": {
       "openNotice": "Open {{title}}",

@@ -141,3 +141,57 @@ it('keeps extreme host identities and a backlog of resolved questions within the
   expect(append).toHaveBeenCalledTimes(calls)
   stream.dispose()
 })
+
+it('ignores title churn and batches agent state changes into one turn a minute', async () => {
+  const append = vi.fn().mockResolvedValue(true)
+  const stream = new OrbAwarenessDelivery(vi.fn())
+  const context = { key: () => 'live-one', append }
+  stream.updateContext({ context, snapshot: snapshot(0), busy: false })
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(append).toHaveBeenCalledTimes(1)
+  for (const index of [1, 2, 3]) {
+    const current = snapshot(0)
+    current.agents[0]!.title = `⠂ Lume ${index}`
+    current.agents[0]!.since = index
+    stream.updateContext({ context, snapshot: current, busy: false })
+    await vi.advanceTimersByTimeAsync(6_000)
+  }
+  expect(append).toHaveBeenCalledTimes(1)
+  for (const state of ['working', 'done']) {
+    const current = snapshot(0)
+    current.agents[0]!.state = state
+    stream.updateContext({ context, snapshot: current, busy: false })
+    await vi.advanceTimersByTimeAsync(10_000)
+  }
+  expect(append).toHaveBeenCalledTimes(1)
+  await vi.advanceTimersByTimeAsync(60_000)
+  expect(append).toHaveBeenCalledTimes(2)
+  expect(packet(append.mock.calls[1]![0])).toMatchObject({ agents: [{ state: 'done' }] })
+  await vi.advanceTimersByTimeAsync(120_000)
+  expect(append).toHaveBeenCalledTimes(2)
+  stream.dispose()
+})
+
+it('sends a new notice promptly even while a state-only update is waiting its minute', async () => {
+  const append = vi.fn().mockResolvedValue(true)
+  const stream = new OrbAwarenessDelivery(vi.fn())
+  const context = { key: () => 'live-one', append }
+  stream.updateContext({ context, snapshot: snapshot(0), busy: false })
+  await vi.advanceTimersByTimeAsync(1_000)
+  const working = snapshot(0)
+  working.agents[0]!.state = 'working'
+  stream.updateContext({ context, snapshot: working, busy: false })
+  await vi.advanceTimersByTimeAsync(5_000)
+  const asking = snapshot(1)
+  asking.agents[0]!.state = 'idle'
+  stream.updateContext({ context, snapshot: asking, busy: false })
+  await vi.advanceTimersByTimeAsync(1_000)
+  expect(append).toHaveBeenCalledTimes(2)
+  expect(packet(append.mock.calls[1]![0])).toMatchObject({
+    newNotices: [{ id: 'request-0' }],
+    agents: [{ state: 'idle' }]
+  })
+  await vi.advanceTimersByTimeAsync(120_000)
+  expect(append).toHaveBeenCalledTimes(2)
+  stream.dispose()
+})

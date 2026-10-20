@@ -47,7 +47,9 @@ function GroupSummary({ group }: { group: AgentHubGroupNode }): React.JSX.Elemen
     <span className="ml-auto flex items-center gap-2.5 font-mono text-[11px] font-normal text-muted-foreground/70">
       <HubCounts counts={group.counts} />
       <span>
-        {translate('agentHub.terminals.termCount', '{{value0}} term', { value0: group.rowCount })}
+        {translate('agentHub.terminals.termCount', '{{value0}} term', {
+          value0: group.rowCount
+        })}
       </span>
     </span>
   )
@@ -114,7 +116,10 @@ function TreeRow({
       <AgentHubChildGroup
         onToggle={context.onToggleChildren ? () => context.onToggleChildren?.(row.key) : undefined}
         parentKey={row.key}
-        childAgents={{ workers: row.children.flatMap((child) => child.thread ?? []), subagents }}
+        childAgents={{
+          workers: row.children.flatMap((child) => child.thread ?? []),
+          subagents
+        }}
         expanded={isAgentHubRowExpanded(row.key, context.expandedKeys, context.narrowed)}
         indent={!nested}
         now={now}
@@ -150,14 +155,23 @@ export function AgentHubTerminalTree({
   onToggleChildren,
   emptyLabel,
   windowFilter,
-  renderWorkspaceAction
+  renderWorkspaceAction,
+  filterBar,
+  emptyState
 }: {
   groups: readonly AgentHubGroupNode[]
   renderWorkspaceAction?: (workspace: AgentHubWorkspaceNode) => React.ReactNode
   totalCount: number
   emptyLabel?: string
+  /** Sits under the search row, inside the sticky header. */
+  filterBar?: React.ReactNode
+  /** Replaces the empty message when nothing is left and no search is typed. */
+  emptyState?: React.ReactNode
   /** Shows the window filter beside the sort; the hub's lists have it, the picker does not. */
-  windowFilter?: { value: AgentHubWindowFilter; onChange: (filter: AgentHubWindowFilter) => void }
+  windowFilter?: {
+    value: AgentHubWindowFilter
+    onChange: (filter: AgentHubWindowFilter) => void
+  }
   query: string
   onQueryChange: (query: string) => void
   searchRef: React.RefObject<HTMLInputElement | null>
@@ -193,48 +207,52 @@ export function AgentHubTerminalTree({
   return (
     <div>
       {/* Why the popover color and shadow: the sticky row must hide rows scrolling under it. */}
-      <div className="sticky top-0 z-[2] mt-0.5 mb-1 flex items-center gap-1.5 bg-popover shadow-[0_-8px_0_var(--popover)]">
-        <label className="flex h-8.5 min-w-0 flex-1 items-center gap-2 rounded-lg border border-foreground/[0.08] bg-background pr-1.5 pl-2.5 text-muted-foreground/70 focus-within:border-foreground/20">
-          <Search className="size-3.5 shrink-0" />
-          <input
-            ref={searchRef}
-            value={query}
-            data-agent-hub-search
-            onChange={(event) => onQueryChange(event.target.value)}
-            onKeyDown={(event) => {
-              // The popover keeps itself open for this Esc (see AgentHubRoot).
-              if (event.key === 'Escape' && query) {
-                onQueryChange('')
+      <div className="sticky top-0 z-[2] mt-0.5 mb-1 flex flex-col gap-1.5 bg-popover shadow-[0_-8px_0_var(--popover)]">
+        <div className="flex items-center gap-1.5">
+          <label className="flex h-8.5 min-w-0 flex-1 items-center gap-2 rounded-lg border border-foreground/[0.08] bg-background pr-1.5 pl-2.5 text-muted-foreground/70 focus-within:border-foreground/20">
+            <Search className="size-3.5 shrink-0" />
+            <input
+              ref={searchRef}
+              value={query}
+              data-agent-hub-search
+              onChange={(event) => onQueryChange(event.target.value)}
+              onKeyDown={(event) => {
+                // The popover keeps itself open for this Esc (see AgentHubRoot).
+                if (event.key === 'Escape' && query) {
+                  onQueryChange('')
+                }
+              }}
+              placeholder={translate(
+                'agentHub.terminals.searchPlaceholder',
+                'Filter by terminal, project, group, agent…'
+              )}
+              aria-label={translate('agentHub.terminals.searchLabel', 'Filter terminals')}
+              aria-controls={selectionMode ? listId : undefined}
+              aria-activedescendant={
+                selectionMode && selectedKey ? `${listId}-${selectedKey}` : undefined
               }
-            }}
-            placeholder={translate(
-              'agentHub.terminals.searchPlaceholder',
-              'Filter by terminal, project, group, agent…'
-            )}
-            aria-label={translate('agentHub.terminals.searchLabel', 'Filter terminals')}
-            aria-controls={selectionMode ? listId : undefined}
-            aria-activedescendant={
-              selectionMode && selectedKey ? `${listId}-${selectedKey}` : undefined
-            }
-            className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
-          />
-          <HubKeys keys={[String(totalCount)]} />
-        </label>
-        {windowFilter ? (
-          <AgentHubWindowFilterMenu
-            filter={windowFilter.value}
-            onFilterChange={windowFilter.onChange}
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none placeholder:text-muted-foreground/70"
+            />
+            <HubKeys keys={[String(totalCount)]} />
+          </label>
+          {windowFilter ? (
+            <AgentHubWindowFilterMenu
+              filter={windowFilter.value}
+              onFilterChange={windowFilter.onChange}
+              onClosed={() => searchRef.current?.focus()}
+            />
+          ) : null}
+          <AgentHubTerminalSortMenu
+            focusable={selectionMode}
+            sortBy={sortBy}
+            onSortChange={onSortChange}
             onClosed={() => searchRef.current?.focus()}
           />
-        ) : null}
-        <AgentHubTerminalSortMenu
-          focusable={selectionMode}
-          sortBy={sortBy}
-          onSortChange={onSortChange}
-          onClosed={() => searchRef.current?.focus()}
-        />
+        </div>
+        {filterBar}
       </div>
-      {groups.length === 0 ? (
+      {groups.length === 0 && emptyState && !trimmedQuery ? emptyState : null}
+      {groups.length === 0 && !(emptyState && !trimmedQuery) ? (
         <div className="flex flex-col items-center gap-1 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground">
           <b className="text-[13px] font-medium text-foreground/85">
             {trimmedQuery

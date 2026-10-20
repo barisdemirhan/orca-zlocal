@@ -21428,7 +21428,20 @@
       "moveToMirror": "미러로 이동",
       "moveUnavailable": "이 터미널은 더 이상 이동할 수 없습니다.",
       "tabLabel": "{{value0}}, {{value1}}",
-      "dictationStopKey": "눌러 중지"
+      "dictationStopKey": "눌러 중지",
+      "projectFilter": {
+        "label": "프로젝트",
+        "remove": "필터에서 {{value0}} 제거",
+        "add": "프로젝트",
+        "all": "모든 프로젝트",
+        "search": "프로젝트 검색…",
+        "noMatch": "일치하는 프로젝트가 없습니다.",
+        "clear": "필터 지우기",
+        "empty": "이 프로젝트에는 더 추가할 항목이 없습니다",
+        "showAllProjects": "모든 프로젝트 표시",
+        "outside": "필터 밖에 {{value0}}개 더",
+        "showAll": "모두 표시"
+      }
     },
     "title": "에이전트",
     "tab": {
@@ -21763,7 +21776,8 @@
       "modelsLoading": "사용 가능한 모델을 불러오는 중…",
       "modelsUnavailable": "사용 가능한 모델을 불러오지 못했습니다. 모델 메뉴를 열어 다시 시도하세요.",
       "modelUnavailable": "사용 불가",
-      "settingsApply": "Orb가 유휴 상태일 때 에이전트, 모델, 승인 변경은 새 대화를 시작합니다. 이전 대화는 해당 에이전트와 모델을 유지합니다."
+      "settingsApply": "Orb가 유휴 상태일 때 에이전트, 모델, 승인 변경은 새 대화를 시작합니다. 이전 대화는 해당 에이전트와 모델을 유지합니다.",
+      "liveHoldsInput": "라이브 음성이 켜져 있습니다. 입력하려면 중지하세요."
     }
   },
   "workspaceDeletion": {

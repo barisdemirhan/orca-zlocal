@@ -24,7 +24,7 @@ export function agentHubSuggestedBindings(
         ['agentHub.dockMirrors', 'Alt+Shift+M'],
         ['agentHub.toggleCanvas', 'Alt+Shift+V'],
         ['agentHub.arrangeMirrors', 'Alt+Shift+G'],
-        ['agentHub.focusMirror', 'Alt+Shift+U'],
+        ['agentHub.focusMirror', 'Alt+Shift+E'],
         ['agentHub.popOut', 'Alt+Shift+P'],
         ['agentHub.jumpToMirror', 'Alt+Shift+J'],
         ['agentHub.nextMirrorTab', 'Alt+Shift+BracketRight'],

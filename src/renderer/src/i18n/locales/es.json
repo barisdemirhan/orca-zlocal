@@ -22151,7 +22151,20 @@
       "moveToMirror": "Mover a la vista espejo",
       "moveUnavailable": "Este terminal ya no se puede mover.",
       "tabLabel": "{{value0}}, {{value1}}",
-      "dictationStopKey": "para detener"
+      "dictationStopKey": "para detener",
+      "projectFilter": {
+        "label": "Proyectos",
+        "remove": "Quitar {{value0}} del filtro",
+        "add": "Proyecto",
+        "all": "Todos los proyectos",
+        "search": "Buscar proyectos…",
+        "noMatch": "Ningún proyecto coincide.",
+        "clear": "Borrar filtro",
+        "empty": "No hay nada más que añadir en estos proyectos",
+        "showAllProjects": "Mostrar todos los proyectos",
+        "outside": "{{value0}} más fuera del filtro",
+        "showAll": "Mostrar todo"
+      }
     },
     "title": "Agentes",
     "tab": {
@@ -22486,7 +22499,8 @@
       "modelsLoading": "Cargando modelos disponibles…",
       "modelsUnavailable": "No se pudieron cargar los modelos disponibles. Abre el menú de modelos para reintentar.",
       "modelUnavailable": "No disponible",
-      "settingsApply": "Los cambios de agente, modelo y aprobación inician una nueva conversación cuando Orb está inactivo. Las conversaciones anteriores conservan su agente y modelo."
+      "settingsApply": "Los cambios de agente, modelo y aprobación inician una nueva conversación cuando Orb está inactivo. Las conversaciones anteriores conservan su agente y modelo.",
+      "liveHoldsInput": "La voz en directo está activa. Detenla para escribir."
     }
   },
   "workspaceDeletion": {

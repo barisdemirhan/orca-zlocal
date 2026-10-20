@@ -356,21 +356,28 @@ export function NativeChatComposerField({
                     : undefined
                 }
                 placeholder={
-                  editSession
-                    ? translate('components.native-chat.queuedMessages.editMessage', 'Edit message')
-                    : goalMode?.active
+                  voiceHoldsInput
+                    ? translate('agentHub.orb.liveHoldsInput', 'Live voice is on. Stop it to type.')
+                    : editSession
                       ? translate(
-                          'components.native-chat.goal.placeholder',
-                          'Describe your goal, define measurable outcomes for best results'
+                          'components.native-chat.queuedMessages.editMessage',
+                          'Edit message'
                         )
-                      : (unavailableHint ?? nativeChatComposerPlaceholder(hasPty, canSend, afterStop))
+                      : goalMode?.active
+                        ? translate(
+                            'components.native-chat.goal.placeholder',
+                            'Describe your goal, define measurable outcomes for best results'
+                          )
+                        : (unavailableHint ??
+                          nativeChatComposerPlaceholder(hasPty, canSend, afterStop))
                 }
                 // Let layout handle wrapping and touch targets; scroll after eight lines without JavaScript measurement.
                 className={cn(
                   'min-h-12 w-full bg-transparent px-2 py-1 text-sm text-chat-foreground-strong outline-none pointer-coarse:min-h-14',
                   'max-h-[calc(8lh+0.5rem)] overflow-y-auto scrollbar-sleek',
                   // Why: the editor is a contenteditable, which `:disabled` never matches.
-                  'placeholder:text-chat-foreground-faint [&[contenteditable=false]]:cursor-not-allowed [&[contenteditable=false]]:opacity-50'
+                  'placeholder:text-chat-foreground-faint [&[contenteditable=false]]:cursor-not-allowed [&[contenteditable=false]]:opacity-50',
+                  'in-data-[agent-hub-orb-live-input]:cursor-not-allowed in-data-[agent-hub-orb-live-input]:opacity-50'
                 )}
               />
               <div className="flex flex-wrap items-center gap-2 pt-0.5">

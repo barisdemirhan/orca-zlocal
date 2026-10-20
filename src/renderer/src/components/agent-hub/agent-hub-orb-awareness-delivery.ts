@@ -14,7 +14,8 @@ export class OrbAwarenessDelivery {
   private inFlight = false
   private generation = 0
   private lastSentAt = 0
-  private lastVersion = ''
+  private lastStates = ''
+  private timerDueAt = 0
   private readonly attemptedNotices = new Map<string, string>()
   private readonly contextNotices = new Set<string>()
 
@@ -55,48 +56,66 @@ export class OrbAwarenessDelivery {
     this.timer = null
     this.inFlight = false
     this.lastSentAt = 0
-    this.lastVersion = ''
+    this.lastStates = ''
     this.attemptedNotices.clear()
     this.contextNotices.clear()
     this.onDelivery('idle')
-  }
-
-  private version(snapshot: AgentHubOrbAwareness): string {
-    return JSON.stringify([
-      snapshot.agents,
-      snapshot.notices,
-      snapshot.totalAgents,
-      snapshot.truncated
-    ])
   }
 
   private fresh(snapshot: AgentHubOrbAwareness) {
     return snapshot.notices.filter((notice) => this.attemptedNotices.get(notice.id) !== notice.text)
   }
 
-  private schedule(): void {
-    if (!this.update || this.update.busy || this.inFlight || this.timer) {
-      return
-    }
-    const snapshot = this.update.snapshot
+  // Title spinners and `since` churn constantly; only a real state transition is news.
+  private states(snapshot: AgentHubOrbAwareness): string {
+    return JSON.stringify([
+      snapshot.totalAgents,
+      snapshot.truncated,
+      snapshot.agents.map(({ host, paneKey, agent, state }) => [host, paneKey, agent, state])
+    ])
+  }
+
+  /** Milliseconds until the next packet may go, or null when there is nothing new. */
+  private nextDelay(snapshot: AgentHubOrbAwareness): number | null {
+    const elapsed = Date.now() - this.lastSentAt
     const ids = new Set(snapshot.notices.map((notice) => notice.id))
     const removals = [...this.contextNotices].some((id) => !ids.has(id))
-    if (this.version(snapshot) === this.lastVersion && !this.fresh(snapshot).length && !removals) {
+    if (!this.lastSentAt || this.fresh(snapshot).length || removals) {
+      return Math.max(750, 5_000 - elapsed)
+    }
+    // Why: every Live append is a turn the model answers aloud, so state-only updates
+    // (e.g. an agent finishing) are batched to at most one turn a minute.
+    return this.states(snapshot) === this.lastStates ? null : Math.max(750, 60_000 - elapsed)
+  }
+
+  private schedule(): void {
+    if (!this.update || this.update.busy || this.inFlight) {
       return
     }
-    this.timer = setTimeout(
-      () => {
-        this.timer = null
-        void this.deliver()
-      },
-      Math.max(750, 5_000 - (Date.now() - this.lastSentAt))
-    )
+    const delay = this.nextDelay(this.update.snapshot)
+    if (delay === null || (this.timer && this.timerDueAt <= Date.now() + delay)) {
+      return
+    }
+    if (this.timer) {
+      clearTimeout(this.timer)
+    }
+    this.timerDueAt = Date.now() + delay
+    this.timer = setTimeout(() => {
+      this.timer = null
+      void this.deliver()
+    }, delay)
   }
 
   private async deliver(): Promise<void> {
     const update = this.update
     const attempt = this.attempt
-    if (!update || update.busy || !attempt || update.context.key() !== attempt) {
+    if (
+      !update ||
+      update.busy ||
+      !attempt ||
+      update.context.key() !== attempt ||
+      this.nextDelay(update.snapshot) === null
+    ) {
       return
     }
     const generation = this.generation
@@ -159,8 +178,11 @@ export class OrbAwarenessDelivery {
     }
     // A question can exceed a Live packet; its complete version stays in Hub/CLI.
     const text = AGENT_HUB_ORB_AWARENESS_INSTRUCTIONS + JSON.stringify(packet)
-    this.lastVersion = this.version(snapshot)
     this.lastSentAt = Date.now()
+    // A closure-only drain packet carries no agents, so their states still need a turn.
+    if (packet.agents.length || !snapshot.agents.length) {
+      this.lastStates = this.states(snapshot)
+    }
     selected.forEach((notice) => this.attemptedNotices.set(notice.id, notice.text))
     for (const id of this.attemptedNotices.keys()) {
       if (this.attemptedNotices.size <= 1_024) {

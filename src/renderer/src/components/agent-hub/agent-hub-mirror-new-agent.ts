@@ -4,13 +4,61 @@ import { useAppStore } from '@/store'
 import { launchAgentBackgroundSession } from '@/lib/launch-agent-background-session'
 import { getAgentCatalog } from '@/lib/agent-catalog'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
-import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
+import { makePaneKey, parsePaneKey } from '../../../../shared/stable-pane-id'
+import { toWebTerminalSurfaceTabId } from '../../../../shared/terminal-surface-id'
+import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubMirrorWindows, AGENT_HUB_MIRROR_TAB_CAP } from './agent-hub-mirror-membership'
 import { agentHubMirrorTabCapReason } from './agent-hub-mirror-tab-actions'
 import { addAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
+import { agentHubMirrorPaneExists } from './agent-hub-mirror-source'
+
+const REMOTE_TAB_WAIT_MS = 10_000
+
+/** The tab and pane the mirror must track for a freshly launched agent. */
+async function resolveLaunchedMirrorPane(
+  worktreeId: string,
+  launchedTabId: string,
+  launchedPaneKey: string
+): Promise<{ tab: TerminalTab; paneKey: string } | null> {
+  const pane = parsePaneKey(launchedPaneKey)
+  if (pane?.tabId !== launchedTabId) {
+    return null
+  }
+  const environmentId = getRuntimeEnvironmentIdForWorktree(useAppStore.getState(), worktreeId)
+  // Why: a runtime host's tab reaches this client as web-terminal-<hostTabId> one sync later,
+  // replacing the reserved local tab; tracking the reserved id would be pruned as closed.
+  const tabId = environmentId ? toWebTerminalSurfaceTabId(launchedTabId) : launchedTabId
+  const paneKey = environmentId ? makePaneKey(tabId, pane.leafId) : launchedPaneKey
+  const find = (): { tab: TerminalTab; paneKey: string } | null => {
+    const state = useAppStore.getState()
+    const tab = state.tabsByWorktree[worktreeId]?.find((entry) => entry.id === tabId)
+    return tab && (!environmentId || agentHubMirrorPaneExists(state, tabId, paneKey))
+      ? { tab, paneKey }
+      : null
+  }
+  const found = find()
+  if (found || !environmentId) {
+    return found
+  }
+  return new Promise((resolve) => {
+    const finish = (result: { tab: TerminalTab; paneKey: string } | null): void => {
+      clearTimeout(timer)
+      unsubscribe()
+      resolve(result)
+    }
+    const timer = setTimeout(() => finish(null), REMOTE_TAB_WAIT_MS)
+    const unsubscribe = useAppStore.subscribe(() => {
+      const next = find()
+      if (next) {
+        finish(next)
+      }
+    })
+  })
+}
 
 export async function startAgentInAgentHubMirror(
   windowId: string,
@@ -56,20 +104,19 @@ export async function startAgentInAgentHubMirror(
     started = true
     // A mirror is user-owned; it must never retain automation's retirement subscription.
     launched.terminalOwnership?.release()
-    const pane = parsePaneKey(launched.paneKey)
-    const store = useAppStore.getState()
-    const tab = store.tabsByWorktree[worktree.id]?.find((tab) => tab.id === launched.tabId)
-    if (!tab || pane?.tabId !== tab.id) {
+    const resolved = await resolveLaunchedMirrorPane(worktree.id, launched.tabId, launched.paneKey)
+    if (!resolved) {
       reportWorkspace()
       return true
     }
+    const { tab, paneKey } = resolved
     const added = addAgentHubMirrorTab(
       windowId,
       {
         worktree,
-        repo: store.repos.find((repo) => repo.id === worktree.repoId) ?? null,
+        repo: useAppStore.getState().repos.find((repo) => repo.id === worktree.repoId) ?? null,
         tab,
-        paneKey: launched.paneKey,
+        paneKey,
         title: tab.customTitle ?? tab.title,
         agentType: agent
       },

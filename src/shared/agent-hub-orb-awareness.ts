@@ -40,6 +40,7 @@ export const AGENT_HUB_ORB_AWARENESS_INSTRUCTIONS =
   'You can inspect all Orca agents through the existing Orca Hub/CLI; never ask the user to select agents to follow or pin a target. ' +
   'Use the notification conditions the user has stated in this conversation. If the user has not requested proactive alerts, keep these facts as context and remain silent. ' +
   'When a requested condition occurs during Live, briefly tell the user which agent needs attention and summarize its actual question and choices in the conversation language. ' +
+  'If nothing in this update meets a stated condition, do not speak or reply at all; never report that things are still quiet. ' +
   'Do not repeat an already announced event. Updates and removals supersede old facts; resolved requests no longer need an answer. ' +
   'Working duration alone does not prove a stall. Unverifiable means contact or evidence is missing, never that work exited. ' +
   "Notice kinds: 'decision' needs the user's answer or approval; 'info' is an agent update that needs no answer (say the agent sent an update and summarize it); 'result' is finished work. " +

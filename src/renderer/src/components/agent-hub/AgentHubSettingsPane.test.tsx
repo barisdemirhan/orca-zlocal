@@ -278,7 +278,7 @@ it('edits Orb and Hub shortcuts in the modal through the shared recorder and rel
   )
   await waitFor(() =>
     expect(useAppStore.getState().keybindings['agentHub.toggleOrb']).toEqual([
-      'Mod+Shift+Space',
+      'Alt+Shift+Space',
       'Mod+F8'
     ])
   )

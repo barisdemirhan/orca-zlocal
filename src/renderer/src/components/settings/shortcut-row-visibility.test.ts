@@ -102,7 +102,7 @@ it('lists the Orb quick-access shortcut under Agent Hub and lets assigned mirror
   const result = buildShortcutRowVisibility({ ...baseOptions, groups, agentHubEnabled: true })
   const orb = result.shortcutRows.find((row) => row.item.id === 'agentHub.toggleOrb')
   expect(orb?.groupTitle).toBe('Agent Hub')
-  expect(orb?.effective).toEqual(['Mod+Shift+Space'])
+  expect(orb?.effective).toEqual(['Alt+Shift+Space'])
   for (const id of [
     'agentHub.toggleOrb',
     'agentHub.nextMirrorTab',

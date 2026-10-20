@@ -14,10 +14,10 @@ import { ALL_TUI_AGENTS } from './tui-agent-display-names'
 
 describe('keybindings', () => {
   it.each(['darwin', 'linux', 'win32'] as const)(
-    'opens Orb on Mod+Shift+Space on %s and preserves explicit overrides',
+    'opens Orb on Alt+Shift+Space on %s and preserves explicit overrides',
     (platform) => {
       expect(getEffectiveKeybindingsForAction('agentHub.toggleOrb', platform)).toEqual([
-        'Mod+Shift+Space'
+        'Alt+Shift+Space'
       ])
       expect(
         getEffectiveKeybindingsForAction('agentHub.toggleOrb', platform, {

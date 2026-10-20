@@ -15,6 +15,7 @@ import {
 import { getStructuredAgentSessionReadOwner } from '../native-chat/structured-agent-session-read-owner'
 import { useStructuredAgentSessionMutate } from '../native-chat/use-structured-agent-session-mutate'
 import { AgentHubOrbVoiceController } from './agent-hub-orb-voice-controller'
+import { OrbDictationHold } from './agent-hub-orb-dictation-hold'
 import {
   EMPTY_ORB_VOICE_SNAPSHOT,
   type AgentHubOrbVoiceSnapshot
@@ -126,6 +127,9 @@ export function useAgentHubOrbVoice(
     emptyVoice
   )
   useAgentHubOrbLaunch(controller, snapshot, visible)
+  const dictating = useAppStore((state) => isDictationRunning(state.dictationState))
+  const dictationHold = useMemo(() => controller && new OrbDictationHold(controller), [controller])
+  useEffect(() => dictationHold?.update(snapshot, dictating), [dictationHold, snapshot, dictating])
   return useMemo(
     () => ({
       ...snapshot,

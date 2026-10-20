@@ -8,7 +8,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['orb', 'live', 'voice'],
-    defaultBindings: platformBindings(['Mod+Shift+L']),
+    defaultBindings: platformBindings(['Alt+Shift+L']),
     allowInTerminal: true
   },
   {
@@ -17,7 +17,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['orb', 'microphone', 'mute'],
-    defaultBindings: platformBindings(['Mod+Shift+U']),
+    defaultBindings: platformBindings(['Alt+Shift+U']),
     allowInTerminal: true
   },
   {
@@ -26,7 +26,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['orb', 'speaker', 'mute'],
-    defaultBindings: platformBindings(['Mod+Shift+S']),
+    defaultBindings: platformBindings(['Alt+Shift+S']),
     allowInTerminal: true
   },
   {
@@ -75,7 +75,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     group: 'Agent Hub',
     scope: 'global',
     searchKeywords: ['shortcut', 'agent', 'hub', 'orb', 'voice', 'talk'],
-    defaultBindings: platformBindings(['Mod+Shift+Space']),
+    defaultBindings: platformBindings(['Alt+Shift+Space']),
     allowInTerminal: true
   },
   {

@@ -21429,7 +21429,20 @@
       "moveToMirror": "移至镜像窗口",
       "moveUnavailable": "此终端已无法移动。",
       "tabLabel": "{{value0}}，{{value1}}",
-      "dictationStopKey": "以停止"
+      "dictationStopKey": "以停止",
+      "projectFilter": {
+        "label": "项目",
+        "remove": "从筛选中移除 {{value0}}",
+        "add": "项目",
+        "all": "所有项目",
+        "search": "搜索项目…",
+        "noMatch": "没有匹配的项目。",
+        "clear": "清除筛选",
+        "empty": "这些项目中没有其他可添加的内容",
+        "showAllProjects": "显示所有项目",
+        "outside": "筛选之外还有 {{value0}} 项",
+        "showAll": "全部显示"
+      }
     },
     "title": "智能体",
     "tab": {
@@ -21764,7 +21777,8 @@
       "modelsLoading": "正在加载可用模型…",
       "modelsUnavailable": "无法加载可用模型。请打开模型菜单重试。",
       "modelUnavailable": "不可用",
-      "settingsApply": "Orb 空闲时，更改代理、模型或审批设置会开始新对话。过去的对话会保留其代理和模型。"
+      "settingsApply": "Orb 空闲时，更改代理、模型或审批设置会开始新对话。过去的对话会保留其代理和模型。",
+      "liveHoldsInput": "实时语音已开启。停止后即可输入。"
     }
   },
   "workspaceDeletion": {

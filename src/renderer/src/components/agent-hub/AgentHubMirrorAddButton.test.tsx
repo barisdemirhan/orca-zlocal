@@ -72,6 +72,7 @@ vi.mock('@/store', async () => {
   }
 })
 vi.mock('./use-agent-hub-terminal-tree', () => ({ useAgentHubTerminalTree: () => fixture.groups }))
+vi.mock('./use-agent-hub-host-labels', () => ({ useAgentHubHostLabels: () => undefined }))
 vi.mock('./use-agent-hub-tree-order', () => ({
   useAgentHubTreeOrder: () => ({ sortBy: 'repo', workspaceRank: new Map(), now: 0 })
 }))
@@ -550,3 +551,67 @@ it.each(['closed-mirror', 'full-mirror', 'missing-tab'] as const)(
     )
   }
 )
+
+function setupTwoProjects(homeProjectTabs: string[]) {
+  const home = makeWorktree()
+  const billing = { ...makeWorktree(), id: 'wt-billing', repoId: 'repo-billing' }
+  const repos = [makeRepo(), { ...makeRepo(), id: 'repo-billing', displayName: 'Billing' }]
+  const worktreesByRepo = { [home.repoId]: [home], [billing.repoId]: [billing] }
+  useAppStore.setState({ repos, worktreesByRepo })
+  fixture.groups = buildAgentHubTerminalTree({
+    projectGroups: [],
+    repos,
+    worktreesByRepo,
+    folderWorkspaces: [],
+    tabsByWorktree: {
+      [home.id]: homeProjectTabs.map((id) => makeTabWithIds(id, home.id, id)),
+      [billing.id]: [makeTabWithIds('billing-agent', billing.id)]
+    },
+    threads: [],
+    floating: null,
+    includeShells: true,
+    idleAgentOf: () => 'claude',
+    ungroupedLabel: 'Ungrouped',
+    unknownProjectLabel: 'Project'
+  })
+  const homeRow = fixture.groups
+    .flatMap((group) => group.workspaces.flatMap((workspace) => workspace.rows))
+    .find((row) => row.tab.id === 'home')
+  if (!homeRow) {
+    throw new Error('No fixture')
+  }
+  openAgentHubMirror(paneTargetFromTerminalRow(homeRow))
+  const id = readAgentHubMirrors().windows[0]?.id
+  if (!id) {
+    throw new Error('No window')
+  }
+  render(
+    <TooltipProvider>
+      <AgentHubMirrorAddButton
+        windowId={id}
+        count={1}
+        threads={[]}
+        lineage={EMPTY_AGENT_HUB_LINEAGE}
+      />
+    </TooltipProvider>
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Add terminal to this mirror' }))
+}
+
+it('starts filtered to the mirror window projects and counts what the filter hides', async () => {
+  setupTwoProjects(['home', 'solo'])
+  expect(await screen.findByRole('option', { name: /solo/ })).toBeTruthy()
+  expect(screen.queryByRole('option', { name: /billing-agent/ })).toBeNull()
+  expect(screen.getByText('1 more outside the filter')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Show all' }))
+  expect(screen.getByRole('option', { name: /billing-agent/ })).toBeTruthy()
+  expect(screen.queryByText('1 more outside the filter')).toBeNull()
+})
+
+it('keeps the filter on with a way out when the mirror projects have nothing left to add', async () => {
+  setupTwoProjects(['home'])
+  expect(await screen.findByText('Nothing else to add in these projects')).toBeTruthy()
+  expect(screen.queryByRole('option', { name: /billing-agent/ })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Show all projects' }))
+  expect(screen.getByRole('option', { name: /billing-agent/ })).toBeTruthy()
+})
