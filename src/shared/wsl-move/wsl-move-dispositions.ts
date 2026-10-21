@@ -154,7 +154,10 @@ export const WORKSPACE_SESSION_DISPOSITIONS = {
   }),
   // Names terminals of the host the project leaves, as the incarnation map does.
   closedTerminalPanesByPaneKey: { disposition: 'drop-pty-binding', item: 36 },
-  terminalSpawnedByPaneKey: moveDisposition(33)
+  terminalSpawnedByPaneKey: notApplicableDisposition(
+    32,
+    'Spawn lineage is host-private; it is not moved.'
+  )
 } as const satisfies Record<keyof WorkspaceSessionState, WslMoveFieldDisposition>
 
 /** Nested PTY bindings dropped wherever they appear in moved session rows (item 36). */
