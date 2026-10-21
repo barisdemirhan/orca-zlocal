@@ -24,7 +24,7 @@ export function codexVoiceTargetCapability(
     }
   }
   const adapter = deps.agents.registration(record.provider)?.adapter
-  return adapter?.startVoice && adapter.stopVoice
+  return adapter?.voice
     ? { supported: true, accountAccess: 'unchecked' }
     : { supported: false, reason: 'This host does not support native Codex Live voice.' }
 }

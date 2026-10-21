@@ -8713,8 +8713,6 @@
           "1810b51482": "Conectando",
           "4c86f30877": "Desconectar",
           "18968ede9e": "Error",
-          "hostNodeFallback": "Configuración no compatible: el Node gestionado por Orca no está disponible para esta conexión, así que Orca usa el Node.js de este host con compatibilidad de terminal instalada por npm en el host.",
-          "hostNodeUnsupported": "Configuración no compatible: Orca usa el Node.js de este host con compatibilidad de terminal instalada por npm en el host. Establece Runtime en Auto en los ajustes SSH de este host para usar el Node gestionado por Orca.",
           "removing": "Eliminando…",
           "testing": "Probando…",
           "select": "Seleccionar {{label}}",

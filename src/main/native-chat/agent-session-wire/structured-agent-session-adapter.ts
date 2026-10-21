@@ -168,7 +168,7 @@ export type StructuredAgentSessionSetOptionInput = {
   signal?: AbortSignal
 }
 
-type SessionControls = StructuredAgentSessionAdapterStop & NativeVoice
+type SessionControls = StructuredAgentSessionAdapterStop & { voice?: NativeVoice }
 
 export type StructuredAgentSessionAdapter = SessionControls & {
   /** Opens the published process under the host's startup signal. */

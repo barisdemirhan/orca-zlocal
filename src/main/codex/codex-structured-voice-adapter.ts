@@ -1,4 +1,4 @@
-import type { StructuredAgentSessionAdapter } from '../native-chat/agent-session-wire/structured-agent-session-adapter'
+import type { StructuredAgentSessionVoiceAdapter } from '../native-chat/agent-session-wire/structured-agent-session-voice-adapter'
 import { CodexStructuredRealtime } from './codex-structured-realtime'
 import { readCodexRealtimeSupport } from './codex-structured-realtime-support'
 import { readCodexRealtimeTimeline } from './codex-structured-realtime-timeline'
@@ -11,7 +11,12 @@ import {
 import type { CodexJournalTranslationAdmission } from './codex-structured-journal-contracts'
 import { isProviderRecord } from '../provider-process/provider-json-record'
 
-export class CodexStructuredVoiceAdapter {
+// The template literal keeps other notifications in the caller's false branch.
+type CodexRealtimeEvent = Extract<CodexStructuredSessionEvent, { type: 'notification' }> & {
+  method: `thread/realtime/${string}`
+}
+
+export class CodexStructuredVoiceAdapter implements StructuredAgentSessionVoiceAdapter {
   constructor(
     private readonly sessions: Map<string, CodexSession>,
     private readonly dependencies: () => CodexStructuredSessionAdapterDeps
@@ -21,7 +26,7 @@ export class CodexStructuredVoiceAdapter {
     return this.dependencies()
   }
 
-  start: NonNullable<StructuredAgentSessionAdapter['startVoice']> = async (input) => {
+  start: StructuredAgentSessionVoiceAdapter['start'] = async (input) => {
     const session = requireLiveCodexSession(this.sessions, input.sessionId)
     if (session.fence !== input.fence) {
       return { ok: false, rejected: 'This chat changed owner. Reopen it before starting Live.' }
@@ -85,7 +90,7 @@ export class CodexStructuredVoiceAdapter {
     return session.realtime.start(input)
   }
 
-  stop: NonNullable<StructuredAgentSessionAdapter['stopVoice']> = (input) => {
+  stop: StructuredAgentSessionVoiceAdapter['stop'] = (input) => {
     const session = this.sessions.get(input.sessionId)
     if (!session || session.ended || session.fence !== input.fence || !session.realtime) {
       return Promise.resolve({
@@ -99,7 +104,7 @@ export class CodexStructuredVoiceAdapter {
 
   holds = (sessionId: string): boolean => this.sessions.get(sessionId)?.realtime?.holdsWork === true
 
-  appendText: NonNullable<StructuredAgentSessionAdapter['appendVoiceText']> = async (input) => {
+  appendText: StructuredAgentSessionVoiceAdapter['appendText'] = async (input) => {
     const session = this.sessions.get(input.sessionId)
     if (!session || session.ended || session.fence !== input.fence) {
       return false
@@ -107,7 +112,7 @@ export class CodexStructuredVoiceAdapter {
     return session.realtime?.appendText(input) ?? false
   }
 
-  capability: NonNullable<StructuredAgentSessionAdapter['readVoiceCapability']> = (sessionId) => {
+  capability: StructuredAgentSessionVoiceAdapter['capability'] = (sessionId) => {
     const session = this.sessions.get(sessionId)
     return session && !session.ended
       ? readCodexRealtimeSupport(session.connection, this.deps.requestTimeoutMs)
@@ -117,20 +122,18 @@ export class CodexStructuredVoiceAdapter {
         })
   }
 
-  notification(
-    session: CodexSession,
-    event: CodexStructuredSessionEvent
-  ): CodexJournalTranslationAdmission | undefined {
-    if (event.type === 'notification' && event.method.startsWith('thread/realtime/')) {
-      const admission =
-        event.method === 'thread/realtime/item/completed'
-          ? (session.translator?.handle(event) ?? { accepted: true as const })
-          : { accepted: true as const }
-      if (admission.accepted && isProviderRecord(event.params)) {
-        session.realtime?.observe(event.method, event.params)
-      }
-      return admission
+  handles(event: CodexStructuredSessionEvent): event is CodexRealtimeEvent {
+    return event.type === 'notification' && event.method.startsWith('thread/realtime/')
+  }
+
+  notification(session: CodexSession, event: CodexRealtimeEvent): CodexJournalTranslationAdmission {
+    const admission =
+      event.method === 'thread/realtime/item/completed'
+        ? (session.translator?.handle(event) ?? { accepted: true as const })
+        : { accepted: true as const }
+    if (admission.accepted && isProviderRecord(event.params)) {
+      session.realtime?.observe(event.method, event.params)
     }
-    return undefined
+    return admission
   }
 }

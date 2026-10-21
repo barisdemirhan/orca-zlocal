@@ -12,6 +12,7 @@ import { codexProviderHandle } from '../../../shared/agent-session-provider-hand
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session-journal-types'
 import { claudeAndCodexAgents } from './structured-agent-session-adapter-router-test-support'
 import type { StructuredAgentSessionAdapter } from './structured-agent-session-adapter'
+import type { StructuredAgentSessionVoiceAdapter } from './structured-agent-session-voice-adapter'
 import {
   HOST_TEST_SESSION as SESSION,
   HOST_TEST_THREAD as THREAD,
@@ -31,8 +32,8 @@ const SDP = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'
 let rig: RestTestRig
 let voiceLive = false
 const acquire = vi.fn<StructuredAgentSessionAdapter['acquire']>()
-const startVoice = vi.fn<NonNullable<StructuredAgentSessionAdapter['startVoice']>>()
-const stopVoice = vi.fn<NonNullable<StructuredAgentSessionAdapter['stopVoice']>>()
+const startVoice = vi.fn<StructuredAgentSessionVoiceAdapter['start']>()
+const stopVoice = vi.fn<StructuredAgentSessionVoiceAdapter['stop']>()
 const appendVoiceText = vi.fn(async () => true)
 const closeSession = vi.fn(async () => true)
 const cancelTurn = vi.fn(async () => ({ cancelled: true }))
@@ -125,12 +126,14 @@ beforeEach(async () => {
   const adapter: StructuredAgentSessionAdapter = {
     acquire,
     open: async () => ({ reportedOptions: { model: '' } }),
-    startVoice,
-    stopVoice,
-    appendVoiceText,
+    voice: {
+      start: startVoice,
+      stop: stopVoice,
+      appendText: appendVoiceText,
+      holds: () => voiceLive,
+      capability: async () => ({ supported: true, accountAccess: 'unchecked' })
+    },
     closeSession,
-    holdsVoice: () => voiceLive,
-    readVoiceCapability: async () => ({ supported: true, accountAccess: 'unchecked' }),
     dispatch: async () => ({
       state: 'accepted',
       providerIdentity: { provider: 'codex', threadId: THREAD, turnId: 'turn-1', ordinal: 1 }

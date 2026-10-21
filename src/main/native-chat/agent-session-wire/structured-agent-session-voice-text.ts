@@ -43,7 +43,7 @@ export function appendStructuredVoiceText(
     fields: { ...owner, text },
     conversationWrite: true,
     run: async (ctx) => {
-      if (!ownsAttempt(ctx.fence) || !ctx.adapter.appendVoiceText) {
+      if (!ownsAttempt(ctx.fence) || !ctx.adapter.voice) {
         return {
           ok: false,
           refusal: refuse(
@@ -53,7 +53,7 @@ export function appendStructuredVoiceText(
           )
         }
       }
-      const applied = await ctx.adapter.appendVoiceText({
+      const applied = await ctx.adapter.voice.appendText({
         sessionId: params.envelope.sessionId,
         fence: ctx.fence,
         ...owner,

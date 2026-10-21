@@ -8979,8 +8979,6 @@
           "1810b51482": "Connexion",
           "4c86f30877": "Déconnecter",
           "18968ede9e": "Erreur",
-          "hostNodeFallback": "Configuration non prise en charge : le Node géré par Orca n’est pas disponible pour cette connexion ; Orca utilise donc le Node.js de cet hôte, avec la prise en charge du terminal installée par npm sur l’hôte.",
-          "hostNodeUnsupported": "Configuration non prise en charge : Orca utilise le Node.js de cet hôte, avec la prise en charge du terminal installée par npm sur l’hôte. Réglez Runtime sur Auto dans les paramètres SSH de cet hôte pour utiliser le Node géré par Orca.",
           "removing": "Suppression…",
           "testing": "Test en cours…",
           "select": "Sélectionner {{label}}",

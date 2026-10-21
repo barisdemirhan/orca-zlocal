@@ -92,7 +92,7 @@ describe('capability gating', () => {
       ])
     )
     // Keep protocol stable: structured capability already hides additive session methods from older clients.
-    expect(STRUCTURED_AGENT_SESSION_METHODS).toHaveLength(47)
+    expect(STRUCTURED_AGENT_SESSION_METHODS).toHaveLength(48)
   })
 
   it('hides the surface from a declared client that did not advertise it', async () => {

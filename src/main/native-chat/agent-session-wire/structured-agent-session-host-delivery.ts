@@ -96,7 +96,7 @@ export function createStructuredAgentSessionConversationDelivery(input: {
     providerHoldsDispatch: () =>
       deps.adapter.holdsDispatch?.(sessionId) === true ||
       [...(sessions.get(sessionId)?.child?.heldSends?.() ?? [])].some((id) => id !== continuingId),
-    providerHoldsVoice: () => deps.adapter.holdsVoice?.(sessionId) === true
+    providerHoldsVoice: () => deps.adapter.voice?.holds(sessionId) === true
   })
   const loop = new StructuredAgentSessionDeliveryLoop({
     sessions,

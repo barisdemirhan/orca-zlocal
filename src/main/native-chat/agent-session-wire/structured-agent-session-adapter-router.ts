@@ -3,6 +3,7 @@ import type { AgentChatPermissionChoice } from '../../../shared/agent-chat-permi
 import type { AgentSessionJournalIdentity } from '../../../shared/agent-session-journal-types'
 import type { AgentSessionExecutionLocation } from '../../../shared/agent-session-record'
 import type { StructuredAgentSessionAdapter } from './structured-agent-session-adapter'
+import type { StructuredAgentSessionVoiceAdapter } from './structured-agent-session-voice-adapter'
 import type { StructuredAgentSessionAcquisitionReceipt } from './structured-agent-session-startup-attempt-contract'
 import type {
   StructuredAgentRegistration,
@@ -130,32 +131,27 @@ export class StructuredAgentSessionAdapterRouter implements StructuredAgentSessi
   heldSends = (sessionId: string): ReadonlySet<string> | undefined =>
     this.liveOwnerOrNull(sessionId)?.heldSends?.(sessionId)
 
-  startVoice: NonNullable<StructuredAgentSessionAdapter['startVoice']> = (input) =>
-    this.owner(input.sessionId).startVoice?.(input) ??
-    Promise.resolve({ ok: false, rejected: 'Live voice is unavailable for this provider.' })
-
-  appendVoiceText: NonNullable<StructuredAgentSessionAdapter['appendVoiceText']> = (input) =>
-    this.liveOwnerOrNull(input.sessionId)?.appendVoiceText?.(input) ?? Promise.resolve(false)
-
-  stopVoice: NonNullable<StructuredAgentSessionAdapter['stopVoice']> = (input) =>
-    this.liveOwnerOrNull(input.sessionId)?.stopVoice?.(input) ??
-    Promise.resolve({
-      voiceSessionId: input.voiceSessionId,
-      generation: input.generation,
-      state: 'off'
-    })
-
-  holdsVoice = (sessionId: string): boolean =>
-    this.liveOwnerOrNull(sessionId)?.holdsVoice?.(sessionId) === true
-
-  readVoiceCapability: NonNullable<StructuredAgentSessionAdapter['readVoiceCapability']> = (
-    sessionId
-  ) =>
-    this.liveOwnerOrNull(sessionId)?.readVoiceCapability?.(sessionId) ??
-    Promise.resolve({
-      supported: null,
-      reason: 'Native voice support will be checked when this conversation connects.'
-    })
+  readonly voice: StructuredAgentSessionVoiceAdapter = {
+    start: (input) =>
+      this.owner(input.sessionId).voice?.start(input) ??
+      Promise.resolve({ ok: false, rejected: 'Live voice is unavailable for this provider.' }),
+    appendText: (input) =>
+      this.liveOwnerOrNull(input.sessionId)?.voice?.appendText(input) ?? Promise.resolve(false),
+    stop: (input) =>
+      this.liveOwnerOrNull(input.sessionId)?.voice?.stop(input) ??
+      Promise.resolve({
+        voiceSessionId: input.voiceSessionId,
+        generation: input.generation,
+        state: 'off'
+      }),
+    holds: (sessionId) => this.liveOwnerOrNull(sessionId)?.voice?.holds(sessionId) === true,
+    capability: (sessionId) =>
+      this.liveOwnerOrNull(sessionId)?.voice?.capability(sessionId) ??
+      Promise.resolve({
+        supported: null,
+        reason: 'Native voice support will be checked when this conversation connects.'
+      })
+  }
 
   holdsLiveProviderProcess = (sessionId: string, acquisitionGeneration: string): boolean =>
     this.liveOwnerOrNull(sessionId)?.holdsLiveProviderProcess?.(sessionId, acquisitionGeneration) ??

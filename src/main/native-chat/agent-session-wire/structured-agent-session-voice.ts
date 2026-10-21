@@ -65,7 +65,7 @@ export class StructuredAgentSessionVoice {
       return target
     }
     return (
-      this.context().deps.adapter.readVoiceCapability?.(sessionId) ?? {
+      this.context().deps.adapter.voice?.capability(sessionId) ?? {
         supported: null,
         reason: 'Native voice support has not been checked for this conversation.'
       }
@@ -111,16 +111,16 @@ export class StructuredAgentSessionVoice {
         if (!admitted.ok) {
           return admitted
         }
-        if (!ctx.adapter.startVoice) {
+        if (!ctx.adapter.voice) {
           return invalid('Live voice is unavailable for this provider.')
         }
         const current = this.active.get(sessionId)
-        if (current && ctx.adapter.holdsVoice?.(sessionId)) {
+        if (current && ctx.adapter.voice.holds(sessionId)) {
           if (this.hasSubscriber(sessionId, current, current)) {
             return invalid('The previous Live connection has not been confirmed closed.')
           }
           const stopped = await this.stopOwned(sessionId, current, current, ctx.fence)
-          if (stopped.state !== 'off' || ctx.adapter.holdsVoice?.(sessionId)) {
+          if (stopped.state !== 'off' || ctx.adapter.voice.holds(sessionId)) {
             return invalid('The previous Live connection is still closing. Try again shortly.')
           }
         }
@@ -132,7 +132,7 @@ export class StructuredAgentSessionVoice {
           fence: ctx.fence
         }
         this.active.set(sessionId, owner)
-        const result = await ctx.adapter.startVoice({
+        const result = await ctx.adapter.voice.start({
           sessionId,
           fence: ctx.fence,
           voiceSessionId: params.voiceSessionId,
@@ -190,7 +190,7 @@ export class StructuredAgentSessionVoice {
       replay: () => ({
         voiceSessionId: params.voiceSessionId,
         generation: params.generation,
-        state: this.context().deps.adapter.holdsVoice?.(sessionId) ? 'unverifiable' : 'off'
+        state: this.context().deps.adapter.voice?.holds(sessionId) ? 'unverifiable' : 'off'
       })
     }
     return mutateStructuredAgentSession(
@@ -293,7 +293,7 @@ export class StructuredAgentSessionVoice {
         state: 'off'
       }
     }
-    const result = (await this.context().deps.adapter.stopVoice?.({
+    const result = (await this.context().deps.adapter.voice?.stop({
       sessionId,
       fence,
       ...requested

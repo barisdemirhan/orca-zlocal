@@ -5,16 +5,16 @@ import type {
 } from '../../../shared/agent-session-voice'
 
 export type StructuredAgentSessionVoiceAdapter = {
-  appendVoiceText?(
+  appendText(
     input: AgentSessionVoiceOwner & { sessionId: string; fence: number; text: string }
   ): Promise<boolean>
-  startVoice?(
+  start(
     input: AgentSessionVoiceOwner & { sessionId: string; fence: number; sdp: string }
   ): Promise<{ ok: true; value: AgentSessionVoiceResult } | { ok: false; rejected: string }>
-  stopVoice?(
+  stop(
     input: AgentSessionVoiceOwner & { sessionId: string; fence: number }
   ): Promise<AgentSessionVoiceResult>
   /** An active or unconfirmed voice transport keeps the existing provider child alive. */
-  holdsVoice?(sessionId: string): boolean
-  readVoiceCapability?(sessionId: string): Promise<AgentSessionVoiceCapability>
+  holds(sessionId: string): boolean
+  capability(sessionId: string): Promise<AgentSessionVoiceCapability>
 }

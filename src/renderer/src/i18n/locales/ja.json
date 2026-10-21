@@ -8457,8 +8457,6 @@
           "1810b51482": "接続中",
           "4c86f30877": "切断",
           "18968ede9e": "エラー",
-          "hostNodeFallback": "非対応の構成: この接続では Orca 管理の Node を利用できないため、Orca はこのホストの Node.js で動作し、ターミナル対応はホスト上の npm でインストールされます。",
-          "hostNodeUnsupported": "非対応の構成: Orca はこのホストの Node.js で動作し、ターミナル対応はホスト上の npm でインストールされます。Orca 管理の Node を使うには、このホストの SSH 設定で Runtime を Auto にしてください。",
           "removing": "削除中…",
           "testing": "テスト中…",
           "select": "{{label}} を選択",

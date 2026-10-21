@@ -8420,8 +8420,6 @@
           "1810b51482": "连接中",
           "4c86f30877": "断开连接",
           "18968ede9e": "错误",
-          "hostNodeFallback": "不受支持的配置：此连接无法使用 Orca 托管的 Node，因此 Orca 在此主机的 Node.js 上运行，终端支持由 npm 在主机上安装。",
-          "hostNodeUnsupported": "不受支持的配置：Orca 在此主机的 Node.js 上运行，终端支持由 npm 在主机上安装。若要使用 Orca 托管的 Node，请在此主机的 SSH 设置中将 Runtime 设为 Auto。",
           "removing": "正在移除…",
           "testing": "正在测试…",
           "select": "选择 {{label}}",

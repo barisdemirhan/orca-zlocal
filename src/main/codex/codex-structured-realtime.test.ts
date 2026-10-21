@@ -46,16 +46,16 @@ describe('Codex native realtime on a structured conversation', () => {
   it('appends selected context to the live acquired thread without starting a turn or replaying after close', async () => {
     const rig = await setup()
     const input = { ...INPUT, text: 'A selected agent needs a decision.' }
-    expect(await rig.adapter.appendVoiceText(input)).toBe(false)
-    await rig.adapter.startVoice(INPUT)
+    expect(await rig.adapter.voice.appendText(input)).toBe(false)
+    await rig.adapter.voice.start(INPUT)
     rig.connection.handlers.onNotification?.('thread/realtime/started', {
       threadId: THREAD_ID,
       realtimeSessionId: OWNER.voiceSessionId
     })
-    expect(await rig.adapter.appendVoiceText(input)).toBe(true)
-    expect(await rig.adapter.appendVoiceText({ ...input, generation: 2 })).toBe(false)
-    await rig.adapter.stopVoice(INPUT)
-    expect(await rig.adapter.appendVoiceText(input)).toBe(false)
+    expect(await rig.adapter.voice.appendText(input)).toBe(true)
+    expect(await rig.adapter.voice.appendText({ ...input, generation: 2 })).toBe(false)
+    await rig.adapter.voice.stop(INPUT)
+    expect(await rig.adapter.voice.appendText(input)).toBe(false)
     expect(
       rig.connection.calls.filter((call) => call.method === 'thread/realtime/appendText')
     ).toMatchObject([{ params: { threadId: THREAD_ID, role: 'user', text: input.text } }])
@@ -70,7 +70,7 @@ describe('Codex native realtime on a structured conversation', () => {
     const openedThreads = rig.connection.calls.filter(
       (call) => call.method === 'thread/start'
     ).length
-    expect(await rig.adapter.startVoice(INPUT)).toEqual({
+    expect(await rig.adapter.voice.start(INPUT)).toEqual({
       ok: true,
       value: { ...OWNER, state: 'connecting' }
     })
@@ -97,7 +97,7 @@ describe('Codex native realtime on a structured conversation', () => {
       })
       return {}
     }
-    expect(await rig.adapter.startVoice(INPUT)).toEqual({
+    expect(await rig.adapter.voice.start(INPUT)).toEqual({
       ok: true,
       value: { ...OWNER, state: 'connecting' }
     })
@@ -112,8 +112,8 @@ describe('Codex native realtime on a structured conversation', () => {
     expect(
       rig.events.filter((event) => event.type === 'voice').map((event) => event.event.type)
     ).toEqual(['started', 'sdp'])
-    expect(await rig.adapter.stopVoice(INPUT)).toEqual({ ...OWNER, state: 'off' })
-    expect(rig.adapter.holdsVoice('session-1')).toBe(false)
+    expect(await rig.adapter.voice.stop(INPUT)).toEqual({ ...OWNER, state: 'off' })
+    expect(rig.adapter.voice.holds('session-1')).toBe(false)
     expect(
       rig.events.filter((event) => event.type === 'voice' && event.event.type === 'closed')
     ).toHaveLength(1)
@@ -138,7 +138,7 @@ describe('Codex native realtime on a structured conversation', () => {
       }
       return {}
     }
-    expect(await rig.adapter.startVoice(INPUT)).toEqual({
+    expect(await rig.adapter.voice.start(INPUT)).toEqual({
       ok: true,
       value: { ...OWNER, state: 'connecting' }
     })
@@ -158,18 +158,18 @@ describe('Codex native realtime on a structured conversation', () => {
         throw new Error('transport lost')
       }
     })
-    await expect(rig.adapter.startVoice(INPUT)).rejects.toThrow('could not connect')
-    expect(rig.adapter.holdsVoice('session-1')).toBe(true)
-    expect(await rig.adapter.stopVoice(INPUT)).toEqual({ ...OWNER, state: 'unverifiable' })
+    await expect(rig.adapter.voice.start(INPUT)).rejects.toThrow('could not connect')
+    expect(rig.adapter.voice.holds('session-1')).toBe(true)
+    expect(await rig.adapter.voice.stop(INPUT)).toEqual({ ...OWNER, state: 'unverifiable' })
     expect(
-      await rig.adapter.startVoice({ ...INPUT, voiceSessionId: 'another-attempt', generation: 2 })
+      await rig.adapter.voice.start({ ...INPUT, voiceSessionId: 'another-attempt', generation: 2 })
     ).toMatchObject({ ok: false })
     expect(
       rig.connection.calls.filter((call) => call.method === 'thread/realtime/start')
     ).toHaveLength(1)
     rig.connection.handlers.onNotification?.('thread/realtime/closed', { threadId: THREAD_ID })
-    expect(rig.adapter.holdsVoice('session-1')).toBe(false)
-    expect(await rig.adapter.startVoice(INPUT)).toMatchObject({ ok: false })
+    expect(rig.adapter.voice.holds('session-1')).toBe(false)
+    expect(await rig.adapter.voice.start(INPUT)).toMatchObject({ ok: false })
     expect(
       rig.connection.calls.filter((call) => call.method === 'thread/realtime/start')
     ).toHaveLength(1)
@@ -177,8 +177,8 @@ describe('Codex native realtime on a structured conversation', () => {
 
   it('does not publish or stop a newer voice from an older fence, child, or attempt', async () => {
     const rig = await setup()
-    await rig.adapter.startVoice(INPUT)
-    expect(await rig.adapter.stopVoice({ ...INPUT, voiceSessionId: 'old-voice' })).toMatchObject({
+    await rig.adapter.voice.start(INPUT)
+    expect(await rig.adapter.voice.stop({ ...INPUT, voiceSessionId: 'old-voice' })).toMatchObject({
       state: 'off'
     })
     expect(rig.connection.calls.some((call) => call.method === 'thread/realtime/stop')).toBe(false)
@@ -191,7 +191,7 @@ describe('Codex native realtime on a structured conversation', () => {
     if (!second) {
       throw new Error('Expected the replacement provider connection')
     }
-    await rig.adapter.startVoice({
+    await rig.adapter.voice.start({
       ...INPUT,
       fence: 8,
       generation: 2,
@@ -215,8 +215,8 @@ describe('Codex native realtime on a structured conversation', () => {
     })
     second.handlers.onNotification?.('thread/realtime/sdp', { threadId: THREAD_ID, sdp: SDP })
     expect(rig.events.filter((event) => event.type === 'voice')).toHaveLength(before)
-    expect(rig.adapter.holdsVoice('session-1')).toBe(true)
-    expect(await rig.adapter.startVoice(INPUT)).toMatchObject({ ok: false })
+    expect(rig.adapter.voice.holds('session-1')).toBe(true)
+    expect(await rig.adapter.voice.start(INPUT)).toMatchObject({ ok: false })
   })
 
   it('distinguishes native unsupported from an unknown probe and never starts audio from either', async () => {
@@ -225,10 +225,10 @@ describe('Codex native realtime on a structured conversation', () => {
         throw new CodexAppServerUnsupportedError('method missing')
       }
     })
-    expect(await rig.adapter.readVoiceCapability('session-1')).toMatchObject({ supported: false })
-    expect(await rig.adapter.startVoice(INPUT)).toMatchObject({ ok: false })
+    expect(await rig.adapter.voice.capability('session-1')).toMatchObject({ supported: false })
+    expect(await rig.adapter.voice.start(INPUT)).toMatchObject({ ok: false })
     expect(rig.connection.calls.some((call) => call.method === 'thread/realtime/start')).toBe(false)
-    expect(await rig.adapter.readVoiceCapability('at-rest')).toMatchObject({ supported: null })
+    expect(await rig.adapter.voice.capability('at-rest')).toMatchObject({ supported: null })
     await acquireReadyCodexForTest(rig.adapter, {
       identity: identityFor('session-1'),
       fence: 8,
@@ -237,9 +237,9 @@ describe('Codex native realtime on a structured conversation', () => {
     rig.codex.routes['thread/realtime/listVoices'] = () => {
       throw new Error('timed out')
     }
-    expect(await rig.adapter.readVoiceCapability('session-1')).toMatchObject({ supported: null })
+    expect(await rig.adapter.voice.capability('session-1')).toMatchObject({ supported: null })
     rig.codex.routes['thread/realtime/listVoices'] = () => VOICES
-    expect(await rig.adapter.readVoiceCapability('session-1')).toEqual({
+    expect(await rig.adapter.voice.capability('session-1')).toEqual({
       supported: true,
       accountAccess: 'unchecked'
     })
@@ -265,7 +265,7 @@ describe('Codex native realtime on a structured conversation', () => {
           return { data, nextCursor: limit === 'entries' ? `page-${offset}` : null }
         }
       })
-      expect(await rig.adapter.startVoice(INPUT)).toEqual({
+      expect(await rig.adapter.voice.start(INPUT)).toEqual({
         ok: false,
         rejected: 'This conversation is too long for Live voice. Start a new Orb conversation.'
       })
@@ -277,7 +277,7 @@ describe('Codex native realtime on a structured conversation', () => {
 
   it('publishes only safe current transcript activity and sanitizes a native account refusal', async () => {
     const rig = await setup()
-    await rig.adapter.startVoice(INPUT)
+    await rig.adapter.voice.start(INPUT)
     const notify = rig.connection.handlers.onNotification
     notify?.('thread/realtime/started', {
       threadId: THREAD_ID,
@@ -333,7 +333,7 @@ describe('Codex native realtime on a structured conversation', () => {
     rig.codex.routes['thread/realtime/start'] = () => {
       throw new CodexAppServerRequestError('thread/realtime/start', -32600, `account quota ${SDP}`)
     }
-    const refused = await rig.adapter.startVoice({
+    const refused = await rig.adapter.voice.start({
       ...INPUT,
       voiceSessionId: 'voice-attempt-2',
       generation: 2
