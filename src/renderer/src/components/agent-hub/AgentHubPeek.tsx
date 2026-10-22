@@ -299,6 +299,7 @@ export function AgentHubPeek(): React.JSX.Element | null {
             <AgentHubPeekBrowser
               url={item.content.url}
               hostId={item.content.hostId}
+              routeHostId={item.content.routeHostId}
               routingWorktreeId={item.content.routingWorktreeId}
               onUnavailable={onUnavailable}
               onOpenPage={(url) => {

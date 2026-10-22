@@ -11,7 +11,11 @@ const mocks = vi.hoisted(() => {
     browser: 'enabled' | 'hidden'
     route: { executionHostId: string; runtimeEnvironmentId: string | null }
     portForwardsByConnection: Record<string, PortForwardEntry[]>
-    runtimeEnvironments: { id: string; sshAccess: { sshTargetId: string } }[]
+    runtimeEnvironments: {
+      id: string
+      sshAccess?: { sshTargetId: string }
+      orcadDeployment?: { kind: 'ssh'; sshTargetId: string; sshTargetGeneration: number }
+    }[]
   } = {
     settings: { experimentalAgentHub: true },
     connectionId: null,
@@ -242,14 +246,48 @@ describe('a paired workspace', () => {
     expect(linkSource.openInWorkspace).not.toHaveBeenCalled()
   })
 
-  it('embeds a directly reachable domain without creating a host browser tab', () => {
-    expect(peekTerminalUrlFromMirror('https://site.dev.test/path', pairedSource())).toBe(true)
+  it('embeds a public domain without creating a host browser tab', () => {
+    expect(peekTerminalUrlFromMirror('https://github.com/stablyai/orca', pairedSource())).toBe(true)
     expect(shown()?.content).toMatchObject({
       kind: 'web',
-      url: 'https://site.dev.test/path',
+      url: 'https://github.com/stablyai/orca',
       hostId: 'local'
     })
   })
+
+  it.each(['https://site.dev.test/path', 'http://10.0.0.2/', 'http://devbox:3000/'])(
+    'opens the host-resolved name %s in the paired workspace browser',
+    (url) => {
+      expect(peekTerminalUrlFromMirror(url, pairedSource())).toBe(true)
+      expect(shown()).toBeNull()
+      expect(openWorkspaceBrowserTab).toHaveBeenCalledWith(
+        expect.objectContaining({ url, expectedRuntimeEnvironmentId: 'workhost' })
+      )
+      expect(toast.info).toHaveBeenCalledWith(
+        'This address is only available on its host. Opening in the workspace browser.'
+      )
+    }
+  )
+
+  it.each(['https://site.dev.test/path', 'http://localhost:5173/'])(
+    'routes %s over an SSH-deployed server’s SSH route',
+    (url) => {
+      mocks.runtimeEnvironments = [
+        {
+          id: 'workhost',
+          orcadDeployment: { kind: 'ssh', sshTargetId: 'workhost-ssh', sshTargetGeneration: 1 }
+        }
+      ]
+      expect(peekTerminalUrlFromMirror(url, pairedSource())).toBe(true)
+      expect(shown()?.content).toMatchObject({
+        kind: 'web',
+        url,
+        hostId: 'local',
+        routeHostId: 'runtime:workhost',
+        routingWorktreeId: 'wt-1'
+      })
+    }
+  )
 
   it.each(['localhost', '127.0.0.1', '[::1]', '0.0.0.0'])(
     'uses an existing host-specific forward for %s',

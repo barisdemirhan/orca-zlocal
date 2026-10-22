@@ -10,7 +10,14 @@ export function peekReadRuntimeEnvironmentId(
 }
 
 export type AgentHubPeekContent =
-  | { kind: 'web'; url: string; hostId: ExecutionHostId; routingWorktreeId?: string }
+  | {
+      kind: 'web'
+      url: string
+      hostId: ExecutionHostId
+      /** The host whose browser route the page takes when that differs from `hostId`. */
+      routeHostId?: ExecutionHostId
+      routingWorktreeId?: string
+    }
   | {
       kind: 'image' | 'pdf' | 'media' | 'markdown' | 'csv' | 'mermaid' | 'notebook' | 'text'
       filePath: string

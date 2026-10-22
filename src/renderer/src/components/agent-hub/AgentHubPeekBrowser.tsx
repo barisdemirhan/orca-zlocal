@@ -26,6 +26,7 @@ function peekPageUrl(tabId: string): string | null {
 export function AgentHubPeekBrowser({
   url,
   hostId,
+  routeHostId,
   routingWorktreeId,
   onUnavailable,
   onOpenPage
@@ -33,6 +34,7 @@ export function AgentHubPeekBrowser({
   url: string
   /** Loads through this machine, as the workspace's own browser tabs do (an SSH host's localhost). */
   hostId: ExecutionHostId
+  routeHostId?: ExecutionHostId
   routingWorktreeId?: string
   onUnavailable: () => void
   /** A link the page opened in a new tab or window; Peek shows it next. */
@@ -143,7 +145,7 @@ export function AgentHubPeekBrowser({
           isWorktreeActive
           chromeShortcutScope="owned-target"
           routingWorktreeId={routingWorktreeId}
-          sourceExecutionHostId={hostId}
+          sourceExecutionHostId={routeHostId ?? hostId}
         />
       </DeferredBrowserContent>
     </div>

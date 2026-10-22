@@ -5,6 +5,7 @@ import {
   resolveWorktreeOperationRouteForHost
 } from '@/lib/worktree-operation-route'
 import { browserUrlForPortForwardEntry } from '@/lib/workspace-port-urls'
+import { resolveSshWorkspaceBrowserRouteEligibility } from '@/lib/ssh-workspace-browser-route-eligibility'
 import {
   parseExecutionHostId,
   toRuntimeExecutionHostId,
@@ -50,9 +51,33 @@ function isHostOnlyAddress(hostname: string): boolean {
   return classifyRemotePairingHostname(host) === 'loopback' || host === '0.0.0.0' || host === '::'
 }
 
+const PRIVATE_NAME_SUFFIXES = [
+  '.test',
+  '.local',
+  '.internal',
+  '.lan',
+  '.home.arpa',
+  '.example',
+  '.invalid'
+]
+
+/** A name or address only its own network resolves; this machine may reach something else. */
+function isPrivateNetworkHost(hostname: string): boolean {
+  const host = hostname
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '')
+    .toLowerCase()
+  return (
+    classifyRemotePairingHostname(host) !== 'public' ||
+    host.startsWith('169.254.') ||
+    PRIVATE_NAME_SUFFIXES.some((suffix) => host.endsWith(suffix))
+  )
+}
+
 export function isAgentHubPeekHostAddress(url: string): boolean {
   try {
-    return isHostOnlyAddress(new URL(url).hostname)
+    const { hostname } = new URL(url)
+    return isHostOnlyAddress(hostname) || isPrivateNetworkHost(hostname)
   } catch {
     return false
   }
@@ -82,9 +107,26 @@ export function agentHubPeekBrowserRoute(
       ...(host.kind === 'ssh' ? { routingWorktreeId: source.worktreeId } : {})
     }
   }
+  // WHY: an SSH-deployed server's pages leave over its SSH route, as its workspace browser's do.
+  if (
+    resolveSshWorkspaceBrowserRouteEligibility(
+      route.executionHostId,
+      state.settings,
+      state.runtimeEnvironments
+    )?.eligible
+  ) {
+    return {
+      kind: 'web',
+      url,
+      hostId: 'local',
+      routeHostId: host.id,
+      routingWorktreeId: source.worktreeId
+    }
+  }
   const parsed = new URL(url)
   if (!isHostOnlyAddress(parsed.hostname)) {
-    return { kind: 'web', url, hostId: 'local' }
+    // WHY: the runtime's workspace browser resolves a private name on that host; here it may not.
+    return isPrivateNetworkHost(parsed.hostname) ? null : { kind: 'web', url, hostId: 'local' }
   }
   const environment = state.runtimeEnvironments?.find(
     (entry) => entry.id === route.runtimeEnvironmentId
