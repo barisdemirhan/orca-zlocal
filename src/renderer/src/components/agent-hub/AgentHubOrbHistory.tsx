@@ -35,12 +35,14 @@ export function AgentHubOrbHistory({
   const yesterdayDate = new Date(now)
   yesterdayDate.setDate(yesterdayDate.getDate() - 1)
   const yesterday = dayKey(yesterdayDate.getTime())
+  const untitled = translate('agentHub.orb.newConversationTitle', 'New conversation')
   const groups = new Map<string, AgentHubOrbConversation[]>()
   for (const conversation of conversations) {
     if (agent && agents.includes(agent) && conversation.agent !== agent) {
       continue
     }
-    const search = `${conversation.title} ${conversation.lastReply ?? ''}`.toLocaleLowerCase()
+    const search =
+      `${conversation.title || untitled} ${conversation.lastReply ?? ''}`.toLocaleLowerCase()
     if (!search.includes(query.trim().toLocaleLowerCase())) {
       continue
     }
@@ -111,7 +113,9 @@ export function AgentHubOrbHistory({
                 onClick={() => onReopen(entry.sessionId)}
               >
                 <span className="flex w-full items-center gap-2 text-sm">
-                  <span className="min-w-0 flex-1 truncate font-medium">{entry.title}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {entry.title || untitled}
+                  </span>
                   <time
                     dateTime={new Date(entry.lastActiveAt).toISOString()}
                     className="shrink-0 text-xs text-muted-foreground"
@@ -137,12 +141,6 @@ export function AgentHubOrbHistory({
           </p>
         ) : null}
       </div>
-      <p className="border-t border-border px-3 py-2 text-xs text-muted-foreground">
-        {translate(
-          'auto.agentHub.orb.historyHint',
-          'Click to reopen. Each conversation keeps its own agent and continues where it stopped.'
-        )}
-      </p>
     </div>
   )
 }

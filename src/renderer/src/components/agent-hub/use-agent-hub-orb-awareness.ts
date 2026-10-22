@@ -87,7 +87,7 @@ export function useAgentHubOrbAwareness(
           orbTabId: session.tabId,
           now: Date.now()
         })
-      : { snapshot: null, targets: new Map() }
+      : { snapshot: null, targets: new Map(), display: new Map(), quota: [] }
     useAgentHubOrbAwarenessStore.setState(value)
   }, [session, threads, lists, requests, localLimits, remoteLimits, now])
 }

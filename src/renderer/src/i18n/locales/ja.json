@@ -18296,7 +18296,6 @@
         "today": "今日",
         "yesterday": "昨日",
         "noConversations": "会話が見つかりません",
-        "historyHint": "クリックして再開。各会話は同じAgentで、中断したところから続きます。",
         "historyFailed": "会話を読み込めませんでした。もう一度お試しください。",
         "talk": "Orb と話す",
         "disabled": "Orb と話すには Agent の操作を有効にしてください",

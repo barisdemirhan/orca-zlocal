@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { translate, getIntlLocale } from '@/i18n/i18n'
+import { translate } from '@/i18n/i18n'
 import { structuredAgentLabel } from '@/lib/structured-agent-session-launch-label'
 import { useAppStore } from '@/store'
 import {
@@ -273,15 +273,6 @@ export function AgentHubOrbConversation({
         </div>
       ) : null}
       <AgentHubOrbFollowNotices onOpenTarget={openFollowTarget} />
-      {chatVisible && conversation ? (
-        <p className="shrink-0 truncate px-3 pt-2 text-xs text-muted-foreground">
-          {conversation.title} ·{' '}
-          {new Date(conversation.lastActiveAt).toLocaleString(getIntlLocale(), {
-            dateStyle: 'short',
-            timeStyle: 'short'
-          })}
-        </p>
-      ) : null}
       {history ? (
         <AgentHubOrbHistory
           conversations={conversations}

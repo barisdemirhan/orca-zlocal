@@ -21,7 +21,10 @@ const buttonVariants = cva(
         'pane-title-close': 'pane-title-close',
         // The worktree card's "rename failed" chip, for a failure the user can open.
         'destructive-chip':
-          'border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive'
+          'border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive',
+        // The Orb header's usage-limit chip, for an account that is nearly or fully used up.
+        'warning-chip':
+          'border border-status-warning-border bg-status-warning-background text-status-warning hover:border-status-warning hover:text-status-warning'
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',

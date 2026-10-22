@@ -1,9 +1,7 @@
-import {
-  AGENT_HUB_ORB_OPENING_PROMPT,
-  type AgentHubOrbConversation
-} from '../../../shared/agent-hub-orb'
+import type { AgentHubOrbConversation } from '../../../shared/agent-hub-orb'
 import type { AgentSessionRecord } from '../../../shared/agent-session-record'
 import { isStructuredAgentId } from '../../../shared/agent-session-provider-handle'
+import { isOrbOpeningText } from '../../../shared/native-chat-provider-frame-summary'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
 
 export async function listAgentHubOrbConversations(
@@ -36,14 +34,15 @@ export async function listAgentHubOrbConversations(
       return [{ role: item.body.role, text }]
     })
     const firstUser = messages.find(
-      (message) => message.role === 'user' && message.text !== AGENT_HUB_ORB_OPENING_PROMPT
+      (message) => message.role === 'user' && message.text && !isOrbOpeningText(message.text)
     )
     const lastReply = messages.findLast((message) => message.role === 'assistant')?.text
     conversations.push({
       sessionId: record.sessionId,
       agent: record.provider,
       ...(record.options?.model ? { model: record.options.model } : {}),
-      title: (record.conversationName || firstUser?.text || 'Orb').slice(0, 120),
+      // Empty means untitled; the renderer shows a translated placeholder.
+      title: (record.conversationName || firstUser?.text || '').slice(0, 120),
       startedAt: record.createdAt,
       lastActiveAt,
       ...(lastReply ? { lastReply: lastReply.slice(0, 240) } : {})

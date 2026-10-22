@@ -19129,7 +19129,6 @@
         "today": "Today",
         "yesterday": "Yesterday",
         "noConversations": "No conversations found",
-        "historyHint": "Click to reopen. Each conversation keeps its own agent and continues where it stopped.",
         "historyFailed": "Could not load conversations. Try again.",
         "talk": "Talk to Orb",
         "disabled": "Enable Agent control to talk to Orb",
@@ -22311,11 +22310,36 @@
         "unverifiable": "Control could not be verified. Reconnect and try again."
       },
       "attention": "An agent sent an update",
-      "liveHoldsInput": "Live voice is on. Stop it to type."
-    },
-    "follow": {
-      "openNotice": "Open {{title}}",
-      "deliveryUnverifiable": "Live delivery could not be verified. Review the current agent here."
+      "liveHoldsInput": "Live voice is on. Stop it to type.",
+      "deliveryUnverifiable": "Orb may not have the latest agent states",
+      "newConversationTitle": "New conversation",
+      "quota": {
+        "low": "{{provider}} {{percent}}%",
+        "limitUntil": "Limit · {{time}}",
+        "limit": "Limit",
+        "show": "Show usage limits",
+        "thisComputer": "This computer",
+        "agentsOne": "1 agent uses this account",
+        "agentsMany": "{{count}} agents use this account"
+      },
+      "notices": {
+        "approval": "Waiting for approval",
+        "question": "Asks: {{question}}",
+        "questionOneOption": "Asks: {{question}} · 1 option",
+        "questionOptions": "Asks: {{question}} · {{count}} options",
+        "attention": "Needs attention",
+        "done": "Finished",
+        "needsYouOne": "1 agent needs you",
+        "needsYouMany": "{{count}} agents need you",
+        "updateOne": "1 update",
+        "updateMany": "{{count}} updates",
+        "finishedOne": "1 finished",
+        "finishedMany": "{{count}} finished",
+        "updates": "Updates",
+        "finished": "Finished",
+        "answer": "Answer",
+        "goToAgent": "Go to agent"
+      }
     },
     "sleep": {
       "waking": "Waking…",

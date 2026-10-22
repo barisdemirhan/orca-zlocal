@@ -18768,7 +18768,6 @@
         "today": "Hoy",
         "yesterday": "Ayer",
         "noConversations": "No se encontraron conversaciones",
-        "historyHint": "Haz clic para reabrir. Cada conversación conserva su agente y continúa donde se detuvo.",
         "historyFailed": "No se pudieron cargar las conversaciones. Inténtalo de nuevo.",
         "talk": "Hablar con Orb",
         "disabled": "Activa el control de agentes para hablar con Orb",

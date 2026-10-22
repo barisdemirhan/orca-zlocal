@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { createEmptyRateLimitState } from '../../../../shared/rate-limit-state-factory'
 import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
-import { agentHubOrbQuotaNotices, agentHubOrbQuotaProvider } from './agent-hub-orb-quota-notices'
+import {
+  agentHubOrbQuotaNotices,
+  agentHubOrbQuotaProvider,
+  collectAgentHubOrbQuotaAlerts
+} from './agent-hub-orb-quota-notices'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 const target: AgentHubPaneTarget = {
@@ -13,6 +17,16 @@ const target: AgentHubPaneTarget = {
   agentType: 'codex'
 }
 const now = 1_000_000
+const alerts = (
+  owner: string,
+  limits: ReturnType<typeof createEmptyRateLimitState> | null,
+  at = now,
+  agents = [target]
+) =>
+  collectAgentHubOrbQuotaAlerts(
+    agents.map((entry) => ({ target: entry, owner, limits })),
+    at
+  )
 const snapshot = () =>
   createEmptyRateLimitState({
     codex: {
@@ -31,41 +45,46 @@ const snapshot = () =>
   })
 
 describe('opted-in quota risk notices', () => {
-  it('deduplicates one shared bucket and escalates only at the next threshold', () => {
+  it('reports one shared account window once and re-delivers only when it runs out', () => {
     const data = snapshot()
-    const notice = agentHubOrbQuotaNotices(target, 'owner-a', data, now)[0]
-    expect(notice?.text).toContain('9% remaining')
-    expect(notice?.text).toContain('exact account is unverified')
-    expect(agentHubOrbQuotaNotices(target, 'owner-a', data, now + 1000)[0]?.id).toBe(notice?.id)
-    expect(agentHubOrbQuotaNotices(target, 'owner-b', data, now)[0]?.id).not.toBe(notice?.id)
+    const [alert] = alerts('owner-a', data, now, [target, { ...target, title: 'Second agent' }])
+    expect(alert?.agents).toBe(2)
+    const [notice] = alert ? agentHubOrbQuotaNotices(alert, now) : []
+    expect(notice?.text).toContain('10% or less left')
+    expect(notice?.text).toContain('2 agents use it')
+    expect(alerts('owner-b', data)[0]?.id).not.toBe(alert?.id)
     if (!data.codex?.session) {
       throw new Error('Missing fixture')
     }
     data.codex.session.usedPercent = 96
-    expect(agentHubOrbQuotaNotices(target, 'owner-a', data, now)[0]?.id).not.toBe(notice?.id)
+    const [lower] = alerts('owner-a', data)
+    expect(lower && agentHubOrbQuotaNotices(lower, now)[0]?.id).toBe(notice?.id)
+    data.codex.session.usedPercent = 100
+    const [empty] = alerts('owner-a', data)
+    const emptyNotice = empty ? agentHubOrbQuotaNotices(empty, now)[0] : undefined
+    expect(emptyNotice?.id).not.toBe(notice?.id)
+    expect(emptyNotice?.text).toContain('0% left (limit reached)')
   })
   it('never reports stale, disconnected, malformed, reset, or missing usage as zero quota', () => {
     const data = snapshot()
-    expect(agentHubOrbQuotaNotices(target, 'local', data, now + 301_000)).toEqual([])
+    expect(alerts('local', data, now + 301_000)).toEqual([])
     if (!data.codex?.session) {
       throw new Error('Missing fixture')
     }
     data.codex.usageMetadata = { unverifiableOwner: true }
-    expect(agentHubOrbQuotaNotices(target, 'remote', data, now)).toEqual([])
+    expect(alerts('remote', data)).toEqual([])
     delete data.codex.usageMetadata
     data.codex.session.usedPercent = Number.NaN
-    expect(agentHubOrbQuotaNotices(target, 'local', data, now)).toEqual([])
+    expect(alerts('local', data)).toEqual([])
     data.codex.session.usedPercent = 100
     data.codex.session.resetsAt = now
-    expect(agentHubOrbQuotaNotices(target, 'local', data, now)).toEqual([])
-    expect(agentHubOrbQuotaNotices(target, 'local', null, now)).toEqual([])
+    expect(alerts('local', data)).toEqual([])
+    expect(alerts('local', null)).toEqual([])
   })
   it('does not attribute a multi-provider harness or MiMo to an unrelated provider account', () => {
     for (const agentType of ['opencode', 'omp', 'pi', 'mimo-code', 'copilot', 'muse'] as const) {
       expect(agentHubOrbQuotaProvider({ ...target, agentType })).toBeNull()
-      expect(agentHubOrbQuotaNotices({ ...target, agentType }, 'local', snapshot(), now)).toEqual(
-        []
-      )
+      expect(alerts('local', snapshot(), now, [{ ...target, agentType }])).toEqual([])
     }
   })
 })

@@ -3,14 +3,27 @@ import type {
   RateLimitState,
   RateLimitWindow
 } from '../../../../shared/rate-limit-types'
+import { getProviderDisplayName } from '../status-bar/usage-error-copy'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
-export type AgentHubOrbFollowNotice = {
-  id: string
-  target: AgentHubPaneTarget
-  text: string
-  kind: 'decision' | 'quota' | 'unverifiable'
+export type AgentHubOrbQuotaWindow = {
+  name: string
+  remaining: number
+  resetsAt: number | null
+  resetDescription: string | null
 }
+
+/** One provider account on one host, however many agents draw on it. */
+export type AgentHubOrbQuotaAlert = {
+  id: string
+  owner: string
+  provider: ProviderRateLimits['provider']
+  limits: ProviderRateLimits
+  windows: AgentHubOrbQuotaWindow[]
+  agents: number
+}
+
+const QUOTA_ALERT_REMAINING_PERCENT = 10
 
 /** Multi-provider harnesses need explicit provider evidence; their names never select an account. */
 export function agentHubOrbQuotaProvider(
@@ -32,21 +45,16 @@ export function agentHubOrbQuotaProvider(
   return target.agentType ? (providers[target.agentType] ?? null) : null
 }
 
-export function agentHubOrbQuotaNotices(
-  target: AgentHubPaneTarget,
-  owner: string,
-  limits: RateLimitState | null,
+function verifiedSnapshot(
+  provider: ProviderRateLimits['provider'],
+  limits: RateLimitState,
   now: number
-): AgentHubOrbFollowNotice[] {
-  const provider = agentHubOrbQuotaProvider(target)
-  if (!provider || !limits) {
-    return []
-  }
+): ProviderRateLimits | null {
   if (
     (provider === 'codex' && limits.codexTarget.runtime !== 'host') ||
     (provider === 'claude' && limits.claudeTarget.runtime !== 'host')
   ) {
-    return []
+    return null
   }
   const snapshot = provider === 'opencode-go' ? limits.opencodeGo : limits[provider]
   if (
@@ -56,8 +64,12 @@ export function agentHubOrbQuotaNotices(
     snapshot.updatedAt > now + 60_000 ||
     now - snapshot.updatedAt > 5 * 60_000
   ) {
-    return []
+    return null
   }
+  return snapshot
+}
+
+function lowWindows(snapshot: ProviderRateLimits, now: number): AgentHubOrbQuotaWindow[] {
   const windows: [string, RateLimitWindow | null | undefined][] = [
     ['session', snapshot.session],
     ['weekly', snapshot.weekly],
@@ -76,16 +88,77 @@ export function agentHubOrbQuotaNotices(
       return []
     }
     const remaining = 100 - window.usedPercent
-    const level = remaining <= 5 ? 5 : remaining <= 10 ? 10 : remaining <= 20 ? 20 : null
-    return level === null
+    return remaining > QUOTA_ALERT_REMAINING_PERCENT
       ? []
       : [
           {
-            id: JSON.stringify(['quota', owner, provider, name, window.resetsAt, level]),
-            target,
-            kind: 'quota' as const,
-            text: `${provider} • ${name}: host account usage reports ${Math.round(remaining)}% remaining. Shared account pool; the selected agent's exact account is unverified. Consider finishing the current step before starting more work.`
+            name,
+            remaining,
+            resetsAt: window.resetsAt,
+            resetDescription: window.resetDescription
           }
         ]
+  })
+}
+
+/** Groups agents by the account they draw on, so a shared limit is reported once. */
+export function collectAgentHubOrbQuotaAlerts(
+  usages: readonly { target: AgentHubPaneTarget; owner: string; limits: RateLimitState | null }[],
+  now: number
+): AgentHubOrbQuotaAlert[] {
+  const alerts = new Map<string, AgentHubOrbQuotaAlert>()
+  for (const { target, owner, limits } of usages) {
+    const provider = agentHubOrbQuotaProvider(target)
+    const snapshot = provider && limits ? verifiedSnapshot(provider, limits, now) : null
+    if (!provider || !snapshot) {
+      continue
+    }
+    const id = JSON.stringify(['quota', owner, provider])
+    const existing = alerts.get(id)
+    if (existing) {
+      existing.agents += 1
+      continue
+    }
+    const windows = lowWindows(snapshot, now)
+    if (windows.length > 0) {
+      alerts.set(id, { id, owner, provider, limits: snapshot, windows, agents: 1 })
+    }
+  }
+  return [...alerts.values()].sort(
+    (left, right) =>
+      Math.min(...left.windows.map((window) => window.remaining)) -
+      Math.min(...right.windows.map((window) => window.remaining))
+  )
+}
+
+// Model text stays in English and on a fixed clock so it does not churn with the UI locale.
+function modelResetTime(resetsAt: number, now: number): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    ...(resetsAt - now >= 24 * 60 * 60_000 ? { weekday: 'short' } : {}),
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(resetsAt)
+}
+
+/** One model notice per account window; the level, not the exact percent, keys re-delivery. */
+export function agentHubOrbQuotaNotices(
+  alert: AgentHubOrbQuotaAlert,
+  now: number
+): { id: string; title: string; text: string }[] {
+  const name = getProviderDisplayName(alert.provider)
+  return alert.windows.map((window) => {
+    const empty = window.remaining <= 0
+    const reset =
+      window.resetsAt !== null
+        ? `, resets ${modelResetTime(window.resetsAt, now)}`
+        : window.resetDescription
+          ? `, resets ${window.resetDescription}`
+          : ''
+    const agents = alert.agents === 1 ? '1 agent uses it' : `${alert.agents} agents use it`
+    return {
+      id: JSON.stringify([alert.id, window.name, window.resetsAt, empty ? 'empty' : 'low']),
+      title: name,
+      text: `${name} ${window.name} ${empty ? '0% left (limit reached)' : '10% or less left'}${reset}, ${agents}`
+    }
   })
 }

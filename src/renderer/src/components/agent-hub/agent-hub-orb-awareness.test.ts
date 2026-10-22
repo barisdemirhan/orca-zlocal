@@ -34,6 +34,11 @@ it('includes all current agents and their real question choices without a select
   expect(result.snapshot.notices[0]?.text).toContain('Which layout?')
   expect(result.snapshot.notices[0]?.text).toContain('1. Compact')
   expect(result.snapshot.notices[0]?.text).toContain('2. Wide')
+  expect(result.display.get(result.snapshot.notices[0]?.id ?? '')).toEqual({
+    kind: 'question',
+    question: 'Which layout?',
+    options: 2
+  })
 })
 
 it('keeps equal request and pane IDs on two hosts separate, drops expired requests and excludes Orb itself', () => {
@@ -111,7 +116,7 @@ it('classifies a needs-you notify as an info update, not a decision', () => {
     links: [],
     text: 'TEST-3: Dikkat bildirimi denemesi'
   })
-  const { snapshot } = collectAgentHubOrbAwareness({
+  const { snapshot, display } = collectAgentHubOrbAwareness({
     state: useAppStore.getState(),
     threads,
     lists: buildAgentHubLists(threads),
@@ -122,4 +127,8 @@ it('classifies a needs-you notify as an info update, not a decision', () => {
   expect(snapshot.notices).toHaveLength(1)
   expect(snapshot.notices[0]?.kind).toBe('info')
   expect(snapshot.notices[0]?.text).toContain('TEST-3')
+  expect(display.get(snapshot.notices[0]?.id ?? '')).toEqual({
+    kind: 'update',
+    text: 'TEST-3: Dikkat bildirimi denemesi'
+  })
 })

@@ -18988,7 +18988,6 @@
         "today": "Aujourd’hui",
         "yesterday": "Hier",
         "noConversations": "Aucune conversation trouvée",
-        "historyHint": "Cliquez pour rouvrir. Chaque conversation conserve son agent et reprend où elle s’est arrêtée.",
         "historyFailed": "Impossible de charger les conversations. Réessayez.",
         "talk": "Parler à Orb",
         "disabled": "Activez le contrôle des agents pour parler à Orb",

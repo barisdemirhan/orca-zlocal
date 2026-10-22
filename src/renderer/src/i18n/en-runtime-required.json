@@ -1463,6 +1463,9 @@
       "waitingForServer": "Reloads when the server starts"
     }
   },
+  "common": {
+    "open": "Open"
+  },
   "browserExtensions": {
     "permission": {
       "manyOtherSites_one": "Read and change your data on {{hosts}} and {{count}} other site",

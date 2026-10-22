@@ -155,12 +155,18 @@ function isOrbOpeningMessage(message: NativeChatMessage | undefined): boolean {
   if (message?.role !== 'user') {
     return false
   }
-  const text = message.blocks
-    .filter((block) => block.type === 'text')
-    .map((block) => block.text)
-    .join('\n')
-    .trim()
-  return text === AGENT_HUB_ORB_OPENING_PROMPT || text.startsWith("You are Orca's Orb")
+  return isOrbOpeningText(
+    message.blocks
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text)
+      .join('\n')
+  )
+}
+
+/** Covers older Orb prompts too, which no longer match the current text exactly. */
+export function isOrbOpeningText(text: string): boolean {
+  const trimmed = text.trim()
+  return trimmed === AGENT_HUB_ORB_OPENING_PROMPT || trimmed.startsWith("You are Orca's Orb")
 }
 
 export type NativeChatConnectionWarning = { id: string; block: NativeChatTextBlock }

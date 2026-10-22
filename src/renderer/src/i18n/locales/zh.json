@@ -18296,7 +18296,6 @@
         "today": "今天",
         "yesterday": "昨天",
         "noConversations": "未找到对话",
-        "historyHint": "点击重新打开。每个对话保留自己的智能体，并从停止的位置继续。",
         "historyFailed": "无法加载对话。请重试。",
         "talk": "与 Orb 对话",
         "disabled": "启用代理控制以与 Orb 对话",

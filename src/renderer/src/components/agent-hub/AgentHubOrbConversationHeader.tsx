@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
+import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
+import { AgentHubOrbQuotaChip } from './AgentHubOrbQuotaChip'
 
 function HeaderAction({
   label,
@@ -63,6 +65,11 @@ export function AgentHubOrbConversationHeader({
   const historyLabel = translate('auto.agentHub.orb.pastConversations', 'Past conversations')
   const settingsLabel = translate('auto.agentHub.orb.settings', 'Orb settings')
   const newLabel = translate('auto.agentHub.orb.newConversation', 'New')
+  const deliveryUnverifiable = useAgentHubOrbAwarenessStore((s) => s.delivery === 'unverifiable')
+  const deliveryLabel = translate(
+    'agentHub.orb.deliveryUnverifiable',
+    'Orb may not have the latest agent states'
+  )
   return (
     <header className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2">
       {!chatVisible ? (
@@ -81,11 +88,20 @@ export function AgentHubOrbConversationHeader({
             ? settingsLabel
             : translate('auto.agentHub.orb.title', 'Orb')}
       </span>
+      {chatVisible && deliveryUnverifiable ? (
+        <AgentHubActionTooltip label={deliveryLabel}>
+          <span
+            role="img"
+            aria-label={deliveryLabel}
+            className="size-1.5 shrink-0 rounded-full bg-status-warning"
+          />
+        </AgentHubActionTooltip>
+      ) : null}
       {chatVisible && agentLabel ? (
-        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{agentLabel}</span>
-      ) : (
-        <span className="flex-1" />
-      )}
+        <span className="min-w-0 truncate text-xs text-muted-foreground">{agentLabel}</span>
+      ) : null}
+      {chatVisible ? <AgentHubOrbQuotaChip /> : null}
+      <span className="flex-1" />
       {requestAction}
       {history ? (
         <Button type="button" variant="outline" size="xs" disabled={busy} onClick={onNew}>

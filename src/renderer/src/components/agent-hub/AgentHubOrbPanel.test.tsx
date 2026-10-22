@@ -276,7 +276,6 @@ it('opens a quiet Orb before revealing the same conversation and its model above
   expect(mocks.voice.switchToText).toHaveBeenCalledOnce()
   expect(await screen.findByText('Codex · gpt-model')).toBeTruthy()
   expect(panel()?.hasAttribute('data-agent-hub-orb-only')).toBe(false)
-  expect(screen.getByText(/Mic worker ·/)).toBeTruthy()
   const rect = agentHubOrbAnchorRect(null)
   expect(rect.x).toBe(window.innerWidth / 2)
   expect(rect.y).toBe(window.innerHeight - 40)

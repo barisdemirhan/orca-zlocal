@@ -12,13 +12,20 @@ import { agentHubPromptText, agentHubStateSince, type AgentHubLists } from './ag
 import { agentHubInboxRequests, type AgentHubRequestsState } from './agent-hub-requests-store'
 import { agentHubRequestHost, findAgentHubRequestTarget } from './agent-hub-request-target'
 import { paneTargetFromThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
-import { agentHubOrbQuotaNotices } from './agent-hub-orb-quota-notices'
+import {
+  agentHubOrbQuotaNotices,
+  collectAgentHubOrbQuotaAlerts,
+  type AgentHubOrbQuotaAlert
+} from './agent-hub-orb-quota-notices'
+import type { AgentHubOrbNoticeDisplay } from './agent-hub-orb-notice-display'
 import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
 
 export type OrbAwarenessProjection = {
   snapshot: AgentHubOrbAwareness
   targets: ReadonlyMap<string, AgentHubPaneTarget>
+  display: ReadonlyMap<string, AgentHubOrbNoticeDisplay>
+  quota: readonly AgentHubOrbQuotaAlert[]
 }
 
 // Only ask/gate/consent need an answer; a needs-you notify is an update.
@@ -27,6 +34,18 @@ function orbNoticeKind(request: AgentHubRequest): AgentHubOrbAwareness['notices'
     return 'decision'
   }
   return request.level === 'done' ? 'result' : 'info'
+}
+
+function requestDisplay(request: AgentHubRequest): AgentHubOrbNoticeDisplay {
+  if (request.kind === 'ask' || request.kind === 'gate') {
+    return { kind: 'question', question: request.question, options: request.options.length }
+  }
+  if (request.kind === 'notify') {
+    return request.level === 'done'
+      ? { kind: 'done', text: request.text }
+      : { kind: 'update', text: request.text }
+  }
+  return { kind: 'approval' }
 }
 
 export function collectAgentHubOrbAwareness(input: {
@@ -44,6 +63,7 @@ export function collectAgentHubOrbAwareness(input: {
   const key = (host: string, paneKey: string) => JSON.stringify([host, paneKey])
   const notices = new Map<string, AgentHubOrbAwareness['notices'][number]>()
   const requested = new Set<string>()
+  const display = new Map<string, AgentHubOrbNoticeDisplay>()
   const agents = threads
     .map((thread) => {
       const target = paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle)
@@ -86,6 +106,7 @@ export function collectAgentHubOrbAwareness(input: {
           : 'An explicit permission request is waiting in Agent Hub.'
     const id = JSON.stringify(['request', host, request.requestId])
     requested.add(targetKey)
+    display.set(id, requestDisplay(request))
     notices.set(id, {
       id,
       host,
@@ -120,6 +141,15 @@ export function collectAgentHubOrbAwareness(input: {
           ? prompt.approval.title
           : 'A question or blocked step needs attention. Inspect the current agent before acting.'
     const id = JSON.stringify(['status', host, thread.paneKey, agentHubStateSince(thread)])
+    const question = prompt?.kind === 'question' ? prompt.prompt.questions[0] : undefined
+    display.set(
+      id,
+      question
+        ? { kind: 'question', question: question.question, options: question.options.length }
+        : prompt?.kind === 'approval'
+          ? { kind: 'approval' }
+          : { kind: 'attention' }
+    )
     notices.set(id, {
       id,
       host,
@@ -129,33 +159,27 @@ export function collectAgentHubOrbAwareness(input: {
       text: text.slice(0, 2_400)
     })
   }
-  for (const thread of threads) {
-    const target = paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle)
+  const usages = threads.flatMap((thread) => {
     const host = agentHubRequestHost(state, thread.worktree)
     if (!host || activityThreadStatusId(thread) === 'unverifiable') {
-      continue
+      return []
     }
     const owner = toAgentHibernationRuntimeOwner(
       resolveTerminalPtyOwner(state, thread.worktree.id),
       []
     )
-    const usage =
+    const limits =
       owner.kind === 'runtime'
         ? (input.remoteLimits.get(owner.environmentId) ?? null)
         : owner.kind === 'non-runtime' && !thread.worktree.hostId?.startsWith('ssh:')
           ? state.rateLimits
           : null
-    for (const notice of agentHubOrbQuotaNotices(target, host, usage, now)) {
-      if (!notices.has(notice.id)) {
-        notices.set(notice.id, {
-          id: notice.id,
-          host,
-          paneKey: thread.paneKey,
-          title: target.title.slice(0, 320),
-          kind: notice.kind,
-          text: notice.text
-        })
-      }
+    return limits ? [{ target: paneTargetFromThread(thread, ''), owner: host, limits }] : []
+  })
+  const quota = collectAgentHubOrbQuotaAlerts(usages, now)
+  for (const alert of quota) {
+    for (const notice of agentHubOrbQuotaNotices(alert, now)) {
+      notices.set(notice.id, { ...notice, host: alert.owner, paneKey: '', kind: 'quota' })
     }
   }
   return {
@@ -166,6 +190,8 @@ export function collectAgentHubOrbAwareness(input: {
       agents: agents.slice(0, 500),
       notices: [...notices.values()].slice(0, 128)
     },
-    targets
+    targets,
+    display,
+    quota
   }
 }
