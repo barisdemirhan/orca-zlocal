@@ -80,6 +80,45 @@
   margin-top: 0;
   min-height: 32px;
 }
+/* Why a reserved slot: the box appears and disappears under the sphere without moving it. */
+.agent-hub-orb-quick-slot {
+  display: flex;
+  justify-content: center;
+  flex: none;
+  width: 100%;
+  height: 36px;
+  margin-bottom: 8px;
+}
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-quick-slot {
+  pointer-events: none;
+}
+.agent-hub-orb-quick {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 292px;
+  max-width: calc(100vw - 32px);
+  height: 36px;
+  padding: 0 4px 0 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--popover) 88%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-floating);
+  color: var(--popover-foreground);
+  pointer-events: auto;
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease,
+    visibility 0s linear 0s;
+}
+.agent-hub-orb-quick[data-open='false'] {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  visibility: hidden;
+  pointer-events: none;
+  transition-delay: 0s, 0s, 220ms;
+}
 .agent-hub-orb-request-host {
   z-index: 48;
   min-height: 0;
@@ -159,7 +198,8 @@
 @media (prefers-reduced-motion: reduce) {
   .agent-hub-orb-stage .agent-hub-orb-controls,
   .agent-hub-orb-stage .agent-hub-orb-resize,
-  .agent-hub-orb-stage .agent-hub-orb-hover-controls {
+  .agent-hub-orb-stage .agent-hub-orb-hover-controls,
+  .agent-hub-orb-stage .agent-hub-orb-quick {
     transition: none;
   }
 }

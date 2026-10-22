@@ -133,6 +133,7 @@ describe('Orb state', () => {
     expect(deriveAgentHubOrbState({ ...base, items: [reply], latestTurn, now: 105_999 })).toEqual({
       kind: 'done',
       summary: 'Tests passed',
+      reply: 'Tests passed\nDetails',
       expiresAt: 106_000
     })
     expect(deriveAgentHubOrbState({ ...base, items: [reply], latestTurn, now: 106_000 })).toEqual({

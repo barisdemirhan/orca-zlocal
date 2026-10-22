@@ -9,11 +9,26 @@ vi.mock('./use-agent-hub-orb-caption-side', () => ({
   useAgentHubOrbCaptionSide: () => ({ side: 'right', sideOffset: 12 })
 }))
 
-function Caption({ text }: { text: string }): React.JSX.Element {
+function Caption({
+  text,
+  durationMs,
+  action
+}: {
+  text: string
+  durationMs?: number
+  action?: React.ReactNode
+}): React.JSX.Element {
   const [open, setOpen] = useState(true)
   return (
     <TooltipProvider>
-      <AgentHubOrbSpeechBubble open={open} onOpenChange={setOpen} text={text} speakerLabel="Orb">
+      <AgentHubOrbSpeechBubble
+        open={open}
+        onOpenChange={setOpen}
+        text={text}
+        speakerLabel="Orb"
+        durationMs={durationMs}
+        action={action}
+      >
         <button>Live Orb</button>
       </AgentHubOrbSpeechBubble>
     </TooltipProvider>
@@ -91,4 +106,15 @@ it('offers Show captions after the idle timeout and restores them from the keybo
   expect(screen.queryByText('Timed out response')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Show captions' }))
   expect(screen.queryByText('Timed out response')).not.toBeNull()
+})
+
+it('keeps a written reply for its shorter time with its own header action', () => {
+  vi.useFakeTimers()
+  render(<Caption text="Tests passed" durationMs={12_000} action={<button>Open chat</button>} />)
+  const header = screen.getByRole('button', { name: 'Open chat' }).parentElement
+  expect(header?.contains(screen.getByRole('button', { name: 'Hide captions' }))).toBe(true)
+  act(() => vi.advanceTimersByTime(11_999))
+  expect(screen.queryByText('Tests passed')).not.toBeNull()
+  act(() => vi.advanceTimersByTime(1))
+  expect(screen.queryByText('Tests passed')).toBeNull()
 })

@@ -57,6 +57,20 @@ export function useAgentHubOrbComposerReady(tabId: string | undefined): boolean 
   )
 }
 
+/** Sends a line written outside the chat through its composer; false when nothing could go. */
+export function sendAgentHubOrbText(tabId: string, text: string): boolean {
+  const message = text.trim()
+  const composer = composers.get(tabId)
+  const input = composer?.input.current
+  if (!message || !composer?.ready() || !input?.insertText) {
+    return false
+  }
+  input.insertText(message)
+  // Why: the composer reads its draft from React state, which the insert only updates next frame.
+  requestAnimationFrame(() => composers.get(tabId)?.send())
+  return true
+}
+
 export function finishAgentHubOrbDictationForText(tabId: string | undefined): void {
   if (
     !tabId ||

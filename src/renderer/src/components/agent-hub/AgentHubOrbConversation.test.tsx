@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { useRef } from 'react'
 import { act, cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -14,6 +15,9 @@ import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 import { orbAsk } from './agent-hub-orb-test-fixtures'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
 import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
+import { AgentHubOrbComposerContext, useAgentHubOrbComposerBinding } from './agent-hub-orb-composer'
+import type { NativeChatComposerInput } from '../native-chat/native-chat-composer-input'
+import { AGENT_HUB_ORB_DOUBLE_CLICK_MS } from './use-agent-hub-orb-sphere-gestures'
 import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 
 vi.mock('@/store', async () => {
@@ -69,6 +73,36 @@ const conversation = (value = voice) => (
     <AgentHubOrbConversation {...props} voice={value} />
   </TooltipProvider>
 )
+const composer = { insertText: vi.fn(), send: vi.fn() }
+function Composer(): null {
+  const input = useRef<NativeChatComposerInput | null>(null)
+  if (!input.current) {
+    input.current = {
+      value: '',
+      selectionStart: 0,
+      selectionEnd: 0,
+      disabled: false,
+      focus: () => {},
+      select: () => {},
+      setSelectionRange: () => {},
+      insertText: composer.insertText
+    }
+  }
+  useAgentHubOrbComposerBinding(input, composer.send)
+  return null
+}
+const writing = () => (
+  <AgentHubOrbComposerContext.Provider value="orb-tab">
+    <TooltipProvider>
+      <Composer />
+      <AgentHubOrbConversation {...props} voice={voice} />
+    </TooltipProvider>
+  </AgentHubOrbComposerContext.Provider>
+)
+function clickSphere(): void {
+  fireEvent.click(screen.getByRole('button', { name: 'Message Orb' }))
+  act(() => vi.advanceTimersByTime(AGENT_HUB_ORB_DOUBLE_CLICK_MS))
+}
 function stage(): HTMLElement {
   const element = document.querySelector('[data-agent-hub-orb-stage]')
   if (!(element instanceof HTMLElement)) {
@@ -92,6 +126,8 @@ afterEach(() => {
   cleanup()
   closeAgentHubOrbPanel()
   clearAgentHubRequestHost('local')
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 it('keeps the retained chat without a separate Orb strip in every Live phase', () => {
@@ -213,4 +249,41 @@ it('keeps compact actions in one strip with history, new and settings only in it
   act(() => close.focus())
   fireEvent.click(close)
   expect(useAgentHubOrbPanel.getState().session).toBeNull()
+})
+
+it('opens the writing box on a sphere click and sends Enter through the chat composer', () => {
+  vi.useFakeTimers()
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0)
+    return 0
+  })
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
+  render(writing())
+  const box = stage().querySelector('[data-agent-hub-orb-quick-input]')
+  expect(box?.getAttribute('data-open')).toBe('false')
+  clickSphere()
+  expect(box?.getAttribute('data-open')).toBe('true')
+  const input = screen.getByRole('textbox', { name: 'Message Orb' })
+  fireEvent.change(input, { target: { value: 'Run the tests' } })
+  fireEvent.keyDown(input, { key: 'Enter' })
+  expect(composer.insertText).toHaveBeenCalledWith('Run the tests')
+  expect(composer.send).toHaveBeenCalledOnce()
+  expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Message Orb' }).value).toBe('')
+  clickSphere()
+  expect(box?.getAttribute('data-open')).toBe('false')
+})
+
+it('steps a question aside with Answer later and brings it back on the next sphere click', () => {
+  vi.useFakeTimers()
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
+  applyAgentHubDelivery('local', orbAsk('orb'))
+  render(writing())
+  const host = stage().querySelector('[data-agent-hub-orb-request-host]')
+  expect(host?.hasAttribute('hidden')).toBe(false)
+  fireEvent.click(screen.getByRole('button', { name: 'Answer later' }))
+  expect(host?.hasAttribute('hidden')).toBe(true)
+  expect(useAgentHubOrbPanel.getState().quickInputOpen).toBe(true)
+  clickSphere()
+  expect(host?.hasAttribute('hidden')).toBe(false)
+  expect(useAgentHubOrbPanel.getState().quickInputOpen).toBe(false)
 })

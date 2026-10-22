@@ -16,6 +16,10 @@ export type AgentHubOrbSpeechBubbleProps = {
   children: ReactNode
   compact?: boolean
   engaged?: boolean
+  /** How long the bubble stays without a pointer or focus on it; speech gets a minute. */
+  durationMs?: number
+  /** A header action beside Hide, such as opening the full conversation. */
+  action?: ReactNode
 }
 
 const isCaptionToggle = (target: EventTarget): boolean =>
@@ -28,7 +32,9 @@ export function AgentHubOrbSpeechBubble({
   speakerLabel,
   children,
   compact = false,
-  engaged = false
+  engaged = false,
+  durationMs,
+  action
 }: AgentHubOrbSpeechBubbleProps): React.JSX.Element {
   const reopenRef = useRef<HTMLButtonElement>(null)
   const restoreFocus = useRef(false)
@@ -40,7 +46,8 @@ export function AgentHubOrbSpeechBubble({
   const { visible, restore } = useAgentHubOrbCaptionVisibility({
     open,
     text,
-    engaged: engaged || anchorHovered || anchorFocused || bubbleHovered || bubbleFocused
+    engaged: engaged || anchorHovered || anchorFocused || bubbleHovered || bubbleFocused,
+    durationMs
   })
   // Why: a bubble that closes under the pointer or focus never sends pointerleave or blur.
   useEffect(() => {
@@ -138,6 +145,7 @@ export function AgentHubOrbSpeechBubble({
         <div ref={contentRef} className="agent-hub-orb-caption-content">
           <div className="flex items-center justify-between gap-2 px-3 pt-2">
             <span className="min-w-0 truncate text-xs text-muted-foreground">{speakerLabel}</span>
+            {action}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+export const AGENT_HUB_ORB_CAPTION_MS = 60_000
+
 export function useAgentHubOrbCaptionVisibility({
   open,
   text,
-  engaged
+  engaged,
+  durationMs = AGENT_HUB_ORB_CAPTION_MS
 }: {
   open: boolean
   text: string
   engaged: boolean
+  durationMs?: number
 }): { visible: boolean; restore: () => void } {
   const [restoreCount, setRestoreCount] = useState(0)
   // Speech, pointer and focus transitions each begin a new visibility cycle.
@@ -21,9 +25,9 @@ export function useAgentHubOrbCaptionVisibility({
     if (!visible || engaged) {
       return
     }
-    const timer = setTimeout(() => setExpiredCycle(cycle), 60_000)
+    const timer = setTimeout(() => setExpiredCycle(cycle), durationMs)
     return () => clearTimeout(timer)
-  }, [cycle, engaged, visible])
+  }, [cycle, durationMs, engaged, visible])
   const restore = useCallback(() => setRestoreCount((count) => count + 1), [])
   return { visible, restore }
 }

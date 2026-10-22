@@ -15,8 +15,12 @@ import { translate } from '@/i18n/i18n'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
 import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
+import { useAgentHubOrbSphereGestures } from './use-agent-hub-orb-sphere-gestures'
 import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
 import './agent-hub-orb-stage.css'
+
+const INTERACTIVE_TARGETS =
+  '[data-agent-hub-orb-resize], [data-agent-hub-orb-live-controls], [data-agent-hub-orb-interactive]'
 
 export function AgentHubOrbStage({
   embedded,
@@ -25,12 +29,18 @@ export function AgentHubOrbStage({
   visible,
   controls,
   sphereControls,
+  quickInput,
   request,
   requestVisible,
   notice,
   caption,
+  captionDurationMs,
+  captionAction,
   sphereLabel,
   onSphereClick,
+  onSphereDoubleClick,
+  onSphereHoldStart,
+  onSphereHoldEnd,
   ...sphere
 }: AgentHubOrbSphereProps & {
   embedded: boolean
@@ -39,16 +49,22 @@ export function AgentHubOrbStage({
   visible: boolean
   controls: ReactNode
   sphereControls?: ReactNode
+  /** The one-line writing box; its slot under the sphere is reserved whether or not it is open. */
+  quickInput?: ReactNode
   request: ReactNode
   requestVisible: boolean
   notice?: string
   caption?: string
+  captionDurationMs?: number
+  captionAction?: ReactNode
   /** What a click on the sphere does, as words; the sphere is a plain image without it. */
   sphereLabel?: string
   onSphereClick?: () => void
+  onSphereDoubleClick?: () => void
+  onSphereHoldStart?: () => void
+  onSphereHoldEnd?: () => void
 }): React.JSX.Element {
   const inlineRef = useRef<HTMLDivElement>(null)
-  const pressedAt = useRef<{ x: number; y: number } | null>(null)
   const [captionsOpen, setCaptionsOpen] = useState(true)
   const [captionEngaged, setCaptionEngaged] = useState(false)
   const [container] = useState(() => document.createElement('div'))
@@ -57,10 +73,20 @@ export function AgentHubOrbStage({
     request: placement,
     shellRef,
     controlsRef,
+    quickRef,
     requestRef,
     beginGesture,
     resizeKey
   } = useAgentHubOrbGeometry({ embedded, compact, live, requestVisible })
+  const gestures = useAgentHubOrbSphereGestures(
+    {
+      onClick: () => onSphereClick?.(),
+      onDoubleClick: () => (onSphereDoubleClick ?? onSphereClick)?.(),
+      onHoldStart: () => onSphereHoldStart?.(),
+      onHoldEnd: () => onSphereHoldEnd?.()
+    },
+    !embedded && onSphereClick !== undefined
+  )
   // Why: a hidden stage never sends pointerleave, which would keep captions engaged.
   useEffect(() => {
     if (!visible) {
@@ -81,6 +107,8 @@ export function AgentHubOrbStage({
     },
     [requestRef]
   )
+  const onInteractive = (event: React.SyntheticEvent): boolean =>
+    event.target instanceof Element && event.target.closest(INTERACTIVE_TARGETS) !== null
   const label = translate('auto.agentHub.orb.size', 'Orb size')
   const style: CSSProperties & { '--orb-diameter': string } = {
     '--orb-diameter': `${geometry.diameter}px`,
@@ -124,36 +152,19 @@ export function AgentHubOrbStage({
             onPointerEnter={() => setCaptionEngaged(true)}
             onPointerLeave={() => setCaptionEngaged(false)}
             onPointerDown={(event) => {
-              if (
-                event.target instanceof Element &&
-                event.target.closest(
-                  '[data-agent-hub-orb-live-controls], [data-agent-hub-orb-interactive]'
-                )
-              ) {
+              if (onInteractive(event)) {
                 return
               }
-              pressedAt.current = { x: event.clientX, y: event.clientY }
+              gestures.onPointerDown(event)
               beginGesture('move', event)
             }}
+            onPointerMove={gestures.onPointerMove}
+            onPointerUp={gestures.onPointerUp}
+            onPointerCancel={gestures.onPointerCancel}
             onClick={(event) => {
-              const pressed = pressedAt.current
-              pressedAt.current = null
-              // Why: a drag ends in a click on the captured element; only a press that stayed put acts.
-              const dragged =
-                pressed !== null &&
-                Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y) > 4
-              if (
-                embedded ||
-                !onSphereClick ||
-                dragged ||
-                (event.target instanceof Element &&
-                  event.target.closest(
-                    '[data-agent-hub-orb-resize], [data-agent-hub-orb-live-controls], [data-agent-hub-orb-interactive]'
-                  ))
-              ) {
-                return
+              if (!onInteractive(event)) {
+                gestures.onClick()
               }
-              onSphereClick()
             }}
           >
             {sphereControls ? (
@@ -166,6 +177,8 @@ export function AgentHubOrbStage({
                 onOpenChange={setCaptionsOpen}
                 text={caption ?? ''}
                 speakerLabel={translate('auto.agentHub.orb.title', 'Orb')}
+                durationMs={captionDurationMs}
+                action={captionAction}
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -221,6 +234,11 @@ export function AgentHubOrbStage({
               </span>
             ) : null}
           </div>
+          {!embedded ? (
+            <div ref={quickRef} className="agent-hub-orb-quick-slot">
+              {quickInput}
+            </div>
+          ) : null}
           <div data-agent-hub-orb-controls className="min-w-0 max-w-xs">
             <div ref={controlsRef} className="agent-hub-orb-controls">
               {controls}

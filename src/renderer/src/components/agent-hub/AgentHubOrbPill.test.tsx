@@ -168,7 +168,10 @@ describe('Orb pill', () => {
   })
   it('keeps the completed summary in a tooltip beside the Open action', async () => {
     const open = vi.fn()
-    show({ kind: 'done', summary: 'All tests passed', expiresAt: 106_000 }, open)
+    show(
+      { kind: 'done', summary: 'All tests passed', reply: 'All tests passed', expiresAt: 106_000 },
+      open
+    )
     expect(screen.queryByText('All tests passed')).toBeNull()
     const pill = document.querySelector('[data-agent-hub-orb-pill]')
     if (!(pill instanceof HTMLElement)) {

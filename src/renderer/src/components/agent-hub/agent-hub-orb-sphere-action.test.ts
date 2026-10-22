@@ -1,21 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { agentHubOrbPillShown, agentHubOrbSphereAction } from './agent-hub-orb-sphere-action'
 
-const idle = { liveActive: false, dictating: false, canStartLive: false, canDictate: false }
-
 describe('agentHubOrbSphereAction', () => {
-  it('ignores an active Live click and keeps finishing dictation explicit', () => {
-    expect(agentHubOrbSphereAction({ ...idle, liveActive: true, canStartLive: true })).toBe('none')
-    expect(agentHubOrbSphereAction({ ...idle, dictating: true, canDictate: true })).toBe(
-      'finish-dictation'
-    )
-  })
-  it('starts Live, else dictates, else opens the chat', () => {
-    expect(agentHubOrbSphereAction({ ...idle, canStartLive: true, canDictate: true })).toBe(
-      'start-live'
-    )
-    expect(agentHubOrbSphereAction({ ...idle, canDictate: true })).toBe('dictate')
-    expect(agentHubOrbSphereAction(idle)).toBe('show-chat')
+  it('leaves Live alone, finishes a recording, otherwise opens the writing box', () => {
+    expect(agentHubOrbSphereAction({ liveActive: true, dictating: false })).toBe('none')
+    expect(agentHubOrbSphereAction({ liveActive: false, dictating: true })).toBe('finish-dictation')
+    expect(agentHubOrbSphereAction({ liveActive: false, dictating: false })).toBe('quick-input')
   })
 })
 

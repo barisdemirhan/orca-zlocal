@@ -29,7 +29,8 @@ export function AgentHubRequestCard({
   controlRef,
   compact = false,
   onOpen,
-  onDismiss
+  onDismiss,
+  dismissLabel
 }: {
   item: AgentHubInboxRequest
   presentation: AgentHubRequestPresentation
@@ -37,6 +38,7 @@ export function AgentHubRequestCard({
   compact?: boolean
   onOpen?: () => void
   onDismiss?: () => void
+  dismissLabel?: string
 }): React.JSX.Element {
   const { host, request } = item
   const state = useAgentHubRequests().get(host)?.answerStates.get(request.requestId)
@@ -280,7 +282,7 @@ export function AgentHubRequestCard({
           variant="ghost"
           size="icon-xs"
           className="absolute top-2 right-2"
-          aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
+          aria-label={dismissLabel ?? translate('agentHub.alert.dismiss', 'Dismiss')}
           disabled={busy}
           onClick={() =>
             // A needs-you bubble only steps aside; its Inbox card is what closes the notice.

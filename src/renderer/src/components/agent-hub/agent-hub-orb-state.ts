@@ -30,7 +30,7 @@ export type AgentHubOrbState =
   | { kind: 'off' | 'idle' | 'listening' | 'error' }
   | { kind: 'working'; command?: string }
   | { kind: 'needsYou'; request: AgentHubOrbAttention }
-  | { kind: 'done'; summary: string; expiresAt: number }
+  | { kind: 'done'; summary: string; reply: string; expiresAt: number }
 
 export function agentHubOrbRequest(item: AgentHubInboxRequest): boolean {
   return item.request.kind === 'ask' && item.request.caller.kind === 'orb'
@@ -130,7 +130,7 @@ export function deriveAgentHubOrbState(args: {
     const expiresAt =
       (turn?.completedAt ?? reply.body.completedAt ?? reply.observedAt) + AGENT_HUB_ORB_DONE_MS
     if (summary && args.now < expiresAt) {
-      return { kind: 'done', summary, expiresAt }
+      return { kind: 'done', summary, reply: text, expiresAt }
     }
   }
   return { kind: 'idle' }

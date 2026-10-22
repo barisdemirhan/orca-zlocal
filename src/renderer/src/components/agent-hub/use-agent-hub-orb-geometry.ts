@@ -43,6 +43,7 @@ export function useAgentHubOrbGeometry({
   const savedPosition = useAgentHubOrbPanel((s) => s.stagePosition)
   const shellRef = useRef<HTMLDivElement>(null)
   const controlsRef = useRef<HTMLDivElement>(null)
+  const quickRef = useRef<HTMLDivElement>(null)
   const requestRef = useRef<HTMLDivElement>(null)
   const gesture = useRef<OrbGesture | null>(null)
   const previousSide = useRef<AgentHubOrbSide | undefined>(undefined)
@@ -95,7 +96,9 @@ export function useAgentHubOrbGeometry({
     let frame = 0
     const measure = (): void => {
       frame = 0
-      const controlsWidth = controlsRef.current?.scrollWidth || 170
+      // Why: the hidden writing box keeps its width, so the sphere does not move when it opens.
+      const controlsWidth =
+        Math.max(controlsRef.current?.scrollWidth ?? 0, quickRef.current?.scrollWidth ?? 0) || 170
       const request = requestRef.current
       // Why: scrollHeight leaves out the borders, so a max-height from it alone always overflows.
       const requestHeight = request
@@ -129,6 +132,7 @@ export function useAgentHubOrbGeometry({
     for (const element of [
       shellRef.current,
       controlsRef.current,
+      quickRef.current,
       requestRef.current,
       document.querySelector('[data-agent-hub-dock]')
     ]) {
@@ -239,6 +243,7 @@ export function useAgentHubOrbGeometry({
     request: layout.request,
     shellRef,
     controlsRef,
+    quickRef,
     requestRef,
     beginGesture: (mode: OrbGesture['mode'], event: React.PointerEvent<HTMLElement>): void => {
       if (

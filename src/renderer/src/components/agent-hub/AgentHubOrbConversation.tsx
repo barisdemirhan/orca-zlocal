@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { structuredAgentLabel } from '@/lib/structured-agent-session-launch-label'
@@ -12,12 +13,8 @@ import {
 import { useAgentHubOrbConversations } from './agent-hub-orb-conversations'
 import { AgentHubOrbHistory } from './AgentHubOrbHistory'
 import { AgentHubSettingsOrbSection } from './AgentHubSettingsOrbSection'
-import { openAgentHubOrb } from './agent-hub-orb-open'
 import { cancelDictation } from './agent-hub-dictation-cancel'
-import {
-  readAgentHubDictationSession,
-  useAgentHubDictationSession
-} from './agent-hub-dictation-origin'
+import { useAgentHubDictationSession } from './agent-hub-dictation-origin'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
 import { agentHubInboxRequests, useAgentHubRequests } from './agent-hub-requests-store'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
@@ -34,15 +31,19 @@ import { dispatchDictationControl } from '../dictation/dictation-control-events'
 import { AgentHubRequestCard } from './AgentHubRequestCard'
 import { AgentHubOrbRequestModal } from './AgentHubOrbRequestModal'
 import { AgentHubOrbLiveControls } from './AgentHubOrbLiveControls'
+import { AgentHubOrbQuickInput } from './AgentHubOrbQuickInput'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
-
-import { agentHubOrbErrorMessage } from './agent-hub-orb-error'
 import { AgentHubOrbFollowNotices } from './AgentHubOrbFollowNotices'
 import { useAgentHubOrbAwarenessDelivery } from './use-agent-hub-orb-awareness-delivery'
+import { useAgentHubOrbQuickWrite } from './use-agent-hub-orb-quick-write'
+import { useAgentHubOrbReopen } from './use-agent-hub-orb-reopen'
 import { openAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { sleepAgentHubOrb } from './agent-hub-orb-sleep'
+
+/** A written reply stays under the sphere this long; spoken captions keep their minute. */
+const AGENT_HUB_ORB_REPLY_MS = 12_000
 
 const sleep = (): void => {
   void sleepAgentHubOrb()
@@ -97,13 +98,22 @@ export function AgentHubOrbConversation({
       ...(view === 'chat' ? { presentation: 'chat', compact: false } : {})
     })
   }
+  const showConversation = (): void => {
+    cancelAgentHubOrbLaunch(sessionId, tabId)
+    useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
+  }
   const history = !chatVisible && secondaryView === 'history'
   const showSettings = !chatVisible && secondaryView === 'settings'
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const [busy, setBusy] = useState(false)
-  const [failure, setFailure] = useState<{ message: string; resumeId?: string } | null>(null)
   const { conversations, error, refresh } = useAgentHubOrbConversations(sessionId, history)
+  const { busy, failure, reopen } = useAgentHubOrbReopen({
+    sessionId,
+    tabId,
+    stopLive: voice.stopLive,
+    refresh,
+    onOpened: () => setView('chat')
+  })
   const conversation = conversations.find((entry) => entry.sessionId === sessionId)
   const tabAgent = useAppStore(
     (s) =>
@@ -117,13 +127,21 @@ export function AgentHubOrbConversation({
     agentHubCurrentOrbRequest(item, { host: 'local', sessionId })
   )
   const currentRequest = nativeRequestPending ? undefined : requests[0]
+  const quick = useAgentHubOrbQuickWrite({
+    tabId,
+    state,
+    prepareDictation: voice.prepareDictation,
+    currentRequest,
+    onShowChat: showConversation
+  })
   const hasRequest = nativeRequestPending || requests.length > 0
-  const requestVisible = nativeRequestVisible || requests.length > 0
+  const requestVisible = nativeRequestVisible || (requests.length > 0 && !quick.requestDismissed)
+  const quickDictating = dictating || quick.dictation.active
   const visual = agentHubOrbPresentation(
     state,
     voice,
     hasRequest,
-    dictating ? dictationState : null,
+    quickDictating ? dictationState : null,
     currentRequest?.request.kind === 'gate' || currentRequest?.request.kind === 'consent',
     attention
   )
@@ -132,54 +150,14 @@ export function AgentHubOrbConversation({
       key={currentRequest.request.requestId}
       item={currentRequest}
       presentation={requestPresentationOf(currentRequest.host, currentRequest.request)}
+      onDismiss={showChat ? undefined : quick.later}
+      dismissLabel={
+        currentRequest.request.kind === 'notify'
+          ? undefined
+          : translate('agentHub.orb.answerLater', 'Answer later')
+      }
     />
   ) : null
-  const reopen = async (resumeId?: string) => {
-    if (busy) {
-      return
-    }
-    cancelAgentHubOrbLaunch(sessionId, tabId)
-    setBusy(true)
-    setFailure(null)
-    if (
-      tabId &&
-      isDictationRunning(useAppStore.getState().dictationState) &&
-      readAgentHubDictationSession()?.pane?.tabId === tabId
-    ) {
-      cancelDictation()
-    }
-    try {
-      await voice.stopLive()
-      if (!resumeId) {
-        await window.api.agentHub.orb.close()
-      }
-      const opened = await openAgentHubOrb(
-        resumeId ? { resume: { sessionId: resumeId } } : undefined
-      )
-      if (!opened) {
-        setFailure({
-          message: translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.'),
-          resumeId
-        })
-        return
-      }
-      const next = useAgentHubOrbPanel.getState().session
-      if (next && (resumeId ? next.sessionId === resumeId : next.sessionId !== sessionId)) {
-        setView('chat')
-      }
-      await refresh()
-    } catch (error) {
-      setFailure({
-        message: agentHubOrbErrorMessage(
-          error,
-          translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.')
-        ),
-        resumeId
-      })
-    } finally {
-      setBusy(false)
-    }
-  }
   const settingsLabel = translate('auto.agentHub.orb.settings', 'Orb settings')
   const dictate = () => {
     void voice.prepareDictation().then((ready) => {
@@ -191,31 +169,28 @@ export function AgentHubOrbConversation({
     })
   }
   const agent = conversation?.agent ?? tabAgent
-  const sphereAction = agentHubOrbSphereAction({
-    liveActive: live,
-    dictating,
-    canStartLive: agent === 'codex' && !busy && voice.capability !== 'checking' && voice.canStart,
-    canDictate: !busy && voice.connection !== 'stopping'
-  })
+  const sphereAction = agentHubOrbSphereAction({ liveActive: live, dictating: quickDictating })
   const sphereLabels = {
     none: visual.label,
     'finish-dictation': translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation'),
-    'start-live': translate('auto.agentHub.orb.startLiveVoice', 'Start live voice'),
-    dictate: translate('agentHub.card.dictate', 'Dictate'),
-    'show-chat': translate('auto.agentHub.orb.showConversation', 'Show conversation')
+    'quick-input': translate('agentHub.orb.quickInput', 'Message Orb')
+  }
+  const stopDictation = (): void => {
+    if (quick.dictation.active) {
+      quick.dictation.stop()
+    } else {
+      dispatchDictationControl('stop')
+    }
   }
   const onSphereClick = () => {
     cancelAgentHubOrbLaunch(sessionId, tabId)
     if (sphereAction === 'finish-dictation') {
-      dispatchDictationControl('stop')
-    } else if (sphereAction === 'start-live') {
-      void voice.startLive()
-    } else if (sphereAction === 'dictate') {
-      dictate()
-    } else if (sphereAction === 'show-chat') {
-      useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
+      stopDictation()
+    } else if (sphereAction === 'quick-input') {
+      quick.onSphereClick()
     }
   }
+  const canHold = sphereAction === 'quick-input' && !busy && voice.connection !== 'stopping'
   return (
     <section
       aria-label={translate('auto.agentHub.orb.title', 'Orb')}
@@ -306,7 +281,22 @@ export function AgentHubOrbConversation({
       {!showChat ? (
         <AgentHubOrbStage
           {...visual}
-          caption={live ? voice.caption : undefined}
+          caption={live ? voice.caption : (quick.reply ?? undefined)}
+          captionDurationMs={live ? undefined : AGENT_HUB_ORB_REPLY_MS}
+          captionAction={
+            live ? undefined : (
+              <Button
+                type="button"
+                variant="link"
+                size="xs"
+                className="ml-auto shrink-0"
+                onClick={quick.showChat}
+              >
+                {translate('agentHub.orb.openChat', 'Open chat')}
+                <ChevronRight aria-hidden />
+              </Button>
+            )
+          }
           inputMuted={live && voice.input === 'muted'}
           outputMuted={live && voice.outputMuted}
           inputSpeaking={voice.inputSpeaking}
@@ -317,6 +307,27 @@ export function AgentHubOrbConversation({
           requestVisible={requestVisible}
           sphereLabel={sphereLabels[sphereAction]}
           onSphereClick={onSphereClick}
+          onSphereDoubleClick={showConversation}
+          onSphereHoldStart={canHold ? quick.onSphereHoldStart : undefined}
+          onSphereHoldEnd={quick.dictation.stop}
+          quickInput={
+            live ? null : (
+              <AgentHubOrbQuickInput
+                open={quick.open}
+                ready={quick.ready && !busy}
+                inputRef={quick.inputRef}
+                value={quick.draft}
+                listening={quick.dictation.active}
+                onChange={quick.setDraft}
+                onInput={quick.dictation.onInput}
+                onKeyDown={quick.dictation.onKeyDown}
+                onSubmit={quick.submit}
+                onDictate={quick.dictation.start}
+                onStopDictation={quick.dictation.stop}
+                onOpenChat={quick.showChat}
+              />
+            )
+          }
           notice={
             voice.reason ??
             (agent === 'codex' && voice.capability === 'unsupported'
@@ -335,11 +346,8 @@ export function AgentHubOrbConversation({
               orbView={!showChat}
               compact={compact}
               busy={busy}
-              dictating={dictating}
-              onShowChat={() => {
-                cancelAgentHubOrbLaunch(sessionId, tabId)
-                useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
-              }}
+              dictating={quickDictating}
+              onShowChat={showConversation}
               onShowOrb={() => {
                 cancelAgentHubOrbLaunch(sessionId, tabId)
                 useAgentHubOrbPanel.setState({ presentation: 'orb', compact: false })
@@ -360,7 +368,7 @@ export function AgentHubOrbConversation({
                   )
               }}
               onDictate={dictate}
-              onStopDictation={() => dispatchDictationControl('stop')}
+              onStopDictation={stopDictation}
               onCancelDictation={cancelDictation}
               onHistory={() => setView('history')}
               onSettings={() => setView('settings')}
