@@ -55,6 +55,7 @@ const mocks = vi.hoisted(() => {
     feed: {
       getSnapshot: vi.fn(() => new Map<string, AgentSessionStatusSummary>()),
       activate: () => () => {},
+      getSessionObservation: () => 'unverifiable' as const,
       subscribe: (listener: () => void) => {
         listeners.add(listener)
         return () => listeners.delete(listener)
@@ -342,6 +343,18 @@ it.each(['off', 'connecting', 'live', 'stopping'] as const)(
     }
   }
 )
+
+it('steps the mini window back to the sphere on Escape instead of hiding Orb', async () => {
+  await show(false)
+  act(() => useAgentHubOrbPanel.setState({ presentation: 'mini' }))
+  expect(document.querySelector('[data-agent-hub-orb-mini-window]')).toBeTruthy()
+  fireEvent.keyDown(document.querySelector('[data-agent-hub-orb-panel]') ?? document.body, {
+    key: 'Escape'
+  })
+  await waitFor(() => expect(useAgentHubOrbPanel.getState().presentation).toBe('orb'))
+  expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
+  expect(document.querySelector('[data-agent-hub-orb-mini-window]')).toBeNull()
+})
 
 it('keeps an Orb approval open on Escape and still closes from the surrounding panel', async () => {
   const request: AgentHubRequest = {

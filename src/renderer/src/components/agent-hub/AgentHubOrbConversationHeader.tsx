@@ -6,7 +6,7 @@ import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import { AgentHubOrbQuotaChip } from './AgentHubOrbQuotaChip'
 
-function HeaderAction({
+export function AgentHubOrbHeaderAction({
   label,
   actionId,
   disabled,
@@ -75,13 +75,13 @@ export function AgentHubOrbConversationHeader({
   return (
     <header className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2">
       {!chatVisible ? (
-        <HeaderAction
+        <AgentHubOrbHeaderAction
           label={translate('auto.agentHub.orb.backToConversation', 'Back to conversation')}
           disabled={busy}
           onClick={onBack}
         >
           <ArrowLeft />
-        </HeaderAction>
+        </AgentHubOrbHeaderAction>
       ) : null}
       <span className="text-sm font-semibold">
         {history
@@ -110,41 +110,41 @@ export function AgentHubOrbConversationHeader({
           {newLabel}
         </Button>
       ) : !settingsView ? (
-        <HeaderAction label={historyLabel} disabled={busy} onClick={onHistory}>
+        <AgentHubOrbHeaderAction label={historyLabel} disabled={busy} onClick={onHistory}>
           <History />
-        </HeaderAction>
+        </AgentHubOrbHeaderAction>
       ) : null}
       {chatVisible ? (
-        <HeaderAction label={newLabel} disabled={busy} onClick={onNew}>
+        <AgentHubOrbHeaderAction label={newLabel} disabled={busy} onClick={onNew}>
           <Plus />
-        </HeaderAction>
+        </AgentHubOrbHeaderAction>
       ) : null}
       {!settingsView ? (
-        <HeaderAction label={settingsLabel} disabled={busy} onClick={onSettings}>
+        <AgentHubOrbHeaderAction label={settingsLabel} disabled={busy} onClick={onSettings}>
           <Settings />
-        </HeaderAction>
+        </AgentHubOrbHeaderAction>
       ) : null}
       {chatVisible ? (
-        <HeaderAction
+        <AgentHubOrbHeaderAction
           label={translate('auto.agentHub.orb.minimize', 'Minimize Orb')}
           actionId="agentHub.orb.toggleConversation"
           onClick={onMinimize}
         >
           <Minimize2 />
-        </HeaderAction>
+        </AgentHubOrbHeaderAction>
       ) : null}
       {chatVisible ? (
-        <HeaderAction
+        <AgentHubOrbHeaderAction
           label={translate('agentHub.orb.sleep', 'Put Orb to sleep')}
           disabled={busy}
           onClick={onSleep}
         >
           <Moon />
-        </HeaderAction>
+        </AgentHubOrbHeaderAction>
       ) : null}
-      <HeaderAction label={translate('agentHub.orb.hide', 'Hide Orb')} onClick={onClose}>
+      <AgentHubOrbHeaderAction label={translate('agentHub.orb.hide', 'Hide Orb')} onClick={onClose}>
         <X />
-      </HeaderAction>
+      </AgentHubOrbHeaderAction>
     </header>
   )
 }

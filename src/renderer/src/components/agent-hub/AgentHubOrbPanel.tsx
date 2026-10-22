@@ -45,7 +45,7 @@ export function AgentHubOrbPanel({
   const presentation = useAgentHubOrbPanel((s) => s.presentation)
   const compact = useAgentHubOrbPanel((s) => s.compact)
   const voice = useAgentHubOrbVoice(session, !hidden && chatVisible)
-  const orbOnly = chatVisible && (presentation === 'orb' || compact)
+  const orbOnly = chatVisible && (presentation !== 'chat' || compact)
   useAgentHubOrbSettingsSync(session !== null)
   const [anchored, setAnchored] = useState(false)
   useAnchorBinding(anchorRef, side, () => {
@@ -107,6 +107,10 @@ export function AgentHubOrbPanel({
             ) {
               event.preventDefault()
               cancelDictation()
+            } else if (presentation === 'mini' && !compact) {
+              // Why: Escape in the mini window steps back to the sphere, not out of Orb.
+              event.preventDefault()
+              useAgentHubOrbPanel.setState({ presentation: 'orb' })
             }
           }}
           onInteractOutside={(event) => event.preventDefault()}

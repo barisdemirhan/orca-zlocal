@@ -20,10 +20,13 @@ type OrbPanelState = {
   launchRequest: AgentHubOrbLaunchRequest | null
   destination: HTMLElement | null
   chatVisible: boolean
-  presentation: 'chat' | 'orb'
+  /** `mini` is the narrow chat window that opens where the sphere was. */
+  presentation: 'chat' | 'orb' | 'mini'
   compact: boolean
   preferredDiameter: number
   stagePosition: { x: number; y: number } | null
+  /** Where the mini window was last left; it opens on the sphere until then. */
+  miniPosition: { x: number; y: number } | null
   /** The one-line box under the sphere; a plain click on a sleeping Orb opens straight into it. */
   quickInputOpen: boolean
   requestDestination: HTMLElement | null
@@ -44,6 +47,7 @@ export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   compact: false,
   preferredDiameter: AGENT_HUB_ORB_DEFAULT_DIAMETER,
   stagePosition: null,
+  miniPosition: null,
   quickInputOpen: false,
   requestDestination: null,
   nativeRequestPending: false,

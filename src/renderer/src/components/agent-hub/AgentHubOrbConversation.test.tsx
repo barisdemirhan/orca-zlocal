@@ -39,6 +39,14 @@ vi.mock('./agent-hub-orb-conversations', () => ({
   })
 }))
 vi.mock('./AgentHubSettingsOrbSection', () => ({ AgentHubSettingsOrbSection: () => null }))
+vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
+  getStructuredAgentSessionStatusFeed: () => ({
+    getSnapshot: () => new Map(),
+    activate: () => () => {},
+    subscribe: () => () => {},
+    getSessionObservation: () => 'unverifiable'
+  })
+}))
 
 const voice: AgentHubOrbVoiceValue = {
   capability: 'supported',
@@ -286,4 +294,55 @@ it('steps a question aside with Answer later and brings it back on the next sphe
   clickSphere()
   expect(host?.hasAttribute('hidden')).toBe(false)
   expect(useAgentHubOrbPanel.getState().quickInputOpen).toBe(false)
+})
+
+function miniWindow(): HTMLElement | null {
+  return document.querySelector('[data-agent-hub-orb-mini-window]')
+}
+
+it('opens the mini window where the sphere was on a double click and the full chat from its header', () => {
+  vi.useFakeTimers()
+  useAgentHubOrbPanel.setState({ presentation: 'orb', stagePosition: { x: 100, y: 120 } })
+  render(writing())
+  const sphere = screen.getByRole('button', { name: 'Message Orb' })
+  fireEvent.click(sphere)
+  fireEvent.click(sphere)
+  expect(useAgentHubOrbPanel.getState().presentation).toBe('mini')
+  expect(useAgentHubOrbPanel.getState().quickInputOpen).toBe(false)
+  const mini = miniWindow()
+  expect(mini?.style.left).toBe('100px')
+  expect(mini?.style.top).toBe('120px')
+  expect(document.querySelector('[data-agent-hub-orb-stage]')).toBeNull()
+  const { destination, requestDestination } = useAgentHubOrbPanel.getState()
+  expect(destination).not.toBeNull()
+  expect(mini?.contains(destination)).toBe(true)
+  expect(requestDestination).toBe(mini?.querySelector('[data-agent-hub-orb-request-host]'))
+  fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
+  expect(useAgentHubOrbPanel.getState().presentation).toBe('chat')
+  expect(miniWindow()).toBeNull()
+  expect(useAgentHubOrbPanel.getState().destination).not.toBeNull()
+})
+
+it('opens the mini window from the reply bubble and steps back to the sphere from its header', () => {
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
+  render(
+    <TooltipProvider>
+      <AgentHubOrbConversation
+        {...props}
+        voice={voice}
+        state={{
+          kind: 'done',
+          summary: 'Done',
+          reply: 'All tests passed',
+          expiresAt: Date.now() + 60_000
+        }}
+      />
+    </TooltipProvider>
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Open chat' }))
+  expect(useAgentHubOrbPanel.getState().presentation).toBe('mini')
+  fireEvent.click(screen.getByRole('button', { name: 'Minimize Orb' }))
+  expect(useAgentHubOrbPanel.getState().presentation).toBe('orb')
+  expect(miniWindow()).toBeNull()
+  expect(stage()).toBeTruthy()
 })

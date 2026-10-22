@@ -203,3 +203,13 @@
     transition: none;
   }
 }
+
+/* Why: inside the mini window the request host is a strip under the header, not a floating card. */
+.agent-hub-orb-mini-window .agent-hub-orb-request-host {
+  flex: none;
+  max-height: 220px;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: var(--card);
+  box-shadow: none;
+}

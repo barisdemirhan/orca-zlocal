@@ -11,8 +11,8 @@ import {
   setAgentHubOrbDestination
 } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbConversations } from './agent-hub-orb-conversations'
-import { AgentHubOrbHistory } from './AgentHubOrbHistory'
-import { AgentHubSettingsOrbSection } from './AgentHubSettingsOrbSection'
+import { AgentHubOrbSecondaryViews } from './AgentHubOrbSecondaryViews'
+import { AgentHubOrbMiniWindow } from './AgentHubOrbMiniWindow'
 import { cancelDictation } from './agent-hub-dictation-cancel'
 import { useAgentHubDictationSession } from './agent-hub-dictation-origin'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
@@ -73,6 +73,7 @@ export function AgentHubOrbConversation({
     (s) => s.nativeRequestVisible || s.nativeRequestPending
   )
   const showChat = chatVisible && presentation === 'chat' && !compact
+  const showMini = chatVisible && presentation === 'mini' && !compact
   const live =
     voice.connection === 'connecting' ||
     voice.connection === 'live' ||
@@ -101,6 +102,10 @@ export function AgentHubOrbConversation({
   const showConversation = (): void => {
     cancelAgentHubOrbLaunch(sessionId, tabId)
     useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
+  }
+  const showMiniWindow = (): void => {
+    cancelAgentHubOrbLaunch(sessionId, tabId)
+    useAgentHubOrbPanel.setState({ presentation: 'mini', compact: false })
   }
   const history = !chatVisible && secondaryView === 'history'
   const showSettings = !chatVisible && secondaryView === 'settings'
@@ -132,7 +137,7 @@ export function AgentHubOrbConversation({
     state,
     prepareDictation: voice.prepareDictation,
     currentRequest,
-    onShowChat: showConversation
+    onShowChat: showMiniWindow
   })
   const hasRequest = nativeRequestPending || requests.length > 0
   const requestVisible = nativeRequestVisible || (requests.length > 0 && !quick.requestDismissed)
@@ -150,7 +155,7 @@ export function AgentHubOrbConversation({
       key={currentRequest.request.requestId}
       item={currentRequest}
       presentation={requestPresentationOf(currentRequest.host, currentRequest.request)}
-      onDismiss={showChat ? undefined : quick.later}
+      onDismiss={showChat || showMini ? undefined : quick.later}
       dismissLabel={
         currentRequest.request.kind === 'notify'
           ? undefined
@@ -158,7 +163,6 @@ export function AgentHubOrbConversation({
       }
     />
   ) : null
-  const settingsLabel = translate('auto.agentHub.orb.settings', 'Orb settings')
   const dictate = () => {
     void voice.prepareDictation().then((ready) => {
       if (!ready) {
@@ -191,6 +195,17 @@ export function AgentHubOrbConversation({
     }
   }
   const canHold = sphereAction === 'quick-input' && !busy && voice.connection !== 'stopping'
+  const agentLabel = agent
+    ? `${structuredAgentLabel(agent)} · ${conversation?.model ?? translate('auto.agentHub.orb.agentDefault', 'Agent default')}`
+    : null
+  // Why: the retained chat follows this div into whichever surface shows it.
+  const chatHost = (
+    <div
+      ref={setAgentHubOrbDestination}
+      data-agent-hub-orb-chat-tab-id={tabId}
+      className={showChat || showMini ? 'relative min-h-0 flex-1 overflow-hidden' : 'hidden'}
+    />
+  )
   return (
     <section
       aria-label={translate('auto.agentHub.orb.title', 'Orb')}
@@ -202,11 +217,7 @@ export function AgentHubOrbConversation({
           settingsView={showSettings}
           chatVisible={chatVisible}
           busy={busy}
-          agentLabel={
-            agent
-              ? `${structuredAgentLabel(agent)} · ${conversation?.model ?? translate('auto.agentHub.orb.agentDefault', 'Agent default')}`
-              : null
-          }
+          agentLabel={agentLabel}
           onBack={() => setView('chat')}
           onHistory={() => setView('history')}
           onSettings={() => setView('settings')}
@@ -228,57 +239,47 @@ export function AgentHubOrbConversation({
           }
         />
       ) : null}
-      {error || failure ? (
-        <div
-          role="status"
-          className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"
-        >
-          {failure?.message ??
-            translate(
-              'auto.agentHub.orb.historyFailed',
-              'Could not load conversations. Try again.'
-            )}
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            onClick={() => {
-              if (failure) {
-                void reopen(failure.resumeId)
-              } else {
-                void refresh()
-              }
-            }}
-          >
-            {translate('common.retry', 'Retry')}
-          </Button>
-        </div>
-      ) : null}
-      <AgentHubOrbFollowNotices onOpenTarget={openFollowTarget} />
-      {history ? (
-        <AgentHubOrbHistory
-          conversations={conversations}
-          activeSessionId={sessionId}
-          busy={busy}
-          onReopen={(id) => {
-            void reopen(id)
-          }}
-        />
-      ) : null}
-      {showSettings && settings ? (
-        <section
-          aria-label={settingsLabel}
-          className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto p-3"
-        >
-          <AgentHubSettingsOrbSection settings={settings} updateSettings={updateSettings} />
-        </section>
-      ) : null}
-      <div
-        ref={setAgentHubOrbDestination}
-        data-agent-hub-orb-chat-tab-id={tabId}
-        className={showChat ? 'relative min-h-0 flex-1 overflow-hidden' : 'hidden'}
+      <AgentHubOrbSecondaryViews
+        sessionId={sessionId}
+        busy={busy}
+        error={error}
+        failure={failure}
+        history={history}
+        settingsView={showSettings}
+        conversations={conversations}
+        settings={settings}
+        updateSettings={updateSettings}
+        reopen={reopen}
+        refresh={refresh}
       />
-      {!showChat ? (
+      <AgentHubOrbFollowNotices onOpenTarget={openFollowTarget} />
+      {showMini ? (
+        <AgentHubOrbMiniWindow
+          sessionId={sessionId}
+          sphere={{
+            ...visual,
+            inputMuted: live && voice.input === 'muted',
+            outputMuted: live && voice.outputMuted,
+            inputSpeaking: voice.inputSpeaking
+          }}
+          agentLabel={agentLabel}
+          busy={busy}
+          request={requestCard}
+          requestVisible={hasRequest}
+          onShowChat={showConversation}
+          onMinimize={() => {
+            cancelAgentHubOrbLaunch(sessionId, tabId)
+            useAgentHubOrbPanel.setState({ presentation: 'orb' })
+          }}
+          onSleep={sleep}
+          onHide={closeAgentHubOrbPanel}
+        >
+          {chatHost}
+        </AgentHubOrbMiniWindow>
+      ) : (
+        chatHost
+      )}
+      {!showChat && !showMini ? (
         <AgentHubOrbStage
           {...visual}
           caption={live ? voice.caption : (quick.reply ?? undefined)}
@@ -307,7 +308,7 @@ export function AgentHubOrbConversation({
           requestVisible={requestVisible}
           sphereLabel={sphereLabels[sphereAction]}
           onSphereClick={onSphereClick}
-          onSphereDoubleClick={showConversation}
+          onSphereDoubleClick={showMiniWindow}
           onSphereHoldStart={canHold ? quick.onSphereHoldStart : undefined}
           onSphereHoldEnd={quick.dictation.stop}
           quickInput={
