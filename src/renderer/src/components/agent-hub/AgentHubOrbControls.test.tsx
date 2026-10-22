@@ -40,6 +40,7 @@ function controls(overrides: Partial<Controls> = {}): Controls {
     onHistory: vi.fn(),
     onSettings: vi.fn(),
     onNew: vi.fn(),
+    onSleep: vi.fn(),
     onClose: vi.fn(),
     ...overrides
   }

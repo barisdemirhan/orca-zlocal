@@ -42,6 +42,12 @@ import { AgentHubOrbFollowNotices } from './AgentHubOrbFollowNotices'
 import { useAgentHubOrbAwarenessDelivery } from './use-agent-hub-orb-awareness-delivery'
 import { openAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { sleepAgentHubOrb } from './agent-hub-orb-sleep'
+
+const sleep = (): void => {
+  void sleepAgentHubOrb()
+}
+
 export function AgentHubOrbConversation({
   sessionId,
   tabId,
@@ -233,6 +239,7 @@ export function AgentHubOrbConversation({
             void reopen()
           }}
           onMinimize={() => useAgentHubOrbPanel.setState({ compact: true })}
+          onSleep={sleep}
           onClose={closeAgentHubOrbPanel}
           requestAction={
             showChat ? (
@@ -360,6 +367,7 @@ export function AgentHubOrbConversation({
               onNew={() => {
                 void reopen()
               }}
+              onSleep={sleep}
               onClose={closeAgentHubOrbPanel}
             />
           }

@@ -202,7 +202,7 @@ it('keeps compact actions in one strip with history, new and settings only in it
   expect(screen.queryByRole('slider', { name: 'Orb size' })).toBeNull()
   const controls = stage().querySelector('[data-agent-hub-orb-controls]')
   expect(controls?.contains(screen.getByRole('button', { name: 'Expand Orb' }))).toBe(true)
-  const close = screen.getByRole('button', { name: 'Close Orb' })
+  const close = screen.getByRole('button', { name: 'Hide Orb' })
   expect(controls?.contains(close)).toBe(true)
   expect(within(stage()).getAllByRole('button').at(-1)).toBe(close)
   await user.click(screen.getByRole('button', { name: 'Orb options' }))

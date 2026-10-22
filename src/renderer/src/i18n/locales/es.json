@@ -18794,7 +18794,6 @@
         "switchToText": "Cambiar a texto",
         "mode": "Modo del Orb",
         "minimize": "Minimizar Orb",
-        "closeOrb": "Cerrar Orb",
         "voiceUnavailable": "La voz en vivo no está disponible en este host.",
         "requestNoLongerAvailable": "Esta solicitud se respondió en otro lugar o ya no está disponible.",
         "requestDenied": "Solicitud denegada",

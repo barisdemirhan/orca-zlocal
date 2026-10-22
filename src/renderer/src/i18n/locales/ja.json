@@ -18322,7 +18322,6 @@
         "switchToText": "テキストに切り替え",
         "mode": "Orb モード",
         "minimize": "Orb を最小化",
-        "closeOrb": "Orb を閉じる",
         "voiceUnavailable": "このホストではライブ音声を利用できません。",
         "requestNoLongerAvailable": "このリクエストは別の場所で回答済みか、すでに利用できません。",
         "requestDenied": "リクエストを拒否しました",

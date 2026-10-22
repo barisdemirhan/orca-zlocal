@@ -7,6 +7,7 @@ import {
   Mic,
   MicOff,
   Minimize2,
+  Moon,
   MoreHorizontal,
   X
 } from 'lucide-react'
@@ -105,6 +106,7 @@ export function AgentHubOrbControls({
   onHistory,
   onSettings,
   onNew,
+  onSleep,
   onClose
 }: {
   voice: AgentHubOrbVoiceValue
@@ -124,6 +126,7 @@ export function AgentHubOrbControls({
   onHistory: () => void
   onSettings: () => void
   onNew: () => void
+  onSleep: () => void
   onClose: () => void
 }): React.JSX.Element {
   const live =
@@ -264,9 +267,18 @@ export function AgentHubOrbControls({
         </DropdownMenuContent>
       </DropdownMenu>
       {orbView ? (
-        <OrbControl label={translate('auto.agentHub.orb.closeOrb', 'Close Orb')} onClick={onClose}>
-          <X />
-        </OrbControl>
+        <>
+          <OrbControl
+            label={translate('agentHub.orb.sleep', 'Put Orb to sleep')}
+            disabled={busy}
+            onClick={onSleep}
+          >
+            <Moon />
+          </OrbControl>
+          <OrbControl label={translate('agentHub.orb.hide', 'Hide Orb')} onClick={onClose}>
+            <X />
+          </OrbControl>
+        </>
       ) : null}
     </span>
   )

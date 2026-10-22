@@ -19154,7 +19154,6 @@
         "switchToText": "Switch to text",
         "mode": "Orb mode",
         "minimize": "Minimize Orb",
-        "closeOrb": "Close Orb",
         "voiceUnavailable": "Live voice is unavailable on this host.",
         "requestNoLongerAvailable": "This request was answered elsewhere or is no longer available.",
         "requestDenied": "Request denied",
@@ -22339,7 +22338,11 @@
         "finished": "Finished",
         "answer": "Answer",
         "goToAgent": "Go to agent"
-      }
+      },
+      "hide": "Hide Orb",
+      "sleep": "Put Orb to sleep",
+      "asleep": "Orb is asleep. The conversation is in History.",
+      "sleepFailed": "Could not put Orb to sleep. Try again."
     },
     "sleep": {
       "waking": "Waking…",

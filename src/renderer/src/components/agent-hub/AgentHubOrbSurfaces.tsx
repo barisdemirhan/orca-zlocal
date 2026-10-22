@@ -62,8 +62,12 @@ export function useAgentHubOrbSurfaces(
     (alternate = false) => {
       if (useAgentHubOrbPanel.getState().session && !alternate) {
         closeAgentHubOrbPanel()
+      } else if (alternate) {
+        void openOrb(true)
       } else {
-        void openOrb(alternate)
+        // A plain click wakes the Orb straight into writing; the configured action stays on the shortcut.
+        useAgentHubOrbPanel.setState({ quickInputOpen: true })
+        void openOrb(false, false)
       }
     },
     [openOrb]

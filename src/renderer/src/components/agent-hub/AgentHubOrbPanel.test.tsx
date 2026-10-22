@@ -262,7 +262,7 @@ it('keeps the retained chat and its model picker open until explicitly closed', 
   expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('current')
   expect(screen.getByRole('textbox', { name: 'Chat draft' })).toBe(draft)
   expect(draft).toMatchObject({ value: 'unsent draft' })
-  await user.click(screen.getByRole('button', { name: /^Close\b/ }))
+  await user.click(screen.getByRole('button', { name: 'Hide Orb' }))
   await waitFor(() => expect(useAgentHubOrbPanel.getState().session).toBeNull())
 })
 
@@ -299,7 +299,7 @@ it('opens a quiet Orb before revealing the same conversation and its model above
   )
   act(() => mocks.listeners.forEach((listener) => listener()))
   await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2))
-  fireEvent.click(screen.getByRole('button', { name: /^Close\b/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Hide Orb' }))
   expect(useAgentHubOrbPanel.getState().session).toBeNull()
   expect(mocks.close).not.toHaveBeenCalled()
 })

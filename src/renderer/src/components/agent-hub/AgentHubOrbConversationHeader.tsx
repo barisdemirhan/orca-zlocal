@@ -1,4 +1,4 @@
-import { ArrowLeft, History, Minimize2, Plus, Settings, X } from 'lucide-react'
+import { ArrowLeft, History, Minimize2, Moon, Plus, Settings, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
@@ -46,6 +46,7 @@ export function AgentHubOrbConversationHeader({
   onSettings,
   onNew,
   onMinimize,
+  onSleep,
   onClose,
   requestAction
 }: {
@@ -59,6 +60,7 @@ export function AgentHubOrbConversationHeader({
   onSettings: () => void
   onNew: () => void
   onMinimize: () => void
+  onSleep: () => void
   onClose: () => void
   requestAction?: ReactNode
 }): React.JSX.Element {
@@ -131,7 +133,16 @@ export function AgentHubOrbConversationHeader({
           <Minimize2 />
         </HeaderAction>
       ) : null}
-      <HeaderAction label={translate('agentHub.close', 'Close')} onClick={onClose}>
+      {chatVisible ? (
+        <HeaderAction
+          label={translate('agentHub.orb.sleep', 'Put Orb to sleep')}
+          disabled={busy}
+          onClick={onSleep}
+        >
+          <Moon />
+        </HeaderAction>
+      ) : null}
+      <HeaderAction label={translate('agentHub.orb.hide', 'Hide Orb')} onClick={onClose}>
         <X />
       </HeaderAction>
     </header>

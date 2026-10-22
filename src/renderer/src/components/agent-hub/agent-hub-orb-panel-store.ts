@@ -24,6 +24,8 @@ type OrbPanelState = {
   compact: boolean
   preferredDiameter: number
   stagePosition: { x: number; y: number } | null
+  /** The one-line box under the sphere; a plain click on a sleeping Orb opens straight into it. */
+  quickInputOpen: boolean
   requestDestination: HTMLElement | null
   nativeRequestPending: boolean
   nativeRequestVisible: boolean
@@ -42,6 +44,7 @@ export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   compact: false,
   preferredDiameter: AGENT_HUB_ORB_DEFAULT_DIAMETER,
   stagePosition: null,
+  quickInputOpen: false,
   requestDestination: null,
   nativeRequestPending: false,
   nativeRequestVisible: false,
@@ -90,6 +93,7 @@ export function closeAgentHubOrbPanel(): void {
     closeGeneration: useAgentHubOrbPanel.getState().closeGeneration + 1,
     chatVisible: true,
     compact: false,
+    quickInputOpen: false,
     requestDestination: null,
     nativeRequestPending: false,
     nativeRequestVisible: false,
