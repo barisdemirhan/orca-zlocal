@@ -100,6 +100,7 @@ export const appApi = {
     ipcRenderer.invoke('app:getFloatingTerminalCwd', args),
   getFloatingMarkdownDirectory: (): Promise<string> =>
     ipcRenderer.invoke('app:getFloatingMarkdownDirectory'),
+  getAgentHubOrbDirectory: (): Promise<string> => ipcRenderer.invoke('app:getAgentHubOrbDirectory'),
   pickFloatingMarkdownDocument: (): Promise<MarkdownDocument | null> =>
     ipcRenderer.invoke('app:pickFloatingMarkdownDocument'),
   pickFloatingWorkspaceDirectory: (): Promise<string | null> =>

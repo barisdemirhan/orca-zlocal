@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AgentHubOrbSessionManager,
@@ -16,6 +16,11 @@ import { createGlobalSettingsFixture } from '../../../shared/global-settings-tes
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session-journal-types'
 import { AGENT_HUB_ORB_OPENING_PROMPT } from '../../../shared/agent-hub-orb'
+import {
+  AGENT_HUB_ORB_INSTRUCTION_FILES,
+  agentHubOrbInstructionsMarkdown,
+  ensureAgentHubOrbDirectory
+} from './agent-hub-orb-directory'
 import {
   structuredAgentSessionSendBody,
   structuredAgentSessionMessageSendMutation
@@ -36,6 +41,7 @@ import {
 } from '../../runtime/agent-hub/agent-hub-orb-operations'
 
 let state: ReturnType<typeof hostTestState>
+let orbDirectory: string
 let settings: ReturnType<typeof createGlobalSettingsFixture>
 let manager: AgentHubOrbSessionManager
 let runtime: ConstructorParameters<typeof AgentHubOrbSessionManager>[0]
@@ -63,10 +69,11 @@ it('refuses Pi Ask before reserving a session or starting a provider', async () 
   expect(state.acquire).not.toHaveBeenCalled()
 })
 
-beforeEach(() => {
+beforeEach(async () => {
   notifySettings = () => {}
   vi.spyOn(Date, 'now').mockReturnValue(HOST_TEST_NOW)
   state = hostTestState()
+  orbDirectory = await ensureAgentHubOrbDirectory(join(state.root, 'orb'))
   setStructuredAgentSessionHost(state.host)
   settings = createGlobalSettingsFixture({
     experimentalAgentHub: true,
@@ -142,16 +149,20 @@ beforeEach(() => {
       )
     })
   }
-  manager = createAgentHubOrbSessionManager(runtime, {
-    getSettings: () => settings,
-    updateSettings: (updates) => {
-      settings = { ...settings, ...updates }
+  manager = createAgentHubOrbSessionManager(
+    runtime,
+    {
+      getSettings: () => settings,
+      updateSettings: (updates) => {
+        settings = { ...settings, ...updates }
+      },
+      onSettingsChanged: (listener) => {
+        notifySettings = () => listener({}, settings)
+        return () => {}
+      }
     },
-    onSettingsChanged: (listener) => {
-      notifySettings = () => listener({}, settings)
-      return () => {}
-    }
-  })
+    () => ensureAgentHubOrbDirectory(join(state.root, 'orb'))
+  )
 })
 afterEach(async () => {
   for (const record of state.store.listRecords()) {
@@ -368,10 +379,19 @@ describe('Orb conversations on the structured host', () => {
   })
   it('reads long journals without passing every timestamp as a function argument', async () => {
     const current = await manager.open()
+    await state.host.send(
+      { callerKey: 'desktop' },
+      structuredAgentSessionMessageSendMutation({
+        sessionId: current.sessionId,
+        clientOperationId: createStructuredAgentSessionOperationId(randomUUID),
+        expectedRuntimeFence: state.store.getRecord(current.sessionId)?.lease.runtimeFence ?? 1,
+        body: structuredAgentSessionSendBody('Long journal', [])
+      })
+    )
     const snapshot = await state.host.journalSnapshot(current.sessionId)
     const item = snapshot.items[0]
     if (!item) {
-      throw new Error('Expected the opening prompt in the journal')
+      throw new Error('Expected the sent message in the journal')
     }
     vi.spyOn(state.host, 'journalSnapshot').mockResolvedValue({
       ...snapshot,
@@ -381,25 +401,34 @@ describe('Orb conversations on the structured host', () => {
       { sessionId: current.sessionId, lastActiveAt: HOST_TEST_NOW + 1 }
     ])
   })
-  it('uses the host-resolved floating directory instead of a separately saved Orb folder', async () => {
+  it('runs in the Orb folder whatever the saved Orb or floating folders say', async () => {
     settings.agentHubOrbCwd = join(state.root, 'old-orb-folder')
+    settings.floatingTerminalCwd = ''
     const opened = await manager.open()
-    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(state.root)
+    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(orbDirectory)
+    expect(settings.agentHubOrbCwd).toBe(join(state.root, 'old-orb-folder'))
     await manager.close()
     const nextDirectory = join(state.root, 'floating-next')
     await mkdir(nextDirectory)
     settings.floatingTerminalCwd = nextDirectory
     const next = await manager.open()
-    expect(state.store.getRecord(next.sessionId)?.launchDirectory).toBe(nextDirectory)
+    expect(state.store.getRecord(next.sessionId)?.launchDirectory).toBe(orbDirectory)
     const resumed = await manager.open({ resume: { sessionId: opened.sessionId } })
     expect(resumed.sessionId).toBe(opened.sessionId)
-    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(state.root)
+    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(orbDirectory)
   })
-  it('starts without a separate folder choice using the floating host default', async () => {
-    settings.floatingTerminalCwd = ''
+  it('rewrites stale instruction files on open instead of sending an opening message', async () => {
+    await writeFile(join(orbDirectory, 'CLAUDE.md'), '# edited by hand\n')
     const opened = await manager.open()
-    expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(state.root)
-    expect(settings.agentHubOrbCwd).toBeNull()
+    for (const name of AGENT_HUB_ORB_INSTRUCTION_FILES) {
+      expect(await readFile(join(orbDirectory, name), 'utf8')).toBe(
+        agentHubOrbInstructionsMarkdown()
+      )
+    }
+    expect(agentHubOrbInstructionsMarkdown()).toContain(AGENT_HUB_ORB_OPENING_PROMPT)
+    const snapshot = await state.host.journalSnapshot(opened.sessionId)
+    expect(snapshot.submissions).toHaveLength(0)
+    expect(snapshot.items).toHaveLength(0)
   })
   it('keeps explicit cwd requests compatible and rejects missing and file paths before launch', async () => {
     await expect(manager.open({ cwd: join(state.root, 'missing') })).rejects.toMatchObject({
@@ -416,8 +445,12 @@ describe('Orb conversations on the structured host', () => {
     const opened = await manager.open({ cwd: chosen })
     expect(settings.agentHubOrbCwd).toBe(chosen)
     expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(chosen)
+    // Why: outside the Orb folder no instruction file is read, so the prompt is the first message.
+    const snapshot = await state.host.journalSnapshot(opened.sessionId)
+    expect(snapshot.submissions).toHaveLength(1)
+    expect(JSON.stringify(snapshot.items)).toContain(AGENT_HUB_ORB_OPENING_PROMPT)
   })
-  it('coalesces concurrent opens, commits one opening instruction, and persists the floating location and tag', async () => {
+  it('coalesces concurrent opens, starts silently in the Orb folder, and persists the location and tag', async () => {
     const [first, second] = await Promise.all([manager.open(), manager.open()])
     expect(second).toEqual(first)
     expect(manager.current()).toEqual(first)
@@ -427,13 +460,12 @@ describe('Orb conversations on the structured host', () => {
       sessionId: first.sessionId,
       origin: 'agent-hub-orb',
       location: { workspaceId: FLOATING_TERMINAL_WORKTREE_ID, workspaceKind: 'folder' },
-      launchDirectory: state.root,
+      launchDirectory: orbDirectory,
       permissionMode: 'auto'
     })
     expect(records[0]?.options).toBeUndefined()
     const snapshot = await state.host.journalSnapshot(first.sessionId)
-    expect(snapshot.submissions).toHaveLength(1)
-    expect(JSON.stringify(snapshot.items)).toContain(AGENT_HUB_ORB_OPENING_PROMPT)
+    expect(snapshot.submissions).toHaveLength(0)
     const reopened = await openTestAgentSessionRecordStore(state.root)
     expect(reopened.getRecord(first.sessionId)?.origin).toBe('agent-hub-orb')
     expect(
@@ -532,8 +564,12 @@ describe('Orb conversations on the structured host', () => {
   })
 
   it('keeps a committed session current after a prompt failure so retry cannot create another chat', async () => {
+    const chosen = join(state.root, 'chosen')
+    await mkdir(chosen)
     vi.spyOn(state.host, 'send').mockRejectedValueOnce(new Error('disk failure'))
-    await expect(manager.open()).rejects.toMatchObject({ code: 'invalid_argument' })
+    await expect(manager.open({ cwd: chosen })).rejects.toMatchObject({
+      code: 'invalid_argument'
+    })
     expect(state.store.listRecords()).toHaveLength(1)
     await expect(manager.open()).resolves.toMatchObject({
       sessionId: state.store.listRecords()[0].sessionId
@@ -595,6 +631,21 @@ describe('Orb conversations on the structured host', () => {
     expect(settings.agentHubOrbPermission).toBe('ask')
   })
 
+  it('restarts a resumed chat under the saved approvals and stops it when they narrow later', async () => {
+    const previous = await manager.open()
+    expect(state.store.getRecord(previous.sessionId)?.permissionMode).toBe('auto')
+    await manager.close()
+    settings.agentHubOrbPermission = 'free'
+    notifySettings()
+    const resumed = await manager.open({ resume: { sessionId: previous.sessionId } })
+    expect(resumed.sessionId).toBe(previous.sessionId)
+    expect(state.store.getRecord(previous.sessionId)?.permissionMode).toBe('full-access')
+    expect(state.host.getSessionTabId(previous.sessionId)).not.toBeNull()
+    settings.agentHubOrbPermission = 'ask'
+    notifySettings()
+    await vi.waitFor(() => expect(state.host.getSessionTabId(previous.sessionId)).toBeNull())
+  })
+
   it('keeps a chat that never had a choice open when Full access is chosen later', async () => {
     delete settings.agentHubOrbPermission
     const current = await manager.open()
@@ -613,6 +664,6 @@ describe('Orb conversations on the structured host', () => {
     expect(attach).toHaveBeenCalledOnce()
     expect(state.store.listRecords()).toHaveLength(1)
     expect(state.host.getSessionTabId(current.sessionId)).toBe(current.tabId)
-    expect((await state.host.journalSnapshot(current.sessionId)).submissions).toHaveLength(1)
+    expect((await state.host.journalSnapshot(current.sessionId)).submissions).toHaveLength(0)
   })
 })

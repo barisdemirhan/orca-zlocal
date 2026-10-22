@@ -1,8 +1,11 @@
 import {
+  ORB_ACCESS_RANK,
+  agentHubOrbAccessRank,
   agentHubOrbAutoModeSupported,
   agentHubOrbPermissionMode,
   agentHubOrbPermissionOptions
 } from './agent-hub-orb-permission-settings'
+import { resumeAgentHubOrbSession } from './agent-hub-orb-session-resume'
 import type { AgentChatPermissionMode } from '../../../shared/agent-chat-permission-mode'
 import { stat } from 'node:fs/promises'
 import { isAbsolute } from 'node:path'
@@ -26,6 +29,7 @@ import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import type { RuntimeStore } from '../../runtime/runtime-store-contract'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
+import { ensureAgentHubOrbDirectory } from './agent-hub-orb-directory'
 import { listAgentHubOrbConversations } from './agent-hub-orb-history'
 import {
   prepareAgentHubOrbSessionCreate,
@@ -61,7 +65,9 @@ export class AgentHubOrbSessionManager {
   constructor(
     private readonly runtime: OrbRuntime,
     private readonly getSettings: () => AgentHubSettings,
-    private readonly saveCwd: (cwd: string) => void | Promise<void>
+    private readonly saveCwd: (cwd: string) => void | Promise<void>,
+    /** The Orb folder, created and its instruction files refreshed on every open. */
+    private readonly resolveDirectory: () => Promise<string> = ensureAgentHubOrbDirectory
   ) {}
 
   requireEnabled(): void {
@@ -150,7 +156,7 @@ export class AgentHubOrbSessionManager {
   private async openOnce(params: AgentHubOrbOpenParams): Promise<AgentHubOrbSession> {
     const settings = normalizeAgentHubOrbSettings(this.getSettings())
     const cwd = params.cwd?.trim()
-    // Older clients may supply a cwd; ordinary opens use the host's floating workspace resolver.
+    // Older clients may supply a cwd; ordinary opens run in the Orb folder.
     if (params.cwd !== undefined) {
       if (!cwd || !isAbsolute(cwd)) {
         throw new AgentHubError('invalid_argument', 'Orb folder must be an absolute path')
@@ -166,6 +172,7 @@ export class AgentHubOrbSessionManager {
     }
     const host = await this.ensureHost()
     this.requireEnabled()
+    const orbDirectory = await this.resolveDirectory()
     const current = this.current()
     const record = current ? host.deps.store.getRecord(current.sessionId) : null
     const changeSettings =
@@ -178,7 +185,7 @@ export class AgentHubOrbSessionManager {
       if (record && settings.permission === 'ask' && !agentHubOrbSupportsAsk(record.provider)) {
         throw new AgentHubError('invalid_argument', AGENT_HUB_ORB_PI_PERMISSION_REASON)
       }
-      return this.finishOpen(host, current, settings)
+      return this.finishOpen(host, current, settings, orbDirectory)
     }
     const previous = params.resume ? host.deps.store.getRecord(params.resume.sessionId) : null
     if (params.resume && previous?.origin !== AGENT_HUB_ORB_ORIGIN) {
@@ -195,26 +202,24 @@ export class AgentHubOrbSessionManager {
       await requireIdleAgentHubOrbSession(host, this.runtime.agentHub, current.sessionId)
     }
     if (previous) {
-      // Why: a resumed chat keeps the mode it was created with, which this process never saw.
       this.appliedMode = null
-      const resumed = await replaceAgentHubOrbSession(
-        this.runtime,
+      const resumed = await resumeAgentHubOrbSession({
+        runtime: this.runtime,
         host,
         current,
-        previous.sessionId,
-        async () => {
-          const revealed = await host.revealSession(previous.sessionId)
-          await this.runtime.publishStructuredAgentSessionTab({
-            workspaceId: revealed.workspaceId,
-            sessionId: revealed.sessionId,
-            agent: revealed.agent,
-            activate: false
-          })
-          const tabId = host.getSessionTabId(previous.sessionId)
-          return { sessionId: previous.sessionId, ...(tabId ? { tabId } : {}), resumed: true }
-        }
-      )
-      return this.finishOpen(host, resumed, settings)
+        previous,
+        mode: agentHubOrbPermissionMode(
+          this.getSettings(),
+          agent,
+          await agentHubOrbAutoModeSupported(
+            host.deps.modelCatalog,
+            agent,
+            previous.options?.model ?? null
+          )
+        )
+      })
+      this.appliedMode = resumed.mode
+      return this.finishOpen(host, resumed.session, settings, orbDirectory)
     }
     const model = params.model === undefined ? settings.model : params.model
     const autoSupported = await agentHubOrbAutoModeSupported(host.deps.modelCatalog, agent, model)
@@ -224,7 +229,7 @@ export class AgentHubOrbSessionManager {
       caller,
       agent,
       model,
-      cwd,
+      cwd: cwd ?? orbDirectory,
       permissionOptions: agentHubOrbPermissionOptions(this.getSettings(), agent, autoSupported)
     })
     this.requireEnabled()
@@ -237,13 +242,14 @@ export class AgentHubOrbSessionManager {
       () => commitAgentHubOrbSessionCreate({ runtime: this.runtime, caller, prepared })
     )
     this.appliedMode = appliedMode
-    return this.finishOpen(host, created, settings)
+    return this.finishOpen(host, created, settings, orbDirectory)
   }
 
   private async finishOpen(
     host: StructuredAgentSessionHost,
     session: AgentHubOrbSession,
-    settings: ReturnType<typeof normalizeAgentHubOrbSettings>
+    settings: ReturnType<typeof normalizeAgentHubOrbSettings>,
+    orbDirectory: string
   ): Promise<AgentHubOrbSession> {
     this.active = session
     this.selectedSettings = settings
@@ -251,7 +257,7 @@ export class AgentHubOrbSessionManager {
       await this.closeOnce()
       throw new AgentHubError('disabled', 'Agent Hub Orb is disabled')
     }
-    await ensureAgentHubOrbOpeningPrompt(host, caller, session.sessionId)
+    await ensureAgentHubOrbOpeningPrompt(host, caller, session.sessionId, orbDirectory)
     return session
   }
 
@@ -272,23 +278,10 @@ export class AgentHubOrbSessionManager {
   }
 }
 
-// Why: a choice never made resolves to Approve for me or Ask, so it ranks at most with Approve for me.
-const ORB_ACCESS_RANK = {
-  ask: 0,
-  'accept-edits': 1,
-  auto: 2,
-  'full-access': 3
-} as const
-
-function agentHubOrbAccessRank(
-  permission: ReturnType<typeof normalizeAgentHubOrbSettings>['permission']
-): number {
-  return permission ? ORB_ACCESS_RANK[permission] : ORB_ACCESS_RANK.auto
-}
-
 export function createAgentHubOrbSessionManager(
   runtime: OrbRuntime,
-  store: Pick<RuntimeStore, 'getSettings' | 'updateSettings' | 'onSettingsChanged'> | null
+  store: Pick<RuntimeStore, 'getSettings' | 'updateSettings' | 'onSettingsChanged'> | null,
+  resolveDirectory?: () => Promise<string>
 ): AgentHubOrbSessionManager {
   const manager = new AgentHubOrbSessionManager(
     runtime,
@@ -298,7 +291,8 @@ export function createAgentHubOrbSessionManager(
         throw new Error('runtime_unavailable')
       }
       store.updateSettings({ agentHubOrbCwd: cwd }, { notifyListeners: true })
-    }
+    },
+    resolveDirectory
   )
   // Why: partial stores (tests, early boot) have no getSettings.
   let permission = normalizeAgentHubOrbSettings(store?.getSettings?.() ?? {}).permission

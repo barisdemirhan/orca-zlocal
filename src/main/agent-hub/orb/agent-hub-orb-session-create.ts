@@ -20,6 +20,7 @@ import {
   type PreparedStructuredAgentSessionCreate
 } from '../../runtime/rpc/methods/structured-agent-session-create'
 import { commitStructuredAgentSessionLaunchPrompt } from '../../runtime/rpc/methods/agent-launch-structured-prompt'
+import { isAgentHubOrbDirectory } from './agent-hub-orb-directory'
 
 async function resolveAgentHubOrbModel(input: {
   host: StructuredAgentSessionHost
@@ -62,7 +63,7 @@ export async function prepareAgentHubOrbSessionCreate(input: {
   caller: StructuredAgentSessionCaller
   agent: StructuredAgentId
   model: string | null
-  cwd?: string
+  cwd: string
   permissionOptions: Record<string, string>
 }) {
   const create = structuredAgentSessionCreateParams({
@@ -77,7 +78,7 @@ export async function prepareAgentHubOrbSessionCreate(input: {
     caller: input.caller,
     ...create,
     origin: AGENT_HUB_ORB_ORIGIN,
-    ...(input.cwd ? { hostLaunchDirectory: input.cwd } : {}),
+    hostLaunchDirectory: input.cwd,
     options: { ...(input.model ? { model: input.model } : {}), ...input.permissionOptions }
   })
   const model = await resolveAgentHubOrbModel({
@@ -124,18 +125,24 @@ export async function commitAgentHubOrbSessionCreate(input: {
   throw new AgentHubError('invalid_argument', result.refusal.message)
 }
 
+/** A chat in the Orb folder reads its instruction files; one launched elsewhere (an explicit
+ *  client cwd) still gets them as its first message. */
 export async function ensureAgentHubOrbOpeningPrompt(
   host: StructuredAgentSessionHost,
   caller: StructuredAgentSessionCaller,
-  sessionId: string
+  sessionId: string,
+  orbDirectory: string
 ): Promise<void> {
-  const snapshot = await host.journalSnapshot(sessionId)
-  if (snapshot.items.length > 0 || snapshot.submissions.length > 0) {
-    return
-  }
   const record = host.deps.store.getRecord(sessionId)
   if (!record) {
     throw new AgentHubError('not_found', 'Orb conversation was not found on this host')
+  }
+  if (isAgentHubOrbDirectory(record.launchDirectory, orbDirectory)) {
+    return
+  }
+  const snapshot = await host.journalSnapshot(sessionId)
+  if (snapshot.items.length > 0 || snapshot.submissions.length > 0) {
+    return
   }
   const committed = await commitStructuredAgentSessionLaunchPrompt({
     host,

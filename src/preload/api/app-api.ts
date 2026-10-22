@@ -64,6 +64,8 @@ export type AppApi = {
   getFloatingTerminalCwd: (args?: FloatingTerminalCwdRequest) => Promise<string>
   /** App-owned directory for auto-created Floating Workspace notes. */
   getFloatingMarkdownDirectory: () => Promise<string>
+  /** Creates Orb's own folder under userData, with its instruction files, and returns it. */
+  getAgentHubOrbDirectory: () => Promise<string>
   /** Picks a Floating Workspace document and authorizes editor reads/writes. */
   pickFloatingMarkdownDocument: () => Promise<MarkdownDocument | null>
   /** Picks a directory and authorizes Floating Workspace markdown creation. */

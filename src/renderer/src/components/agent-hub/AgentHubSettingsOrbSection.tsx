@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { translate } from '@/i18n/i18n'
+import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { chatModelSupportsAutoMode } from '../../../../shared/agent-chat-permission-mode'
 import {
@@ -67,12 +69,21 @@ export function AgentHubSettingsOrbSection({
     settings.agentHubOrbPlacement === 'hidden'
       ? settings.agentHubOrbPlacement
       : 'floating'
-  const chooseFolder = async (): Promise<void> => {
-    const path = await window.api.app.pickFloatingWorkspaceDirectory()
-    if (path) {
-      updateSettings({ floatingTerminalCwd: path })
+  const [orbDirectory, setOrbDirectory] = useState('')
+  useEffect(() => {
+    let active = true
+    void window.api.app
+      .getAgentHubOrbDirectory()
+      .then((directory) => {
+        if (active) {
+          setOrbDirectory(directory)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      active = false
     }
-  }
+  }, [])
   return (
     <section className="@container space-y-3">
       <SettingsSubsectionHeader
@@ -206,15 +217,23 @@ export function AgentHubSettingsOrbSection({
         description={
           <>
             {translate(
-              'auto.agentHub.orb.sharedWorkingFolder',
-              'Uses the floating workspace directory. Changes also apply to new floating tabs.'
+              'agentHub.orb.ownFolder',
+              'Orb works in its own folder. Its instructions are written there as CLAUDE.md and AGENTS.md.'
             )}
-            <span className="block break-all font-mono">{settings.floatingTerminalCwd || '~'}</span>
+            {orbDirectory ? (
+              <span className="block break-all font-mono">{orbDirectory}</span>
+            ) : null}
           </>
         }
         control={
-          <Button type="button" variant="outline" size="xs" onClick={() => void chooseFolder()}>
-            {translate('auto.agentHub.orb.choose', 'Choose…')}
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            disabled={!orbDirectory}
+            onClick={() => void window.api.shell.openPath(orbDirectory, LOCAL_EXECUTION_HOST_ID)}
+          >
+            {translate('agentHub.orb.openFolder', 'Open folder')}
           </Button>
         }
       />

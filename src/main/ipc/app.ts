@@ -23,6 +23,7 @@ import {
   trustFloatingWorkspaceDirectory,
   resolveFloatingTerminalCwd
 } from './floating-workspace-directory'
+import { ensureAgentHubOrbDirectory } from '../agent-hub/orb/agent-hub-orb-directory'
 import {
   isMarkdownDocumentName,
   markdownDocumentFromFilePath
@@ -226,6 +227,8 @@ export function registerAppHandlers(store: Store, options: RegisterAppHandlersOp
   )
 
   ipcMain.handle('app:getFloatingMarkdownDirectory', () => ensureDefaultFloatingWorkspacePath())
+
+  ipcMain.handle('app:getAgentHubOrbDirectory', () => ensureAgentHubOrbDirectory())
 
   ipcMain.handle('app:pickFloatingMarkdownDocument', (event) => pickFloatingMarkdownDocument(event))
 
