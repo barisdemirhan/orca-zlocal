@@ -49,7 +49,6 @@ const mocks = vi.hoisted(() => {
     open: vi.fn(),
     close: vi.fn(),
     list: vi.fn(),
-    pickFolder: vi.fn(),
     voice,
     listeners,
     feed: {
@@ -129,12 +128,13 @@ beforeEach(() => {
     resumed: Boolean(params?.resume)
   }))
   mocks.close.mockResolvedValue(undefined)
-  mocks.pickFolder.mockResolvedValue(null)
   Object.defineProperty(window, 'api', {
     configurable: true,
     value: {
       agentHub: { orb: { list: mocks.list, open: mocks.open, close: mocks.close } },
-      app: { pickFloatingWorkspaceDirectory: mocks.pickFolder }
+      app: {
+        getAgentHubOrbDirectory: () => Promise.resolve('/tmp/orb')
+      }
     }
   })
 })
@@ -476,10 +476,6 @@ it('edits the shared Orb settings without losing the retained draft or conversat
   })
   fireEvent.click(await screen.findByRole('option', { name: 'Next model' }))
   fireEvent.click(within(settings).getByRole('radio', { name: 'Full access' }))
-  await act(async () => fireEvent.click(within(settings).getByRole('button', { name: 'Choose…' })))
-  expect(useAppStore.getState().settings?.floatingTerminalCwd).toBe('~')
-  mocks.pickFolder.mockResolvedValue('/project/orb')
-  await act(async () => fireEvent.click(within(settings).getByRole('button', { name: 'Choose…' })))
   fireEvent.click(
     within(within(settings).getByRole('radiogroup', { name: 'Placement' })).getByRole('radio', {
       name: 'Status bar'
@@ -489,7 +485,6 @@ it('edits the shared Orb settings without losing the retained draft or conversat
     agentHubOrbAgent: 'codex',
     agentHubOrbModel: 'next-model',
     agentHubOrbPermission: 'free',
-    floatingTerminalCwd: '/project/orb',
     agentHubOrbPlacement: 'statusBar'
   })
   await waitFor(() => expect(mocks.open).toHaveBeenCalledOnce())
