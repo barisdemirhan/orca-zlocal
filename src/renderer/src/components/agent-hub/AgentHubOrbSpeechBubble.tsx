@@ -56,10 +56,11 @@ export function AgentHubOrbSpeechBubble({
       setBubbleFocused(false)
     }
   }, [visible])
-  const { anchorRef, contentRef, textRef, side, sideOffset } = useAgentHubOrbCaptionSide({
-    open: visible,
-    compact
-  })
+  const { anchorRef, contentRef, textRef, side, sideOffset, align, alignOffset } =
+    useAgentHubOrbCaptionSide({
+      open: visible,
+      compact
+    })
   const showLabel = translate('agentHub.orb.showCaptions', 'Show captions')
   const hideLabel = translate('agentHub.orb.hideCaptions', 'Hide captions')
   const changeOpen = (next: boolean): void => {
@@ -115,7 +116,8 @@ export function AgentHubOrbSpeechBubble({
         data-agent-hub-orb-interactive
         data-agent-hub-orb-captions
         side={side}
-        align="center"
+        align={align}
+        alignOffset={alignOffset}
         sideOffset={sideOffset}
         collisionPadding={16}
         respectReducedMotion

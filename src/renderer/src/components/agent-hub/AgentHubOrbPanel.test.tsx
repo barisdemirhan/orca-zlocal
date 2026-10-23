@@ -151,6 +151,15 @@ const requestPresentation: AgentHubRequestPresentation = {
   target: null,
   location: { project: 'Orca', group: null, workspace: null }
 }
+async function openFullChat(user?: ReturnType<typeof userEvent.setup>) {
+  const click = async (name: string) =>
+    user
+      ? user.click(screen.getByRole('button', { name }))
+      : act(async () => fireEvent.click(screen.getByRole('button', { name })))
+  await click('Mini window')
+  await click('Open full chat')
+}
+
 async function show(chat = true) {
   showAgentHubOrbPanel({ sessionId: 'current', tabId: 'tab-current', resumed: false })
   const rendered = render(
@@ -165,13 +174,12 @@ async function show(chat = true) {
     </TooltipProvider>
   )
   if (chat) {
-    await act(async () => {
-      fireEvent.click(
-        mocks.voice.connection === 'off'
-          ? screen.getByRole('radio', { name: 'Switch to text' })
-          : screen.getByRole('button', { name: 'Show conversation' })
-      )
-    })
+    if (mocks.voice.connection === 'off') {
+      await openFullChat()
+    } else {
+      // Live shows only its own controls, so the chat is reached through the panel state.
+      act(() => useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false }))
+    }
   }
   return rendered
 }
@@ -234,7 +242,7 @@ it('keeps the retained chat and its model picker open until explicitly closed', 
       <button>Outside</button>
     </TooltipProvider>
   )
-  await user.click(screen.getByRole('radio', { name: 'Switch to text' }))
+  await openFullChat(user)
   const draft = await screen.findByRole('textbox', { name: 'Chat draft' })
   const trigger = screen.getByRole('button', { name: /Model.*Opus/ })
   await user.click(trigger)
@@ -273,8 +281,7 @@ it('opens a quiet Orb before revealing the same conversation and its model above
   expect(mocks.voice.startLive).not.toHaveBeenCalled()
   const panel = () => document.querySelector('[data-agent-hub-orb-panel]')
   expect(panel()?.hasAttribute('data-agent-hub-orb-only')).toBe(true)
-  await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
-  expect(mocks.voice.switchToText).toHaveBeenCalledOnce()
+  await openFullChat()
   expect(await screen.findByText('Codex · gpt-model')).toBeTruthy()
   expect(panel()?.hasAttribute('data-agent-hub-orb-only')).toBe(false)
   const rect = agentHubOrbAnchorRect(null)

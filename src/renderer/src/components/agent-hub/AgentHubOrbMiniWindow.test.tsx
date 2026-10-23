@@ -55,7 +55,7 @@ it('names the agent and its approval mode and drags by the header, remembering w
   render(miniWindow())
   const mini = screen.getByRole('region', { name: 'Orb' })
   expect(mini.textContent).toContain('Codex · gpt-model')
-  expect(mini.textContent).toContain('Ask for approval')
+  expect(screen.getByLabelText('Ask for approval')).toBeTruthy()
   expect(mini.contains(screen.getByTestId('chat'))).toBe(true)
   expect(mini.style.left).toBe('200px')
   const header = screen.getByText('Codex · gpt-model').parentElement
@@ -71,10 +71,16 @@ it('names the agent and its approval mode and drags by the header, remembering w
   fireEvent.pointerUp(header, { pointerId: 1, clientX: 340, clientY: 150 })
   expect(mini.style.left).toBe('240px')
   expect(mini.style.top).toBe('140px')
-  fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Open full chat' }))
   fireEvent.click(screen.getByRole('button', { name: 'Put Orb to sleep' }))
   expect(actions.onShowChat).toHaveBeenCalledOnce()
   expect(actions.onSleep).toHaveBeenCalledOnce()
+})
+
+it('returns to the sphere from the header sphere', () => {
+  render(miniWindow())
+  fireEvent.click(screen.getByRole('button', { name: 'Back to Orb' }))
+  expect(actions.onMinimize).toHaveBeenCalledOnce()
 })
 
 it('does not start a drag from a header button', () => {

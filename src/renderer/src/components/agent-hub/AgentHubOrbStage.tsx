@@ -27,7 +27,6 @@ export function AgentHubOrbStage({
   compact,
   live = false,
   visible,
-  controls,
   sphereControls,
   quickInput,
   request,
@@ -47,7 +46,7 @@ export function AgentHubOrbStage({
   compact: boolean
   live?: boolean
   visible: boolean
-  controls: ReactNode
+  /** What the hover pill shows at the top of the sphere. */
   sphereControls?: ReactNode
   /** The one-line writing box; its slot under the sphere is reserved whether or not it is open. */
   quickInput?: ReactNode
@@ -72,7 +71,6 @@ export function AgentHubOrbStage({
     geometry,
     request: placement,
     shellRef,
-    controlsRef,
     quickRef,
     requestRef,
     beginGesture,
@@ -168,7 +166,9 @@ export function AgentHubOrbStage({
             }}
           >
             {sphereControls ? (
-              <div className="agent-hub-orb-hover-controls">{sphereControls}</div>
+              <div className="agent-hub-orb-hover-controls" data-agent-hub-orb-interactive>
+                {sphereControls}
+              </div>
             ) : null}
             <div className="agent-hub-orb-art-sphere">
               <AgentHubOrbSpeechBubble
@@ -180,26 +180,19 @@ export function AgentHubOrbStage({
                 durationMs={captionDurationMs}
                 action={captionAction}
               >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {!embedded && onSphereClick && sphereLabel ? (
-                      <button
-                        type="button"
-                        aria-label={sphereLabel}
-                        className="inline-flex size-full cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                      >
-                        <AgentHubOrbSphere {...sphere} />
-                      </button>
-                    ) : (
-                      <span className="inline-flex size-full">
-                        <AgentHubOrbSphere {...sphere} />
-                      </span>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {!embedded && sphereLabel ? sphereLabel : sphere.label}
-                  </TooltipContent>
-                </Tooltip>
+                {!embedded && onSphereClick && sphereLabel ? (
+                  <button
+                    type="button"
+                    aria-label={sphereLabel}
+                    className="inline-flex size-full cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  >
+                    <AgentHubOrbSphere {...sphere} />
+                  </button>
+                ) : (
+                  <span className="inline-flex size-full">
+                    <AgentHubOrbSphere {...sphere} />
+                  </span>
+                )}
               </AgentHubOrbSpeechBubble>
             </div>
             {!embedded && !compact ? (
@@ -210,7 +203,7 @@ export function AgentHubOrbStage({
                       type="button"
                       variant="outline"
                       size="icon-sm"
-                      className="cursor-nwse-resize touch-none"
+                      className="size-[22px] min-w-0 cursor-nwse-resize touch-none rounded-full border-input bg-popover/80 p-0 text-muted-foreground backdrop-blur-md [&_svg]:size-3"
                       role="slider"
                       aria-label={label}
                       aria-valuemin={geometry.minimum}
@@ -239,19 +232,15 @@ export function AgentHubOrbStage({
               {quickInput}
             </div>
           ) : null}
-          <div data-agent-hub-orb-controls className="min-w-0 max-w-xs">
-            <div ref={controlsRef} className="agent-hub-orb-controls">
-              {controls}
-            </div>
-            {notice ? (
-              <p
-                role="status"
-                className="mt-1 max-w-full rounded-md bg-muted px-2 py-1 text-center text-xs text-muted-foreground"
-              >
-                {notice}
-              </p>
-            ) : null}
-          </div>
+          {notice ? (
+            <p
+              role="status"
+              data-agent-hub-orb-controls
+              className="mt-1 max-w-xs rounded-md bg-muted px-2 py-1 text-center text-xs text-muted-foreground"
+            >
+              {notice}
+            </p>
+          ) : null}
         </div>,
         container
       )}

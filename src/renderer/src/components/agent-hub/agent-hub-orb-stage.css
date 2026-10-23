@@ -5,7 +5,6 @@
   flex-direction: column;
   align-items: center;
   padding: 0 12px 12px;
-  min-height: calc(var(--orb-diameter) + 116px);
   user-select: none;
 }
 
@@ -41,14 +40,14 @@
   width: var(--orb-diameter);
   height: var(--orb-diameter);
 }
+/* Why: the handle rides the visible sphere's rim at 45 degrees (radius 0.32 x diameter) so it tracks the diameter; 11px is half the handle. */
 .agent-hub-orb-resize {
   position: absolute;
   display: flex;
-  right: 25px;
-  bottom: 10px;
+  left: calc(50% + var(--orb-diameter) * 0.32 * 0.707 + 6px - 11px);
+  top: calc(50% + var(--orb-diameter) * 0.32 * 0.707 + 6px - 11px);
 }
-/* Why: floating controls sit in a small translucent pill that shows on hover or focus, so keyboard users reach them. */
-.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-controls,
+/* Why: the handle shows on hover or focus, so keyboard users reach it. */
 .agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-resize {
   opacity: 0;
   transform: translateY(4px);
@@ -56,29 +55,10 @@
     opacity 220ms ease,
     transform 280ms ease;
 }
-.agent-hub-orb-stage[data-embedded='false']:hover .agent-hub-orb-controls,
-.agent-hub-orb-stage[data-embedded='false']:focus-within .agent-hub-orb-controls,
-.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-controls:has([aria-expanded='true']),
 .agent-hub-orb-stage[data-embedded='false']:hover .agent-hub-orb-resize,
 .agent-hub-orb-stage[data-embedded='false']:focus-within .agent-hub-orb-resize {
   opacity: 1;
   transform: translateY(0);
-}
-.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-controls {
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--popover) 72%, transparent);
-  backdrop-filter: blur(12px);
-}
-.agent-hub-orb-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  gap: 4px;
-  margin-top: 0;
-  min-height: 32px;
 }
 /* Why a reserved slot: the box appears and disappears under the sphere without moving it. */
 .agent-hub-orb-quick-slot {
@@ -87,6 +67,8 @@
   flex: none;
   width: 100%;
   height: 36px;
+  /* Why: the canvas is bigger than the visible sphere; pull the box up so it sits about 12px under the sphere. */
+  margin-top: calc(-14px - var(--orb-diameter) * 0.225);
   margin-bottom: 8px;
 }
 .agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-quick-slot {
@@ -146,10 +128,6 @@
   height: var(--orb-diameter);
   cursor: default;
 }
-.agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-controls {
-  margin-top: 0;
-  flex-wrap: wrap;
-}
 .agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-request-host {
   grid-column: 1 / -1;
   width: 100%;
@@ -196,7 +174,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .agent-hub-orb-stage .agent-hub-orb-controls,
   .agent-hub-orb-stage .agent-hub-orb-resize,
   .agent-hub-orb-stage .agent-hub-orb-hover-controls,
   .agent-hub-orb-stage .agent-hub-orb-quick {

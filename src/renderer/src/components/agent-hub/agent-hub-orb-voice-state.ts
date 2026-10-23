@@ -32,3 +32,12 @@ export function nextAgentHubOrbVoiceSnapshot(
     canStart: supported && next.capability !== 'unsupported' && next.capability !== 'checking'
   }
 }
+
+/** Nothing is worth showing while support is still unknown or being checked, or when the Live button's tooltip says it. */
+export function agentHubOrbVoiceNotice(snapshot: AgentHubOrbVoiceSnapshot): string | undefined {
+  if (snapshot.connection === 'error') {
+    return snapshot.reason
+  }
+  const settled = snapshot.capability === 'supported' || snapshot.capability === 'error'
+  return settled ? snapshot.reason : undefined
+}

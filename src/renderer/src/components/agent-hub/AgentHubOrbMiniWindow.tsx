@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Maximize2, Minimize2, Moon, X } from 'lucide-react'
+import { Maximize2, Moon, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { translate } from '@/i18n/i18n'
 import {
@@ -8,6 +8,7 @@ import {
   nativeChatPermissionModeLabel
 } from '../native-chat/native-chat-permission-mode-labels'
 import { AgentHubOrbHeaderAction } from './AgentHubOrbConversationHeader'
+import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
 import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbMiniWindowDrag } from './use-agent-hub-orb-mini-window-drag'
@@ -49,6 +50,8 @@ export function AgentHubOrbMiniWindow({
   const permission = useAgentHubOrbPermissionMode(sessionId)
   const PermissionIcon = permission ? NATIVE_CHAT_PERMISSION_MODE_ICONS[permission] : null
   const title = translate('auto.agentHub.orb.title', 'Orb')
+  const backLabel = translate('agentHub.orb.backToOrb', 'Back to Orb')
+  const permissionLabel = permission ? nativeChatPermissionModeLabel(permission) : ''
   return createPortal(
     <section
       aria-label={title}
@@ -60,29 +63,33 @@ export function AgentHubOrbMiniWindow({
         className="flex shrink-0 cursor-grab touch-none select-none items-center gap-1.5 border-b border-border py-1.5 pr-1.5 pl-2 active:cursor-grabbing"
         {...drag}
       >
-        <span className="inline-flex size-6 shrink-0">
-          <AgentHubOrbSphere {...sphere} />
-        </span>
-        <span className="min-w-0 truncate text-xs font-medium">{agentLabel ?? title}</span>
+        <AgentHubActionTooltip label={backLabel} actionId="agentHub.orb.toggleConversation">
+          <button
+            type="button"
+            aria-label={backLabel}
+            className="inline-flex size-6 shrink-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            onClick={onMinimize}
+          >
+            <AgentHubOrbSphere {...sphere} />
+          </button>
+        </AgentHubActionTooltip>
+        <span className="shrink-0 text-sm font-semibold">{title}</span>
+        {agentLabel ? (
+          <span className="min-w-0 truncate text-xs text-muted-foreground">{agentLabel}</span>
+        ) : null}
         {permission && PermissionIcon ? (
-          <Badge variant="outline">
-            <PermissionIcon aria-hidden />
-            {nativeChatPermissionModeLabel(permission)}
-          </Badge>
+          <AgentHubActionTooltip label={permissionLabel}>
+            <Badge variant="outline" aria-label={permissionLabel} className="shrink-0">
+              <PermissionIcon aria-hidden />
+            </Badge>
+          </AgentHubActionTooltip>
         ) : null}
         <span className="flex-1" />
         <AgentHubOrbHeaderAction
-          label={translate('auto.agentHub.orb.showConversation', 'Show conversation')}
+          label={translate('agentHub.orb.openFullChat', 'Open full chat')}
           onClick={onShowChat}
         >
           <Maximize2 />
-        </AgentHubOrbHeaderAction>
-        <AgentHubOrbHeaderAction
-          label={translate('auto.agentHub.orb.minimize', 'Minimize Orb')}
-          actionId="agentHub.orb.toggleConversation"
-          onClick={onMinimize}
-        >
-          <Minimize2 />
         </AgentHubOrbHeaderAction>
         <AgentHubOrbHeaderAction
           label={translate('agentHub.orb.sleep', 'Put Orb to sleep')}

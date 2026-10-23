@@ -32,6 +32,7 @@ import { useLatestHandler } from '@/lib/use-latest-handler'
 import { AgentHubOrbComposerContext, useAgentHubOrbComposerDictation } from '../agent-hub/agent-hub-orb-composer'
 import { AgentHubOrbComposerDictationOverlay } from '../agent-hub/AgentHubOrbComposerDictationOverlay'
 import { useAgentHubOrbVoiceContext } from '../agent-hub/agent-hub-orb-voice-context'
+import { agentHubOrbVoiceNotice } from '../agent-hub/agent-hub-orb-voice-state'
 
 function noop(): void {}
 
@@ -304,9 +305,9 @@ export function NativeChatComposerField({
             )}
             className="mb-1.5"
           />
-          {orbTabId && voice.snapshot.reason ? (
+          {orbTabId && agentHubOrbVoiceNotice(voice.snapshot) ? (
             <p role="status" className="mb-1.5 text-xs text-chat-foreground-faint">
-              {voice.snapshot.reason}
+              {agentHubOrbVoiceNotice(voice.snapshot)}
             </p>
           ) : null}
           <div

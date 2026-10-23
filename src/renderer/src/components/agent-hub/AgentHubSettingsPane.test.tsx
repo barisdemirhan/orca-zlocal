@@ -59,7 +59,7 @@ vi.mock('@/runtime/local-runtime-capabilities', async () => {
     ])
   }
 })
-const pickFolder = vi.fn<() => Promise<string | null>>()
+const openPath = vi.fn()
 
 beforeEach(() => {
   resetHostStructuredAgentsForTests()
@@ -69,11 +69,13 @@ beforeEach(() => {
     keybindings: {}
   })
   vi.clearAllMocks()
-  pickFolder.mockResolvedValue(null)
   Object.defineProperty(window, 'api', {
     configurable: true,
     value: {
-      app: { pickFloatingWorkspaceDirectory: pickFolder },
+      app: {
+        getAgentHubOrbDirectory: () => Promise.resolve('/tmp/orb')
+      },
+      shell: { openPath },
       ui: { setShortcutRecorderFocused: vi.fn() }
     }
   })
@@ -99,7 +101,7 @@ function Pane(): React.JSX.Element {
   )
 }
 
-it('groups the hub preferences and shares the floating workspace directory and unassigned shortcut', () => {
+it('groups the hub preferences and shows the Orb folder and unassigned shortcut', () => {
   render(<Pane />)
   for (const name of ['Dock', 'Alerts', 'Popover', 'Mirrors & canvas', 'Voice', 'Orb']) {
     expect(screen.getByRole('heading', { name })).toBeTruthy()
@@ -109,10 +111,9 @@ it('groups the hub preferences and shares the floating workspace directory and u
   expect(screen.getByText('Working folder')).toBeTruthy()
   expect(
     screen.getByText(
-      'Uses the floating workspace directory. Changes also apply to new floating tabs.'
+      'Orb works in its own folder. Its instructions are written there as CLAUDE.md and AGENTS.md.'
     )
   ).toBeTruthy()
-  expect(screen.getByText('~')).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Edit shortcuts' })).toBeTruthy()
   expect(screen.queryByRole('button', { name: /Add shortcut for/ })).toBeNull()
   expect(screen.queryByRole('switch', { name: 'Speak replies' })).toBeNull()
@@ -203,15 +204,11 @@ it('keeps Pi Ask unavailable and Full access selected', () => {
   expect(useAppStore.getState().settings?.agentHubOrbPermission).toBe('free')
 })
 
-it('keeps the shared directory on cancellation and updates the floating workspace when chosen', async () => {
+it('opens the Orb folder on the local host', async () => {
   render(<Pane />)
-  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Choose…' })))
-  expect(useAppStore.getState().updateSettings).not.toHaveBeenCalled()
-  pickFolder.mockResolvedValue('/project/orb')
-  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Choose…' })))
-  expect(useAppStore.getState().settings?.floatingTerminalCwd).toBe('/project/orb')
-  expect(useAppStore.getState().settings?.agentHubOrbCwd).toBeNull()
-  expect(screen.getByText('/project/orb')).toBeTruthy()
+  expect(await screen.findByText('/tmp/orb')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'Open folder' }))
+  expect(openPath).toHaveBeenCalledWith('/tmp/orb', 'local')
 })
 
 it('loads registered ACP agents with Chat UI off and clears the model pick when changing agents', async () => {

@@ -6,14 +6,26 @@ import {
 } from './agent-hub-orb-geometry'
 import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
 
+/** The organism canvas draws its visible sphere at this fraction of the anchor box (0.32 x 0.86). */
+const VISIBLE_SPHERE_RADIUS = 0.32 * 0.86
+
+type CaptionPosition = {
+  side: AgentHubOrbSide
+  sideOffset: number
+  align: 'end' | 'center'
+  alignOffset: number
+}
+
 export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; compact: boolean }) {
   const [anchor, setAnchor] = useState<HTMLSpanElement | null>(null)
   const [content, setContent] = useState<HTMLDivElement | null>(null)
   const [text, setText] = useState<HTMLDivElement | null>(null)
   const previousSide = useRef<AgentHubOrbSide>('right')
-  const [position, setPosition] = useState<{ side: AgentHubOrbSide; sideOffset: number }>({
+  const [position, setPosition] = useState<CaptionPosition>({
     side: 'right',
-    sideOffset: AGENT_HUB_ORB_CARD_GAP
+    sideOffset: AGENT_HUB_ORB_CARD_GAP,
+    align: 'end',
+    alignOffset: 0
   })
 
   useLayoutEffect(() => {
@@ -29,31 +41,63 @@ export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; co
       const height = content
         ? content.offsetHeight + (text ? text.scrollHeight - text.clientHeight : 0)
         : 160
-      const placement = placeAgentHubOrbRequest({
-        anchor: {
-          x: protectedBox.x,
-          y: protectedBox.y,
-          width: protectedBox.width,
-          height: protectedBox.height
-        },
-        bounds: readAgentHubOrbBounds(),
-        desiredSize: { width: 320, height: Math.min(256, height) },
-        previousSide: previousSide.current
-      })
-      const nextSide = placement?.side ?? 'top'
+      const inset = box.width * (0.5 - VISIBLE_SPHERE_RADIUS)
+      const sphere = {
+        x: box.x + inset,
+        y: box.y + inset,
+        width: box.width - inset * 2,
+        height: box.height - inset * 2
+      }
+      const bounds = readAgentHubOrbBounds()
+      const desiredSize = { width: 320, height: Math.min(256, height) }
+      // A reply reads as the sphere speaking, so beside it wins whenever the bubble fits there in full.
+      const room = {
+        right: bounds.right - (sphere.x + sphere.width + AGENT_HUB_ORB_CARD_GAP),
+        left: sphere.x - AGENT_HUB_ORB_CARD_GAP - bounds.left
+      }
+      const fitsBeside = (side: 'left' | 'right'): boolean =>
+        room[side] >= desiredSize.width &&
+        sphere.y + sphere.height - bounds.top >= desiredSize.height
+      const besideOrder: ('left' | 'right')[] =
+        previousSide.current === 'left' ? ['left', 'right'] : ['right', 'left']
+      const nextSide =
+        besideOrder.find(fitsBeside) ??
+        placeAgentHubOrbRequest({
+          anchor: sphere,
+          bounds,
+          desiredSize,
+          previousSide: previousSide.current
+        })?.side ??
+        'top'
+      const beside = nextSide === 'left' || nextSide === 'right'
       const clearance = {
         right: protectedBox.right - box.right,
         left: box.left - protectedBox.left,
         top: box.top - protectedBox.top,
         bottom: protectedBox.bottom - box.bottom
       }
-      // Radix anchors to the sphere; the selected side must clear the whole control stage.
-      const sideOffset = AGENT_HUB_ORB_CARD_GAP + Math.max(0, clearance[nextSide])
+      // Radix anchors to the canvas box: beside the sphere only its transparent margin is cleared and the bubble's bottom meets the sphere's, so it grows upward and never covers the quick box; above or below, the whole control stage.
+      const next: CaptionPosition = beside
+        ? {
+            side: nextSide,
+            sideOffset: AGENT_HUB_ORB_CARD_GAP - inset,
+            align: 'end',
+            alignOffset: inset
+          }
+        : {
+            side: nextSide,
+            sideOffset: AGENT_HUB_ORB_CARD_GAP + Math.max(0, clearance[nextSide]),
+            align: 'center',
+            alignOffset: 0
+          }
       previousSide.current = nextSide
       setPosition((current) =>
-        current.side === nextSide && current.sideOffset === sideOffset
+        current.side === next.side &&
+        current.sideOffset === next.sideOffset &&
+        current.align === next.align &&
+        current.alignOffset === next.alignOffset
           ? current
-          : { side: nextSide, sideOffset }
+          : next
       )
     }
     const schedule = (): void => {
@@ -97,6 +141,8 @@ export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; co
     contentRef: setContent,
     textRef: setText,
     side: preferredSide,
-    sideOffset: compact ? AGENT_HUB_ORB_CARD_GAP : position.sideOffset
+    sideOffset: compact ? AGENT_HUB_ORB_CARD_GAP : position.sideOffset,
+    align: compact ? ('center' as const) : position.align,
+    alignOffset: compact ? 0 : position.alignOffset
   }
 }

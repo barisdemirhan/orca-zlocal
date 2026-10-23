@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { useRef } from 'react'
-import { act, cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
@@ -14,11 +13,9 @@ import {
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 import { orbAsk } from './agent-hub-orb-test-fixtures'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
-import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
 import { AgentHubOrbComposerContext, useAgentHubOrbComposerBinding } from './agent-hub-orb-composer'
 import type { NativeChatComposerInput } from '../native-chat/native-chat-composer-input'
 import { AGENT_HUB_ORB_DOUBLE_CLICK_MS } from './use-agent-hub-orb-sphere-gestures'
-import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -150,48 +147,13 @@ it('keeps the retained chat without a separate Orb strip in every Live phase', (
   }
 })
 
-it('stops its own dictation when text is selected and keeps the same chat destination', async () => {
-  useAgentHubOrbPanel.setState({ presentation: 'orb' })
-  const stopTracking = trackAgentHubDictationOrigin()
-  const actions: unknown[] = []
-  const control = (event: Event) => {
-    if (event instanceof CustomEvent) {
-      actions.push(event.detail)
-    }
-  }
-  document.addEventListener(DICTATION_CONTROL_EVENT, control)
-  try {
-    render(conversation())
-    const destination = useAgentHubOrbPanel.getState().destination
-    if (!destination) {
-      throw new Error('Expected retained chat destination')
-    }
-    const draft = document.createElement('textarea')
-    draft.value = 'Already typed'
-    destination.append(draft)
-    draft.focus()
-    act(() => useAppStore.setState({ dictationState: 'listening' }))
-    await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
-    expect(actions).toEqual(['stop'])
-    expect(voice.switchToText).toHaveBeenCalledOnce()
-    act(() => useAppStore.setState({ dictationState: 'idle' }))
-    expect(document.querySelector('[data-agent-hub-orb-stage]')).toBeNull()
-    expect(useAgentHubOrbPanel.getState().destination).toBe(destination)
-    expect(draft.value).toBe('Already typed')
-  } finally {
-    act(() => useAppStore.setState({ dictationState: 'idle' }))
-    stopTracking()
-    document.removeEventListener(DICTATION_CONTROL_EVENT, control)
-  }
-})
-
 it('does not cancel a newer panel launch from an older conversation control', async () => {
   showAgentHubOrbPanel({ sessionId: 'newer-orb', tabId: 'newer-tab', resumed: false }, 'live')
   useAgentHubOrbPanel.setState({ presentation: 'orb' })
   const pending = useAgentHubOrbPanel.getState().launchRequest
   const sequence = useAgentHubOrbPanel.getState().launchSequence
   render(conversation())
-  await act(async () => fireEvent.click(screen.getByRole('radio', { name: 'Switch to text' })))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Mini window' })))
   expect(useAgentHubOrbPanel.getState().launchRequest).toBe(pending)
   expect(useAgentHubOrbPanel.getState().launchSequence).toBe(sequence)
 })
@@ -203,14 +165,16 @@ it('places a pending request above the retained chat in a modal', () => {
   expect(document.querySelector('[data-agent-hub-orb-stage]')).toBeNull()
 })
 
-it('keeps voice availability messages inside the floating control strip', () => {
+it('shows no voice notice while support is unknown, and keeps a real failure inside the stage', () => {
   useAgentHubOrbPanel.setState({ presentation: 'orb' })
-  render(conversation({ ...voice, reason: 'Native voice support will be checked when started.' }))
-  const status = screen.getByRole('status')
-  const controls = stage().querySelector('[data-agent-hub-orb-controls]')
-  expect(controls?.contains(status)).toBe(true)
-  expect(status.classList.contains('bg-muted')).toBe(true)
-  expect(useAgentHubOrbPanel.getState().destination?.contains(status)).toBe(false)
+  const pending = 'Native voice support will be checked when started.'
+  const { rerender } = render(conversation({ ...voice, capability: 'unknown', reason: pending }))
+  expect(screen.queryByRole('status')).toBeNull()
+  rerender(conversation({ ...voice, capability: 'error', reason: 'Could not check live voice.' }))
+  expect(stage().contains(screen.getByRole('status'))).toBe(true)
+  expect(useAgentHubOrbPanel.getState().destination?.contains(screen.getByRole('status'))).toBe(
+    false
+  )
 })
 
 it('removes a resolved Hub question without leaving an answer receipt', async () => {
@@ -235,28 +199,15 @@ it('removes a resolved Hub question without leaving an answer receipt', async ()
   expect(document.querySelector('[data-agent-hub-orb-request-receipt]')).toBeNull()
 })
 
-it('keeps compact actions in one strip with history, new and settings only in its menu', async () => {
-  const user = userEvent.setup()
+it('offers only Expand and Sleep on the compact sphere, with no history, settings or resize', () => {
   useAgentHubOrbPanel.setState({ compact: true })
   render(conversation())
   expect(screen.queryByRole('button', { name: 'Past conversations' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'New' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Orb settings' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Minimize Orb' })).toBeNull()
   expect(screen.queryByRole('slider', { name: 'Orb size' })).toBeNull()
-  const controls = stage().querySelector('[data-agent-hub-orb-controls]')
-  expect(controls?.contains(screen.getByRole('button', { name: 'Expand Orb' }))).toBe(true)
-  const close = screen.getByRole('button', { name: 'Hide Orb' })
-  expect(controls?.contains(close)).toBe(true)
-  expect(within(stage()).getAllByRole('button').at(-1)).toBe(close)
-  await user.click(screen.getByRole('button', { name: 'Orb options' }))
-  expect(screen.getByRole('menuitem', { name: 'Past conversations' })).toBeTruthy()
-  expect(screen.getByRole('menuitem', { name: 'New' })).toBeTruthy()
-  expect(screen.getByRole('menuitem', { name: 'Orb settings' })).toBeTruthy()
-  fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
-  act(() => close.focus())
-  fireEvent.click(close)
-  expect(useAgentHubOrbPanel.getState().session).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Expand Orb' }))
+  expect(useAgentHubOrbPanel.getState().compact).toBe(false)
+  expect(useAgentHubOrbPanel.getState().presentation).toBe('orb')
 })
 
 it('opens the writing box on a sphere click and sends Enter through the chat composer', () => {
@@ -317,7 +268,7 @@ it('opens the mini window where the sphere was on a double click and the full ch
   expect(destination).not.toBeNull()
   expect(mini?.contains(destination)).toBe(true)
   expect(requestDestination).toBe(mini?.querySelector('[data-agent-hub-orb-request-host]'))
-  fireEvent.click(screen.getByRole('button', { name: 'Show conversation' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Open full chat' }))
   expect(useAgentHubOrbPanel.getState().presentation).toBe('chat')
   expect(miniWindow()).toBeNull()
   expect(useAgentHubOrbPanel.getState().destination).not.toBeNull()
@@ -341,7 +292,7 @@ it('opens the mini window from the reply bubble and steps back to the sphere fro
   )
   fireEvent.click(screen.getByRole('button', { name: 'Open chat' }))
   expect(useAgentHubOrbPanel.getState().presentation).toBe('mini')
-  fireEvent.click(screen.getByRole('button', { name: 'Minimize Orb' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Back to Orb' }))
   expect(useAgentHubOrbPanel.getState().presentation).toBe('orb')
   expect(miniWindow()).toBeNull()
   expect(stage()).toBeTruthy()
