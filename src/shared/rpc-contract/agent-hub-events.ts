@@ -59,6 +59,7 @@ export const AgentHubEventSchema: z.ZodType<AgentHubEvent> = z.discriminatedUnio
     options: z.array(z.string()),
     multi: z.literal(false)
   }),
+  base.extend({ kind: z.literal('memory'), text: z.string() }),
   base.extend({ kind: z.literal('presence') }),
   base.extend({ kind: z.literal('status') }),
   base.extend(peek.shape),

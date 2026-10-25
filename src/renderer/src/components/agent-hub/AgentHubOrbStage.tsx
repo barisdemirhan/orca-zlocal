@@ -18,6 +18,7 @@ import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
 import { useAgentHubOrbSphereGestures } from './use-agent-hub-orb-sphere-gestures'
 import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
 import './agent-hub-orb-stage.css'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
 const INTERACTIVE_TARGETS =
   '[data-agent-hub-orb-resize], [data-agent-hub-orb-live-controls], [data-agent-hub-orb-interactive]'
@@ -35,6 +36,7 @@ export function AgentHubOrbStage({
   caption,
   captionDurationMs,
   captionAction,
+  captionHint,
   sphereLabel,
   onSphereClick,
   onSphereDoubleClick,
@@ -56,6 +58,7 @@ export function AgentHubOrbStage({
   caption?: string
   captionDurationMs?: number
   captionAction?: ReactNode
+  captionHint?: ReactNode
   /** What a click on the sphere does, as words; the sphere is a plain image without it. */
   sphereLabel?: string
   onSphereClick?: () => void
@@ -107,6 +110,7 @@ export function AgentHubOrbStage({
   )
   const onInteractive = (event: React.SyntheticEvent): boolean =>
     event.target instanceof Element && event.target.closest(INTERACTIVE_TARGETS) !== null
+  const name = useAgentHubOrbName()
   const label = translate('auto.agentHub.orb.size', 'Orb size')
   const style: CSSProperties & { '--orb-diameter': string } = {
     '--orb-diameter': `${geometry.diameter}px`,
@@ -176,9 +180,10 @@ export function AgentHubOrbStage({
                 engaged={captionEngaged}
                 onOpenChange={setCaptionsOpen}
                 text={caption ?? ''}
-                speakerLabel={translate('auto.agentHub.orb.title', 'Orb')}
+                speakerLabel={name}
                 durationMs={captionDurationMs}
                 action={captionAction}
+                hint={captionHint}
               >
                 {!embedded && onSphereClick && sphereLabel ? (
                   <button

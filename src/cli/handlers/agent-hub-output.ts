@@ -17,6 +17,9 @@ export function formatAgentHubResult(method: string, result: unknown): string {
       paneList('Waiting for you', result.waiting)
     ].join('\n')
   }
+  if (method === 'agentHub.orb.remember' && 'message' in result) {
+    return String(result.message)
+  }
   if (method === 'agentHub.progress') {
     return 'Progress updated.'
   }

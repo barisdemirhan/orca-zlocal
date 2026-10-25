@@ -5,6 +5,7 @@ import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import { AgentHubOrbQuotaChip } from './AgentHubOrbQuotaChip'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
 export function AgentHubOrbHeaderAction({
   label,
@@ -64,6 +65,7 @@ export function AgentHubOrbConversationHeader({
   onClose: () => void
   requestAction?: ReactNode
 }): React.JSX.Element {
+  const name = useAgentHubOrbName()
   const historyLabel = translate('auto.agentHub.orb.pastConversations', 'Past conversations')
   const settingsLabel = translate('auto.agentHub.orb.settings', 'Orb settings')
   const newLabel = translate('auto.agentHub.orb.newConversation', 'New')
@@ -84,11 +86,7 @@ export function AgentHubOrbConversationHeader({
         </AgentHubOrbHeaderAction>
       ) : null}
       <span className="text-sm font-semibold">
-        {history
-          ? historyLabel
-          : settingsView
-            ? settingsLabel
-            : translate('auto.agentHub.orb.title', 'Orb')}
+        {history ? historyLabel : settingsView ? settingsLabel : name}
       </span>
       {chatVisible && deliveryUnverifiable ? (
         <AgentHubActionTooltip label={deliveryLabel}>
@@ -135,14 +133,17 @@ export function AgentHubOrbConversationHeader({
       ) : null}
       {chatVisible ? (
         <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.sleep', 'Put Orb to sleep')}
+          label={translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name })}
           disabled={busy}
           onClick={onSleep}
         >
           <Moon />
         </AgentHubOrbHeaderAction>
       ) : null}
-      <AgentHubOrbHeaderAction label={translate('agentHub.orb.hide', 'Hide Orb')} onClick={onClose}>
+      <AgentHubOrbHeaderAction
+        label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name })}
+        onClick={onClose}
+      >
         <X />
       </AgentHubOrbHeaderAction>
     </header>

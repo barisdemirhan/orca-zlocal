@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { translate } from '@/i18n/i18n'
-import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { chatModelSupportsAutoMode } from '../../../../shared/agent-chat-permission-mode'
 import {
@@ -11,7 +10,6 @@ import {
   resolveAgentHubOrbMode
 } from '../../../../shared/agent-hub-orb-settings'
 import { nativeChatPermissionModeLabel } from '../native-chat/native-chat-permission-mode-labels'
-import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import {
@@ -21,6 +19,8 @@ import {
 } from '../settings/SettingsFormControls'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
 import { AgentHubSettingsOrbActions } from './AgentHubSettingsOrbActions'
+import { AgentHubSettingsOrbIdentity } from './AgentHubSettingsOrbIdentity'
+import { AgentHubSettingsOrbMemory } from './AgentHubSettingsOrbMemory'
 
 export function AgentHubSettingsOrbSection({
   settings,
@@ -94,6 +94,12 @@ export function AgentHubSettingsOrbSection({
         )}
       />
       <AgentHubSettingsOrbActions settings={settings} updateSettings={updateSettings} />
+      <AgentHubSettingsOrbIdentity settings={settings} updateSettings={updateSettings} />
+      <AgentHubSettingsOrbMemory
+        settings={settings}
+        updateSettings={updateSettings}
+        orbDirectory={orbDirectory}
+      />
       <SettingsRow
         label={agentLabel}
         control={
@@ -225,17 +231,7 @@ export function AgentHubSettingsOrbSection({
             ) : null}
           </>
         }
-        control={
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            disabled={!orbDirectory}
-            onClick={() => void window.api.shell.openPath(orbDirectory, LOCAL_EXECUTION_HOST_ID)}
-          >
-            {translate('agentHub.orb.openFolder', 'Open folder')}
-          </Button>
-        }
+        control={null}
       />
       <SettingsRow
         label={placementLabel}

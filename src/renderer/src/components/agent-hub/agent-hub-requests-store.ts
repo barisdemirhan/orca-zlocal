@@ -29,6 +29,8 @@ export type AgentHubHostRequests = {
   pendingGates: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'gate' }>>
   pendingAsks: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'ask' }>>
   pendingConsents: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'consent' }>>
+  /** Shown only in the Orb conversation; never part of the inbox, dock counts or alerts. */
+  pendingMemories: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'memory' }>>
   notifications: ReadonlyMap<string, Extract<AgentHubRequest, { kind: 'notify' }>>
   progressByPane: ReadonlyMap<string, AgentHubProgress>
   awayAnswers: ReadonlyMap<string, AgentHubAwayAnswer>
@@ -43,6 +45,7 @@ function emptyHost(): AgentHubHostRequests {
     pendingGates: new Map(),
     pendingAsks: new Map(),
     pendingConsents: new Map(),
+    pendingMemories: new Map(),
     notifications: new Map(),
     progressByPane: new Map(),
     awayAnswers: new Map(),
@@ -75,6 +78,7 @@ export function reduceAgentHubRequests(
               view.pendingGates.has(id) ||
               view.pendingAsks.has(id) ||
               view.pendingConsents.has(id) ||
+              view.pendingMemories.has(id) ||
               view.notifications.has(id)
           )
         )
@@ -95,6 +99,7 @@ export function reduceAgentHubRequests(
   const pendingGates = new Map(previous.pendingGates)
   const pendingAsks = new Map(previous.pendingAsks)
   const pendingConsents = new Map(previous.pendingConsents)
+  const pendingMemories = new Map(previous.pendingMemories)
   const notifications = new Map(previous.notifications)
   const progressByPane = new Map(previous.progressByPane)
   const awayAnswers = new Map(previous.awayAnswers)
@@ -112,6 +117,9 @@ export function reduceAgentHubRequests(
     case 'consent':
       orbReceipts = pruneAgentHubOrbReceiptForRequest(orbReceipts, event)
       pendingConsents.set(event.requestId, event)
+      break
+    case 'memory':
+      pendingMemories.set(event.requestId, event)
       break
     case 'notify':
       orbReceipts = pruneAgentHubOrbReceiptForRequest(orbReceipts, event)
@@ -136,6 +144,7 @@ export function reduceAgentHubRequests(
       pendingGates.delete(event.requestId)
       pendingAsks.delete(event.requestId)
       pendingConsents.delete(event.requestId)
+      pendingMemories.delete(event.requestId)
       notifications.delete(event.requestId)
       answerStates.delete(event.requestId)
       if (event.result?.by === 'away-default') {
@@ -165,6 +174,7 @@ export function reduceAgentHubRequests(
     pendingGates,
     pendingAsks,
     pendingConsents,
+    pendingMemories,
     notifications,
     progressByPane,
     awayAnswers,
@@ -233,6 +243,7 @@ export function setAgentHubRequestAnswerState(
       view.pendingGates.has(requestId) ||
       view.pendingAsks.has(requestId) ||
       view.pendingConsents.has(requestId) ||
+      view.pendingMemories.has(requestId) ||
       view.notifications.has(requestId)
     )
   ) {
@@ -259,6 +270,7 @@ export function removeAgentHubResolvedRequest(
     state.get(host)?.pendingGates.get(requestId) ??
     state.get(host)?.pendingAsks.get(requestId) ??
     state.get(host)?.pendingConsents.get(requestId) ??
+    state.get(host)?.pendingMemories.get(requestId) ??
     state.get(host)?.notifications.get(requestId)
   if (request) {
     applyAgentHubDelivery(host, { ...request, kind: 'closed', reason: 'already_resolved' })
@@ -287,4 +299,16 @@ export function dismissAgentHubOrbRequestReceipt(
   const orbReceipts = new Map(view.orbReceipts)
   orbReceipts.delete(sessionId)
   commit(new Map(state).set(host, { ...view, orbReceipts }))
+}
+
+/** The Orb's own pending memory proposals, oldest first. */
+export function agentHubOrbMemoryRequests(
+  state: AgentHubRequestsState,
+  owner: { host: string; sessionId: string }
+): Extract<AgentHubRequest, { kind: 'memory' }>[] {
+  return [...(state.get(owner.host)?.pendingMemories.values() ?? [])]
+    .filter(
+      (request) => request.caller.kind === 'orb' && request.caller.sessionId === owner.sessionId
+    )
+    .sort((a, b) => a.createdAt - b.createdAt)
 }

@@ -16,7 +16,12 @@ import { AgentHubOrbMiniWindow } from './AgentHubOrbMiniWindow'
 import { cancelDictation } from './agent-hub-dictation-cancel'
 import { useAgentHubDictationSession } from './agent-hub-dictation-origin'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
-import { agentHubInboxRequests, useAgentHubRequests } from './agent-hub-requests-store'
+import {
+  agentHubInboxRequests,
+  agentHubOrbMemoryRequests,
+  useAgentHubRequests
+} from './agent-hub-requests-store'
+import { AgentHubOrbMemoryCard } from './AgentHubOrbMemoryCard'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 import { agentHubCurrentOrbRequest } from './agent-hub-orb-request-owner'
 import { AgentHubOrbStage } from './AgentHubOrbStage'
@@ -41,6 +46,7 @@ import { useAgentHubOrbReopen } from './use-agent-hub-orb-reopen'
 import { openAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { sleepAgentHubOrb } from './agent-hub-orb-sleep'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
 /** A written reply stays under the sphere this long; spoken captions keep their minute. */
 const AGENT_HUB_ORB_REPLY_MS = 12_000
@@ -132,6 +138,9 @@ export function AgentHubOrbConversation({
     agentHubCurrentOrbRequest(item, { host: 'local', sessionId })
   )
   const currentRequest = nativeRequestPending ? undefined : requests[0]
+  const memoryPending =
+    agentHubOrbMemoryRequests(requestState, { host: 'local', sessionId }).length > 0
+  const memoryCard = <AgentHubOrbMemoryCard host="local" sessionId={sessionId} />
   const quick = useAgentHubOrbQuickWrite({
     tabId,
     state,
@@ -163,12 +172,13 @@ export function AgentHubOrbConversation({
       }
     />
   ) : null
+  const orbName = useAgentHubOrbName()
   const agent = conversation?.agent ?? tabAgent
   const sphereAction = agentHubOrbSphereAction({ liveActive: live, dictating: quickDictating })
   const sphereLabels = {
     none: visual.label,
     'finish-dictation': translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation'),
-    'quick-input': translate('agentHub.orb.quickInput', 'Message Orb')
+    'quick-input': translate('agentHub.orb.quickInputNamed', 'Message {{name}}', { name: orbName })
   }
   const stopDictation = (): void => {
     if (quick.dictation.active) {
@@ -198,10 +208,7 @@ export function AgentHubOrbConversation({
     />
   )
   return (
-    <section
-      aria-label={translate('auto.agentHub.orb.title', 'Orb')}
-      className="flex h-[min(640px,calc(100vh-96px))] min-h-0 flex-col"
-    >
+    <section aria-label={orbName} className="flex h-[min(640px,calc(100vh-96px))] min-h-0 flex-col">
       {showChat || !chatVisible ? (
         <AgentHubOrbConversationHeader
           history={history}
@@ -244,6 +251,7 @@ export function AgentHubOrbConversation({
         refresh={refresh}
       />
       <AgentHubOrbFollowNotices onOpenTarget={openFollowTarget} />
+      {showChat ? memoryCard : null}
       {showMini ? (
         <AgentHubOrbMiniWindow
           sessionId={sessionId}
@@ -257,6 +265,7 @@ export function AgentHubOrbConversation({
           busy={busy}
           request={requestCard}
           requestVisible={hasRequest}
+          memory={memoryCard}
           onShowChat={showConversation}
           onMinimize={() => {
             cancelAgentHubOrbLaunch(sessionId, tabId)
@@ -276,7 +285,7 @@ export function AgentHubOrbConversation({
           caption={live ? voice.caption : (quick.reply ?? undefined)}
           captionDurationMs={live ? undefined : AGENT_HUB_ORB_REPLY_MS}
           captionAction={
-            live ? undefined : (
+            live || !quick.reply ? undefined : (
               <Button
                 type="button"
                 variant="link"
@@ -288,6 +297,27 @@ export function AgentHubOrbConversation({
                 <ChevronRight aria-hidden />
               </Button>
             )
+          }
+          captionHint={
+            memoryPending && !live ? (
+              <p
+                className={
+                  quick.reply
+                    ? 'mt-2 text-xs text-muted-foreground'
+                    : 'text-xs text-muted-foreground'
+                }
+              >
+                {translate('agentHub.orb.memoryProposal.hint', 'Memory suggestion')}
+                {' · '}
+                <button
+                  type="button"
+                  className="cursor-pointer underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  onClick={showMiniWindow}
+                >
+                  {translate('agentHub.orb.memoryProposal.openConversation', 'Open conversation')}
+                </button>
+              </p>
+            ) : undefined
           }
           inputMuted={live && voice.input === 'muted'}
           outputMuted={live && voice.outputMuted}

@@ -4,6 +4,7 @@ import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubOrbHeaderAction } from './AgentHubOrbConversationHeader'
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
 /** The pill at the top of the floating sphere: mini window, Live (Codex), Sleep, and Expand while compact. */
 export function AgentHubOrbHoverControls({
@@ -29,6 +30,7 @@ export function AgentHubOrbHoverControls({
   onSleep: () => void
   onCancelDictation: () => void
 }): React.JSX.Element {
+  const name = useAgentHubOrbName()
   const unsupported = voice.capability === 'unsupported'
   const liveLabel = translate('auto.agentHub.orb.startLiveVoice', 'Start live voice')
   const liveTooltip = unsupported
@@ -78,7 +80,7 @@ export function AgentHubOrbHoverControls({
         </AgentHubOrbHeaderAction>
       ) : null}
       <AgentHubOrbHeaderAction
-        label={translate('agentHub.orb.sleep', 'Put Orb to sleep')}
+        label={translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name })}
         disabled={busy}
         onClick={onSleep}
       >

@@ -73,7 +73,9 @@ beforeEach(() => {
     configurable: true,
     value: {
       app: {
-        getAgentHubOrbDirectory: () => Promise.resolve('/tmp/orb')
+        getAgentHubOrbDirectory: () => Promise.resolve('/tmp/orb'),
+        readAgentHubOrbIdentity: () =>
+          Promise.resolve({ soul: '', user: '', memory: [], truncated: false })
       },
       shell: { openPath },
       ui: { setShortcutRecorderFocused: vi.fn() }

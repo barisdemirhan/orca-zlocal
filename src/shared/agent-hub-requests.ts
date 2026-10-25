@@ -57,6 +57,7 @@ export type AgentHubRequest = AgentHubRequestBase &
       }
     | ({ kind: 'ask' } & AgentHubAskContent)
     | AgentHubGateContent
+    | { kind: 'memory'; text: string }
     | { kind: 'presence' }
     | { kind: 'status' }
     | AgentHubOperation
@@ -93,6 +94,7 @@ export type AgentHubResponse =
   | ({ kind: 'presence' } & AgentHubPresence)
   | ({ kind: 'status' } & AgentHubStatus)
   | { kind: 'consent'; decision: 'once' | 'session' | 'deny' }
+  | { kind: 'memory'; decision: 'remember' | 'decline'; text: string }
   | {
       kind: 'error'
       code: 'disabled_by_user' | 'denied_by_user' | 'invalid_argument'

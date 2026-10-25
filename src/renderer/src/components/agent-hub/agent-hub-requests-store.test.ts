@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   reduceAgentHubRequests,
   agentHubInboxRequests,
+  agentHubOrbMemoryRequests,
   type AgentHubRequestsState
 } from './agent-hub-requests-store'
 import { agentHubRequestBase } from './agent-hub-request-test-fixtures'
@@ -239,5 +240,24 @@ describe('Orb request outcomes', () => {
     })
     expect(state.get('local')?.orbReceipts.size).toBe(20)
     expect(state.get('local')?.orbReceipts.get('session-24')?.requestId).toBe('latest')
+  })
+
+  it('keeps memory proposals out of the inbox and hands each Orb only its own', () => {
+    const proposal: Extract<AgentHubRequest, { kind: 'memory' }> = {
+      ...orbAsk('mine'),
+      requestId: 'memory',
+      kind: 'memory',
+      text: 'Prefers short answers'
+    }
+    let state = reduceAgentHubRequests(new Map(), 'local', proposal)
+    expect(agentHubInboxRequests(state)).toHaveLength(0)
+    expect(agentHubOrbMemoryRequests(state, { host: 'local', sessionId: 'mine' })).toHaveLength(1)
+    expect(agentHubOrbMemoryRequests(state, { host: 'local', sessionId: 'other' })).toHaveLength(0)
+    state = reduceAgentHubRequests(state, 'local', {
+      ...proposal,
+      kind: 'closed',
+      reason: 'responded'
+    })
+    expect(agentHubOrbMemoryRequests(state, { host: 'local', sessionId: 'mine' })).toHaveLength(0)
   })
 })

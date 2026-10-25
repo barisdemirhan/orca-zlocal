@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron'
+import type { AgentHubOrbIdentityFiles } from '../../shared/agent-hub-orb-identity'
 import type { AppIdentity } from '../../shared/app-identity'
 import type { FloatingTerminalCwdRequest } from '../../shared/ui-chrome-types'
 import type { MacCapturedDigitRowChord } from '../../shared/macos-symbolic-hotkeys'
@@ -101,6 +102,16 @@ export const appApi = {
   getFloatingMarkdownDirectory: (): Promise<string> =>
     ipcRenderer.invoke('app:getFloatingMarkdownDirectory'),
   getAgentHubOrbDirectory: (): Promise<string> => ipcRenderer.invoke('app:getAgentHubOrbDirectory'),
+  readAgentHubOrbIdentity: (): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:readAgentHubOrbIdentity'),
+  writeAgentHubOrbSoul: (text: string): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:writeAgentHubOrbSoul', text),
+  writeAgentHubOrbUser: (text: string): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:writeAgentHubOrbUser', text),
+  forgetAgentHubOrbMemory: (line: string | null): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:forgetAgentHubOrbMemory', line),
+  refreshAgentHubOrbInstructions: (): Promise<{ truncated: boolean }> =>
+    ipcRenderer.invoke('app:refreshAgentHubOrbInstructions'),
   pickFloatingMarkdownDocument: (): Promise<MarkdownDocument | null> =>
     ipcRenderer.invoke('app:pickFloatingMarkdownDocument'),
   pickFloatingWorkspaceDirectory: (): Promise<string | null> =>

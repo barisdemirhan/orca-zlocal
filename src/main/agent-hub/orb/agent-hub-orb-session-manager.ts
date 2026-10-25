@@ -29,7 +29,7 @@ import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import type { RuntimeStore } from '../../runtime/runtime-store-contract'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
-import { ensureAgentHubOrbDirectory } from './agent-hub-orb-directory'
+import { agentHubOrbIdentityOptions, ensureAgentHubOrbDirectory } from './agent-hub-orb-directory'
 import { listAgentHubOrbConversations } from './agent-hub-orb-history'
 import {
   prepareAgentHubOrbSessionCreate,
@@ -67,7 +67,8 @@ export class AgentHubOrbSessionManager {
     private readonly getSettings: () => AgentHubSettings,
     private readonly saveCwd: (cwd: string) => void | Promise<void>,
     /** The Orb folder, created and its instruction files refreshed on every open. */
-    private readonly resolveDirectory: () => Promise<string> = ensureAgentHubOrbDirectory
+    private readonly resolveDirectory: () => Promise<string> = () =>
+      ensureAgentHubOrbDirectory(undefined, agentHubOrbIdentityOptions(getSettings()))
   ) {}
 
   requireEnabled(): void {

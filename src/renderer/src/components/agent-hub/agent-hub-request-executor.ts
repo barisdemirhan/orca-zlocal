@@ -151,6 +151,7 @@ export async function executeAgentHubRequest(
       case 'ask':
       case 'consent':
       case 'notify':
+      case 'memory':
         return null
       case 'mirror':
         executeMirror(host, request, context)

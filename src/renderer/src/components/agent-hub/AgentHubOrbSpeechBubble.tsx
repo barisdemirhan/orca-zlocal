@@ -20,6 +20,8 @@ export type AgentHubOrbSpeechBubbleProps = {
   durationMs?: number
   /** A header action beside Hide, such as opening the full conversation. */
   action?: ReactNode
+  /** A muted line under the reply, such as a pending suggestion that needs the full window. */
+  hint?: ReactNode
 }
 
 const isCaptionToggle = (target: EventTarget): boolean =>
@@ -34,7 +36,8 @@ export function AgentHubOrbSpeechBubble({
   compact = false,
   engaged = false,
   durationMs,
-  action
+  action,
+  hint
 }: AgentHubOrbSpeechBubbleProps): React.JSX.Element {
   const reopenRef = useRef<HTMLButtonElement>(null)
   const restoreFocus = useRef(false)
@@ -43,10 +46,12 @@ export function AgentHubOrbSpeechBubble({
   const [bubbleHovered, setBubbleHovered] = useState(false)
   const [bubbleFocused, setBubbleFocused] = useState(false)
   const hasText = text.trim().length > 0
+  const pinned = hint !== undefined && hint !== null
   const { visible, restore } = useAgentHubOrbCaptionVisibility({
     open,
     text,
     engaged: engaged || anchorHovered || anchorFocused || bubbleHovered || bubbleFocused,
+    pinned,
     durationMs
   })
   // Why: a bubble that closes under the pointer or focus never sends pointerleave or blur.
@@ -90,7 +95,7 @@ export function AgentHubOrbSpeechBubble({
           onBlurCapture={() => setAnchorFocused(false)}
         >
           {children}
-          {!visible && hasText ? (
+          {!visible && (hasText || pinned) ? (
             <span className="agent-hub-orb-caption-toggle" data-agent-hub-orb-interactive>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -170,7 +175,8 @@ export function AgentHubOrbSpeechBubble({
             ref={textRef}
             className="agent-hub-orb-caption-text scrollbar-sleek px-3 pb-3 pt-1 text-sm"
           >
-            <p className="whitespace-pre-wrap break-words">{text}</p>
+            {hasText ? <p className="whitespace-pre-wrap break-words">{text}</p> : null}
+            {hint}
           </div>
         </div>
       </PopoverContent>

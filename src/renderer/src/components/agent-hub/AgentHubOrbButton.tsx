@@ -10,6 +10,7 @@ import { EMPTY_ORB_VOICE_SNAPSHOT } from './agent-hub-orb-voice-state'
 import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
 import { agentHubOrbActionLabel } from './agent-hub-orb-action-label'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
 export function AgentHubOrbMark({
   state,
@@ -46,13 +47,16 @@ export function AgentHubOrbButton({
   disabled?: boolean
   floating?: boolean
 }): React.JSX.Element {
+  const name = useAgentHubOrbName()
   const bindings = useAppStore((s) => s.keybindings)
   const settings = useAppStore((s) => s.settings)
   const shortcut = formatOptionalShortcutLabel('agentHub.toggleOrb', bindings)
   const notSet = translate('auto.agentHub.orb.notSet', 'Not set')
   const talk = disabled
-    ? translate('auto.agentHub.orb.disabled', 'Enable Agent control to talk to Orb')
-    : translate('auto.agentHub.orb.talk', 'Talk to Orb')
+    ? translate('agentHub.orb.disabledNamed', 'Enable Agent control to talk to {{name}}', {
+        name
+      })
+    : translate('agentHub.orb.talkNamed', 'Talk to {{name}}', { name })
   return (
     <DockButton
       label={`${talk} · ${shortcut ?? notSet}`}

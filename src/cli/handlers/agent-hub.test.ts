@@ -69,6 +69,30 @@ describe('hub CLI', () => {
       expect.anything()
     )
   })
+  it('sends an Orb memory proposal without waiting and prints the host message', async () => {
+    vi.stubEnv('ORCA_TERMINAL_HANDLE', '')
+    vi.stubEnv('ORCA_AGENT_SESSION_ID', 'codex_orb')
+    call.mockResolvedValueOnce({
+      id: 'req-2',
+      ok: true,
+      result: { proposed: true, message: 'Proposed; the user decides in the Orb window.' },
+      _meta: { runtimeId: 'host-1' }
+    })
+    await run(['hub', 'orb', 'remember', 'Prefers short answers'])
+    expect(call).toHaveBeenLastCalledWith(
+      'agentHub.orb.remember',
+      expect.objectContaining({ callerSessionId: 'codex_orb', text: 'Prefers short answers' }),
+      { timeoutMs: 35_000 }
+    )
+    expect(log).toHaveBeenCalledWith('Proposed; the user decides in the Orb window.')
+    expect(process.exitCode).toBeUndefined()
+  })
+  it('rejects a memory longer than 280 characters before contacting the host', async () => {
+    await expect(run(['hub', 'orb', 'remember', 'x'.repeat(281)])).rejects.toMatchObject({
+      code: 'invalid_argument'
+    })
+    expect(call).not.toHaveBeenCalled()
+  })
   it('reports missing Peek input as a usage error before contacting the host', async () => {
     await expect(run(['hub', 'peek'])).rejects.toMatchObject({
       code: 'invalid_argument',

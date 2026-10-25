@@ -20,6 +20,11 @@ import { AgentHubPendingRequests } from './agent-hub-pending-requests'
 import { AgentHubProgressLines } from './agent-hub-progress'
 import { AgentHubOrbOperations } from './agent-hub-orb-operations'
 import { agentHubTargetNeedsConsent } from './agent-hub-target-consent'
+import {
+  AGENT_HUB_ORB_MEMORY_PROPOSAL_TTL_MS as MEMORY_TTL_MS,
+  AgentHubOrbMemoryProposals
+} from './agent-hub-orb-memory-proposals'
+import { answerAgentHubAskWhenAway } from './agent-hub-away-answer'
 
 export class AgentHubLedger {
   readonly orbOperations: AgentHubOrbOperations
@@ -28,6 +33,7 @@ export class AgentHubLedger {
   private readonly rates: AgentHubRateLimits
   private readonly requests: AgentHubPendingRequests
   private readonly progress: AgentHubProgressLines
+  private readonly memories: AgentHubOrbMemoryProposals
 
   constructor(
     publish: (event: AgentHubEvent) => void,
@@ -36,6 +42,7 @@ export class AgentHubLedger {
   ) {
     this.rates = new AgentHubRateLimits(now)
     this.requests = new AgentHubPendingRequests(now, publish)
+    this.memories = new AgentHubOrbMemoryProposals(this.requests)
     this.progress = new AgentHubProgressLines(now, publish)
     this.orbOperations = new AgentHubOrbOperations(publish)
   }
@@ -115,7 +122,11 @@ export class AgentHubLedger {
     }
     this.requests.create(request, this.desktops.keys())
     if (content.ifAway) {
-      void this.answerWhenAway(request)
+      void answerAgentHubAskWhenAway(
+        request,
+        () => this.presence(caller, target),
+        (answer) => this.requests.respond(requestId, answer, 'host', 'away-default')
+      )
     }
     return this.resume(caller, requestId, signal)
   }
@@ -245,6 +256,17 @@ export class AgentHubLedger {
       : execute(signal)
   }
 
+  proposeMemory(caller: AgentHubCaller, target: AgentHubPane, text: string): { requestId: string } {
+    this.requireDesktop()
+    const request = this.memories.propose(this.base(caller, target, MEMORY_TTL_MS), text)
+    this.requests.create(request, this.desktops.keys())
+    return { requestId: request.requestId }
+  }
+
+  pendingMemoryText(requestId: string): string | undefined {
+    return this.memories.pendingText(requestId)
+  }
+
   respond(
     requestId: string,
     response: AgentHubResponse,
@@ -253,7 +275,9 @@ export class AgentHubLedger {
     if (!this.desktops.has(desktop)) {
       throw new AgentHubError('no_desktop', 'Only a subscribed desktop can respond to hub requests')
     }
-    this.requests.respond(requestId, response, desktop)
+    this.memories.settle(requestId, response, () =>
+      this.requests.respond(requestId, response, desktop)
+    )
     return { accepted: true, requestId }
   }
 
@@ -289,24 +313,5 @@ export class AgentHubLedger {
     const request: AgentHubRequest = { ...this.base(caller, target, AGENT_HUB_UI_TIMEOUT_MS), kind }
     this.requests.create(request, this.desktops.keys())
     return (await this.requests.wait(request.requestId, signal)).response
-  }
-  private async answerWhenAway(request: Extract<AgentHubRequest, { kind: 'ask' }>): Promise<void> {
-    try {
-      const presence = await this.presence(request.caller, request.target)
-      if (!presence.present && request.recommended) {
-        this.requests.respond(
-          request.requestId,
-          {
-            kind: 'ask',
-            answer: request.options[request.recommended - 1],
-            index: request.recommended
-          },
-          'host',
-          'away-default'
-        )
-      }
-    } catch {
-      // A missing presence reply leaves the question for the human or its deadline.
-    }
   }
 }

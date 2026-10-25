@@ -13,6 +13,7 @@ import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSph
 import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbMiniWindowDrag } from './use-agent-hub-orb-mini-window-drag'
 import { useAgentHubOrbPermissionMode } from './use-agent-hub-orb-permission-mode'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 import './agent-hub-orb-stage.css'
 
 /** The narrow chat that opens where the sphere was: the retained chat under a draggable header. */
@@ -23,6 +24,7 @@ export function AgentHubOrbMiniWindow({
   busy,
   request,
   requestVisible,
+  memory,
   onShowChat,
   onMinimize,
   onSleep,
@@ -35,6 +37,7 @@ export function AgentHubOrbMiniWindow({
   busy: boolean
   request: ReactNode
   requestVisible: boolean
+  memory?: ReactNode
   onShowChat: () => void
   onMinimize: () => void
   onSleep: () => void
@@ -49,7 +52,7 @@ export function AgentHubOrbMiniWindow({
   const { frame, ...drag } = useAgentHubOrbMiniWindowDrag()
   const permission = useAgentHubOrbPermissionMode(sessionId)
   const PermissionIcon = permission ? NATIVE_CHAT_PERMISSION_MODE_ICONS[permission] : null
-  const title = translate('auto.agentHub.orb.title', 'Orb')
+  const title = useAgentHubOrbName()
   const backLabel = translate('agentHub.orb.backToOrb', 'Back to Orb')
   const permissionLabel = permission ? nativeChatPermissionModeLabel(permission) : ''
   return createPortal(
@@ -92,14 +95,14 @@ export function AgentHubOrbMiniWindow({
           <Maximize2 />
         </AgentHubOrbHeaderAction>
         <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.sleep', 'Put Orb to sleep')}
+          label={translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name: title })}
           disabled={busy}
           onClick={onSleep}
         >
           <Moon />
         </AgentHubOrbHeaderAction>
         <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.hide', 'Hide Orb')}
+          label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name: title })}
           onClick={onHide}
         >
           <X />
@@ -113,6 +116,7 @@ export function AgentHubOrbMiniWindow({
       >
         {request}
       </div>
+      {memory}
       {children}
     </section>,
     container

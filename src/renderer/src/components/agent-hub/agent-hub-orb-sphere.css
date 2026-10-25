@@ -8,6 +8,32 @@
   pointer-events: none;
 }
 
+/* Idle-only tint: state colours keep their own tokens. */
+.agent-hub-orb-sphere[data-orb-tint='teal'] {
+  --agent-orb-idle: var(--color-teal-600);
+}
+.agent-hub-orb-sphere[data-orb-tint='emerald'] {
+  --agent-orb-idle: var(--color-emerald-600);
+}
+.agent-hub-orb-sphere[data-orb-tint='violet'] {
+  --agent-orb-idle: var(--color-violet-600);
+}
+.agent-hub-orb-sphere[data-orb-tint='rose'] {
+  --agent-orb-idle: var(--color-rose-600);
+}
+.dark .agent-hub-orb-sphere[data-orb-tint='teal'] {
+  --agent-orb-idle: var(--color-teal-400);
+}
+.dark .agent-hub-orb-sphere[data-orb-tint='emerald'] {
+  --agent-orb-idle: var(--color-emerald-400);
+}
+.dark .agent-hub-orb-sphere[data-orb-tint='violet'] {
+  --agent-orb-idle: var(--color-violet-400);
+}
+.dark .agent-hub-orb-sphere[data-orb-tint='rose'] {
+  --agent-orb-idle: var(--color-rose-400);
+}
+
 .agent-hub-orb-canvas {
   display: block;
 }

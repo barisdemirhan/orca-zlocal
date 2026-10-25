@@ -10,7 +10,8 @@ import {
   AgentHubStatusParams,
   AgentHubMirrorParams,
   AgentHubArrangeParams,
-  AgentHubCanvasParams
+  AgentHubCanvasParams,
+  AgentHubOrbRememberParams
 } from '../../shared/rpc-contract/agent-hub-params'
 import { agentHubCallerFlags, parseAgentHubParams, printAgentHubCommand } from './agent-hub-command'
 import { agentHubAsk } from './agent-hub-ask'
@@ -62,6 +63,13 @@ export const AGENT_HUB_HANDLERS: Record<string, CommandHandler> = {
     text: getOptionalStringFlag(flags, 'text'),
     clear: flags.get('clear') === true
   })),
+  'hub orb remember': operation(
+    'agentHub.orb.remember',
+    AgentHubOrbRememberParams,
+    ({ flags }) => ({
+      text: getOptionalStringFlag(flags, 'text')
+    })
+  ),
   'hub presence': operation('agentHub.presence', AgentHubPresenceParams, () => ({})),
   'hub status': operation('agentHub.status', AgentHubStatusParams, () => ({})),
   'hub arrange': operation('agentHub.arrange', AgentHubArrangeParams, ({ flags }) => ({

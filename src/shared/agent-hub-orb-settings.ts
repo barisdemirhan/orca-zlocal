@@ -6,6 +6,11 @@ import {
   type AgentChatPermissionMode
 } from './agent-chat-permission-mode'
 import type { AgentHubOrbAction, AgentHubSettings } from './agent-hub-settings'
+import {
+  normalizeAgentHubOrbName,
+  normalizeAgentHubOrbTint,
+  normalizeAgentHubOrbTone
+} from './agent-hub-orb-identity'
 import { isStructuredAgentId } from './agent-session-provider-handle'
 
 export const AGENT_HUB_ORB_PI_PERMISSION_REASON =
@@ -67,6 +72,15 @@ export function normalizeAgentHubOrbSettings(settings: AgentHubSettings) {
         : null,
     permission: agentHubOrbChosenMode(settings.agentHubOrbPermission),
     cwd: typeof settings.agentHubOrbCwd === 'string' ? settings.agentHubOrbCwd.trim() || null : null
+  }
+}
+
+export function normalizeAgentHubOrbIdentitySettings(settings: AgentHubSettings) {
+  return {
+    name: normalizeAgentHubOrbName(settings.agentHubOrbName),
+    tone: normalizeAgentHubOrbTone(settings.agentHubOrbTone),
+    tint: normalizeAgentHubOrbTint(settings.agentHubOrbTint),
+    memorySuggestions: settings.agentHubOrbMemorySuggestions !== false
   }
 }
 

@@ -5,7 +5,10 @@ import {
   normalizeAgentHubAnswerQueue
 } from './agent-hub-settings'
 import { createGlobalSettingsFixture } from './global-settings-test-fixture'
-import { normalizeAgentHubOrbSettings } from './agent-hub-orb-settings'
+import {
+  normalizeAgentHubOrbIdentitySettings,
+  normalizeAgentHubOrbSettings
+} from './agent-hub-orb-settings'
 describe('mirror microphone default mode', () => {
   it.each([undefined, null, '', 'unknown', true, 1, {}, 'dictate'])(
     'defaults invalid or missing mode %j to plain dictation',
@@ -60,4 +63,23 @@ it('loads older settings with the answer queue off, automatic opening and approv
     answerQueueOpening: 'shortcut',
     answerQueueIncludeApprovals: true
   })
+})
+
+it('normalizes the Orb identity: trimmed 24-character name, safe defaults, suggestions on', () => {
+  expect(normalizeAgentHubOrbIdentitySettings({})).toEqual({
+    name: 'Orb',
+    tone: 'calm',
+    tint: 'silver',
+    memorySuggestions: true
+  })
+  expect(
+    normalizeAgentHubOrbIdentitySettings({
+      agentHubOrbName: `  ${'x'.repeat(30)}  `,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: a stale stored value outside the tone union.
+      agentHubOrbTone: 'nope' as never,
+      agentHubOrbTint: 'rose',
+      agentHubOrbMemorySuggestions: false
+    })
+  ).toEqual({ name: 'x'.repeat(24), tone: 'calm', tint: 'rose', memorySuggestions: false })
+  expect(normalizeAgentHubOrbIdentitySettings({ agentHubOrbName: '   ' }).name).toBe('Orb')
 })

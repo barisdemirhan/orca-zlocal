@@ -15,6 +15,7 @@ import { agentHubDesktopId, resolveAgentHubPanes } from './agent-hub-caller'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
 import { waitForAgentHubAnswer } from '../../agent-hub/agent-hub-answer-wait'
 import { randomUUID } from 'node:crypto'
+import { respondToAgentHubMemory } from './agent-hub-orb-memory'
 
 export const AGENT_HUB_METHODS = [
   defineMethod({
@@ -161,6 +162,9 @@ export const AGENT_HUB_METHODS = [
       const desktop = agentHubDesktopId(ctx)
       if (!desktop) {
         throw new AgentHubError('no_desktop', 'Only a capable desktop can answer hub requests')
+      }
+      if (params.result.kind === 'memory') {
+        return respondToAgentHubMemory(ctx.runtime, params.requestId, params.result, desktop)
       }
       return ctx.runtime.agentHub.respond(params.requestId, params.result, desktop)
     }

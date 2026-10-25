@@ -56,7 +56,7 @@ export function buildOrbStateParams(
     const rim = extra.rim ?? rimOf(core)
     return { ...BASE, ...overrides, core, rim, nucleusTint: extra.nucleusTint ?? rim }
   }
-  const idleCore = mixOrbRgb(palette.ring, palette.muted, 0.5)
+  const idleCore = palette.idle ?? mixOrbRgb(palette.ring, palette.muted, 0.5)
   const sleepCore = mixOrbRgb(idleCore, BLACK, palette.dark ? 0.6 : 0.2)
   const errorCore = mixOrbRgb(palette.destructive, palette.muted, 0.3)
   const speakCore = mixOrbRgb(palette.listening, palette.foreground, 0.55)

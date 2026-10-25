@@ -3,6 +3,7 @@ import type { RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
 function QuickAction({
   label,
@@ -62,7 +63,8 @@ export function AgentHubOrbQuickInput({
   onStopDictation: () => void
   onOpenChat: () => void
 }): React.JSX.Element {
-  const label = translate('agentHub.orb.quickInput', 'Message Orb')
+  const name = useAgentHubOrbName()
+  const label = translate('agentHub.orb.quickInputNamed', 'Message {{name}}', { name })
   return (
     <div
       data-agent-hub-orb-quick-input
@@ -82,7 +84,7 @@ export function AgentHubOrbQuickInput({
         placeholder={
           listening
             ? translate('agentHub.orb.quickListening', 'Listening… release to send')
-            : translate('agentHub.orb.quickPlaceholder', 'Ask Orb…')
+            : translate('agentHub.orb.quickPlaceholderNamed', 'Ask {{name}}…', { name })
         }
         className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
         onChange={(event) => onChange(event.target.value)}

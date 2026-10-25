@@ -1,5 +1,6 @@
 import type { PersistedUIState } from './persisted-ui-state-types'
 import type { StructuredAgentId } from './agent-session-provider-handle'
+import type { AgentHubOrbTint, AgentHubOrbTone } from './agent-hub-orb-identity'
 
 /** Where the Agent Hub lives: a draggable dock on a window edge, or a status-bar item. */
 export type AgentHubPlacement = 'dock' | 'status-bar'
@@ -49,6 +50,13 @@ export type AgentHubSettings = {
   agentHubOrbDefaultAction?: AgentHubOrbAction
   agentHubOrbAlternateAction?: AgentHubOrbAction
   agentHubOrbSpeakReplies?: boolean
+  /** What Orb calls itself; blank means "Orb". */
+  agentHubOrbName?: string
+  agentHubOrbTone?: AgentHubOrbTone
+  /** Colours the idle sphere only; state colours never change. */
+  agentHubOrbTint?: AgentHubOrbTint
+  /** Whether Orb may propose lasting memories; absent means on. */
+  agentHubOrbMemorySuggestions?: boolean
   /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */
   agentHubMicMode?: AgentHubMicMode
   /** Agent Hub: a draggable dock on a window edge (default) or a status-bar item. */

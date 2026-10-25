@@ -154,6 +154,10 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCa
     return settings?.experimentalAgentHub === true && settings.agentHubAgentControl !== false
   }
 
+  isAgentHubOrbMemorySuggestionsEnabled(): boolean {
+    return this.store?.getSettings?.()?.agentHubOrbMemorySuggestions !== false
+  }
+
   getAgentHubCaller(handle: string): AgentHubCaller | null {
     const paneKey = this.getTerminalPaneKey(handle)
     if (!paneKey) {

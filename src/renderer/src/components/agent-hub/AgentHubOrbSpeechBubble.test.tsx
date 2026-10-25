@@ -12,11 +12,13 @@ vi.mock('./use-agent-hub-orb-caption-side', () => ({
 function Caption({
   text,
   durationMs,
-  action
+  action,
+  hint
 }: {
   text: string
   durationMs?: number
   action?: React.ReactNode
+  hint?: React.ReactNode
 }): React.JSX.Element {
   const [open, setOpen] = useState(true)
   return (
@@ -28,6 +30,7 @@ function Caption({
         speakerLabel="Orb"
         durationMs={durationMs}
         action={action}
+        hint={hint}
       >
         <button>Live Orb</button>
       </AgentHubOrbSpeechBubble>
@@ -117,4 +120,14 @@ it('keeps a written reply for its shorter time with its own header action', () =
   expect(screen.queryByText('Tests passed')).not.toBeNull()
   act(() => vi.advanceTimersByTime(1))
   expect(screen.queryByText('Tests passed')).toBeNull()
+})
+
+it('keeps a pending hint on the sphere without a reply until it is answered', () => {
+  vi.useFakeTimers()
+  const { rerender } = render(<Caption text="" hint={<p>Memory suggestion</p>} />)
+  act(() => vi.advanceTimersByTime(30 * 60_000))
+  expect(screen.queryByText('Memory suggestion')).not.toBeNull()
+  rerender(<Caption text="" />)
+  expect(screen.queryByText('Memory suggestion')).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Show captions' })).toBeNull()
 })

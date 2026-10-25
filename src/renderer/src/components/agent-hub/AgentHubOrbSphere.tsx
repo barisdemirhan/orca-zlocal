@@ -7,6 +7,7 @@ import {
   type AgentHubOrganism
 } from './agent-hub-orb-organism'
 import { readAgentHubOrbPalette } from './agent-hub-orb-palette'
+import { useAgentHubOrbTint } from './use-agent-hub-orb-identity'
 import './agent-hub-orb-sphere.css'
 
 export type { AgentHubOrbPhase }
@@ -38,6 +39,7 @@ export function AgentHubOrbSphere({
   const stateKey = agentHubOrbStateKey(phase, outcome)
   const stateKeyRef = useRef(stateKey)
   const inputSpeakingRef = useRef(inputSpeaking)
+  const tint = useAgentHubOrbTint()
 
   useEffect(() => {
     stateKeyRef.current = stateKey
@@ -48,6 +50,14 @@ export function AgentHubOrbSphere({
     inputSpeakingRef.current = inputSpeaking
     organismRef.current?.setInputActive(inputSpeaking)
   }, [inputSpeaking])
+
+  useEffect(() => {
+    // Why: the data-orb-tint attribute changes the --agent-orb-idle custom property on the root.
+    const root = rootRef.current
+    if (root) {
+      organismRef.current?.setPalette(readAgentHubOrbPalette(root))
+    }
+  }, [tint])
 
   useEffect(() => {
     const root = rootRef.current
@@ -146,6 +156,7 @@ export function AgentHubOrbSphere({
     <span
       ref={rootRef}
       className="agent-hub-orb-sphere"
+      data-orb-tint={tint === 'silver' ? undefined : tint}
       data-agent-hub-orb-phase={phase}
       data-input-muted={inputMuted}
       data-output-muted={outputMuted}

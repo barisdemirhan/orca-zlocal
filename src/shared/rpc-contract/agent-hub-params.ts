@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { AgentHubOrbAwarenessSchema } from '../agent-hub-orb-awareness'
+import { AGENT_HUB_ORB_MEMORY_MAX_LENGTH } from '../agent-hub-orb-identity'
 
 export const AGENT_HUB_DEFAULT_ASK_TIMEOUT_MS = 30 * 60_000
 export const AGENT_HUB_MAX_ASK_TIMEOUT_MS = 24 * 60 * 60_000
@@ -94,6 +95,9 @@ export const AgentHubMirrorParams = caller.and(
 export const AgentHubArrangeParams = caller.and(
   z.object({ layout: z.string().trim().min(1).max(80).optional() })
 )
+export const AgentHubOrbRememberParams = caller.and(
+  z.object({ text: z.string().trim().min(1).max(AGENT_HUB_ORB_MEMORY_MAX_LENGTH) })
+)
 export const AgentHubCanvasParams = caller.and(z.object({ action: z.enum(['open', 'close']) }))
 
 const pane = z.object({ paneKey: identity, terminalHandle: identity })
@@ -119,6 +123,11 @@ export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
     orbAwareness: AgentHubOrbAwarenessSchema.optional()
   }),
   z.object({ kind: z.literal('consent'), decision: z.enum(['once', 'session', 'deny']) }),
+  z.object({
+    kind: z.literal('memory'),
+    decision: z.enum(['remember', 'decline']),
+    text: z.string().trim().max(AGENT_HUB_ORB_MEMORY_MAX_LENGTH)
+  }),
   z.object({
     kind: z.literal('error'),
     code: z.enum(['disabled_by_user', 'denied_by_user', 'invalid_argument']),

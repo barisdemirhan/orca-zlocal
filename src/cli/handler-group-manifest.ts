@@ -22,6 +22,7 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
       'hub notify',
       'hub peek',
       'hub ask',
+      'hub orb remember',
       'hub progress',
       'hub presence',
       'hub status',

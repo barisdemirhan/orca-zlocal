@@ -53,6 +53,19 @@ export const AGENT_HUB_COMMAND_SPECS: CommandSpec[] = [
     ['text', 'clear'],
     ['text']
   ),
+  {
+    ...hubSpec(
+      ['orb', 'remember'],
+      'Orb only: propose a lasting memory for the user to approve',
+      'orb remember <text>',
+      ['text'],
+      ['text']
+    ),
+    notes: [
+      'Returns at once; the user accepts, edits or declines in the Orb window. Text is at most 280 characters.',
+      'Refused when memory suggestions are off, or when the text is already pending, saved or was declined.'
+    ]
+  },
   hubSpec(['presence'], 'Read whether any connected desktop is present', 'presence'),
   hubSpec(['status'], 'Read open mirrors, parked panes and waiting panes', 'status'),
   ...['open', 'add', 'minimize', 'restore', 'close'].map((action) =>

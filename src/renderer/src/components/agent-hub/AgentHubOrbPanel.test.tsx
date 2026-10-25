@@ -133,7 +133,9 @@ beforeEach(() => {
     value: {
       agentHub: { orb: { list: mocks.list, open: mocks.open, close: mocks.close } },
       app: {
-        getAgentHubOrbDirectory: () => Promise.resolve('/tmp/orb')
+        getAgentHubOrbDirectory: () => Promise.resolve('/tmp/orb'),
+        readAgentHubOrbIdentity: () =>
+          Promise.resolve({ soul: '', user: '', memory: [], truncated: false })
       }
     }
   })

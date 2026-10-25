@@ -11,6 +11,8 @@ export type AgentHubOrbPalette = {
   ring: OrbRgb
   muted: OrbRgb
   foreground: OrbRgb
+  /** The user's idle tint; absent means the neutral silver look. */
+  idle?: OrbRgb
   dark: boolean
 }
 
@@ -87,6 +89,7 @@ export function readAgentHubOrbPalette(element: Element): AgentHubOrbPalette {
   const read = (token: string, fallback: OrbRgb): OrbRgb =>
     resolveColor(style.getPropertyValue(token), fallback)
   const background = read('--background', [10, 10, 10])
+  const idleToken = style.getPropertyValue('--agent-orb-idle').trim()
   const luminance = (background[0] * 0.299 + background[1] * 0.587 + background[2] * 0.114) / 255
   return {
     listening: read('--agent-orb-listening', TOKEN_FALLBACK.listening),
@@ -99,6 +102,7 @@ export function readAgentHubOrbPalette(element: Element): AgentHubOrbPalette {
     ring: read('--ring', TOKEN_FALLBACK.ring),
     muted: read('--muted-foreground', TOKEN_FALLBACK.muted),
     foreground: read('--foreground', TOKEN_FALLBACK.foreground),
+    idle: idleToken ? read('--agent-orb-idle', TOKEN_FALLBACK.ring) : undefined,
     dark: luminance < 0.5
   }
 }

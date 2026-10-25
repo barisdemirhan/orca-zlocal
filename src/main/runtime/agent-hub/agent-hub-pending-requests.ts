@@ -149,6 +149,10 @@ export class AgentHubPendingRequests {
       ) {
         throw new AgentHubError('invalid_argument', 'Answer indices must name the question options')
       }
+    } else if (request.kind === 'memory') {
+      if (response.kind !== 'memory') {
+        throw new AgentHubError('invalid_argument', 'Response kind does not match the hub request')
+      }
     } else if (request.kind === 'presence' && response.kind === 'presence') {
       if (!entry.desktops.has(desktop)) {
         throw new AgentHubError('invalid_argument', 'Desktop did not receive this presence request')

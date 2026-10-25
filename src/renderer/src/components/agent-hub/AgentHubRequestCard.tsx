@@ -22,6 +22,7 @@ import {
   type AgentHubInboxRequest
 } from './agent-hub-requests-store'
 import { AGENT_HUB_CARD_KEY_GUARD_MS } from './use-agent-hub-quick-answer'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
 export function AgentHubRequestCard({
   item,
@@ -50,10 +51,8 @@ export function AgentHubRequestCard({
   const canResolveGate = useAppStore((app) => agentHubCanResolveGate(app, host))
   const busy =
     (state !== undefined && state.phase !== 'error') || (request.kind === 'gate' && !canResolveGate)
-  const agent =
-    request.caller.kind === 'orb'
-      ? translate('auto.agentHub.orb.title', 'Orb')
-      : (request.caller.agentType ?? 'agent')
+  const orbName = useAgentHubOrbName()
+  const agent = request.caller.kind === 'orb' ? orbName : (request.caller.agentType ?? 'agent')
   const send = (result: Parameters<typeof answerAgentHubRequest>[2]): void => {
     void answerAgentHubRequest(host, request.requestId, result)
   }
