@@ -229,7 +229,8 @@ export function AgentHubMirrorWindow({
       data-kind={kind}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Why the strong edge: the mirror floats over terminals that share its background.
-      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating data-[highlighted=true]:ring-2 data-[highlighted=true]:ring-ring data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none motion-reduce:animate-none!"
+      // Why transition-none: duration-150 would also transition the box under the glide's transform.
+      className="group/mirror pointer-events-auto fixed flex animate-in flex-col overflow-hidden rounded-xl border border-foreground/25 bg-background shadow-floating transition-none data-[highlighted=true]:ring-2 data-[highlighted=true]:ring-ring data-[kind=ask]:border-agent-question/60 data-[kind=done]:border-status-success/50 duration-150 fade-in-0 zoom-in-95 data-[leaving=true]:animate-out data-[leaving=true]:fade-out-0 data-[leaving=true]:zoom-out-95 data-[leaving=true]:[animation-fill-mode:forwards] data-[restored=true]:data-[leaving=false]:animate-none motion-reduce:animate-none!"
       style={{
         left: geometry.x,
         top: geometry.y,

@@ -17,18 +17,16 @@ export function glideMirrorWindow(
   const start = `translate(${from.x - to.x}px, ${from.y - to.y}px) scale(${from.width / to.width}, ${
     from.height / to.height
   })`
-  const animation = element.animate([{ transform: start }, { transform: 'none' }], {
-    duration: GLIDE_MS,
-    easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
-  })
-  // Why origin here: the scale is measured from the window's top-left corner.
-  element.style.transformOrigin = '0 0'
-  const clear = (): void => {
-    element.style.transformOrigin = ''
-  }
+  // Why origin in the keyframes: the scale is measured from the top-left corner, and an inline
+  // origin would be cleared by the previous glide's cancel event, which arrives after this starts.
+  const animation = element.animate(
+    [
+      { transform: start, transformOrigin: '0 0' },
+      { transform: 'none', transformOrigin: '0 0' }
+    ],
+    { duration: GLIDE_MS, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+  )
   // A cancelled glide rejects `finished`; nobody awaits it.
   animation.finished?.catch(() => {})
-  animation.onfinish = clear
-  animation.oncancel = clear
   return animation
 }

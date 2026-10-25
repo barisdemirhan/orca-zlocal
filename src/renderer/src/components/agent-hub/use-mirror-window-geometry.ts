@@ -181,7 +181,7 @@ export function useMirrorWindowGeometry(
   useLayoutEffect(() => {
     const before = shownBefore.current
     shownBefore.current = shownGeometry
-    if (!settling || reducedMotion || !sectionRef.current || before === shownGeometry) {
+    if (!settling || reducedMotion || !sectionRef.current || sameMirrorBox(before, shownGeometry)) {
       return
     }
     glide.current?.cancel()
@@ -315,4 +315,9 @@ export function useMirrorWindowGeometry(
     endDrag,
     cancelDrag
   }
+}
+
+// Why by value: the focus box is derived anew on every render.
+function sameMirrorBox(a: AgentHubMirrorGeometry, b: AgentHubMirrorGeometry): boolean {
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height
 }

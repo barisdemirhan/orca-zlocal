@@ -142,7 +142,9 @@ describe('a focused mirror window', () => {
       act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
       expect(animate).toHaveBeenCalledTimes(1)
       const frames = animate.mock.calls[0]?.[0]
-      expect(frames?.[1]).toEqual({ transform: 'none' })
+      // The origin rides in the keyframes: an inline one is cleared by the last glide's cancel.
+      expect(frames?.[0]).toMatchObject({ transformOrigin: '0 0' })
+      expect(frames?.[1]).toEqual({ transform: 'none', transformOrigin: '0 0' })
       act(() => toggleAgentHubMirrorFocus(mirrorWindowIdFor('tab-a:leaf')))
       expect(animate).toHaveBeenCalledTimes(2)
     } finally {
