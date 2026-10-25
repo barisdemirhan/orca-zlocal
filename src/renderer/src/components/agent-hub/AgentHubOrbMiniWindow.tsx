@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Maximize2, Moon, X } from 'lucide-react'
+import { ChevronLeft, Maximize2, Moon, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { translate } from '@/i18n/i18n'
 import {
@@ -70,13 +70,16 @@ export function AgentHubOrbMiniWindow({
           <button
             type="button"
             aria-label={backLabel}
-            className="inline-flex size-6 shrink-0 cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="-ml-1 inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md pr-1.5 pl-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             onClick={onMinimize}
           >
-            <AgentHubOrbSphere {...sphere} />
+            <ChevronLeft aria-hidden className="size-3.5" />
+            <span className="inline-flex size-5">
+              <AgentHubOrbSphere {...sphere} />
+            </span>
+            <span className="text-sm font-semibold text-foreground">{title}</span>
           </button>
         </AgentHubActionTooltip>
-        <span className="shrink-0 text-sm font-semibold">{title}</span>
         {agentLabel ? (
           <span className="min-w-0 truncate text-xs text-muted-foreground">{agentLabel}</span>
         ) : null}
