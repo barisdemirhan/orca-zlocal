@@ -151,7 +151,8 @@
 .agent-hub-orb-hover-controls {
   position: absolute;
   z-index: 2;
-  top: 0;
+  /* Why: against the top edge the stage passes the bound; the pill stays on screen over the glow. */
+  top: var(--orb-top-clip, 0px);
   left: 50%;
   transform: translate(-50%, 4px);
   padding: 4px;

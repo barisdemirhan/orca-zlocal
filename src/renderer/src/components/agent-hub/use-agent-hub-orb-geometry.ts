@@ -3,12 +3,20 @@ import { useAppStore } from '@/store'
 import {
   AGENT_HUB_ORB_MAX_DIAMETER,
   AGENT_HUB_ORB_MIN_DIAMETER,
+  agentHubOrbResizeKeyDiameter,
   fitAgentHubOrb,
   layoutAgentHubOrb,
+  type AgentHubOrbOverhang,
   type AgentHubOrbSide
 } from './agent-hub-orb-geometry'
 import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import {
+  NO_AGENT_HUB_ORB_OVERHANG,
+  clampAgentHubOrbPosition,
+  liftAgentHubOrbAboveBottom,
+  measureAgentHubOrbOverhang
+} from './agent-hub-orb-overhang'
 import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
 import { useAgentHubOrbDiameter } from './use-agent-hub-orb-diameter'
 
@@ -22,6 +30,7 @@ type OrbGesture = {
   diameter: number
   width: number
   height: number
+  overhang: AgentHubOrbOverhang
 }
 
 export function useAgentHubOrbGeometry({
@@ -41,6 +50,7 @@ export function useAgentHubOrbGeometry({
       `${s.settings?.agentHubDockPosition?.edge}:${s.settings?.agentHubDockPosition?.offset}:${s.settings?.agentHubDockSize}`
   )
   const savedPosition = useAgentHubOrbPanel((s) => s.stagePosition)
+  const quickOpen = useAgentHubOrbPanel((s) => s.quickInputOpen)
   const shellRef = useRef<HTMLDivElement>(null)
   const controlsRef = useRef<HTMLDivElement>(null)
   const quickRef = useRef<HTMLDivElement>(null)
@@ -52,13 +62,15 @@ export function useAgentHubOrbGeometry({
     controlsWidth: 170,
     requestHeight: 240,
     inlineWidth: 480,
-    heightOverhead: 116
+    heightOverhead: 116,
+    overhang: NO_AGENT_HUB_ORB_OVERHANG
   }))
   const fit = {
     preferredDiameter,
     bounds: measurements.bounds,
     controlsWidth: measurements.controlsWidth,
     heightOverhead: measurements.heightOverhead,
+    overhang: embedded ? NO_AGENT_HUB_ORB_OVERHANG : measurements.overhang,
     compact
   }
   const initialSize = fitAgentHubOrb({
@@ -113,14 +125,19 @@ export function useAgentHubOrbGeometry({
         ? 116
         : Math.max(116, (shellRef.current?.offsetHeight ?? 0) - currentDiameter)
       const bounds = readAgentHubOrbBounds()
+      const overhang = measureAgentHubOrbOverhang(
+        shellRef.current,
+        quickRef.current,
+        currentDiameter + heightOverhead,
+        quickOpen
+      )
+      if (!embedded) {
+        liftAgentHubOrbAboveBottom(bounds, overhang, currentDiameter + heightOverhead)
+      }
+      const next = { bounds, controlsWidth, requestHeight, inlineWidth, heightOverhead, overhang }
+      // Why: every field is a plain number in a fixed key order, so equal text means nothing moved.
       setMeasurements((previous) =>
-        previous.controlsWidth === controlsWidth &&
-        previous.requestHeight === requestHeight &&
-        previous.inlineWidth === inlineWidth &&
-        previous.heightOverhead === heightOverhead &&
-        Object.entries(bounds).every(([key, value]) => Reflect.get(previous.bounds, key) === value)
-          ? previous
-          : { bounds, controlsWidth, requestHeight, inlineWidth, heightOverhead }
+        JSON.stringify(previous) === JSON.stringify(next) ? previous : next
       )
     }
     const schedule = (): void => {
@@ -158,7 +175,7 @@ export function useAgentHubOrbGeometry({
       mutations.disconnect()
       window.removeEventListener('resize', schedule)
     }
-  }, [embedded, compact, requestVisible, dockPlacement])
+  }, [embedded, compact, requestVisible, dockPlacement, quickOpen])
 
   useEffect(() => {
     const finish = (cancel: boolean): void => {
@@ -198,12 +215,13 @@ export function useAgentHubOrbGeometry({
           )
         })
       } else {
-        const bounds = readAgentHubOrbBounds()
         useAgentHubOrbPanel.setState({
-          stagePosition: {
-            x: Math.max(bounds.left, Math.min(bounds.right - active.width, active.position.x + dx)),
-            y: Math.max(bounds.top, Math.min(bounds.bottom - active.height, active.position.y + dy))
-          }
+          stagePosition: clampAgentHubOrbPosition(
+            { x: active.position.x + dx, y: active.position.y + dy },
+            active,
+            readAgentHubOrbBounds(),
+            active.overhang
+          )
         })
       }
       event.preventDefault()
@@ -240,6 +258,8 @@ export function useAgentHubOrbGeometry({
 
   return {
     geometry,
+    /** How far the stage sits above the top bound; the hover pill moves down by as much. */
+    topClip: Math.max(0, measurements.bounds.top - geometry.y),
     request: layout.request,
     shellRef,
     controlsRef,
@@ -266,7 +286,8 @@ export function useAgentHubOrbGeometry({
         preferredDiameter,
         diameter: geometry.diameter,
         width: geometry.width,
-        height: geometry.height
+        height: geometry.height,
+        overhang: fit.overhang
       }
       event.currentTarget.setPointerCapture(event.pointerId)
     },
@@ -274,23 +295,12 @@ export function useAgentHubOrbGeometry({
       if (embedded || compact || gesture.current) {
         return
       }
-      const step = event.shiftKey ? 24 : 8
-      const next =
-        event.key === 'Home'
-          ? geometry.minimum
-          : event.key === 'End'
-            ? geometry.maximum
-            : event.key === 'ArrowRight' || event.key === 'ArrowDown'
-              ? geometry.diameter + step
-              : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
-                ? geometry.diameter - step
-                : null
-      if (next === null) {
+      const diameter = agentHubOrbResizeKeyDiameter(event.key, event.shiftKey, geometry)
+      if (diameter === null) {
         return
       }
       event.preventDefault()
       event.stopPropagation()
-      const diameter = Math.max(AGENT_HUB_ORB_MIN_DIAMETER, Math.min(geometry.maximum, next))
       useAgentHubOrbPanel.setState({ preferredDiameter: diameter })
       rememberDiameter(diameter)
     }

@@ -4,9 +4,13 @@ export const AGENT_HUB_ORB_MIN_DIAMETER = 128
 export const AGENT_HUB_ORB_DEFAULT_DIAMETER = AGENT_HUB_ORB_MIN_DIAMETER
 export const AGENT_HUB_ORB_MAX_DIAMETER = 360
 export const AGENT_HUB_ORB_CARD_GAP = 14
+/** The drawn sphere's radius as a share of its canvas; the rest of the canvas is glow. */
+export const AGENT_HUB_ORB_VISIBLE_RADIUS = 0.32
 
 export type AgentHubOrbBounds = { left: number; top: number; right: number; bottom: number }
 export type AgentHubOrbSide = 'right' | 'left' | 'top' | 'bottom'
+/** How far the stage box may pass the top and bottom bounds: its transparent room around the sphere. */
+export type AgentHubOrbOverhang = { top: number; bottom: number }
 export type AgentHubOrbGeometry = AgentHubMirrorGeometry & {
   diameter: number
   minimum: number
@@ -30,6 +34,7 @@ export function fitAgentHubOrb({
   controlsWidth = 170,
   compact = false,
   heightOverhead = HEIGHT_OVERHEAD,
+  overhang = { top: 0, bottom: 0 },
   maximumDiameter = AGENT_HUB_ORB_MAX_DIAMETER
 }: {
   position: { x: number; y: number }
@@ -38,17 +43,16 @@ export function fitAgentHubOrb({
   controlsWidth?: number
   compact?: boolean
   heightOverhead?: number
+  overhang?: AgentHubOrbOverhang
   maximumDiameter?: number
 }): AgentHubOrbGeometry {
   const width = Math.max(0, bounds.right - bounds.left)
   const height = Math.max(0, bounds.bottom - bounds.top)
   const minimumWidth = Math.min(width, Math.max(128 + WIDTH_OVERHEAD, controlsWidth + 24))
   const x = within(position.x, bounds.left, Math.max(bounds.left, bounds.right - minimumWidth))
-  const y = within(
-    position.y,
-    bounds.top,
-    Math.max(bounds.top, bounds.bottom - MIN_VISIBLE_DIAMETER - heightOverhead)
-  )
+  const top = bounds.top - overhang.top
+  const bottom = bounds.bottom + overhang.bottom
+  const y = within(position.y, top, Math.max(top, bottom - MIN_VISIBLE_DIAMETER - heightOverhead))
   const maximum = Math.max(
     0,
     Math.floor(
@@ -57,7 +61,7 @@ export function fitAgentHubOrb({
         compact ? AGENT_HUB_ORB_MIN_DIAMETER : AGENT_HUB_ORB_MAX_DIAMETER,
         maximumDiameter,
         bounds.right - x - WIDTH_OVERHEAD,
-        bounds.bottom - y - heightOverhead
+        bottom - y - heightOverhead
       )
     )
   )
@@ -195,4 +199,24 @@ export function layoutAgentHubOrb(
       placement: 'stack'
     }
   }
+}
+
+/** The diameter a resize-handle key asks for, or null when the key is not a resize key. */
+export function agentHubOrbResizeKeyDiameter(
+  key: string,
+  shiftKey: boolean,
+  orb: Pick<AgentHubOrbGeometry, 'diameter' | 'minimum' | 'maximum'>
+): number | null {
+  const step = shiftKey ? 24 : 8
+  const next =
+    key === 'Home'
+      ? orb.minimum
+      : key === 'End'
+        ? orb.maximum
+        : key === 'ArrowRight' || key === 'ArrowDown'
+          ? orb.diameter + step
+          : key === 'ArrowLeft' || key === 'ArrowUp'
+            ? orb.diameter - step
+            : null
+  return next === null ? null : Math.max(AGENT_HUB_ORB_MIN_DIAMETER, Math.min(orb.maximum, next))
 }

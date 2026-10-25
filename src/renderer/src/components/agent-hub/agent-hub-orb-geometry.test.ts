@@ -105,4 +105,17 @@ describe('Orb viewport fitting', () => {
       height: 500
     })
   })
+
+  it('lets the transparent room around the sphere pass the top and bottom bounds', () => {
+    const fit = (y: number) =>
+      fitAgentHubOrb({
+        position: { x: 80, y },
+        preferredDiameter: 128,
+        bounds,
+        overhang: { top: 15, bottom: 113 }
+      })
+    expect(fit(0)).toMatchObject({ y: 33, diameter: 128 })
+    // The lowest stage whose box passes the bottom bound by its room keeps its full size.
+    expect(fit(864 + 113 - 128 - 116)).toMatchObject({ y: 733, diameter: 128 })
+  })
 })

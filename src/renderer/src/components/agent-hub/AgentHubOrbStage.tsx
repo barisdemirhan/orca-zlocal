@@ -76,6 +76,7 @@ export function AgentHubOrbStage({
   const [container] = useState(() => document.createElement('div'))
   const {
     geometry,
+    topClip,
     request: placement,
     shellRef,
     quickRef,
@@ -116,8 +117,9 @@ export function AgentHubOrbStage({
     event.target instanceof Element && event.target.closest(INTERACTIVE_TARGETS) !== null
   const name = useAgentHubOrbName()
   const label = translate('auto.agentHub.orb.size', 'Orb size')
-  const style: CSSProperties & { '--orb-diameter': string } = {
+  const style: CSSProperties & { '--orb-diameter': string; '--orb-top-clip': string } = {
     '--orb-diameter': `${geometry.diameter}px`,
+    '--orb-top-clip': `${topClip}px`,
     ...(!embedded ? { left: geometry.x, top: geometry.y, width: geometry.width } : {})
   }
   return (
