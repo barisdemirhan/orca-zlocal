@@ -8,13 +8,12 @@ import {
   type CSSProperties
 } from 'react'
 import { createPortal } from 'react-dom'
-import { MoveDiagonal2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
 import { setAgentHubOrbRequestDestination, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
+import { agentHubOrbResizeArc } from './agent-hub-orb-geometry'
 import { useAgentHubOrbSphereGestures } from './use-agent-hub-orb-sphere-gestures'
 import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
 import './agent-hub-orb-stage.css'
@@ -76,7 +75,7 @@ export function AgentHubOrbStage({
   const [container] = useState(() => document.createElement('div'))
   const {
     geometry,
-    topClip,
+    pillBelow,
     request: placement,
     shellRef,
     quickRef,
@@ -117,9 +116,9 @@ export function AgentHubOrbStage({
     event.target instanceof Element && event.target.closest(INTERACTIVE_TARGETS) !== null
   const name = useAgentHubOrbName()
   const label = translate('auto.agentHub.orb.size', 'Orb size')
-  const style: CSSProperties & { '--orb-diameter': string; '--orb-top-clip': string } = {
+  const grip = agentHubOrbResizeArc(geometry.diameter)
+  const style: CSSProperties & { '--orb-diameter': string } = {
     '--orb-diameter': `${geometry.diameter}px`,
-    '--orb-top-clip': `${topClip}px`,
     ...(!embedded ? { left: geometry.x, top: geometry.y, width: geometry.width } : {})
   }
   return (
@@ -130,6 +129,7 @@ export function AgentHubOrbStage({
           data-agent-hub-orb-stage
           data-embedded={embedded}
           data-compact={compact}
+          data-pill={pillBelow ? 'below' : 'above'}
           className="agent-hub-orb-stage"
           style={style}
           hidden={!visible}
@@ -212,11 +212,10 @@ export function AgentHubOrbStage({
               <span className="agent-hub-orb-resize" data-agent-hub-orb-resize>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="icon-sm"
-                      className="size-[22px] min-w-0 cursor-nwse-resize touch-none rounded-full border-input bg-popover/80 p-0 text-muted-foreground backdrop-blur-md [&_svg]:size-3"
+                      className="agent-hub-orb-resize-grip"
+                      style={{ width: grip.size, height: grip.size }}
                       role="slider"
                       aria-label={label}
                       aria-valuemin={geometry.minimum}
@@ -232,10 +231,15 @@ export function AgentHubOrbStage({
                       onPointerDown={(event) => beginGesture('resize', event)}
                       onKeyDown={resizeKey}
                     >
-                      <MoveDiagonal2 aria-hidden />
-                    </Button>
+                      <svg width={grip.size} height={grip.size} aria-hidden>
+                        <path className="agent-hub-orb-resize-hit" d={grip.path} />
+                        <path className="agent-hub-orb-resize-arc" d={grip.path} />
+                      </svg>
+                    </button>
                   </TooltipTrigger>
-                  <TooltipContent>{label}</TooltipContent>
+                  <TooltipContent side="bottom" align="end">
+                    {label}
+                  </TooltipContent>
                 </Tooltip>
               </span>
             ) : null}

@@ -1,9 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import {
-  AGENT_HUB_ORB_MAX_DIAMETER,
-  AGENT_HUB_ORB_MIN_DIAMETER,
   agentHubOrbResizeKeyDiameter,
+  clampAgentHubOrbDiameter,
   fitAgentHubOrb,
   layoutAgentHubOrb,
   type AgentHubOrbOverhang,
@@ -13,6 +12,7 @@ import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import {
   NO_AGENT_HUB_ORB_OVERHANG,
+  agentHubOrbPillBelow,
   clampAgentHubOrbPosition,
   liftAgentHubOrbAboveBottom,
   measureAgentHubOrbOverhang
@@ -209,10 +209,7 @@ export function useAgentHubOrbGeometry({
       const dy = event.clientY - active.pointer.y
       if (active.mode === 'resize') {
         useAgentHubOrbPanel.setState({
-          preferredDiameter: Math.max(
-            AGENT_HUB_ORB_MIN_DIAMETER,
-            Math.min(AGENT_HUB_ORB_MAX_DIAMETER, active.diameter + Math.max(dx, dy))
-          )
+          preferredDiameter: clampAgentHubOrbDiameter(active.diameter + Math.max(dx, dy))
         })
       } else {
         useAgentHubOrbPanel.setState({
@@ -258,8 +255,8 @@ export function useAgentHubOrbGeometry({
 
   return {
     geometry,
-    /** How far the stage sits above the top bound; the hover pill moves down by as much. */
-    topClip: Math.max(0, measurements.bounds.top - geometry.y),
+    pillBelow:
+      !embedded && agentHubOrbPillBelow(geometry.y, measurements.overhang, measurements.bounds),
     request: layout.request,
     shellRef,
     controlsRef,

@@ -5,6 +5,7 @@ import {
   placeAgentHubOrbRequest,
   type AgentHubOrbBounds
 } from './agent-hub-orb-geometry'
+import { agentHubOrbPillBelow } from './agent-hub-orb-overhang'
 
 const bounds = { left: 12, top: 48, right: 788, bottom: 864 }
 
@@ -117,5 +118,12 @@ describe('Orb viewport fitting', () => {
     expect(fit(0)).toMatchObject({ y: 33, diameter: 128 })
     // The lowest stage whose box passes the bottom bound by its room keeps its full size.
     expect(fit(864 + 113 - 128 - 116)).toMatchObject({ y: 733, diameter: 128 })
+  })
+
+  it('moves the hover pill under the sphere once it would pass the top bound', () => {
+    const overhang = { top: 49, bottom: 0, pill: 42 }
+    // The pill needs its height plus a 6px gap above the visible sphere.
+    expect(agentHubOrbPillBelow(48 - 49 + 48, overhang, bounds)).toBe(false)
+    expect(agentHubOrbPillBelow(48 - 49 + 47, overhang, bounds)).toBe(true)
   })
 })

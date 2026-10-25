@@ -201,6 +201,26 @@ export function layoutAgentHubOrb(
   }
 }
 
+/** The resize grip: an arc 6px outside the visible rim, from 20 to 70 degrees below the right side. */
+export function agentHubOrbResizeArc(diameter: number): { size: number; path: string } {
+  const radius = diameter * AGENT_HUB_ORB_VISIBLE_RADIUS + 6
+  const point = (degrees: number): string => {
+    const angle = (degrees * Math.PI) / 180
+    return `${(radius * Math.cos(angle)).toFixed(1)} ${(radius * Math.sin(angle)).toFixed(1)}`
+  }
+  return {
+    size: Math.ceil(radius + 10),
+    path: `M ${point(20)} A ${radius} ${radius} 0 0 1 ${point(70)}`
+  }
+}
+
+export function clampAgentHubOrbDiameter(
+  value: number,
+  maximum = AGENT_HUB_ORB_MAX_DIAMETER
+): number {
+  return Math.max(AGENT_HUB_ORB_MIN_DIAMETER, Math.min(maximum, value))
+}
+
 /** The diameter a resize-handle key asks for, or null when the key is not a resize key. */
 export function agentHubOrbResizeKeyDiameter(
   key: string,
@@ -218,5 +238,5 @@ export function agentHubOrbResizeKeyDiameter(
           : key === 'ArrowLeft' || key === 'ArrowUp'
             ? orb.diameter - step
             : null
-  return next === null ? null : Math.max(AGENT_HUB_ORB_MIN_DIAMETER, Math.min(orb.maximum, next))
+  return next === null ? null : clampAgentHubOrbDiameter(next, orb.maximum)
 }

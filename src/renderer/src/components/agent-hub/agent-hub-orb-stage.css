@@ -40,12 +40,45 @@
   width: var(--orb-diameter);
   height: var(--orb-diameter);
 }
-/* Why: the handle rides the visible sphere's rim at 45 degrees (radius 0.32 x diameter) so it tracks the diameter; 11px is half the handle. */
+/* Why: the grip's box starts at the sphere's centre; only the arc's stroke takes the pointer, so the sphere stays clickable. */
 .agent-hub-orb-resize {
   position: absolute;
+  left: 50%;
+  top: 50%;
   display: flex;
-  left: calc(50% + var(--orb-diameter) * 0.32 * 0.707 + 6px - 11px);
-  top: calc(50% + var(--orb-diameter) * 0.32 * 0.707 + 6px - 11px);
+  pointer-events: none;
+}
+.agent-hub-orb-resize-grip {
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: none;
+  outline: none;
+}
+.agent-hub-orb-resize-grip svg {
+  overflow: visible;
+}
+.agent-hub-orb-resize-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14px;
+  pointer-events: stroke;
+  cursor: nwse-resize;
+}
+.agent-hub-orb-resize-arc {
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  pointer-events: none;
+  transition:
+    stroke 160ms ease,
+    stroke-width 160ms ease;
+}
+.agent-hub-orb-resize-grip:hover .agent-hub-orb-resize-arc,
+.agent-hub-orb-resize-grip:focus-visible .agent-hub-orb-resize-arc {
+  stroke: var(--foreground);
+  stroke-width: 4px;
 }
 /* Why: the handle shows on hover or focus, so keyboard users reach it. */
 .agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-resize {
@@ -151,10 +184,10 @@
 .agent-hub-orb-hover-controls {
   position: absolute;
   z-index: 2;
-  /* Why: against the top edge the stage passes the bound; the pill stays on screen over the glow. */
-  top: var(--orb-top-clip, 0px);
+  /* Why: the canvas sits 26px into the art and the visible sphere starts 0.18 x diameter into it; 6px gap. */
+  top: calc(26px + var(--orb-diameter) * 0.18 - 6px);
   left: 50%;
-  transform: translate(-50%, 4px);
+  transform: translate(-50%, calc(-100% + 4px));
   padding: 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -163,15 +196,39 @@
   color: var(--popover-foreground);
   opacity: 0;
   pointer-events: none;
+  /* Why: the pill lingers 300ms so a pointer that slips off on its way up does not lose it. */
   transition:
-    opacity 220ms ease,
-    transform 280ms ease;
+    opacity 220ms ease 300ms,
+    transform 280ms ease 300ms;
+}
+/* Why: against the top edge the pill sits under the visible sphere, or under the open writing box. */
+.agent-hub-orb-stage[data-pill='below'] .agent-hub-orb-hover-controls {
+  top: calc(26px + var(--orb-diameter) * 0.82 + 6px);
+  transform: translate(-50%, -4px);
+}
+.agent-hub-orb-stage[data-pill='below']:has(.agent-hub-orb-quick[data-open='true'])
+  .agent-hub-orb-hover-controls {
+  top: calc(80px + var(--orb-diameter) * 0.775);
+}
+.agent-hub-orb-art:hover .agent-hub-orb-hover-controls,
+.agent-hub-orb-art:focus-within .agent-hub-orb-hover-controls,
+.agent-hub-orb-stage[data-pill='below']:has(.agent-hub-orb-quick:hover)
+  .agent-hub-orb-hover-controls {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0ms;
 }
 .agent-hub-orb-art:hover .agent-hub-orb-hover-controls,
 .agent-hub-orb-art:focus-within .agent-hub-orb-hover-controls {
-  opacity: 1;
+  transform: translate(-50%, -100%);
+}
+.agent-hub-orb-stage[data-pill='below'] .agent-hub-orb-art:hover .agent-hub-orb-hover-controls,
+.agent-hub-orb-stage[data-pill='below']
+  .agent-hub-orb-art:focus-within
+  .agent-hub-orb-hover-controls,
+.agent-hub-orb-stage[data-pill='below']:has(.agent-hub-orb-quick:hover)
+  .agent-hub-orb-hover-controls {
   transform: translate(-50%, 0);
-  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

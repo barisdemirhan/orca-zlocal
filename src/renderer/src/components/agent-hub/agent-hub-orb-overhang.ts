@@ -5,15 +5,20 @@ import {
 } from './agent-hub-orb-geometry'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
-export const NO_AGENT_HUB_ORB_OVERHANG: AgentHubOrbOverhang = { top: 0, bottom: 0 }
+/** The overhang plus the hover pill's height, which decides the side the pill sits on. */
+export type AgentHubOrbMeasuredOverhang = AgentHubOrbOverhang & { pill: number }
 
-/** Only the drawn sphere, the hover pill and an open writing box have to stay inside the bounds. */
+export const NO_AGENT_HUB_ORB_OVERHANG: AgentHubOrbMeasuredOverhang = { top: 0, bottom: 0, pill: 0 }
+
+const AGENT_HUB_ORB_PILL_GAP = 6
+
+/** Only the drawn sphere and an open writing box have to stay inside the bounds; the pill flips below at the top. */
 export function measureAgentHubOrbOverhang(
   shell: HTMLElement | null,
   quick: HTMLElement | null,
   modelHeight: number,
   quickOpen: boolean
-): AgentHubOrbOverhang {
+): AgentHubOrbMeasuredOverhang {
   const sphere = shell?.querySelector('.agent-hub-orb-art-sphere')
   if (!shell || !(sphere instanceof HTMLElement) || !sphere.offsetHeight) {
     return NO_AGENT_HUB_ORB_OVERHANG
@@ -24,9 +29,19 @@ export function measureAgentHubOrbOverhang(
   const pill = shell.querySelector<HTMLElement>('.agent-hub-orb-hover-controls')?.offsetHeight ?? 0
   const lowest = quickOpen && quick ? quick.getBoundingClientRect().bottom : canvas.bottom - glow
   return {
-    top: Math.max(0, Math.round(canvas.top + glow - box.top - pill)),
-    bottom: Math.max(0, Math.round(box.top + modelHeight - lowest))
+    top: Math.max(0, Math.round(canvas.top + glow - box.top)),
+    bottom: Math.max(0, Math.round(box.top + modelHeight - lowest)),
+    pill
   }
+}
+
+/** True when the pill above the visible sphere would pass the top bound, so it sits under the sphere instead. */
+export function agentHubOrbPillBelow(
+  y: number,
+  overhang: AgentHubOrbMeasuredOverhang,
+  bounds: AgentHubOrbBounds
+): boolean {
+  return y + overhang.top - overhang.pill - AGENT_HUB_ORB_PILL_GAP < bounds.top
 }
 
 /** Lifts a saved Orb whose writing box opened against the bottom edge, rather than shrinking it. */
