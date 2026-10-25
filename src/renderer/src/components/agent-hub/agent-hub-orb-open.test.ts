@@ -34,7 +34,7 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-vi.mock('@/lib/structured-agent-session-tab-activation', () => ({
+vi.mock('@/lib/agent-session/structured-agent-session-tab-activation', () => ({
   findStructuredAgentSessionTab: mocks.find,
   activateStructuredAgentSessionTab: mocks.activate
 }))

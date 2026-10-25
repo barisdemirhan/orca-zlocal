@@ -16,7 +16,7 @@ vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
 }))
 vi.mock('@/lib/worktree-runtime-owner', async (original) => ({
   ...(await original<typeof Owner>()),
-  runtimeEnvironmentIdWithLegacyFallbackUnlessTwin: () => 'old-host'
+  runtimeEnvironmentIdOrLocalUnlessTwin: () => 'old-host'
 }))
 vi.mock('@/lib/terminal-worktree-route', async (original) => ({
   ...(await original<typeof Route>()),

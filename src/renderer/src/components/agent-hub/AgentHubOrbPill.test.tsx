@@ -24,7 +24,10 @@ vi.mock('@/store', async () => {
   }
 })
 vi.mock('../native-chat/use-structured-agent-session-mutate', () => ({
-  useStructuredAgentSessionMutate: () => ({ mutate: mocks.mutate })
+  useStructuredAgentSessionMutate: () => ({
+    mutate: mocks.mutate,
+    admit: () => ({ target: { kind: 'local' }, write: vi.fn(), mutate: mocks.mutate })
+  })
 }))
 vi.mock('@/runtime/structured-agent-session-client', () => ({
   supportsStructuredAgentSessionQuestionAnswers: async () => true,

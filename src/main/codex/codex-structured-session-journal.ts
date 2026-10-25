@@ -6,7 +6,7 @@ import {
   type CodexJournalTranslator
 } from './codex-structured-journal-translation'
 import type { CodexOpenedThread } from './codex-structured-thread-open'
-import type { CodexAppServerConnection } from './codex-app-server-connection'
+import type { CodexAppServerConnection } from './app-server/codex-app-server-connection-types'
 import { AgentSessionAcquisitionRefusal } from '../native-chat/agent-session-wire/structured-agent-session-adapter'
 import type { CodexSubagentExecutions } from './codex-subagent-executions'
 import type {

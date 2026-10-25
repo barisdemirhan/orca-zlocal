@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { AgentSessionVoiceCapability } from '../../shared/agent-session-voice'
-import type { CodexAppServerConnection } from './codex-app-server-connection'
+import type { CodexAppServerConnection } from './app-server/codex-app-server-connection-types'
 import { isCodexAppServerRequestError } from './app-server/codex-app-server-request-error'
 import { CodexAppServerUnsupportedError } from './codex-app-server-session'
 

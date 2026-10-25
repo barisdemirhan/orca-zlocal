@@ -105,9 +105,16 @@ export function openFilePathLinkAtBufferPosition(
       onOpenFailure && (verified || link.isKnownWorktreeRoot || /[\\/]/.test(link.pathText))
     const reportedPath =
       verified || link.isKnownWorktreeRoot || !shown ? link.absolutePath : shown.absolutePath
+    const openDeps = {
+      ...deps,
+      openWithSystemDefault: deps.openWithSystemDefault === true,
+      onOpenFailure: reportsFailure
+        ? (failure: FileOpenFailure) => onOpenFailure(reportedPath, failure)
+        : undefined
+    }
     if (
       deps.event &&
-      !deps.openWithSystemDefault &&
+      !openDeps.openWithSystemDefault &&
       peekTerminalFileFromMirror(link.absolutePath, {
         worktreeId: deps.worktreeId,
         onPairedRuntime: Boolean(deps.runtimeEnvironmentId),
@@ -122,21 +129,17 @@ export function openFilePathLinkAtBufferPosition(
         worktreePath: deps.worktreePath,
         event: deps.event,
         openInWorkspace: () =>
-          openDetectedFilePath(link.absolutePath, link.line, link.column, deps),
+          openDetectedFilePath(link.absolutePath, link.line, link.column, openDeps),
         openExternally: () =>
           openDetectedFilePath(link.absolutePath, link.line, link.column, {
-            ...deps,
+            ...openDeps,
             openWithSystemDefault: true
           })
       })
     ) {
       return
     }
-    openDetectedFilePath(link.absolutePath, link.line, link.column, {
-      ...deps,
-      openWithSystemDefault: deps.openWithSystemDefault === true,
-      onOpenFailure: reportsFailure ? (failure) => onOpenFailure(reportedPath, failure) : undefined
-    })
+    openDetectedFilePath(link.absolutePath, link.line, link.column, openDeps)
   }
   // Never stat external shares unprompted; open the path as written and let the host resolve it.
   const settled = (link: ClickedFileLink): boolean =>

@@ -246,7 +246,7 @@ const SLEEPING = {
   origin: resumeRecord('origin'),
   restoreOnTabOpenOnly: resumeRecord('restoreOnTabOpenOnly'),
   // Manual sleep only; a quit capture never waits for a request.
-  wakeOnRequestOnly: paneRecord('leaf.sleeping.wakeOnRequestOnly')
+  wakeOnRequestOnly: resumeRecord('wakeOnRequestOnly')
 } as const satisfies Record<keyof SleepingAgentSessionRecord, DiskFieldWritten>
 
 const INCARNATION = {

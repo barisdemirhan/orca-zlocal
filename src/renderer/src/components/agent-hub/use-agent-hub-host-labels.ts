@@ -4,6 +4,8 @@ import { getMixedWorktreeHostContextLabels } from '../../../../shared/sidebar-li
 import { buildSidebarHostOptions } from '@/components/sidebar/sidebar-host-options'
 import { getSettingsFocusedExecutionHostId } from '../../../../shared/execution-host'
 import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'
+import { getRepoHostIdentity } from '../../../../shared/repo-host-identity'
+import { repoOfWorktree } from '../../../../shared/sidebar-list/sidebar-feed-index'
 
 /**
  * "Local Mac" / SSH host / server labels keyed by worktree host identity, only when the workspaces
@@ -30,9 +32,11 @@ export function useAgentHubHostLabels(): ReadonlyMap<string, string> | undefined
         hostLabelOverrides: getHostDisplayLabelOverrides(settings)
       }).map((host) => [host.id, host.label])
     )
+    const repoMap = new Map(repos.map((repo) => [repo.id, repo]))
+    const reposByKey = new Map(repos.map((repo) => [getRepoHostIdentity(repo), repo]))
     return getMixedWorktreeHostContextLabels(
       Object.values(worktreesByRepo).flat(),
-      new Map(repos.map((repo) => [repo.id, repo])),
+      (worktree) => repoOfWorktree(repoMap, reposByKey, worktree),
       hostLabelById,
       getSettingsFocusedExecutionHostId(settings)
     )

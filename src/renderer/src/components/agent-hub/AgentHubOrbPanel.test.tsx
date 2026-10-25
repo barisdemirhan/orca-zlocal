@@ -94,7 +94,7 @@ vi.mock('./use-agent-hub-orb-options', () => ({
 vi.mock('@/lib/structured-agent-session-launch-label', () => ({
   structuredAgentLabel: (id: string) => (id === 'codex' ? 'Codex' : 'Claude')
 }))
-vi.mock('@/lib/structured-agent-session-tab-activation', () => ({
+vi.mock('@/lib/agent-session/structured-agent-session-tab-activation', () => ({
   findStructuredAgentSessionTab: (_tabs: unknown, params: { sessionId: string }) => ({
     id: `tab-${params.sessionId}`
   })

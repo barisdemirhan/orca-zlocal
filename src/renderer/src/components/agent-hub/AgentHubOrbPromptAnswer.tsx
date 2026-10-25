@@ -25,7 +25,7 @@ export function AgentHubOrbPromptAnswer({
 }): React.JSX.Element {
   const stateRef = useRef(readState)
   stateRef.current = readState
-  const { mutate } = useStructuredAgentSessionMutate({
+  const { mutate, admit } = useStructuredAgentSessionMutate({
     sessionId,
     target: AGENT_HUB_ORB_TARGET,
     stateRef
@@ -96,8 +96,7 @@ export function AgentHubOrbPromptAnswer({
           respondToStructuredAgentSessionPrompt({
             item,
             response: { kind: 'option', optionId: option.id },
-            target: AGENT_HUB_ORB_TARGET,
-            mutate
+            action: admit()
           }),
         index
       )

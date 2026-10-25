@@ -1,5 +1,5 @@
 import { getConnectionId } from '@/lib/connection-context'
-import { runtimeEnvironmentIdWithLegacyFallbackUnlessTwin } from '@/lib/worktree-runtime-owner'
+import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { AgentHubPeekChips } from './AgentHubPeekChips'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
@@ -174,8 +174,7 @@ export function AgentHubAttentionCard({
     const state = useAppStore.getState()
     return window.api.ui.saveClipboardImageAsTempFile({
       connectionId: getConnectionId(thread.worktree.id) ?? null,
-      runtimeEnvironmentId:
-        runtimeEnvironmentIdWithLegacyFallbackUnlessTwin(state, thread.worktree.id) ?? null
+      runtimeEnvironmentId: runtimeEnvironmentIdOrLocalUnlessTwin(state, thread.worktree.id) ?? null
     })
   }
 

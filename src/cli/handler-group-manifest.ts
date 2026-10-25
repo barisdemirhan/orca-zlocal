@@ -1,5 +1,6 @@
 import type { CommandHandler } from './dispatch'
 import { BROWSER_HANDLER_GROUPS } from './browser-handler-groups'
+import { AGENT_HUB_HANDLER_GROUP } from './agent-hub-handler-group'
 import { JIRA_HANDLER_GROUP } from './jira-handler-group'
 import { LINEAR_HANDLER_GROUP } from './linear-handler-group'
 import { REFERENCE_HANDLER_GROUP } from './reference-handler-group'
@@ -16,27 +17,7 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
   JIRA_HANDLER_GROUP,
   LINEAR_HANDLER_GROUP,
   REFERENCE_HANDLER_GROUP,
-  {
-    name: 'agent-hub',
-    keys: [
-      'hub notify',
-      'hub peek',
-      'hub ask',
-      'hub orb remember',
-      'hub progress',
-      'hub presence',
-      'hub status',
-      'hub mirror open',
-      'hub mirror add',
-      'hub mirror minimize',
-      'hub mirror restore',
-      'hub mirror close',
-      'hub arrange',
-      'hub canvas open',
-      'hub canvas close'
-    ],
-    load: async () => (await import('./handlers/agent-hub.js')).AGENT_HUB_HANDLERS
-  },
+  AGENT_HUB_HANDLER_GROUP,
   {
     name: 'core',
     keys: ['claude-teams', 'open', 'serve', 'status'],
