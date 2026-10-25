@@ -15,9 +15,14 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/i18n/i18n', () => ({
   translate: (_key: string, fallback: string) => fallback
 }))
-vi.mock('@/store', () => ({
-  useAppStore: { getState: () => ({ settings: mocks.settings }) }
-}))
+vi.mock('@/store', () => {
+  const state = { settings: mocks.settings }
+  return {
+    useAppStore: Object.assign((selector: (s: typeof state) => unknown) => selector(state), {
+      getState: () => state
+    })
+  }
+})
 vi.mock('../terminal-pane/terminal-fit-restore', () => ({
   restoreTerminalFitToDesktop: mocks.restoreTerminalFitToDesktop
 }))
