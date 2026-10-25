@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
-import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
+import { setAgentHubOrbRequestDestination, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
 import { useAgentHubOrbSphereGestures } from './use-agent-hub-orb-sphere-gestures'
 import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
@@ -34,6 +34,7 @@ export function AgentHubOrbStage({
   requestVisible,
   notice,
   caption,
+  captionKey,
   captionDurationMs,
   captionAction,
   captionHint,
@@ -56,6 +57,8 @@ export function AgentHubOrbStage({
   requestVisible: boolean
   notice?: string
   caption?: string
+  /** Tells two replies with the same words apart; Close hides only the one it was pressed on. */
+  captionKey?: string
   captionDurationMs?: number
   captionAction?: ReactNode
   captionHint?: ReactNode
@@ -67,7 +70,8 @@ export function AgentHubOrbStage({
   onSphereHoldEnd?: () => void
 }): React.JSX.Element {
   const inlineRef = useRef<HTMLDivElement>(null)
-  const [captionsOpen, setCaptionsOpen] = useState(true)
+  const dismissedCaption = useAgentHubOrbPanel((s) => s.dismissedCaption)
+  const captionId = captionKey ?? caption ?? ''
   const [captionEngaged, setCaptionEngaged] = useState(false)
   const [container] = useState(() => document.createElement('div'))
   const {
@@ -176,9 +180,11 @@ export function AgentHubOrbStage({
             ) : null}
             <div className="agent-hub-orb-art-sphere">
               <AgentHubOrbSpeechBubble
-                open={captionsOpen}
+                open={captionId !== dismissedCaption}
                 engaged={captionEngaged}
-                onOpenChange={setCaptionsOpen}
+                onOpenChange={(next) =>
+                  useAgentHubOrbPanel.setState({ dismissedCaption: next ? null : captionId })
+                }
                 text={caption ?? ''}
                 speakerLabel={name}
                 durationMs={captionDurationMs}

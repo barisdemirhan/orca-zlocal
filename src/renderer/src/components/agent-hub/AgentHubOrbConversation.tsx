@@ -283,6 +283,7 @@ export function AgentHubOrbConversation({
         <AgentHubOrbStage
           {...visual}
           caption={live ? voice.caption : (quick.reply ?? undefined)}
+          captionKey={live ? undefined : quick.replyKey}
           captionDurationMs={live ? undefined : AGENT_HUB_ORB_REPLY_MS}
           captionAction={
             live || !quick.reply ? undefined : (

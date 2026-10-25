@@ -71,7 +71,7 @@ it('hides idle speech after one minute and lets the pointer keep it available', 
   expect(visible()).toBe(false)
 })
 
-it('starts a fresh minute for new speech while preserving an explicit Hide captions choice', () => {
+it('starts a fresh minute for new speech while preserving an explicit Close', () => {
   vi.useFakeTimers()
   const { rerender } = render(<Caption text="First response" />)
   act(() => vi.advanceTimersByTime(45_000))
@@ -83,7 +83,7 @@ it('starts a fresh minute for new speech while preserving an explicit Hide capti
   rerender(<Caption text="" />)
   rerender(<Caption text="Second response" />)
   expect(screen.queryByText('Second response')).not.toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Hide captions' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }))
   rerender(<Caption text="Third response" />)
   fireEvent.pointerEnter(screen.getByRole('button', { name: 'Live Orb' }))
   expect(screen.queryByText('Third response')).toBeNull()
@@ -96,7 +96,7 @@ it('lets captions expire again after the bubble closed under a resting pointer',
   render(<Caption text="Sticky response" />)
   const bubble = screen.getByText('Sticky response').closest('[data-agent-hub-orb-captions]')!
   fireEvent.pointerEnter(bubble)
-  fireEvent.click(screen.getByRole('button', { name: 'Hide captions' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }))
   fireEvent.click(screen.getByRole('button', { name: 'Show captions' }))
   act(() => vi.advanceTimersByTime(60_000))
   expect(screen.queryByText('Sticky response')).toBeNull()
@@ -115,7 +115,7 @@ it('keeps a written reply for its shorter time with its own header action', () =
   vi.useFakeTimers()
   render(<Caption text="Tests passed" durationMs={12_000} action={<button>Open chat</button>} />)
   const header = screen.getByRole('button', { name: 'Open chat' }).parentElement
-  expect(header?.contains(screen.getByRole('button', { name: 'Hide captions' }))).toBe(true)
+  expect(header?.contains(screen.getByRole('button', { name: 'Close' }))).toBe(true)
   act(() => vi.advanceTimersByTime(11_999))
   expect(screen.queryByText('Tests passed')).not.toBeNull()
   act(() => vi.advanceTimersByTime(1))

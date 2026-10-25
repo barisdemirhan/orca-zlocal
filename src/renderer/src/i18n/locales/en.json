@@ -22344,7 +22344,7 @@
       "unmuteSpeaker": "Unmute Orb",
       "muteSpeaker": "Mute Orb",
       "showCaptions": "Show captions",
-      "hideCaptions": "Hide captions",
+      "closeCaption": "Close",
       "requestTitle": "Orb is waiting for you",
       "answerLater": "Answer later",
       "miniWindow": "Mini window",

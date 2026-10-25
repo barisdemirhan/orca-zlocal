@@ -29,6 +29,8 @@ type OrbPanelState = {
   miniPosition: { x: number; y: number } | null
   /** The one-line box under the sphere; a plain click on a sleeping Orb opens straight into it. */
   quickInputOpen: boolean
+  /** The reply whose bubble was closed; kept here so the sphere coming back does not reopen it. */
+  dismissedCaption: string | null
   requestDestination: HTMLElement | null
   nativeRequestPending: boolean
   nativeRequestVisible: boolean
@@ -49,6 +51,7 @@ export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   stagePosition: null,
   miniPosition: null,
   quickInputOpen: false,
+  dismissedCaption: null,
   requestDestination: null,
   nativeRequestPending: false,
   nativeRequestVisible: false,

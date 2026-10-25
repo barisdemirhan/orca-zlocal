@@ -18,7 +18,7 @@ export type AgentHubOrbSpeechBubbleProps = {
   engaged?: boolean
   /** How long the bubble stays without a pointer or focus on it; speech gets a minute. */
   durationMs?: number
-  /** A header action beside Hide, such as opening the full conversation. */
+  /** A header action beside Close, such as opening the full conversation. */
   action?: ReactNode
   /** A muted line under the reply, such as a pending suggestion that needs the full window. */
   hint?: ReactNode
@@ -67,7 +67,7 @@ export function AgentHubOrbSpeechBubble({
       compact
     })
   const showLabel = translate('agentHub.orb.showCaptions', 'Show captions')
-  const hideLabel = translate('agentHub.orb.hideCaptions', 'Hide captions')
+  const closeLabel = translate('agentHub.orb.closeCaption', 'Close')
   const changeOpen = (next: boolean): void => {
     if (!next) {
       setBubbleHovered(false)
@@ -159,7 +159,7 @@ export function AgentHubOrbSpeechBubble({
                   type="button"
                   variant="ghost"
                   size="icon-xs"
-                  aria-label={hideLabel}
+                  aria-label={closeLabel}
                   onClick={() => {
                     restoreFocus.current = true
                     changeOpen(false)
@@ -168,7 +168,7 @@ export function AgentHubOrbSpeechBubble({
                   <X />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{hideLabel}</TooltipContent>
+              <TooltipContent>{closeLabel}</TooltipContent>
             </Tooltip>
           </div>
           <div

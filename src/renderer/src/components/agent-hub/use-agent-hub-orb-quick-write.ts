@@ -68,6 +68,7 @@ export function useAgentHubOrbQuickWrite({
     submit,
     dictation,
     reply,
+    replyKey: latch.key,
     requestDismissed,
     showChat,
     /** "Answer later" on the card: the card steps aside and the box opens. */

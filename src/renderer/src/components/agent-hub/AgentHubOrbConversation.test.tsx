@@ -297,3 +297,28 @@ it('opens the mini window from the reply bubble and steps back to the sphere fro
   expect(miniWindow()).toBeNull()
   expect(stage()).toBeTruthy()
 })
+
+it('closes only this reply from the bubble, across a trip to the mini window, until the next one', () => {
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
+  const done = (reply: string, expiresAt: number) => (
+    <TooltipProvider>
+      <AgentHubOrbConversation
+        {...props}
+        voice={voice}
+        state={{ kind: 'done', summary: 'Done', reply, expiresAt }}
+      />
+    </TooltipProvider>
+  )
+  const { rerender } = render(done('All tests passed', 1))
+  const reply = () => screen.queryByText('All tests passed')
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+  expect(reply()).toBeNull()
+  act(() => useAgentHubOrbPanel.setState({ presentation: 'mini' }))
+  act(() => useAgentHubOrbPanel.setState({ presentation: 'orb' }))
+  expect(reply()).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Show captions' }))
+  expect(reply()).not.toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+  rerender(done('All tests passed', 2))
+  expect(reply()).not.toBeNull()
+})
