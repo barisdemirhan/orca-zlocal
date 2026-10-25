@@ -16,6 +16,7 @@ import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-req
 import { AgentHubOrbComposerContext, useAgentHubOrbComposerBinding } from './agent-hub-orb-composer'
 import type { NativeChatComposerInput } from '../native-chat/native-chat-composer-input'
 import { AGENT_HUB_ORB_DOUBLE_CLICK_MS } from './use-agent-hub-orb-sphere-gestures'
+import type { AgentHubOrbState } from './agent-hub-orb-state'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -96,11 +97,11 @@ function Composer(): null {
   useAgentHubOrbComposerBinding(input, composer.send)
   return null
 }
-const writing = () => (
+const writing = (state: AgentHubOrbState = props.state) => (
   <AgentHubOrbComposerContext.Provider value="orb-tab">
     <TooltipProvider>
       <Composer />
-      <AgentHubOrbConversation {...props} voice={voice} />
+      <AgentHubOrbConversation {...props} state={state} voice={voice} />
     </TooltipProvider>
   </AgentHubOrbComposerContext.Provider>
 )
@@ -210,7 +211,7 @@ it('offers only Expand and Sleep on the compact sphere, with no history, setting
   expect(useAgentHubOrbPanel.getState().presentation).toBe('orb')
 })
 
-it('opens the writing box on a sphere click and sends Enter through the chat composer', () => {
+it('opens the writing box on a sphere click, sends Enter and waits with the question in the bubble', () => {
   vi.useFakeTimers()
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
     callback(0)
@@ -228,8 +229,41 @@ it('opens the writing box on a sphere click and sends Enter through the chat com
   expect(composer.insertText).toHaveBeenCalledWith('Run the tests')
   expect(composer.send).toHaveBeenCalledOnce()
   expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Message Orb' }).value).toBe('')
-  clickSphere()
   expect(box?.getAttribute('data-open')).toBe('false')
+  expect(screen.getByText('Run the tests')).toBeTruthy()
+  expect(screen.getByText('Thinking…')).toBeTruthy()
+  clickSphere()
+  expect(box?.getAttribute('data-open')).toBe('true')
+  fireEvent.keyDown(input, { key: 'Escape' })
+  expect(box?.getAttribute('data-open')).toBe('false')
+  expect(screen.getByText('Thinking…')).toBeTruthy()
+})
+
+it('names the running command under the question and keeps the question above the reply', () => {
+  vi.useFakeTimers()
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    callback(0)
+    return 0
+  })
+  useAgentHubOrbPanel.setState({ presentation: 'orb' })
+  const view = render(writing())
+  clickSphere()
+  const input = screen.getByRole('textbox', { name: 'Message Orb' })
+  fireEvent.change(input, { target: { value: 'Did the tests pass?' } })
+  fireEvent.keyDown(input, { key: 'Enter' })
+  view.rerender(writing({ kind: 'working', command: 'pnpm test' }))
+  expect(screen.getByText('pnpm test')).toBeTruthy()
+  view.rerender(
+    writing({
+      kind: 'done',
+      summary: 'All green.',
+      reply: 'All green.',
+      expiresAt: Date.now() + 6000
+    })
+  )
+  expect(screen.getByText('Did the tests pass?')).toBeTruthy()
+  expect(screen.getByText('All green.')).toBeTruthy()
+  expect(screen.queryByText('pnpm test')).toBeNull()
 })
 
 it('steps a question aside with Answer later and brings it back on the next sphere click', () => {

@@ -37,6 +37,8 @@ export function AgentHubOrbStage({
   captionDurationMs,
   captionAction,
   captionHint,
+  captionPrompt,
+  captionStatus,
   sphereLabel,
   onSphereClick,
   onSphereDoubleClick,
@@ -61,6 +63,8 @@ export function AgentHubOrbStage({
   captionDurationMs?: number
   captionAction?: ReactNode
   captionHint?: ReactNode
+  captionPrompt?: string
+  captionStatus?: ReactNode
   /** What a click on the sphere does, as words; the sphere is a plain image without it. */
   sphereLabel?: string
   onSphereClick?: () => void
@@ -76,6 +80,7 @@ export function AgentHubOrbStage({
   const {
     geometry,
     pinned,
+    quickBeside,
     dockDrop,
     pillBelow,
     request: placement,
@@ -134,6 +139,8 @@ export function AgentHubOrbStage({
           data-compact={compact}
           data-pill={pillBelow ? 'below' : 'above'}
           data-pinned={pinned ? (pinned.bottom != null ? 'up' : 'down') : undefined}
+          data-away={pinned?.away ?? undefined}
+          data-quick={quickBeside ? 'beside' : undefined}
           className="agent-hub-orb-stage"
           style={style}
           hidden={!visible}
@@ -196,6 +203,8 @@ export function AgentHubOrbStage({
                 durationMs={captionDurationMs}
                 action={captionAction}
                 hint={captionHint}
+                prompt={captionPrompt}
+                status={captionStatus}
               >
                 {!embedded && onSphereClick && sphereLabel ? (
                   <button

@@ -17,6 +17,7 @@ import {
 import { useAgentHubOrbDiameter } from './use-agent-hub-orb-diameter'
 import { useAgentHubOrbDrag } from './use-agent-hub-orb-drag'
 import {
+  agentHubOrbPinnedQuickFits,
   layoutAgentHubOrbPinned,
   readAgentHubOrbDockBox,
   useAgentHubOrbPinned
@@ -92,6 +93,9 @@ export function useAgentHubOrbGeometry({
           window.innerHeight
         )
       : null
+  const quickBeside =
+    pinnedLayout !== null &&
+    agentHubOrbPinnedQuickFits(pinnedLayout, measurements.controlsWidth, measurements.bounds)
   const geometry = embedded
     ? {
         ...layout.orb,
@@ -207,6 +211,7 @@ export function useAgentHubOrbGeometry({
   return {
     geometry,
     pinned: pinnedLayout,
+    quickBeside,
     pillBelow:
       !embedded &&
       (pinnedLayout

@@ -24,6 +24,8 @@ export type AgentHubOrbPinnedGeometry = AgentHubOrbGeometry & {
   centre: { x: number; y: number }
   /** Set when the stage grows upward from the dock: its CSS bottom keeps the sphere still. */
   bottom: number | null
+  /** Beside a top or bottom dock, the side away from it, where the writing box and reply go. */
+  away: 'left' | 'right' | null
 }
 
 export function readAgentHubOrbDockBox(): AgentHubOrbDockBox | null {
@@ -81,8 +83,22 @@ export function layoutAgentHubOrbPinned(
     minimum: diameter,
     maximum: diameter,
     centre,
-    bottom: opensUp ? viewportHeight - artBottom : null
+    bottom: opensUp ? viewportHeight - artBottom : null,
+    away:
+      dock.edge === 'left' || dock.edge === 'right' ? null : centre.x < dock.left ? 'left' : 'right'
   }
+}
+
+/** Whether the writing box fits in the dock's row, on the sphere's side away from the dock. */
+export function agentHubOrbPinnedQuickFits(
+  layout: AgentHubOrbPinnedGeometry,
+  boxWidth: number,
+  bounds: { left: number; right: number }
+): boolean {
+  const reach = layout.diameter * AGENT_HUB_ORB_VISIBLE_RADIUS + DOCK_GAP + boxWidth
+  return layout.away === 'left'
+    ? layout.centre.x - reach >= bounds.left
+    : layout.away === 'right' && layout.centre.x + reach <= bounds.right
 }
 
 /** How close a dragged sphere's centre is to the pinned spot: the drop zone shows when near, a release pins when armed. */

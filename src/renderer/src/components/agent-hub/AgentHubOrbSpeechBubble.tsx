@@ -22,6 +22,31 @@ export type AgentHubOrbSpeechBubbleProps = {
   action?: ReactNode
   /** A muted line under the reply, such as a pending suggestion that needs the full window. */
   hint?: ReactNode
+  /** What was written to the sphere, kept above its reply as one muted line. */
+  prompt?: string
+  /** Stands in for a reply that is still on its way; the bubble stays until it is replaced. */
+  status?: ReactNode
+}
+
+/** The line a written question waits on: the command the agent runs, or that it is thinking. */
+export function AgentHubOrbThinking({ command }: { command?: string }): React.JSX.Element {
+  return (
+    <p className="flex min-w-0 items-center gap-2 text-muted-foreground">
+      <span aria-hidden className="agent-hub-orb-thinking-dots">
+        <span />
+        <span />
+        <span />
+      </span>
+      {command ? (
+        <span className="min-w-0 truncate">
+          {translate('agentHub.orb.captionRunning', 'Running')}{' '}
+          <code className="font-mono text-xs text-foreground">{command}</code>
+        </span>
+      ) : (
+        translate('agentHub.orb.captionThinking', 'Thinking…')
+      )}
+    </p>
+  )
 }
 
 const isCaptionToggle = (target: EventTarget): boolean =>
@@ -37,7 +62,9 @@ export function AgentHubOrbSpeechBubble({
   engaged = false,
   durationMs,
   action,
-  hint
+  hint,
+  prompt,
+  status
 }: AgentHubOrbSpeechBubbleProps): React.JSX.Element {
   const reopenRef = useRef<HTMLButtonElement>(null)
   const restoreFocus = useRef(false)
@@ -46,7 +73,7 @@ export function AgentHubOrbSpeechBubble({
   const [bubbleHovered, setBubbleHovered] = useState(false)
   const [bubbleFocused, setBubbleFocused] = useState(false)
   const hasText = text.trim().length > 0
-  const pinned = hint !== undefined && hint !== null
+  const pinned = (hint !== undefined && hint !== null) || (status !== undefined && status !== null)
   const { visible, restore } = useAgentHubOrbCaptionVisibility({
     open,
     text,
@@ -143,7 +170,15 @@ export function AgentHubOrbSpeechBubble({
             reopenRef.current?.focus()
           }
         }}
-        onEscapeKeyDown={() => {
+        onEscapeKeyDown={(event) => {
+          // Why: Escape in the writing box closes only the box.
+          if (
+            event.target instanceof Element &&
+            event.target.closest('[data-agent-hub-orb-quick-input]')
+          ) {
+            event.preventDefault()
+            return
+          }
           restoreFocus.current = true
         }}
         onInteractOutside={(event) => event.preventDefault()}
@@ -175,7 +210,16 @@ export function AgentHubOrbSpeechBubble({
             ref={textRef}
             className="agent-hub-orb-caption-text scrollbar-sleek px-3 pb-3 pt-1 text-sm"
           >
+            {prompt ? (
+              <p className="flex min-w-0 gap-1.5 pb-1 text-xs text-muted-foreground">
+                <span className="shrink-0 font-medium">
+                  {translate('agentHub.orb.captionYou', 'You')}
+                </span>
+                <span className="min-w-0 truncate">{prompt}</span>
+              </p>
+            ) : null}
             {hasText ? <p className="whitespace-pre-wrap break-words">{text}</p> : null}
+            {status}
             {hint}
           </div>
         </div>

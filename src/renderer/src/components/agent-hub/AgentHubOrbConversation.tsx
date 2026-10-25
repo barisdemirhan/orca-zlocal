@@ -37,6 +37,7 @@ import { AgentHubRequestCard } from './AgentHubRequestCard'
 import { AgentHubOrbRequestModal } from './AgentHubOrbRequestModal'
 import { AgentHubOrbLiveControls } from './AgentHubOrbLiveControls'
 import { AgentHubOrbQuickInput } from './AgentHubOrbQuickInput'
+import { AgentHubOrbThinking } from './AgentHubOrbSpeechBubble'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { AgentHubOrbFollowNotices } from './AgentHubOrbFollowNotices'
@@ -291,8 +292,19 @@ export function AgentHubOrbConversation({
           caption={live ? voice.caption : (quick.reply ?? undefined)}
           captionKey={live ? undefined : quick.replyKey}
           captionDurationMs={live ? undefined : AGENT_HUB_ORB_REPLY_MS}
+          captionPrompt={live ? undefined : quick.ask?.text}
+          captionStatus={
+            live || !quick.ask || quick.ask.status === 'answered' ? undefined : quick.ask.status ===
+              'failed' ? (
+              <p className="text-muted-foreground">
+                {translate('agentHub.orb.captionNoReply', 'No reply came back.')}
+              </p>
+            ) : (
+              <AgentHubOrbThinking command={state.kind === 'working' ? state.command : undefined} />
+            )
+          }
           captionAction={
-            live || !quick.reply ? undefined : (
+            live || (!quick.reply && !quick.ask) ? undefined : (
               <Button
                 type="button"
                 variant="link"
@@ -354,6 +366,7 @@ export function AgentHubOrbConversation({
                 onDictate={quick.dictation.start}
                 onStopDictation={quick.dictation.stop}
                 onOpenChat={quick.showChat}
+                onClose={quick.close}
               />
             )
           }

@@ -35,7 +35,7 @@ function QuickAction({
   )
 }
 
-/** The one-line box under the sphere; its slot stays reserved so the sphere never jumps. */
+/** The one-line box by the sphere; it shows on hover and stays while it is open, holds words or listens. */
 export function AgentHubOrbQuickInput({
   open,
   ready,
@@ -48,7 +48,8 @@ export function AgentHubOrbQuickInput({
   onSubmit,
   onDictate,
   onStopDictation,
-  onOpenChat
+  onOpenChat,
+  onClose
 }: {
   open: boolean
   ready: boolean
@@ -62,6 +63,7 @@ export function AgentHubOrbQuickInput({
   onDictate: () => void
   onStopDictation: () => void
   onOpenChat: () => void
+  onClose: () => void
 }): React.JSX.Element {
   const name = useAgentHubOrbName()
   const label = translate('agentHub.orb.quickInputNamed', 'Message {{name}}', { name })
@@ -69,8 +71,13 @@ export function AgentHubOrbQuickInput({
     <div
       data-agent-hub-orb-quick-input
       data-agent-hub-orb-interactive
-      data-open={open}
+      data-open={open || listening || value.length > 0}
       className="agent-hub-orb-quick focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget) && !value && !listening) {
+          onClose()
+        }
+      }}
     >
       <input
         ref={inputRef}
@@ -94,6 +101,11 @@ export function AgentHubOrbQuickInput({
           if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
             event.preventDefault()
             onSubmit()
+          } else if (event.key === 'Escape') {
+            event.preventDefault()
+            onChange('')
+            event.currentTarget.blur()
+            onClose()
           }
         }}
       />

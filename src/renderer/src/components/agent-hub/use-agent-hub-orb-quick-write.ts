@@ -5,6 +5,15 @@ import type { AgentHubOrbState } from './agent-hub-orb-state'
 import type { AgentHubInboxRequest } from './agent-hub-requests-store'
 import { useAgentHubOrbQuickDictation } from './use-agent-hub-orb-quick-dictation'
 
+const AGENT_HUB_ORB_STALL_MS = 1_500
+
+export type AgentHubOrbQuickAsk = {
+  id: number
+  text: string
+  status: 'sent' | 'working' | 'answered' | 'failed'
+}
+type QuickTurn = { key: string; text: string | null; ask: AgentHubOrbQuickAsk | null }
+
 /** Writing from the sphere: the one-line box, the reply bubble and which card a click opens first. */
 export function useAgentHubOrbQuickWrite({
   tabId,
@@ -24,14 +33,41 @@ export function useAgentHubOrbQuickWrite({
   const inputRef = useRef<HTMLInputElement>(null)
   const [draft, setDraft] = useState('')
   // Why a latch: the done state expires before the bubble does; a new turn clears it, idle keeps it.
-  const [latch, setLatch] = useState<{ key: string; text: string | null }>({ key: '', text: null })
+  const [latch, setLatch] = useState<QuickTurn>({ key: '', text: null, ask: null })
   const latchKey =
     state.kind === 'done' ? `done:${state.expiresAt}` : state.kind === 'working' ? 'working' : ''
+  const waiting = latch.ask?.status === 'sent' || latch.ask?.status === 'working' ? latch.ask : null
   if (latchKey && latchKey !== latch.key) {
-    setLatch({ key: latchKey, text: state.kind === 'done' ? state.reply : null })
+    setLatch(
+      state.kind === 'done'
+        ? { key: latchKey, text: state.reply, ask: waiting && { ...waiting, status: 'answered' } }
+        : { key: latchKey, text: null, ask: waiting && { ...waiting, status: 'working' } }
+    )
+  } else if (state.kind === 'working' && waiting?.status === 'sent') {
+    // Why: a turn sent after a failed one starts under the same working key.
+    setLatch({ ...latch, ask: { ...waiting, status: 'working' } })
   }
   const reply = latch.text
+  const ask = latch.ask
+  // Why: a turn that ends without a reply first reads as idle for a moment before its outcome lands.
+  const stalled = ask?.status === 'working' && (state.kind === 'idle' || state.kind === 'error')
+  useEffect(() => {
+    if (!stalled) {
+      return
+    }
+    const timer = setTimeout(
+      () =>
+        setLatch((current) =>
+          current.ask?.status === 'working'
+            ? { ...current, ask: { ...current.ask, status: 'failed' } }
+            : current
+        ),
+      state.kind === 'error' ? 0 : AGENT_HUB_ORB_STALL_MS
+    )
+    return () => clearTimeout(timer)
+  }, [stalled, state.kind])
   const [laterRequestId, setLaterRequestId] = useState<string | null>(null)
+  const askCount = useRef(0)
   useEffect(() => {
     if (open && ready) {
       inputRef.current?.focus({ preventScroll: true })
@@ -44,10 +80,17 @@ export function useAgentHubOrbQuickWrite({
     const text = inputRef.current?.value ?? ''
     if (tabId && sendAgentHubOrbText(tabId, text)) {
       setDraft('')
-      setLatch((current) => ({ ...current, text: null }))
-      inputRef.current?.focus({ preventScroll: true })
+      askCount.current += 1
+      setLatch((current) => ({
+        ...current,
+        text: null,
+        ask: { id: askCount.current, text: text.trim(), status: 'sent' }
+      }))
+      // Why: the question moves into the bubble, so the box steps aside until it is wanted again.
+      setOpen(false)
+      inputRef.current?.blur()
     }
-  }, [tabId])
+  }, [tabId, setOpen])
   const dictation = useAgentHubOrbQuickDictation({
     inputRef,
     prepare: prepareDictation,
@@ -68,7 +111,13 @@ export function useAgentHubOrbQuickWrite({
     submit,
     dictation,
     reply,
-    replyKey: latch.key,
+    /** What was asked from the box, kept above the reply; the bubble waits with it until the reply lands. */
+    ask,
+    replyKey:
+      ask && ask.status !== 'answered'
+        ? `ask:${ask.id}:${ask.status === 'failed' ? 'failed' : 'pending'}`
+        : latch.key,
+    close: (): void => setOpen(false),
     requestDismissed,
     showChat,
     /** "Answer later" on the card: the card steps aside and the box opens. */
@@ -82,7 +131,10 @@ export function useAgentHubOrbQuickWrite({
         setOpen(false)
         return
       }
-      setOpen(!open)
+      if (open) {
+        inputRef.current?.focus({ preventScroll: true })
+      }
+      setOpen(true)
     },
     onSphereHoldStart: (): void => {
       setOpen(true)

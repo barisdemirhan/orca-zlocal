@@ -8,11 +8,13 @@ import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
 
 /** The organism canvas draws its visible sphere at this fraction of the anchor box (0.32 x 0.86). */
 const VISIBLE_SPHERE_RADIUS = 0.32 * 0.86
+/** A hidden pill rests 4px toward the sphere and slides out when it shows. */
+const PILL_REVEAL_SHIFT = 4
 
 type CaptionPosition = {
   side: AgentHubOrbSide
   sideOffset: number
-  align: 'end' | 'center'
+  align: 'start' | 'end' | 'center'
   alignOffset: number
 }
 
@@ -37,7 +39,17 @@ export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; co
     const measure = (): void => {
       frame = 0
       const box = anchor.getBoundingClientRect()
-      const protectedBox = stage?.getBoundingClientRect() ?? box
+      // Why: the pill overflows the stage; the bubble keeps its space even while it is hidden, so it never jumps.
+      const pill = stage?.querySelector('.agent-hub-orb-hover-controls')?.getBoundingClientRect()
+      const stageBox = stage?.getBoundingClientRect() ?? box
+      const protectedBox = pill
+        ? {
+            left: Math.min(stageBox.left, pill.left),
+            top: Math.min(stageBox.top, pill.top - PILL_REVEAL_SHIFT),
+            right: Math.max(stageBox.right, pill.right),
+            bottom: Math.max(stageBox.bottom, pill.bottom + PILL_REVEAL_SHIFT)
+          }
+        : stageBox
       const height = content
         ? content.offsetHeight + (text ? text.scrollHeight - text.clientHeight : 0)
         : 160
@@ -61,6 +73,7 @@ export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; co
       const besideOrder: ('left' | 'right')[] =
         previousSide.current === 'left' ? ['left', 'right'] : ['right', 'left']
       const pinned = stage?.getAttribute('data-pinned')
+      const away = pinned ? stage?.getAttribute('data-away') : null
       // Why: beside a pinned sphere the bubble would cover the dock, so it opens away from the dock.
       const nextSide = pinned
         ? pinned === 'down'
@@ -92,8 +105,12 @@ export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; co
         : {
             side: nextSide,
             sideOffset: AGENT_HUB_ORB_CARD_GAP + Math.max(0, clearance[nextSide]),
-            align: 'center',
-            alignOffset: 0
+            // Why: beside a top or bottom dock the bubble lines up with the sphere's far edge and grows away from the dock.
+            ...(away === 'left'
+              ? { align: 'end' as const, alignOffset: inset }
+              : away === 'right'
+                ? { align: 'start' as const, alignOffset: inset }
+                : { align: 'center' as const, alignOffset: 0 })
           }
       previousSide.current = nextSide
       setPosition((current) =>
@@ -120,7 +137,10 @@ export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; co
     const mutations = new MutationObserver(schedule)
     for (const element of [stage, dock]) {
       if (element) {
-        mutations.observe(element, { attributes: true, attributeFilter: ['style', 'data-edge'] })
+        mutations.observe(element, {
+          attributes: true,
+          attributeFilter: ['style', 'data-edge', 'data-away', 'data-quick']
+        })
       }
     }
     if (text) {

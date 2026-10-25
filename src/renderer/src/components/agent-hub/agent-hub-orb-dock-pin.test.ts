@@ -3,6 +3,7 @@ import {
   AGENT_HUB_ORB_PINNED_DIAMETER,
   agentHubOrbDockDrop,
   agentHubOrbPinnedCentre,
+  agentHubOrbPinnedQuickFits,
   layoutAgentHubOrbPinned,
   type AgentHubOrbDockBox
 } from './agent-hub-orb-dock-pin'
@@ -21,6 +22,19 @@ describe('Orb pinned beside the dock', () => {
     expect(layout.x + layout.width / 2).toBeCloseTo(centre.x)
     expect(layout.bottom).not.toBeNull()
     expect(1000 - (layout.bottom ?? 0) - 12 - (layout.diameter + 52) / 2).toBeCloseTo(centre.y)
+  })
+
+  it('puts the writing box in the dock row away from the dock, or above when the row is short', () => {
+    const before = layoutAgentHubOrbPinned(dock, 292, 116, 1000)
+    expect(before.away).toBe('left')
+    expect(agentHubOrbPinnedQuickFits(before, 292, { left: 0, right: 1200 })).toBe(true)
+    expect(agentHubOrbPinnedQuickFits(before, 292, { left: 100, right: 1200 })).toBe(false)
+    const after = layoutAgentHubOrbPinned({ ...dock, left: 20, right: 320 }, 292, 116, 1000)
+    expect(after.away).toBe('right')
+    expect(agentHubOrbPinnedQuickFits(after, 292, { left: 0, right: 1200 })).toBe(true)
+    const side = layoutAgentHubOrbPinned({ ...dock, edge: 'left' }, 292, 116, 1000)
+    expect(side.away).toBeNull()
+    expect(agentHubOrbPinnedQuickFits(side, 292, { left: 0, right: 1200 })).toBe(false)
   })
 
   it('goes after a dock that leaves no room before it', () => {
