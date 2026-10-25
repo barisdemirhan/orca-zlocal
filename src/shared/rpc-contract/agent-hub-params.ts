@@ -90,7 +90,12 @@ export const AgentHubProgressParams = caller.and(
 export const AgentHubPresenceParams = caller
 export const AgentHubStatusParams = caller
 export const AgentHubMirrorParams = caller.and(
-  z.object({ action: z.enum(['open', 'add', 'minimize', 'restore', 'close']) })
+  z
+    .object({
+      action: z.enum(['open', 'add', 'minimize', 'restore', 'close']),
+      into: identity.optional()
+    })
+    .refine((value) => !value.into || value.action === 'add', '--into only works with mirror add')
 )
 export const AgentHubArrangeParams = caller.and(
   z.object({ layout: z.string().trim().min(1).max(80).optional() })
@@ -102,7 +107,10 @@ export const AgentHubCanvasParams = caller.and(z.object({ action: z.enum(['open'
 
 const pane = z.object({ paneKey: identity, terminalHandle: identity })
 export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('ack') }),
+  z.object({
+    kind: z.literal('ack'),
+    mirror: z.enum(['added', 'opened', 'already-there']).optional()
+  }),
   z.object({
     kind: z.literal('ask'),
     answer: z.string().max(8_000),
@@ -119,6 +127,12 @@ export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
     mirrors: z.array(pane).max(500),
     parked: z.array(pane).max(500),
     waiting: z.array(pane).max(500),
+    cards: z
+      .array(
+        z.object({ parked: z.boolean(), containsCaller: z.boolean(), tabs: z.array(pane).max(50) })
+      )
+      .max(256)
+      .optional(),
     orbFocus: z.object({ pinned: pane.nullable(), following: z.array(pane).max(500) }).optional(),
     orbAwareness: AgentHubOrbAwarenessSchema.optional()
   }),

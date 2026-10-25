@@ -128,6 +128,47 @@ describe('Agent Hub runtime boundary', () => {
     }
   )
 
+  it('carries an Orb mirror add into a named card and returns where the tab landed', async () => {
+    const desktop = subscribe('local', true, true)
+    const mirror = AGENT_HUB_METHODS.find((method) => method.name === 'agentHub.mirror')
+    const respond = AGENT_HUB_METHODS.find((method) => method.name === 'agentHub.respond')
+    if (!mirror || !respond) {
+      throw new Error('Missing methods')
+    }
+    const ctx: RpcContext = { runtime, caller: { kind: 'local-cli' } }
+    const params = { callerSessionId: 'codex_orb', action: 'add', terminal: caller.terminalHandle }
+    expect(() =>
+      mirror.handler(mirror.params.parse({ ...params, into: 'term-gone' }), ctx)
+    ).toThrow('The --into terminal was not found on this host')
+    const added = mirror.handler(
+      mirror.params.parse({ ...params, into: caller.terminalHandle }),
+      ctx
+    )
+    const into = { paneKey: caller.paneKey, terminalHandle: caller.terminalHandle }
+    const consent = readAgentHubDelivery(desktop.received.at(-1))
+    expect(consent).toMatchObject({ kind: 'consent', operation: { kind: 'mirror', into } })
+    if (!consent) {
+      throw new Error('No consent request')
+    }
+    respond.handler(
+      { requestId: consent.requestId, result: { kind: 'consent', decision: 'once' } },
+      desktop.ctx
+    )
+    await vi.waitFor(() =>
+      expect(readAgentHubDelivery(desktop.received.at(-1))).toMatchObject({ kind: 'mirror' })
+    )
+    const event = readAgentHubDelivery(desktop.received.at(-1))
+    expect(event).toMatchObject({ kind: 'mirror', action: 'add', into })
+    if (!event) {
+      throw new Error('No mirror request')
+    }
+    respond.handler(
+      { requestId: event.requestId, result: { kind: 'ack', mirror: 'added' } },
+      desktop.ctx
+    )
+    await expect(added).resolves.toMatchObject({ mirror: 'added' })
+  })
+
   it('refuses ordinary structured sessions and cross-host Orb identity claims', () => {
     expect(() =>
       resolveAgentHubPanes(

@@ -67,9 +67,35 @@ export const AGENT_HUB_COMMAND_SPECS: CommandSpec[] = [
     ]
   },
   hubSpec(['presence'], 'Read whether any connected desktop is present', 'presence'),
-  hubSpec(['status'], 'Read open mirrors, parked panes and waiting panes', 'status'),
-  ...['open', 'add', 'minimize', 'restore', 'close'].map((action) =>
-    hubSpec(['mirror', action], `${action} an Agent Hub mirror`, `mirror ${action}`)
+  hubSpec(['status'], 'Read Agent Hub cards (mirrors), parked cards and waiting panes', 'status'),
+  hubSpec(
+    ['mirror', 'open'],
+    'Open a new Agent Hub card (floating mirror) showing the terminal',
+    'mirror open'
+  ),
+  {
+    ...hubSpec(
+      ['mirror', 'add'],
+      'Add the terminal as a tab in an Agent Hub card (floating mirror)',
+      'mirror add [--into <handle>]',
+      ['into']
+    ),
+    notes: [
+      'Without --into the tab joins the card that shows your own terminal; if you are in no card, a new card opens.',
+      '--into <handle> adds the tab to the card that shows that terminal (see hub status). The Orb has no card of its own, so it must pass --into to reach an existing card.',
+      'The result says added, opened or already-there.'
+    ]
+  },
+  hubSpec(['mirror', 'minimize'], 'Park the card that shows the terminal', 'mirror minimize'),
+  hubSpec(
+    ['mirror', 'restore'],
+    'Restore the parked card that shows the terminal',
+    'mirror restore'
+  ),
+  hubSpec(
+    ['mirror', 'close'],
+    'Close the card that shows the terminal; processes keep running',
+    'mirror close'
   ),
   hubSpec(['arrange'], 'Arrange Agent Hub mirrors', 'arrange [--layout <name>]', ['layout']),
   ...['open', 'close'].map((action) =>

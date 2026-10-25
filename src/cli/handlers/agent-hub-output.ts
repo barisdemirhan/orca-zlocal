@@ -12,8 +12,9 @@ export function formatAgentHubResult(method: string, result: unknown): string {
     'waiting' in result
   ) {
     return [
-      paneList('Mirrors', result.mirrors),
-      paneList('Parked', result.parked),
+      'cards' in result && Array.isArray(result.cards)
+        ? cardList(result.cards)
+        : [paneList('Mirrors', result.mirrors), paneList('Parked', result.parked)].join('\n'),
       paneList('Waiting for you', result.waiting)
     ].join('\n')
   }
@@ -23,20 +24,53 @@ export function formatAgentHubResult(method: string, result: unknown): string {
   if (method === 'agentHub.progress') {
     return 'Progress updated.'
   }
+  if (method === 'agentHub.mirror' && 'mirror' in result) {
+    return MIRROR_OUTCOMES[String(result.mirror)] ?? 'Agent Hub request completed.'
+  }
   if ('requestId' in result) {
     return `${method === 'agentHub.notify' ? 'Notification sent to Agent Hub' : 'Agent Hub request completed'} (${String(result.requestId)}).`
   }
   return JSON.stringify(result, null, 2)
 }
 
+const MIRROR_OUTCOMES: Record<string, string> = {
+  added: 'Added as a tab in the card.',
+  opened: 'Opened a new card.',
+  'already-there': 'Already a tab in that card.'
+}
+
+function cardList(cards: unknown[]): string {
+  if (!cards.length) {
+    return 'Cards: none'
+  }
+  return [
+    'Cards:',
+    ...cards.map((card, index) => {
+      if (typeof card !== 'object' || card === null) {
+        return `  ${index + 1}. ?`
+      }
+      const tags = [
+        'containsCaller' in card && card.containsCaller ? 'yours' : null,
+        'parked' in card && card.parked ? 'parked' : null
+      ].filter(Boolean)
+      const tabs = 'tabs' in card ? paneNames(card.tabs) : '?'
+      return `  ${index + 1}.${tags.length ? ` (${tags.join(', ')})` : ''} ${tabs}`
+    })
+  ].join('\n')
+}
+
 function paneList(label: string, value: unknown): string {
+  return `${label}: ${paneNames(value)}`
+}
+
+function paneNames(value: unknown): string {
   if (!Array.isArray(value)) {
-    return `${label}: unavailable`
+    return 'unavailable'
   }
   const panes = value.map((pane: unknown) =>
     typeof pane === 'object' && pane !== null && 'terminalHandle' in pane
       ? String(pane.terminalHandle)
       : '?'
   )
-  return `${label}: ${panes.length ? panes.join(', ') : 'none'}`
+  return panes.length ? panes.join(', ') : 'none'
 }

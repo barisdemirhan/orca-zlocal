@@ -119,10 +119,16 @@ afterEach(() => {
 
 describe('Agent Hub non-card actions', () => {
   it('opens, adds to the caller’s window, parks, restores and closes without selecting keyboard input', async () => {
-    expect(await run({ ...base, kind: 'mirror', action: 'open' })).toEqual({ kind: 'ack' })
+    expect(await run({ ...base, kind: 'mirror', action: 'open' })).toEqual({
+      kind: 'ack',
+      mirror: 'opened'
+    })
     const windowId = readAgentHubMirrors().windows[0]?.id
     expect(windowId).toBeTruthy()
-    expect(await run({ ...base, target, kind: 'mirror', action: 'add' })).toEqual({ kind: 'ack' })
+    expect(await run({ ...base, target, kind: 'mirror', action: 'add' })).toEqual({
+      kind: 'ack',
+      mirror: 'added'
+    })
     expect(readAgentHubMirrors().windows).toHaveLength(1)
     expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
     expect(await run({ ...base, target, kind: 'mirror', action: 'minimize' })).toEqual({
@@ -140,11 +146,41 @@ describe('Agent Hub non-card actions', () => {
     expect(screen.getByText('false')).toBeTruthy()
     expect(await run({ ...base, target, kind: 'mirror', action: 'close' })).toEqual({ kind: 'ack' })
     expect(readAgentHubMirrors().windows).toHaveLength(0)
-    expect(await run({ ...base, kind: 'mirror', action: 'add' })).toEqual({ kind: 'ack' })
+    expect(await run({ ...base, kind: 'mirror', action: 'add' })).toEqual({
+      kind: 'ack',
+      mirror: 'opened'
+    })
     expect(readAgentHubMirrors().windows).toHaveLength(1)
     await run({ ...base, kind: 'mirror', action: 'minimize' })
     await run({ ...base, kind: 'mirror', action: 'close' })
     expect(readAgentHubMirrors().chips).toHaveLength(0)
+  })
+
+  it('adds into the card named by --into, so an Orb without a card of its own can add tabs', async () => {
+    const orb = { paneKey: 'orb', terminalHandle: 'orb', kind: 'orb' as const, sessionId: 'orb-1' }
+    const into = base.target
+    const add = (request: Partial<AgentHubRequest>) =>
+      run({ ...base, caller: orb, target, kind: 'mirror', action: 'add', into, ...request })
+    expect(await add({})).toMatchObject({
+      kind: 'error',
+      message: expect.stringContaining('--into')
+    })
+    expect(readAgentHubMirrors().windows).toHaveLength(0)
+    await run({ ...base, kind: 'mirror', action: 'open' })
+    expect(await add({})).toEqual({ kind: 'ack', mirror: 'added' })
+    expect(await add({})).toEqual({ kind: 'ack', mirror: 'already-there' })
+    expect(readAgentHubMirrors().windows).toHaveLength(1)
+    expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
+    await run({ ...base, target, kind: 'mirror', action: 'close' })
+    await run({ ...base, kind: 'mirror', action: 'open' })
+    await run({ ...base, target, kind: 'mirror', action: 'open' })
+    expect(await add({})).toMatchObject({
+      kind: 'error',
+      message: expect.stringContaining('another card')
+    })
+    await run({ ...base, kind: 'mirror', action: 'close' })
+    await run({ ...base, target, kind: 'mirror', action: 'close' })
+    expect(await add({ into: undefined })).toEqual({ kind: 'ack', mirror: 'opened' })
   })
 
   it('keeps a typing field focused when the selected terminal attaches after an agent opens it', async () => {
@@ -266,14 +302,24 @@ describe('Agent Hub non-card actions', () => {
     expect(
       await executeAgentHubRequest(
         'workhost',
-        { ...base, kind: 'peek', link: 'https://site.dev.test' },
+        { ...base, kind: 'peek', link: 'https://example.com' },
         pairedContext
       )
     ).toEqual({ kind: 'ack' })
     expect(readAgentHubPeek()?.history.at(-1)).toMatchObject({
-      content: { hostId: 'local', url: 'https://site.dev.test' },
+      content: { hostId: 'local', url: 'https://example.com' },
       preserveKeyboardFocus: true
     })
+    expect(
+      await executeAgentHubRequest(
+        'workhost',
+        { ...base, kind: 'peek', link: 'https://site.dev.test' },
+        pairedContext
+      )
+    ).toEqual({ kind: 'ack' })
+    expect(openWorkspaceBrowserTab).toHaveBeenLastCalledWith(
+      expect.objectContaining({ expectedRuntimeEnvironmentId: 'workhost', url: 'https://site.dev.test' })
+    )
     expect(
       await executeAgentHubRequest(
         'workhost',
@@ -375,13 +421,18 @@ describe('Agent Hub non-card actions', () => {
       kind: 'status',
       mirrors: [base.target],
       parked: [target],
-      waiting: [base.target, target]
+      waiting: [base.target, target],
+      cards: [
+        { parked: false, containsCaller: true, tabs: [base.target] },
+        { parked: true, containsCaller: false, tabs: [target] }
+      ]
     })
     expect(await run({ ...base, kind: 'status' }, 'workhost')).toEqual({
       kind: 'status',
       mirrors: [],
       parked: [],
-      waiting: []
+      waiting: [],
+      cards: []
     })
     expect(await run({ ...base, kind: 'presence' })).toEqual({
       kind: 'presence',
@@ -520,7 +571,7 @@ it('adds a newly reported spawned child to the already open caller mirror', asyn
       { ...base, target, kind: 'mirror', action: 'add' },
       freshContext
     )
-  ).toEqual({ kind: 'ack' })
+  ).toEqual({ kind: 'ack', mirror: 'added' })
   expect(readAgentHubMirrors().windows).toHaveLength(1)
   expect(readAgentHubMirrors().windows[0]?.id).toBe(windowId)
   expect(readAgentHubMirrors().windows[0]?.tabs.map((tab) => tab.target.paneKey)).toEqual([

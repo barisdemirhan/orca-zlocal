@@ -118,10 +118,21 @@ export const AGENT_HUB_METHODS = [
     params: AgentHubMirrorParams,
     handler: (params, ctx) => {
       const { caller, target } = resolveAgentHubPanes(params, ctx, 'mirror')
+      const into = params.into ? ctx.runtime.getAgentHubCaller(params.into) : null
+      if (params.into && !into) {
+        throw new AgentHubError(
+          'invalid_argument',
+          'The --into terminal was not found on this host'
+        )
+      }
       return ctx.runtime.agentHub.operate(
         caller,
         target,
-        { kind: 'mirror', action: params.action },
+        {
+          kind: 'mirror',
+          action: params.action,
+          ...(into ? { into: { paneKey: into.paneKey, terminalHandle: into.terminalHandle } } : {})
+        },
         ctx.signal
       )
     }

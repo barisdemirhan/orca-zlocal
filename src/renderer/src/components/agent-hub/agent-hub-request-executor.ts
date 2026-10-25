@@ -10,19 +10,11 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { openAgentHubCanvas, closeAgentHubCanvas } from './agent-hub-canvas-store'
 import {
   arrangeAgentHubFloatingWindowsByDefault,
-  arrangeAgentHubFloatingWindowsOnScreen,
-  openAgentHubMirrorInLayout,
-  rearrangeAgentHubMirrorsByDefault
+  arrangeAgentHubFloatingWindowsOnScreen
 } from './agent-hub-floating-arrangement'
-import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
-import {
-  closeAgentHubMirror,
-  closeAgentHubMirrorChip,
-  minimizeAgentHubMirror,
-  readAgentHubMirrors,
-  restoreAgentHubMirror
-} from './agent-hub-mirror-store'
-import { addAgentHubMirrorTabWithFeedback } from './agent-hub-mirror-tab-actions'
+import { agentHubMirrorWindows, findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
+import { readAgentHubMirrors } from './agent-hub-mirror-store'
+import { executeAgentHubMirror } from './agent-hub-request-mirror'
 import {
   agentHubRequestHost,
   agentHubTargetPane,
@@ -36,7 +28,12 @@ import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 
 type Context = { threads: readonly AgentPaneThread[]; lists: AgentHubLists }
 
-function readStatus(host: string, context: Context, includeAwareness: boolean): AgentHubStatus {
+function readStatus(
+  host: string,
+  request: AgentHubRequest,
+  context: Context,
+  includeAwareness: boolean
+): AgentHubStatus {
   const state = useAppStore.getState()
   const collect = (targets: readonly AgentHubPaneTarget[]): AgentHubPane[] => {
     const panes = new Map<string, AgentHubPane>()
@@ -66,6 +63,17 @@ function readStatus(host: string, context: Context, includeAwareness: boolean): 
   ]) {
     waiting.set(request.target.paneKey, request.target)
   }
+  const caller = findAgentHubRequestTarget(state, context.threads, host, request.caller)
+  const cards = agentHubMirrorWindows(mirrors).flatMap((window) => {
+    const tabs = collect(window.tabs.map((tab) => tab.viewing ?? tab.target))
+    if (!tabs.length) {
+      return []
+    }
+    const containsCaller = Boolean(
+      caller && findAgentHubMirrorMembership(mirrors, caller)?.window.id === window.id
+    )
+    return [{ parked: !mirrors.windows.includes(window), containsCaller, tabs }]
+  })
   return {
     mirrors: collect(
       mirrors.windows.flatMap((window) => window.tabs.map((tab) => tab.viewing ?? tab.target))
@@ -74,69 +82,9 @@ function readStatus(host: string, context: Context, includeAwareness: boolean): 
       mirrors.chips.flatMap((chip) => chip.window.tabs.map((tab) => tab.viewing ?? tab.target))
     ),
     waiting: [...waiting.values()],
+    cards,
     ...(awareness ? { orbAwareness: awareness } : {})
   }
-}
-
-function executeMirror(
-  host: string,
-  request: Extract<AgentHubRequest, { kind: 'mirror' }>,
-  context: Context
-): void {
-  const state = useAppStore.getState()
-  const target = findAgentHubRequestTarget(state, context.threads, host, request.target)
-  if (!target) {
-    throw new Error(
-      translate(
-        'agentHub.requests.targetUnavailable',
-        'This terminal is no longer available on its host.'
-      )
-    )
-  }
-  if (request.action === 'open' || request.action === 'add') {
-    const caller = findAgentHubRequestTarget(state, context.threads, host, request.caller)
-    const owner = caller ? findAgentHubMirrorMembership(readAgentHubMirrors(), caller) : null
-    if (request.action === 'add' && owner?.presence === 'window') {
-      const result = addAgentHubMirrorTabWithFeedback(owner.window.id, target, false)
-      if (result.status !== 'changed') {
-        throw new Error(
-          translate(
-            'agentHub.requests.mirrorAddFailed',
-            'The terminal could not be added to the caller’s mirror ({{reason}}).',
-            { reason: result.status }
-          )
-        )
-      }
-    } else {
-      const result = openAgentHubMirrorInLayout(target, false)
-      if (result !== 'opened') {
-        throw new Error(
-          translate(
-            'agentHub.requests.mirrorOpenFailed',
-            'The mirror could not be opened ({{reason}}).',
-            { reason: result }
-          )
-        )
-      }
-    }
-    return
-  }
-  const owner = findAgentHubMirrorMembership(readAgentHubMirrors(), target)
-  if (!owner) {
-    throw new Error(
-      translate('agentHub.requests.mirrorUnavailable', 'This terminal has no mirror.')
-    )
-  }
-  if (request.action === 'minimize') {
-    minimizeAgentHubMirror(owner.window.id)
-  } else if (request.action === 'restore') {
-    restoreAgentHubMirror(owner.window.id, false)
-  } else if (owner.presence === 'chip') {
-    closeAgentHubMirrorChip(owner.window.id)
-  } else {
-    closeAgentHubMirror(owner.window.id)
-  }
-  rearrangeAgentHubMirrorsByDefault()
 }
 
 /** Card requests stay pending for the next phase; actions are acknowledged only after execution. */
@@ -153,9 +101,10 @@ export async function executeAgentHubRequest(
       case 'notify':
       case 'memory':
         return null
-      case 'mirror':
-        executeMirror(host, request, context)
-        break
+      case 'mirror': {
+        const mirror = executeAgentHubMirror(host, request, context)
+        return mirror ? { kind: 'ack', mirror } : { kind: 'ack' }
+      }
       case 'arrange':
         if (!request.layout) {
           arrangeAgentHubFloatingWindowsByDefault()
@@ -210,7 +159,7 @@ export async function executeAgentHubRequest(
             ? (await window.api.agentHub.orb.current().catch(() => null))?.sessionId
             : undefined
         const isOrb = Boolean(orbSessionId) && orbSessionId === request.caller.sessionId
-        return { kind: 'status', ...readStatus(host, context, isOrb) }
+        return { kind: 'status', ...readStatus(host, request, context, isOrb) }
       }
       case 'presence': {
         const presence = await window.api.notifications.getDesktopPresence()

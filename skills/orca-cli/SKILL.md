@@ -5,9 +5,10 @@ description: >-
   comments, Agent Hub, and Orca's embedded browser through the `orca` CLI. Use when the user
   says "$orca-cli", "Orca worktree", "child worktree", "spawn codex/claude in a worktree",
   "read/wait/send Orca terminal", "handoff" / "handover" / "give this to another agent",
-  "orca hub", or "Orca browser". Prefer it over raw git worktree, ad hoc PTYs, or Computer Use
-  when Orca state is involved. Use Computer Use only when a visible window needs GUI control
-  that a CLI, filesystem, or API cannot do.
+  "orca hub", "Agent Hub card" / "floating card" / "mirror" (open one, add a tab to it), or
+  "Orca browser". Prefer it over raw git worktree, ad hoc PTYs, or Computer Use when Orca state
+  is involved. Use Computer Use only when a visible window needs GUI control that a CLI,
+  filesystem, or API cannot do.
 ---
 
 # Orca CLI

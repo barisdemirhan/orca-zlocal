@@ -20,7 +20,8 @@ export type AgentHubRequestBase = {
 export type AgentHubMirrorAction = 'open' | 'add' | 'minimize' | 'restore' | 'close'
 export type AgentHubOperation =
   | { kind: 'peek'; link: string }
-  | { kind: 'mirror'; action: AgentHubMirrorAction }
+  /** `into` names a pane whose card receives an `add`; older desktops ignore it. */
+  | { kind: 'mirror'; action: AgentHubMirrorAction; into?: AgentHubPane }
   | { kind: 'arrange'; layout?: string }
   | { kind: 'canvas'; action: 'open' | 'close' }
 
@@ -78,18 +79,22 @@ export type AgentHubAnswer = {
   desktop: string
 }
 export type AgentHubPresence = { present: boolean; idleMinutes: number }
+export type AgentHubMirrorCard = { parked: boolean; containsCaller: boolean; tabs: AgentHubPane[] }
 export type AgentHubStatus = {
   mirrors: AgentHubPane[]
   parked: AgentHubPane[]
   waiting: AgentHubPane[]
+  /** Mirrors grouped by card; optional for older desktops. */
+  cards?: AgentHubMirrorCard[]
   /** Optional user-selected Orb context; older clients may ignore it. Never grants input authority. */
   orbFocus?: { pinned: AgentHubPane | null; following: AgentHubPane[] }
   /** Current host-sourced status facts. Optional for independently updated peers. */
   orbAwareness?: AgentHubOrbAwareness
 }
 
+export type AgentHubMirrorOutcome = 'added' | 'opened' | 'already-there'
 export type AgentHubResponse =
-  | { kind: 'ack' }
+  | { kind: 'ack'; mirror?: AgentHubMirrorOutcome }
   | ({ kind: 'ask' } & Pick<AgentHubAnswer, 'answer' | 'index' | 'indices'>)
   | ({ kind: 'presence' } & AgentHubPresence)
   | ({ kind: 'status' } & AgentHubStatus)

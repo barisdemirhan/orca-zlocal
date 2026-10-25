@@ -387,10 +387,52 @@ describe('hub CLI', () => {
       'agentHub.mirror',
       { action: 'close', terminal: 'other' }
     ],
+    [
+      ['hub', 'mirror', 'add', '--terminal', 'child', '--into', 'term-card'],
+      'agentHub.mirror',
+      { action: 'add', terminal: 'child', into: 'term-card' }
+    ],
     [['hub', 'arrange', '--layout', 'grid'], 'agentHub.arrange', { layout: 'grid' }],
     [['hub', 'canvas', 'open'], 'agentHub.canvas', { action: 'open' }]
   ])('dispatches %j through its host', async (argv, method, content) => {
     await run(argv)
     expect(call).toHaveBeenCalledWith(method, expect.objectContaining(content), expect.anything())
+  })
+
+  it('lists cards with their tab handles and says where a mirror add landed', async () => {
+    call.mockResolvedValueOnce({
+      id: 'req-1',
+      ok: true,
+      result: {
+        mirrors: [],
+        parked: [],
+        waiting: [],
+        cards: [
+          {
+            parked: false,
+            containsCaller: true,
+            tabs: [{ paneKey: 'a', terminalHandle: 'term-a' }]
+          },
+          {
+            parked: true,
+            containsCaller: false,
+            tabs: [{ paneKey: 'b', terminalHandle: 'term-b' }]
+          }
+        ]
+      },
+      _meta: { runtimeId: 'host-1' }
+    })
+    await run(['hub', 'status'])
+    expect(log.mock.calls.flat().join('\n')).toContain(
+      'Cards:\n  1. (yours) term-a\n  2. (parked) term-b'
+    )
+    call.mockResolvedValueOnce({
+      id: 'req-2',
+      ok: true,
+      result: { requestId: 'hub-id', mirror: 'added' },
+      _meta: { runtimeId: 'host-1' }
+    })
+    await run(['hub', 'mirror', 'add', '--terminal', 'term-c', '--into', 'term-a'])
+    expect(log).toHaveBeenLastCalledWith('Added as a tab in the card.')
   })
 })

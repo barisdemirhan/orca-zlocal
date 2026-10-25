@@ -5,9 +5,10 @@ description: >-
   comments, Agent Hub, and Orca's embedded browser through the `orca` CLI. Use when the user
   says "$orca-cli", "Orca worktree", "child worktree", "spawn codex/claude in a worktree",
   "read/wait/send Orca terminal", "handoff" / "handover" / "give this to another agent",
-  "orca hub", or "Orca browser". Prefer it over raw git worktree, ad hoc PTYs, or Computer Use
-  when Orca state is involved. Use Computer Use only when a visible window needs GUI control
-  that a CLI, filesystem, or API cannot do.
+  "orca hub", "Agent Hub card" / "floating card" / "mirror" (open one, add a tab to it), or
+  "Orca browser". Prefer it over raw git worktree, ad hoc PTYs, or Computer Use when Orca state
+  is involved. Use Computer Use only when a visible window needs GUI control that a CLI,
+  filesystem, or API cannot do.
 ---
 
 # Orca CLI
@@ -247,6 +248,20 @@ Terminal rules:
 Agent Hub is the user's view of agents, questions, progress, and terminal mirrors. Use
 `hub` to show a result, ask a decision, or manage mirrors of agents you started. Prefer
 your native question tool when available. Before blocking, check `ORCA hub presence --json`.
+
+**A floating Agent Hub card is a mirror.** The window with a tab strip, a `+` button and
+a terminal title (for example "Terminal 1") shows real Orca terminals. When the user asks
+for a tab "in this card", "next to this pane" or "in the floating window", create the
+terminal, then add it to the card; never say no command exists:
+
+```text
+ORCA terminal create --command "<command>" --json
+ORCA hub mirror add --terminal <returnedHandle> --json
+ORCA hub mirror add --terminal <handle> --into <handleShownInThatCard> --json
+```
+
+Without `--into` the tab joins the card that shows your own terminal. `hub status --json`
+lists `cards` with their tabs and marks yours with `containsCaller`.
 
 Load `references/agent-hub.md` before using these commands. **`hub ask` exit 2 means
 pending: resume the printed request ID with short `--wait` calls; do not ask again.**

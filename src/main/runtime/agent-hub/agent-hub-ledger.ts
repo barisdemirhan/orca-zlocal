@@ -4,6 +4,7 @@ import type {
   AgentHubAskContent,
   AgentHubCaller,
   AgentHubEvent,
+  AgentHubMirrorOutcome,
   AgentHubOperation,
   AgentHubPane,
   AgentHubPresence,
@@ -194,12 +195,8 @@ export class AgentHubLedger {
     if (response.kind !== 'status') {
       throw new AgentHubError('invalid_argument', 'Invalid status response')
     }
-    return {
-      mirrors: response.mirrors,
-      parked: response.parked,
-      waiting: response.waiting,
-      ...(response.orbAwareness ? { orbAwareness: response.orbAwareness } : {})
-    }
+    const { kind: _kind, ...status } = response
+    return status
   }
 
   async operate(
@@ -207,7 +204,7 @@ export class AgentHubLedger {
     target: AgentHubPane,
     operation: AgentHubOperation,
     signal?: AbortSignal
-  ): Promise<{ requestId: string }> {
+  ): Promise<{ requestId: string; mirror?: AgentHubMirrorOutcome }> {
     this.requireDesktop()
     this.rates.consume(caller, operation.kind === 'peek' ? 'peek' : 'mirror')
     const grantKey = JSON.stringify([agentHubCallerRateKey(caller), target.paneKey])
@@ -242,8 +239,10 @@ export class AgentHubLedger {
     }
     const execute = async (operationSignal?: AbortSignal) => {
       this.requests.create(request, this.desktops.keys())
-      await this.requests.wait(request.requestId, operationSignal)
-      return { requestId: request.requestId }
+      const { response } = await this.requests.wait(request.requestId, operationSignal)
+      return response.kind === 'ack' && response.mirror
+        ? { requestId: request.requestId, mirror: response.mirror }
+        : { requestId: request.requestId }
     }
     return caller.kind === 'orb' && caller.sessionId
       ? this.orbOperations.run(

@@ -78,7 +78,10 @@ export const AGENT_HUB_HANDLERS: Record<string, CommandHandler> = {
   ...Object.fromEntries(
     ['open', 'add', 'minimize', 'restore', 'close'].map((action) => [
       `hub mirror ${action}`,
-      operation('agentHub.mirror', AgentHubMirrorParams, () => ({ action }))
+      operation('agentHub.mirror', AgentHubMirrorParams, ({ flags }) => ({
+        action,
+        into: getOptionalStringFlag(flags, 'into')
+      }))
     ])
   ),
   ...Object.fromEntries(

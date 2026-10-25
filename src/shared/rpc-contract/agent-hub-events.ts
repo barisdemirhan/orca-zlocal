@@ -18,7 +18,8 @@ const base = z.object({
 const peek = z.object({ kind: z.literal('peek'), link: z.string() })
 const mirror = z.object({
   kind: z.literal('mirror'),
-  action: z.enum(['open', 'add', 'minimize', 'restore', 'close'])
+  action: z.enum(['open', 'add', 'minimize', 'restore', 'close']),
+  into: pane.optional()
 })
 const arrange = z.object({ kind: z.literal('arrange'), layout: z.string().optional() })
 const canvas = z.object({ kind: z.literal('canvas'), action: z.enum(['open', 'close']) })

@@ -48,6 +48,12 @@ describe('Agent Hub RPC parameter admission', () => {
       { ...caller, action: 'restore', terminal: 'term-2' },
       { ...caller, action: 'kill' }
     ],
+    [
+      'mirror --into',
+      AgentHubMirrorParams,
+      { ...caller, action: 'add', terminal: 'term-2', into: 'term-1' },
+      { ...caller, action: 'close', into: 'term-1' }
+    ],
     ['arrange', AgentHubArrangeParams, { ...caller, layout: 'grid' }, { ...caller, layout: '' }],
     [
       'canvas',

@@ -74,6 +74,8 @@ ORCA hub status --json
 - `status` returns host-scoped `result.mirrors`, `parked`, and `waiting` pane lists with
   `paneKey` and `terminalHandle`. Parked panes are minimized mirrors; waiting includes
   agents needing input and pending Hub questions, consents, and orchestration gates.
+  `result.cards` groups the same mirrors by card: each has `tabs`, `parked`, and
+  `containsCaller` (the card that shows your terminal). Older desktops omit `cards`.
 
 ## Orb memory proposal (Orb only)
 
@@ -94,8 +96,9 @@ ORCA hub orb remember "Does not want long builds started after 8pm" --json
 ```text
 ORCA hub mirror open [--terminal <handle>] [--json]
 ORCA hub mirror open --json
-ORCA hub mirror add [--terminal <handle>] [--json]
+ORCA hub mirror add [--into <handle>] [--terminal <handle>] [--json]
 ORCA hub mirror add --terminal <helperHandle> --json
+ORCA hub mirror add --terminal <helperHandle> --into <handleInThatCard> --json
 ORCA hub mirror minimize [--terminal <handle>] [--json]
 ORCA hub mirror minimize --json
 ORCA hub mirror restore [--terminal <handle>] [--json]
@@ -110,8 +113,17 @@ ORCA hub canvas close [--terminal <handle>] [--json]
 ORCA hub canvas close --json
 ```
 
-- `open` opens a mirror of the target. `add` adds the target as a tab in your open mirror;
-  without an open caller mirror, it opens a mirror for the target instead.
+- A mirror is what the user sees as a floating Agent Hub card: a window with a tab strip
+  and a `+` button. "Add a tab to this card" means `hub mirror add`.
+- `open` opens a new card for the target. `add` adds the target as a tab in the card that
+  shows your own terminal, or with `--into <handle>` in the card that shows that terminal.
+  Without `--into` and outside any card it opens a new card. `--into` naming a terminal
+  in no card fails with `invalid_argument`; it never opens a new card. A parked card keeps
+  the new tab parked. The result field `mirror` is `added`, `opened`, or `already-there`.
+- A terminal can be a tab in only one card. Adding one that is already a tab in another
+  card fails; close that tab first. Adding it to its own card returns `already-there`.
+- The Orb has no card of its own: it must pass `--terminal`, and `--into` to reach an
+  existing card.
 - `minimize`, `restore`, and `close` act on the mirror containing the target, including
   its other tabs. Closing a mirror does not terminate its terminal process.
 - `arrange` accepts `grid`, `columns`, or `rows`; omitted `--layout` uses the user's
