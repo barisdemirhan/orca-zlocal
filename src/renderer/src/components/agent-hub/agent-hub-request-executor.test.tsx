@@ -158,29 +158,35 @@ describe('Agent Hub non-card actions', () => {
 
   it('adds into the card named by --into, so an Orb without a card of its own can add tabs', async () => {
     const orb = { paneKey: 'orb', terminalHandle: 'orb', kind: 'orb' as const, sessionId: 'orb-1' }
-    const into = base.target
-    const add = (request: Partial<AgentHubRequest>) =>
-      run({ ...base, caller: orb, target, kind: 'mirror', action: 'add', into, ...request })
-    expect(await add({})).toMatchObject({
+    const add = (into?: typeof base.target) =>
+      run({
+        ...base,
+        caller: orb,
+        target,
+        kind: 'mirror',
+        action: 'add',
+        ...(into ? { into } : {})
+      })
+    expect(await add(base.target)).toMatchObject({
       kind: 'error',
       message: expect.stringContaining('--into')
     })
     expect(readAgentHubMirrors().windows).toHaveLength(0)
     await run({ ...base, kind: 'mirror', action: 'open' })
-    expect(await add({})).toEqual({ kind: 'ack', mirror: 'added' })
-    expect(await add({})).toEqual({ kind: 'ack', mirror: 'already-there' })
+    expect(await add(base.target)).toEqual({ kind: 'ack', mirror: 'added' })
+    expect(await add(base.target)).toEqual({ kind: 'ack', mirror: 'already-there' })
     expect(readAgentHubMirrors().windows).toHaveLength(1)
     expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
     await run({ ...base, target, kind: 'mirror', action: 'close' })
     await run({ ...base, kind: 'mirror', action: 'open' })
     await run({ ...base, target, kind: 'mirror', action: 'open' })
-    expect(await add({})).toMatchObject({
+    expect(await add(base.target)).toMatchObject({
       kind: 'error',
       message: expect.stringContaining('another card')
     })
     await run({ ...base, kind: 'mirror', action: 'close' })
     await run({ ...base, target, kind: 'mirror', action: 'close' })
-    expect(await add({ into: undefined })).toEqual({ kind: 'ack', mirror: 'opened' })
+    expect(await add()).toEqual({ kind: 'ack', mirror: 'opened' })
   })
 
   it('keeps a typing field focused when the selected terminal attaches after an agent opens it', async () => {

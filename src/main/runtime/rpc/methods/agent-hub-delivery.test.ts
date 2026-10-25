@@ -147,7 +147,7 @@ describe('Agent Hub runtime boundary', () => {
     const into = { paneKey: caller.paneKey, terminalHandle: caller.terminalHandle }
     const consent = readAgentHubDelivery(desktop.received.at(-1))
     expect(consent).toMatchObject({ kind: 'consent', operation: { kind: 'mirror', into } })
-    if (!consent) {
+    if (consent?.kind !== 'consent') {
       throw new Error('No consent request')
     }
     respond.handler(
@@ -159,7 +159,7 @@ describe('Agent Hub runtime boundary', () => {
     )
     const event = readAgentHubDelivery(desktop.received.at(-1))
     expect(event).toMatchObject({ kind: 'mirror', action: 'add', into })
-    if (!event) {
+    if (event?.kind !== 'mirror') {
       throw new Error('No mirror request')
     }
     respond.handler(
