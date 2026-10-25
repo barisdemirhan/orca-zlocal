@@ -74,6 +74,9 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+// A closed menu restores focus on a 0ms timer, which would dismiss a menu opened before it fires.
+const settleClosedMenu = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+
 function target(id: string): AgentHubPaneTarget {
   const worktree = makeWorktree()
   return {
@@ -269,6 +272,7 @@ it('moves per-agent actions into tab menus, restores the singleton header and cl
   )
   expect(readAgentHubMirrors().windows[0]?.tabs).toHaveLength(2)
   closeAgent.mockClear()
+  await settleClosedMenu()
   fireEvent.contextMenu(screen.getByRole('tab', { name: 'first, idle' }))
   fireEvent.click(
     await screen.findByRole('menuitem', { name: 'Jump to this terminal in its workspace' })
@@ -280,6 +284,7 @@ it('moves per-agent actions into tab menus, restores the singleton header and cl
   ).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Jump' }))
   expect(reveal).toHaveBeenLastCalledWith('second')
+  await settleClosedMenu()
   const close = screen.getByRole('button', { name: 'Close mirror' })
   fireEvent.contextMenu(close)
   const endAgent = await screen.findByRole('menuitem', { name: 'Close agent' })
