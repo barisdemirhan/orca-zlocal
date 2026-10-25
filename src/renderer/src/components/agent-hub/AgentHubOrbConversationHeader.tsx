@@ -11,12 +11,14 @@ export function AgentHubOrbHeaderAction({
   label,
   actionId,
   disabled,
+  pressed,
   onClick,
   children
 }: {
   label: string
   actionId?: string
   disabled?: boolean
+  pressed?: boolean
   onClick: () => void
   children: ReactNode
 }): React.JSX.Element {
@@ -27,6 +29,8 @@ export function AgentHubOrbHeaderAction({
         variant="ghost"
         size="icon-sm"
         aria-label={label}
+        aria-pressed={pressed}
+        className="aria-pressed:bg-accent aria-pressed:text-accent-foreground"
         disabled={disabled}
         onClick={onClick}
       >

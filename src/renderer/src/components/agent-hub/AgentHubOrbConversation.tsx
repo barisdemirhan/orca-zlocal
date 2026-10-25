@@ -47,6 +47,8 @@ import { openAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { sleepAgentHubOrb } from './agent-hub-orb-sleep'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
+import { setAgentHubOrbPinned } from './agent-hub-orb-dock-pin'
+import { normalizeAgentHubPlacement } from '../../../../shared/agent-hub-settings'
 
 /** A written reply stays under the sphere this long; spoken captions keep their minute. */
 const AGENT_HUB_ORB_REPLY_MS = 12_000
@@ -73,6 +75,10 @@ export function AgentHubOrbConversation({
   const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
   const presentation = useAgentHubOrbPanel((s) => s.presentation)
   const compact = useAgentHubOrbPanel((s) => s.compact)
+  const pinned = useAgentHubOrbPanel((s) => s.pinned)
+  const canPin = useAppStore(
+    (s) => normalizeAgentHubPlacement(s.settings?.agentHubPlacement) === 'dock'
+  )
   const nativeRequestPending = useAgentHubOrbPanel((s) => s.nativeRequestPending)
   const nativeRequestId = useAgentHubOrbPanel((s) => s.nativeRequestId)
   const nativeRequestVisible = useAgentHubOrbPanel(
@@ -363,6 +369,8 @@ export function AgentHubOrbConversation({
                 compact={compact}
                 busy={busy}
                 dictating={quickDictating}
+                pinned={pinned}
+                canPin={canPin}
                 onMiniWindow={showMiniWindow}
                 onExpand={() =>
                   useAgentHubOrbPanel.setState({ compact: false, presentation: 'orb' })
@@ -373,6 +381,7 @@ export function AgentHubOrbConversation({
                 }}
                 onSleep={sleep}
                 onCancelDictation={cancelDictation}
+                onTogglePin={() => setAgentHubOrbPinned(!pinned)}
               />
             )
           }

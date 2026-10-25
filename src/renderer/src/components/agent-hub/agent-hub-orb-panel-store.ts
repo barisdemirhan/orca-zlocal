@@ -25,6 +25,8 @@ type OrbPanelState = {
   compact: boolean
   preferredDiameter: number
   stagePosition: { x: number; y: number } | null
+  /** Pinned beside the dock; stagePosition keeps the floating spot for when it is released. */
+  pinned: boolean
   /** Where the mini window was last left; it opens on the sphere until then. */
   miniPosition: { x: number; y: number } | null
   /** The one-line box under the sphere; a plain click on a sleeping Orb opens straight into it. */
@@ -49,6 +51,7 @@ export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   compact: false,
   preferredDiameter: AGENT_HUB_ORB_DEFAULT_DIAMETER,
   stagePosition: null,
+  pinned: false,
   miniPosition: null,
   quickInputOpen: false,
   dismissedCaption: null,

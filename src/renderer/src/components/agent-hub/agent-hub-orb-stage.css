@@ -231,6 +231,37 @@
   transform: translate(-50%, 0);
 }
 
+/* Why: beside a bottom or side dock the writing box opens above the sphere, mirroring its usual gap below. */
+.agent-hub-orb-stage[data-pinned='up'] {
+  flex-direction: column-reverse;
+}
+.agent-hub-orb-stage[data-pinned='up'] .agent-hub-orb-quick-slot {
+  margin-top: 8px;
+  margin-bottom: calc(-14px - var(--orb-diameter) * 0.225);
+}
+.agent-hub-orb-stage[data-pinned='up']:has(.agent-hub-orb-quick[data-open='true'])
+  .agent-hub-orb-hover-controls {
+  top: calc(var(--orb-diameter) * 0.225 - 28px);
+}
+/* Why: the pinned spot's outline while a drag is near the dock; it brightens where a release pins. */
+.agent-hub-orb-dock-drop {
+  position: fixed;
+  z-index: -1;
+  width: 58px;
+  height: 58px;
+  border: 1.5px dashed color-mix(in srgb, var(--foreground) 35%, transparent);
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+.agent-hub-orb-dock-drop[data-armed='true'] {
+  border-color: color-mix(in srgb, var(--foreground) 70%, transparent);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .agent-hub-orb-stage .agent-hub-orb-resize,
   .agent-hub-orb-stage .agent-hub-orb-hover-controls,

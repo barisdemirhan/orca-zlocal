@@ -22348,6 +22348,8 @@
       "requestTitle": "Orb is waiting for you",
       "answerLater": "Answer later",
       "miniWindow": "Mini window",
+      "pinToDock": "Pin beside the dock",
+      "unpinFromDock": "Release from the dock",
       "openFullChat": "Open full chat",
       "backToOrb": "Back to Orb",
       "quickListening": "Listening… release to send",

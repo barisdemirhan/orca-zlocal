@@ -47,6 +47,8 @@ export type AgentHubSettings = {
   agentHubOrbPlacement?: 'floating' | 'dock' | 'statusBar' | 'hidden'
   agentHubOrbPosition?: { x: number; y: number }
   agentHubOrbDiameter?: number
+  /** The sphere sits small beside the dock instead of floating. */
+  agentHubOrbPinned?: boolean
   agentHubOrbDefaultAction?: AgentHubOrbAction
   agentHubOrbAlternateAction?: AgentHubOrbAction
   agentHubOrbSpeakReplies?: boolean

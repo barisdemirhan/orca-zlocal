@@ -60,15 +60,20 @@ export function useAgentHubOrbCaptionSide({ open, compact }: { open: boolean; co
         sphere.y + sphere.height - bounds.top >= desiredSize.height
       const besideOrder: ('left' | 'right')[] =
         previousSide.current === 'left' ? ['left', 'right'] : ['right', 'left']
-      const nextSide =
-        besideOrder.find(fitsBeside) ??
-        placeAgentHubOrbRequest({
-          anchor: sphere,
-          bounds,
-          desiredSize,
-          previousSide: previousSide.current
-        })?.side ??
-        'top'
+      const pinned = stage?.getAttribute('data-pinned')
+      // Why: beside a pinned sphere the bubble would cover the dock, so it opens away from the dock.
+      const nextSide = pinned
+        ? pinned === 'down'
+          ? 'bottom'
+          : 'top'
+        : (besideOrder.find(fitsBeside) ??
+          placeAgentHubOrbRequest({
+            anchor: sphere,
+            bounds,
+            desiredSize,
+            previousSide: previousSide.current
+          })?.side ??
+          'top')
       const beside = nextSide === 'left' || nextSide === 'right'
       const clearance = {
         right: protectedBox.right - box.right,

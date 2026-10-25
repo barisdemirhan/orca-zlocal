@@ -75,6 +75,8 @@ export function AgentHubOrbStage({
   const [container] = useState(() => document.createElement('div'))
   const {
     geometry,
+    pinned,
+    dockDrop,
     pillBelow,
     request: placement,
     shellRef,
@@ -119,7 +121,8 @@ export function AgentHubOrbStage({
   const grip = agentHubOrbResizeArc(geometry.diameter)
   const style: CSSProperties & { '--orb-diameter': string } = {
     '--orb-diameter': `${geometry.diameter}px`,
-    ...(!embedded ? { left: geometry.x, top: geometry.y, width: geometry.width } : {})
+    ...(!embedded ? { left: geometry.x, top: geometry.y, width: geometry.width } : {}),
+    ...(pinned?.bottom != null ? { top: 'auto', bottom: pinned.bottom } : {})
   }
   return (
     <div ref={inlineRef} className={visible && embedded ? 'shrink-0' : 'hidden'}>
@@ -130,6 +133,7 @@ export function AgentHubOrbStage({
           data-embedded={embedded}
           data-compact={compact}
           data-pill={pillBelow ? 'below' : 'above'}
+          data-pinned={pinned ? (pinned.bottom != null ? 'up' : 'down') : undefined}
           className="agent-hub-orb-stage"
           style={style}
           hidden={!visible}
@@ -208,7 +212,7 @@ export function AgentHubOrbStage({
                 )}
               </AgentHubOrbSpeechBubble>
             </div>
-            {!embedded && !compact ? (
+            {!embedded && !compact && !pinned ? (
               <span className="agent-hub-orb-resize" data-agent-hub-orb-resize>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -248,6 +252,14 @@ export function AgentHubOrbStage({
             <div ref={quickRef} className="agent-hub-orb-quick-slot">
               {quickInput}
             </div>
+          ) : null}
+          {dockDrop ? (
+            <span
+              aria-hidden
+              className="agent-hub-orb-dock-drop"
+              data-armed={dockDrop.drop === 'armed'}
+              style={{ left: dockDrop.centre.x, top: dockDrop.centre.y }}
+            />
           ) : null}
           {notice ? (
             <p

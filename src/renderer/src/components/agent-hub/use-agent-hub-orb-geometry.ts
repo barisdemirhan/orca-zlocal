@@ -1,11 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import {
-  agentHubOrbResizeKeyDiameter,
-  clampAgentHubOrbDiameter,
   fitAgentHubOrb,
   layoutAgentHubOrb,
-  type AgentHubOrbOverhang,
+  placeAgentHubOrbRequest,
   type AgentHubOrbSide
 } from './agent-hub-orb-geometry'
 import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
@@ -13,25 +11,16 @@ import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import {
   NO_AGENT_HUB_ORB_OVERHANG,
   agentHubOrbPillBelow,
-  clampAgentHubOrbPosition,
   liftAgentHubOrbAboveBottom,
   measureAgentHubOrbOverhang
 } from './agent-hub-orb-overhang'
-import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
 import { useAgentHubOrbDiameter } from './use-agent-hub-orb-diameter'
-
-type OrbGesture = {
-  mode: 'move' | 'resize'
-  pointerId: number
-  element: HTMLElement
-  pointer: { x: number; y: number }
-  position: { x: number; y: number }
-  preferredDiameter: number
-  diameter: number
-  width: number
-  height: number
-  overhang: AgentHubOrbOverhang
-}
+import { useAgentHubOrbDrag } from './use-agent-hub-orb-drag'
+import {
+  layoutAgentHubOrbPinned,
+  readAgentHubOrbDockBox,
+  useAgentHubOrbPinned
+} from './agent-hub-orb-dock-pin'
 
 export function useAgentHubOrbGeometry({
   embedded,
@@ -51,11 +40,11 @@ export function useAgentHubOrbGeometry({
   )
   const savedPosition = useAgentHubOrbPanel((s) => s.stagePosition)
   const quickOpen = useAgentHubOrbPanel((s) => s.quickInputOpen)
+  const pinned = useAgentHubOrbPinned()
   const shellRef = useRef<HTMLDivElement>(null)
   const controlsRef = useRef<HTMLDivElement>(null)
   const quickRef = useRef<HTMLDivElement>(null)
   const requestRef = useRef<HTMLDivElement>(null)
-  const gesture = useRef<OrbGesture | null>(null)
   const previousSide = useRef<AgentHubOrbSide | undefined>(undefined)
   const [measurements, setMeasurements] = useState(() => ({
     bounds: readAgentHubOrbBounds(),
@@ -63,7 +52,8 @@ export function useAgentHubOrbGeometry({
     requestHeight: 240,
     inlineWidth: 480,
     heightOverhead: 116,
-    overhang: NO_AGENT_HUB_ORB_OVERHANG
+    overhang: NO_AGENT_HUB_ORB_OVERHANG,
+    dock: readAgentHubOrbDockBox()
   }))
   const fit = {
     preferredDiameter,
@@ -92,6 +82,16 @@ export function useAgentHubOrbGeometry({
     32,
     Math.min(live ? 128 : 40, measurements.inlineWidth - measurements.controlsWidth - 48)
   )
+  // Why: without a dock on screen a pinned sphere floats, so the pin survives the dock being hidden.
+  const pinnedLayout =
+    pinned && !embedded && measurements.dock
+      ? layoutAgentHubOrbPinned(
+          measurements.dock,
+          measurements.controlsWidth,
+          measurements.heightOverhead,
+          window.innerHeight
+        )
+      : null
   const geometry = embedded
     ? {
         ...layout.orb,
@@ -99,10 +99,19 @@ export function useAgentHubOrbGeometry({
         minimum: inlineMaximum,
         maximum: inlineMaximum
       }
-    : layout.orb
+    : (pinnedLayout ?? layout.orb)
+  const request =
+    pinnedLayout && layout.request
+      ? (placeAgentHubOrbRequest({
+          anchor: pinnedLayout,
+          bounds: measurements.bounds,
+          desiredSize: layout.request,
+          previousSide: previousSide.current
+        }) ?? layout.request)
+      : layout.request
   useLayoutEffect(() => {
-    previousSide.current = layout.request?.side
-  }, [layout.request?.side])
+    previousSide.current = request?.side
+  }, [request?.side])
 
   useLayoutEffect(() => {
     let frame = 0
@@ -131,10 +140,19 @@ export function useAgentHubOrbGeometry({
         currentDiameter + heightOverhead,
         quickOpen
       )
-      if (!embedded) {
+      if (!embedded && !useAgentHubOrbPanel.getState().pinned) {
         liftAgentHubOrbAboveBottom(bounds, overhang, currentDiameter + heightOverhead)
       }
-      const next = { bounds, controlsWidth, requestHeight, inlineWidth, heightOverhead, overhang }
+      const dock = readAgentHubOrbDockBox()
+      const next = {
+        bounds,
+        controlsWidth,
+        requestHeight,
+        inlineWidth,
+        heightOverhead,
+        overhang,
+        dock
+      }
       // Why: every field is a plain number in a fixed key order, so equal text means nothing moved.
       setMeasurements((previous) =>
         JSON.stringify(previous) === JSON.stringify(next) ? previous : next
@@ -175,131 +193,30 @@ export function useAgentHubOrbGeometry({
       mutations.disconnect()
       window.removeEventListener('resize', schedule)
     }
-  }, [embedded, compact, requestVisible, dockPlacement, quickOpen])
-
-  useEffect(() => {
-    const finish = (cancel: boolean): void => {
-      const active = gesture.current
-      gesture.current = null
-      releaseAgentHubOrbGesture(gesture)
-      if (!active) {
-        return
-      }
-      if (cancel) {
-        useAgentHubOrbPanel.setState({
-          stagePosition: active.position,
-          ...(active.mode === 'resize' ? { preferredDiameter: active.preferredDiameter } : {})
-        })
-      } else if (active.mode === 'resize') {
-        const diameter = useAgentHubOrbPanel.getState().preferredDiameter
-        if (diameter !== active.preferredDiameter) {
-          rememberDiameter(diameter)
-        }
-      }
-      if (active.element.hasPointerCapture(active.pointerId)) {
-        active.element.releasePointerCapture(active.pointerId)
-      }
-    }
-    const move = (event: PointerEvent): void => {
-      const active = gesture.current
-      if (!active || event.pointerId !== active.pointerId) {
-        return
-      }
-      const dx = event.clientX - active.pointer.x
-      const dy = event.clientY - active.pointer.y
-      if (active.mode === 'resize') {
-        useAgentHubOrbPanel.setState({
-          preferredDiameter: clampAgentHubOrbDiameter(active.diameter + Math.max(dx, dy))
-        })
-      } else {
-        useAgentHubOrbPanel.setState({
-          stagePosition: clampAgentHubOrbPosition(
-            { x: active.position.x + dx, y: active.position.y + dy },
-            active,
-            readAgentHubOrbBounds(),
-            active.overhang
-          )
-        })
-      }
-      event.preventDefault()
-    }
-    const end = (event: PointerEvent): void => {
-      if (event.pointerId === gesture.current?.pointerId) {
-        finish(event.type !== 'pointerup')
-      }
-    }
-    const cancel = (): void => finish(true)
-    const escape = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape' && gesture.current) {
-        event.preventDefault()
-        event.stopImmediatePropagation()
-        cancel()
-      }
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', end)
-    window.addEventListener('pointercancel', end)
-    window.addEventListener('lostpointercapture', end)
-    window.addEventListener('blur', cancel)
-    document.addEventListener('keydown', escape, true)
-    return () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', end)
-      window.removeEventListener('pointercancel', end)
-      window.removeEventListener('lostpointercapture', end)
-      window.removeEventListener('blur', cancel)
-      document.removeEventListener('keydown', escape, true)
-      cancel()
-    }
-  }, [embedded, compact, rememberDiameter])
+  }, [embedded, compact, requestVisible, dockPlacement, quickOpen, pinned])
+  const drag = useAgentHubOrbDrag({
+    embedded,
+    compact,
+    pinned: pinnedLayout !== null,
+    geometry,
+    overhang: fit.overhang,
+    preferredDiameter,
+    rememberDiameter
+  })
 
   return {
     geometry,
+    pinned: pinnedLayout,
     pillBelow:
-      !embedded && agentHubOrbPillBelow(geometry.y, measurements.overhang, measurements.bounds),
-    request: layout.request,
+      !embedded &&
+      (pinnedLayout
+        ? measurements.dock?.edge === 'top'
+        : agentHubOrbPillBelow(geometry.y, measurements.overhang, measurements.bounds)),
+    request,
     shellRef,
     controlsRef,
     quickRef,
     requestRef,
-    beginGesture: (mode: OrbGesture['mode'], event: React.PointerEvent<HTMLElement>): void => {
-      if (
-        event.button !== 0 ||
-        gesture.current ||
-        embedded ||
-        (compact && mode === 'resize') ||
-        !claimAgentHubOrbGesture(gesture, event.pointerId)
-      ) {
-        return
-      }
-      event.stopPropagation()
-      event.preventDefault()
-      gesture.current = {
-        mode,
-        pointerId: event.pointerId,
-        element: event.currentTarget,
-        pointer: { x: event.clientX, y: event.clientY },
-        position: { x: geometry.x, y: geometry.y },
-        preferredDiameter,
-        diameter: geometry.diameter,
-        width: geometry.width,
-        height: geometry.height,
-        overhang: fit.overhang
-      }
-      event.currentTarget.setPointerCapture(event.pointerId)
-    },
-    resizeKey: (event: React.KeyboardEvent<HTMLElement>): void => {
-      if (embedded || compact || gesture.current) {
-        return
-      }
-      const diameter = agentHubOrbResizeKeyDiameter(event.key, event.shiftKey, geometry)
-      if (diameter === null) {
-        return
-      }
-      event.preventDefault()
-      event.stopPropagation()
-      useAgentHubOrbPanel.setState({ preferredDiameter: diameter })
-      rememberDiameter(diameter)
-    }
+    ...drag
   }
 }
