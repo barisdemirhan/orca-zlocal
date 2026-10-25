@@ -27,7 +27,7 @@ it('reopens an ordinary conversation through the turn restore resets without rea
   const resetTurn = vi.spyOn(CodexTurnOrdinals.prototype, 'forgetTurn')
   const adapter = adapterFor(codex, { resumeThreadId: THREAD_ID })
   try {
-    await adapter.acquire({
+    const acquired = await adapter.acquire({
       identity: identityFor('session-1'),
       fence: 7,
       spawnToken: 'reopen',
@@ -36,6 +36,12 @@ it('reopens an ordinary conversation through the turn restore resets without rea
         appendTombstone: () => {},
         publish: () => {}
       }
+    })
+    await adapter.open({
+      sessionId: 'session-1',
+      fence: 7,
+      acquisitionGeneration: acquired.acquisitionGeneration ?? null,
+      signal: new AbortController().signal
     })
 
     expect(bodies).toContainEqual({
