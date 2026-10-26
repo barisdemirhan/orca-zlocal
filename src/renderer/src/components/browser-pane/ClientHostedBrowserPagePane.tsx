@@ -335,6 +335,7 @@ export function ClientHostedBrowserPagePane({
                 <RemoteRuntimeEgressIndicator
                   runtimeEnvironmentId={runtimeEnvironmentId}
                   presentation="client-hosted"
+                  page={{ id: browserTab.id, worktreeId, url: browserTab.url }}
                 />
               }
               loading={loading}

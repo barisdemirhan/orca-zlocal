@@ -2,7 +2,14 @@ import { useState } from 'react'
 import { Globe, Monitor, Server } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { SettingsSegmentedControl } from '@/components/settings/SettingsFormControls'
+import {
+  getBrowserClientHostedRemoteOptions,
+  type BrowserClientHostedRemoteChoice
+} from '@/components/settings/browser-client-hosted-remote-copy'
+import { switchBrowserPageChannel } from '../browser-page-channel-switch'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -23,13 +30,15 @@ function EgressIndicatorButton({
   egress,
   description,
   detail,
-  settingsSectionId
+  settingsSectionId,
+  renderControls
 }: {
   icon: React.ReactNode
   egress: 'ssh' | 'local' | 'remote'
   description: string
   detail: string
   settingsSectionId: string
+  renderControls?: (close: () => void) => React.ReactNode
 }): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
@@ -66,6 +75,7 @@ function EgressIndicatorButton({
       >
         <div className="text-sm font-medium text-foreground">{description}</div>
         <div className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</div>
+        {renderControls?.(() => setOpen(false))}
         <Button
           type="button"
           variant="link"
@@ -143,10 +153,13 @@ export function SshEgressIndicator({
 /** Remote-runtime browser pages: client-hosted (renders here) or streamed from the host. */
 export function RemoteRuntimeEgressIndicator({
   runtimeEnvironmentId,
-  presentation
+  presentation,
+  page
 }: {
   runtimeEnvironmentId: string
   presentation: 'client-hosted' | 'streamed'
+  /** The page this address bar belongs to, so the popover can move it to the other channel. */
+  page?: { id: string; worktreeId: string; url: string | null }
 }): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const environmentName = useAppStore(
@@ -187,6 +200,98 @@ export function RemoteRuntimeEgressIndicator({
             )
       }
       settingsSectionId={BROWSER_CLIENT_HOSTED_REMOTE_SETTINGS_TARGET_ID}
+      renderControls={(close) => (
+        <RemoteBrowserChannelControls
+          runtimeEnvironmentId={runtimeEnvironmentId}
+          hostLabel={hostLabel}
+          pageChannel={clientHosted ? 'device' : 'server'}
+          page={page}
+          onMoved={close}
+        />
+      )}
     />
+  )
+}
+
+/** Where new pages render, and a way to move this page when it sits on the other side. */
+function RemoteBrowserChannelControls({
+  runtimeEnvironmentId,
+  hostLabel,
+  pageChannel,
+  page,
+  onMoved
+}: {
+  runtimeEnvironmentId: string
+  hostLabel: string
+  pageChannel: BrowserClientHostedRemoteChoice
+  page: { id: string; worktreeId: string; url: string | null } | undefined
+  onMoved: () => void
+}): React.JSX.Element {
+  const choice: BrowserClientHostedRemoteChoice = useAppStore((s) =>
+    s.settings?.browserClientHostedRemoteEnabled === false ? 'server' : 'device'
+  )
+  const updateSettings = useAppStore((s) => s.updateSettings)
+  const [moving, setMoving] = useState(false)
+  const label = translate('browser.remoteEgress.channelLabel', 'Open new pages on')
+  return (
+    <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <SettingsSegmentedControl
+        size="sm"
+        equalWidth
+        ariaLabel={label}
+        value={choice}
+        onChange={(value) => {
+          void updateSettings({ browserClientHostedRemoteEnabled: value === 'device' })
+        }}
+        options={getBrowserClientHostedRemoteOptions()}
+      />
+      {page && pageChannel !== choice ? (
+        <Button
+          type="button"
+          size="xs"
+          variant="secondary"
+          className="self-start"
+          disabled={moving}
+          data-testid="remote-egress-move-page"
+          title={translate(
+            'browser.remoteEgress.moveCaveat',
+            'Opens a new page at this page’s last address and closes this one. Signed-in and other transient page state may differ.'
+          )}
+          onClick={() => {
+            setMoving(true)
+            void switchBrowserPageChannel({
+              environmentId: runtimeEnvironmentId,
+              worktreeId: page.worktreeId,
+              pageId: page.id,
+              lastCommittedUrl: page.url,
+              channel: choice
+            })
+              .then((moved) => {
+                if (moved) {
+                  onMoved()
+                } else {
+                  toast.error(
+                    translate(
+                      'browser.remoteEgress.moveFailed',
+                      "Couldn't reopen this page. Check the connection and try again."
+                    )
+                  )
+                }
+              })
+              .catch((error: unknown) => {
+                toast.error(error instanceof Error ? error.message : String(error))
+              })
+              .finally(() => setMoving(false))
+          }}
+        >
+          {choice === 'device'
+            ? translate('browser.remoteEgress.moveHere', 'Reopen this page here')
+            : translate('browser.remoteEgress.moveToHost', 'Reopen this page on {{value0}}', {
+                value0: hostLabel
+              })}
+        </Button>
+      ) : null}
+    </div>
   )
 }

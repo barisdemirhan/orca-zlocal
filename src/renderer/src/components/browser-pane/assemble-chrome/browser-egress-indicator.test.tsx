@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -9,7 +9,12 @@ import {
 } from '@/lib/settings-navigation-types'
 
 const mocks = vi.hoisted(() => ({
-  executionHostId: 'local' as string
+  executionHostId: 'local' as string,
+  switchBrowserPageChannel: vi.fn(async () => true)
+}))
+
+vi.mock('../browser-page-channel-switch', () => ({
+  switchBrowserPageChannel: mocks.switchBrowserPageChannel
 }))
 
 vi.mock('@/lib/worktree-runtime-owner', () => ({
@@ -163,5 +168,69 @@ describe('RemoteRuntimeEgressIndicator', () => {
     } finally {
       useAppStore.setState(prior as unknown as SetState)
     }
+  })
+
+  describe('channel switch', () => {
+    let priorSettings: ReturnType<typeof useAppStore.getState>['settings']
+    let priorUpdateSettings: ReturnType<typeof useAppStore.getState>['updateSettings']
+    const updateSettings = vi.fn(async () => {})
+    const page = { id: 'page-1', worktreeId: 'wt-1', url: 'https://app.dev.test/' }
+
+    beforeEach(() => {
+      priorSettings = useAppStore.getState().settings
+      priorUpdateSettings = useAppStore.getState().updateSettings
+      updateSettings.mockClear()
+      mocks.switchBrowserPageChannel.mockClear()
+      useAppStore.setState({
+        settings: { ...priorSettings, browserClientHostedRemoteEnabled: true },
+        updateSettings
+      } as unknown as SetState)
+    })
+    afterEach(() => {
+      useAppStore.setState({
+        settings: priorSettings,
+        updateSettings: priorUpdateSettings
+      } as unknown as SetState)
+    })
+
+    function openPopover(presentation: 'client-hosted' | 'streamed'): void {
+      render(
+        <TooltipProvider>
+          <RemoteRuntimeEgressIndicator
+            runtimeEnvironmentId="env-1"
+            presentation={presentation}
+            page={page}
+          />
+        </TooltipProvider>
+      )
+      fireEvent.click(screen.getByTestId('ssh-egress-indicator'))
+    }
+
+    it('writes the chosen channel to the app setting', () => {
+      openPopover('client-hosted')
+      fireEvent.click(screen.getByRole('radio', { name: 'Server (streamed)' }))
+      expect(updateSettings).toHaveBeenCalledWith({ browserClientHostedRemoteEnabled: false })
+    })
+
+    it('offers no move while the page already sits on the chosen channel', () => {
+      openPopover('client-hosted')
+      expect(screen.queryByTestId('remote-egress-move-page')).toBeNull()
+    })
+
+    it('moves a streamed page here when this device is the chosen channel', async () => {
+      openPopover('streamed')
+      const move = screen.getByTestId('remote-egress-move-page')
+      expect(move.textContent).toBe('Reopen this page here')
+      fireEvent.click(move)
+      await waitFor(() =>
+        expect(mocks.switchBrowserPageChannel).toHaveBeenCalledWith({
+          environmentId: 'env-1',
+          worktreeId: 'wt-1',
+          pageId: 'page-1',
+          lastCommittedUrl: 'https://app.dev.test/',
+          channel: 'device'
+        })
+      )
+    })
   })
 })

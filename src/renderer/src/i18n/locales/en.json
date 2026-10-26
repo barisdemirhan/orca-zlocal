@@ -335,7 +335,12 @@
       "clientHostedTooltip": "Browsing through {{value0}}",
       "streamedTooltip": "Browsing on {{value0}}",
       "clientHostedDetail": "The page renders on this device. Network traffic and DNS go through the remote host.",
-      "streamedDetail": "The page runs on the remote host and streams to this device."
+      "streamedDetail": "The page runs on the remote host and streams to this device.",
+      "channelLabel": "Open new pages on",
+      "moveHere": "Reopen this page here",
+      "moveToHost": "Reopen this page on {{value0}}",
+      "moveCaveat": "Opens a new page at this page’s last address and closes this one. Signed-in and other transient page state may differ.",
+      "moveFailed": "Couldn't reopen this page. Check the connection and try again."
     },
     "remote": {
       "findUnavailable": "Find in page is not available while this page streams from the remote host.",

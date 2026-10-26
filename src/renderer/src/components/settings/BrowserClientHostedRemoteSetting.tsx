@@ -1,10 +1,10 @@
-import { translate } from '@/i18n/i18n'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { BROWSER_CLIENT_HOSTED_REMOTE_SETTINGS_TARGET_ID } from '@/lib/settings-navigation-types'
 import { SearchableSetting } from './SearchableSetting'
 import { SettingsRow, SettingsSegmentedControl } from './SettingsFormControls'
 import {
   getBrowserClientHostedRemoteDescription,
+  getBrowserClientHostedRemoteOptions,
   getBrowserClientHostedRemoteTitle
 } from './browser-client-hosted-remote-copy'
 
@@ -50,27 +50,7 @@ export function BrowserClientHostedRemoteSetting({
             onChange={(value) =>
               updateSettings({ browserClientHostedRemoteEnabled: value === 'device' })
             }
-            options={[
-              {
-                value: 'device',
-                label: translate('settings.browser.clientHostedRemote.optionDevice', 'This device'),
-                tooltip: translate(
-                  'settings.browser.clientHostedRemote.optionDeviceTooltip',
-                  'Pages render on this desktop, so input and popups behave natively.'
-                )
-              },
-              {
-                value: 'server',
-                label: translate(
-                  'settings.browser.clientHostedRemote.optionServer',
-                  'Server (streamed)'
-                ),
-                tooltip: translate(
-                  'settings.browser.clientHostedRemote.optionServerTooltip',
-                  'Pages render on the remote server and stream to this device.'
-                )
-              }
-            ]}
+            options={getBrowserClientHostedRemoteOptions()}
           />
         }
       />

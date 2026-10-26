@@ -12,6 +12,7 @@ import type { MarkupModeController } from '../annotate/useMarkupMode'
 
 export function RemoteBrowserPageToolbar({
   runtimeEnvironmentId,
+  page,
   addressBarValue,
   onAddressBarChange,
   onSubmitAddressBar,
@@ -30,6 +31,7 @@ export function RemoteBrowserPageToolbar({
   onReload
 }: {
   runtimeEnvironmentId: string
+  page: { id: string; worktreeId: string; url: string | null }
   addressBarValue: string
   onAddressBarChange: (value: string) => void
   onSubmitAddressBar: () => void
@@ -73,6 +75,7 @@ export function RemoteBrowserPageToolbar({
             <RemoteRuntimeEgressIndicator
               runtimeEnvironmentId={runtimeEnvironmentId}
               presentation="streamed"
+              page={page}
             />
           }
           loading={busy || loading}

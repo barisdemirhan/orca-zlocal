@@ -11,3 +11,30 @@ export function getBrowserClientHostedRemoteDescription(): string {
     'Where pages render. Traffic always goes through the remote server. Applies to new pages only.'
   )
 }
+
+export type BrowserClientHostedRemoteChoice = 'device' | 'server'
+
+export function getBrowserClientHostedRemoteOptions(): {
+  value: BrowserClientHostedRemoteChoice
+  label: string
+  tooltip: string
+}[] {
+  return [
+    {
+      value: 'device',
+      label: translate('settings.browser.clientHostedRemote.optionDevice', 'This device'),
+      tooltip: translate(
+        'settings.browser.clientHostedRemote.optionDeviceTooltip',
+        'Pages render on this desktop, so input and popups behave natively.'
+      )
+    },
+    {
+      value: 'server',
+      label: translate('settings.browser.clientHostedRemote.optionServer', 'Server (streamed)'),
+      tooltip: translate(
+        'settings.browser.clientHostedRemote.optionServerTooltip',
+        'Pages render on the remote server and stream to this device.'
+      )
+    }
+  ]
+}
