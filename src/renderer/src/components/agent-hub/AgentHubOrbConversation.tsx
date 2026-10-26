@@ -358,7 +358,7 @@ export function AgentHubOrbConversation({
                 ready={quick.ready && !busy}
                 inputRef={quick.inputRef}
                 value={quick.draft}
-                listening={quick.dictation.active}
+                dictation={quick.dictation}
                 onChange={quick.setDraft}
                 onInput={quick.dictation.onInput}
                 onKeyDown={quick.dictation.onKeyDown}

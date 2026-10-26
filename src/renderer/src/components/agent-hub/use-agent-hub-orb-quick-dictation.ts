@@ -12,6 +12,21 @@ import { isDictationRunning } from './agent-hub-mirror-mic-state'
 /** The last transcript segment lands after the recording ends; wait for the box to go quiet. */
 export const AGENT_HUB_ORB_QUICK_SETTLE_MS = 500
 const AGENT_HUB_ORB_QUICK_START_MS = 2_000
+export const AGENT_HUB_ORB_QUICK_MISSED_MS = 4_000
+
+export type AgentHubOrbQuickDictationPhase = 'starting' | 'listening' | 'finishing'
+
+export type AgentHubOrbQuickDictation = {
+  active: boolean
+  /** Null while no recording runs; 'starting' until the controller is actually listening. */
+  phase: AgentHubOrbQuickDictationPhase | null
+  /** A finished recording left the box empty. */
+  missed: boolean
+  start: () => void
+  stop: () => void
+  onInput: () => void
+  onKeyDown: () => void
+}
 
 /** Dictation into the one-line box: the box is the insertion target and a finished recording sends itself. */
 export function useAgentHubOrbQuickDictation({
@@ -22,14 +37,9 @@ export function useAgentHubOrbQuickDictation({
   inputRef: RefObject<HTMLInputElement | null>
   prepare: () => Promise<boolean>
   onSend: () => void
-}): {
-  active: boolean
-  start: () => void
-  stop: () => void
-  onInput: () => void
-  onKeyDown: () => void
-} {
+}): AgentHubOrbQuickDictation {
   const [active, setActive] = useState(false)
+  const [missed, setMissed] = useState(false)
   const dictationState = useAppStore((s) => s.dictationState)
   const starting = useRef(false)
   const stopWhenStarted = useRef(false)
@@ -50,6 +60,8 @@ export function useAgentHubOrbQuickDictation({
       settleTimer.current = null
       if (inputRef.current?.value.trim()) {
         latestSend.current()
+      } else {
+        setMissed(true)
       }
     }, AGENT_HUB_ORB_QUICK_SETTLE_MS)
   }, [clearSettle, inputRef])
@@ -73,6 +85,13 @@ export function useAgentHubOrbQuickDictation({
     const timer = setTimeout(() => setActive(false), AGENT_HUB_ORB_QUICK_START_MS)
     return () => clearTimeout(timer)
   }, [active, dictationState, armSettle])
+  useEffect(() => {
+    if (!missed) {
+      return
+    }
+    const timer = setTimeout(() => setMissed(false), AGENT_HUB_ORB_QUICK_MISSED_MS)
+    return () => clearTimeout(timer)
+  }, [missed])
   // Why: a thrown-away recording leaves its words in the box, but they must not send themselves.
   useEffect(() => {
     const control = (event: Event): void => {
@@ -97,6 +116,7 @@ export function useAgentHubOrbQuickDictation({
       return
     }
     starting.current = true
+    setMissed(false)
     stopWhenStarted.current = false
     cancelled.current = false
     void prepare().then((ready) => {
@@ -130,5 +150,13 @@ export function useAgentHubOrbQuickDictation({
       armSettle()
     }
   }, [armSettle])
-  return { active, start, stop, onInput, onKeyDown: clearSettle }
+  // Why: speech before the mic opens is lost, so "Listening" waits for the controller.
+  const phase = !active
+    ? null
+    : dictationState === 'listening'
+      ? 'listening'
+      : dictationState === 'idle' || dictationState === 'starting'
+        ? 'starting'
+        : 'finishing'
+  return { active, phase, missed, start, stop, onInput, onKeyDown: clearSettle }
 }

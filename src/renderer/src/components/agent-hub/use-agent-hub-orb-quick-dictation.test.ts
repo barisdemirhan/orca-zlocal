@@ -54,7 +54,10 @@ it('records into the focused box and sends once the last segment has landed', as
   expect(document.activeElement).toBe(input)
   expect(actions).toEqual(['start'])
   expect(result.current.active).toBe(true)
+  act(() => useAppStore.setState({ dictationState: 'starting' }))
+  expect(result.current.phase).toBe('starting')
   act(() => useAppStore.setState({ dictationState: 'listening' }))
+  expect(result.current.phase).toBe('listening')
   input.value = 'Run the'
   act(() => useAppStore.setState({ dictationState: 'idle' }))
   expect(result.current.active).toBe(false)
@@ -74,7 +77,9 @@ it('keeps an empty or edited box instead of sending it', async () => {
   act(() => useAppStore.setState({ dictationState: 'idle' }))
   act(() => vi.advanceTimersByTime(AGENT_HUB_ORB_QUICK_SETTLE_MS))
   expect(onSend).not.toHaveBeenCalled()
+  expect(result.current.missed).toBe(true)
   await act(async () => result.current.start())
+  expect(result.current.missed).toBe(false)
   act(() => useAppStore.setState({ dictationState: 'listening' }))
   input.value = 'Draft'
   act(() => useAppStore.setState({ dictationState: 'idle' }))

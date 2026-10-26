@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
+import type { AgentHubOrbQuickDictation } from './use-agent-hub-orb-quick-dictation'
 
 function QuickAction({
   label,
@@ -41,7 +42,7 @@ export function AgentHubOrbQuickInput({
   ready,
   inputRef,
   value,
-  listening,
+  dictation,
   onChange,
   onInput,
   onKeyDown,
@@ -55,7 +56,7 @@ export function AgentHubOrbQuickInput({
   ready: boolean
   inputRef: RefObject<HTMLInputElement | null>
   value: string
-  listening: boolean
+  dictation: Pick<AgentHubOrbQuickDictation, 'active' | 'phase' | 'missed'>
   onChange: (value: string) => void
   onInput: () => void
   onKeyDown: () => void
@@ -66,6 +67,7 @@ export function AgentHubOrbQuickInput({
   onClose: () => void
 }): React.JSX.Element {
   const name = useAgentHubOrbName()
+  const { active: listening, phase, missed } = dictation
   const label = translate('agentHub.orb.quickInputNamed', 'Message {{name}}', { name })
   return (
     <div
@@ -89,9 +91,15 @@ export function AgentHubOrbQuickInput({
         disabled={!ready}
         tabIndex={open ? 0 : -1}
         placeholder={
-          listening
-            ? translate('agentHub.orb.quickListening', 'Listening… release to send')
-            : translate('agentHub.orb.quickPlaceholderNamed', 'Ask {{name}}…', { name })
+          phase === 'starting'
+            ? translate('agentHub.orb.quickStarting', 'Starting mic… wait to speak')
+            : phase === 'finishing'
+              ? translate('auto.components.dictation.DictationIndicator.f082d0cb9d', 'Processing…')
+              : listening
+                ? translate('agentHub.orb.quickListening', 'Listening… release to send')
+                : missed
+                  ? translate('agentHub.orb.quickNoSpeech', 'No speech heard. Try again.')
+                  : translate('agentHub.orb.quickPlaceholderNamed', 'Ask {{name}}…', { name })
         }
         className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
         onChange={(event) => onChange(event.target.value)}

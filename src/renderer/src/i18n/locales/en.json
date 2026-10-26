@@ -22363,6 +22363,8 @@
       "openFullChat": "Open full chat",
       "backToOrb": "Back to Orb",
       "quickListening": "Listening… release to send",
+      "quickStarting": "Starting mic… wait to speak",
+      "quickNoSpeech": "No speech heard. Try again.",
       "openChat": "Open chat",
       "captionYou": "You",
       "captionThinking": "Thinking…",
