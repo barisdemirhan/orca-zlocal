@@ -18,6 +18,7 @@ import { trackEmptyPaneKeyHook } from './server-transport-rules'
 import { AgentHookServerStatusHookLifecycle } from './server-status-hook-lifecycle'
 import { OPENCODE_STARTUP_PROMPT_CLAIM_PATH } from '../../../shared/opencode-startup-prompt'
 import { CLAUDE_AGENT_VIEW_PATH } from '../../../shared/claude-agent-view'
+import { ClaudeAttachHookRouter } from '../claude-attach-hook-routing'
 
 type HookServerStartOptions = {
   env?: string
@@ -28,6 +29,7 @@ type HookServerStartOptions = {
 
 export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHookLifecycle {
   private readonly startup = new AgentHookStartup()
+  protected claudeAttachHookRouter = new ClaudeAttachHookRouter()
 
   start(options?: HookServerStartOptions): Promise<void> {
     return this.startup.start((isCurrent) => this.startListener(options, isCurrent))
@@ -133,7 +135,10 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHook
         }
         const hookBody = mergeAgentHookRequestHeaders(body, req.headers)
         trackEmptyPaneKeyHook(hookBody)
-        const aliasedBody = this.normalizeHookBodyPaneKeyAlias(hookBody)
+        const aliasedBody = await this.claudeAttachHookRouter.route(
+          source,
+          this.normalizeHookBodyPaneKeyAlias(hookBody)
+        )
         if (await this.ingestTmuxHook(source, aliasedBody)) {
           res.writeHead(204)
           res.end()
