@@ -57,6 +57,8 @@ ORCA hub notify <text> [--level info|done|needs-you] [--sound] [--link <url|path
 ORCA hub notify "Import preview is ready" --level done --sound --link https://localhost:3000/import --link /abs/workspace/import-report.md --json
 ORCA hub peek <url|path> [--terminal <handle>] [--json]
 ORCA hub peek ./import-report.md --json
+ORCA hub peek close [--json]
+ORCA hub peek back [--json]
 ORCA hub progress <text> | progress --clear [--terminal <handle>] [--json]
 ORCA hub progress "Checking duplicate rows (2/3)" --json
 ORCA hub progress --clear --json
@@ -69,6 +71,11 @@ ORCA hub status --json
   `--link` for up to 20 links. Notification success means queued in Hub, not read by the user.
 - `peek` opens an HTTP(S) URL or file in Peek on its owning host, including paired hosts.
   Relative file paths resolve from the CLI's cwd; `~` uses that host's home directory.
+- `peek close` closes Peek and `peek back` returns to its previous page, only while it shows a
+  page or file from your host. `result.peek` is `closed`, `went-back`, `nothing-open`, or
+  `at-first-page`. Peek is one view per desktop, so these take no `--terminal`. Close what you
+  opened when you are done with it; leave a page the user opened alone. To peek a file named
+  `close` or `back`, write `./close`. Older desktops ignore these and you get `no_response`.
 - `progress` replaces one line (1–80 characters), coalesces updates to once per second,
   and expires after ten minutes without an update. Clear it when finished.
 - `status` returns host-scoped `result.mirrors`, `parked`, and `waiting` pane lists with
@@ -76,6 +83,8 @@ ORCA hub status --json
   agents needing input and pending Hub questions, consents, and orchestration gates.
   `result.cards` groups the same mirrors by card: each has `tabs`, `parked`, and
   `containsCaller` (the card that shows your terminal). Older desktops omit `cards`.
+  `result.peek` is `{ title, location, canGoBack }` while Peek shows something from your host,
+  otherwise null; older desktops omit it.
 
 ## Orb memory proposal (Orb only)
 

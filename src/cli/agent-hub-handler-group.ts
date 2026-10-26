@@ -5,6 +5,8 @@ export const AGENT_HUB_HANDLER_GROUP: HandlerGroup = {
   keys: [
     'hub notify',
     'hub peek',
+    'hub peek close',
+    'hub peek back',
     'hub ask',
     'hub orb remember',
     'hub progress',

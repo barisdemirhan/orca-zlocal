@@ -165,6 +165,7 @@ export function reduceAgentHubRequests(
     case 'arrange':
     case 'canvas':
     case 'peek':
+    case 'peek-control':
     case 'status':
     case 'presence':
       return state

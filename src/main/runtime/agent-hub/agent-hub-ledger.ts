@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto'
 import type {
+  AgentHubAck,
   AgentHubAnswer,
   AgentHubAskContent,
   AgentHubCaller,
   AgentHubEvent,
-  AgentHubMirrorOutcome,
   AgentHubOperation,
   AgentHubPane,
   AgentHubPresence,
@@ -204,9 +204,9 @@ export class AgentHubLedger {
     target: AgentHubPane,
     operation: AgentHubOperation,
     signal?: AbortSignal
-  ): Promise<{ requestId: string; mirror?: AgentHubMirrorOutcome }> {
+  ): Promise<{ requestId: string } & AgentHubAck> {
     this.requireDesktop()
-    this.rates.consume(caller, operation.kind === 'peek' ? 'peek' : 'mirror')
+    this.rates.consume(caller, operation.kind.startsWith('peek') ? 'peek' : 'mirror')
     const grantKey = JSON.stringify([agentHubCallerRateKey(caller), target.paneKey])
     if (
       agentHubTargetNeedsConsent(caller, target, this.parentOf) &&
@@ -240,9 +240,10 @@ export class AgentHubLedger {
     const execute = async (operationSignal?: AbortSignal) => {
       this.requests.create(request, this.desktops.keys())
       const { response } = await this.requests.wait(request.requestId, operationSignal)
-      return response.kind === 'ack' && response.mirror
-        ? { requestId: request.requestId, mirror: response.mirror }
-        : { requestId: request.requestId }
+      const { requestId } = request
+      return response.kind === 'ack'
+        ? { requestId, mirror: response.mirror, peek: response.peek }
+        : { requestId }
     }
     return caller.kind === 'orb' && caller.sessionId
       ? this.orbOperations.run(

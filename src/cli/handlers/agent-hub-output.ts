@@ -15,7 +15,8 @@ export function formatAgentHubResult(method: string, result: unknown): string {
       'cards' in result && Array.isArray(result.cards)
         ? cardList(result.cards)
         : [paneList('Mirrors', result.mirrors), paneList('Parked', result.parked)].join('\n'),
-      paneList('Waiting for you', result.waiting)
+      paneList('Waiting for you', result.waiting),
+      ...('peek' in result ? [peekLine(result.peek)] : [])
     ].join('\n')
   }
   if (method === 'agentHub.orb.remember' && 'message' in result) {
@@ -27,6 +28,9 @@ export function formatAgentHubResult(method: string, result: unknown): string {
   if (method === 'agentHub.mirror' && 'mirror' in result) {
     return MIRROR_OUTCOMES[String(result.mirror)] ?? 'Agent Hub request completed.'
   }
+  if (method === 'agentHub.peekControl' && 'peek' in result) {
+    return PEEK_OUTCOMES[String(result.peek)] ?? 'Agent Hub request completed.'
+  }
   if ('requestId' in result) {
     return `${method === 'agentHub.notify' ? 'Notification sent to Agent Hub' : 'Agent Hub request completed'} (${String(result.requestId)}).`
   }
@@ -37,6 +41,22 @@ const MIRROR_OUTCOMES: Record<string, string> = {
   added: 'Added as a tab in the card.',
   opened: 'Opened a new card.',
   'already-there': 'Already a tab in that card.'
+}
+
+const PEEK_OUTCOMES: Record<string, string> = {
+  closed: 'Closed Peek.',
+  'went-back': 'Went back one page in Peek.',
+  'nothing-open': 'Peek shows nothing from this host.',
+  'at-first-page': 'Peek is already on its first page.'
+}
+
+function peekLine(peek: unknown): string {
+  if (typeof peek !== 'object' || peek === null || !('location' in peek)) {
+    return 'Peek: closed'
+  }
+  const title = 'title' in peek && peek.title ? `${String(peek.title)} — ` : ''
+  const back = 'canGoBack' in peek && peek.canGoBack ? ' (can go back)' : ''
+  return `Peek: ${title}${String(peek.location)}${back}`
 }
 
 function cardList(cards: unknown[]): string {

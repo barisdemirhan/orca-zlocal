@@ -2,6 +2,7 @@ import { defineMethod } from '../core'
 import {
   AgentHubNotifyParams,
   AgentHubPeekParams,
+  AgentHubPeekControlParams,
   AgentHubAskParams,
   AgentHubProgressParams,
   AgentHubPresenceParams,
@@ -42,6 +43,21 @@ export const AGENT_HUB_METHODS = [
         caller,
         target,
         { kind: 'peek', link: params.link },
+        ctx.signal
+      )
+    }
+  }),
+  defineMethod({
+    name: 'agentHub.peekControl',
+    permission: 'workspace',
+    params: AgentHubPeekControlParams,
+    handler: (params, ctx) => {
+      // Peek is one view per desktop, so it is not addressed through another terminal.
+      const { caller, target } = resolveAgentHubPanes({ ...params, terminal: undefined }, ctx)
+      return ctx.runtime.agentHub.operate(
+        caller,
+        target,
+        { kind: 'peek-control', action: params.action },
         ctx.signal
       )
     }

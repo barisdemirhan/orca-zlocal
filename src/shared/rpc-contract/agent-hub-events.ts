@@ -16,6 +16,7 @@ const base = z.object({
   expiresAt: z.number().finite()
 })
 const peek = z.object({ kind: z.literal('peek'), link: z.string() })
+const peekControl = z.object({ kind: z.literal('peek-control'), action: z.enum(['close', 'back']) })
 const mirror = z.object({
   kind: z.literal('mirror'),
   action: z.enum(['open', 'add', 'minimize', 'restore', 'close']),
@@ -23,7 +24,7 @@ const mirror = z.object({
 })
 const arrange = z.object({ kind: z.literal('arrange'), layout: z.string().optional() })
 const canvas = z.object({ kind: z.literal('canvas'), action: z.enum(['open', 'close']) })
-const operation = z.discriminatedUnion('kind', [peek, mirror, arrange, canvas])
+const operation = z.discriminatedUnion('kind', [peek, peekControl, mirror, arrange, canvas])
 const answer = z.object({
   answer: z.string(),
   index: z.number().int().min(1).nullable(),
@@ -64,6 +65,7 @@ export const AgentHubEventSchema: z.ZodType<AgentHubEvent> = z.discriminatedUnio
   base.extend({ kind: z.literal('presence') }),
   base.extend({ kind: z.literal('status') }),
   base.extend(peek.shape),
+  base.extend(peekControl.shape),
   base.extend(mirror.shape),
   base.extend(arrange.shape),
   base.extend(canvas.shape),

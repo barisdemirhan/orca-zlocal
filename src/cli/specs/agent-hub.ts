@@ -29,6 +29,16 @@ export const AGENT_HUB_COMMAND_SPECS: CommandSpec[] = [
     ['link']
   ),
   hubSpec(['peek'], 'Show a host URL or file in Agent Hub', 'peek <url|path>', ['link'], ['link']),
+  // Peek is one view per desktop, so these take no --terminal.
+  ...[
+    ['close', 'Close Peek if it shows this host'],
+    ['back', 'Go back one page in Peek if it shows this host']
+  ].map(([action, summary]) => ({
+    path: ['hub', 'peek', action],
+    summary,
+    usage: `orca hub peek ${action} [--json]`,
+    allowedFlags: [...GLOBAL_FLAGS]
+  })),
   {
     ...hubSpec(
       ['ask'],

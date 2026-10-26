@@ -5,6 +5,7 @@ import { getOptionalStringFlag, getRepeatedStringFlag } from '../flags'
 import {
   AgentHubNotifyParams,
   AgentHubPeekParams,
+  AgentHubPeekControlParams,
   AgentHubProgressParams,
   AgentHubPresenceParams,
   AgentHubStatusParams,
@@ -59,6 +60,12 @@ export const AGENT_HUB_HANDLERS: Record<string, CommandHandler> = {
   'hub peek': operation('agentHub.peek', AgentHubPeekParams, (ctx) => ({
     link: agentHubPeekLink(ctx)
   })),
+  ...Object.fromEntries(
+    ['close', 'back'].map((action) => [
+      `hub peek ${action}`,
+      operation('agentHub.peekControl', AgentHubPeekControlParams, () => ({ action }))
+    ])
+  ),
   'hub progress': operation('agentHub.progress', AgentHubProgressParams, ({ flags }) => ({
     text: getOptionalStringFlag(flags, 'text'),
     clear: flags.get('clear') === true

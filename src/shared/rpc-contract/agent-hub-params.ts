@@ -30,6 +30,7 @@ export const AgentHubNotifyParams = caller.and(
   })
 )
 export const AgentHubPeekParams = caller.and(z.object({ link }))
+export const AgentHubPeekControlParams = caller.and(z.object({ action: z.enum(['close', 'back']) }))
 export const AgentHubAskParams = caller.and(
   z
     .object({
@@ -109,7 +110,8 @@ const pane = z.object({ paneKey: identity, terminalHandle: identity })
 export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('ack'),
-    mirror: z.enum(['added', 'opened', 'already-there']).optional()
+    mirror: z.enum(['added', 'opened', 'already-there']).optional(),
+    peek: z.enum(['closed', 'went-back', 'nothing-open', 'at-first-page']).optional()
   }),
   z.object({
     kind: z.literal('ask'),
@@ -134,7 +136,15 @@ export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
       .max(256)
       .optional(),
     orbFocus: z.object({ pinned: pane.nullable(), following: z.array(pane).max(500) }).optional(),
-    orbAwareness: AgentHubOrbAwarenessSchema.optional()
+    orbAwareness: AgentHubOrbAwarenessSchema.optional(),
+    peek: z
+      .object({
+        title: z.string().max(1_000),
+        location: z.string().max(4_096),
+        canGoBack: z.boolean()
+      })
+      .nullable()
+      .optional()
   }),
   z.object({ kind: z.literal('consent'), decision: z.enum(['once', 'session', 'deny']) }),
   z.object({

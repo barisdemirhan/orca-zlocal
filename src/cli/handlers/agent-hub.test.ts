@@ -393,7 +393,9 @@ describe('hub CLI', () => {
       { action: 'add', terminal: 'child', into: 'term-card' }
     ],
     [['hub', 'arrange', '--layout', 'grid'], 'agentHub.arrange', { layout: 'grid' }],
-    [['hub', 'canvas', 'open'], 'agentHub.canvas', { action: 'open' }]
+    [['hub', 'canvas', 'open'], 'agentHub.canvas', { action: 'open' }],
+    [['hub', 'peek', 'close'], 'agentHub.peekControl', { action: 'close' }],
+    [['hub', 'peek', 'back'], 'agentHub.peekControl', { action: 'back' }]
   ])('dispatches %j through its host', async (argv, method, content) => {
     await run(argv)
     expect(call).toHaveBeenCalledWith(method, expect.objectContaining(content), expect.anything())
@@ -434,5 +436,31 @@ describe('hub CLI', () => {
     })
     await run(['hub', 'mirror', 'add', '--terminal', 'term-c', '--into', 'term-a'])
     expect(log).toHaveBeenLastCalledWith('Added as a tab in the card.')
+  })
+
+  it('shows what Peek has open in status and what a Peek control did', async () => {
+    call.mockResolvedValueOnce({
+      id: 'req-1',
+      ok: true,
+      result: {
+        mirrors: [],
+        parked: [],
+        waiting: [],
+        peek: { title: 'Report', location: '/workspace/report.md', canGoBack: true }
+      },
+      _meta: { runtimeId: 'host-1' }
+    })
+    await run(['hub', 'status'])
+    expect(log).toHaveBeenLastCalledWith(
+      expect.stringContaining('Peek: Report — /workspace/report.md (can go back)')
+    )
+    call.mockResolvedValueOnce({
+      id: 'req-2',
+      ok: true,
+      result: { requestId: 'hub-id', peek: 'nothing-open' },
+      _meta: { runtimeId: 'host-1' }
+    })
+    await run(['hub', 'peek', 'close'])
+    expect(log).toHaveBeenLastCalledWith('Peek shows nothing from this host.')
   })
 })

@@ -19,7 +19,62 @@ import {
   agentHubPeekFileKind,
   type AgentHubPeekLinkSource
 } from './agent-hub-peek-routing'
-import { isAgentHubPeekHostMounted, openAgentHubPeek } from './agent-hub-peek-store'
+import {
+  closeAgentHubPeek,
+  goBackAgentHubPeek,
+  isAgentHubPeekHostMounted,
+  openAgentHubPeek,
+  readAgentHubPeek
+} from './agent-hub-peek-store'
+import { findWorktreeById } from '@/store/slices/worktree-helpers'
+import { agentHubRequestHost } from './agent-hub-request-target'
+import type {
+  AgentHubPeekControlAction,
+  AgentHubPeekOutcome,
+  AgentHubPeekStatus
+} from '../../../../shared/agent-hub-requests'
+
+/** The Peek item on screen, only when it belongs to `host`: agents never see another host's page. */
+function shownAgentHubPeekForHost(host: string) {
+  const peek = readAgentHubPeek()
+  const item = peek?.history[peek.index]
+  if (!peek || !item) {
+    return null
+  }
+  const state = useAppStore.getState()
+  const worktree = findWorktreeById(state.worktreesByRepo, item.worktreeId)
+  return worktree && agentHubRequestHost(state, worktree) === host ? { peek, item } : null
+}
+
+export function readAgentHubPeekStatus(host: string): AgentHubPeekStatus | null {
+  const shown = shownAgentHubPeekForHost(host)
+  return shown
+    ? {
+        title: shown.item.title.slice(0, 1_000),
+        location: shown.item.location.slice(0, 4_096),
+        canGoBack: shown.peek.index > 0
+      }
+    : null
+}
+
+export function executeAgentHubPeekControl(
+  host: string,
+  action: AgentHubPeekControlAction
+): AgentHubPeekOutcome {
+  const shown = shownAgentHubPeekForHost(host)
+  if (!shown) {
+    return 'nothing-open'
+  }
+  if (action === 'close') {
+    closeAgentHubPeek()
+    return 'closed'
+  }
+  if (shown.peek.index === 0) {
+    return 'at-first-page'
+  }
+  goBackAgentHubPeek()
+  return 'went-back'
+}
 
 export async function executeAgentHubPeek(
   host: string,

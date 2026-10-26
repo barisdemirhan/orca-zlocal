@@ -20,7 +20,11 @@ import {
   agentHubTargetPane,
   findAgentHubRequestTarget
 } from './agent-hub-request-target'
-import { executeAgentHubPeek } from './agent-hub-request-peek'
+import {
+  executeAgentHubPeek,
+  executeAgentHubPeekControl,
+  readAgentHubPeekStatus
+} from './agent-hub-request-peek'
 import { readAgentHubRequests } from './agent-hub-requests-store'
 import { paneTargetFromThread, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import type { AgentHubLists } from './agent-hub-lists'
@@ -83,6 +87,7 @@ function readStatus(
     ),
     waiting: [...waiting.values()],
     cards,
+    peek: readAgentHubPeekStatus(host),
     ...(awareness ? { orbAwareness: awareness } : {})
   }
 }
@@ -152,6 +157,8 @@ export async function executeAgentHubRequest(
         await executeAgentHubPeek(host, request.link, target)
         break
       }
+      case 'peek-control':
+        return { kind: 'ack', peek: executeAgentHubPeekControl(host, request.action) }
       case 'status': {
         // Awareness spans every host; only the current Orb session may read it.
         const orbSessionId =

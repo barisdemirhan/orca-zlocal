@@ -323,9 +323,12 @@ describe('Agent Hub non-card actions', () => {
         pairedContext
       )
     ).toEqual({ kind: 'ack' })
-    expect(openWorkspaceBrowserTab).toHaveBeenLastCalledWith(
-      expect.objectContaining({ expectedRuntimeEnvironmentId: 'workhost', url: 'https://site.dev.test' })
-    )
+    expect(readAgentHubPeek()?.history.at(-1)?.content).toEqual({
+      kind: 'web',
+      url: 'https://site.dev.test',
+      hostId: 'local',
+      resolveNameHere: true
+    })
     expect(
       await executeAgentHubRequest(
         'workhost',
@@ -431,20 +434,40 @@ describe('Agent Hub non-card actions', () => {
       cards: [
         { parked: false, containsCaller: true, tabs: [base.target] },
         { parked: true, containsCaller: false, tabs: [target] }
-      ]
+      ],
+      peek: null
     })
     expect(await run({ ...base, kind: 'status' }, 'workhost')).toEqual({
       kind: 'status',
       mirrors: [],
       parked: [],
       waiting: [],
-      cards: []
+      cards: [],
+      peek: null
     })
     expect(await run({ ...base, kind: 'presence' })).toEqual({
       kind: 'presence',
       present: true,
       idleMinutes: 0.5
     })
+  })
+
+  it('controls and reports Peek only while it shows the requesting host', async () => {
+    const control = (action: 'close' | 'back', host = 'local') =>
+      run({ ...base, kind: 'peek-control', action }, host)
+    expect(await control('close')).toEqual({ kind: 'ack', peek: 'nothing-open' })
+    await run({ ...base, kind: 'peek', link: 'https://example.com/a' })
+    await run({ ...base, kind: 'peek', link: 'https://example.com/b' })
+
+    expect(await run({ ...base, kind: 'status' }, 'workhost')).toMatchObject({ peek: null })
+    expect(await control('close', 'workhost')).toEqual({ kind: 'ack', peek: 'nothing-open' })
+    expect(await run({ ...base, kind: 'status' })).toMatchObject({
+      peek: { location: 'https://example.com/b', canGoBack: true }
+    })
+    expect(await control('back')).toEqual({ kind: 'ack', peek: 'went-back' })
+    expect(await control('back')).toEqual({ kind: 'ack', peek: 'at-first-page' })
+    expect(await control('close')).toEqual({ kind: 'ack', peek: 'closed' })
+    expect(readAgentHubPeek()).toBeNull()
   })
 
   it('shares Orb awareness only with the current Orb session', async () => {

@@ -65,6 +65,10 @@ export function agentHubConsentAction(operation: AgentHubOperation, title: strin
       return mirrorActionText(operation.action, title)
     case 'peek':
       return translate('agentHub.requests.peekLink', 'peek at {{link}}', { link: operation.link })
+    case 'peek-control':
+      return operation.action === 'close'
+        ? translate('agentHub.requests.closePeek', 'close Peek')
+        : translate('agentHub.requests.goBackInPeek', 'go back in Peek')
     case 'arrange':
       return translate('agentHub.requests.arrangeMirrors', 'arrange mirrors')
     case 'canvas':

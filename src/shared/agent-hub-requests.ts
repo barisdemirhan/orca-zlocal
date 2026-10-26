@@ -18,8 +18,10 @@ export type AgentHubRequestBase = {
 }
 
 export type AgentHubMirrorAction = 'open' | 'add' | 'minimize' | 'restore' | 'close'
+export type AgentHubPeekControlAction = 'close' | 'back'
 export type AgentHubOperation =
   | { kind: 'peek'; link: string }
+  | { kind: 'peek-control'; action: AgentHubPeekControlAction }
   /** `into` names a pane whose card receives an `add`; older desktops ignore it. */
   | { kind: 'mirror'; action: AgentHubMirrorAction; into?: AgentHubPane }
   | { kind: 'arrange'; layout?: string }
@@ -90,11 +92,17 @@ export type AgentHubStatus = {
   orbFocus?: { pinned: AgentHubPane | null; following: AgentHubPane[] }
   /** Current host-sourced status facts. Optional for independently updated peers. */
   orbAwareness?: AgentHubOrbAwareness
+  /** What Peek shows for this host, null when closed; older desktops omit it. */
+  peek?: AgentHubPeekStatus | null
 }
+export type AgentHubPeekStatus = { title: string; location: string; canGoBack: boolean }
 
 export type AgentHubMirrorOutcome = 'added' | 'opened' | 'already-there'
+/** `nothing-open` also covers a Peek showing another host's page or file. */
+export type AgentHubPeekOutcome = 'closed' | 'went-back' | 'nothing-open' | 'at-first-page'
+export type AgentHubAck = { mirror?: AgentHubMirrorOutcome; peek?: AgentHubPeekOutcome }
 export type AgentHubResponse =
-  | { kind: 'ack'; mirror?: AgentHubMirrorOutcome }
+  | ({ kind: 'ack' } & AgentHubAck)
   | ({ kind: 'ask' } & Pick<AgentHubAnswer, 'answer' | 'index' | 'indices'>)
   | ({ kind: 'presence' } & AgentHubPresence)
   | ({ kind: 'status' } & AgentHubStatus)

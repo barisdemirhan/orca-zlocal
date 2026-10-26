@@ -22256,6 +22256,8 @@
       "restoreMirror": "restore the mirror of {{title}}",
       "closeMirror": "close the mirror of {{title}}",
       "peekLink": "peek at {{link}}",
+      "closePeek": "close Peek",
+      "goBackInPeek": "go back in Peek",
       "arrangeMirrors": "arrange mirrors",
       "openCanvas": "open the canvas",
       "closeCanvas": "close the canvas",
