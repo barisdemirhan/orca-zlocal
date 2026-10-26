@@ -12,6 +12,8 @@ export const AGENT_HUB_HANDLER_GROUP: HandlerGroup = {
     'hub progress',
     'hub presence',
     'hub status',
+    'hub questions',
+    'hub answer',
     'hub mirror open',
     'hub mirror add',
     'hub mirror minimize',
@@ -21,5 +23,8 @@ export const AGENT_HUB_HANDLER_GROUP: HandlerGroup = {
     'hub canvas open',
     'hub canvas close'
   ],
-  load: async () => (await import('./handlers/agent-hub.js')).AGENT_HUB_HANDLERS
+  load: async () => ({
+    ...(await import('./handlers/agent-hub.js')).AGENT_HUB_HANDLERS,
+    ...(await import('./handlers/agent-hub-questions.js')).AGENT_HUB_QUESTION_HANDLERS
+  })
 }

@@ -263,6 +263,11 @@ ORCA hub mirror add --terminal <handle> --into <handleShownInThatCard> --json
 Without `--into` the tab joins the card that shows your own terminal. `hub status --json`
 lists `cards` with their tabs and marks yours with `containsCaller`.
 
+To read every waiting question and its options without a caller pane (the Orb, a paired
+client), use `hub questions --all-hosts --json`; relay the person's explicit choice with
+`hub answer --question <id> --option <id>`. Neither `hub status` nor `hub questions` is a
+global guarantee: check each host's `status` and `complete`.
+
 Load `references/agent-hub.md` before using these commands. **`hub ask` exit 2 means
 pending: resume the printed request ID with short `--wait` calls; do not ask again.**
 Do not spam the user or operate on unrelated panes without their request.

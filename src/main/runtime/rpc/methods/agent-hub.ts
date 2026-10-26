@@ -10,13 +10,19 @@ import {
   AgentHubMirrorParams,
   AgentHubArrangeParams,
   AgentHubCanvasParams,
-  AgentHubRespondParams
+  AgentHubRespondParams,
+  AgentHubQuestionsParams,
+  AgentHubAnswerParams
 } from '../../../../shared/rpc-contract/agent-hub-params'
 import { agentHubDesktopId, resolveAgentHubPanes } from './agent-hub-caller'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
 import { waitForAgentHubAnswer } from '../../agent-hub/agent-hub-answer-wait'
 import { randomUUID } from 'node:crypto'
 import { respondToAgentHubMemory } from './agent-hub-orb-memory'
+import type {
+  AgentHubAnswerResult,
+  AgentHubQuestionsResult
+} from '../../../../shared/agent-hub-questions'
 
 export const AGENT_HUB_METHODS = [
   defineMethod({
@@ -195,5 +201,33 @@ export const AGENT_HUB_METHODS = [
       }
       return ctx.runtime.agentHub.respond(params.requestId, params.result, desktop)
     }
+  }),
+  defineMethod({
+    name: 'agentHub.questions',
+    permission: 'workspace',
+    params: AgentHubQuestionsParams,
+    handler: async (_params, ctx): Promise<AgentHubQuestionsResult> => {
+      const { hostScope } = await ctx.runtime.listTerminals(undefined, 1, {
+        includeVisualLayouts: false
+      })
+      return {
+        questionsVersion: 1,
+        questions: ctx.runtime.agentHubQuestions.list(ctx.runtime),
+        ...(hostScope ? { hostScope } : {})
+      }
+    }
+  }),
+  defineMethod({
+    name: 'agentHub.answer',
+    permission: 'workspace',
+    params: AgentHubAnswerParams,
+    handler: (params, ctx): Promise<AgentHubAnswerResult> =>
+      ctx.runtime.agentHubQuestions.answer(
+        ctx.runtime,
+        params.questionId,
+        params.optionIds,
+        params.verifyMs,
+        ctx.signal ?? new AbortController().signal
+      )
   })
 ] as const

@@ -32,7 +32,8 @@ export class AgentHubLedger {
   private readonly desktops = new Map<string, number>()
   private readonly sessionGrants = new Set<string>()
   private readonly rates: AgentHubRateLimits
-  private readonly requests: AgentHubPendingRequests
+  /** Read by the CLI answer path, which settles asks without a subscribed desktop. */
+  readonly requests: AgentHubPendingRequests
   private readonly progress: AgentHubProgressLines
   private readonly memories: AgentHubOrbMemoryProposals
 

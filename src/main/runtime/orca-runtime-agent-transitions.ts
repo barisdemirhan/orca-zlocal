@@ -1,5 +1,7 @@
 import { AgentTransitionDetector } from '../agent-hooks/agent-transition-detector'
 import type { ConnectorCloud } from '../connector-cloud/connector-cloud'
+import { agentHookServer } from '../agent-hooks/server'
+import { AgentHubQuestions } from './agent-hub/agent-hub-questions'
 import type { ExternalConversationSeam } from '../external-conversations/external-conversation-seam'
 import { installExternalConversations } from '../external-conversations/external-conversations-install'
 import { HEADLESS_RUNTIME_WINDOW_ID } from '../../shared/runtime-session-contracts'
@@ -48,6 +50,23 @@ export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithAge
   })
 
   private readonly externalConversations = installExternalConversations(this.store, this)
+
+  readonly agentHubQuestions = new AgentHubQuestions({
+    readHookRow: (paneKey) => this.agentTransitions.latestRow(paneKey),
+    panesNeedingYou: () => this.agentTransitions.panesNeedingYou(),
+    readSettings: () => this.store?.getSettings(),
+    ledger: this.agentHub,
+    readGates: () => this.getAgentHubGateSnapshot(),
+    readLastDrivingInputAt: (ptyId) => this.terminalRunFacts.readLastDrivingInputAt(ptyId),
+    markQuestionAnswered: (request) => agentHookServer.inferQuestionAnswered(request),
+    describePane: (_paneKey, handle) => {
+      const pane = handle ? this.getAgentHubCaller(handle) : null
+      return {
+        ...(pane?.title ? { title: pane.title } : {}),
+        ...(pane?.agentType ? { agent: pane.agentType } : {})
+      }
+    }
+  })
 
   /** The connector seam while `experimentalConnectors` is on; null refuses every connector call. */
   getExternalConversationSeam(): ExternalConversationSeam | null {

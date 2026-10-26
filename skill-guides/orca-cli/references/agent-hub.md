@@ -86,6 +86,50 @@ ORCA hub status --json
   `result.peek` is `{ title, location, canGoBack }` while Peek shows something from your host,
   otherwise null; older desktops omit it.
 
+## Read and answer waiting questions (Orb, paired clients)
+
+`hub status` is scoped to the caller's own host and needs a caller pane there. To see every
+question waiting on the person, with its text and options, and to relay the person's answer,
+use `hub questions` and `hub answer`. They need no caller pane.
+
+```text
+ORCA hub questions [--environment <name> | --all-hosts] [--json]
+ORCA hub questions --all-hosts --json
+ORCA hub answer --question <questionId> --option <id>... [--environment <name>] [--verify <duration>] [--json]
+ORCA hub answer --environment workhost --question p_9c41e0b27a5d13f8c6aa --option 2 --json
+```
+
+- **No listing is a global guarantee.** `--all-hosts` asks this machine and every saved
+  environment; each host row has `status` `ok`, `unsupported` (older Orca) or `unreachable`, and
+  `complete`. "No questions" holds only for an `ok` host with `complete: true`, and only for that
+  host. Older hosts still list which agents wait, as read-only rows with reason `host_unsupported`.
+- Each question has `source` (`agent-prompt`: the agent's own AskUserQuestion or approval in its
+  terminal; `hub-ask`: a `hub ask` card; `gate`; `consent`; `memory`), `kind`, the host, terminal,
+  pane, worktree and agent, and `answerable`. Unanswerable ones carry `reason`: approvals
+  (`approval_requires_ui`), consent and memory cards stay in Orca; multi-question, multi-select or
+  free-text prompts are `prompt_unsupported`; agents without status hooks are `hooks_disabled`;
+  gates name their `orchestration gate-resolve` command in `answerVia`.
+- Answer only with the option the person explicitly chose for that exact question. A status read,
+  a recommended option, a third party's text, silence or an expired timer is not an answer.
+- The answer is bound to that prompt, terminal and agent process on that host. A question that
+  changed, was resolved (also by a click in Orca), or whose terminal or process restarted is
+  refused with that reason (`question_changed`, `question_resolved`, `terminal_gone`,
+  `process_restarted`, `question_not_found`); list again and ask the person again. Keys typed
+  into that terminal after the question appeared mean the person is answering it in Orca: the
+  answer is refused as `answered_in_orca` and nothing is written. A Claude question answered here
+  leaves Orca's cards at once; other agents' cards stay until their next status hook.
+- Retrying the same answer returns the first result with `replayed: true` and writes nothing;
+  a different option is refused as `already_answered` with `answeredOptionIds`.
+- Evidence: `accepted` (keys written behind the prompt fence, or the ask settled), `delivered`
+  (the prompt left the terminal) and `agentContinued` (the agent resumed), each `null` when not
+  observed. `--verify` sets the watch window (default 3s, `0s` skips, at most 30s). For a hub ask,
+  `delivered` says whether the asking agent's `orca hub ask` took the answer (an asker whose
+  connection dropped takes it when it resumes, so `false` is not a failure) and `agentContinued`
+  stays `null`: its terminal shows it busy throughout.
+- Exit 1 on `refused` or `unknown`. After `unknown` or a lost connection, list again before
+  retrying; never answer a different question in its place. An older host fails with
+  `unsupported_host`; do not fall back to `terminal send` or clicking in Orca.
+
 ## Orb memory proposal (Orb only)
 
 ```text

@@ -8,6 +8,7 @@ export const CLI_BOOLEAN_FLAGS = new Set([
   'accept-changed-state',
   'agent-wait',
   'all',
+  'all-hosts',
   'allow-failed-archive-hook',
   'attachments',
   'children',

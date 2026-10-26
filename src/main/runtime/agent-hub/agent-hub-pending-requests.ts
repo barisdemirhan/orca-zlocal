@@ -18,6 +18,8 @@ type Entry = {
   request: AgentHubRequest
   timer?: ReturnType<typeof setTimeout>
   outcome?: Outcome
+  /** A waiting caller took the settled outcome, at once or on resume. */
+  collected?: boolean
   listeners: Set<(outcome: Outcome) => void>
   desktops: Set<string>
   presence: Map<string, Extract<AgentHubResponse, { kind: 'presence' }>>
@@ -37,6 +39,11 @@ export class AgentHubPendingRequests {
     return this.snapshot().filter(
       (request) => request.kind === 'ask' && agentHubCallerRateKey(request.caller) === paneKey
     )
+  }
+  /** Whether the asker's wait has taken the settled answer; null while unsettled or unknown. */
+  collected(requestId: string): boolean | null {
+    const entry = this.entries.get(requestId)
+    return entry?.outcome ? entry.collected === true : null
   }
   snapshot(): AgentHubRequest[] {
     return [...this.entries.values()]
@@ -102,6 +109,7 @@ export class AgentHubPendingRequests {
           )
         })
       if (entry.outcome) {
+        entry.collected = true
         finish(entry.outcome)
         return
       }
@@ -260,6 +268,7 @@ export class AgentHubPendingRequests {
       event.result = { ...answer, by: outcome.value.by ?? 'human', desktop: outcome.value.desktop }
     }
     this.publish(event)
+    entry.collected = entry.listeners.size > 0
     for (const listener of entry.listeners) {
       listener(outcome)
     }

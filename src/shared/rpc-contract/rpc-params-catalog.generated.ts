@@ -69,6 +69,7 @@ import {
 } from './accounts-params'
 import { PrepareCodexForWslPaneParams } from './agent-hooks-params'
 import {
+  AgentHubAnswerParams,
   AgentHubArrangeParams,
   AgentHubAskParams,
   AgentHubCanvasParams,
@@ -79,6 +80,7 @@ import {
   AgentHubPeekParams,
   AgentHubPresenceParams,
   AgentHubProgressParams,
+  AgentHubQuestionsParams,
   AgentHubRespondParams
 } from './agent-hub-params'
 import { AgentLaunch, AgentLaunchReplay } from './agent-launch-params'
@@ -774,6 +776,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agent.launch': AgentLaunch,
   'agent.launchReplay': AgentLaunchReplay,
   'agentHooks.prepareCodexForWslPane': PrepareCodexForWslPaneParams,
+  'agentHub.answer': AgentHubAnswerParams,
   'agentHub.arrange': AgentHubArrangeParams,
   'agentHub.ask': AgentHubAskParams,
   'agentHub.canvas': AgentHubCanvasParams,
@@ -789,6 +792,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentHub.peekControl': AgentHubPeekControlParams,
   'agentHub.presence': AgentHubPresenceParams,
   'agentHub.progress': AgentHubProgressParams,
+  'agentHub.questions': AgentHubQuestionsParams,
   'agentHub.respond': AgentHubRespondParams,
   'agentHub.status': AgentHubPresenceParams,
   'agentSession.acknowledgeAttention': AcknowledgeAttentionParams,

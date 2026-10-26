@@ -254,6 +254,13 @@ export class AgentTransitionDetector {
     }
   }
 
+  /** Panes whose agent waits on the person, with the workspace each belongs to. */
+  panesNeedingYou(): { paneKey: string; workspace: AgentPaneWorkspace }[] {
+    return [...this.panes]
+      .filter(([, pane]) => pane.phase === 'needs-you')
+      .map(([paneKey, pane]) => ({ paneKey, workspace: pane.workspace }))
+  }
+
   /** Use the newest row to match the window's arrival-order projection. */
   latestRow(paneKey: string): AgentStatusIpcPayload | null {
     let latest: AgentStatusIpcPayload | null = null

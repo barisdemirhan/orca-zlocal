@@ -166,3 +166,12 @@ export const AgentHubRespondResultSchema = z.object({
   requestId: z.string().uuid(),
   accepted: z.literal(true)
 })
+/** Lists without a caller pane: the Orb and paired clients have none on this host. */
+export const AgentHubQuestionsParams = z.object({})
+export const AGENT_HUB_ANSWER_MAX_VERIFY_MS = 30_000
+export const AgentHubAnswerParams = z.object({
+  questionId: identity,
+  optionIds: z.array(z.string().trim().min(1).max(32)).min(1).max(20),
+  /** How long to watch for the prompt to clear and the agent to resume; 0 skips it. */
+  verifyMs: z.number().int().min(0).max(AGENT_HUB_ANSWER_MAX_VERIFY_MS).default(3_000)
+})
