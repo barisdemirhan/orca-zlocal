@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 
 const mocks = vi.hoisted(() => {
   const state: {
-    settings: { experimentalAgentHub: boolean }
+    settings: { experimentalAgentHub: boolean; browserClientHostedRemoteEnabled?: boolean }
     connectionId: string | null | undefined
     browser: 'enabled' | 'hidden'
     route: { executionHostId: string; runtimeEnvironmentId: string | null }
@@ -255,9 +255,15 @@ describe('a paired workspace', () => {
     })
   })
 
-  it.each(['https://site.dev.test/path', 'http://10.0.0.2/', 'http://devbox:3000/'])(
-    'opens the host-resolved name %s in the paired workspace browser',
-    (url) => {
+  it.each([
+    ['https://site.dev.test/path', false],
+    ['http://devbox:3000/', false],
+    ['http://10.0.0.2/', false],
+    ['http://10.0.0.2/', true]
+  ])(
+    'opens the host-resolved address %s in the paired workspace browser (on this device: %s)',
+    (url, onThisDevice) => {
+      mocks.settings.browserClientHostedRemoteEnabled = onThisDevice
       expect(peekTerminalUrlFromMirror(url, pairedSource())).toBe(true)
       expect(shown()).toBeNull()
       expect(openWorkspaceBrowserTab).toHaveBeenCalledWith(
@@ -268,6 +274,17 @@ describe('a paired workspace', () => {
       )
     }
   )
+
+  it('peeks at a host name on this device when browsing there, if it resolves here', () => {
+    expect(peekTerminalUrlFromMirror('https://site.dev.test/path', pairedSource())).toBe(true)
+    expect(shown()?.content).toEqual({
+      kind: 'web',
+      url: 'https://site.dev.test/path',
+      hostId: 'local',
+      resolveNameHere: true
+    })
+    expect(openWorkspaceBrowserTab).not.toHaveBeenCalled()
+  })
 
   it.each(['https://site.dev.test/path', 'http://localhost:5173/'])(
     'routes %s over an SSH-deployed server’s SSH route',

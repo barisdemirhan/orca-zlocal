@@ -208,10 +208,15 @@ function openPeekUrlWithFeedback(url: string, source: AgentHubPeekLinkSource): v
 export function fallbackAgentHubPeek(item: AgentHubPeekItem): void {
   closeAgentHubPeek()
   toast.info(
-    translate(
-      'agentHub.peek.workspaceFallback',
-      'This preview is unavailable here. Opening in the workspace.'
-    )
+    item.content.kind === 'web' && item.content.resolveNameHere
+      ? translate(
+          'agentHub.peek.hostAddress',
+          'This address is only available on its host. Opening in the workspace browser.'
+        )
+      : translate(
+          'agentHub.peek.workspaceFallback',
+          'This preview is unavailable here. Opening in the workspace.'
+        )
   )
   item.openInWorkspace()
 }

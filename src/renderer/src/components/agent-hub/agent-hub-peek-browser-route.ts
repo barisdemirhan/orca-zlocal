@@ -74,6 +74,32 @@ function isPrivateNetworkHost(hostname: string): boolean {
   )
 }
 
+function isPrivateName(hostname: string): boolean {
+  const host = hostname.replace(/\.$/, '').toLowerCase()
+  return !host.includes(':') && !/^[\d.]+$/.test(host) && isPrivateNetworkHost(host)
+}
+
+/**
+ * Whether this device resolves the URL's private name to another machine, as the paired host
+ * does; a name that lands on this device's own loopback would show a different site.
+ */
+export async function isAgentHubPeekNameReachableHere(url: string): Promise<boolean> {
+  let hostname: string
+  try {
+    hostname = new URL(url).hostname
+  } catch {
+    return false
+  }
+  if (!isPrivateName(hostname)) {
+    return true
+  }
+  const addresses = await window.api.hostNames.lookup({ hostname })
+  return (
+    addresses.length > 0 &&
+    addresses.every((address) => !isHostOnlyAddress(address) && !address.startsWith('169.254.'))
+  )
+}
+
 export function isAgentHubPeekHostAddress(url: string): boolean {
   try {
     const { hostname } = new URL(url)
@@ -125,8 +151,15 @@ export function agentHubPeekBrowserRoute(
   }
   const parsed = new URL(url)
   if (!isHostOnlyAddress(parsed.hostname)) {
-    // WHY: the runtime's workspace browser resolves a private name on that host; here it may not.
-    return isPrivateNetworkHost(parsed.hostname) ? null : { kind: 'web', url, hostId: 'local' }
+    if (!isPrivateNetworkHost(parsed.hostname)) {
+      return { kind: 'web', url, hostId: 'local' }
+    }
+    // WHY: "This device" browsing renders here, so a name this device also resolves can peek;
+    // streamed browsing resolves it only on the host, which Peek cannot show.
+    return state.settings?.browserClientHostedRemoteEnabled !== false &&
+      isPrivateName(parsed.hostname)
+      ? { kind: 'web', url, hostId: 'local', resolveNameHere: true }
+      : null
   }
   const environment = state.runtimeEnvironments?.find(
     (entry) => entry.id === route.runtimeEnvironmentId

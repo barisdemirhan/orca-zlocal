@@ -438,6 +438,37 @@ describe('private Peek pages', () => {
     expect(onUnavailable).not.toHaveBeenCalled()
   })
 
+  it.each([
+    [['10.0.0.2'], true],
+    [['127.0.0.1'], false],
+    [[], false]
+  ])('opens a host name that resolves here to %j: %s', async (addresses, opens) => {
+    seedOwner('runtime:workhost')
+    const lookup = vi.fn(async () => addresses)
+    Object.defineProperty(window, 'api', {
+      configurable: true,
+      value: { shell: { openUrl: vi.fn() }, hostNames: { lookup } }
+    })
+    const onUnavailable = vi.fn()
+    render(
+      <AgentHubPeekBrowser
+        url="https://site.dev.test/"
+        hostId="local"
+        resolveNameHere
+        onOpenPage={vi.fn()}
+        onUnavailable={onUnavailable}
+      />
+    )
+    await waitFor(() => expect(lookup).toHaveBeenCalledWith({ hostname: 'site.dev.test' }))
+    if (opens) {
+      await waitFor(() => expect(screen.getByTestId('browser-route').textContent).toBe('local'))
+      expect(onUnavailable).not.toHaveBeenCalled()
+    } else {
+      await waitFor(() => expect(onUnavailable).toHaveBeenCalledTimes(1))
+      expect(useAppStore.getState().browserTabsByWorktree[AGENT_HUB_PEEK_WORKTREE_ID]).toBeFalsy()
+    }
+  })
+
   it('removes stale empty groups even when no browser survived restart', () => {
     useAppStore.setState({ groupsByWorktree: { [AGENT_HUB_PEEK_WORKTREE_ID]: [] } })
     closeLeftoverAgentHubPeekPages()

@@ -8,6 +8,7 @@ import { createWorkspaceClientBrowserTab } from '@/lib/workspace-client-browser-
 import { resolveLocalhostHttpLinkDisplayUrl } from '@/lib/http-link-routing'
 import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
 import { closeAgentHubPeekBrowserTab } from './agent-hub-peek-pages'
+import { isAgentHubPeekNameReachableHere } from './agent-hub-peek-browser-route'
 
 export { closeLeftoverAgentHubPeekPages } from './agent-hub-peek-pages'
 
@@ -28,6 +29,7 @@ export function AgentHubPeekBrowser({
   hostId,
   routeHostId,
   routingWorktreeId,
+  resolveNameHere,
   onUnavailable,
   onOpenPage
 }: {
@@ -36,6 +38,8 @@ export function AgentHubPeekBrowser({
   hostId: ExecutionHostId
   routeHostId?: ExecutionHostId
   routingWorktreeId?: string
+  /** A host's private name: falls back unless this device resolves it to that machine. */
+  resolveNameHere?: boolean
   onUnavailable: () => void
   /** A link the page opened in a new tab or window; Peek shows it next. */
   onOpenPage: (url: string) => void
@@ -48,6 +52,12 @@ export function AgentHubPeekBrowser({
     let live = true
     let createdTabId: string | null = null
     void (async () => {
+      if (resolveNameHere && !(await isAgentHubPeekNameReachableHere(url))) {
+        if (live) {
+          onUnavailable()
+        }
+        return
+      }
       const displayUrl =
         hostId === 'local' ? await resolveLocalhostHttpLinkDisplayUrl(url, { kind: 'local' }) : null
       if (!live) {
@@ -83,7 +93,7 @@ export function AgentHubPeekBrowser({
         closeAgentHubPeekBrowserTab(createdTabId)
       }
     }
-  }, [url, hostId, onUnavailable])
+  }, [url, hostId, resolveNameHere, onUnavailable])
   const onOpenPageRef = useRef(onOpenPage)
   useLayoutEffect(() => {
     onOpenPageRef.current = onOpenPage

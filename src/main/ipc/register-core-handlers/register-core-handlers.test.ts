@@ -262,6 +262,8 @@ vi.mock('../localhost-worktree-labels', () => ({
   registerLocalhostWorktreeLabelHandlers: registerLocalhostWorktreeLabelHandlersMock
 }))
 
+vi.mock('../host-name-lookup', () => ({ registerHostNameLookupHandlers: vi.fn() }))
+
 vi.mock('../keybindings', () => ({
   registerKeybindingHandlers: registerKeybindingHandlersMock
 }))

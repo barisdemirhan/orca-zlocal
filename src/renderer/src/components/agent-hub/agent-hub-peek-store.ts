@@ -17,6 +17,8 @@ export type AgentHubPeekContent =
       /** The host whose browser route the page takes when that differs from `hostId`. */
       routeHostId?: ExecutionHostId
       routingWorktreeId?: string
+      /** A host's private name: it opens only when this device resolves it to that machine. */
+      resolveNameHere?: boolean
     }
   | {
       kind: 'image' | 'pdf' | 'media' | 'markdown' | 'csv' | 'mermaid' | 'notebook' | 'text'

@@ -55,6 +55,7 @@ import { registerWorkspaceSpaceHandlers } from '../workspace-space'
 import { registerWorkspacePortHandlers } from '../workspace-ports'
 import { registerLinkPreviewHandlers } from '../link-preview'
 import { registerLocalhostWorktreeLabelHandlers } from '../localhost-worktree-labels'
+import { registerHostNameLookupHandlers } from '../host-name-lookup'
 import { registerAutomationHandlers } from '../automations'
 import { registerKeybindingHandlers } from '../keybindings'
 import { registerTelemetryHandlers } from '../telemetry'
@@ -254,6 +255,7 @@ export function registerCoreHandlers(
   registerWorkspacePortHandlers(store)
   registerLinkPreviewHandlers()
   registerLocalhostWorktreeLabelHandlers(store)
+  registerHostNameLookupHandlers()
   registerFilesystemHandlers(store, commitMessageAgentEnv)
   registerFilesystemWatcherHandlers()
   registerRuntimeHandlers(runtime)
