@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron'
 import {
   BrowserClientHostPlacementPreparationRequest,
-  type BrowserPageCreationPlacement
+  type BrowserClientHostPlacementPreparation
 } from '../../../shared/browser-client-host-placement'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import { resolveEnvironment } from '../../../shared/runtime-environment-store'
@@ -19,7 +19,7 @@ export function registerRuntimeEnvironmentBrowserClientHostHandler(options: {
 }): void {
   ipcMain.handle(
     'runtimeEnvironments:prepareBrowserClientHostPlacement',
-    async (_event, input: unknown): Promise<BrowserPageCreationPlacement> => {
+    async (_event, input: unknown): Promise<BrowserClientHostPlacementPreparation> => {
       const args = BrowserClientHostPlacementPreparationRequest.parse(input)
       const userDataPath = options.getUserDataPath()
       const initialEnvironment = resolveEnvironment(userDataPath, args.selector)

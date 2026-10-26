@@ -141,9 +141,39 @@ describe('browser client host placement preparation', () => {
       }
     })
 
-    await expect(harness.prepare()).resolves.toEqual({ kind: 'server' })
+    await expect(harness.prepare()).resolves.toEqual({ kind: 'server', statusUnavailable: true })
     expect(harness.startHost).not.toHaveBeenCalled()
     expect(harness.closeHost).not.toHaveBeenCalled()
+  })
+
+  it('probes once more before giving up, so a probe racing a reconnect still hosts here', async () => {
+    const harness = createHarness()
+    harness.getStatus.mockResolvedValueOnce({
+      id: 'status.get',
+      ok: false,
+      error: { code: 'runtime_unavailable', message: 'offline' },
+      _meta: { runtimeId: 'runtime-a' }
+    })
+
+    await expect(harness.prepare()).resolves.toEqual({
+      kind: 'client',
+      browserHostClientId: 'browser-client-a'
+    })
+    expect(harness.getStatus).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not wait out a second timeout', async () => {
+    const harness = createHarness({
+      status: {
+        id: 'status.get',
+        ok: false,
+        error: { code: 'timeout', message: 'status.get timed out' },
+        _meta: { runtimeId: 'runtime-a' }
+      }
+    })
+
+    await harness.prepare()
+    expect(harness.getStatus).toHaveBeenCalledTimes(1)
   })
 })
 

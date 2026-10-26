@@ -278,6 +278,8 @@
     },
     "clientHosted": {
       "preparationFailed": "Couldn't start the remote browser on this desktop. Check the paired connection and try again.",
+      "statusUnavailable": "This page streams from {{value0}}",
+      "statusUnavailableDetail": "Orca couldn't confirm {{value0}} can lend its network to this device. Use the address bar icon to reopen the page here.",
       "unavailableTitle": "Client-hosted browser unavailable",
       "unavailableDescription": "This page isn't available on this desktop right now.",
       "unavailableOtherDesktopDescription": "This page is open on another desktop.",
