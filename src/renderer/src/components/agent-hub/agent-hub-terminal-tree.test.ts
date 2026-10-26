@@ -68,6 +68,7 @@ function treeInput(): AgentHubTerminalTreeInput {
   }
   const threads = makeThreads(
     buildActivityEvents({
+      chatNames: new Map(),
       agentStatusByPaneKey: {
         [PANE_KEY]: {
           state: 'waiting',

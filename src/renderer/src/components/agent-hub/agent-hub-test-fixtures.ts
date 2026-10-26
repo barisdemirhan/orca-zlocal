@@ -28,6 +28,7 @@ export function agentHubThreadsFor(fixtures: AgentHubThreadFixture[]): AgentPane
   const now = Math.max(...fixtures.map((fixture) => fixture.at))
   return makeThreads(
     buildActivityEvents({
+      chatNames: new Map(),
       agentStatusByPaneKey: Object.fromEntries(
         fixtures.map((fixture) => [
           fixture.paneKey,

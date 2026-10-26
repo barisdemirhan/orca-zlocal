@@ -125,7 +125,7 @@ export function handleTerminalHttpLink(
       ...actions.primary,
       shortcut: peek?.shortcut === 'primary' ? (actions.alternate ? null : 'alternate') : 'primary'
     },
-    ...(peek ? { secondaryActions: [peek] } : {})
+    ...(peek ? { secondaryActions: [peek, ...(actions.secondaryActions ?? [])] } : {})
   })
 }
 

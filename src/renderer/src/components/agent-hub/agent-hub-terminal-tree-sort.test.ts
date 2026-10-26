@@ -165,6 +165,7 @@ function fixture(agents: AgentFixture[] = AGENTS) {
   const repos = [mid, zeta, app, loose]
   const threads = makeThreads(
     buildActivityEvents({
+      chatNames: new Map(),
       agentStatusByPaneKey,
       retainedAgentsByPaneKey: {},
       tabsByWorktree,

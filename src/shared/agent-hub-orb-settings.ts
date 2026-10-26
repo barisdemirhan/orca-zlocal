@@ -1,8 +1,8 @@
 import {
   agentChatPermissionModes,
-  effectiveChatPermissionMode,
   isAgentChatPermissionMode,
   offeredChatPermissionModes,
+  savedChatPermissionMode,
   type AgentChatPermissionMode
 } from './agent-chat-permission-mode'
 import type { AgentHubOrbAction, AgentHubSettings } from './agent-hub-settings'
@@ -57,7 +57,8 @@ export function resolveAgentHubOrbMode(
     return null
   }
   if (chosen) {
-    return effectiveChatPermissionMode(support, chosen, autoSupported)
+    const mode = savedChatPermissionMode(support, chosen)
+    return mode === 'auto' && support.autoNeedsModelSupport && !autoSupported ? 'ask' : mode
   }
   const offered = offeredChatPermissionModes(support, autoSupported)
   return offered.includes('auto') ? 'auto' : 'ask'

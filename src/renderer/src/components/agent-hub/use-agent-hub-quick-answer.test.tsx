@@ -60,6 +60,7 @@ function threadWith(interactivePrompt: string) {
   useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: entry } })
   const [thread] = makeThreads(
     buildActivityEvents({
+      chatNames: new Map(),
       agentStatusByPaneKey: { [PANE_KEY]: entry },
       retainedAgentsByPaneKey: {},
       tabsByWorktree: { [worktree.id]: [tab] },

@@ -42,7 +42,11 @@ vi.mock('@/store', async () => {
       paneForegroundAgentByPaneKey: {},
       ptyIdsByTabId: {},
       unreadTerminalTabs: {},
-      unreadAgentCompletionPanes: {}
+      unreadAgentCompletionPanes: {},
+      browserPagesByWorkspace: {},
+      browserAudiblePageIds: {},
+      browserAudioMutedTabIds: {},
+      setBrowserTabAudioMuted: () => {}
     }))
   }
 })

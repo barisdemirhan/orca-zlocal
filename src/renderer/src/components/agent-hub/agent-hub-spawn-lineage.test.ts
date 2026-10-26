@@ -35,6 +35,7 @@ describe('CLI-started agents in Hub', () => {
     } as const
     const threads = makeThreads(
       buildActivityEvents({
+        chatNames: new Map(),
         agentStatusByPaneKey: {
           [PANE_KEY]: { ...common, stateHistory: [], paneKey: PANE_KEY, agentType: 'claude' },
           [workerPane]: {

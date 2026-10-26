@@ -5,7 +5,7 @@ import {
   getWorktreeExecutionHostId,
   LOCAL_EXECUTION_HOST_ID
 } from '../../../../shared/execution-host'
-import { toolInputCommand } from '../../../../shared/native-chat-tool-summary'
+import { toolInputCommand } from '../../../../shared/native-chat/tools/native-chat-tool-summary'
 import { agentSessionCurrentContextRows } from '../../../../shared/agent-session-context-clear'
 import { readAgentJournalTurnOutcome } from '../../../../shared/agent-session-turn-record'
 import {

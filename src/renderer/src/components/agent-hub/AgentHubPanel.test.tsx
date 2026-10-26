@@ -68,6 +68,7 @@ function fixture() {
   })
   const threads = makeThreads(
     buildActivityEvents({
+      chatNames: new Map(),
       agentStatusByPaneKey: {
         [PANE_KEY]: entry(PANE_KEY, 'working', 3_000),
         [PANE_KEY_2]: entry(PANE_KEY_2, 'done', 1_000),
@@ -398,6 +399,7 @@ describe('AgentHubPanel inbox card', () => {
     )
     const threads = makeThreads(
       buildActivityEvents({
+        chatNames: new Map(),
         agentStatusByPaneKey: entries,
         retainedAgentsByPaneKey: {},
         tabsByWorktree: { [worktree.id]: tabs },
