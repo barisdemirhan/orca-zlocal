@@ -22290,6 +22290,7 @@
       "quickPlaceholderNamed": "Ask {{name}}…",
       "sleepNamed": "Put {{name}} to sleep",
       "hideNamed": "Hide {{name}}",
+      "callBackNamed": "Call {{name}} back",
       "talkNamed": "Talk to {{name}}",
       "disabledNamed": "Enable Agent control to talk to {{name}}",
       "asleepNamed": "{{name}} is asleep. The conversation is in History.",

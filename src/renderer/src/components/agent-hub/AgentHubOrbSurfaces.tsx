@@ -111,7 +111,9 @@ export function useAgentHubOrbSurfaces(
           })
         : translate('agentHub.title', 'Agents')
   const dockButton =
-    placement === 'dock' ? { state: orb.state, disabled: !agentControl, onOpen: togglePanel } : null
+    placement === 'dock'
+      ? { state: orb.state, disabled: !agentControl, onOpen: togglePanel, recall: panelOpen }
+      : null
   const statusButton =
     placement === 'statusBar' ? (
       <span ref={statusRef} className="flex items-center">
@@ -120,6 +122,7 @@ export function useAgentHubOrbSurfaces(
           disabled={!agentControl}
           side="top"
           onOpen={togglePanel}
+          recall={panelOpen}
         />
       </span>
     ) : null

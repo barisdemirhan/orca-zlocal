@@ -94,7 +94,12 @@ export function AgentHubDock({
   onNextWaiting: () => void
   onToggleMirrors: () => void
   onMove: (position: AgentHubDockPosition) => void
-  orb?: { state: AgentHubOrbState; onOpen: (alternate?: boolean) => void; disabled: boolean } | null
+  orb?: {
+    state: AgentHubOrbState
+    onOpen: (alternate?: boolean) => void
+    disabled: boolean
+    recall?: boolean
+  } | null
 }): React.JSX.Element {
   const viewport = useViewportSize()
   const terminalCounts = useAgentHubTerminalCounts(terminals)

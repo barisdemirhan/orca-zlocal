@@ -1,3 +1,4 @@
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { formatOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
@@ -34,18 +35,46 @@ export function AgentHubOrbMark({
   )
 }
 
+const TOWARD_DOCK = {
+  top: { Arrow: ArrowDown, nudge: '[button:hover_&]:translate-y-px' },
+  bottom: { Arrow: ArrowUp, nudge: '[button:hover_&]:-translate-y-px' },
+  left: { Arrow: ArrowRight, nudge: '[button:hover_&]:translate-x-px' },
+  right: { Arrow: ArrowLeft, nudge: '[button:hover_&]:-translate-x-px' }
+}
+
+/** The Orb's empty slot while it is out; the arrow points home, where a click sends it. */
+function AgentHubOrbRecallMark({
+  side
+}: {
+  side: 'top' | 'bottom' | 'left' | 'right'
+}): React.JSX.Element {
+  const { Arrow, nudge } = TOWARD_DOCK[side]
+  return (
+    <span
+      aria-hidden
+      data-agent-hub-orb-recall={side}
+      className="grid size-4 place-items-center rounded-full border border-dashed border-agent-orb-listening text-agent-orb-listening transition-colors [button:hover_&]:border-solid [button:hover_&]:bg-agent-orb-listening/15"
+    >
+      <Arrow className={`size-2.5 transition-transform ${nudge}`} strokeWidth={2.5} />
+    </span>
+  )
+}
+
 export function AgentHubOrbButton({
   state,
   side,
   onOpen,
   disabled = false,
-  floating = false
+  floating = false,
+  recall = false
 }: {
   state: AgentHubOrbState
   side: 'top' | 'bottom' | 'left' | 'right'
   onOpen: (alternate?: boolean) => void
   disabled?: boolean
   floating?: boolean
+  /** The Orb is out, so a click calls it back instead of waking it. */
+  recall?: boolean
 }): React.JSX.Element {
   const name = useAgentHubOrbName()
   const bindings = useAppStore((s) => s.keybindings)
@@ -56,7 +85,9 @@ export function AgentHubOrbButton({
     ? translate('agentHub.orb.disabledNamed', 'Enable Agent control to talk to {{name}}', {
         name
       })
-    : translate('agentHub.orb.talkNamed', 'Talk to {{name}}', { name })
+    : recall
+      ? translate('agentHub.orb.callBackNamed', 'Call {{name}} back', { name })
+      : translate('agentHub.orb.talkNamed', 'Talk to {{name}}', { name })
   return (
     <DockButton
       label={`${talk} · ${shortcut ?? notSet}`}
@@ -86,7 +117,11 @@ export function AgentHubOrbButton({
         onOpen(getShortcutPlatform() === 'darwin' ? event.metaKey : event.ctrlKey)
       }
     >
-      <AgentHubOrbMark state={state} large={floating} />
+      {recall && !floating ? (
+        <AgentHubOrbRecallMark side={side} />
+      ) : (
+        <AgentHubOrbMark state={state} large={floating} />
+      )}
     </DockButton>
   )
 }
