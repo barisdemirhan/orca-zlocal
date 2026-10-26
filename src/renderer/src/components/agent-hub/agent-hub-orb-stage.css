@@ -17,7 +17,8 @@
 [data-radix-popper-content-wrapper]:has(> [data-agent-hub-orb-only]) {
   pointer-events: none;
 }
-.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-art,
+/* Why: the art's margin around the sphere is empty, and beside the dock it would swallow clicks on the dock's buttons. */
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-art-sphere,
 .agent-hub-orb-stage[data-embedded='false'] [data-agent-hub-orb-controls],
 .agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-request-host {
   pointer-events: auto;

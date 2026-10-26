@@ -172,21 +172,16 @@ describe('Orb dock button', () => {
     expect(inbox).not.toHaveBeenCalled()
     expect(move).not.toHaveBeenCalled()
   })
-  it.each([
-    ['top', 'down'],
-    ['left', 'right']
-  ] as const)('shows the empty slot pointing home while the Orb is out (%s)', (side, arrow) => {
+  it('shows a call-back icon instead of the sphere while the Orb is out', () => {
     const open = vi.fn()
     render(
       <TooltipProvider>
-        <AgentHubOrbButton state={{ kind: 'idle' }} side={side} onOpen={open} recall />
+        <AgentHubOrbButton state={{ kind: 'idle' }} side="top" onOpen={open} recall />
       </TooltipProvider>
     )
     const button = screen.getByRole('button', { name: 'Call Orb back · Not set' })
     expect(button.querySelector('[data-agent-hub-orb-mark]')).toBeNull()
-    expect(
-      button.querySelector(`[data-agent-hub-orb-recall=${side}] .lucide-arrow-${arrow}`)
-    ).not.toBeNull()
+    expect(button.querySelector('[data-agent-hub-orb-recall]')).not.toBeNull()
     fireEvent.click(button)
     expect(open).toHaveBeenCalledOnce()
   })

@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react'
+import { Undo2 } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { formatOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
@@ -31,31 +31,6 @@ export function AgentHubOrbMark({
         decorative
         {...agentHubOrbPresentation(state, EMPTY_ORB_VOICE_SNAPSHOT, state.kind === 'needsYou')}
       />
-    </span>
-  )
-}
-
-const TOWARD_DOCK = {
-  top: { Arrow: ArrowDown, nudge: '[button:hover_&]:translate-y-px' },
-  bottom: { Arrow: ArrowUp, nudge: '[button:hover_&]:-translate-y-px' },
-  left: { Arrow: ArrowRight, nudge: '[button:hover_&]:translate-x-px' },
-  right: { Arrow: ArrowLeft, nudge: '[button:hover_&]:-translate-x-px' }
-}
-
-/** The Orb's empty slot while it is out; the arrow points home, where a click sends it. */
-function AgentHubOrbRecallMark({
-  side
-}: {
-  side: 'top' | 'bottom' | 'left' | 'right'
-}): React.JSX.Element {
-  const { Arrow, nudge } = TOWARD_DOCK[side]
-  return (
-    <span
-      aria-hidden
-      data-agent-hub-orb-recall={side}
-      className="grid size-4 place-items-center rounded-full border border-dashed border-agent-orb-listening text-agent-orb-listening transition-colors [button:hover_&]:border-solid [button:hover_&]:bg-agent-orb-listening/15"
-    >
-      <Arrow className={`size-2.5 transition-transform ${nudge}`} strokeWidth={2.5} />
     </span>
   )
 }
@@ -118,7 +93,7 @@ export function AgentHubOrbButton({
       }
     >
       {recall && !floating ? (
-        <AgentHubOrbRecallMark side={side} />
+        <Undo2 aria-hidden data-agent-hub-orb-recall className="size-3.5" />
       ) : (
         <AgentHubOrbMark state={state} large={floating} />
       )}
