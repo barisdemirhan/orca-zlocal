@@ -19,7 +19,7 @@ import {
   prepareStructuredAgentSessionCreateForWorktree,
   type PreparedStructuredAgentSessionCreate
 } from '../../runtime/rpc/methods/structured-agent-session-create'
-import { commitStructuredAgentSessionLaunchPrompt } from '../../runtime/rpc/methods/agent-launch-structured-prompt'
+import { sendAgentHubOrbOpeningPrompt } from './agent-hub-orb-opening-prompt-send'
 import { isAgentHubOrbDirectory } from './agent-hub-orb-directory'
 
 async function resolveAgentHubOrbModel(input: {
@@ -144,7 +144,7 @@ export async function ensureAgentHubOrbOpeningPrompt(
   if (snapshot.items.length > 0 || snapshot.submissions.length > 0) {
     return
   }
-  const committed = await commitStructuredAgentSessionLaunchPrompt({
+  const committed = await sendAgentHubOrbOpeningPrompt({
     host,
     caller,
     sessionId,
