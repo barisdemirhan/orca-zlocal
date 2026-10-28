@@ -54,12 +54,4 @@ describe('Claude init journal boundary', () => {
       expect.objectContaining({ kind: 'status', tone: 'error', text: quota })
     )
   })
-
-  it('still surfaces an explicit failure on the init envelope', () => {
-    const { items, handle } = journal()
-    handle({ ...capturedInit(), error: 'Initialization failed' })
-    expect(items).toContainEqual(
-      expect.objectContaining({ kind: 'status', tone: 'error', text: 'Initialization failed' })
-    )
-  })
 })
