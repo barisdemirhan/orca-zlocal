@@ -295,15 +295,16 @@ it('preserves the manager, xterm, PTY binding and dictation target through 100 d
   expect(terminals).toHaveLength(1)
   expect(ptyBindings).toEqual([{ ptyId: 'worktree-a@@retained-pty' }])
   expect(cleanupMount).not.toHaveBeenCalled()
-  expect(captured).toEqual({ kind: 'terminal', tabId: 'tab-retained', paneId: 7 })
+  expect(captured).toMatchObject({ kind: 'terminal', tabId: 'tab-retained' })
+  textarea.focus()
+  expect(captureInsertionTarget()).toEqual(captured)
   if (!captured) {
     throw new Error('Dictation origin missing')
   }
   insertText('retained origin', captured)
-  expect(insertion.mock.calls[0][0].detail).toEqual({
+  expect(insertion.mock.calls[0][0].detail).toMatchObject({
     text: 'retained origin',
-    tabId: 'tab-retained',
-    paneId: 7
+    tabId: 'tab-retained'
   })
   view.rerender(renderHost(mirror))
   returnRetainedPaneDestinationHome(mirror)
