@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { translate } from '@/i18n/i18n'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
-import { chatModelSupportsAutoMode } from '../../../../shared/agent-chat-permission-mode'
 import {
   normalizeAgentHubOrbSettings,
   agentHubOrbOfferedModes,
@@ -32,11 +31,8 @@ export function AgentHubSettingsOrbSection({
   const orb = normalizeAgentHubOrbSettings(settings)
   const { agents, models, loading, refreshModels } = useAgentHubOrbOptions(orb.agent)
   const supportsAsk = agentHubOrbSupportsAsk(orb.agent)
-  const autoSupported = chatModelSupportsAutoMode(models, orb.model)
   const permission =
-    resolveAgentHubOrbMode(orb.agent, orb.permission, autoSupported) ??
-    orb.permission ??
-    'full-access'
+    resolveAgentHubOrbMode(orb.agent, orb.permission) ?? orb.permission ?? 'full-access'
   const askUnavailable = translate(
     'auto.agentHub.orb.piRequiresFree',
     'Pi requires Full access. Choose another agent to ask before running commands.'
@@ -57,7 +53,7 @@ export function AgentHubSettingsOrbSection({
             tooltip: askUnavailable
           }
         ]),
-    ...agentHubOrbOfferedModes(orb.agent, autoSupported).map((mode) => ({
+    ...agentHubOrbOfferedModes(orb.agent).map((mode) => ({
       value: mode,
       label: nativeChatPermissionModeLabel(mode)
     }))

@@ -51,6 +51,7 @@ function serveCodexModels(probe: AgentModelCatalogProbe): void {
   state.host.deps.modelCatalog = createAgentModelCatalogService({
     store: new AgentModelCatalogStore(),
     getRecord: (sessionId) => state.store.getRecord(sessionId) ?? undefined,
+    getConversation: (sessionId) => state.store.getConversation(sessionId) ?? undefined,
     drivesRecord: () => true,
     resolveAccountHome: async () => ({ variable: 'CODEX_HOME', path: state.root }),
     workspaceMayOverrideDefaultModel: async () => false,

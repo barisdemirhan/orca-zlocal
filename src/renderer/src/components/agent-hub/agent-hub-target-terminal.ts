@@ -8,7 +8,7 @@ import { makePaneKey } from '../../../../shared/stable-pane-id'
 import {
   isRemoteRuntimePtyId,
   parseRemoteRuntimePtyId
-} from '../../../../shared/remote-runtime-pty-id'
+} from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import { resolveAgentHubPtyId, type AgentHubPaneTarget } from './agent-hub-pane-target'
 
 /** Resolve a host handle without letting a replaced pane inherit the selected process. */

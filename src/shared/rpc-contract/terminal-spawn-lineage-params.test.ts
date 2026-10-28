@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { TerminalCreateParams, TerminalSplit } from './terminal-unary-params'
 
 describe('terminal creator params compatibility', () => {
@@ -8,11 +9,11 @@ describe('terminal creator params compatibility', () => {
     expect(TerminalCreateParams.parse(create).callerTerminalHandle).toBe('term-parent')
     expect(TerminalSplit.parse(split).callerTerminalHandle).toBe('term-parent')
     expect(
-      TerminalCreateParams.omit({ callerTerminalHandle: true }).parse(create)
+      z.object(TerminalCreateParams.shape).omit({ callerTerminalHandle: true }).parse(create)
     ).not.toHaveProperty('callerTerminalHandle')
-    expect(TerminalSplit.omit({ callerTerminalHandle: true }).parse(split)).not.toHaveProperty(
-      'callerTerminalHandle'
-    )
+    expect(
+      z.object(TerminalSplit.shape).omit({ callerTerminalHandle: true }).parse(split)
+    ).not.toHaveProperty('callerTerminalHandle')
   })
   it('accepts old callers and treats malformed optional handles as absent', () => {
     expect(TerminalCreateParams.safeParse({ worktree: 'id:folder' }).success).toBe(true)

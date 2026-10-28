@@ -28,6 +28,7 @@ beforeEach(() => {
   state.host.deps.modelCatalog = createAgentModelCatalogService({
     store: new AgentModelCatalogStore(),
     getRecord: (sessionId) => state.store.getRecord(sessionId) ?? undefined,
+    getConversation: (sessionId) => state.store.getConversation(sessionId) ?? undefined,
     drivesRecord: () => true,
     resolveAccountHome: async () => ({ variable: 'CODEX_HOME', path: state.root }),
     workspaceMayOverrideDefaultModel: async () => false,
@@ -151,7 +152,7 @@ it.each(['agent', 'model'] as const)(
     expect(next.sessionId).not.toBe(first.sessionId)
     expect(state.store.getRecord(next.sessionId)).toMatchObject({
       provider: setting === 'agent' ? 'claude' : 'codex',
-      permissionMode: setting === 'agent' ? 'ask' : 'auto',
+      permissionMode: 'auto',
       ...(setting === 'agent' ? {} : { options: { model: 'new-model' } })
     })
     if (setting === 'agent') {
@@ -181,7 +182,7 @@ it.each(['agent', 'model'] as const)(
     expect(next.sessionId).not.toBe(first.sessionId)
     expect(state.store.getRecord(next.sessionId)).toMatchObject({
       provider: selection === 'agent' ? 'claude' : 'codex',
-      permissionMode: selection === 'agent' ? 'ask' : 'auto',
+      permissionMode: 'auto',
       ...(selection === 'agent' ? {} : { options: { model: 'new-model' } })
     })
     if (selection === 'agent') {
@@ -350,6 +351,7 @@ it.each(['launch', 'catalog'] as const)(
       state.host.deps.modelCatalog = createAgentModelCatalogService({
         store: new AgentModelCatalogStore(),
         getRecord: (sessionId) => state.store.getRecord(sessionId) ?? undefined,
+        getConversation: (sessionId) => state.store.getConversation(sessionId) ?? undefined,
         drivesRecord: () => true,
         resolveAccountHome: async () => ({ variable: 'CODEX_HOME', path: state.root }),
         probes: {

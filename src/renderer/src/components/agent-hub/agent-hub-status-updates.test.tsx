@@ -13,7 +13,7 @@ import { activityThreadStatusId } from '../activity/activity-thread-presentation
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubStateWord } from './agent-hub-copy'
 import { useAppStore } from '@/store'
-import { flushMicrotasks } from '@/store/slices/agent-status-test-harness'
+import { flushMicrotasks } from '@/store/slices/agent-status/agent-status-test-harness'
 import { makeUnifiedTab } from '@/store/slices/store-test-helpers'
 import type { AgentStatusPayload } from '@/store/slices/agent-status/agent-status-contract'
 

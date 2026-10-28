@@ -56,7 +56,11 @@ describe('worker-start spawn lineage', () => {
       setStructuredAgentSessionHost({
         subscribe: () => () => {},
         deps: {
-          store: { getRecord: () => ({ location: { executionHostId: 'local', wslDistro: null } }) }
+          store: {
+            requireWritableRecord: () => ({
+              location: { executionHostId: 'local', wslDistro: null }
+            })
+          }
         }
       } as never)
       const placed = await placeWorkerAgent({
@@ -71,7 +75,7 @@ describe('worker-start spawn lineage', () => {
           ...(caller ? { callerTerminalHandle: caller === 'caller' ? parent.handle : caller } : {})
         },
         requestedWorktree: `id:${TEST_WORKTREE_ID}`,
-        creationWorktree: undefined,
+        creationTarget: undefined,
         resolvedWorktree: { id: TEST_WORKTREE_ID, repoId: 'repo-1' },
         mode: {
           mode: 'structured',

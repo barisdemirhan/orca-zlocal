@@ -17,7 +17,7 @@ import type { AgentHubOrbSession, AgentHubOrbConversation } from '../../../../sh
 import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
 import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
 import { NativeChatSessionOptionPickers } from '../native-chat/NativeChatSessionOptionPickers'
-import type { SessionOptionDescriptor } from '../../../../shared/native-chat-session-options'
+import type { SessionOptionDescriptor } from '../../../../shared/native-chat/input/native-chat-session-options'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubRequest } from '../../../../shared/agent-hub-requests'

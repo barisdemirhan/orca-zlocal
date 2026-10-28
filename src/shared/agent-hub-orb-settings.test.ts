@@ -49,25 +49,28 @@ describe('Orb settings', () => {
   })
 
   it.each([
-    ['codex', true, 'auto'],
-    ['claude', true, 'auto'],
-    ['claude', false, 'ask'],
-    ['grok', false, 'ask'],
-    ['pi', false, null]
-  ] as const)('defaults %s (auto supported: %s) to %s when never chosen', (agent, auto, mode) => {
-    expect(resolveAgentHubOrbMode(agent, null, auto)).toBe(mode)
+    ['codex', 'auto'],
+    ['claude', 'auto'],
+    ['grok', 'ask'],
+    ['pi', null]
+  ] as const)('defaults %s to %s when never chosen', (agent, mode) => {
+    expect(resolveAgentHubOrbMode(agent, null)).toBe(mode)
   })
 
   it('keeps an explicit choice, and never grants more than the agent offers', () => {
-    expect(resolveAgentHubOrbMode('codex', 'ask', true)).toBe('ask')
-    expect(resolveAgentHubOrbMode('codex', 'full-access', true)).toBe('full-access')
-    expect(resolveAgentHubOrbMode('grok', 'auto', true)).toBe('ask')
-    expect(resolveAgentHubOrbMode('claude', 'auto', false)).toBe('ask')
+    expect(resolveAgentHubOrbMode('codex', 'ask')).toBe('ask')
+    expect(resolveAgentHubOrbMode('codex', 'full-access')).toBe('full-access')
+    expect(resolveAgentHubOrbMode('grok', 'auto')).toBe('ask')
   })
 
   it('offers the modes the agent supports', () => {
-    expect(agentHubOrbOfferedModes('codex', true)).toEqual(['ask', 'auto', 'full-access'])
-    expect(agentHubOrbOfferedModes('claude', false)).toEqual(['ask', 'accept-edits', 'full-access'])
-    expect(agentHubOrbOfferedModes('pi', false)).toEqual(['full-access'])
+    expect(agentHubOrbOfferedModes('codex')).toEqual(['ask', 'auto', 'full-access'])
+    expect(agentHubOrbOfferedModes('claude')).toEqual([
+      'ask',
+      'accept-edits',
+      'auto',
+      'full-access'
+    ])
+    expect(agentHubOrbOfferedModes('pi')).toEqual(['full-access'])
   })
 })

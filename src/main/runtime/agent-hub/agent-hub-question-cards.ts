@@ -11,7 +11,7 @@ import type {
   AgentHubResponse
 } from '../../../shared/agent-hub-requests'
 import type { AgentStatusIpcPayload } from '../../../shared/agent-status-ipc-payload'
-import { parseAskFromStatus } from '../../../shared/native-chat-ask'
+import { parseAskFromStatus } from '../../../shared/native-chat/input/native-chat-ask'
 import { CONNECTOR_AGENTS } from '../../external-conversations/connector-agents'
 import { AgentHubError } from './agent-hub-error'
 import type { AgentHubPendingRequests } from './agent-hub-pending-requests'

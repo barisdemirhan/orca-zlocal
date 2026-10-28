@@ -12,7 +12,8 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import {
   parseInteractivePrompt,
   type InteractivePromptCard
-} from '../native-chat/native-chat-interactive-prompt'
+} from '../../../../shared/native-chat-interactive-prompt'
+import { sayNativeChatApprovalTranslated } from '../native-chat/native-chat-interactive-prompt'
 import { agentHubCardKey } from './agent-hub-answered-cards'
 import { agentHubStateSince } from './agent-hub-lists'
 import {
@@ -80,7 +81,12 @@ export function useAgentHubAnswerQueueSource(threads: readonly AgentPaneThread[]
       if (!entry || (entry.state !== 'waiting' && entry.state !== 'blocked')) {
         continue
       }
-      const card = parseInteractivePrompt(entry.interactivePrompt, entry.toolName, thread.agentType)
+      const card = parseInteractivePrompt(
+        entry.interactivePrompt,
+        entry.toolName,
+        thread.agentType,
+        sayNativeChatApprovalTranslated
+      )
       if (!card) {
         continue
       }

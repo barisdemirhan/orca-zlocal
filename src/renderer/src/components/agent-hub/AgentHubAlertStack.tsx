@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom'
 import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
-import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
+import { parseInteractivePrompt } from '../../../../shared/native-chat-interactive-prompt'
+import { sayNativeChatApprovalTranslated } from '../native-chat/native-chat-interactive-prompt'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubAlertQuickOptions } from './AgentHubAlertQuickOptions'
@@ -42,7 +43,12 @@ function alertHeadline(alert: AgentHubThreadAlert): string {
 function alertText(alert: AgentHubThreadAlert): string {
   const entry = alert.thread.currentAgentEntry ?? alert.thread.paneEntry
   if (alert.kind !== 'done') {
-    const card = parseInteractivePrompt(entry?.interactivePrompt, entry?.toolName)
+    const card = parseInteractivePrompt(
+      entry?.interactivePrompt,
+      entry?.toolName,
+      undefined,
+      sayNativeChatApprovalTranslated
+    )
     if (card?.kind === 'question') {
       return card.prompt.questions[0]?.question ?? ''
     }

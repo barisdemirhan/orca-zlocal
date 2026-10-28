@@ -1,4 +1,4 @@
-import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime-pty-id'
+import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import type { AgentHubOrbOperation } from '../../../../shared/agent-hub-orb-operation'
 import { readAgentHubRequests } from './agent-hub-requests-store'
 

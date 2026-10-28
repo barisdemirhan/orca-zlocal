@@ -1,6 +1,6 @@
 import type { AgentHubPane } from '../../../../shared/agent-hub-requests'
 import { parsePaneKey } from '../../../../shared/stable-pane-id'
-import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime-pty-id'
+import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { AppState } from '@/store/types'
 import { resolveWorktreeOperationRoute } from '@/lib/worktree-operation-route'

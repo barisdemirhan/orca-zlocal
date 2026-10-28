@@ -1,7 +1,6 @@
 import {
   agentChatPermissionModes,
   isAgentChatPermissionMode,
-  offeredChatPermissionModes,
   savedChatPermissionMode,
   type AgentChatPermissionMode
 } from './agent-chat-permission-mode'
@@ -33,13 +32,10 @@ export function agentHubOrbPermissionSettingValue(
 }
 
 /** The modes Orb offers for an agent; an agent without modes only runs freely or asks. */
-export function agentHubOrbOfferedModes(
-  agent: string,
-  autoSupported: boolean
-): readonly AgentChatPermissionMode[] {
+export function agentHubOrbOfferedModes(agent: string): readonly AgentChatPermissionMode[] {
   const support = agentChatPermissionModes(agent)
   return support
-    ? offeredChatPermissionModes(support, autoSupported)
+    ? support.modes
     : agentHubOrbSupportsAsk(agent)
       ? ['ask', 'full-access']
       : ['full-access']
@@ -49,19 +45,16 @@ export function agentHubOrbOfferedModes(
  *  Null for an agent whose chats offer no modes. */
 export function resolveAgentHubOrbMode(
   agent: string,
-  chosen: AgentChatPermissionMode | null,
-  autoSupported: boolean
+  chosen: AgentChatPermissionMode | null
 ): AgentChatPermissionMode | null {
   const support = agentChatPermissionModes(agent)
   if (!support) {
     return null
   }
   if (chosen) {
-    const mode = savedChatPermissionMode(support, chosen)
-    return mode === 'auto' && support.autoNeedsModelSupport && !autoSupported ? 'ask' : mode
+    return savedChatPermissionMode(support, chosen)
   }
-  const offered = offeredChatPermissionModes(support, autoSupported)
-  return offered.includes('auto') ? 'auto' : 'ask'
+  return support.modes.includes('auto') ? 'auto' : 'ask'
 }
 
 export function normalizeAgentHubOrbSettings(settings: AgentHubSettings) {

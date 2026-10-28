@@ -6,7 +6,7 @@ import { OrcaRuntimeService } from '../orca-runtime'
 import { OrcaRuntimeRpcServer } from '../runtime-rpc'
 import { RemoteRuntimeSharedControlConnection } from '../../../shared/remote-runtime/control/remote-runtime-shared-control-connection'
 import { pairedRuntimeConnectionFromOffer } from '../../../shared/paired-runtime-connection'
-import { remoteRuntimeClientCapabilities } from '../../../shared/remote-runtime-client-capabilities'
+import { remoteRuntimeClientCapabilities } from '../../../shared/remote-runtime/remote-runtime-client-capabilities'
 import { readAgentHubDelivery } from '../../../shared/rpc-contract/agent-hub-events'
 
 function subscriptionId(frames: unknown[]): string | undefined {

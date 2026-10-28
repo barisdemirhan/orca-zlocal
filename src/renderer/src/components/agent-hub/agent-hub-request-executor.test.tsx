@@ -5,7 +5,7 @@ import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
-import { toRemoteRuntimePtyId } from '../../../../shared/remote-runtime-pty-id'
+import { toRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import {
   LEAF_ID,

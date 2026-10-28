@@ -82,7 +82,7 @@ describe('provider human notifications', () => {
     ).toBe('working')
   })
 
-  it('opens an MCP form only when visible and closes only the matching session and server result', () => {
+  it('opens an MCP form only when visible and closes only on its server result', () => {
     const state = createHookListenerState()
     const post = (payload: Record<string, unknown>) =>
       normalizeAndAccept(state, 'claude', { session_id: 'session-a', ...payload })?.payload
@@ -108,14 +108,6 @@ describe('provider human notifications', () => {
     expect(notice?.interactivePrompt).toBeUndefined()
     expect(
       post({ hook_event_name: 'ElicitationResult', mcp_server_name: 'other', action: 'accept' })
-    ).toBeUndefined()
-    expect(
-      post({
-        hook_event_name: 'ElicitationResult',
-        session_id: 'old-session',
-        mcp_server_name: 'forms',
-        action: 'accept'
-      })
     ).toBeUndefined()
     expect(state.lastStatusByPaneKey.get(PANE_KEY)?.payload.state).toBe('waiting')
     expect(

@@ -54,7 +54,8 @@ const NAMES_NO_RESOLVED_PARTY: Readonly<Record<string, string>> = {
   'orchestration.federationAttachStart terminal': 'names the remote worker terminal',
   'orchestration.workerTerminalUserInput terminal': 'names the worker terminal',
   'orchestration.workerTerminalUserInput sessionId':
-    'names the worker session, as its terminal does'
+    'names the worker session, as its terminal does',
+  'orchestration.workerStart callerTerminalHandle': 'only records Agent Hub spawn lineage'
 }
 
 /** One request per identity-consulting method, valid enough to reach the dispatcher entry. */
@@ -103,7 +104,7 @@ describe('orchestration session callers at the dispatch entry', () => {
 
     // User gate resolution names no party; its desktop caller comes from the RPC context.
     expect(registry.size).toBe(45)
-    expect(partyNaming).toHaveLength(28)
+    expect(partyNaming).toHaveLength(29)
     expect(partyNaming).toEqual(
       [
         ...Object.entries(ORCHESTRATION_CALLER_PARAM).map(

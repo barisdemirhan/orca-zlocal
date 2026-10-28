@@ -24,9 +24,8 @@ it('sets no mode for an agent whose chats offer none', () => {
 
 it('defaults a never-chosen Orb to Approve for me, else Ask', () => {
   const settings = createGlobalSettingsFixture()
-  expect(agentHubOrbPermissionMode(settings, 'codex', true)).toBe('auto')
-  expect(agentHubOrbPermissionMode(settings, 'claude', true)).toBe('auto')
-  expect(agentHubOrbPermissionMode(settings, 'claude', false)).toBe('ask')
+  expect(agentHubOrbPermissionMode(settings, 'codex')).toBe('auto')
+  expect(agentHubOrbPermissionMode(settings, 'claude')).toBe('auto')
   expect(agentHubOrbPermissionOptions(settings, 'grok')).toEqual({
     permissionMode: 'ask'
   })
@@ -36,7 +35,7 @@ it('keeps an explicit choice over the default', () => {
   const settings = createGlobalSettingsFixture({
     agentHubOrbPermission: 'ask'
   })
-  expect(agentHubOrbPermissionMode(settings, 'codex', true)).toBe('ask')
+  expect(agentHubOrbPermissionMode(settings, 'codex')).toBe('ask')
   expect(
     agentHubOrbPermissionMode(
       createGlobalSettingsFixture({ agentHubOrbPermission: 'auto' }),

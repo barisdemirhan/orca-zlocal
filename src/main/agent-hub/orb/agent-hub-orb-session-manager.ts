@@ -1,7 +1,6 @@
 import {
   ORB_ACCESS_RANK,
   agentHubOrbAccessRank,
-  agentHubOrbAutoModeSupported,
   agentHubOrbPermissionMode,
   agentHubOrbPermissionOptions
 } from './agent-hub-orb-permission-settings'
@@ -209,21 +208,12 @@ export class AgentHubOrbSessionManager {
         host,
         current,
         previous,
-        mode: agentHubOrbPermissionMode(
-          this.getSettings(),
-          agent,
-          await agentHubOrbAutoModeSupported(
-            host.deps.modelCatalog,
-            agent,
-            previous.options?.model ?? null
-          )
-        )
+        mode: agentHubOrbPermissionMode(this.getSettings(), agent)
       })
       this.appliedMode = resumed.mode
       return this.finishOpen(host, resumed.session, settings, orbDirectory)
     }
     const model = params.model === undefined ? settings.model : params.model
-    const autoSupported = await agentHubOrbAutoModeSupported(host.deps.modelCatalog, agent, model)
     const { prepared } = await prepareAgentHubOrbSessionCreate({
       runtime: this.runtime,
       host,
@@ -231,10 +221,10 @@ export class AgentHubOrbSessionManager {
       agent,
       model,
       cwd: cwd ?? orbDirectory,
-      permissionOptions: agentHubOrbPermissionOptions(this.getSettings(), agent, autoSupported)
+      permissionOptions: agentHubOrbPermissionOptions(this.getSettings(), agent)
     })
     this.requireEnabled()
-    const appliedMode = agentHubOrbPermissionMode(this.getSettings(), agent, autoSupported)
+    const appliedMode = agentHubOrbPermissionMode(this.getSettings(), agent)
     const created = await replaceAgentHubOrbSession(
       this.runtime,
       host,

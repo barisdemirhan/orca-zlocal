@@ -3,7 +3,7 @@ import { Orbit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
-import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime-pty-id'
+import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import type { AgentHubOrbOperation } from '../../../../shared/agent-hub-orb-operation'
 import { subscribeAgentHubRequests } from './agent-hub-requests-store'
 import {

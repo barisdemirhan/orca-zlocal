@@ -4,9 +4,10 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agent-support'
 import type { AgentType } from '../../../../shared/agent-status-types'
-import type { AskQuestion } from '../../../../shared/native-chat-ask-types'
+import type { AskQuestion } from '../../../../shared/native-chat/input/native-chat-ask-types'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { parseInteractivePrompt } from '../native-chat/native-chat-interactive-prompt'
+import { parseInteractivePrompt } from '../../../../shared/native-chat-interactive-prompt'
+import { sayNativeChatApprovalTranslated } from '../native-chat/native-chat-interactive-prompt'
 import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
 import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
 import {
@@ -97,16 +98,17 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
     return entry?.interactivePrompt ? (entry.toolName ?? null) : null
   })
   const card = useMemo(
-    () => parseInteractivePrompt(interactivePrompt, toolName ?? undefined, agentType),
+    () =>
+      parseInteractivePrompt(
+        interactivePrompt,
+        toolName ?? undefined,
+        agentType,
+        sayNativeChatApprovalTranslated
+      ),
     [interactivePrompt, toolName, agentType]
   )
   const ptyId = useAgentHubLivePty(target.worktreeId, tabId, paneKey, false)
-  const send = useNativeChatInteractiveSend(
-    paneKey,
-    ptyId,
-    agentType,
-    FINISH_ANSWER_AFTER_UNMOUNT
-  )
+  const send = useNativeChatInteractiveSend(paneKey, ptyId, agentType, FINISH_ANSWER_AFTER_UNMOUNT)
   // Why canSend: a mobile-owned PTY refuses desktop input, as in the chat composer.
   const canSend = useNativeChatCanSend(ptyId)
   const cardKey = agentHubCardKey(paneKey, target.stateSince, interactivePrompt)

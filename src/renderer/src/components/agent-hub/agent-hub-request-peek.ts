@@ -5,8 +5,11 @@ import {
   joinAbsolutePath,
   normalizeAbsolutePath,
   resolveTildePath
-} from '@/lib/terminal-path-normalization'
-import { resolveTerminalFileLinkText } from '@/lib/terminal-links'
+} from '../../../../shared/terminal-path-normalization'
+import {
+  findExactTerminalFileLink,
+  resolveTerminalFileLink
+} from '../../../../shared/terminal-links'
 import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
 import { getTerminalFileContext } from '../terminal-pane/terminal-file-path-mapping'
 import { detectLanguage } from '@/lib/language-detect'
@@ -101,9 +104,10 @@ export async function executeAgentHubPeek(
       )
     )
   }
+  const exactLink = url ? null : findExactTerminalFileLink(link)
   const filePath = url
     ? null
-    : (resolveTerminalFileLinkText(link, cwd)?.absolutePath ??
+    : ((exactLink ? resolveTerminalFileLink(exactLink, cwd)?.absolutePath : undefined) ??
       (/^~[\\/]/.test(link)
         ? resolveTildePath(link, cwd)
         : (normalizeAbsolutePath(link)?.normalized ?? joinAbsolutePath(cwd, link))))

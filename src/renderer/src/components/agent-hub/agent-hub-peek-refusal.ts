@@ -1,5 +1,5 @@
 import { translate } from '@/i18n/i18n'
-import { normalizeAbsolutePath } from '@/lib/terminal-path-normalization'
+import { normalizeAbsolutePath } from '../../../../shared/terminal-path-normalization'
 import { agentHubPeekFileKind } from './agent-hub-peek-routing'
 
 export function agentHubPeekRefusalReason(link: string): string {
