@@ -7,7 +7,7 @@ import {
   resolveTildePath
 } from '../../../../shared/terminal-path-normalization'
 import {
-  findExactTerminalFileLink,
+  extractTerminalFileLinks,
   resolveTerminalFileLink
 } from '../../../../shared/terminal-links'
 import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
@@ -104,7 +104,11 @@ export async function executeAgentHubPeek(
       )
     )
   }
-  const exactLink = url ? null : findExactTerminalFileLink(link)
+  const exactLink = url
+    ? null
+    : extractTerminalFileLinks(link).find(
+        (parsed) => parsed.startIndex === 0 && parsed.endIndex === link.length
+      )
   const filePath = url
     ? null
     : ((exactLink ? resolveTerminalFileLink(exactLink, cwd)?.absolutePath : undefined) ??

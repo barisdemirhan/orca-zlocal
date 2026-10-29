@@ -200,7 +200,6 @@ export function NativeChatStructuredSession(
     isFocusedGroup: props.isFocusedGroup,
     composerReady: composerShown && install.slot.kind !== 'install'
   })
-  const questionBody = prompt?.body.kind === 'question' ? prompt.body : null
   const transport = useNativeChatStructuredComposerTransport({
     props,
     controller,

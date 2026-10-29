@@ -1,9 +1,9 @@
 import {
-  readPosixPtyProcessTable,
   isPosixPtyRootStopped,
   getPosixPtyProcessGroups,
   signalPosixPtyProcessGroups
 } from '../../pty/posix-pty-process-groups'
+import { readPosixPtyProcessTable } from '../../pty/posix-pty-process-table'
 import type { TerminalSuspensionResult } from '../../../shared/terminal-suspension'
 
 export async function changePosixPtySuspension(
@@ -19,9 +19,14 @@ export async function changePosixPtySuspension(
   }
   try {
     if (suspended !== undefined) {
-      signalPosixPtyProcessGroups(pid, suspended ? 'SIGSTOP' : 'SIGCONT', () => {
-        throw new Error('PTY process group ownership cannot be verified')
-      })
+      await signalPosixPtyProcessGroups(
+        pid,
+        suspended ? 'SIGSTOP' : 'SIGCONT',
+        () => {
+          throw new Error('PTY process group ownership cannot be verified')
+        },
+        { ownsRoot: isCurrent }
+      )
     }
     const table = await readPosixPtyProcessTable(pid)
     if (!isCurrent() || !getPosixPtyProcessGroups(table, pid)?.length) {

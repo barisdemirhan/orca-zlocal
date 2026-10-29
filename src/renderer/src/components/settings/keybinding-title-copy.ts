@@ -36,6 +36,51 @@ const STATIC_TITLE_COPY = {
   'voice.dictation': () => translate('keybindings.title.voiceDictation', 'Dictation'),
   'view.tasks': () => translate('keybindings.title.viewTasks', 'Open Tasks'),
   'view.plugins': () => translate('keybindings.title.viewPlugins', 'Open Plugins'),
+  'agentHub.toggleOrb': () => translate('auto.agentHub.orb.toggle', 'Toggle Agent Hub Orb'),
+  'agentHub.orb.toggleLive': () =>
+    translate('keybindings.title.agentHubOrbToggleLive', 'Toggle Orb Live voice'),
+  'agentHub.orb.toggleMicrophone': () =>
+    translate('keybindings.title.agentHubOrbToggleMicrophone', 'Mute or unmute Orb microphone'),
+  'agentHub.orb.toggleSpeaker': () =>
+    translate('keybindings.title.agentHubOrbToggleSpeaker', 'Mute or unmute Orb speaker'),
+  'agentHub.orb.toggleConversation': () =>
+    translate(
+      'keybindings.title.agentHubOrbToggleConversation',
+      'Show Orb conversation or minimize Orb'
+    ),
+  'agentHub.toggle': () => translate('keybindings.title.agentHubToggle', 'Toggle Agent Hub'),
+  'agentHub.openAnswerQueue': () =>
+    translate('agentHub.answerQueue.openShortcut', 'Open the Agent Hub Answer Queue'),
+  'agentHub.nextWaiting': () =>
+    translate('keybindings.title.agentHubNextWaiting', 'Jump to Next Agent Waiting for You'),
+  'agentHub.dockMirrors': () =>
+    translate(
+      'keybindings.title.agentHubDockMirrors',
+      'Send Agent Hub Mirrors to the Hub or Bring Them Back'
+    ),
+  'agentHub.toggleCanvas': () =>
+    translate('keybindings.title.agentHubToggleCanvas', 'Open or Leave the Agent Hub Canvas'),
+  'agentHub.arrangeMirrors': () =>
+    translate(
+      'keybindings.title.agentHubArrangeMirrors',
+      'Arrange Agent Hub Mirrors in the Default Layout'
+    ),
+  'agentHub.focusMirror': () =>
+    translate(
+      'keybindings.title.agentHubFocusMirror',
+      'Focus or Unfocus the Active Agent Hub Canvas Mirror'
+    ),
+  'agentHub.popOut': () =>
+    translate('keybindings.title.agentHubPopOut', 'Pop Out the Active Agent Hub Terminal'),
+  'agentHub.jumpToMirror': () =>
+    translate(
+      'keybindings.title.agentHubJumpToMirror',
+      'Jump to the Active Agent Hub Mirror in Its Workspace'
+    ),
+  'agentHub.nextMirrorTab': () =>
+    translate('keybindings.title.agentHubNextMirrorTab', 'Next Agent Hub Mirror Tab'),
+  'agentHub.previousMirrorTab': () =>
+    translate('keybindings.title.agentHubPreviousMirrorTab', 'Previous Agent Hub Mirror Tab'),
   'sidebar.left.toggle': () => translate('keybindings.title.sidebarLeftToggle', 'Toggle Sidebar'),
   'sidebar.right.toggle': () =>
     translate('keybindings.title.sidebarRightToggle', 'Toggle Right Sidebar'),
@@ -173,7 +218,8 @@ const GROUP_COPY = {
   Settings: () => translate('keybindings.group.settings', 'Settings'),
   'Terminal Panes': () => translate('keybindings.group.terminalPanes', 'Terminal Panes'),
   Chat: () => translate('keybindings.group.chat', 'Chat'),
-  Agents: () => translate('keybindings.group.agents', 'Agents')
+  Agents: () => translate('keybindings.group.agents', 'Agents'),
+  'Agent Hub': () => translate('auto.agentHub.shortcuts.group', 'Agent Hub')
 } satisfies Record<string, () => string>
 
 const TITLE_COPY_BY_ID = new Map<string, () => string>([
