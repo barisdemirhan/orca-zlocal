@@ -94,9 +94,7 @@ export function useShortcutBindingSave(
     }
     setErrors((previous) => ({ ...previous, [actionId]: undefined }))
     try {
-      await (clearsOverride
-        ? resetOverride(actionId)
-        : setOverride(actionId, normalized))
+      await (clearsOverride ? resetOverride(actionId) : setOverride(actionId, normalized))
       return true
     } catch (failure) {
       if (mountedRef.current) {

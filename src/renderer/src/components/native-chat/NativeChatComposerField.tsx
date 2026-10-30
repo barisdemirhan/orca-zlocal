@@ -29,7 +29,10 @@ import type { NativeChatComposerGoalMode } from './use-native-chat-composer-subm
 import { translate } from '@/i18n/i18n'
 import { useNativeChatComposerDraftUnsaved } from './use-native-chat-draft-unsaved'
 import { useLatestHandler } from '@/lib/use-latest-handler'
-import { AgentHubOrbComposerContext, useAgentHubOrbComposerDictation } from '../agent-hub/agent-hub-orb-composer'
+import {
+  AgentHubOrbComposerContext,
+  useAgentHubOrbComposerDictation
+} from '../agent-hub/agent-hub-orb-composer'
 import { AgentHubOrbComposerDictationOverlay } from '../agent-hub/AgentHubOrbComposerDictationOverlay'
 import { useAgentHubOrbVoiceContext } from '../agent-hub/agent-hub-orb-voice-context'
 import { agentHubOrbVoiceNotice } from '../agent-hub/agent-hub-orb-voice-state'
@@ -320,7 +323,10 @@ export function NativeChatComposerField({
               '[contain:paint]'
             )}
           >
-            <div inert={dictationLocked} data-native-chat-dictation-lock={dictationLocked || undefined}>
+            <div
+              inert={dictationLocked}
+              data-native-chat-dictation-lock={dictationLocked || undefined}
+            >
               {imageAttachments.length > 0 ? (
                 <div className="mb-2 flex flex-wrap gap-2 px-1 pt-1.5">
                   {imageAttachments.map((attachment, index) => (

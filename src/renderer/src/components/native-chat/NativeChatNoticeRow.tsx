@@ -216,11 +216,11 @@ export function NativeChatNoticeRow({
               { agentName, wslDistro },
               sayAgentSessionFailureTranslated
             )
-        : orb
-          ? (nativeChatHookErrorSummary(block) ??
-            nativeChatCodexApiErrorSummary(block) ??
-            agentSessionGoalControlWords(block.text))
-          : agentSessionGoalControlWords(block.text)
+          : orb
+            ? (nativeChatHookErrorSummary(block) ??
+              nativeChatCodexApiErrorSummary(block) ??
+              agentSessionGoalControlWords(block.text))
+            : agentSessionGoalControlWords(block.text)
   const failureDetail = agentSessionFailureDetailText(failure)
   const detail = failureDetail?.trim() !== text.trim() ? failureDetail : undefined
   const tone = named ? 'notice' : look.kind === 'line' ? look.tone : null

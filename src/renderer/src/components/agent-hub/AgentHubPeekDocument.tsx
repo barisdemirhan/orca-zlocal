@@ -53,13 +53,7 @@ export function AgentHubPeekDocument({
         />
       )
     case 'mermaid':
-      return (
-        <MermaidViewer
-          key={cacheKey}
-          content={content}
-          scrollCacheKey={cacheKey}
-        />
-      )
+      return <MermaidViewer key={cacheKey} content={content} scrollCacheKey={cacheKey} />
     case 'notebook':
       return <IpynbPreview key={cacheKey} content={content} />
     case 'text':
