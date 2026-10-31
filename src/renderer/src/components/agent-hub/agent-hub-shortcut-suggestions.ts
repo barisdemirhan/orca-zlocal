@@ -9,7 +9,7 @@ export function agentHubSuggestedBindings(
     ? [
         ['agentHub.toggle', 'Mod+Alt+U'],
         ['agentHub.nextWaiting', 'Mod+Alt+N'],
-        ['agentHub.dockMirrors', 'Mod+Alt+B'],
+        ['agentHub.dockMirrors', 'Mod+Alt+K'],
         ['agentHub.toggleCanvas', 'Mod+Alt+V'],
         ['agentHub.arrangeMirrors', 'Mod+Alt+G'],
         ['agentHub.focusMirror', 'Mod+Alt+O'],
