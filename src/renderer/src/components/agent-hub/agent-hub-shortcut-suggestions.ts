@@ -13,7 +13,7 @@ export function agentHubSuggestedBindings(
         ['agentHub.toggleCanvas', 'Mod+Alt+V'],
         ['agentHub.arrangeMirrors', 'Mod+Alt+G'],
         ['agentHub.focusMirror', 'Mod+Alt+O'],
-        ['agentHub.popOut', 'Mod+Alt+P'],
+        ['agentHub.popOut', 'Mod+Alt+Y'],
         ['agentHub.jumpToMirror', 'Mod+Alt+J'],
         ['agentHub.nextMirrorTab', 'Mod+Alt+Shift+BracketRight'],
         ['agentHub.previousMirrorTab', 'Mod+Alt+Shift+BracketLeft']

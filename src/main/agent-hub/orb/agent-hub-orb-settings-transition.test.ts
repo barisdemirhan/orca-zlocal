@@ -45,7 +45,13 @@ beforeEach(() => {
       })
     }
   })
-  runtime = new OrcaRuntimeService()
+  runtime = new OrcaRuntimeService({
+    getRepo: () => undefined,
+    getRepos: () => [],
+    getAllWorktreeMeta: () => ({}),
+    getWorktreeMeta: () => undefined,
+    getSettings: () => settings
+  } as unknown as ConstructorParameters<typeof OrcaRuntimeService>[0])
   const acquire = state.acquire.getMockImplementation()
   if (!acquire) {
     throw new Error('Missing provider acquisition fixture')

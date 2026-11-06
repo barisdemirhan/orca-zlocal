@@ -43,6 +43,7 @@ beforeEach(() => {
     registerSubscriptionCleanup: registry.register.bind(registry),
     cleanupSubscription: registry.cleanup.bind(registry),
     getTerminalSleepClientEventSnapshot: () => [],
+    getClientSettings: () => ({}),
     getNativeChatLaunchDraftResolutionClientEventSnapshot: () => [],
     getAgentHubCaller: (handle: string) => (handle === caller.terminalHandle ? caller : null),
     getTerminalHandleForPaneKey: (key: string) =>

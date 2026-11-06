@@ -22,6 +22,7 @@ describe('RemoteRuntimeSharedControlConnection', () => {
       )
       expect(update.ok).toBe(true)
       server.closeClients()
+      connection.reconnectNow()
       await vi.waitFor(() => expect(server.auths).toHaveLength(2), { timeout: 3_000 })
       await connection.request('status.get', undefined, 1000)
       expect(server.auths.at(-1)).toMatchObject({

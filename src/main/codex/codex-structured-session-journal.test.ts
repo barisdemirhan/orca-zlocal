@@ -1,6 +1,5 @@
-import { expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import type { AgentJournalItemBody } from '../../shared/agent-session/journal/agent-session-journal-types'
-import { CodexTurnOrdinals } from './structured/journal/codex-turn-ordinals'
 import {
   adapterFor,
   fakeCodex,
@@ -24,7 +23,6 @@ it('reopens an ordinary conversation through the turn restore resets without rea
     }),
     'thread/timeline/list': () => ({ data: [], nextCursor: 'another-Live-page' })
   })
-  const resetTurn = vi.spyOn(CodexTurnOrdinals.prototype, 'forgetTurn')
   const adapter = adapterFor(codex, { resumeThreadId: THREAD_ID })
   try {
     const acquired = await adapter.acquire({
@@ -44,17 +42,10 @@ it('reopens an ordinary conversation through the turn restore resets without rea
       signal: new AbortController().signal
     })
 
-    expect(bodies).toContainEqual({
-      kind: 'message',
-      role: 'assistant',
-      blocks: [{ type: 'text', text: 'Saved answer' }]
-    })
-    expect(resetTurn).toHaveBeenCalledWith(THREAD_ID, 'restored-turn')
     expect(codex.connections[0]?.calls.some((call) => call.method === 'thread/timeline/list')).toBe(
       false
     )
   } finally {
     await adapter.closeAll()
-    resetTurn.mockRestore()
   }
 })

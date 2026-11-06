@@ -29,6 +29,7 @@ describe('Agent Hub consumer on an authenticated paired socket', () => {
     async (scope) => {
       const userDataPath = mkdtempSync(join(tmpdir(), 'orca-hub-paired-'))
       const runtime = new OrcaRuntimeService()
+      vi.spyOn(runtime, 'getClientSettings').mockReturnValue({} as never)
       const server = new OrcaRuntimeRpcServer({
         runtime,
         userDataPath,

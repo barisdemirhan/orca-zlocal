@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render as renderBase, screen, within } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll, expect, it, vi } from 'vitest'
 import { AGENT_HUB_ORB_OPENING_PROMPT } from '../../../../shared/agent-hub-orb'
 import type {
@@ -12,6 +12,9 @@ import { NativeChatMessageList } from './NativeChatMessageList'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { installNativeChatMessageListTestViewport } from './native-chat-message-list-test-viewport'
 import type { NativeChatLiveSession } from './use-native-chat-live-session'
+import { TooltipProvider } from '@/components/ui/tooltip'
+
+const render = (ui: React.ReactElement) => renderBase(ui, { wrapper: TooltipProvider })
 
 let restoreViewport = (): void => {}
 beforeAll(() => {

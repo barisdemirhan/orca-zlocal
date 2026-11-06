@@ -75,7 +75,8 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
             taskId: gate.task_id,
             status: gate.status,
             question: gate.question,
-            options: gate.options && gate.options !== '[]' ? gate.options : undefined
+            options: gate.options && gate.options !== '[]' ? gate.options : undefined,
+            resolvedBy: gate.resolved_by ?? undefined
           })),
           runId: value.runId
         })

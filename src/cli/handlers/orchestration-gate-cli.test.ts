@@ -227,6 +227,6 @@ describe('orchestration gate commands carry caller identity', () => {
       })
     )
     await main(['orchestration', 'gate-list', '--run', 'run_one'], '/tmp/repo')
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('resolved_by=user'))
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('resolvedBy=user'))
   })
 })

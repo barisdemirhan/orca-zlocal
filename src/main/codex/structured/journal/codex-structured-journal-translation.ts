@@ -27,11 +27,7 @@ import { createCodexJournalHistoryRestorer } from '../../codex-structured-journa
 export function createCodexJournalTranslator(
   deps: CodexJournalTranslatorDeps
 ): CodexJournalTranslator {
-  const {
-    restoreThread: _history,
-    restoreTimeline: _timeline,
-    ...live
-  } = createCodexTranslation(deps)
+  const { restoreThread: _history, ...live } = createCodexTranslation(deps)
   return live
 }
 

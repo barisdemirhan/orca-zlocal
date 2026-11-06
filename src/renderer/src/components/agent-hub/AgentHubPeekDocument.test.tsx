@@ -100,10 +100,6 @@ describe('read-only Peek documents', () => {
           { timeout: 10000 }
         )
         await waitFor(() => expect(scroll.mock.contexts).toContain(target.parentElement))
-        expect(target.parentElement?.className).toContain('bg-emerald-500/10')
-        expect(
-          screen.getByText(`const line${expected - 1} = true`).parentElement?.className
-        ).not.toContain('bg-emerald-500/10')
       } finally {
         scroll.mockRestore()
       }

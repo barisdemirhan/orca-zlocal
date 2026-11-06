@@ -312,7 +312,7 @@ async function openNewAgent(workspace?: string) {
     })
   )
   if (workspace) {
-    return screen.findByRole('menuitem', { name: /^Claude$/ })
+    return screen.findByRole('menuitem', { name: /^Claude/ })
   }
   await user.click(await waitFor(() => agentTrigger('Codex')))
   await user.click(await screen.findByRole('option', { name: 'Claude' }))

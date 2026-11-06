@@ -89,6 +89,7 @@ describe('closeAgentHubAgent', () => {
     })
     request.onConfirm()
     expect(mocks.closeTerminalTab).toHaveBeenCalledExactlyOnceWith('tab-1', {
+      reason: 'user',
       skipRunningProcessConfirm: true
     })
   })
@@ -99,6 +100,7 @@ describe('closeAgentHubAgent', () => {
       closeAgentHubAgent(target(LEAF_A), kind)
       expect(mocks.requestConfirm).not.toHaveBeenCalled()
       expect(mocks.closeTerminalTab).toHaveBeenCalledWith('tab-1', {
+        reason: 'user',
         skipRunningProcessConfirm: false
       })
     }
@@ -111,6 +113,7 @@ describe('closeAgentHubAgent', () => {
     expect(request).toMatchObject({ terminalTabId: 'tab-1', copyKind: 'agent' })
     request.onConfirm()
     expect(mocks.closeTerminalTab).toHaveBeenCalledExactlyOnceWith('tab-1', {
+      reason: 'user',
       skipRunningProcessConfirm: true
     })
   })
@@ -146,7 +149,7 @@ describe('closeAgentHubAgent', () => {
     mocks.requestPane.mockReturnValue(false)
     closeAgentHubAgent(target(LEAF_B), 'idle')
     await vi.waitFor(() => expect(mocks.ptyKill).toHaveBeenCalledExactlyOnceWith('pty-b'))
-    expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B)
+    expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B, 'user')
     expect(mocks.closeTerminalTab).not.toHaveBeenCalled()
   })
 
@@ -155,9 +158,9 @@ describe('closeAgentHubAgent', () => {
     mocks.requestPane.mockReturnValue(false)
     mocks.closeRemote.mockReturnValue(true)
     closeAgentHubAgent(target(LEAF_B), 'idle')
-    await vi.waitFor(() => expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B))
+    await vi.waitFor(() => expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B, 'user'))
     expect(mocks.ptyKill).not.toHaveBeenCalled()
-    expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B)
+    expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B, 'user')
   })
 
   it('waits for confirmation before stopping an unmounted shell with a live command', async () => {
@@ -171,7 +174,7 @@ describe('closeAgentHubAgent', () => {
     const [request] = mocks.requestConfirm.mock.calls[0] ?? []
     request.onConfirm()
     expect(mocks.ptyKill).toHaveBeenCalledExactlyOnceWith('pty-b')
-    expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B)
+    expect(mocks.closeLeaf).toHaveBeenCalledWith('tab-1', LEAF_B, 'user')
     expect(mocks.closeTerminalTab).not.toHaveBeenCalled()
   })
 })

@@ -80,6 +80,13 @@ describe('Codex approval ownership learned after its hook', () => {
     return polled
   }
 
+  // A child with no parent rollout and nothing owed ends its poll; the last status stays published.
+  function pollOrKeep(original: AgentHookEventPayload): AgentHookEventPayload {
+    return (
+      pollCodexTranscriptStatus(state, original, { paneKey: PANE_KEY }, 'production') ?? original
+    )
+  }
+
   it.each([
     ['mcp__calendar__delete_event', undefined, false],
     ['mcp__calendar__delete_event', undefined, true],
@@ -96,7 +103,7 @@ describe('Codex approval ownership learned after its hook', () => {
       if (!knownReviewer) {
         setReviewer(path, 'auto_review')
       }
-      const polled = poll(original)
+      const polled = pollOrKeep(original)
       expect(polled.payload.state).toBe('waiting')
       expect(polled.payload.interactivePrompt).toBe(original.payload.interactivePrompt)
       if (agentId) {
@@ -136,7 +143,7 @@ describe('Codex approval ownership learned after its hook', () => {
       expect(update).toBeDefined()
       expect(update?.hookEventName).toBeUndefined()
       expect(update?.hasExplicitPrompt).toBeUndefined()
-      expect(transcriptPollUpdate('codex', polled, poll(polled))).toBeUndefined()
+      expect(transcriptPollUpdate('codex', polled, pollOrKeep(polled))).toBeUndefined()
     }
   )
 

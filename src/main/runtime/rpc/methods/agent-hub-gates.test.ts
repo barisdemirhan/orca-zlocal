@@ -25,6 +25,9 @@ const streams: { stop: AbortController; done: Promise<void> }[] = []
 beforeEach(() => {
   state = harness.setup()
   state.runtime.getOrchestrationDb()
+  vi.spyOn(state.runtime, 'getClientSettings').mockReturnValue({
+    nativeChatQueueFollowUps: true
+  } as ReturnType<typeof state.runtime.getClientSettings>)
 })
 afterEach(async () => {
   for (const stream of streams.splice(0)) {

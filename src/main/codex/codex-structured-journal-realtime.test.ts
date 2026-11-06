@@ -100,7 +100,7 @@ async function conversation() {
       await deferred.drained()
       deferred.unbind()
       await journal.close()
-      closeTestJournalHostDatabase(root)
+      await closeTestJournalHostDatabase(root)
       journal = await journals.open(options)
       deferred.bind({ journal, fence: 2, publish: () => {} })
       translator = createCodexJournalTranslator({
@@ -274,7 +274,7 @@ describe('Codex canonical spoken messages in the real journal', () => {
       throw new Error('Journal rows could not be read')
     }
     expect(written.rows).toHaveLength(1)
-    const saved = JSON.stringify(written.rows)
+    const saved = JSON.stringify([written.rows, await chat.snapshot()])
     expect(saved).toContain('List the current changes.')
     for (const privateValue of [
       'private-sdp',
