@@ -2,9 +2,9 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { AgentJournalRenderItem } from '../../../../shared/agent-session-journal-types'
-import type { NativeChatSpokenProvenance } from '../../../../shared/native-chat-types'
-import { projectStructuredItemToNativeChat } from '../../../../shared/structured-agent-session-projection'
+import type { AgentJournalRenderItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
+import type { NativeChatSpokenProvenance } from '../../../../shared/native-chat/native-chat-types'
+import { projectStructuredItemToNativeChat } from '../../../../shared/agent-session/view/structured-agent-session-projection'
 import { MessageRow } from './NativeChatMessageRow'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 

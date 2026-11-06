@@ -5,11 +5,11 @@ import {
   type AgentHubOrbSession
 } from '../../../shared/agent-hub-orb'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
-import type { StructuredAgentId } from '../../../shared/agent-session-provider-handle'
+import type { StructuredAgentId } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle'
 import {
   createStructuredAgentSessionId,
   structuredAgentSessionCreateParams
-} from '../../../shared/structured-agent-session-create'
+} from '../../../shared/agent-session/structured-agent-session-create'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
 import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/structured-agent-session-host-types'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
@@ -58,6 +58,7 @@ export async function prepareAgentHubOrbSessionCreate(input: {
     | 'resolveStructuredAgentSessionCreateIntent'
     | 'getAgentProviderSessionRows'
     | 'resolveStructuredAgentSessionLocalWorkspacePath'
+    | 'getStructuredAgentCliSourceRoute'
   >
   host: StructuredAgentSessionHost
   caller: StructuredAgentSessionCaller

@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import type { AgentHubOrbIdentityFiles } from '../../shared/agent-hub-orb-identity'
-import type { Store } from '../persistence'
+import type { Store } from '../persistence/loading-store/store'
 import {
   agentHubOrbIdentityOptions,
   getAgentHubOrbDirectory,

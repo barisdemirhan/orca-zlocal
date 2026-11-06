@@ -5,7 +5,7 @@ import {
   makeWorktree
 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
-import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { RuntimeStatus } from '../../../../shared/runtime-types'
 import {
   agentHubMirrorShellLeafId,

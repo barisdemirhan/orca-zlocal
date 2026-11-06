@@ -1,4 +1,4 @@
-import type { TerminalTab } from '../../../shared/terminal-tab-types'
+import type { TerminalTab } from '../../../shared/workspace-layout/terminal-tab-types'
 import { hasTerminalMountRetentionLease } from './terminal-pane/terminal-mount-retention-leases'
 import {
   TERMINAL_WORKTREE_COLD_PARK_DELAY_MS,

@@ -3,7 +3,7 @@ import { ArrowUpRight, ChevronRight, CornerUpLeft, Workflow } from 'lucide-react
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import { AgentIcon } from '@/lib/agent-catalog'
-import { agentTypeToIconAgent } from '@/lib/agent-status'
+import { agentTypeToIconAgent } from '../../../../shared/agent-status/presentation/agent-type-icon-agent'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { HubChip } from './AgentHubInlineLabels'

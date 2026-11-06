@@ -1,4 +1,5 @@
-import type { AgentStatusEntry, AgentSubagentSnapshot } from '../../../../shared/agent-status-types'
+import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
+import type { AgentSubagentSnapshot } from '../../../../shared/agent-status/contracts/agent-status-subagent-snapshot'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import {

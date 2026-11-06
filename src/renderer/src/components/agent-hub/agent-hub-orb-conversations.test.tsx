@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import type { AgentSessionStatusSummary } from '../../../../shared/agent-session-wire'
+import type { AgentSessionStatusSummary } from '../../../../shared/agent-session/agent-session-wire'
 import { useAgentHubOrbConversations } from './agent-hub-orb-conversations'
 
 const mocks = vi.hoisted(() => ({

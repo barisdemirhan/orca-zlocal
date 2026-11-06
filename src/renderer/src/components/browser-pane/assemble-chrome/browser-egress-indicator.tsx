@@ -4,11 +4,11 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { SettingsSegmentedControl } from '@/components/settings/SettingsFormControls'
+import { SettingsSegmentedControl } from '@/components/settings/form-controls/SettingsFormControls'
 import {
   getBrowserClientHostedRemoteOptions,
   type BrowserClientHostedRemoteChoice
-} from '@/components/settings/browser-client-hosted-remote-copy'
+} from '@/components/settings/browser/routing/browser-client-hosted-remote-copy'
 import { switchBrowserPageChannel } from '../browser-page-channel-switch'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'

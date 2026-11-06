@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 // Share Settings/Cmd+J visibility without Settings pane UI imports; an architecture test enforces this boundary.
+// Share Settings/Cmd+J visibility without Settings pane UI imports; an architecture test enforces this boundary.
 import {
   getRuntimeEnvironmentsSearchEntry,
   getWebRuntimeEnvironmentsSearchEntry
-} from '@/components/settings/runtime-environments-search'
-import { getTerminalPaneSearchEntries } from '@/components/settings/terminal-search'
+} from '@/components/settings/runtime-environments/catalog/runtime-environments-search'
+import { getTerminalPaneSearchEntries } from '@/components/settings/terminal/terminal-search'
 import { isMacUserAgent, isWindowsUserAgent } from '@/components/terminal-pane/pane-helpers'
 import { useLinearProviderConnected } from '@/hooks/useLinearProviderConnected'
 import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
@@ -43,7 +44,6 @@ export function buildSettingsNavigationMetadata({
   isLocalWindowsHost = isWindows,
   isWindowsTerminalHost = isWindows,
   isWebClient,
-  nativeChatEnabled = false,
   hostQueuesMessages = false,
   typedChatPermissions = false,
   agentHubEnabled = false,
@@ -59,7 +59,6 @@ export function buildSettingsNavigationMetadata({
   isLocalWindowsHost?: boolean
   isWindowsTerminalHost?: boolean
   isWebClient: boolean
-  nativeChatEnabled?: boolean
   hostQueuesMessages?: boolean
   typedChatPermissions?: boolean
   agentHubEnabled?: boolean
@@ -90,7 +89,6 @@ export function buildSettingsNavigationMetadata({
     isLocalWindowsHost,
     isWindowsTerminalHost,
     isWebClient,
-    nativeChatEnabled,
     hostQueuesMessages,
     typedChatPermissions,
     agentHubEnabled,
@@ -127,7 +125,6 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
       ] as const
     })
   )
-  const nativeChatEnabled = settings?.experimentalNativeChat === true
   const typedChatPermissions = useChatSettingsOwnPermissions()
   const hostQueuesMessages = useStructuredAgentSessionHostQueuesMessages({ kind: 'local' })
   const agentHubEnabled = settings?.experimentalAgentHub === true
@@ -171,7 +168,6 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
         isLocalWindowsHost,
         isWindowsTerminalHost,
         isWebClient,
-        nativeChatEnabled,
         hostQueuesMessages,
         typedChatPermissions,
         agentHubEnabled,
@@ -192,7 +188,6 @@ export function useSettingsNavigationMetadata(): SettingsNavSection[] {
       isLocalWindowsHost,
       isWindowsTerminalHost,
       isWebClient,
-      nativeChatEnabled,
       hostQueuesMessages,
       typedChatPermissions,
       agentHubEnabled,

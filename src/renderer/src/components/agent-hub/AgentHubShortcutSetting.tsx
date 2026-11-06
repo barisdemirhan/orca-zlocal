@@ -2,8 +2,8 @@ import { translate } from '@/i18n/i18n'
 import { KEYBINDING_DEFINITIONS, formatKeybindingList } from '../../../../shared/keybindings'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
-import { ShortcutRecorderButton } from '../settings/ShortcutRecorderButton'
-import { ShortcutRemoveButton } from '../settings/ShortcutRemoveButton'
+import { ShortcutRecorderButton } from '../settings/shortcuts/ShortcutRecorderButton'
+import { ShortcutRemoveButton } from '../settings/shortcuts/ShortcutRemoveButton'
 import { AGENT_HUB_SUGGESTED_BINDINGS } from './agent-hub-shortcut-suggestions'
 import {
   useAgentHubShortcutEditor,

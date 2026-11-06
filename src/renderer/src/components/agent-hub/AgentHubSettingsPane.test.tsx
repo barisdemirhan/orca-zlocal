@@ -38,7 +38,7 @@ vi.mock('@/store', async () => {
   return { useAppStore }
 })
 vi.mock('@/store/plugin-panels', () => ({ useEditablePluginCommands: () => [] }))
-vi.mock('../settings/use-mac-captured-digit-chords', () => ({
+vi.mock('../settings/shortcuts/use-mac-captured-digit-chords', () => ({
   useMacCapturedDigitChords: () => []
 }))
 vi.mock('@/runtime/runtime-rpc-client', () => ({
@@ -49,9 +49,9 @@ vi.mock('@/runtime/structured-agent-session-client', () => ({
 }))
 vi.mock('@/runtime/local-runtime-capabilities', async () => {
   const { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } =
-    await import('../../../../shared/structured-agent-session-surface-capabilities')
+    await import('../../../../shared/agent-session/structured-agent-session-surface-capabilities')
   const { STRUCTURED_AGENT_SESSION_REGISTERED_AGENTS_RUNTIME_CAPABILITY } =
-    await import('../../../../shared/protocol-version')
+    await import('../../../../shared/agent-session/structured-agent-session-surface-capabilities')
   return {
     ensureLocalRuntimeCapabilities: vi.fn(async () => [
       AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY,
@@ -213,8 +213,7 @@ it('opens the Orb folder on the local host', async () => {
   expect(openPath).toHaveBeenCalledWith('/tmp/orb', 'local')
 })
 
-it('loads registered ACP agents with Chat UI off and clears the model pick when changing agents', async () => {
-  useAppStore.getState().updateSettings({ experimentalNativeChat: false })
+it('loads registered ACP agents and clears the model pick when changing agents', async () => {
   useAppStore.getState().updateSettings({ agentHubOrbModel: 'old-model' })
   render(<Pane />)
   fireEvent.keyDown(screen.getByRole('combobox', { name: 'Agent' }), { key: 'ArrowDown' })

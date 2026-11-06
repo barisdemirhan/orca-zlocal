@@ -1,4 +1,4 @@
-import { projectGroupIdFromRepoId } from '../../../../shared/folder-workspace-worktree'
+import { projectGroupIdFromRepoId } from '../../../../shared/folder-workspaces/folder-workspace-worktree'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { AgentHubGroupNode, AgentHubTerminalRow } from './agent-hub-terminal-tree'

@@ -1,5 +1,5 @@
 import type { AppState } from '@/store/types'
-import { lastVerifiedRuntimeStatus } from '../../../../shared/runtime-host-status'
+import { lastVerifiedRuntimeStatus } from '../../../../shared/remote-runtime/host-status/runtime-host-status'
 import { ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY } from '../../../../shared/protocol-version'
 
 export function agentHubCanResolveGate(state: AppState, host: string): boolean {

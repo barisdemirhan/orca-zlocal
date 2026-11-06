@@ -3,7 +3,7 @@ import type {
   AgentSessionVoiceTextResult,
   AgentSessionVoiceOwner
 } from '../../../shared/agent-session-voice'
-import { refuse } from '../../../shared/agent-session-wire-refusals'
+import { refuse } from '../../../shared/agent-session/failures/agent-session-wire-refusals'
 import type { StructuredAgentSessionCaller } from './structured-agent-session-host-types'
 import {
   mutateStructuredAgentSession,

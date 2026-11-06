@@ -3,7 +3,7 @@ import type { OrcaRuntimeService } from '../../orca-runtime'
 import type { RuntimeClientEvent } from '../../../../shared/runtime-client-events'
 import type { RpcContext } from '../core'
 import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
-import { RuntimeClientEventBus } from '../../runtime-client-event-bus'
+import { RuntimeClientEventBus } from '../../client/events/runtime-client-event-bus'
 import { RuntimeSubscriptionRegistry } from '../../runtime-subscription-registry'
 import { AgentHubLedger } from '../../agent-hub/agent-hub-ledger'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
@@ -14,11 +14,11 @@ import { ClientEventsSubscribeParams } from '../../../../shared/rpc-contract/cli
 import { resolveAgentHubPanes } from './agent-hub-caller'
 import { readAgentHubDelivery } from '../../../../shared/rpc-contract/agent-hub-events'
 
-vi.mock('../../../ssh/ssh-target-registry', () => ({
+vi.mock('../../../ssh/targets/ssh-target-registry', () => ({
   listRegisteredSshTargets: () => [],
   getRegisteredSshState: () => null
 }))
-vi.mock('../../public-ssh-state', () => ({ getPublicSshState: () => null }))
+vi.mock('../../hosts/platform-probe/public-ssh-state', () => ({ getPublicSshState: () => null }))
 
 const caller = { paneKey: 'pane-1', terminalHandle: 'term-1', agentType: 'codex', title: 'Worker' }
 let bus: RuntimeClientEventBus

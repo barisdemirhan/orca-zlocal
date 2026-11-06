@@ -16,7 +16,7 @@ import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import {
   structuredAgentSessionPaneKey,
   structuredAgentSessionTabId
-} from '../../../../shared/structured-agent-session-projection'
+} from '../../../../shared/agent-session/view/structured-agent-session-projection'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 
 describe('CLI-started agents in Hub', () => {

@@ -6,7 +6,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
-import { formatAgentTypeLabel } from '../../../../shared/agent-type-label'
+import { formatAgentTypeLabel } from '../../../../shared/agent-status/presentation/agent-type-label'
 import {
   activityThreadRowCopy,
   threadAgentStateLabel

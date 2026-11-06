@@ -1,4 +1,4 @@
-import { refuse } from '../../../shared/agent-session-wire-refusals'
+import { refuse } from '../../../shared/agent-session/failures/agent-session-wire-refusals'
 
 export function invalidAgentSessionVoiceOperation(message: string) {
   return {

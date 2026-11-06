@@ -47,7 +47,7 @@ export function AgentHubAnswerQueueCard({
   location: AgentHubLocation
   unavailable: boolean
   controlRef: React.RefObject<NativeChatInteractiveCardControl | null>
-  answerInputRef: React.RefObject<HTMLInputElement | null>
+  answerInputRef: React.RefObject<HTMLTextAreaElement | null>
   onResolved: (id: string) => void
   onSending: (id: string, sending?: boolean) => void
 }): React.JSX.Element {

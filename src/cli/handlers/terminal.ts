@@ -39,10 +39,11 @@ import {
   listSupportedWindowsShellOverrides
 } from '../../shared/windows-terminal-shell'
 import { getCallerTerminalHandle } from '../caller-terminal-handle'
+import '../../shared/protocol-version'
 import {
   TERMINAL_CREATE_SHELL_SELECTION_RUNTIME_CAPABILITY,
   TERMINAL_SPLIT_RETRY_RUNTIME_CAPABILITY
-} from '../../shared/protocol-version'
+} from '../../shared/terminal/runtime-policy/terminal-runtime-capabilities'
 import {
   getBrowserWorktreeSelector,
   getOptionalWorktreeSelector,

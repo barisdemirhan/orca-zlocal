@@ -1,5 +1,5 @@
 import { AGENT_HUB_ORB_OPENING_PROMPT } from '../agent-hub-orb'
-import type { NativeChatBlock, NativeChatMessage, NativeChatTextBlock } from '../native-chat-types'
+import type { NativeChatBlock, NativeChatMessage, NativeChatTextBlock } from './native-chat-types'
 
 type ProviderFrameTextBlock = Extract<NativeChatBlock, { type: 'text' }>
 

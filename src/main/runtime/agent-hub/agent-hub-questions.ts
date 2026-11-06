@@ -1,15 +1,15 @@
-import type { PendingPrompt } from '../../../shared/agent-pending-prompt'
+import type { PendingPrompt } from '../../../shared/agent-status/contracts/agent-pending-prompt'
 import type { AgentHubAnswerResult, AgentHubQuestion } from '../../../shared/agent-hub-questions'
 import type { AgentHubGate } from '../../../shared/agent-hub-requests'
-import type { AgentQuestionAnsweredInferenceRequest } from '../../../shared/agent-question-answered-intent'
-import type { AgentStatusHooksSettings } from '../../../shared/agent-status-hooks-setting'
-import type { AgentStatusIpcPayload } from '../../../shared/agent-status-ipc-payload'
+import type { AgentQuestionAnsweredInferenceRequest } from '../../../shared/agent-status/lifecycle/agent-question-answered-intent'
+import type { AgentStatusHooksSettings } from '../../../shared/agent-hook-listener/configuration/agent-status-hooks-setting'
+import type { AgentStatusIpcPayload } from '../../../shared/agent-status/contracts/agent-status-ipc-payload'
 import type { ConnectorAgent } from '../../../shared/external-conversation-link'
-import { hookRowAgentPhase } from '../../../shared/agent-transitions'
+import { hookRowAgentPhase } from '../../../shared/agent-status/lifecycle/agent-transitions'
 import type { AgentPaneWorkspace } from '../../agent-hooks/agent-transition-detector'
 import { admitConnectorAgent } from '../../external-conversations/connector-agents'
 import type { PromptTerminal } from '../../external-conversations/external-conversation-prompts'
-import { createLaunchedAgentWriteGuard } from '../launched-agent-write-guard'
+import { createLaunchedAgentWriteGuard } from '../terminal/wait/launched-agent-write-guard'
 import {
   TerminalAgentPromptAnswers,
   type PromptAnswerOutcome

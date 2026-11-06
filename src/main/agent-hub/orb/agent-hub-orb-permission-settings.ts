@@ -1,7 +1,7 @@
 import {
   AGENT_CHAT_PERMISSION_MODE_OPTION_ID,
   type AgentChatPermissionMode
-} from '../../../shared/agent-chat-permission-mode'
+} from '../../../shared/agent-launch/permissions/agent-chat-permission-mode'
 import {
   normalizeAgentHubOrbSettings,
   resolveAgentHubOrbMode

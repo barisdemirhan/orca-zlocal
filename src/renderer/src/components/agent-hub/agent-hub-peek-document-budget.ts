@@ -1,9 +1,9 @@
-import { parseIpynb } from '../editor/ipynb-parse'
+import { parseIpynb } from '../editor/notebook/document/ipynb-parse'
 import {
   IPYNB_CODE_CELL_PREVIEW_LINE_MAX_CODE_UNITS,
   IPYNB_CODE_CELL_PREVIEW_MAX_LINES,
   IPYNB_CODE_CELL_PREVIEW_SCAN_CODE_UNITS
-} from '../editor/ipynb-code-cell-lines'
+} from '../editor/notebook/cells/ipynb-code-cell-lines'
 import { MAX_TOKENIZATION_LINE_LENGTH } from '@/lib/monaco-languages/monarch-embed-entry-budget'
 import type { AgentHubPeekContent } from './agent-hub-peek-store'
 

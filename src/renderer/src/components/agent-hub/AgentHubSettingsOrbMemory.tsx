@@ -4,7 +4,7 @@ import { translate } from '@/i18n/i18n'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { Button } from '../ui/button'
-import { SettingsRow, SettingsSwitchRow } from '../settings/SettingsFormControls'
+import { SettingsRow, SettingsSwitchRow } from '../settings/form-controls/SettingsFormControls'
 import { useAgentHubOrbIdentityFiles } from './use-agent-hub-orb-identity-files'
 
 export function AgentHubSettingsOrbMemory({

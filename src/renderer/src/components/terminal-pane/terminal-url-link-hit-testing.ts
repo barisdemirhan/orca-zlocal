@@ -6,7 +6,7 @@ import {
   type TerminalLinkPtyMouseSuppression
 } from './terminal-link-pty-mouse-suppression'
 import { getTerminalBufferPositionForMouseEvent } from './terminal-mouse-buffer-position'
-import { findTerminalHttpLinkAtBufferPosition } from '../../../../shared/terminal-link-buffer-hit-testing'
+import { findTerminalHttpLinkAtBufferPosition } from '../../../../shared/terminal/links/terminal-link-buffer-hit-testing'
 import { isTerminalLinkifierHoverActive } from '@/lib/pane-manager/terminal-linkifier-hover-reset'
 import {
   buildHttpLinkActions,
@@ -27,9 +27,6 @@ import {
   peekTerminalUrlFromMirror,
   type AgentHubPeekLinkSource
 } from '../agent-hub/agent-hub-peek-routing'
-
-export { extractTerminalHttpLinks } from '../../../../shared/terminal-http-url-extraction'
-export { TERMINAL_HTTP_URL_MAX_LENGTH } from '../../../../shared/terminal-http-link-limits'
 
 type UrlLinkHitTestDeps = {
   worktreeId: string

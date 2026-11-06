@@ -17,7 +17,10 @@ import {
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
-import { SettingsRow, SettingsSegmentedControl } from '../settings/SettingsFormControls'
+import {
+  SettingsRow,
+  SettingsSegmentedControl
+} from '../settings/form-controls/SettingsFormControls'
 import { openAgentHubOrb } from './agent-hub-orb-open'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbIdentityFiles } from './use-agent-hub-orb-identity-files'

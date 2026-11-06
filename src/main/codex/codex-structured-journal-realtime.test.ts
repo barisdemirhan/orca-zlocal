@@ -2,9 +2,9 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { AgentJournalRenderItemSchema } from '../../shared/agent-session-journal-schemas'
-import { codexProviderHandle } from '../../shared/agent-session-provider-handle-encoding'
-import { projectStructuredItemsToNativeChat } from '../../shared/structured-agent-session-projection'
+import { AgentJournalRenderItemSchema } from '../../shared/agent-session/journal/agent-session-journal-schemas'
+import { codexProviderHandle } from '../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
+import { projectStructuredItemsToNativeChat } from '../../shared/agent-session/view/structured-agent-session-projection'
 import {
   closeTestJournalHostDatabase,
   createTrackedJournalOpener,
@@ -12,7 +12,7 @@ import {
 } from '../native-chat/agent-session-journal/journal-host-database-test-support'
 import { createDeferredStructuredAgentSessionEventSink } from '../native-chat/agent-session-wire/structured-agent-session-event-sink'
 import { testEventSinkLogging } from '../native-chat/agent-session-wire/structured-agent-session-logger-test-support'
-import { createCodexJournalTranslator } from './codex-structured-journal-translation'
+import { createCodexJournalTranslator } from './structured/journal/codex-structured-journal-translation'
 import type { CodexTimelineEntry } from './codex-structured-realtime-timeline'
 
 const SESSION = 'session-native-voice'

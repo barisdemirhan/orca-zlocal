@@ -1,4 +1,4 @@
-import type { TerminalInputKind } from '../../../../shared/terminal-input-kind'
+import type { TerminalInputKind } from '../../../../shared/terminal/input/terminal-input-kind'
 import { readOrbOperations } from '../../agent-hub/agent-hub-orb-operations'
 
 export function protectOrbTerminalWriteOptions<

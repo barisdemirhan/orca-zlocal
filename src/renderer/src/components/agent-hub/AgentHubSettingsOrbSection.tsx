@@ -15,7 +15,7 @@ import {
   SettingsRow,
   SettingsSegmentedControl,
   SettingsSubsectionHeader
-} from '../settings/SettingsFormControls'
+} from '../settings/form-controls/SettingsFormControls'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
 import { AgentHubSettingsOrbActions } from './AgentHubSettingsOrbActions'
 import { AgentHubSettingsOrbIdentity } from './AgentHubSettingsOrbIdentity'

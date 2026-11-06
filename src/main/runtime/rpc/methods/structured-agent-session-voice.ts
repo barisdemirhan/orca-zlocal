@@ -1,5 +1,5 @@
 import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../../../shared/agent-session-voice'
-import { agentSessionRefusalError } from '../../../../shared/agent-session-wire-refusals'
+import { agentSessionRefusalError } from '../../../../shared/agent-session/failures/agent-session-wire-refusals'
 import {
   StartVoiceParams,
   AppendVoiceTextParams,

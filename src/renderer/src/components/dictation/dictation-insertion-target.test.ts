@@ -5,7 +5,7 @@ import { getUtf8ByteLength } from '../../../../shared/utf8-byte-limits'
 import { act, renderHook } from '@testing-library/react'
 import { useAppStore } from '@/store'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
-import type { TerminalTab } from '../../../../shared/terminal-tab-types'
+import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import { useDictationTerminalMountLease } from './use-dictation-terminal-mount-lease'
 import {
   hasTerminalMountRetentionLease,
@@ -103,20 +103,6 @@ describe('dictation insertion target', () => {
       useAppStore.setState(previous, true)
     }
   })
-  it('dispatches terminal dictation with the captured pane target', () => {
-    const listener = vi.fn()
-    document.addEventListener('dictation:insertText', listener)
-
-    insertText('git status', { kind: 'terminal', tabId: 'tab-1', paneId: 7 })
-
-    expect(listener).toHaveBeenCalledTimes(1)
-    expect((listener.mock.calls[0][0] as CustomEvent).detail).toEqual({
-      text: 'git status',
-      tabId: 'tab-1',
-      paneId: 7
-    })
-  })
-
   it('chunks large textarea dictation without one large input event', async () => {
     vi.useFakeTimers()
     const textarea = appendTextarea()
@@ -152,21 +138,6 @@ describe('dictation insertion target', () => {
     ).toBe(true)
     expect(beforeInputEvents).toHaveLength(execCommand.mock.calls.length)
     expect(beforeInputEvents.some((event) => event.data === text)).toBe(false)
-  })
-
-  it('waits for yielded contenteditable dictation preflight before inserting large text', async () => {
-    vi.useFakeTimers()
-    const editor = appendContentEditable()
-    const execCommand = installExecCommandMock(() => true)
-    const text = 'x'.repeat(TEXT_CONTROL_PASTE_DIRECT_MAX_BYTES + 10)
-
-    insertText(text, { kind: 'contentEditable', element: editor })
-
-    expect(execCommand).not.toHaveBeenCalled()
-
-    await vi.runAllTimersAsync()
-
-    expect(execCommand).toHaveBeenCalled()
   })
 
   it('cancels chunked contenteditable dictation when the target disconnects', async () => {

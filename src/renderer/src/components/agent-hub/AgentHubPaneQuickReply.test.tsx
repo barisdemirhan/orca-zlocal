@@ -2,9 +2,9 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
+import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import { getDefaultSettings, getDefaultVoiceSettings } from '../../../../shared/constants'
-import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
 import { TooltipProvider } from '../ui/tooltip'
 import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
@@ -65,7 +65,7 @@ vi.mock('../native-chat/NativeChatInteractiveCard', async () => {
       card: { prompt: { questions: { question: string }[] } }
       onDismiss: () => void
       controlRef: React.Ref<{ chooseOption: (index: number) => boolean }>
-      answerInputRef?: React.RefObject<HTMLInputElement | null>
+      answerInputRef?: React.RefObject<HTMLTextAreaElement | null>
       answerAccessory?: React.ReactNode
     }) => {
       useImperativeHandle(controlRef, () => ({ chooseOption: fullCard.chooseOption }))
@@ -74,7 +74,7 @@ vi.mock('../native-chat/NativeChatInteractiveCard', async () => {
         <div data-testid="full-card">
           {card.prompt.questions.map((question) => question.question).join(' / ')}
           <div data-testid="full-card-answer-row">
-            <input ref={answerInputRef} aria-label="Full card answer" />
+            <textarea ref={answerInputRef} aria-label="Full card answer" />
             {answerAccessory}
           </div>
         </div>
@@ -245,7 +245,7 @@ it('dictates only into the full card answer, and refuses while that field is dis
   const pane = mountPane()
   pane.terminal.focus()
   renderPortals(pane)
-  const input = screen.getByRole<HTMLInputElement>('textbox', { name: 'Full card answer' })
+  const input = screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Full card answer' })
   // The mic belongs to the answer field's row, not a separate strip under the card.
   expect(
     screen

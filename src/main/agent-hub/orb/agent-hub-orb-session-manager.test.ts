@@ -11,10 +11,10 @@ import {
   HOST_TEST_THREAD
 } from '../../native-chat/agent-session-wire/structured-agent-session-host-test-data'
 import { setStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-registry'
-import { openTestAgentSessionRecordStore } from '../../runtime/agent-session-record-store-test-harness'
+import { openTestAgentSessionRecordStore } from '../../runtime/agent-session/records/agent-session-record-store-test-harness'
 import { createGlobalSettingsFixture } from '../../../shared/global-settings-test-fixture'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
-import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session-journal-types'
+import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session/journal/agent-session-journal-types'
 import { AGENT_HUB_ORB_OPENING_PROMPT } from '../../../shared/agent-hub-orb'
 import {
   AGENT_HUB_ORB_INSTRUCTION_FILES,
@@ -24,14 +24,14 @@ import {
 import {
   structuredAgentSessionSendBody,
   structuredAgentSessionMessageSendMutation
-} from '../../../shared/structured-agent-session-send-mutation'
-import { createStructuredAgentSessionOperationId } from '../../../shared/structured-agent-session-mutation'
+} from '../../../shared/agent-session/requests/structured-agent-session-send-mutation'
+import { createStructuredAgentSessionOperationId } from '../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
 import { randomUUID } from 'node:crypto'
-import { claudeProviderHandle } from '../../../shared/agent-session-provider-handle-encoding'
+import { claudeProviderHandle } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
 import {
   committedMobileSessionTabClose,
   refusedMobileSessionTabClose
-} from '../../runtime/mobile-session-tab-close-outcome'
+} from '../../runtime/session-lifecycle/close/mobile-session-tab-close-outcome'
 import { AgentModelCatalogStore } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
 import { createAgentModelCatalogService } from '../../native-chat/agent-model-catalog/agent-model-catalog-service'
 import type { AgentModelCatalogProbe } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
@@ -107,6 +107,7 @@ beforeEach(async () => {
       settings.experimentalAgentHub === true && settings.agentHubAgentControl !== false,
     ensureStructuredAgentSessionHost: async () => {},
     getAgentProviderSessionRows: () => [],
+    getStructuredAgentCliSourceRoute: () => 'unsupported',
     resolveStructuredAgentSessionLocalWorkspacePath: async () => null,
     resolveStructuredAgentSessionCreateIntent: vi.fn<
       ConstructorParameters<

@@ -4,7 +4,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { getIntlLocale, translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { normalizeUsagePercentageDisplay } from '../../../../shared/usage-percentage-display'
-import { ProviderPanel, getProviderDisplayName } from '../status-bar/tooltip'
+import { ProviderPanel } from '../status-bar/tooltip'
+import { getProviderDisplayName } from '../../../../shared/usage-provider-windows'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import type { AgentHubOrbQuotaAlert } from './agent-hub-orb-quota-notices'
 

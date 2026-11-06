@@ -4,15 +4,15 @@ import {
   resolveWorktreeOperationRoute,
   resolveWorktreeOperationRouteForHost
 } from '@/lib/worktree-operation-route'
-import { browserUrlForPortForwardEntry } from '@/lib/workspace-port-urls'
+import { browserUrlForPortForwardEntry } from '@/lib/workspace-ports/workspace-port-urls'
 import { resolveSshWorkspaceBrowserRouteEligibility } from '@/lib/ssh-workspace-browser-route-eligibility'
 import {
   parseExecutionHostId,
   toRuntimeExecutionHostId,
   toSshExecutionHostId
 } from '../../../../shared/execution-host'
-import { classifyRemotePairingHostname } from '../../../../shared/remote-pairing-address'
-import { getRuntimeSshAccess } from '../../../../shared/runtime-environments'
+import { classifyRemotePairingHostname } from '../../../../shared/remote-runtime/pairing/remote-pairing-address'
+import { getRuntimeSshAccess } from '../../../../shared/remote-runtime/host-catalog/runtime-environments'
 import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
 import type { AgentHubPeekLinkSource } from './agent-hub-peek-routing'
 import type { AgentHubPeekContent } from './agent-hub-peek-store'

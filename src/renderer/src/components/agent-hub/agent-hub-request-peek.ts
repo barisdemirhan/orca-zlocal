@@ -5,11 +5,11 @@ import {
   joinAbsolutePath,
   normalizeAbsolutePath,
   resolveTildePath
-} from '../../../../shared/terminal-path-normalization'
+} from '../../../../shared/file-links/file-link-path-normalization'
 import {
   extractTerminalFileLinks,
   resolveTerminalFileLink
-} from '../../../../shared/terminal-links'
+} from '../../../../shared/terminal/links/terminal-links'
 import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
 import { getTerminalFileContext } from '../terminal-pane/terminal-file-path-mapping'
 import { detectLanguage } from '@/lib/language-detect'

@@ -6,20 +6,20 @@ import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-de
 import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import type { OrchestrationDb } from './orchestration/db'
-import { OrcaRuntimeWithMigrationCatalog } from './orca-runtime-migration-catalog'
+import { OrcaRuntimeWithWindowlessTerminalActivity } from './orca-runtime-windowless-terminal-activity'
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
 import { registerOrbOperations } from './agent-hub/agent-hub-orb-operations'
 import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
 import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
-import type { TerminalSurfaceCloseTarget } from '../../shared/terminal-surface-close-target'
-import { resolveStructuredWorkerAuthority } from './structured-worker-authority'
+import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surface-close-target'
+import { resolveStructuredWorkerAuthority } from './orchestration/terminal-authority/structured-sessions/structured-worker-authority'
 import {
   structuredAgentSessionPaneKey,
   structuredAgentSessionTabId
-} from '../../shared/structured-agent-session-projection'
+} from '../../shared/agent-session/view/structured-agent-session-projection'
 
 /** Agent Hub ledger, Orb and pane spawn lineage, layered over the upstream runtime chain. */
-export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCatalog {
+export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessTerminalActivity {
   private readonly paneSpawnLineage: RuntimePaneSpawnLineage
   readonly agentHubOrb: AgentHubOrbSessionManager = createAgentHubOrbSessionManager(
     this,
@@ -44,7 +44,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCa
   )
 
   override async createTerminal(
-    ...args: Parameters<OrcaRuntimeWithMigrationCatalog['createTerminal']>
+    ...args: Parameters<OrcaRuntimeWithWindowlessTerminalActivity['createTerminal']>
   ) {
     const terminal = await super.createTerminal(...args)
     if (!terminal.isReattach) {
@@ -54,7 +54,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCa
   }
 
   override async splitTerminal(
-    ...args: Parameters<OrcaRuntimeWithMigrationCatalog['splitTerminal']>
+    ...args: Parameters<OrcaRuntimeWithWindowlessTerminalActivity['splitTerminal']>
   ) {
     const split = await super.splitTerminal(...args)
     this.paneSpawnLineage.record(split.handle, args[1]?.callerTerminalHandle)
@@ -62,7 +62,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCa
   }
 
   override async createManagedWorktree(
-    ...args: Parameters<OrcaRuntimeWithMigrationCatalog['createManagedWorktree']>
+    ...args: Parameters<OrcaRuntimeWithWindowlessTerminalActivity['createManagedWorktree']>
   ) {
     const result = await super.createManagedWorktree(...args)
     if (result.startupTerminal?.handle) {
@@ -174,7 +174,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithMigrationCa
     }
   }
 
-  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithMigrationCatalog>) {
+  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithWindowlessTerminalActivity>) {
     super(...args)
     registerOrbOperations(this, this.agentHub.orbOperations)
     this.paneSpawnLineage = new RuntimePaneSpawnLineage({

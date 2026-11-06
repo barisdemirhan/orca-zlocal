@@ -3,7 +3,7 @@ import { DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/d
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
-import { SORT_OPTIONS } from '../sidebar/sidebar-workspace-option-items'
+import { SORT_OPTIONS } from '../sidebar/worktree-list/controls/sidebar-workspace-option-items'
 import { AgentHubListMenu } from './AgentHubListMenu'
 
 function SortIcon({ sortBy }: { sortBy: AgentHubTerminalSort }): React.JSX.Element {

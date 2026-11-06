@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { readInjectedAgentSessionId } from '../../shared/agent-session-caller-env'
+import { readInjectedAgentSessionId } from '../../shared/agent-session/lifecycle/agent-session-caller-env'
 import { readOrchestrationCompatibilityEvidence } from '../../shared/orchestration-compatibility-evidence'
 import type { RuntimeOrchestrationEnvelope } from '../../shared/runtime-rpc-envelope'
 
@@ -15,15 +15,14 @@ export function createOrchestrationCompatibilityEnvelope(
   }
 }
 
-export function runtimeMethodCompatibilityEnvelope(
-  method: string,
-  envelope: RuntimeOrchestrationEnvelope,
-  requestId?: string
-): RuntimeOrchestrationEnvelope {
-  const sessionWrite =
-    (method === 'terminal.send' || method === 'agentSession.send') &&
-    envelope.orchestrationCompatibilityEvidence?.agentSessionId
-  return method.startsWith('orchestration.') || sessionWrite
-    ? { ...envelope, compatibilityInvocationId: requestId ?? envelope.compatibilityInvocationId }
-    : {}
+/** The chat an agent launch came from, so the host can show the launched agent there.
+ *  Only a same-host session can be named: host-stamped (WSL) environments send nothing. */
+export function createAgentLaunchCallerEvidence(
+  env: NodeJS.ProcessEnv
+): RuntimeOrchestrationEnvelope['orchestrationCompatibilityEvidence'] {
+  const agentSessionId = readInjectedAgentSessionId(env)
+  if (!agentSessionId || readOrchestrationCompatibilityEvidence(env)?.host) {
+    return undefined
+  }
+  return { agentSessionId }
 }

@@ -7,7 +7,7 @@ import {
   activityThreadRowCopy
 } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { parseInteractivePrompt } from '../../../../shared/native-chat-interactive-prompt'
+import { parseInteractivePrompt } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
 import { agentHubPromptText, agentHubStateSince, type AgentHubLists } from './agent-hub-lists'
 import { agentHubInboxRequests, type AgentHubRequestsState } from './agent-hub-requests-store'
 import { agentHubRequestHost, findAgentHubRequestTarget } from './agent-hub-request-target'

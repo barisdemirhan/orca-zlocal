@@ -1,6 +1,6 @@
 import type { AgentHubOrbConversation } from '../../../shared/agent-hub-orb'
-import type { AgentSessionRecord } from '../../../shared/agent-session-record'
-import { isStructuredAgentId } from '../../../shared/agent-session-provider-handle'
+import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
+import { isStructuredAgentId } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
 import { isOrbOpeningText } from '../../../shared/native-chat/native-chat-provider-frame-summary'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
 

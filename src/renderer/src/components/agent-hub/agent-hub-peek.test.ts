@@ -49,7 +49,7 @@ vi.mock('@/lib/workspace-browser-tab-open', () => ({
   openWorkspaceBrowserTab: vi.fn(async () => {})
 }))
 vi.mock('sonner', () => ({ toast: { info: vi.fn(), error: vi.fn() } }))
-vi.mock('@/components/editor/markdown-internal-links', () => ({
+vi.mock('@/components/editor/markdown/link-routing/markdown-internal-links', () => ({
   absolutePathToFileUri: (path: string) => `file://${path}`
 }))
 

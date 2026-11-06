@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import type { AgentJournalItemBody } from '../../shared/agent-session-journal-types'
-import { createClaudeJournalTranslator } from './claude-structured-journal-translation'
-import { claudeRecord } from './claude-structured-item-translation'
+import type { AgentJournalItemBody } from '../../shared/agent-session/journal/agent-session-journal-types'
+import { createClaudeJournalTranslator } from './structured/journal/claude-structured-journal-translation'
+import { claudeRecord } from './structured/journal/claude-structured-item-translation'
 
 function capturedInit(): Record<string, unknown> {
   const lines = readFileSync(

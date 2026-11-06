@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useSyncExternalStore, useState } from 'react'
-import { structuredAgentLabel } from '@/lib/structured-agent-session-launch-label'
+import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import {
   loadHostStructuredAgents,
   readHostStructuredAgentsForRuntime,
@@ -13,9 +13,9 @@ import {
 import { ensureLocalRuntimeCapabilities } from '@/runtime/local-runtime-capabilities'
 import { callStructuredAgentSession } from '@/runtime/structured-agent-session-client'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
-import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session-wire'
-import { structuredAgentSessionSeedCatalog } from '../../../../shared/structured-agent-session-seed-catalog'
-import { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } from '../../../../shared/structured-agent-session-surface-capabilities'
+import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session/agent-session-wire'
+import { structuredAgentSessionSeedCatalog } from '../../../../shared/agent-session/options/structured-agent-session-seed-catalog'
+import { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } from '../../../../shared/agent-session/structured-agent-session-surface-capabilities'
 
 const LOCAL = { kind: 'local' } as const
 const readAgents = () => readHostStructuredAgentsForRuntime('local', null)

@@ -1,21 +1,22 @@
-import './orca-runtime-test-lifecycle.spec'
 import { describe, expect, it, vi } from 'vitest'
-import {
-  OrcaRuntimeService,
-  computeWorktreePathMock,
-  ensurePathWithinWorkspaceMock,
-  listWorktrees
-} from './orca-runtime-test-mocks.spec'
-import {
-  TEST_WORKTREE_ID,
-  makeRuntimeStoreWithWorkspaceSession,
-  makeWorkspaceSessionWithHeadlessTerminal
-} from './orca-runtime-test-fixtures.spec'
 import { RpcDispatcher } from './rpc/dispatcher'
 import { TERMINAL_METHODS } from './rpc/methods/terminal'
 import type { RuntimeStore } from './runtime-store-contract'
 import { makeAgentStatusStoreWiring } from './agent-status-store-wiring.test-fixture'
-import { parseWorkspaceSession } from '../../shared/workspace-session-schema'
+import { parseWorkspaceSession } from '../../shared/workspace-session/workspace-session-schema'
+import { listWorktrees } from '../git/worktrees/catalog/worktree-scan-cache'
+
+// Preserve side-effect order: mocks, lifecycle, fixtures.
+await import('./orca-runtime-tests/runtime-test-module-registration.spec')
+const { OrcaRuntimeService } = await import('./orca-runtime')
+const { computeWorktreePathMock, ensurePathWithinWorkspaceMock } =
+  await import('./orca-runtime-test-mocks/setup.spec')
+await import('./orca-runtime-tests/orca-runtime-test-lifecycle.spec')
+const {
+  TEST_WORKTREE_ID,
+  makeRuntimeStoreWithWorkspaceSession,
+  makeWorkspaceSessionWithHeadlessTerminal
+} = await import('./orca-runtime-tests/orca-runtime-test-fixtures.spec')
 
 /** The created terminal with the pane identity these assertions rely on. */
 function created<T extends { paneKey?: string | null; tabId?: string }>(

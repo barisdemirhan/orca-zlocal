@@ -12,9 +12,9 @@ import { useRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { AgentHubOrbSession } from '../../../../shared/agent-hub-orb'
 import type { AgentSessionVoiceOwner } from '../../../../shared/agent-session-voice'
-import type { RuntimeEnvironmentStatus } from '../../../../shared/runtime-host-status'
+import type { RuntimeEnvironmentStatus } from '../../../../shared/remote-runtime/host-status/runtime-host-status'
 import type { Tab } from '../../../../shared/tab-types'
-import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/structured-agent-session-reducer'
+import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/structured-agent-session-reducer'
 import {
   getRuntimeEnvironmentRevision,
   replaceRuntimeEnvironmentRevisions

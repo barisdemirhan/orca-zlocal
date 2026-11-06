@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session-wire'
+import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session/agent-session-wire'
 import { resetHostModelCatalogSnapshotsForTests } from '@/runtime/host-model-catalog-snapshots'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
 

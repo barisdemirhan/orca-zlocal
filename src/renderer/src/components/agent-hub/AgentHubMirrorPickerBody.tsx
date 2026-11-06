@@ -22,7 +22,7 @@ import { sortAgentHubTerminalTree } from './agent-hub-terminal-tree-sort'
 import { moveAgentHubSelection } from './agent-hub-keys'
 import { AgentHubTerminalTree } from './AgentHubTerminalTree'
 import { AgentHubTabSwitcher, agentHubTabSwitcherPanelProps } from './AgentHubTabSwitcher'
-import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {
   activeAgentHubMirrorTab,

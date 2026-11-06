@@ -3,7 +3,7 @@ import type {
   RateLimitState,
   RateLimitWindow
 } from '../../../../shared/rate-limit-types'
-import { getProviderDisplayName } from '../status-bar/usage-error-copy'
+import { getProviderDisplayName } from '../../../../shared/usage-provider-windows'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 export type AgentHubOrbQuotaWindow = {

@@ -4,7 +4,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { AgentHubOrbHistory } from './AgentHubOrbHistory'
 import type { AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
 
-vi.mock('@/lib/structured-agent-session-launch-label', () => ({
+vi.mock('@/lib/agent-session/launch/structured-agent-session-launch-label', () => ({
   structuredAgentLabel: (id: string) => (id === 'codex' ? 'Codex' : 'Claude')
 }))
 afterEach(cleanup)

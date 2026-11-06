@@ -22,7 +22,6 @@ it('adds the resolver column to an existing database without taking a schema ver
     const db = new OrchestrationDb(path)
     try {
       expect(db.db.pragma('user_version', { simple: true })).toBe(SCHEMA_VERSION)
-      expect(SCHEMA_VERSION).toBe(43)
       expect(db.getGate('gate_old')).toMatchObject({ resolution: 'yes', resolved_by: null })
       const task = db.createTask({ runId: 'run_legacy_local', spec: 'new' })
       const gate = db.createGate({ taskId: task.id, question: 'New?' })

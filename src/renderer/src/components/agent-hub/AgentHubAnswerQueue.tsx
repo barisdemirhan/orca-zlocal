@@ -68,7 +68,7 @@ export function AgentHubAnswerQueue(props: Props): React.JSX.Element | null {
   const restoreFocusRef = useRef<HTMLElement | null>(null)
   const columnRef = useRef<HTMLDivElement>(null)
   const controlRef = useRef<NativeChatInteractiveCardControl>(null)
-  const answerInputRef = useRef<HTMLInputElement>(null)
+  const answerInputRef = useRef<HTMLTextAreaElement>(null)
   const current = controller.queue[0]
   const [displayed, setDisplayed] = useState(current)
   const [leaving, setLeaving] = useState(false)

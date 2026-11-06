@@ -9,7 +9,7 @@ import {
   CommandList
 } from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { branchDisplayName } from '@/components/sidebar/WorktreeCardHelpers'
+import { branchDisplayName } from '@/components/sidebar/workspace-card/identity/worktree-branch-display'
 import { COMBOBOX_POPOVER_SURFACE } from '@/components/new-workspace/type-ahead-combobox-styles'
 import { translate } from '@/i18n/i18n'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'

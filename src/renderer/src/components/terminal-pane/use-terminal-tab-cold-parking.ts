@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useTerminalMountRetentionMembership } from './terminal-mount-retention-leases'
 import { useShallow } from 'zustand/react/shallow'
-import type { TerminalTab } from '../../../../shared/terminal-tab-types'
+import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import { useAppStore } from '../../store'
 import {
   findActivityTerminalPortal,

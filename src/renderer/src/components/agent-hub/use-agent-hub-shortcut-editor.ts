@@ -10,16 +10,16 @@ import {
   type KeybindingActionId,
   type KeybindingInput
 } from '../../../../shared/keybindings'
-import { buildShortcutDefinitionCatalog } from '../settings/shortcut-definition-catalog'
-import { EMPTY_DISABLED_TUI_AGENTS } from '../settings/shortcut-groups'
-import { useMacCapturedDigitChords } from '../settings/use-mac-captured-digit-chords'
-import { clearRecordingActionForShortcutMutation } from '../settings/shortcut-recording-state'
+import { buildShortcutDefinitionCatalog } from '../settings/shortcuts/shortcut-definition-catalog'
+import { EMPTY_DISABLED_TUI_AGENTS } from '../settings/shortcuts/shortcut-groups'
+import { useMacCapturedDigitChords } from '../settings/shortcuts/use-mac-captured-digit-chords'
+import { clearRecordingActionForShortcutMutation } from '../settings/shortcuts/shortcut-recording-state'
 import {
   adjustRecordingIndexAfterRemove,
   appendBinding,
   removeBindingAt,
   replaceBindingAt
-} from '../settings/shortcut-binding-list-mutations'
+} from '../settings/shortcuts/shortcut-binding-list-mutations'
 import { useShortcutBindingSave } from './use-shortcut-binding-save'
 
 const platform = getShortcutPlatform()

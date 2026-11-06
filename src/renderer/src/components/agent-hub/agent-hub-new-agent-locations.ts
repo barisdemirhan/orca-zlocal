@@ -6,11 +6,11 @@ import {
   getRepoDisplayLabelKey,
   getRepoDisplayLabelsByPath
 } from '../../../../shared/repo-display-labels'
-import { getDeleteStateForWorktreeHost } from '../sidebar/worktree-delete-state-host-match'
+import { getDeleteStateForWorktreeHost } from '../sidebar/workspace-actions/deletion/worktree-delete-state-host-match'
 import {
   folderWorkspaceRepoId,
   folderWorkspaceToWorktree
-} from '../../../../shared/folder-workspace-worktree'
+} from '../../../../shared/folder-workspaces/folder-workspace-worktree'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import type { Worktree } from '../../../../shared/worktree/types'
 

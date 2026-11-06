@@ -2,8 +2,8 @@ import {
   isPosixPtyRootStopped,
   getPosixPtyProcessGroups,
   signalPosixPtyProcessGroups
-} from '../../pty/posix-pty-process-groups'
-import { readPosixPtyProcessTable } from '../../pty/posix-pty-process-table'
+} from '../../pty/process-retirement/posix-pty-process-groups'
+import { readPosixPtyProcessTable } from '../../pty/process-retirement/posix-pty-process-table'
 import type { TerminalSuspensionResult } from '../../../shared/terminal-suspension'
 
 export async function changePosixPtySuspension(

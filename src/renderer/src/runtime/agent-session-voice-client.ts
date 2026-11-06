@@ -8,9 +8,9 @@ import {
   agentSessionVoiceStartFields,
   agentSessionVoiceStopFields
 } from '../../../shared/agent-session-voice'
-import type { AgentSessionMutationResult } from '../../../shared/agent-session-wire'
-import type { RuntimeEnvironmentStatus } from '../../../shared/runtime-host-status'
-import { structuredAgentSessionPayloadFingerprint } from '../../../shared/structured-agent-session-mutation'
+import type { AgentSessionMutationResult } from '../../../shared/agent-session/agent-session-wire'
+import type { RuntimeEnvironmentStatus } from '../../../shared/remote-runtime/host-status/runtime-host-status'
+import { structuredAgentSessionPayloadFingerprint } from '../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
 import type { RuntimeClientTarget } from '../../../shared/runtime-client-target'
 import { getRuntimeEnvironmentRevision } from './runtime-environment-revision'
 import { runtimeHostConnectionStateForEntry } from './runtime-host-connection-state'

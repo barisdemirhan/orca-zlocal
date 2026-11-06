@@ -5,8 +5,8 @@ import { requestActiveTerminalPaneClose } from '../terminal-pane/request-active-
 import { closeWebRuntimeTerminal } from '@/runtime/web-runtime-terminal-actions'
 import { useAppStore } from '@/store'
 import { useRunningTerminalCloseConfirmStore } from '@/store/running-terminal-close-confirm'
-import { parsePaneKey } from '../../../../shared/stable-pane-id'
-import type { TerminalPaneLayoutNode } from '../../../../shared/terminal-tab-types'
+import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
+import type { TerminalPaneLayoutNode } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
@@ -27,7 +27,7 @@ function closeSplitLeaf(tabId: string, leafId: string, title: string, confirmed:
     if (ptyId && !closeWebRuntimeTerminal(ptyId)) {
       void window.api.pty.kill(ptyId).catch(() => {})
     }
-    applyClosedTerminalLeafNotice(tabId, leafId)
+    applyClosedTerminalLeafNotice(tabId, leafId, 'user')
   }
   if (confirmed) {
     close()
@@ -51,7 +51,7 @@ export function closeAgentHubAgent(
       closeSplitLeaf(tabId, splitLeaf, target.title, confirmed)
       return
     }
-    closeTerminalTab(tabId, { skipRunningProcessConfirm: confirmed })
+    closeTerminalTab(tabId, { reason: 'user', skipRunningProcessConfirm: confirmed })
   }
 
   const skipConfirm = useAppStore.getState().settings?.skipCloseTerminalWithRunningProcessConfirm

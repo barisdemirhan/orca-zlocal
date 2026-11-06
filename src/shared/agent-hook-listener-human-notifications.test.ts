@@ -4,8 +4,11 @@ import {
   clearPaneCacheState,
   movePaneCacheState
 } from './agent-hook-listener/listener-state'
-import { normalizeAndAccept, PANE_KEY } from './agent-hook-listener-test-harness'
-import { makePaneKey } from './stable-pane-id'
+import {
+  normalizeAndAccept,
+  PANE_KEY
+} from './agent-hook-listener/normalization/agent-hook-listener-test-harness'
+import { makePaneKey } from './workspace-layout/stable-pane-id'
 
 describe('provider human notifications', () => {
   it('drops the previous session notification wait when a replacement first reports tool activity', () => {

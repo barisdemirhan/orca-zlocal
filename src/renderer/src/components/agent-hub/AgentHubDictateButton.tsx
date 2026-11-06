@@ -23,7 +23,7 @@ export function HubDictateButton({
 }: {
   compact?: boolean
   disabled?: boolean
-  targetInputRef?: RefObject<HTMLInputElement | null>
+  targetInputRef?: RefObject<HTMLInputElement | HTMLTextAreaElement | null>
   /** Multiline field of the same row; used when the single-line one is not mounted. */
   targetTextareaRef?: RefObject<HTMLTextAreaElement | null>
 }): React.JSX.Element | null {

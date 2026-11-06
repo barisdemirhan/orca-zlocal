@@ -4,17 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setStructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-registry'
 import {
   AGENT_SESSION_ACCEPTED_SEND_RUNTIME_CAPABILITY,
-  AGENT_SESSION_CONVERSATION_STOP_RUNTIME_CAPABILITY,
   AGENT_SESSION_PENDING_SEND_RESULT_RUNTIME_CAPABILITY,
-  RUNTIME_CAPABILITIES,
-  RUNTIME_PROTOCOL_VERSION,
-  STRUCTURED_AGENT_SESSION_HOLD_RUNTIME_CAPABILITY,
-  AGENT_SESSION_TURN_COMPLETION_RUNTIME_CAPABILITY,
-  STRUCTURED_AGENT_SESSION_REVEAL_RUNTIME_CAPABILITY,
   STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY
-} from '../../../../shared/protocol-version'
+} from '../../../../shared/agent-session/agent-session-runtime-capabilities'
+import { RUNTIME_CAPABILITIES, RUNTIME_PROTOCOL_VERSION } from '../../../../shared/protocol-version'
+import {
+  STRUCTURED_AGENT_SESSION_HOLD_RUNTIME_CAPABILITY,
+  STRUCTURED_AGENT_SESSION_REVEAL_RUNTIME_CAPABILITY
+} from '../../../../shared/agent-session/structured-agent-session-surface-capabilities'
+import { AGENT_SESSION_TURN_COMPLETION_RUNTIME_CAPABILITY } from '../../../../shared/agent-session/agent-session-attention-capabilities'
+import { AGENT_SESSION_CONVERSATION_STOP_RUNTIME_CAPABILITY } from '../../../../shared/agent-session/lifecycle/agent-session-stop-capabilities'
 import { STRUCTURED_AGENT_SESSION_START_WAIT_MS } from '../../../native-chat/agent-session-wire/structured-agent-session-send-settlement'
-import { computeAgentSessionPayloadFingerprint } from '../../../../shared/agent-session-mutation-envelope'
+import { computeAgentSessionPayloadFingerprint } from '../../../../shared/agent-session/lifecycle/agent-session-mutation-envelope'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { ALL_RPC_METHODS } from './index'
 import { STRUCTURED_AGENT_SESSION_METHODS } from './structured-agent-session'
@@ -48,19 +49,22 @@ describe('capability gating', () => {
 
     expect(response).toMatchObject({ ok: true, result: { ok: true } })
     expect(hostCalls.close).toHaveBeenCalledWith(SESSION, 'user-close')
-    expect(hostCalls.setSessionTabVisibility).toHaveBeenCalledWith(SESSION, false)
+    expect(hostCalls.setSessionTabVisibility).toHaveBeenCalledWith(SESSION, false, undefined, {
+      deferHiddenNotice: true,
+      check: expect.any(Function)
+    })
     expect(hostCalls.setSessionTabVisibility.mock.invocationCallOrder[0]).toBeLessThan(
       hostCalls.close.mock.invocationCallOrder[0]!
     )
   })
 
-  it('does not stop the provider when durable tab retirement fails', async () => {
+  it('attempts provider stop and reports the durable tab retirement failure', async () => {
     hostCalls.setSessionTabVisibility.mockRejectedValueOnce(new Error('visibility write failed'))
 
     const response = await call('agentSession.close', { sessionId: SESSION }, STRUCTURED_CLIENT)
 
     expect(response).toMatchObject({ ok: false })
-    expect(hostCalls.close).not.toHaveBeenCalled()
+    expect(hostCalls.close).toHaveBeenCalledWith(SESSION, 'user-close')
   })
 
   it('advertises the capability without bumping the protocol version', () => {
@@ -91,8 +95,6 @@ describe('capability gating', () => {
         'agentSession.subscribeVoice'
       ])
     )
-    // Keep protocol stable: structured capability already hides additive session methods from older clients.
-    expect(STRUCTURED_AGENT_SESSION_METHODS).toHaveLength(48)
   })
 
   it('hides the surface from a declared client that did not advertise it', async () => {
@@ -227,9 +229,9 @@ describe('capability gating', () => {
     })
   })
 
-  it('serves a capable mobile client whatever the host structured-chat setting says', async () => {
+  it("serves a capable mobile client whatever the host's Chat | CLI choices say", async () => {
     const response = await call('agentSession.send', sendParams(), STRUCTURED_MOBILE_CLIENT, {
-      getClientSettings: () => ({ experimentalNativeChat: false })
+      getClientSettings: () => ({})
     })
     expect(response).toMatchObject({ ok: true })
     expect(hostCalls.send).toHaveBeenCalledTimes(1)

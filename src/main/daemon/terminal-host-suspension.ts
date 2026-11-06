@@ -2,8 +2,8 @@ import type {
   TerminalSuspensionOptions,
   TerminalSuspensionResult
 } from '../../shared/terminal-suspension'
-import type { Session } from './session'
-import { getAliveTerminalHostSession } from './terminal-host-session-access'
+import type { Session } from './sessions/session'
+import { getAliveTerminalHostSession } from './terminal-host/terminal-host-session-access'
 import { changePosixPtySuspension } from './pty-subprocess/posix-suspension'
 
 export async function changeTerminalHostSuspension(

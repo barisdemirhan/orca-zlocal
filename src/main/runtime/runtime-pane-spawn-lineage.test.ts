@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { getDefaultWorkspaceSession } from '../../shared/constants'
-import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
+import type { WorkspaceSessionState } from '../../shared/workspace-session/workspace-session-state-types'
 import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
 
 it('restores folder-workspace lineage only for tabs and leaves still in the saved session', () => {

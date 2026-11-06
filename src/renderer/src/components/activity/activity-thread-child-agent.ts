@@ -1,10 +1,11 @@
-import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
+import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import {
   buildAgentRowLineageTree,
   resolveAgentRowParentPaneKey,
   type AgentLineageSourceRow,
   type AgentRowLineageTree
 } from '../dashboard/agent-row-lineage-model'
+import type { ActivityLiveAgentState } from './activity-thread-types'
 
 type ChildAgentLineageEntry = Pick<
   AgentStatusEntry,
@@ -15,6 +16,8 @@ type ChildAgentLineageEntry = Pick<
 export type ChildAgentClassifiableThread = {
   paneKey: string
   paneEntry?: ChildAgentLineageEntry
+  /** Non-null while the pane's own turn is live (working, monitoring or waiting on the user). */
+  currentAgentState?: ActivityLiveAgentState | null
   currentAgentEntry?: ChildAgentLineageEntry | null
   latestEvent?: { entry: ChildAgentLineageEntry } | null
   events?: readonly { entry: ChildAgentLineageEntry }[]
@@ -44,14 +47,23 @@ function firstReportedTerminalHandle(thread: ChildAgentClassifiableThread): stri
   return undefined
 }
 
-/** Reuse dashboard lineage classification: the newest still-resolving parent wins across history. Orphans and cycles remain top-level rather than disappearing behind child filters. */
-export function collectChildAgentPaneKeys(
+/** Reuse dashboard lineage classification: the newest still-resolving parent wins across history. Orphans and cycles remain top-level rather than disappearing behind child filters. A live child is never hidden, whatever its ancestors are doing: a row's visibility depends only on that chat's own state. */
+export function collectHiddenChildAgentPaneKeys(
   threads: readonly ChildAgentClassifiableThread[]
 ): Set<string> {
-  return buildChildAgentLineageTree(threads).childPaneKeys
+  const livePaneKeys = new Set(
+    threads.filter((thread) => thread.currentAgentState).map((thread) => thread.paneKey)
+  )
+  const hidden = new Set<string>()
+  for (const paneKey of buildChildAgentLineageTree(threads).childPaneKeys) {
+    if (!livePaneKeys.has(paneKey)) {
+      hidden.add(paneKey)
+    }
+  }
+  return hidden
 }
 
-/** The lineage tree behind `collectChildAgentPaneKeys`, for surfaces that nest children under their parent. */
+/** The lineage tree behind `collectHiddenChildAgentPaneKeys`, for surfaces that nest children under their parent. */
 export function buildChildAgentLineageTree(
   threads: readonly ChildAgentClassifiableThread[],
   includeSpawnedBy = false

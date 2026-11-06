@@ -1,7 +1,7 @@
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { normalizeAgentHubMicMode } from '../../../../shared/agent-hub-settings'
-import { SettingsSwitchRow } from '../settings/SettingsFormControls'
+import { SettingsSwitchRow } from '../settings/form-controls/SettingsFormControls'
 import { readAgentHubDictationCapabilities } from './agent-hub-dictation-capabilities'
 
 export function AgentHubMicModeSetting(): React.JSX.Element {

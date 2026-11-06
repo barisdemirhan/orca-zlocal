@@ -79,14 +79,16 @@ export function handleTerminalProgrammaticTextPaste({
     inputKind: 'driving',
     isTargetCurrent,
     canContinue: isTargetCurrent
-  }).then((result) => {
-    if (result.status !== 'pasted') {
-      return
-    }
-    recordTerminalUserInputForLeaf(tabId, pane.leafId)
-    if (focusTerminal && shouldFocusAfterPaste()) {
-      pane.terminal.focus()
-    }
-  }).finally(onFinished)
+  })
+    .then((result) => {
+      if (result.status !== 'pasted') {
+        return
+      }
+      recordTerminalUserInputForLeaf(tabId, pane.leafId)
+      if (focusTerminal && shouldFocusAfterPaste()) {
+        pane.terminal.focus()
+      }
+    })
+    .finally(onFinished)
   return accepted
 }

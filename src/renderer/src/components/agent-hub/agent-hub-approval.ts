@@ -1,4 +1,4 @@
-import type { AgentType } from '../../../../shared/agent-status-types'
+import type { AgentType } from '../../../../shared/agent-status/contracts/agent-status-types'
 
 /** The tool an approval prompt is for, read from the hook's `{"approval":{"tool":…}}` envelope. */
 export function readApprovalTool(interactivePrompt: string | null): string | null {

@@ -10,13 +10,13 @@ import {
   type KeybindingActionId,
   type KeybindingOverrides
 } from '../../../../shared/keybindings'
-import type { ShortcutDefinitionCatalog } from '../settings/shortcut-definition-catalog'
-import { keybindingValidationErrorText } from '../settings/keybinding-diagnostic-text'
+import type { ShortcutDefinitionCatalog } from '../settings/shortcuts/shortcut-definition-catalog'
+import { keybindingValidationErrorText } from '../settings/shortcuts/keybinding-diagnostic-text'
 import {
   hasCommonBindingOverride,
   removeBindingOverride,
   sameBindings
-} from '../settings/keybinding-override-edits'
+} from '../settings/shortcuts/keybinding-override-edits'
 
 /** One save path for the Keyboard Shortcuts pane and the hub's inline editor. */
 export function useShortcutBindingSave(

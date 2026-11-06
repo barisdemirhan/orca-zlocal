@@ -13,9 +13,9 @@ import { worktreeLaunchWorkspace } from './agent-launch-route-input'
 import { addLaunchedSessionToAgentHubMirror } from '@/components/agent-hub/agent-hub-mirror-continuation'
 import type { AgentSessionContinuationPlacement } from '@/lib/agent-session-continuation-placement'
 import type { AgentSessionContinuationMirrorSource } from '@/lib/agent-session-continuation'
-import { isTuiAgentEnabled } from '../../../shared/tui-agent-selection'
-import type { LaunchSource } from '../../../shared/telemetry-events'
-import type { TuiAgent } from '../../../shared/tui-agent'
+import { isTuiAgentEnabled } from '../../../shared/agent-launch/catalog/tui-agent-selection'
+import type { LaunchSource } from '../../../shared/telemetry-property-schemas'
+import type { TuiAgent } from '../../../shared/agent-launch/catalog/tui-agent'
 import {
   adoptAgentSessionLaunchVerdict,
   planAgentSessionLaunch
@@ -38,6 +38,9 @@ type LaunchAgentSessionContinuationArgs = {
   signal?: AbortSignal
   /** Started from a mirror pane; omitted keeps the legacy jump to a new tab in the group. */
   mirror?: AgentSessionContinuationMirrorSource & { placement: AgentSessionContinuationPlacement }
+  sessionOptions?: Readonly<Record<string, string>>
+  chatSessionOptions?: Readonly<Record<string, string>>
+  agentArgs?: string | null
 }
 
 /** Detected agents, then those that open as a chat on the workspace's host without their CLI. */
@@ -107,7 +110,10 @@ export async function launchAgentSessionContinuation({
   launchChoice,
   launchSource,
   signal,
-  mirror
+  mirror,
+  sessionOptions,
+  chatSessionOptions,
+  agentArgs
 }: LaunchAgentSessionContinuationArgs): Promise<boolean> {
   const label = getAgentLabel(agent)
   // Why: a mirror shows one pane, so the new session joins it as a mirror tab and the user stays
@@ -120,6 +126,9 @@ export async function launchAgentSessionContinuation({
   const delivery = {
     agent,
     worktreeId,
+    ...(sessionOptions ? { sessionOptions: { ...sessionOptions } } : {}),
+    ...(chatSessionOptions !== undefined ? { chatSessionOptions: { ...chatSessionOptions } } : {}),
+    ...(agentArgs !== undefined ? { agentArgs } : {}),
     ...(groupId ? { groupId } : {}),
     ...(mirrorWindowId ? { activate: false, keepTabType: true } : {}),
     prompt,
@@ -154,6 +163,10 @@ export async function launchAgentSessionContinuation({
   }
   const request = {
     ...delivery,
+    ...(delivery.sessionOptions ? { launchOptions: delivery.sessionOptions } : {}),
+    ...(delivery.chatSessionOptions !== undefined
+      ? { chatLaunchOptions: delivery.chatSessionOptions }
+      : {}),
     requestId: newAgentLaunchRequestId(),
     workspace: worktreeLaunchWorkspace(worktreeId),
     tuiCustomization: { cwd: initialCwd }
@@ -211,7 +224,7 @@ export async function launchAgentSessionContinuation({
   if (result.promptDeliveryResult) {
     void result.promptDeliveryResult
       .then((delivery) => {
-        if (!delivery.delivered && !delivery.failureNotified) {
+        if (!delivery.delivered && !delivery.failureNotified && !delivery.unconfirmed) {
           notifyDeliveryFailed(label, prompt)
         }
       })

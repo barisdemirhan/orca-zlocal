@@ -1,5 +1,5 @@
 import { delayUnlessAborted } from '../../../shared/abort-aware-delay'
-import type { PendingPrompt } from '../../../shared/agent-pending-prompt'
+import type { PendingPrompt } from '../../../shared/agent-status/contracts/agent-pending-prompt'
 import type {
   AgentHubAnswerResult,
   AgentHubQuestion,
@@ -10,7 +10,7 @@ import type {
   AgentHubRequest,
   AgentHubResponse
 } from '../../../shared/agent-hub-requests'
-import type { AgentStatusIpcPayload } from '../../../shared/agent-status-ipc-payload'
+import type { AgentStatusIpcPayload } from '../../../shared/agent-status/contracts/agent-status-ipc-payload'
 import { parseAskFromStatus } from '../../../shared/native-chat/input/native-chat-ask'
 import { CONNECTOR_AGENTS } from '../../external-conversations/connector-agents'
 import { AgentHubError } from './agent-hub-error'

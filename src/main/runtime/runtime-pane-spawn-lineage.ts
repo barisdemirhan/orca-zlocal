@@ -1,8 +1,8 @@
-import type { AgentStatusEntry } from '../../shared/agent-status-types'
-import type { TerminalSurfaceCloseTarget } from '../../shared/terminal-surface-close-target'
-import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
-import { parsePaneKey } from '../../shared/stable-pane-id'
-import { terminalLayoutContainsLeaf } from '../../shared/workspace-session-pane-ownership'
+import type { AgentStatusEntry } from '../../shared/agent-status/contracts/agent-status-types'
+import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surface-close-target'
+import type { WorkspaceSessionState } from '../../shared/workspace-session/workspace-session-state-types'
+import { parsePaneKey } from '../../shared/workspace-layout/stable-pane-id'
+import { terminalLayoutContainsLeaf } from '../../shared/workspace-session/workspace-session-pane-ownership'
 
 type SpawnedBy = NonNullable<AgentStatusEntry['spawnedBy']>
 type Lineage = Record<string, SpawnedBy>

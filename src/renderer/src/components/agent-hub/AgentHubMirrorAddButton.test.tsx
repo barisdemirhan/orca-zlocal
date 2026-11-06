@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
-import { buildAgentStartupPlan } from '@/lib/tui-agent-startup'
+import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/tui-agent-startup'
 import type { launchAgentBackgroundSession } from '@/lib/launch-agent-background-session'
-import type { TerminalTab } from '../../../../shared/terminal-tab-types'
-import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
+import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import { TooltipProvider } from '../ui/tooltip'
 import {
   makeRepo,

@@ -2,7 +2,7 @@ import type { AppState } from '@/store/types'
 import { agentHubRowOfTab } from './agent-hub-tab-row'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 import { paneTargetFromTerminalRow, type AgentHubPaneTarget } from './agent-hub-pane-target'
-import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 
 let selectedTarget: AgentHubPaneTarget | null = null
 

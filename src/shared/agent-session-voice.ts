@@ -1,4 +1,4 @@
-import type { AgentSessionMutationEnvelope } from './agent-session-wire'
+import type { AgentSessionMutationEnvelope } from './agent-session/agent-session-wire'
 
 export const AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY = 'agent-session.codex-voice.v1' as const
 export const AGENT_SESSION_VOICE_MAX_SDP_LENGTH = 128 * 1024

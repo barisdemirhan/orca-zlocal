@@ -1,8 +1,8 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { AgentHubOrbOperations } from './agent-hub-orb-operations'
-import { RuntimeTerminalWriter } from '../runtime-terminal-writer'
-import { WRITE_ACCEPTED } from '../../../shared/pty-write-settlement'
-import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../../shared/terminal-input'
+import { RuntimeTerminalWriter } from '../terminal/input/runtime-terminal-writer'
+import { WRITE_ACCEPTED } from '../../../shared/terminal/pty/lifecycle/pty-write-settlement'
+import { TERMINAL_INPUT_CHUNK_MAX_BYTES } from '../../../shared/terminal/input/terminal-input'
 import { AgentHubEventSchema } from '../../../shared/rpc-contract/agent-hub-events'
 import type { AgentHubProgress } from '../../../shared/agent-hub-requests'
 

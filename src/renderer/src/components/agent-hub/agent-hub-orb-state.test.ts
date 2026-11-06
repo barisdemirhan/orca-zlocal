@@ -2,8 +2,8 @@
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/structured-agent-session-reducer'
-import type { AgentJournalRenderItem } from '../../../../shared/agent-session-journal-types'
+import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/structured-agent-session-reducer'
+import type { AgentJournalRenderItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
 import { deriveAgentHubOrbState } from './agent-hub-orb-state'
 import { orbApproval, orbAsk, orbMessage } from './agent-hub-orb-test-fixtures'
 

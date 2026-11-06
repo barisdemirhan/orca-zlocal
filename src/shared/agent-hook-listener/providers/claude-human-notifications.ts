@@ -1,4 +1,4 @@
-import type { ParsedAgentStatusPayload } from '../../agent-status-types'
+import type { ParsedAgentStatusPayload } from '../../agent-status/contracts/agent-status-types'
 import {
   claudeTeammateIdMatchesName,
   upsertWorkingClaudeSubagent

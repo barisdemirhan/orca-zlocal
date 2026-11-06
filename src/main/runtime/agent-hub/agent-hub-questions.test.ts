@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AgentHubGate } from '../../../shared/agent-hub-requests'
-import type { AgentQuestionAnsweredInferenceRequest } from '../../../shared/agent-question-answered-intent'
-import type { AgentStatusIpcPayload } from '../../../shared/agent-status-ipc-payload'
-import { hookRowAgentPhase } from '../../../shared/agent-transitions'
+import type { AgentQuestionAnsweredInferenceRequest } from '../../../shared/agent-status/lifecycle/agent-question-answered-intent'
+import type { AgentStatusIpcPayload } from '../../../shared/agent-status/contracts/agent-status-ipc-payload'
+import { hookRowAgentPhase } from '../../../shared/agent-status/lifecycle/agent-transitions'
 import {
   fakeTerminal,
   PANE,

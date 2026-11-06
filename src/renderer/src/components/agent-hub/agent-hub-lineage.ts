@@ -1,12 +1,12 @@
-import { isExplicitAgentStatusFresh } from '@/lib/agent-status'
+import { isExplicitAgentStatusFresh } from '@/lib/pane-agent-evidence'
 import {
   agentChildRowContextForParent,
   buildAgentChildRowModels,
   buildLegacyAgentChildRowModels,
   flattenAgentChildRowModels,
   type AgentChildRowModel
-} from '../../../../shared/agent-child-row-model'
-import { AGENT_STATUS_STALE_AFTER_MS } from '../../../../shared/agent-status-types'
+} from '../../../../shared/agent-status/presentation/agent-child-row-model'
+import { AGENT_STATUS_STALE_AFTER_MS } from '../../../../shared/agent-status/contracts/agent-status-freshness'
 import { buildChildAgentLineageTree } from '../activity/activity-thread-child-agent'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { agentHubSection, type AgentHubCounts, type AgentHubIndicatorKind } from './agent-hub-lists'

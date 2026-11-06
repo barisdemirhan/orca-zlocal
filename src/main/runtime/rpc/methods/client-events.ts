@@ -3,7 +3,7 @@ import {
   getRegisteredSshState,
   listRegisteredSshTargets
 } from '../../../ssh/targets/ssh-target-registry'
-import { getPublicSshState } from '../../public-ssh-state'
+import { getPublicSshState } from '../../hosts/platform-probe/public-ssh-state'
 import { defineMethod, defineStreamingMethod } from '../core'
 import {
   ClientEventsSubscribeParams,
@@ -76,7 +76,7 @@ export const CLIENT_EVENT_METHODS = [
           const state = getPublicSshState(getRegisteredSshState(target.id) ?? null)
           return state ? [{ targetId: target.id, state }] : []
         })
-        // Why: attaching the listener before snapshotting closes the reload gap without exposing HUB-private target configuration.
+        // Listen before snapshotting to close reload gaps without exposing HUB-private target configuration.
         const snapshot = desktop ? runtime.agentHub.snapshot() : null
         if (snapshot && gates) {
           snapshot.requests.push(...(runtime.getAgentHubGateSnapshot?.() ?? []))
@@ -84,7 +84,11 @@ export const CLIENT_EVENT_METHODS = [
         emit({
           type: 'ready',
           subscriptionId,
-          snapshot: { sshStates, ...(snapshot ? { agentHub: snapshot } : {}) }
+          snapshot: {
+            sshStates,
+            nativeChatQueueFollowUps: runtime.getClientSettings().nativeChatQueueFollowUps,
+            ...(snapshot ? { agentHub: snapshot } : {})
+          }
         })
       })
     }

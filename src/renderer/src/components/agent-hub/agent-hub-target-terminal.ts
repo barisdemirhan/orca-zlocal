@@ -4,7 +4,7 @@ import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
 import type { RuntimeTerminalResolvePane } from '../../../../shared/runtime-types'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
-import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import {
   isRemoteRuntimePtyId,
   parseRemoteRuntimePtyId

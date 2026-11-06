@@ -1,4 +1,4 @@
-import type { AgentStatusEntry } from '../../../../../shared/agent-status-types'
+import type { AgentStatusEntry } from '../../../../../shared/agent-status/contracts/agent-status-types'
 import type { Worktree } from '../../../../../shared/worktree/types'
 import { findWorktreeById } from '../worktree-helpers'
 

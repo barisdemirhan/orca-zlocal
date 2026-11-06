@@ -7,7 +7,7 @@ import {
   NativeChatQuestionCard,
   type NativeChatQuestionCardControl
 } from './NativeChatQuestionCard'
-import type { AskAnswerSelection } from '../../../../shared/native-chat-ask-answer'
+import type { AskAnswerSelection } from '../../../../shared/native-chat/input/native-chat-ask-answer'
 import type { AskPrompt } from '../../../../shared/native-chat/input/native-chat-ask-types'
 
 // The Agent Hub answers with number keys through controlRef; these pin that a digit

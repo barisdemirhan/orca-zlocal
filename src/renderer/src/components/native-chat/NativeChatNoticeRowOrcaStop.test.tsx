@@ -2,10 +2,10 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, fireEvent, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AgentJournalStatusItem } from '../../../../shared/agent-session-journal-types'
-import { agentSessionFailureWords } from '../../../../shared/agent-session-failure-words'
-import { agentSessionFailureFact } from '../../../../shared/agent-session-failure'
-import { isAdmissibleAgentJournalItemBody } from '../../../../shared/agent-session-journal-schemas'
+import type { AgentJournalStatusItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
+import { agentSessionFailureWords } from '../../../../shared/agent-session/failures/agent-session-failure-words'
+import { agentSessionFailureFact } from '../../../../shared/agent-session/failures/agent-session-failure'
+import { isAdmissibleAgentJournalItemBody } from '../../../../shared/agent-session/journal/agent-session-journal-schemas'
 import { NO_OFFER, renderStatus } from './NativeChatNoticeRow.test-fixture'
 
 afterEach(cleanup)

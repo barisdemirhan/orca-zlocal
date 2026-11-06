@@ -5,10 +5,10 @@ import {
   adoptAgentBackgroundSessionTab,
   reserveAgentBackgroundSessionIdentity
 } from '@/lib/adopt-agent-background-session-tab'
-import { buildAgentStartupPlan } from '@/lib/tui-agent-startup'
-import type { TerminalLayoutSnapshot } from '../../../../shared/terminal-tab-types'
-import { makePaneKey, parsePaneKey } from '../../../../shared/stable-pane-id'
-import { toWebTerminalSurfaceTabId } from '../../../../shared/terminal-surface-id'
+import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/tui-agent-startup'
+import type { TerminalLayoutSnapshot } from '../../../../shared/workspace-layout/terminal-tab-types'
+import { makePaneKey, parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
+import { toWebTerminalSurfaceTabId } from '../../../../shared/workspace-layout/terminal-surface-id'
 import { makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import { startAgentInAgentHubMirror } from './agent-hub-mirror-new-agent'
 import {
@@ -49,9 +49,7 @@ vi.mock('@/lib/launch-agent-background-session', () => ({
     const reserved = reserveAgentBackgroundSessionIdentity({
       store,
       agentType: agent,
-      worktreeId,
-      launchConfig: startupPlan.launchConfig,
-      env: startupPlan.env
+      worktreeId
     })
     // Terminal mounts retain the first store-visible layout in initialLayoutRef.
     const stop = useAppStore.subscribe((state) => {

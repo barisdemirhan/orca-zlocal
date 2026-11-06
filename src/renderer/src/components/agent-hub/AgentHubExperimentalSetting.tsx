@@ -3,9 +3,9 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
-import { SearchableSetting } from '../settings/SearchableSetting'
-import { SettingsSwitch } from '../settings/SettingsFormControls'
-import { getExperimentalSearchEntry } from '../settings/experimental-search'
+import { SearchableSetting } from '../settings/section-layout/SearchableSetting'
+import { SettingsSwitch } from '../settings/form-controls/SettingsFormControls'
+import { getExperimentalSearchEntry } from '../settings/advanced/experimental-search'
 
 export function AgentHubExperimentalSetting({
   settings,

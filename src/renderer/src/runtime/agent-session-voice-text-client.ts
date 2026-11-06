@@ -3,9 +3,9 @@ import type {
   AgentSessionVoiceTextResult
 } from '../../../shared/agent-session-voice'
 import { agentSessionVoiceStopFields } from '../../../shared/agent-session-voice'
-import type { AgentSessionMutationResult } from '../../../shared/agent-session-wire'
+import type { AgentSessionMutationResult } from '../../../shared/agent-session/agent-session-wire'
 import type { RuntimeClientTarget } from '../../../shared/runtime-client-target'
-import { structuredAgentSessionPayloadFingerprint } from '../../../shared/structured-agent-session-mutation'
+import { structuredAgentSessionPayloadFingerprint } from '../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
 import { structuredSessionOperationId } from '../components/native-chat/structured-agent-session-operation-id'
 import { callRuntimeRpc } from './runtime-rpc-client'
 

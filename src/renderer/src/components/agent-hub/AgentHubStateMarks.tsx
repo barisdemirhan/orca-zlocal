@@ -1,8 +1,8 @@
 import { SquareTerminal } from 'lucide-react'
 import { AgentIcon } from '@/lib/agent-catalog'
-import { agentTypeToIconAgent } from '@/lib/agent-status'
+import { agentTypeToIconAgent } from '../../../../shared/agent-status/presentation/agent-type-icon-agent'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
-import type { AgentType } from '../../../../shared/agent-status-types'
+import type { AgentType } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { AgentHubCounts, AgentHubIndicatorKind } from './agent-hub-lists'
 
 export function HubStateIndicator({ kind }: { kind: AgentHubIndicatorKind }): React.JSX.Element {

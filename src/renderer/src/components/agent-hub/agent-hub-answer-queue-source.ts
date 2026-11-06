@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
-import { buildSidebarHostOptions } from '../sidebar/sidebar-host-options'
+import { buildSidebarHostOptions } from '../sidebar/worktree-list/controls/sidebar-host-options'
 import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'
 import {
   getSettingsFocusedExecutionHostId,
@@ -12,7 +12,7 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import {
   parseInteractivePrompt,
   type InteractivePromptCard
-} from '../../../../shared/native-chat-interactive-prompt'
+} from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
 import { sayNativeChatApprovalTranslated } from '../native-chat/native-chat-interactive-prompt'
 import { agentHubCardKey } from './agent-hub-answered-cards'
 import { agentHubStateSince } from './agent-hub-lists'

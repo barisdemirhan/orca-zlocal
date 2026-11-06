@@ -1,5 +1,5 @@
 import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
-import { WorktreeHostContextBadge } from '@/components/sidebar/WorktreeHostContextBadge'
+import { WorktreeHostContextBadge } from '@/components/sidebar/workspace-card/host/WorktreeHostContextBadge'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 
 export function HubChip({

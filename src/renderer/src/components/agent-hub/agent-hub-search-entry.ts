@@ -1,6 +1,6 @@
-import type { SettingsSearchEntry } from '../settings/settings-search'
+import type { SettingsSearchEntry } from '../settings/search/settings-search'
 import { translate } from '@/i18n/i18n'
-import { translateSearchKeyword } from '../settings/settings-search-keywords'
+import { translateSearchKeyword } from '../settings/search/settings-search-keywords'
 
 export function getAgentHubSearchEntry(): SettingsSearchEntry {
   return {

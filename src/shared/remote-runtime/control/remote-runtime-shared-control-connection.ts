@@ -1,6 +1,6 @@
-import type { PairedE2EEClientHandshake } from '../../paired-e2ee-client-handshake'
+import type { PairedE2EEClientHandshake } from '../e2ee/paired-e2ee-client-handshake'
 import type WebSocket from 'ws'
-import type { PairedRuntimeConnection } from '../../paired-runtime-connection'
+import type { PairedRuntimeConnection } from '../pairing/paired-runtime-connection'
 import { remoteRuntimeClientCapabilities } from '../remote-runtime-client-capabilities'
 import { remoteRuntimeUnavailableError } from '../requests/remote-runtime-request-frames'
 import { openSharedControlSocket } from './remote-runtime-shared-control-open'
@@ -10,7 +10,7 @@ import * as sharedControlProtocol from './remote-runtime-shared-control-protocol
 import { SharedControlReconnectScheduler } from './remote-runtime-shared-control-reconnect'
 import { requestSharedControl } from '../requests/remote-runtime-shared-control-requests'
 import { SharedControlRetiredRequestIds } from '../requests/remote-runtime-shared-control-retired-request-ids'
-import { SharedControlReadyStableResetTimer } from './remote-runtime-shared-control-stability'
+import { SharedControlReadinessTimer } from './remote-runtime-shared-control-stability'
 import { rejectSharedControlReadyWaiters } from './remote-runtime-shared-control-state'
 import { closeSharedControlSocket, LOCAL_CLOSE } from './remote-runtime-shared-control-socket-close'
 import { startSharedControlSubscription } from '../requests/remote-runtime-shared-control-subscription-start'
@@ -34,7 +34,7 @@ export class RemoteRuntimeSharedControlConnection {
   private handshake: PairedE2EEClientHandshake | null = null
   private socketCleanup: (() => void) | null = null
   private readonly reconnect = new SharedControlReconnectScheduler()
-  private readonly readyStableReset: SharedControlReadyStableResetTimer
+  private readonly readiness: SharedControlReadinessTimer
   private intentionallyClosed = false
   private readonly diagnostics: SharedControlDiagnosticsTracker
   private readonly pendingRequests = new Map<string, PendingRequest>()
@@ -50,9 +50,12 @@ export class RemoteRuntimeSharedControlConnection {
     private readonly options: SharedControlTypes.RemoteRuntimeSharedControlConnectionOptions = {}
   ) {
     this.diagnostics = new SharedControlDiagnosticsTracker(options, () => this.diagnosticsCounts())
-    this.readyStableReset = new SharedControlReadyStableResetTimer(
-      options.reconnectStableResetMs ?? 30_000
-    )
+    this.readiness = new SharedControlReadinessTimer(options, {
+      getState: () => this.state,
+      getSocket: () => this.ws,
+      resetAttempt: () => this.reconnect.resetAttempt(),
+      retire: this.handleSocketClosed
+    })
   }
   request<TResult>(
     method: string,
@@ -180,6 +183,7 @@ export class RemoteRuntimeSharedControlConnection {
         }
         this.handleSocketClosed(error, socketGeneration, cause)
       },
+      onOpened: () => this.readiness.armReadyDeadline(socketGeneration),
       onTextFrame: (frame) => this.handleTextFrame(frame, socketGeneration),
       onActivity: this.options.onAnswered,
       liveness: {
@@ -224,11 +228,7 @@ export class RemoteRuntimeSharedControlConnection {
         this.options.onReady?.()
         // Clear predecessor-attempt diagnostics on recovery so Connected cannot retain stale failure details.
         this.publishDiagnostics()
-        this.readyStableReset.schedule({
-          getState: () => this.state,
-          getSocket: () => this.ws,
-          reset: () => this.reconnect.resetAttempt()
-        })
+        this.readiness.scheduleStableReset()
       },
       replaySubscriptions: () => this.replaySubscriptions(),
       publishDiagnostics: () => this.publishDiagnostics()
@@ -300,7 +300,7 @@ export class RemoteRuntimeSharedControlConnection {
       ws: this.ws,
       error,
       preserveReadyWaitersAndPendingRequests: options.preserveReadyWaitersAndPendingRequests,
-      clearReadyStableTimer: () => this.readyStableReset.clear()
+      clearReadinessTimer: () => this.readiness.clear()
     })
     this.ws = this.handshake = null
     this.socketCleanup = null

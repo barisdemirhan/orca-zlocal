@@ -85,10 +85,17 @@ const CLAUDE_HUMAN_NOTIFICATION_EVENTS = [
   }
 ] as const
 
+// A batch end releases a permission wait Claude denied itself, which fires no Post* hook.
+const CLAUDE_POST_TOOL_BATCH_EVENT = {
+  eventName: 'PostToolBatch',
+  definition: { hooks: [{ type: 'command', command: '' }] }
+} as const
+
 export const CLAUDE_MANAGED_EVENTS = [
   ...CLAUDE_EVENTS,
   CLAUDE_SESSION_END_EVENT,
-  ...CLAUDE_HUMAN_NOTIFICATION_EVENTS
+  ...CLAUDE_HUMAN_NOTIFICATION_EVENTS,
+  CLAUDE_POST_TOOL_BATCH_EVENT
 ] as const
 
 export type ManagedHookEvent = {
@@ -127,6 +134,6 @@ export function getClaudeManagedHookPlan(
 // OpenClaude statusline data would be misattributed to Claude; leave its slot alone.
 export const OPENCLAUDE_MANAGED_HOOK_PLAN: ClaudeManagedHookPlan = {
   install: CLAUDE_EVENTS,
-  retire: [CLAUDE_SESSION_END_EVENT],
+  retire: [CLAUDE_SESSION_END_EVENT, CLAUDE_POST_TOOL_BATCH_EVENT],
   statusLine: 'leave'
 }

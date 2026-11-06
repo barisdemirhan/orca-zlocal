@@ -11,7 +11,7 @@ import {
 } from '@/lib/pane-manager/pane-overlay-focus'
 import type { ManagedPane } from '@/lib/pane-manager/pane-manager'
 import { useAppStore } from '@/store'
-import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { paneIsCoveredByNativeChat } from '../terminal-pane/native-chat-covered-pane'
 import {
   NativeChatInteractiveCard,
@@ -72,7 +72,7 @@ function PaneQuickReplyCard({
       ? quick.card
       : null
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
-  const nativeAnswerInputRef = useRef<HTMLInputElement>(null)
+  const nativeAnswerInputRef = useRef<HTMLTextAreaElement>(null)
   const nativeAnswerTextareaRef = useRef<HTMLTextAreaElement>(null)
   const answerable = quick.options.length > 0 || fullCard !== null
   const shown = answerable && !dismissed && !gone

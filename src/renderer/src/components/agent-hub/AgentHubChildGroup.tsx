@@ -1,6 +1,6 @@
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { translate } from '@/i18n/i18n'
-import type { AgentChildRowModel } from '../../../../shared/agent-child-row-model'
+import type { AgentChildRowModel } from '../../../../shared/agent-status/presentation/agent-child-row-model'
 import { agentChildRowText } from '../agent-child-row-text'
 import { HubChip } from './AgentHubInlineLabels'
 import { HubCollapse, HubFoldChevron } from './AgentHubFold'

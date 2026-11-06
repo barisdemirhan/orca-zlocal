@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createCodexAppServerRecordDispatcher } from './codex-app-server-record-dispatch'
+import { createCodexAppServerRecordDispatcher } from './app-server/codex-app-server-record-dispatch'
 
 afterEach(() => {
   vi.restoreAllMocks()

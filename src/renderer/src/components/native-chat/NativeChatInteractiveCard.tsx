@@ -1,3 +1,4 @@
+import { nativeChatAskDismissKey } from '../../../../shared/native-chat/input/native-chat-ask-dismiss-key'
 import {
   useCallback,
   useImperativeHandle,
@@ -6,7 +7,7 @@ import {
   useState,
   type Ref
 } from 'react'
-import type { InteractivePromptCard } from '../../../../shared/native-chat-interactive-prompt'
+import type { InteractivePromptCard } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
 import {
   NativeChatQuestionCard,
   type NativeChatQuestionCardControl
@@ -53,9 +54,9 @@ export function NativeChatInteractiveCard({
   onAnswerInTerminal?: () => void
   /** Take focus when the card takes the input region from the composer. */
   shouldFocus?: boolean
-  /** Forwarded to the question card's free-text row so pane-level Paste keeps
-   *  a target while the composer is unmounted. */
-  answerInputRef?: React.RefObject<HTMLInputElement | null>
+  /** Paste target while the prompt card replaces the composer. */
+  answerInputRef?: React.RefObject<HTMLTextAreaElement | null>
+  /** Forwarded to the question card's multiline free-text field. */
   answerTextareaRef?: React.RefObject<HTMLTextAreaElement | null>
   /** Forwarded to the question card's free-text row. */
   answerAccessory?: React.ReactNode
@@ -131,7 +132,7 @@ export function NativeChatInteractiveCard({
   if (card.kind === 'question') {
     if (requiresTerminal) {
       return (
-        <div className="shrink-0 bg-chat-canvas">
+        <div className="shrink-0 bg-chat-pane">
           <div className="mx-auto w-full max-w-(--chat-content-max-width) px-3 pt-2 pb-4 sm:px-4">
             <div className="rounded-lg border border-input bg-card p-3 shadow-xs">
               <p className="text-sm text-foreground">
@@ -155,6 +156,7 @@ export function NativeChatInteractiveCard({
     }
     return (
       <NativeChatQuestionCard
+        key={nativeChatAskDismissKey(card.prompt)}
         prompt={card.prompt}
         isSubmitting={submitting}
         isCancelling={cancelling}

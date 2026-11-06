@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { getIntlLocale, translate } from '@/i18n/i18n'
-import { structuredAgentLabel } from '@/lib/structured-agent-session-launch-label'
+import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import type { AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
 import { useNow } from '@/hooks/use-now'
 

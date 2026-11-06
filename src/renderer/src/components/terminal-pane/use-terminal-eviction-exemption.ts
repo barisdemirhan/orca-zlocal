@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { TerminalTab } from '../../../../shared/terminal-tab-types'
+import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import { useAppStore } from '../../store'
 import {
   selectEvictionExemptTerminalTabIds,

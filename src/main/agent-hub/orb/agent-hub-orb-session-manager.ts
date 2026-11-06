@@ -5,7 +5,7 @@ import {
   agentHubOrbPermissionOptions
 } from './agent-hub-orb-permission-settings'
 import { resumeAgentHubOrbSession } from './agent-hub-orb-session-resume'
-import type { AgentChatPermissionMode } from '../../../shared/agent-chat-permission-mode'
+import type { AgentChatPermissionMode } from '../../../shared/agent-launch/permissions/agent-chat-permission-mode'
 import { stat } from 'node:fs/promises'
 import { isAbsolute } from 'node:path'
 import {
@@ -20,8 +20,8 @@ import {
   AGENT_HUB_ORB_PI_PERMISSION_REASON
 } from '../../../shared/agent-hub-orb-settings'
 import type { AgentHubSettings } from '../../../shared/agent-hub-settings'
-import { isStructuredAgentId } from '../../../shared/agent-session-provider-handle'
-import type { AgentSessionRecord } from '../../../shared/agent-session-record'
+import { isStructuredAgentId } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
+import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
 import { getStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-registry'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
@@ -49,6 +49,7 @@ type OrbRuntime = Pick<
   | 'resolveStructuredAgentSessionCreateIntent'
   | 'getAgentProviderSessionRows'
   | 'resolveStructuredAgentSessionLocalWorkspacePath'
+  | 'getStructuredAgentCliSourceRoute'
   | 'publishStructuredAgentSessionTab'
   | 'closeMobileSessionTab'
 > & { agentHub: Pick<OrcaRuntimeService['agentHub'], 'snapshot'> }

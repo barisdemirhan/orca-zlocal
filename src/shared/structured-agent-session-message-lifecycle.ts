@@ -1,8 +1,8 @@
 import {
   AGENT_JOURNAL_MESSAGE_STATES,
   type AgentJournalMessageItem
-} from './agent-session-journal-types'
-import type { NativeChatMessage } from './native-chat-types'
+} from './agent-session/journal/agent-session-journal-types'
+import type { NativeChatMessage } from './native-chat/native-chat-types'
 
 /** A state this build cannot name reads as completed: a newer host's row is never live here. */
 export function structuredMessageLifecycle(

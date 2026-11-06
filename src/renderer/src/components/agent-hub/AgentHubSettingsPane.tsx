@@ -1,6 +1,6 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { translate } from '@/i18n/i18n'
-import { SettingsRow, SettingsSwitchRow } from '../settings/SettingsFormControls'
+import { SettingsRow, SettingsSwitchRow } from '../settings/form-controls/SettingsFormControls'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { AgentHubSettingsDockSection } from './AgentHubSettingsDockSection'
 import { AgentHubAlertSettings } from './AgentHubAlertSettings'

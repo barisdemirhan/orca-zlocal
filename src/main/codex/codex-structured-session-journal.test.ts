@@ -1,12 +1,12 @@
 import { expect, it, vi } from 'vitest'
-import type { AgentJournalItemBody } from '../../shared/agent-session-journal-types'
-import { CodexTurnOrdinals } from './codex-structured-item-translation'
+import type { AgentJournalItemBody } from '../../shared/agent-session/journal/agent-session-journal-types'
+import { CodexTurnOrdinals } from './structured/journal/codex-turn-ordinals'
 import {
   adapterFor,
   fakeCodex,
   identityFor,
   THREAD_ID
-} from './codex-structured-session-adapter-fixture'
+} from './structured/session-lifecycle/codex-structured-session-adapter-fixture'
 
 it('reopens an ordinary conversation through the turn restore resets without reading Live pages', async () => {
   const bodies: AgentJournalItemBody[] = []

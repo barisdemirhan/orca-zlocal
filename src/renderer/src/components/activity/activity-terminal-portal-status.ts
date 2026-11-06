@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { useActivityTerminalPortals } from './activity-terminal-portal'
 import {
   ACTIVITY_PORTAL_READINESS_BURST_WINDOW_MS,

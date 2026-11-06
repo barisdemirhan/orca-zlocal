@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store'
-import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 export function findAttachedAgentHubMirrorInput(

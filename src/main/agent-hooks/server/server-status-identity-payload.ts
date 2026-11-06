@@ -1,5 +1,5 @@
 import type { AgentHookEventPayload } from '../../../shared/agent-hook-listener/listener-event'
-import type { resolveAgentStatusIdentity } from '../../../shared/agent-status-identity'
+import type { resolveAgentStatusIdentity } from '../../../shared/agent-status/identity/agent-status-identity'
 import type { EnrichedAgentHookEventPayload } from './server-types'
 
 /** Carries root-only Codex context across a relay restart, then stamps the resolved agent identity. */

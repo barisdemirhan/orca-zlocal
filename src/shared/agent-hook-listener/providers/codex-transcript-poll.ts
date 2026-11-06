@@ -1,14 +1,18 @@
 import { record } from '../../codex-rollout-jsonl-cursor'
 import {
+  hasPendingCodexSubagentIdentity,
+  retryPendingCodexSubagentIdentities,
+  upsertCodexSubagent
+} from '../../codex-subagent-roster'
+import {
   codexTranscriptTurnEnd,
   reconcileCodexSubagentTranscript
 } from '../../codex-subagent-transcript'
-import { normalizeHookPayload } from '../../agent-hook-listener'
+import { normalizeHookPayload } from '../normalization/normalize-hook-payload'
 import {
   codexTurnApprovalsAreAutoReviewed,
   reconcileCodexSubagentReviewer
 } from '../../codex-subagent-reviewer'
-import { upsertCodexSubagent } from '../../codex-subagent-roster'
 import type { AgentHookEventPayload } from '../listener-event'
 import type { HookListenerState } from '../listener-state'
 import { resolveToolState } from '../prompt-fields'
@@ -26,12 +30,25 @@ export function pollCodexTranscriptStatus(
   body: unknown,
   env: string
 ): AgentHookEventPayload | undefined {
-  const transcript = state.codexSubagentTranscriptByPaneKey.get(original.paneKey)
-  if (!transcript) {
-    return undefined
-  }
   const roster = getOrCreateCodexSubagentRoster(state, original.paneKey)
-  let changed = reconcileCodexSubagentTranscript(transcript, roster, transcript.parent.filePath)
+  const transcript = state.codexSubagentTranscriptByPaneKey.get(original.paneKey)
+  if (!transcript?.parent.filePath) {
+    const named = retryPendingCodexSubagentIdentities(roster)
+    // Without a parent rollout, keep polling only while a child's own rollout still owes its name.
+    const payload = named
+      ? buildCodexChildDrivenStatusPayload(state, undefined, original.paneKey, {})
+      : undefined
+    if (payload) {
+      return { ...original, hookEventName: undefined, payload }
+    }
+    return hasPendingCodexSubagentIdentity(roster) ? original : undefined
+  }
+  const reconciled = reconcileCodexSubagentTranscript(
+    transcript,
+    roster,
+    transcript.parent.filePath
+  )
+  let changed = retryPendingCodexSubagentIdentities(roster) || reconciled
   for (const [agentId, path] of transcript.pendingApprovalPathsByAgentId) {
     const lead = state.codexLeadStateByPaneKey.get(original.paneKey)
     const pendingState = agentId ? roster.get(agentId)?.state : lead?.state

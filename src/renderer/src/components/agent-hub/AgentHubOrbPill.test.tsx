@@ -4,12 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { useRef } from 'react'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/structured-agent-session-reducer'
+import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/structured-agent-session-reducer'
 import { AgentHubOrbPill, AgentHubOrbPillContent } from './AgentHubOrbPill'
 import { orbApproval, orbAsk } from './agent-hub-orb-test-fixtures'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
 import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
-import { isAdmissibleAgentJournalItemBody } from '../../../../shared/agent-session-journal-schemas'
+import { isAdmissibleAgentJournalItemBody } from '../../../../shared/agent-session/journal/agent-session-journal-schemas'
 
 const mocks = vi.hoisted(() => ({ mutate: vi.fn(), cancel: vi.fn() }))
 vi.mock('@/store', async () => {

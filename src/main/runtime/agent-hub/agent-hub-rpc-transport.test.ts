@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { OrcaRuntimeService } from '../orca-runtime'
-import { OrcaRuntimeRpcServer } from '../runtime-rpc'
-import { readRuntimeMetadata } from '../runtime-metadata'
-import { openFramedSession, waitFor } from '../runtime-rpc-test-harness'
+import { OrcaRuntimeRpcServer } from '../rpc/server/runtime-rpc'
+import { readRuntimeMetadata } from '../rpc/server/runtime-metadata'
+import { openFramedSession, waitFor } from '../rpc/server/runtime-rpc-test-harness'
 
 const caller = { paneKey: 'pane-fixture', terminalHandle: 'term-fixture', agentType: 'codex' }
 type CliHandler = (ctx: {

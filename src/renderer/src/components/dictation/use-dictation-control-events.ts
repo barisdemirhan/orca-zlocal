@@ -62,13 +62,5 @@ export function useDictationControlEvents({
       document.removeEventListener(DICTATION_CONTROL_EVENT, control)
       document.removeEventListener('dictation:capabilities', capabilities)
     }
-  }, [
-    settings?.voice?.enabled,
-    state,
-    target,
-    cancelled,
-    discard,
-    start,
-    stop
-  ])
+  }, [settings?.voice?.enabled, state, target, cancelled, discard, start, stop])
 }

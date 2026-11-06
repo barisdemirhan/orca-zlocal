@@ -2,17 +2,17 @@ import type {
   CodexJournalTranslator,
   CodexJournalTranslatorDeps,
   CodexJournalTranslationAdmission
-} from './codex-structured-journal-contracts'
+} from './structured/journal/codex-structured-journal-contracts'
 import { appendCodexRealtimeTranscript } from './codex-structured-realtime-transcript'
 import type { CodexTimelineEntry } from './codex-structured-realtime-timeline'
 import {
   historicalTurnLifecycle,
   restoreCodexHistoryItem
-} from './codex-structured-journal-translation-restore'
-import { publishCodexTurnLifecycle } from './codex-structured-journal-translation-turns'
-import type { CodexJournalItems } from './codex-structured-journal-items'
-import type { CodexJournalCompactions } from './codex-structured-journal-compactions'
-import type { CodexSubagentExecutions } from './codex-subagent-executions'
+} from './structured/journal/codex-structured-journal-translation-restore'
+import { publishCodexTurnLifecycle } from './structured/journal/codex-structured-journal-translation-turns'
+import type { CodexJournalItems } from './structured/journal/codex-structured-journal-items'
+import type { CodexJournalCompactions } from './structured/journal/codex-structured-journal-compactions'
+import type { CodexSubagentExecutions } from './structured/background-work/codex-subagent-executions'
 
 export function createCodexJournalHistoryRestorer(input: {
   deps: CodexJournalTranslatorDeps

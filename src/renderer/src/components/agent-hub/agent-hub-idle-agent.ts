@@ -3,11 +3,12 @@ import { resolveOpenTabOccupantAgent } from '@/lib/open-tab-occupant-agent'
 import { resolveRuntimePaneTitleForLeaf } from '../../../../shared/runtime-pane-title-leaf-id'
 import { hasRemoteRuntimePtyForTab } from '@/lib/tab-agent-remote-pty-selector'
 import { worktreeUsesRemoteConnection } from '@/store/terminals/terminal-workspace-routing'
-import { isTerminalLeafId, makePaneKey } from '../../../../shared/stable-pane-id'
-import { detectAgentStatusFromTitle, titleShowsNoAgent } from '../../../../shared/agent-detection'
-import { collectAgentTitleEvidence } from '../../../../shared/agent-title-evidence'
-import type { TerminalTab } from '../../../../shared/terminal-tab-types'
-import type { TerminalAgent } from '../../../../shared/terminal-agent'
+import { isTerminalLeafId, makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
+import { detectAgentStatusFromTitle } from '../../../../shared/agent-status/title/agent-title-status'
+import { titleShowsNoAgent } from '../../../../shared/agent-status/process/shell-process-detection'
+import { collectAgentTitleEvidence } from '../../../../shared/agent-status/title/agent-title-evidence'
+import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
+import type { TerminalAgent } from '../../../../shared/agent-status/identity/terminal-agent'
 
 /** The store fields that can name a tab's agent when no hook status does. */
 export type AgentHubIdleAgentSignals = Pick<
@@ -66,8 +67,7 @@ export function resolveAgentHubIdleAgent(
     agentStatusByPaneKey: signals.agentStatusByPaneKey,
     retainedAgentsByPaneKey: signals.retainedAgentsByPaneKey,
     sleepingAgentSessionsByPaneKey: signals.sleepingAgentSessionsByPaneKey,
-    paneForegroundAgentByPaneKey: signals.paneForegroundAgentByPaneKey,
-    isRemote
+    paneForegroundAgentByPaneKey: signals.paneForegroundAgentByPaneKey
   })
   if (occupant) {
     return occupant

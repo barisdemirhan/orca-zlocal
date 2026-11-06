@@ -8,7 +8,7 @@ import {
   SettingsRow,
   SettingsSubsectionHeader,
   SettingsSwitchRow
-} from '../settings/SettingsFormControls'
+} from '../settings/form-controls/SettingsFormControls'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 

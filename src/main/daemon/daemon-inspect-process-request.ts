@@ -1,5 +1,5 @@
-import type { TerminalHost } from './terminal-host'
-import type { DaemonRequest } from './types'
+import type { TerminalHost } from './terminal-host/terminal-host'
+import type { DaemonRequest } from './protocol/daemon-rpc-contract'
 
 type InspectProcessPayload = Extract<DaemonRequest, { type: 'inspectProcess' }>['payload']
 

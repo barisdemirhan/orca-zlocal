@@ -7,8 +7,8 @@ import {
   type CodexSession,
   type CodexStructuredSessionAdapterDeps,
   type CodexStructuredSessionEvent
-} from './codex-structured-session-state'
-import type { CodexJournalTranslationAdmission } from './codex-structured-journal-contracts'
+} from './structured/session-lifecycle/codex-structured-session-state'
+import type { CodexJournalTranslationAdmission } from './structured/journal/codex-structured-journal-contracts'
 import { isProviderRecord } from '../provider-process/provider-json-record'
 
 // The template literal keeps other notifications in the caller's false branch.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { folderWorkspaceRepoId } from '../../../../shared/folder-workspace-worktree'
+import { folderWorkspaceRepoId } from '../../../../shared/folder-workspaces/folder-workspace-worktree'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {

@@ -2,7 +2,7 @@ import { useAppStore } from '@/store'
 import {
   isAgentChatPermissionMode,
   type AgentChatPermissionMode
-} from '../../../../shared/agent-chat-permission-mode'
+} from '../../../../shared/agent-launch/permissions/agent-chat-permission-mode'
 import { agentHubOrbChosenMode } from '../../../../shared/agent-hub-orb-settings'
 import { useStructuredAgentSessionStatusSummary } from '../native-chat/StructuredAgentSessionStatusBridge'
 

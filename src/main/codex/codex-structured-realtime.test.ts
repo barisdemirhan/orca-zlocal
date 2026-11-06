@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { CodexAppServerRequestError } from './app-server/codex-app-server-request-error'
-import { CodexAppServerUnsupportedError } from './codex-app-server-session'
+import { CodexAppServerUnsupportedError } from './app-server/codex-app-server-session'
 import {
   acquireReadyCodexForTest,
   adapterFor,
   fakeCodex,
   identityFor,
   THREAD_ID
-} from './codex-structured-session-adapter-fixture'
-import type { CodexStructuredSessionAdapter } from './codex-structured-session-adapter'
-import type { CodexStructuredSessionEvent } from './codex-structured-session-state'
+} from './structured/session-lifecycle/codex-structured-session-adapter-fixture'
+import type { CodexStructuredSessionAdapter } from './structured/session-lifecycle/codex-structured-session-adapter'
+import type { CodexStructuredSessionEvent } from './structured/session-lifecycle/codex-structured-session-state'
 
 const SDP = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'
 const OWNER = { voiceSessionId: 'voice-attempt-1', generation: 1 }

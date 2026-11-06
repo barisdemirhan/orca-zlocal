@@ -62,7 +62,7 @@ export function NativeChatQuestionOptionRow({
         {description ? (
           <span
             className={cn(
-              'block break-words text-xs',
+              'block whitespace-pre-wrap break-words text-xs',
               selected
                 ? 'text-accent-foreground'
                 : 'text-muted-foreground group-hover/option:text-accent-foreground group-focus/option:text-accent-foreground'

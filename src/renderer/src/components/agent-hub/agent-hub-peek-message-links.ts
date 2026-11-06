@@ -2,8 +2,8 @@ import { openRoutedHttpLink } from '@/lib/http-link-destinations'
 import {
   extractTerminalFileLinks,
   resolveTerminalFileLink
-} from '../../../../shared/terminal-links'
-import { extractTerminalHttpLinks } from '../../../../shared/terminal-http-url-extraction'
+} from '../../../../shared/terminal/links/terminal-links'
+import { extractTerminalHttpLinks } from '../../../../shared/terminal/links/terminal-http-url-extraction'
 import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { agentHubPeekFileItem, agentHubPeekUrlItem } from './agent-hub-peek-routing'

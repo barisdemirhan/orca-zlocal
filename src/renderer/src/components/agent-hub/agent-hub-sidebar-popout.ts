@@ -1,4 +1,4 @@
-import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { DashboardAgentRow } from '../dashboard/useDashboardData'
 import { paneTargetFromTerminalRow, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import { agentHubRowOfTab } from './agent-hub-tab-row'

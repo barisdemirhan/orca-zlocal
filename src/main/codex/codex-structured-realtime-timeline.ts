@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { CodexAppServerConnection } from './app-server/codex-app-server-connection-types'
 import { isCodexAppServerRequestError } from './app-server/codex-app-server-request-error'
-import { CodexAppServerUnsupportedError } from './codex-app-server-session'
+import { CodexAppServerUnsupportedError } from './app-server/codex-app-server-session'
 import {
   CodexRealtimeItemSchema,
   normalizeCodexTimelineEntry
@@ -9,7 +9,7 @@ import {
 import {
   CODEX_RESTORE_MAX_BYTES,
   CODEX_RESTORE_MAX_OPERATIONS
-} from './codex-structured-journal-translation-restore'
+} from './structured/journal/codex-structured-journal-translation-restore'
 
 const TimelineItem = z.object({ id: z.string().min(1), type: z.string().min(1) }).passthrough()
 const Position = z.number().int().nonnegative()

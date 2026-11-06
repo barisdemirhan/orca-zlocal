@@ -4,7 +4,7 @@ import {
   SettingsSegmentedControl,
   SettingsSubsectionHeader,
   SettingsSwitchRow
-} from '../settings/SettingsFormControls'
+} from '../settings/form-controls/SettingsFormControls'
 import type { AgentHubSettingsSectionProps } from './agent-hub-settings-section-props'
 import {
   AGENT_HUB_MIRROR_WINDOW_CAPS,

@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { translate } from '@/i18n/i18n'
-import { parseIpynb } from './ipynb-parse'
-import { IpynbCodePreview, IpynbMarkdownCell } from './IpynbCellEditor'
-import { IpynbCellOutputs } from './IpynbCellOutputs'
-import { getIpynbCellKey } from './useIpynbDocumentEditing'
+import { parseIpynb } from './notebook/document/ipynb-parse'
+import { IpynbCodePreview, IpynbMarkdownCell } from './notebook/cells/IpynbCellEditor'
+import { IpynbCellOutputs } from './notebook/outputs/IpynbCellOutputs'
+import { getIpynbCellKey } from './notebook/document/ipynb-source-drafts'
 
 /** Saved cells and outputs, without mounting editing or kernel hooks. */
 export default function IpynbPreview({ content }: { content: string }): React.JSX.Element {

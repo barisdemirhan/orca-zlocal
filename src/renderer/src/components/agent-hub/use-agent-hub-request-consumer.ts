@@ -8,7 +8,7 @@ import {
 } from '@/runtime/runtime-host-connection-state'
 import { createAgentHubClient } from '@/runtime/agent-hub-client'
 import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
-import { lastVerifiedRuntimeStatus } from '../../../../shared/runtime-host-status'
+import { lastVerifiedRuntimeStatus } from '../../../../shared/remote-runtime/host-status/runtime-host-status'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubLists } from './agent-hub-lists'
 import { AgentHubRequestConsumer, type AgentHubConsumerHost } from './agent-hub-request-consumer'

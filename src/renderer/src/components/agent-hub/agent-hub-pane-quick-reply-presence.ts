@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 
 // Panes whose quick-reply card is open; while one is, its mirror's mic leaves dictation to the card.
 let openPaneKeys: ReadonlySet<string> = new Set()

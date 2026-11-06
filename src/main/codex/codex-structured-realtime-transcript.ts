@@ -1,17 +1,17 @@
 import type {
   CodexJournalTranslatorDeps,
   CodexJournalTranslationAdmission
-} from './codex-structured-journal-contracts'
-import { appendCodexItemAndPublish } from './codex-structured-journal-sink'
+} from './structured/journal/codex-structured-journal-contracts'
+import { appendCodexItemAndPublish } from './structured/journal/codex-structured-journal-sink'
 import {
   AGENT_JOURNAL_THREAD_SCOPE,
-  type AgentJournalItemIdentity,
   type AgentJournalMessageItem
-} from '../../shared/agent-session-journal-types'
-import { agentJournalItemKey } from '../../shared/agent-session-journal-item-key'
+} from '../../shared/agent-session/journal/agent-session-journal-types'
+import type { AgentJournalItemIdentity } from '../../shared/agent-session/journal/agent-session-journal-identity'
+import { agentJournalItemKey } from '../../shared/agent-session/journal/agent-session-journal-item-key'
 import { estimateStructuredAgentSessionItemBytes } from '../native-chat/agent-session-wire/structured-agent-session-event-sink-estimate'
 import { CodexRealtimeTranscriptSchema } from './codex-structured-realtime-items'
-import type { CodexStructuredSessionEvent } from './codex-structured-session-state'
+import type { CodexStructuredSessionEvent } from './structured/session-lifecycle/codex-structured-session-state'
 
 /** Only the provider's canonical commit makes a spoken message durable. */
 export function appendCodexRealtimeTranscript(

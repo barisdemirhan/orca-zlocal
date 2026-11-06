@@ -6,6 +6,7 @@ export function createNotificationsApi(): NonNullable<Partial<PreloadApi>['notif
     getDesktopAwayState: async () => undefined,
     getDesktopPresence: async () => undefined,
     dispatch: () => Promise.resolve({ delivered: false, reason: 'not-supported' }),
+    acknowledgeAttention: () => Promise.resolve({ dismissed: 0 }),
     dismiss: () => Promise.resolve({ dismissed: 0 }),
     // The browser client relays nothing to phones, so there is nothing to settle.
     settleStructuredPrompts: () => Promise.resolve(),

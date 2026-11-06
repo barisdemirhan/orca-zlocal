@@ -20,12 +20,12 @@ import { getAgentCatalog } from '@/lib/agent-catalog'
 import type { NewWorkspaceProjectOption } from '@/lib/new-workspace-project-options'
 import { getScreenSubmitModifierLabel, isScreenSubmitShortcut } from '@/lib/screen-submit-shortcut'
 import { useAppStore } from '@/store'
-import { projectGroupIdFromRepoId } from '../../../../shared/folder-workspace-worktree'
-import type { TuiAgent } from '../../../../shared/tui-agent'
+import { projectGroupIdFromRepoId } from '../../../../shared/folder-workspaces/folder-workspace-worktree'
+import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import {
   DEFAULT_DISABLED_TUI_AGENTS,
   filterEnabledTuiAgents
-} from '../../../../shared/tui-agent-selection'
+} from '../../../../shared/agent-launch/catalog/tui-agent-selection'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { buildAgentHubNewAgentLocations } from './agent-hub-new-agent-locations'

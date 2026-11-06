@@ -5,15 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ZodObject } from 'zod'
 import type { OrchestrationCompatibilityEvidence } from '../../../shared/orchestration-compatibility-evidence'
 import { ORCHESTRATION_SESSION_CALLER_ERROR_CODES as CODES } from '../../../shared/orchestration-session-caller-codes'
-import { DeviceRegistry } from '../device-registry'
-import { OrcaRuntimeRpcServer } from '../runtime-rpc'
+import { DeviceRegistry } from './server/pairing/device-registry'
+import { OrcaRuntimeRpcServer } from './server/runtime-rpc'
 import { buildRegistry } from './core'
 import { ORCHESTRATION_METHODS } from './methods/orchestration'
 import {
   mintStructuredWorkerHandle,
   mintStructuredWorkerPaneKey,
   structuredWorkerProcessIncarnation
-} from '../structured-worker-identity'
+} from '../orchestration/terminal-authority/structured-sessions/structured-worker-identity'
 import {
   ADDRESS_X,
   createSessionCallerHarness,
@@ -44,10 +44,12 @@ const PARTY_NAMING_FIELDS = [
   'terminal',
   'callerTerminalHandle',
   'sessionId',
-  'address'
+  'address',
+  'party'
 ] as const
 // These identity-adjacent fields must never resolve as parties.
 const NAMES_NO_RESOLVED_PARTY: Readonly<Record<string, string>> = {
+  'orchestration.crewSubscribe party': 'queries the selected party; declares no caller',
   'orchestration.run from': 'retired; refused before any handler',
   'orchestration.runShow from': 'reads a Run by id; `from` is unused',
   'orchestration.dispatchShow from': '`from` only fills the preview preamble text',
@@ -55,7 +57,13 @@ const NAMES_NO_RESOLVED_PARTY: Readonly<Record<string, string>> = {
   'orchestration.workerTerminalUserInput terminal': 'names the worker terminal',
   'orchestration.workerTerminalUserInput sessionId':
     'names the worker session, as its terminal does',
-  'orchestration.workerStart callerTerminalHandle': 'only records Agent Hub spawn lineage'
+  'orchestration.workerStart callerTerminalHandle': 'only records Agent Hub spawn lineage',
+  'orchestration.workerAutoClose terminal': 'names the worker terminal',
+  'orchestration.workerAutoClose sessionId': 'names the worker session, as its terminal does',
+  'orchestration.workerKeepOpen terminal': 'names the worker terminal',
+  'orchestration.workerKeepOpen sessionId': 'names the worker session, as its terminal does',
+  'orchestration.workerChatTouch terminal': 'names the worker terminal',
+  'orchestration.workerChatTouch sessionId': 'names the worker session, as its terminal does'
 }
 
 /** One request per identity-consulting method, valid enough to reach the dispatcher entry. */
@@ -102,9 +110,9 @@ describe('orchestration session callers at the dispatch entry', () => {
       })
       .sort()
 
-    // User gate resolution names no party; its desktop caller comes from the RPC context.
-    expect(registry.size).toBe(45)
-    expect(partyNaming).toHaveLength(29)
+    // The population: 51 registered methods carrying 37 party-naming fields; user gate resolution names no party.
+    expect(registry.size).toBe(51)
+    expect(partyNaming).toHaveLength(37)
     expect(partyNaming).toEqual(
       [
         ...Object.entries(ORCHESTRATION_CALLER_PARAM).map(
@@ -119,6 +127,20 @@ describe('orchestration session callers at the dispatch entry', () => {
     expect(Object.keys(MINIMAL_PARAMS).sort()).toEqual(
       Object.keys(ORCHESTRATION_CALLER_PARAM).sort()
     )
+    expect(
+      needsOrchestrationCallerResolution(
+        orchestrationRequest('orchestration.crewSubscribe', { party: ADDRESS_X })
+      )
+    ).toBe(false)
+    expect(
+      needsOrchestrationCallerResolution(
+        orchestrationRequest(
+          'orchestration.crewSubscribe',
+          { party: ADDRESS_X },
+          { sessionId: SESSION_X }
+        )
+      )
+    ).toBe(true)
   })
 
   it.each(Object.keys(ORCHESTRATION_CALLER_PARAM))(

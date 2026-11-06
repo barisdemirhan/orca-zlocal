@@ -1,16 +1,16 @@
+import { agentChatPermissionModes } from './agent-launch/permissions/agent-chat-permission-support'
 import {
-  agentChatPermissionModes,
   isAgentChatPermissionMode,
   savedChatPermissionMode,
   type AgentChatPermissionMode
-} from './agent-chat-permission-mode'
+} from './agent-launch/permissions/agent-chat-permission-mode'
 import type { AgentHubOrbAction, AgentHubSettings } from './agent-hub-settings'
 import {
   normalizeAgentHubOrbName,
   normalizeAgentHubOrbTint,
   normalizeAgentHubOrbTone
 } from './agent-hub-orb-identity'
-import { isStructuredAgentId } from './agent-session-provider-handle'
+import { isStructuredAgentId } from './agent-session/lifecycle/agent-session-provider-handle-encoding'
 
 export const AGENT_HUB_ORB_PI_PERMISSION_REASON =
   'Pi requires Full access. Choose another agent to ask before running commands.'

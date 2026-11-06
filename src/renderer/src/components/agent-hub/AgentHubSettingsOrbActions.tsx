@@ -3,7 +3,10 @@ import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { AgentHubOrbAction } from '../../../../shared/agent-hub-settings'
 import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
-import { SettingsRow, SettingsSegmentedControl } from '../settings/SettingsFormControls'
+import {
+  SettingsRow,
+  SettingsSegmentedControl
+} from '../settings/form-controls/SettingsFormControls'
 import { agentHubOrbActionLabel } from './agent-hub-orb-action-label'
 
 export function AgentHubSettingsOrbActions({

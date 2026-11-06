@@ -25,7 +25,7 @@ import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-req
 import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
 import { orbAsk } from './agent-hub-orb-test-fixtures'
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
-import type { AgentSessionStatusSummary } from '../../../../shared/agent-session-wire'
+import type { AgentSessionStatusSummary } from '../../../../shared/agent-session/agent-session-wire'
 
 const mocks = vi.hoisted(() => {
   const listeners = new Set<() => void>()
@@ -91,7 +91,7 @@ vi.mock('./use-agent-hub-orb-options', () => ({
     refreshModels: () => {}
   })
 }))
-vi.mock('@/lib/structured-agent-session-launch-label', () => ({
+vi.mock('@/lib/agent-session/launch/structured-agent-session-launch-label', () => ({
   structuredAgentLabel: (id: string) => (id === 'codex' ? 'Codex' : 'Claude')
 }))
 vi.mock('@/lib/agent-session/structured-agent-session-tab-activation', () => ({

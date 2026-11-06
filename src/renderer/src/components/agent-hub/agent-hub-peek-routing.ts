@@ -1,7 +1,7 @@
 import { translate } from '@/i18n/i18n'
 import type { LinkAction } from '@/components/link-actions/link-action-request'
 import { PictureInPicture2 } from 'lucide-react'
-import { absolutePathToFileUri } from '@/components/editor/markdown-internal-links'
+import { absolutePathToFileUri } from '@/components/editor/markdown/link-routing/markdown-internal-links'
 import { getConnectionIdForFile } from '@/lib/connection-context'
 import { resolveWorkspaceDirectory } from '@/lib/workspace-directory'
 import { getTerminalFileContext } from '../terminal-pane/terminal-file-path-mapping'

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
-import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 import { agentHubRowOfTab } from './agent-hub-tab-row'
 import {

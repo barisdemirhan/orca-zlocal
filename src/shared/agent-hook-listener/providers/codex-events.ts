@@ -1,14 +1,16 @@
 import {
   AGENT_MODEL_MAX_LENGTH,
+  normalizeOptionalField
+} from '../../agent-status/contracts/agent-status-field-normalization'
+import {
   normalizeAgentStatusPayload,
   type ParsedAgentStatusPayload
-} from '../../agent-status-types'
-import { normalizeOptionalField } from '../../agent-status-field-normalization'
-import { isAskUserQuestionTool } from '../../agent-question-answered-intent'
+} from '../../agent-status/contracts/agent-status-types'
+import { isAskUserQuestionTool } from '../../agent-status/lifecycle/agent-question-answered-intent'
 import {
   mainAgentTurnInterrupted,
   type AgentLeadStatusResolution
-} from '../../agent-lead-status-fold'
+} from '../../agent-status/lifecycle/agent-lead-status-fold'
 import {
   codexRosterToSnapshots,
   enrichCodexSubagentIdentity,

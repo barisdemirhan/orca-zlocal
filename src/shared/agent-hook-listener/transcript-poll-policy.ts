@@ -1,8 +1,9 @@
-import type { AgentHookSource } from '../agent-hook-relay'
+import type { AgentHookSource } from './transport/agent-hook-relay'
 import type { AgentHookEventPayload } from './listener-event'
 import type { HookListenerState } from './listener-state'
 import { hasCodexTranscriptSubagents } from './providers/codex-state'
 import { hasMuseSessionLog } from './providers/muse-events'
+import { hasPendingCodexSubagentIdentity } from '../codex-subagent-roster'
 
 export function shouldPollHookTranscript(
   state: HookListenerState,
@@ -16,6 +17,7 @@ export function shouldPollHookTranscript(
         state.codexSubagentTranscriptByPaneKey.get(event.paneKey)?.pendingApprovalPathsByAgentId
           .size
       ) ||
+      hasPendingCodexSubagentIdentity(state.codexSubagentRosterByPaneKey.get(event.paneKey)) ||
       (state.codexLeadStateByPaneKey.get(event.paneKey)?.state !== 'done' &&
         Boolean(state.codexSubagentTranscriptByPaneKey.get(event.paneKey)?.parent.filePath))
     )

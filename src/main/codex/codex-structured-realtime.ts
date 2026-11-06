@@ -7,7 +7,7 @@ import { isAgentSessionVoiceSdp } from '../../shared/agent-session-voice'
 import { isCodexAppServerRequestError } from './app-server/codex-app-server-request-error'
 import type { CodexAppServerConnection } from './app-server/codex-app-server-connection-types'
 import { readCodexRealtimeSupport } from './codex-structured-realtime-support'
-import { CodexAppServerUnsupportedError } from './codex-app-server-session'
+import { CodexAppServerUnsupportedError } from './app-server/codex-app-server-session'
 
 type VoiceAttempt = AgentSessionVoiceOwner & {
   state: 'connecting' | 'live' | 'stopping' | 'unverifiable' | 'off'

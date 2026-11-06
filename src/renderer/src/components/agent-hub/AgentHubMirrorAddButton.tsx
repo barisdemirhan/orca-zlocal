@@ -16,7 +16,7 @@ import { AgentHubMirrorPickerBody } from './AgentHubMirrorPickerBody'
 import { startAgentInAgentHubMirror } from './agent-hub-mirror-new-agent'
 import { AgentHubNewAgentDialog } from './AgentHubNewAgentDialog'
 import type { Worktree } from '../../../../shared/worktree/types'
-import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 
 export function AgentHubMirrorAddButton({
   windowId,

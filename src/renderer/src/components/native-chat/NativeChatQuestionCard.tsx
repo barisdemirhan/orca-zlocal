@@ -1,4 +1,4 @@
-import { ImeInput } from '@/lib/ime-text-field'
+import { ImeTextarea } from '@/lib/ime-text-field'
 import { Textarea } from '@/components/ui/textarea'
 import {
   useImperativeHandle,
@@ -11,21 +11,22 @@ import {
 import { Check, Pencil, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
-import type { AskAnswerSelection } from '../../../../shared/native-chat-ask-answer'
+import { NativeChatQuestionText } from './NativeChatQuestionText'
+import type { AskAnswerSelection } from '../../../../shared/native-chat/input/native-chat-ask-answer'
 import type { AskPrompt } from '../../../../shared/native-chat/input/native-chat-ask-types'
 import { NativeChatPromptCollapseToggle } from './NativeChatPromptCollapse'
 import { useNativeChatPromptCardFocus } from './use-native-chat-prompt-card-focus'
 import { useNativeChatQuestionAutoAdvance } from './use-native-chat-question-auto-advance'
 import { useNativeChatQuestionKeys } from './use-native-chat-question-keys'
 import { isEditableTarget } from '@/lib/editable-target'
-import type { AgentJournalFreeTextInput } from '../../../../shared/agent-session-journal-types'
+import type { AgentJournalFreeTextInput } from '../../../../shared/agent-session/journal/agent-session-journal-types'
 import {
   askAcceptsEmptyAnswer,
   askConfirmAction,
   askConfirmLabel,
   askTypedText,
   toggleAskOption
-} from '../../../../shared/native-chat-ask-card-rules'
+} from '../../../../shared/native-chat/input/native-chat-ask-card-rules'
 import { NativeChatQuestionOptionRow } from './NativeChatQuestionOptionRow'
 
 export type NativeChatQuestionCardControl = {
@@ -48,9 +49,8 @@ export type NativeChatQuestionCardProps = {
   onCollapse?: () => void
   /** Take focus when the card takes the input region; number keys pick while it holds. */
   shouldFocus?: boolean
-  /** Exposes the free-text row so pane-level Paste can target it while the
-   *  card replaces the composer. */
-  answerInputRef?: RefObject<HTMLInputElement | null>
+  /** Paste target while the card replaces the composer. */
+  answerInputRef?: RefObject<HTMLTextAreaElement | null>
   /** The multiline free-text field, for hosts whose answerAccessory targets it. */
   answerTextareaRef?: RefObject<HTMLTextAreaElement | null>
   /** Rendered inside the free-text row, after the field (e.g. a dictation mic). */
@@ -65,6 +65,7 @@ export type NativeChatQuestionCardProps = {
 // Selection entry for the typed answer (never a real option index), so a single-select
 // question holds exactly one choice: an option or the typed answer.
 const TYPED_ANSWER = -1
+const LINE_BREAKS = /[\r\n\u2028\u2029]/g
 
 const CONFIRM_LABEL = {
   submit: () => translate('components.native-chat.question.send', 'Submit'),
@@ -91,7 +92,7 @@ export function NativeChatQuestionCard({
   controlRef
 }: NativeChatQuestionCardProps): React.JSX.Element {
   const cardRef = useRef<HTMLDivElement>(null)
-  const autoAdvance = useNativeChatQuestionAutoAdvance()
+  const autoAdvance = useNativeChatQuestionAutoAdvance(isSubmitting || isCancelling)
   const [index, setIndex] = useState(0)
   useNativeChatPromptCardFocus(cardRef, shouldFocus, index)
   // Use indices because labels can repeat and the agent commits numbered rows.
@@ -242,6 +243,7 @@ export function NativeChatQuestionCard({
   const expandedAnswer = layout === 'embedded' && freeTextInput?.multiline
   const multilineField = (
     <Textarea
+      data-native-chat-answer-field
       data-native-chat-prompt-card-focus-target={fieldTakesFocus}
       ref={answerTextareaRef}
       rows={expandedAnswer ? 8 : undefined}
@@ -259,7 +261,7 @@ export function NativeChatQuestionCard({
       role="group"
       aria-label={q.question}
       tabIndex={-1}
-      className="shrink-0 bg-chat-canvas data-[layout=embedded]:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      className="shrink-0 bg-chat-pane data-[layout=embedded]:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       data-layout={layout}
       aria-busy={isSubmitting}
       onKeyDown={(event) => {
@@ -312,12 +314,11 @@ export function NativeChatQuestionCard({
 
         <div className="overflow-hidden rounded-lg border border-input bg-card shadow-xs">
           <div className="flex items-start gap-2 px-3.5 py-2.5">
-            <p
+            <NativeChatQuestionText
               data-testid="native-chat-question-card-title"
-              className="min-w-0 flex-1 break-words text-sm font-semibold text-foreground"
-            >
-              {q.question}
-            </p>
+              content={q.question}
+              className="min-w-0 flex-1 break-words text-sm font-semibold text-foreground [&_p]:my-0 [&_p+p]:mt-2"
+            />
             {collapse ? (
               <NativeChatPromptCollapseToggle
                 expanded
@@ -379,13 +380,24 @@ export function NativeChatQuestionCard({
                       multilineField
                     )
                   ) : (
-                    <ImeInput
+                    <ImeTextarea
                       ref={answerInputRef}
+                      rows={1}
                       data-native-chat-answer-field
                       data-native-chat-prompt-card-focus-target={fieldTakesFocus}
                       disabled={isSubmitting}
                       value={otherText[index]}
-                      onChange={(e) => setOther(index, e.target.value)}
+                      // Enter submits, so a line break becomes a space; edit in place so a mid-draft paste keeps the caret.
+                      onChange={(e) => {
+                        const field = e.target
+                        const oneLine = field.value.replace(LINE_BREAKS, ' ')
+                        if (oneLine !== field.value) {
+                          const { selectionStart, selectionEnd } = field
+                          field.value = oneLine
+                          field.setSelectionRange(selectionStart, selectionEnd)
+                        }
+                        setOther(index, oneLine)
+                      }}
                       // Select typed text on click; tabbing toward Submit must not replace a picked option.
                       onClick={() => {
                         autoAdvance.cancel()
@@ -401,7 +413,7 @@ export function NativeChatQuestionCard({
                       }}
                       placeholder={answerPlaceholder}
                       className={cn(
-                        'min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60 disabled:cursor-default disabled:opacity-50',
+                        'scrollbar-sleek max-h-[6lh] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-sm outline-none [field-sizing:content] placeholder:text-muted-foreground disabled:cursor-default disabled:opacity-50',
                         currentTypedAnswerChosen || !otherText[index]
                           ? 'text-foreground'
                           : 'text-muted-foreground'

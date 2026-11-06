@@ -5,12 +5,12 @@ import { setStructuredAgentSessionHost } from '../../native-chat/agent-session-w
 import { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { createGlobalSettingsFixture } from '../../../shared/global-settings-test-fixture'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
-import { claudeProviderHandle } from '../../../shared/agent-session-provider-handle-encoding'
+import { claudeProviderHandle } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
 import {
   HOST_TEST_NOW,
   HOST_TEST_THREAD
 } from '../../native-chat/agent-session-wire/structured-agent-session-host-test-data'
-import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session-journal-types'
+import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session/journal/agent-session-journal-types'
 import { createAgentModelCatalogService } from '../../native-chat/agent-model-catalog/agent-model-catalog-service'
 import { AgentModelCatalogStore } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'
 
@@ -64,6 +64,7 @@ beforeEach(() => {
     isAgentHubEnabled: () => true,
     ensureStructuredAgentSessionHost: async () => {},
     getAgentProviderSessionRows: () => [],
+    getStructuredAgentCliSourceRoute: () => 'unsupported',
     resolveStructuredAgentSessionLocalWorkspacePath: async () => null,
     resolveStructuredAgentSessionCreateIntent: async (params) => ({
       envelope: { ...params.envelope, expectedRuntimeFence: null, payloadFingerprint: '' },

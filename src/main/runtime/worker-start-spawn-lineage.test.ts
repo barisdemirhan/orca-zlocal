@@ -1,22 +1,25 @@
-import './orca-runtime-test-lifecycle.spec'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { OrcaRuntimeService } from './orca-runtime-test-mocks.spec'
-import {
-  TEST_WORKTREE_ID,
-  makeRuntimeStoreWithWorkspaceSession,
-  makeWorkspaceSessionWithHeadlessTerminal
-} from './orca-runtime-test-fixtures.spec'
 import type { RuntimeStore } from './runtime-store-contract'
 import type { OrchestrationDb } from './orchestration/db'
 import { makeAgentStatusStoreWiring } from './agent-status-store-wiring.test-fixture'
 import { setStructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-registry'
-import { structuredWorkerIdentities } from './structured-worker-identity'
+import { structuredWorkerIdentities } from './orchestration/terminal-authority/structured-sessions/structured-worker-identity'
 import { placeWorkerAgent } from './rpc/methods/orchestration/worker/worker-start-agent-placement'
-import { makeStructuredAgentStatusSubject } from '../../shared/agent-status-subject'
+import { makeStructuredAgentStatusSubject } from '../../shared/agent-status/contracts/agent-status-subject'
 import {
   structuredAgentSessionPaneKey,
   structuredAgentSessionTabId
-} from '../../shared/structured-agent-session-projection'
+} from '../../shared/agent-session/view/structured-agent-session-projection'
+
+// Preserve side-effect order: mocks, lifecycle, fixtures.
+await import('./orca-runtime-tests/runtime-test-module-registration.spec')
+const { OrcaRuntimeService } = await import('./orca-runtime')
+await import('./orca-runtime-tests/orca-runtime-test-lifecycle.spec')
+const {
+  TEST_WORKTREE_ID,
+  makeRuntimeStoreWithWorkspaceSession,
+  makeWorkspaceSessionWithHeadlessTerminal
+} = await import('./orca-runtime-tests/orca-runtime-test-fixtures.spec')
 
 vi.mock('./rpc/methods/structured-agent-session-create', () => ({
   createStructuredAgentSessionForWorktree: async (args: { envelope: { sessionId: string } }) => ({

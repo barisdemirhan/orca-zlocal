@@ -62,7 +62,8 @@ async function targets(ctx: HandlerContext): Promise<HostTarget[]> {
     const environment = ctx.client.environmentSelector
     return [{ connect: () => ctx.client, host: environment ?? 'local', environment }]
   }
-  const { listEnvironments } = await import('../runtime/environments.js')
+  const { listEnvironments } =
+    await import('../../shared/remote-runtime/host-store/runtime-environment-store.js')
   const userDataPath = ctx.client.userDataPath
   return [
     {

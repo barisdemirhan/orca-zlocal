@@ -2,7 +2,7 @@ import { appendFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { normalizeHookPayload } from './agent-hook-listener'
+import { normalizeHookPayload } from './agent-hook-listener/normalization/normalize-hook-payload'
 import type { AgentHookEventPayload } from './agent-hook-listener/listener-event'
 import {
   createHookListenerState,
@@ -14,7 +14,7 @@ import {
   shouldPollHookTranscript,
   transcriptPollUpdate
 } from './agent-hook-listener/transcript-poll-policy'
-import { PANE_KEY } from './agent-hook-listener-test-harness'
+import { PANE_KEY } from './agent-hook-listener/normalization/agent-hook-listener-test-harness'
 
 describe('Codex approval ownership learned after its hook', () => {
   let state: HookListenerState

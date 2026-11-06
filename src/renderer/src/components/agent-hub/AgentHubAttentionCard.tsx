@@ -6,7 +6,7 @@ import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { formatAgentTypeLabel } from '@/lib/agent-status'
+import { formatAgentTypeLabel } from '../../../../shared/agent-status/presentation/agent-type-label'
 import { formatShortTimeAgo } from '@/lib/short-time-ago'
 import { submitPromptToAgentPty } from '@/lib/agent-paste-draft'
 import { translate } from '@/i18n/i18n'
@@ -16,8 +16,8 @@ import {
   NativeChatInteractiveCard,
   type NativeChatInteractiveCardControl
 } from '../native-chat/NativeChatInteractiveCard'
-import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat-agent-support'
-import { nativeChatCardDismissKey } from '../../../../shared/native-chat-prompt-dismiss-key'
+import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat/native-chat-agent-support'
+import { nativeChatCardDismissKey } from '../../../../shared/native-chat/input/native-chat-prompt-dismiss-key'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubChip, HubCrumb, HubKeys } from './AgentHubInlineLabels'
 import {

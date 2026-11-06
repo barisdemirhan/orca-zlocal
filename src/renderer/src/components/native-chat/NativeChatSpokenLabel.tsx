@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import { Mic } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
-import type { NativeChatMessage } from '../../../../shared/native-chat-types'
+import type { NativeChatMessage } from '../../../../shared/native-chat/native-chat-types'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 
 export function NativeChatSpokenLabel({

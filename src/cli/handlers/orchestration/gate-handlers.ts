@@ -1,5 +1,6 @@
 import type { CommandHandler } from '../../dispatch'
 import { printResult } from '../../format'
+import { printOrchestrationResult } from './agent-view'
 import { getOptionalJsonFlag, getOptionalStringFlag, getRequiredStringFlag } from '../../flags'
 import { callOrchestrationMutation } from './mutation-request'
 import { resolveCoordinatorTerminalHandle, runScopedSessionCaller } from './terminal-identity'
@@ -14,6 +15,11 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
       options: getOptionalJsonFlag(flags, 'options'),
       from: await resolveCoordinatorTerminalHandle(flags, cwd, client)
     })
+    // The row echoes the question and options the caller just sent.
+    if (!flags.has('full')) {
+      printOrchestrationResult(result, json, { fields: (value) => gateReceipt(value.gate) })
+      return
+    }
     printResult(
       result,
       json,
@@ -30,6 +36,10 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
       resolution: getRequiredStringFlag(flags, 'resolution'),
       from: await resolveCoordinatorTerminalHandle(flags, cwd, client)
     })
+    if (!flags.has('full')) {
+      printOrchestrationResult(result, json, { fields: (value) => gateReceipt(value.gate) })
+      return
+    }
     printResult(result, json, (value) => `Gate ${value.gate.id} resolved: ${value.gate.resolution}`)
   },
 
@@ -44,6 +54,7 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
         id: string
         task_id: string
         question: string
+        options?: string
         status: string
         resolved_by?: string | null
       }[]
@@ -55,6 +66,22 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
       run,
       from
     })
+    if (!flags.has('full')) {
+      // Rows also carry resolutions and timestamps that no next command takes.
+      printOrchestrationResult(result, json, {
+        fields: (value) => ({
+          gates: value.gates.map((gate) => ({
+            id: gate.id,
+            taskId: gate.task_id,
+            status: gate.status,
+            question: gate.question,
+            options: gate.options && gate.options !== '[]' ? gate.options : undefined
+          })),
+          runId: value.runId
+        })
+      })
+      return
+    }
     printResult(result, json, (value) => {
       if (value.gates.length === 0) {
         return 'No gates found.'
@@ -67,4 +94,8 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
         .join('\n')
     })
   }
+}
+
+function gateReceipt(gate: { id: string; task_id: string; status: string }) {
+  return { gateId: gate.id, taskId: gate.task_id, status: gate.status }
 }

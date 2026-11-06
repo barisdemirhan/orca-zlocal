@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
-import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
 import { QuickLaunchAgentMenuItems } from '../tab-bar/QuickLaunchButton'

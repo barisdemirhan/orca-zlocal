@@ -3,15 +3,14 @@ import { useRef } from 'react'
 import { ShieldQuestion, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
-import type { CommentMarkdownLinkClickHandler } from '@/components/sidebar/CommentMarkdown'
 import { NativeChatMarkdown } from './NativeChatMarkdown'
-import { approvalBlockedPathToShow } from '../../../../shared/agent-session-approval-blocked-path'
+import { approvalBlockedPathToShow } from '../../../../shared/agent-session/agent-session-approval-blocked-path'
 import {
   isNewerApprovalSubject,
   isPlanApprovalSubject
-} from '../../../../shared/agent-session-approval-subject'
+} from '../../../../shared/agent-session/agent-session-approval-subject'
 import { NativeChatCodeBlock } from './NativeChatCodeBlock'
-import type { ChatApproval } from '../../../../shared/native-chat-interactive-prompt'
+import type { ChatApproval } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
 import { NativeChatPromptCollapseToggle } from './NativeChatPromptCollapse'
 import { useNativeChatPromptCardFocus } from './use-native-chat-prompt-card-focus'
 
@@ -26,9 +25,6 @@ export type NativeChatApprovalCardProps = {
   /** A choice is being delivered: the options wait for its answer. */
   isSubmitting?: boolean
   shouldFocus?: boolean
-  /** A plan body renders as markdown; these make its file paths clickable. */
-  onLinkClick?: CommentMarkdownLinkClickHandler
-  allowFileUriLinks?: boolean
   /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
   layout?: 'composer' | 'embedded'
 }
@@ -41,8 +37,6 @@ export function NativeChatApprovalCard({
   onCollapse,
   isSubmitting = false,
   shouldFocus = false,
-  onLinkClick,
-  allowFileUriLinks = false,
   layout = 'composer'
 }: NativeChatApprovalCardProps): React.JSX.Element {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -62,7 +56,7 @@ export function NativeChatApprovalCard({
   return (
     <SecuritySurface>
       <div
-        className="min-h-0 shrink overflow-hidden bg-chat-canvas data-[layout=embedded]:bg-transparent"
+        className="min-h-0 shrink overflow-hidden bg-chat-pane data-[layout=embedded]:bg-transparent"
         data-layout={layout}
       >
         <div
@@ -142,9 +136,7 @@ export function NativeChatApprovalCard({
                       variant="document"
                       className="text-sm text-chat-foreground"
                       renderCodeBlock={NativeChatCodeBlock}
-                      {...(onLinkClick ? { onLinkClick } : {})}
-                      allowFileUriLinks={allowFileUriLinks}
-                      linkifyFilePaths={onLinkClick !== undefined}
+                      linkifyFilePaths
                     />
                     {approval.subject.filePath ? (
                       <p className="mt-2 break-all">
