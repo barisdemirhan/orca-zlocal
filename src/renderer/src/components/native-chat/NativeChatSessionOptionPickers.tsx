@@ -101,11 +101,15 @@ function PickerTrigger(props: {
             size="xs"
             aria-label={props.accessibleName}
             disabled={props.disabled}
-            className="max-w-64"
+            className="max-w-64 min-w-0 shrink"
             onKeyDown={props.onKeyDown}
           >
-            <span className="truncate text-chat-foreground">{props.modelLabel}</span>
-            {props.optionsLabel ? <span className="shrink-0">{props.optionsLabel}</span> : null}
+            <span className="min-w-0 truncate text-chat-foreground">{props.modelLabel}</span>
+            {props.optionsLabel ? (
+              <span className="min-w-0 shrink-100 truncate @max-[20rem]/chat-actions:hidden">
+                {props.optionsLabel}
+              </span>
+            ) : null}
             <ChevronDown className="size-3" />
           </Button>
         </PopoverTrigger>

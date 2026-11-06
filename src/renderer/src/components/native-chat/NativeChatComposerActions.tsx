@@ -242,8 +242,8 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
   }
 
   return (
-    <div className="flex w-full items-center justify-between gap-2 text-chat-foreground-faint">
-      <div className="flex min-w-0 items-center gap-0.5">
+    <div className="@container/chat-actions flex w-full items-center justify-between gap-2 text-chat-foreground-faint">
+      <div className="flex shrink-0 items-center gap-0.5">
         {attach}
         <NativeChatComposerPermissionPicker
           disabled={interactionDisabled}
@@ -253,7 +253,7 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
         />
         {onExitGoalMode ? <NativeChatComposerGoalChip onExit={onExitGoalMode} /> : null}
       </div>
-      <div className="ml-auto flex items-center gap-1.5">
+      <div className="ml-auto flex min-w-0 items-center gap-1.5">
         {/* Keep option pickers beside the session actions they affect. */}
         <NativeChatSessionOptionPickers
           disabled={interactionDisabled}

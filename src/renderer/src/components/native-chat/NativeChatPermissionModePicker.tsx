@@ -37,7 +37,11 @@ export function NativeChatPermissionModeName(props: {
   const body = (
     <>
       <Icon className="size-3.5 shrink-0" aria-hidden />
-      {props.truncate ? <span className="truncate">{label}</span> : <span>{label}</span>}
+      {props.truncate ? (
+        <span className="truncate @max-[30rem]/chat-actions:hidden">{label}</span>
+      ) : (
+        <span>{label}</span>
+      )}
     </>
   )
   return props.mode === 'full-access' ? (
@@ -108,7 +112,7 @@ function NativeChatPermissionModePickerInner({
     : current === 'own'
       ? translate('settings.agents.permissionOwnAll', "Agents' own settings")
       : (currentLabel ?? title)
-  // `shrink` overrides the button's shrink-0 so a narrow composer truncates the mode name.
+  // `shrink` overrides the button's shrink-0; a narrow composer keeps only the mode's icon.
   return (
     <DropdownMenu open={open && !disabled} onOpenChange={setOpen}>
       <Tooltip>
@@ -130,10 +134,10 @@ function NativeChatPermissionModePickerInner({
               ) : (
                 <>
                   <Settings2 className="size-3.5 shrink-0" aria-hidden />
-                  <span className="truncate">{label}</span>
+                  <span className="truncate @max-[30rem]/chat-actions:hidden">{label}</span>
                 </>
               )}
-              <ChevronDown className="size-3" />
+              <ChevronDown className="size-3 @max-[30rem]/chat-actions:hidden" />
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
