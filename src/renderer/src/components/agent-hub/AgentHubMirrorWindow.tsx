@@ -7,6 +7,8 @@ import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { Loader2, PanelsTopLeft } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
+import { isAgentHubChatTab } from './agent-hub-chat-tabs'
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
@@ -83,9 +85,10 @@ export function AgentHubMirrorWindow({
   previewFocus?: boolean
   /**
    * How the terminal is shown: the real pane moved in (`portal`), a note while the pane is on
-   * screen in the workspace (`in-workspace`), or the dashboard's preview for floating terminals.
+   * screen in the workspace (`in-workspace`), the dashboard's preview for floating terminals, or
+   * a chat's retained view moved in (`chat`).
    */
-  surface: 'portal' | 'in-workspace' | 'preview'
+  surface: 'portal' | 'in-workspace' | 'preview' | 'chat'
   /** An alert for this pane, shown by the window itself rather than by the hub. */
   nudge: AgentHubThreadAlert | null
   onNudged: (id: string) => void
@@ -126,7 +129,7 @@ export function AgentHubMirrorWindow({
     shownTarget.worktree.id,
     shownTarget.tab.id,
     shownTarget.paneKey,
-    surface === 'portal'
+    surface === 'portal' || surface === 'chat'
   )
   const [gaveUp, setGaveUp] = useState(false)
   // Put back at launch: it is simply there, without the opening animation.
@@ -180,6 +183,7 @@ export function AgentHubMirrorWindow({
     }
   }, [dockRequest])
   const homeTitle = useAgentHubTargetTitle(target)
+  const isChat = useAppStore((s) => isAgentHubChatTab(s, shownTarget.tab.id))
   const activeKind = thread ? agentHubIndicatorKind(thread) : 'idle'
   const kind = windowKind ?? activeKind
   useAgentHubMirrorSelectionFocus({
@@ -187,7 +191,8 @@ export function AgentHubMirrorWindow({
     tabId: windowState?.activeTabId ?? '',
     target: shownTarget,
     rootRef: sectionRef,
-    allowed: previewFocus && surface !== 'in-workspace',
+    // A chat claims focus through its own composer (see agent-hub-chat-destinations).
+    allowed: previewFocus && surface !== 'in-workspace' && surface !== 'chat',
     preview: surface === 'preview'
   })
   const familyRoot = family?.path[0]?.paneKey ?? null
@@ -279,6 +284,7 @@ export function AgentHubMirrorWindow({
           onMinimize={minimizeAlone}
           onClose={() => leave(onClose)}
           isAgent={thread !== null || target.agentType !== null}
+          isChat={isChat}
           onCloseAgent={
             (windowState?.tabs.length ?? 1) === 1
               ? () =>
@@ -331,6 +337,13 @@ export function AgentHubMirrorWindow({
               {translate('agentHub.mirror.minimize', 'Minimize')}
             </Button>
           </div>
+        ) : surface === 'chat' ? (
+          <div
+            key="chat"
+            ref={slotRef}
+            data-agent-hub-mirror-slot
+            className="relative flex min-h-0 flex-1 overflow-hidden"
+          />
         ) : surface !== 'preview' ? (
           // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
           <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">

@@ -6,6 +6,7 @@ import { translate } from '@/i18n/i18n'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { standaloneActivityWorktree } from '../activity/activity-standalone-worktree'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { agentHubChatAgents, agentHubTabsByWorktree } from './agent-hub-chat-tabs'
 import { resolveAgentHubIdleAgent } from './agent-hub-idle-agent'
 import { buildAgentHubTerminalTree, type AgentHubGroupNode } from './agent-hub-terminal-tree'
 
@@ -23,9 +24,10 @@ type AgentHubTerminalTreeState = Pick<
   | 'sleepingAgentSessionsByPaneKey'
   | 'paneForegroundAgentByPaneKey'
   | 'ptyIdsByTabId'
->
+> &
+  Partial<Pick<AppState, 'unifiedTabsByWorktree'>>
 
-/** Every open terminal as the hub lists it, from one read of the store. */
+/** Every open terminal and chat as the hub lists it, from one read of the store. */
 export function agentHubTerminalTreeFromState(
   state: AgentHubTerminalTreeState,
   threads: readonly AgentPaneThread[],
@@ -33,17 +35,18 @@ export function agentHubTerminalTreeFromState(
   parentOf: ReadonlyMap<string, string>
 ): AgentHubGroupNode[] {
   const floating = standaloneActivityWorktree(FLOATING_TERMINAL_WORKTREE_ID)
+  const chatAgents = agentHubChatAgents(state)
   return buildAgentHubTerminalTree({
     projectGroups: state.projectGroups,
     repos: state.repos,
     worktreesByRepo: state.worktreesByRepo,
     folderWorkspaces: state.folderWorkspaces,
-    tabsByWorktree: state.tabsByWorktree,
+    tabsByWorktree: agentHubTabsByWorktree(state),
     threads,
     floating: { worktree: floating, label: floating.displayName },
     includeShells,
     // What names an agent that is open but quiet (no thread), e.g. after a restart.
-    idleAgentOf: (tab) => resolveAgentHubIdleAgent(tab, state),
+    idleAgentOf: (tab) => chatAgents.get(tab.id) ?? resolveAgentHubIdleAgent(tab, state),
     ungroupedLabel: translate('agentHub.terminals.ungrouped', 'Ungrouped'),
     unknownProjectLabel: translate('agentHub.terminals.unknownProject', 'Unknown'),
     parentOf
@@ -61,6 +64,7 @@ export function useAgentHubTerminalTree(
   const worktreesByRepo = useAppStore((s) => s.worktreesByRepo)
   const folderWorkspaces = useAppStore((s) => s.folderWorkspaces)
   const tabsByWorktree = useAppStore((s) => s.tabsByWorktree)
+  const unifiedTabsByWorktree = useAppStore((s) => s.unifiedTabsByWorktree)
   const idleSignals = useAppStore(
     useShallow((s) => ({
       terminalLayoutsByTabId: s.terminalLayoutsByTabId,
@@ -75,7 +79,15 @@ export function useAgentHubTerminalTree(
   return useMemo(
     () =>
       agentHubTerminalTreeFromState(
-        { projectGroups, repos, worktreesByRepo, folderWorkspaces, tabsByWorktree, ...idleSignals },
+        {
+          projectGroups,
+          repos,
+          worktreesByRepo,
+          folderWorkspaces,
+          tabsByWorktree,
+          unifiedTabsByWorktree,
+          ...idleSignals
+        },
         threads,
         includeShells,
         parentOf
@@ -86,6 +98,7 @@ export function useAgentHubTerminalTree(
       worktreesByRepo,
       folderWorkspaces,
       tabsByWorktree,
+      unifiedTabsByWorktree,
       threads,
       includeShells,
       idleSignals,

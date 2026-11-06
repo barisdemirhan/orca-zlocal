@@ -316,7 +316,7 @@ export default function SortableTab({
           <Minimize2 className="w-3 h-3" />
         </button>
       )}
-      {!isEditing && canSplitTerminal && (
+      {!isEditing && (canSplitTerminal || nativeChat) && (
         <AgentHubTabPopout tabId={tab.id} worktreeId={tab.worktreeId} />
       )}
       {!isEditing && !isPinned && (

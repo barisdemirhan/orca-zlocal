@@ -57,6 +57,10 @@ export function borrowAgentHubTab(tab: BorrowedTab): void {
   emit([...borrowed.filter((item) => item.tabId !== tab.tabId), tab])
 }
 
+export function readAgentHubBorrowedTab(tabId: string, worktreeId: string): BorrowedTab | null {
+  return borrowed.find((tab) => tab.tabId === tabId && tab.worktreeId === worktreeId) ?? null
+}
+
 export function useAgentHubBorrowedTabs(): readonly BorrowedTab[] {
   return useSyncExternalStore(
     (listener) => {

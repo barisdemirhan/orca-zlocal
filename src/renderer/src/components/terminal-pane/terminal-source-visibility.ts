@@ -25,8 +25,8 @@ export function isTerminalSourceVisible(
   }
   return (state.unifiedTabsByWorktree[worktreeId] ?? []).some(
     (tab) =>
-      tab.contentType === 'terminal' &&
-      tab.entityId === tabId &&
+      ((tab.contentType === 'terminal' && tab.entityId === tabId) ||
+        (tab.contentType === 'agent-session' && tab.id === tabId)) &&
       groups.some((group) => group.id === tab.groupId && group.activeTabId === tab.id)
   )
 }

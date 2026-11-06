@@ -11,6 +11,7 @@ import {
 import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
 import NativeChatView from './NativeChatView'
 import { isStructuredTab } from '../../../../shared/agent-session/view/structured-agent-session-tab'
+import { useAgentHubChatDestination } from '../agent-hub/agent-hub-chat-destinations'
 import { useAgentHubOrbPanel } from '../agent-hub/agent-hub-orb-panel-store'
 import { AgentHubOrbComposerContext } from '../agent-hub/agent-hub-orb-composer'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
@@ -51,10 +52,14 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
     tab.entityId,
     target ? structuredAgentSessionHostKey(target) : ''
   )
-  const destination = useAgentHubOrbPanel((s) =>
+  const orbDestination = useAgentHubOrbPanel((s) =>
     s.session?.tabId === tab.id ? s.destination : null
   )
   const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
+  const mirror = useAgentHubChatDestination(tab.id)
+  const destination = orbDestination ?? mirror?.element ?? null
+  const visible = orbDestination ? chatVisible : mirror ? mirror.visible : isActive
+  const focused = orbDestination ? chatVisible : mirror ? mirror.focused : isFocusedGroup
   const themeBackgroundActive = useThemeBackgroundStore((state) => state.active)
   if (!target) {
     return null
@@ -70,8 +75,8 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
       retainContent
       destination={destination}
     >
-      <AgentHubOrbComposerContext value={destination ? tab.id : null}>
-        <NativeChatPresentationContext value={destination ? 'orb' : 'chat'}>
+      <AgentHubOrbComposerContext value={orbDestination ? tab.id : null}>
+        <NativeChatPresentationContext value={orbDestination ? 'orb' : 'chat'}>
           <AgentHubOrbVoiceContext value={voice}>
             <AgentHubOrbSessionOperationGuard
               host={target.kind === 'environment' ? target.environmentId : 'local'}
@@ -83,8 +88,8 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
                 groupId={destination ? undefined : groupId}
                 sessionId={tab.entityId}
                 agent={tab.agentSessionAgent}
-                isVisible={destination ? chatVisible : isActive}
-                isFocusedGroup={destination ? chatVisible : isFocusedGroup}
+                isVisible={visible}
+                isFocusedGroup={focused}
                 target={target}
               />
             </AgentHubOrbSessionOperationGuard>

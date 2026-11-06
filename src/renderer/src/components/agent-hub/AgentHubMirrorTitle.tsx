@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { isImeOwnedKeyboardEvent } from '@/lib/ime-composition-keyboard-event'
+import { findAgentHubChatTab, isAgentHubChatTab } from './agent-hub-chat-tabs'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 /** The tab's own name when the user gave it one, else the title the hub derived. */
@@ -9,7 +10,9 @@ export function useAgentHubTargetTitle(target: AgentHubPaneTarget): string {
   const customTitle = useAppStore(
     (s) =>
       (s.tabsByWorktree[target.worktree.id] ?? []).find((tab) => tab.id === target.tab.id)
-        ?.customTitle ?? null
+        ?.customTitle ??
+      findAgentHubChatTab(s, target.tab.id)?.customLabel ??
+      null
   )
   return customTitle?.trim() || target.title
 }
@@ -24,14 +27,18 @@ export function AgentHubMirrorTitle({
 }): React.JSX.Element {
   const title = useAgentHubTargetTitle(target)
   const setTabCustomTitle = useAppStore((s) => s.setTabCustomTitle)
+  // A chat's name lives on its host and is changed from the chat's own tab.
+  const renamable = useAppStore((s) => !isAgentHubChatTab(s, target.tab.id))
   const [editing, setEditing] = useState(false)
   useEffect(() => onEditingChange?.(editing), [editing, onEditingChange])
   if (!editing) {
     return (
       <div
         className="truncate font-semibold"
-        title={translate('agentHub.mirror.renameHint', 'Double-click to rename')}
-        onDoubleClick={() => setEditing(true)}
+        title={
+          renamable ? translate('agentHub.mirror.renameHint', 'Double-click to rename') : undefined
+        }
+        onDoubleClick={renamable ? () => setEditing(true) : undefined}
       >
         {title}
       </div>

@@ -1,5 +1,6 @@
 import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
+import { isStructuredTab } from '../../../../shared/agent-session/view/structured-agent-session-tab'
 import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
 import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { borrowAgentHubTab } from './agent-hub-borrowed-tabs'
@@ -19,7 +20,9 @@ export function popOutAgentHubTab(target: AgentHubPaneTarget): void {
   }
   const worktreeId = target.worktree.id
   const tab = state.unifiedTabsByWorktree[worktreeId]?.find(
-    (item) => item.contentType === 'terminal' && item.entityId === target.tab.id
+    (item) =>
+      (item.contentType === 'terminal' && item.entityId === target.tab.id) ||
+      (isStructuredTab(item) && item.id === target.tab.id)
   )
   const group = state.groupsByWorktree[worktreeId]?.find((item) => item.id === tab?.groupId)
   const visible = isTerminalSourceVisible(state, worktreeId, target.tab.id, isAgentHubCanvasOpen())

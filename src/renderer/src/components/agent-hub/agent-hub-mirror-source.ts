@@ -18,6 +18,7 @@ import {
 } from '../../../../shared/worktree/host-qualified-identity'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { collectLeafIdsInOrder } from '../terminal-pane/terminal-layout-leaf-ids'
+import { agentHubTabsByWorktree, isAgentHubChatTab } from './agent-hub-chat-tabs'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
@@ -67,6 +68,10 @@ export function agentHubMirrorPaneExists(
   tabId: string,
   paneKey: string
 ): boolean {
+  // A chat is one pane with no terminal layout; it lasts as long as its tab.
+  if (isAgentHubChatTab(state, tabId)) {
+    return true
+  }
   const parsed = parsePaneKey(paneKey)
   const layout = state.terminalLayoutsByTabId[tabId]
   return Boolean(
@@ -147,7 +152,8 @@ export function isAgentHubMirrorSourceClosed(
   if (owners.some((owner) => owner.hostId !== target.worktree.hostId)) {
     return false
   }
-  const currentTabs = state.tabsByWorktree[target.worktree.id]
+  const tabsByWorktree = agentHubTabsByWorktree(state)
+  const currentTabs = tabsByWorktree[target.worktree.id]
   const moved = currentTabs?.some((tab) => tab.id === target.tab.id)
     ? null
     : findAgentHubMirrorSource(state, {
@@ -155,7 +161,7 @@ export function isAgentHubMirrorSourceClosed(
         tabId: target.tab.id,
         hostIdentity: getWorktreeHostIdentity(target.worktree)
       })
-  const tabs = moved ? state.tabsByWorktree[moved.worktree.id] : currentTabs
+  const tabs = moved ? tabsByWorktree[moved.worktree.id] : currentTabs
   if (!tabs) {
     return false
   }
@@ -166,7 +172,7 @@ export function isAgentHubMirrorSourceClosed(
     workspaces.some(
       (workspace) =>
         workspace.hostId !== target.worktree.hostId &&
-        state.tabsByWorktree[workspace.id]?.some((tab) => tab.id === target.tab.id)
+        tabsByWorktree[workspace.id]?.some((tab) => tab.id === target.tab.id)
     )
   ) {
     return false

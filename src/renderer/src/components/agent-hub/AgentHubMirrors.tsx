@@ -7,24 +7,16 @@ import {
   useAgentHubMirrorSelection
 } from './agent-hub-mirror-selection'
 import { activeAgentHubMirrorTab, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
+import { useAgentHubMirrorSurfaces } from './use-agent-hub-mirror-surfaces'
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
 import { agentHubMirrorPointerSelection } from './agent-hub-mirror-pointer-selection'
 import { useAgentHubMirrorFocus } from './agent-hub-mirror-focus'
-import { agentHubMirrorShellLeafId } from './agent-hub-mirror-source'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { normalizeAgentHubMirrorWindowCap } from '../../../../shared/agent-hub-settings'
-import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
-import { useAgentHubBorrowedTabs } from './agent-hub-borrowed-tabs'
-import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
 import { setTerminalMirrorMountLeases } from '../terminal-pane/terminal-mount-retention-leases'
-import {
-  setAgentHubTerminalPortals,
-  type ActivityTerminalPortalTarget
-} from '../activity/activity-terminal-portal'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubAlertSide } from './AgentHubAlertStack'
@@ -64,8 +56,6 @@ import {
   type AgentHubLocation,
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
-
-type MirrorSurface = 'portal' | 'in-workspace' | 'preview'
 
 /**
  * Mirrors stay below the floating workspace, rising above it while a mirror is focused.
@@ -128,7 +118,6 @@ export function AgentHubMirrors({
       visited.current.delete(id)
     }
   }
-  const borrowed = useAgentHubBorrowedTabs()
   // Mirrors put back at launch take the keyboard from nobody until the user picks one.
   const quiet = useAgentHubMirrorStageQuiet()
   const windowCap = useAppStore((s) =>
@@ -156,74 +145,7 @@ export function AgentHubMirrors({
       return next
     })
   }, [])
-  // The pane each window shows (a shell target follows its tab's active pane), and whether
-  // that tab is on screen in the workspace right now — the pane can only be in one place.
-  const placement = useAppStore(
-    useShallow((state) =>
-      windows.map((window) => {
-        const target = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
-        const leafId = agentHubMirrorShellLeafId(state.terminalLayoutsByTabId[target.tab.id])
-        const paneKey = target.paneKey ?? (leafId ? makePaneKey(target.tab.id, leafId) : null)
-        const onScreen =
-          !borrowed.some(
-            (tab) => tab.tabId === target.tab.id && tab.worktreeId === target.worktree.id
-          ) && isTerminalSourceVisible(state, target.worktree.id, target.tab.id, onCanvas)
-        return `${paneKey ?? ''}\u0000${onScreen ? '1' : '0'}`
-      })
-    )
-  )
-  const surfaces = useMemo(
-    () =>
-      windows.map((window, index): { surface: MirrorSurface; paneKey: string | null } => {
-        const target = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
-        const [paneKey = '', onScreen] = (placement[index] ?? '').split('\u0000')
-        if (target.worktree.id === FLOATING_TERMINAL_WORKTREE_ID) {
-          // The floating panel draws its own terminals; the dashboard preview stands in.
-          return { surface: 'preview', paneKey: paneKey || null }
-        }
-        return { surface: onScreen === '1' ? 'in-workspace' : 'portal', paneKey: paneKey || null }
-      }),
-    [windows, placement]
-  )
-  const portals = useMemo(
-    () =>
-      windows.flatMap((window, index): ActivityTerminalPortalTarget[] => {
-        const target = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
-        const key = window.id
-        const slot = slots.get(key)
-        const { surface, paneKey } = surfaces[index] ?? { surface: 'portal', paneKey: null }
-        if (surface !== 'portal' || !slot || !paneKey) {
-          return []
-        }
-        return [
-          {
-            owner: 'agent-hub',
-            priority: index,
-            slotId: `agent-hub:${key}`,
-            requestToken: `agent-hub:${key}:${paneKey}`,
-            target: slot,
-            worktreeId: target.worktree.id,
-            tabId: target.tab.id,
-            paneKey,
-            // Only the front window's pane takes keyboard focus on arrival.
-            active:
-              selection.windowId === window.id &&
-              selection.tabId === window.activeTabId &&
-              selection.focusTerminal &&
-              index === windows.length - 1 &&
-              !hubOpen &&
-              !quiet &&
-              !hidden
-          }
-        ]
-      }),
-    [windows, slots, surfaces, hubOpen, quiet, hidden, selection]
-  )
-  // Why layout: publish before paint so the pane moves in the same frame the window opens.
-  useLayoutEffect(() => {
-    setAgentHubTerminalPortals(portals)
-  }, [portals])
-  useLayoutEffect(() => () => setAgentHubTerminalPortals([]), [])
+  const surfaces = useAgentHubMirrorSurfaces({ windows, slots, onCanvas, hubOpen, quiet, hidden })
   useLayoutEffect(() => {
     setTerminalMirrorMountLeases(
       windows

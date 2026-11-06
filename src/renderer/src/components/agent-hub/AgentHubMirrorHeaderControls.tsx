@@ -21,7 +21,8 @@ export function AgentHubMirrorHeaderControls({
   onMinimize,
   onClose,
   onCloseAgent,
-  isAgent
+  isAgent,
+  isChat = false
 }: {
   target: AgentHubPaneTarget
   reachable: boolean
@@ -33,14 +34,16 @@ export function AgentHubMirrorHeaderControls({
   onClose: () => void
   onCloseAgent?: () => void
   isAgent: boolean
+  /** A chat has no PTY to sleep and dictates through its own composer. */
+  isChat?: boolean
 }): React.JSX.Element {
   const dockLabel = translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
   const minimizeLabel = translate('agentHub.mirror.minimize', 'Minimize')
   return (
     <div className="flex shrink-0 items-center gap-0.5">
-      {showJump ? <AgentHubPaneSleepAction target={target} /> : null}
+      {showJump && !isChat ? <AgentHubPaneSleepAction target={target} /> : null}
       <AgentHubDimToggle appearance="mirror" />
-      <AgentHubMirrorMicButton target={target} reachable={reachable} />
+      {isChat ? null : <AgentHubMirrorMicButton target={target} reachable={reachable} />}
       {showJump ? <AgentHubMirrorJumpButton onReveal={onReveal} /> : null}
       <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">
         <Button

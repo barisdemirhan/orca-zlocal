@@ -7,6 +7,7 @@ import { useAppStore } from '@/store'
 import { useRunningTerminalCloseConfirmStore } from '@/store/running-terminal-close-confirm'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { TerminalPaneLayoutNode } from '../../../../shared/workspace-layout/terminal-tab-types'
+import { isAgentHubChatTab } from './agent-hub-chat-tabs'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
@@ -42,6 +43,18 @@ export function closeAgentHubAgent(
   kind: AgentHubIndicatorKind | null
 ): void {
   const tabId = target.tab.id
+  if (isAgentHubChatTab(useAppStore.getState(), tabId)) {
+    useRunningTerminalCloseConfirmStore.getState().requestRunningTerminalCloseConfirm({
+      terminalTabId: tabId,
+      tabLabel: target.title,
+      copyKind: 'agent',
+      allowSkipConfirm: false,
+      onConfirm: () => {
+        useAppStore.getState().closeUnifiedTab(tabId)
+      }
+    })
+    return
+  }
   const leafId = target.paneKey ? (parsePaneKey(target.paneKey)?.leafId ?? null) : null
   const layout = useAppStore.getState().terminalLayoutsByTabId[tabId]
   const splitLeaf = leafId !== null && countLeaves(layout?.root) > 1 ? leafId : null

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { ProjectGroup } from '../../../../shared/project-group-types'
 import type { Repo } from '../../../../shared/repo-types'
+import type { Tab } from '../../../../shared/tab-types'
+import { agentHubTabsByWorktree } from './agent-hub-chat-tabs'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import {
   makeRepo,
@@ -146,6 +148,30 @@ describe('buildAgentHubTerminalTree', () => {
     expect(ungrouped?.workspaces.map((workspace) => workspace.projectLabel)).toEqual([
       'scratch',
       'Unknown'
+    ])
+  })
+
+  it('lists a chat that replaced the last terminal of its workspace', () => {
+    const input = treeInput()
+    const chat = {
+      id: 'agent-chat-tab-v1-1',
+      entityId: 'session-1',
+      contentType: 'agent-session',
+      worktreeId: 'wt-api',
+      label: 'Continued chat',
+      agentSessionAgent: 'claude'
+    } as Tab
+    const groups = buildAgentHubTerminalTree({
+      ...input,
+      tabsByWorktree: agentHubTabsByWorktree({
+        tabsByWorktree: { ...input.tabsByWorktree, 'wt-api': [] },
+        unifiedTabsByWorktree: { 'wt-api': [chat] }
+      })
+    })
+
+    const api = groups[0]?.workspaces.find((workspace) => workspace.projectLabel === 'api')
+    expect(api?.rows.map((row) => [row.tab.id, row.title])).toEqual([
+      ['agent-chat-tab-v1-1', 'Continued chat']
     ])
   })
 

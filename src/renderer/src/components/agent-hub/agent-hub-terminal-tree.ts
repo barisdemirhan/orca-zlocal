@@ -179,7 +179,7 @@ function nestWorkerRows(
 
 /**
  * Group › project › workspace › terminal, in the sidebar's own orders. Only workspaces
- * with an open terminal appear; agents whose tab is gone stay in the Inbox only.
+ * with an open terminal or chat appear; agents whose tab is gone stay in the Inbox only.
  */
 export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): AgentHubGroupNode[] {
   const threadsByTabId = new Map<string, AgentPaneThread[]>()
