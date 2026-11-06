@@ -28,6 +28,7 @@ vi.mock('@/store', async () => {
       settings: {},
       keybindings: {},
       tabsByWorktree: {},
+      unifiedTabsByWorktree: {},
       activeView: 'terminal',
       activeWorktreeId: null
     }))

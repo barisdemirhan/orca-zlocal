@@ -160,6 +160,7 @@ export function AgentHubMirrorTab({
       windowId={windowId}
       entryId={tab.id}
       target={closable ? (tab.viewing ?? tab.target) : undefined}
+      switchTarget={tab.viewing ?? tab.target}
       onReveal={actions.onJump}
       onShowInSidebar={actions.onShowInSidebar}
       onClose={onClose}

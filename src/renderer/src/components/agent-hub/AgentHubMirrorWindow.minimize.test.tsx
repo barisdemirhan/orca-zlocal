@@ -32,6 +32,7 @@ vi.mock('@/store', async () => {
       settings: {},
       keybindings: {},
       tabsByWorktree: {},
+      unifiedTabsByWorktree: {},
       terminalLayoutsByTabId: {},
       ptyIdsByTabId: {},
       sleepingAgentSessionsByPaneKey: {},

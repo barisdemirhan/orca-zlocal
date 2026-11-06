@@ -36,6 +36,7 @@ vi.mock('@/store', async () => {
     useAppStore: create(() => ({
       keybindings: {},
       tabsByWorktree: {},
+      unifiedTabsByWorktree: {},
       setTabCustomTitle: vi.fn(),
       terminalLayoutsByTabId: {},
       ptyIdsByTabId: {},

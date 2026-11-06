@@ -43,6 +43,13 @@ export function agentHubChatTerminalTab(tab: Tab): TerminalTab {
   return terminalTabFromAgentSessionTab(tab, NO_NAMES)
 }
 
+export function agentHubChatSession(chat: Tab): {
+  sessionId: string
+  agent: Tab['agentSessionAgent']
+} {
+  return { sessionId: chat.entityId, agent: chat.agentSessionAgent }
+}
+
 export function agentHubChatAgents(state: ChatTabState): ReadonlyMap<string, TerminalAgent> {
   const agents = new Map<string, TerminalAgent>()
   for (const tab of agentHubChatTabs(state)) {

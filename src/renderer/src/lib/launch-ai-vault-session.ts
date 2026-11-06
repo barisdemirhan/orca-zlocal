@@ -3,7 +3,10 @@ import { persistAgentLaunchTabOrder } from '@/lib/launch-agent-tab-order'
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { createWebRuntimeSessionTerminal } from '@/runtime/web-runtime-terminal-creation'
+import { createWebRuntimeSessionTerminalResult } from '@/runtime/web-runtime-terminal-create-operation'
 import { isWebRuntimeSessionActive } from '@/runtime/web-runtime-session-environment'
+import { webTerminalPlacementParentTabId } from '@/runtime/web-session-terminal-placement'
+import { toWebTerminalSurfaceTabId } from '../../../shared/workspace-layout/terminal-surface-id'
 import type { AiVaultAgent } from '../../../shared/ai-vault/contracts/ai-vault-types'
 import type {
   AgentProviderSessionMetadata,
@@ -14,7 +17,12 @@ import type { WebRuntimeTerminalCreateOutcome } from '@/runtime/web-runtime-sess
 
 export type LaunchAiVaultSessionInNewTabResult =
   | { tabId: string }
-  | { tabId: null; runtimeLaunch: Promise<WebRuntimeTerminalCreateOutcome> }
+  | {
+      tabId: null
+      runtimeLaunch: Promise<WebRuntimeTerminalCreateOutcome>
+      /** Only for an inactive launch, whose caller shows the tab itself. */
+      runtimeTabId?: Promise<string | null>
+    }
 
 export function launchAiVaultSessionInNewTab(args: {
   agent: AiVaultAgent
@@ -27,6 +35,8 @@ export function launchAiVaultSessionInNewTab(args: {
   providerSession?: AgentProviderSessionMetadata
   targetGroupId?: string
   splitDirection?: TabSplitDirection
+  /** false leaves the workspace showing what it shows; the caller places the new tab. */
+  activate?: false
 }): LaunchAiVaultSessionInNewTabResult {
   const store = useAppStore.getState()
   // Why both paths split: the runtime path used to return first and drop the split (#22791).
@@ -41,22 +51,38 @@ export function launchAiVaultSessionInNewTab(args: {
       ? store.createEmptySplitGroup(args.worktreeId, split.sourceGroupId, split.splitDirection)
       : null
     const targetGroupId = splitGroupId ?? args.targetGroupId
+    const terminal = {
+      worktreeId: args.worktreeId,
+      environmentId: runtimeEnvironmentId,
+      ...(targetGroupId ? { targetGroupId } : {}),
+      agentSessionKind: 'resume' as const,
+      launchAgent: args.agent,
+      command: args.command,
+      ...(args.cwd ? { cwd: args.cwd } : {}),
+      ...(args.env ? { env: args.env } : {}),
+      ...(args.envToDelete ? { envToDelete: args.envToDelete } : {}),
+      ...(args.launchConfig ? { launchConfig: args.launchConfig } : {}),
+      ...(args.providerSession ? { providerSession: args.providerSession } : {}),
+      ...(args.launchConfig ? { agentArgs: args.launchConfig.agentArgs } : {})
+    }
+    if (args.activate === false) {
+      const created = createWebRuntimeSessionTerminalResult({
+        ...terminal,
+        activate: false,
+        selectWorktree: false
+      })
+      return {
+        tabId: null,
+        runtimeLaunch: created.then((result) => result.outcome),
+        runtimeTabId: created.then((result) =>
+          result.hostTabId
+            ? toWebTerminalSurfaceTabId(webTerminalPlacementParentTabId(result.hostTabId))
+            : null
+        )
+      }
+    }
     const runtimeLaunch = createWebRuntimeSessionTerminal(
-      {
-        worktreeId: args.worktreeId,
-        environmentId: runtimeEnvironmentId,
-        ...(targetGroupId ? { targetGroupId } : {}),
-        agentSessionKind: 'resume',
-        launchAgent: args.agent,
-        command: args.command,
-        ...(args.cwd ? { cwd: args.cwd } : {}),
-        ...(args.env ? { env: args.env } : {}),
-        ...(args.envToDelete ? { envToDelete: args.envToDelete } : {}),
-        ...(args.launchConfig ? { launchConfig: args.launchConfig } : {}),
-        ...(args.providerSession ? { providerSession: args.providerSession } : {}),
-        ...(args.launchConfig ? { agentArgs: args.launchConfig.agentArgs } : {}),
-        activate: true
-      },
+      { ...terminal, activate: true },
       { notifyFailure: false }
     )
     const observedRuntimeLaunch = runtimeLaunch.then((outcome) => {
@@ -74,6 +100,7 @@ export function launchAiVaultSessionInNewTab(args: {
   const tab = store.createTab(args.worktreeId, args.targetGroupId, undefined, {
     ...(split ? { split } : {}),
     ...(args.cwd ? { startupCwd: args.cwd } : {}),
+    ...(args.activate === false ? { activate: false } : {}),
     pendingStartup: {
       command: args.command,
       ...(args.env ? { env: args.env } : {}),
@@ -87,7 +114,9 @@ export function launchAiVaultSessionInNewTab(args: {
       }
     }
   })
-  store.setActiveTabType('terminal', args.worktreeId)
+  if (args.activate !== false) {
+    store.setActiveTabType('terminal', args.worktreeId)
+  }
 
   persistAgentLaunchTabOrder(args.worktreeId, tab.id)
 

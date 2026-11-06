@@ -32,6 +32,14 @@ import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { agentHubMirrorTabCapReason } from './agent-hub-mirror-tab-actions'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useMenuOpeningClickGuard } from './use-menu-opening-click-guard'
+import { useAppStore } from '@/store'
+import { TabSessionSurfaceSwitchMenuItems } from '../tab-bar/TabSessionSurfaceSwitchMenuItems'
+import { useSortableTabContextMenu } from '../tab-bar/use-sortable-tab-context-menu'
+import { agentHubChatSession, findAgentHubChatTab } from './agent-hub-chat-tabs'
+import {
+  agentHubChatSwitchBlockedReason,
+  useAgentHubChatWorking
+} from './agent-hub-chat-work-state'
 
 function Destination({
   window,
@@ -71,6 +79,7 @@ export function AgentHubMirrorTabMenu({
   windowId,
   entryId,
   target,
+  switchTarget,
   onReveal,
   onShowInSidebar,
   onClose,
@@ -81,6 +90,8 @@ export function AgentHubMirrorTabMenu({
   windowId: string
   entryId: string
   target?: AgentHubPaneTarget
+  /** The tab whose terminal and chat views the menu switches between. */
+  switchTarget?: AgentHubPaneTarget
   /** Jumps to the terminal in its workspace; absent for a window's only tab (its header has it). */
   onReveal?: () => void
   onShowInSidebar?: () => void
@@ -91,13 +102,24 @@ export function AgentHubMirrorTabMenu({
 }): React.JSX.Element {
   const { windows } = useAgentHubMirrors()
   const openingClick = useMenuOpeningClickGuard()
+  const menu = useSortableTabContextMenu()
+  const switchChat = useAppStore((state) =>
+    switchTarget ? findAgentHubChatTab(state, switchTarget.tab.id) : null
+  )
+  const switchChatWorking = useAgentHubChatWorking(switchChat?.id ?? null)
   const keyboardOrigin = useRef<HTMLElement | null>(null)
   const isPinned =
     windows.find((window) => window.id === windowId)?.tabs.find((tab) => tab.id === entryId)
       ?.isPinned === true
   const destinations = windows.filter((window) => window.id !== windowId)
   return (
-    <ContextMenu onOpenChange={openingClick.noteOpenChange}>
+    <ContextMenu
+      open={menu.open}
+      onOpenChange={(open) => {
+        menu.onOpenChange(open)
+        openingClick.noteOpenChange(open)
+      }}
+    >
       <ContextMenuTrigger
         asChild
         onKeyDown={(event) => {
@@ -197,6 +219,17 @@ export function AgentHubMirrorTabMenu({
         >
           {translate('agentHub.mirror.openInNew', 'Open in new mirror')}
         </ContextMenuItem>
+        {switchTarget ? (
+          <TabSessionSurfaceSwitchMenuItems
+            key={menu.openingId}
+            tab={{ id: switchTarget.tab.id, worktreeId: switchTarget.worktree.id }}
+            nativeChat={switchChat ? agentHubChatSession(switchChat) : undefined}
+            leadingSeparator
+            onComplete={menu.onComplete}
+            fromMirror
+            chatBlockedReason={switchChatWorking ? agentHubChatSwitchBlockedReason() : undefined}
+          />
+        ) : null}
         {onReveal || onShowInSidebar ? <ContextMenuSeparator /> : null}
         {onShowInSidebar ? (
           <ContextMenuItem onSelect={onShowInSidebar}>

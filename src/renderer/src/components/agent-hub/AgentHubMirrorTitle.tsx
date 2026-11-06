@@ -2,18 +2,21 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { isImeOwnedKeyboardEvent } from '@/lib/ime-composition-keyboard-event'
+import { useStructuredChatTabNames } from '@/runtime/structured-chat-name-observation'
+import { projectedStructuredChatTabSavedName } from '@/runtime/structured-chat-tab-name'
 import { findAgentHubChatTab, isAgentHubChatTab } from './agent-hub-chat-tabs'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 /** The tab's own name when the user gave it one, else the title the hub derived. */
 export function useAgentHubTargetTitle(target: AgentHubPaneTarget): string {
-  const customTitle = useAppStore(
-    (s) =>
-      (s.tabsByWorktree[target.worktree.id] ?? []).find((tab) => tab.id === target.tab.id)
-        ?.customTitle ??
-      findAgentHubChatTab(s, target.tab.id)?.customLabel ??
-      null
-  )
+  const chatNames = useStructuredChatTabNames()
+  const customTitle = useAppStore((s) => {
+    const chat = findAgentHubChatTab(s, target.tab.id)
+    return chat
+      ? (projectedStructuredChatTabSavedName(chat, chatNames) ?? chat.generatedLabel ?? null)
+      : ((s.tabsByWorktree[target.worktree.id] ?? []).find((tab) => tab.id === target.tab.id)
+          ?.customTitle ?? null)
+  })
   return customTitle?.trim() || target.title
 }
 

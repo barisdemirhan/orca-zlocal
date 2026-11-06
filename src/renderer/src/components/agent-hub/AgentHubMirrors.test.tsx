@@ -24,6 +24,7 @@ vi.mock('@/store', async () => {
       activeView: 'terminal',
       activeWorktreeId: null,
       tabsByWorktree: {},
+      unifiedTabsByWorktree: {},
       terminalLayoutsByTabId: {},
       ptyIdsByTabId: {},
       sleepingAgentSessionsByPaneKey: {},

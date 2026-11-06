@@ -10,6 +10,7 @@ import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { AgentHubMirrorCloseButton } from './AgentHubMirrorCloseButton'
+import { AgentHubMirrorTerminalSwitchButton } from './AgentHubMirrorTerminalSwitchButton'
 
 export function AgentHubMirrorHeaderControls({
   target,
@@ -43,7 +44,11 @@ export function AgentHubMirrorHeaderControls({
     <div className="flex shrink-0 items-center gap-0.5">
       {showJump && !isChat ? <AgentHubPaneSleepAction target={target} /> : null}
       <AgentHubDimToggle appearance="mirror" />
-      {isChat ? null : <AgentHubMirrorMicButton target={target} reachable={reachable} />}
+      {isChat ? (
+        <AgentHubMirrorTerminalSwitchButton target={target} />
+      ) : (
+        <AgentHubMirrorMicButton target={target} reachable={reachable} />
+      )}
       {showJump ? <AgentHubMirrorJumpButton onReveal={onReveal} /> : null}
       <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">
         <Button
