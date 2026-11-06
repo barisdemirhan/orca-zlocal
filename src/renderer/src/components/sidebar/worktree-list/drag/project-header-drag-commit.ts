@@ -9,6 +9,7 @@ import {
 import type { ProjectHeaderDragSession } from './project-header-drag-contract'
 import type { Repo } from '../../../../../../shared/repository/repo-types'
 import { isSameRepoRow } from '@/store/repos/repo-host-identity'
+import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
 import type { RootProjectHeaderDrag } from './root-project-header-drop'
 
 export function commitProjectHeaderDragDrop(
@@ -19,6 +20,7 @@ export function commitProjectHeaderDragDrop(
     repoById: ReadonlyMap<string, Repo>
     liveRepos: readonly Repo[]
     usesProjectGroupOrdering: boolean
+    projectGroups: readonly ProjectGroup[]
     onCommitRepoOrder: (orderedIds: string[]) => void
     onCommitProjectGroupOrder: (project: Repo, projectGroupId: string | null, order: number) => void
   }
@@ -33,7 +35,10 @@ export function commitProjectHeaderDragDrop(
   }
   const draggedRepo = args.liveRepos.find((repo) => isSameRepoRow(repo, args.session.repo))
   // Why: a group change mid-drag (another window or client) moved the row out of this bucket.
-  if (!draggedRepo || getProjectHeaderDragBucketKey(draggedRepo) !== args.session.bucketKey) {
+  if (
+    !draggedRepo ||
+    getProjectHeaderDragBucketKey(draggedRepo, args.projectGroups) !== args.session.bucketKey
+  ) {
     return
   }
 

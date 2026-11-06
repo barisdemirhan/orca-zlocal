@@ -1,6 +1,7 @@
 import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
 import type { Repo } from '../../../../shared/repository/repo-types'
 import { getProjectGroupSubtreeIds } from '../../../../shared/project/groups/project-groups'
+import { getCrossHostProjectGroupMembers } from '../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
 import {
   getRepoExecutionHostId,
   type ExecutionHostId
@@ -60,4 +61,35 @@ export function selectProjectGroupRemovalTargets(
     projectIds,
     projects
   }
+}
+
+/** What deleting a header takes with it: each member's subtree, read on that member's own host. */
+export function selectProjectGroupHeaderRemovalTargets(
+  projectGroups: readonly ProjectGroup[],
+  repos: readonly Repo[],
+  groupId: string,
+  hostId?: ExecutionHostId | null
+): ProjectGroupRemovalTargets {
+  const members = getCrossHostProjectGroupMembers(projectGroups, groupId)
+  if (members.length <= 1) {
+    return selectProjectGroupRemovalTargets(projectGroups, repos, groupId, hostId)
+  }
+  const merged: ProjectGroupRemovalTargets = {
+    groupExists: true,
+    deletedGroupIds: new Set(),
+    projectIds: [],
+    projects: []
+  }
+  for (const member of members) {
+    const targets = selectProjectGroupRemovalTargets(
+      projectGroups,
+      repos,
+      member.id,
+      getRepoExecutionHostId(member)
+    )
+    targets.deletedGroupIds.forEach((id) => merged.deletedGroupIds.add(id))
+    merged.projectIds.push(...targets.projectIds)
+    merged.projects.push(...targets.projects)
+  }
+  return merged
 }

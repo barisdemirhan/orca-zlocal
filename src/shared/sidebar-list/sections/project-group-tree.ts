@@ -14,6 +14,10 @@ import {
   withRepoSectionDisplayLabels,
   type ActivityItem
 } from './project-section-order'
+import {
+  getCrossHostProjectGroupMerge,
+  resolveDisplayProjectGroupId
+} from './cross-host-project-group-merge'
 import { compareRootProjectEntries } from './root-project-order'
 import { compareCodePoints, compareSidebarText } from '../sorting/text-order'
 
@@ -36,14 +40,23 @@ export function walkProjectGroupTree<V extends GroupedProjectEntry>(
     folderCountByGroupId: ReadonlyMap<string, number>
     projectOrderBy: ProjectOrderBy
     repoOrder: ReadonlyMap<string, number> | undefined
+    mergeCrossHostGroups?: boolean
   },
   visit: ProjectGroupTreeVisitor<V>
 ): void {
   const { entries, projectGroups, folderCountByGroupId, projectOrderBy, repoOrder } = args
 
+  const displayGroups = args.mergeCrossHostGroups
+    ? getCrossHostProjectGroupMerge(projectGroups).displayGroups
+    : getDistinctProjectGroups(projectGroups)
+
   const groupByProjectGroupId = new Map<string | null, [string, V][]>()
   for (const entry of entries) {
-    const projectGroupId = entry[1].repo?.projectGroupId ?? null
+    const memberGroupId = entry[1].repo?.projectGroupId ?? null
+    const projectGroupId =
+      args.mergeCrossHostGroups && memberGroupId
+        ? resolveDisplayProjectGroupId(projectGroups, memberGroupId)
+        : memberGroupId
     const list = groupByProjectGroupId.get(projectGroupId) ?? []
     list.push(entry)
     groupByProjectGroupId.set(projectGroupId, list)
@@ -67,10 +80,10 @@ export function walkProjectGroupTree<V extends GroupedProjectEntry>(
     })
   }
 
-  const projectGroupsById = new Map(projectGroups.map((group) => [group.id, group]))
+  const projectGroupsById = new Map(displayGroups.map((group) => [group.id, group]))
   const childGroupsByParentId = new Map<string | null, ProjectGroup[]>()
   // Why distinct: membership is id-keyed, so a same-id copy's header would sit empty (#30045).
-  for (const group of getDistinctProjectGroups(projectGroups)) {
+  for (const group of displayGroups) {
     const parentId =
       group.parentGroupId && projectGroupsById.has(group.parentGroupId) ? group.parentGroupId : null
     const children = childGroupsByParentId.get(parentId) ?? []

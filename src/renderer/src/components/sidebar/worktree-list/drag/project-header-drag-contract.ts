@@ -3,17 +3,37 @@ import type { PointerEvent } from 'react'
 
 import type { ProjectHeaderDragBucketKey, ProjectHeaderDragRect } from './project-header-drop'
 import type { Repo } from '../../../../../../shared/repository/repo-types'
+import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
 
 export type RepoDragState = {
   draggingRepoId: string | null
   dropIndex: number | null
   dropIndicatorY: number | null
+  dropProjectGroupId: string | null
 }
 
 export const INITIAL_REPO_DRAG_STATE: RepoDragState = {
   draggingRepoId: null,
   dropIndex: null,
-  dropIndicatorY: null
+  dropIndicatorY: null,
+  dropProjectGroupId: null
+}
+
+export function isSameRepoDragState(a: RepoDragState, b: RepoDragState): boolean {
+  return (
+    a.draggingRepoId === b.draggingRepoId &&
+    a.dropIndex === b.dropIndex &&
+    a.dropIndicatorY === b.dropIndicatorY &&
+    a.dropProjectGroupId === b.dropProjectGroupId
+  )
+}
+
+export type ProjectHeaderGroupDrop = {
+  /** The list the rows were built from: it decides which header a project sits under. */
+  projectGroups: readonly ProjectGroup[]
+  canReorder: boolean
+  canDropOnProjectGroupHeaders: boolean
+  onCommitMoveToProjectGroup: (project: Repo, groupId: string) => void
 }
 
 export type UseRepoHeaderDragArgs = RootProjectHeaderDrag & {
@@ -22,6 +42,7 @@ export type UseRepoHeaderDragArgs = RootProjectHeaderDrag & {
   repoById: ReadonlyMap<string, Repo>
   getLiveRepos: () => readonly Repo[]
   usesProjectGroupOrdering: boolean
+  groupDrop: ProjectHeaderGroupDrop
   onCommitRepoOrder: (orderedIds: string[]) => void
   onCommitProjectGroupOrder: (project: Repo, projectGroupId: string | null, order: number) => void
   getScrollContainer: () => HTMLElement | null
@@ -36,6 +57,7 @@ export type ProjectHeaderDragSession = {
   // Why the row, not its id: a twin on another host shares the id.
   repo: Repo
   bucketKey: ProjectHeaderDragBucketKey
+  ownProjectGroupHeaderId: string | null
   sidebarRepoHeaderIds: readonly string[]
   rootProjectHeaderKeys?: readonly string[]
   rootProjectHeaderHostId?: string
