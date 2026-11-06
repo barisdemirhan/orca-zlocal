@@ -174,7 +174,8 @@ export function applyTerminalColdActivation(controller: TerminalParkingFoundatio
     backgroundMountTabIdsByWorktreeRef.current,
     mountedWorktreeIdsRef.current,
     tabsByWorktree,
-    activationDeferredMountTabIdsByWorktreeRef.current
+    activationDeferredMountTabIdsByWorktreeRef.current,
+    useAppStore.getState().unifiedTabsByWorktree
   )
   if (startupHeldWorktreeId) {
     holdTerminalTabsForStartup(
