@@ -81,9 +81,9 @@ describe('dictation insertion target', () => {
       settings: createGlobalSettingsFixture({ experimentalAgentHub: true }),
       tabsByWorktree: { 'wt-origin': [tab] }
     })
-    const target: React.RefObject<DictationInsertionTarget | null> = {
-      current: { kind: 'terminal', tabId: tab.id, paneId: 7 }
-    }
+    // Why: the personal build's voice branch addresses panes by leaf; this one by number.
+    const origin = { kind: 'terminal' as const, tabId: tab.id, paneId: 7, leafId: 'leaf-7' }
+    const target: React.RefObject<DictationInsertionTarget | null> = { current: origin }
     const { rerender, unmount } = renderHook(
       ({ state }: { state: DictationState }) => useDictationTerminalMountLease(state, target),
       { initialProps: { state: 'starting' } }
