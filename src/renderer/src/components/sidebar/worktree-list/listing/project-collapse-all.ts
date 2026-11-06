@@ -1,5 +1,10 @@
 import { recordCollapsedGroupChanges } from '@/store/slices/ui/collapsed-group-toggle'
-import { isProjectOrPinnedSectionGroupKey } from '../../../../../../shared/sidebar-list/sections/group-keys'
+import { getCrossHostProjectGroupMerge } from '../../../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
+import {
+  getProjectGroupHeaderKey,
+  isProjectOrPinnedSectionGroupKey
+} from '../../../../../../shared/sidebar-list/sections/group-keys'
+import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
 import type { HostSectionRow } from '../../../../../../shared/sidebar-list/hosts/host-section-rows'
 
 export function getRenderedProjectCollapseKeys(rows: readonly HostSectionRow[]): string[] {
@@ -14,6 +19,56 @@ export function getRenderedProjectCollapseKeys(rows: readonly HostSectionRow[]):
     }
   }
   return [...keys]
+}
+
+/**
+ * The stored keys behind these headers. A merged header's id belongs to its oldest member, which
+ * another member replaces while that host is unknown, so every member keeps the header's state.
+ */
+export function withMergedProjectGroupCollapseKeys(
+  projectGroups: readonly ProjectGroup[],
+  keys: readonly string[]
+): string[] {
+  const { displayGroupIdById, membersByDisplayId } = getCrossHostProjectGroupMerge(projectGroups)
+  const memberIdsByKey = new Map<string, string[]>()
+  for (const [memberId, displayId] of displayGroupIdById) {
+    memberIdsByKey.set(
+      getProjectGroupHeaderKey(memberId),
+      (membersByDisplayId.get(displayId) ?? []).map(({ id }) => id)
+    )
+  }
+  return [
+    ...new Set(
+      keys.flatMap(
+        (key) => memberIdsByKey.get(key)?.map((id) => getProjectGroupHeaderKey(id)) ?? [key]
+      )
+    )
+  ]
+}
+
+/** One collapse key per group header, so groups merged across computers count once. */
+export function getProjectGroupHeaderCollapseKeys(
+  projectGroups: readonly ProjectGroup[]
+): string[] {
+  return getCrossHostProjectGroupMerge(projectGroups).displayGroups.map(({ id }) =>
+    getProjectGroupHeaderKey(id)
+  )
+}
+
+/** Collapse state after toggling a merged header; null when the header has a single group. */
+export function toggleMergedProjectGroupCollapse(
+  collapsedGroups: ReadonlySet<string>,
+  projectGroups: readonly ProjectGroup[],
+  groupKey: string
+): Set<string> | null {
+  const memberKeys = withMergedProjectGroupCollapseKeys(projectGroups, [groupKey])
+  if (memberKeys.length <= 1) {
+    return null
+  }
+  const next = new Set(collapsedGroups)
+  const collapse = !collapsedGroups.has(groupKey)
+  memberKeys.forEach((key) => (collapse ? next.add(key) : next.delete(key)))
+  return next
 }
 
 export function areAllProjectsCollapsed(

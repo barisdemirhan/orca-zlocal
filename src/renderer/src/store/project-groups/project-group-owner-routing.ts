@@ -70,6 +70,14 @@ export function runtimeTargetForProjectGroupOwner(
   return owner ? ipcOrRuntimeTargetForHostId(hostId ?? getRepoExecutionHostId(owner)) : null
 }
 
+/** The host whose catalog stores this group; direct SSH groups live in this app's catalog. */
+export function getProjectGroupCatalogHostId(
+  group: ProjectGroupOwnerRecord
+): ExecutionHostId | null {
+  const catalog = ipcOrRuntimeTargetForHostId(getRepoExecutionHostId(group))
+  return catalog ? getRuntimeTargetHostId(catalog) : null
+}
+
 /** Refuse known groups absent from the target catalog; host would silently clear unknown membership. */
 export function isProjectGroupJoinableFromCatalog(
   projectGroups: readonly ProjectGroupOwnerRecord[],
@@ -80,9 +88,6 @@ export function isProjectGroupJoinableFromCatalog(
   const copies = projectGroups.filter((group) => group.id === groupId)
   return (
     copies.length === 0 ||
-    copies.some((group) => {
-      const groupCatalog = ipcOrRuntimeTargetForHostId(getRepoExecutionHostId(group))
-      return groupCatalog !== null && getRuntimeTargetHostId(groupCatalog) === catalogHostId
-    })
+    copies.some((group) => getProjectGroupCatalogHostId(group) === catalogHostId)
   )
 }

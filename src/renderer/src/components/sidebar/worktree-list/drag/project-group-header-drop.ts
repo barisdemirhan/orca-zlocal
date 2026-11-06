@@ -5,6 +5,7 @@ import {
 } from './worktree-sidebar-header-drop-preview'
 import type { Row } from '../../../../../../shared/sidebar-list/row-types'
 import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
+import { getCrossHostProjectGroupMembers } from '../../../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
 
 export type ProjectGroupHeaderDragBucketKey = string
 
@@ -113,14 +114,12 @@ export function getProjectGroupTabOrderUpdatesForSidebarDrop(args: {
   const orderedIds = siblingIds.slice()
   orderedIds.splice(siblingDropIndex, 0, args.draggedGroupId)
 
+  const allGroups = [...args.projectGroupById.values()]
   const updates: ProjectGroupTabOrderUpdate[] = []
   for (const [index, groupId] of orderedIds.entries()) {
-    const group = args.projectGroupById.get(groupId)
-    if (!group) {
-      continue
-    }
     // Equal legacy ranks require updating the full order to represent an interior insertion.
-    if (group.tabOrder !== index) {
+    // Why every member: a header's other hosts can be behind even when its leader is already in place.
+    if (getCrossHostProjectGroupMembers(allGroups, groupId).some((m) => m.tabOrder !== index)) {
       updates.push({ groupId, tabOrder: index })
     }
   }

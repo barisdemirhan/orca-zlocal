@@ -20,6 +20,11 @@ import {
   DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu'
 import { useTranslate } from '@/i18n/use-translate'
+import {
+  getCrossHostProjectGroupMerge,
+  isInProjectGroupHeader,
+  resolveDisplayProjectGroupId
+} from '../../../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
 import type { WorktreeContextMenuModel } from './use-worktree-context-menu-model'
 import {
   getWorktreeParentPickerLabel,
@@ -126,15 +131,22 @@ export function WorktreeProjectGroupSubMenu({ model }: { model: WorktreeContextM
               {t('auto.components.sidebar.WorktreeContextMenu.76865d827f', 'Move to group')}
             </DropdownMenuLabel>
             <DropdownMenuRadioGroup
-              value={repo.projectGroupId ?? ''}
+              value={
+                repo.projectGroupId
+                  ? resolveDisplayProjectGroupId(projectGroups, repo.projectGroupId)
+                  : ''
+              }
               onValueChange={model.handleMoveProjectToGroup}
             >
-              {projectGroups.map((group) => (
+              {getCrossHostProjectGroupMerge(projectGroups).displayGroups.map((group) => (
                 <DropdownMenuRadioItem
                   key={group.id}
                   value={group.id}
                   textValue={group.name}
-                  disabled={isDeleting || repo.projectGroupId === group.id}
+                  disabled={
+                    isDeleting ||
+                    isInProjectGroupHeader(projectGroups, repo.projectGroupId, group.id)
+                  }
                 >
                   <span className="max-w-48 truncate">{group.name}</span>
                 </DropdownMenuRadioItem>

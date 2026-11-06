@@ -140,6 +140,7 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
     allRepoIds: props.allRepoIds,
     repoMap,
     projectGroups,
+    visibleProjectGroups: props.visibleProjectGroups,
     groupBy,
     projectOrderBy: props.projectOrderBy,
     scrollRef,
