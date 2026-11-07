@@ -58,6 +58,10 @@ const mocks = vi.hoisted(() => {
       subscribe: (listener: () => void) => {
         listeners.add(listener)
         return () => listeners.delete(listener)
+      },
+      subscribeSession: (_sessionId: string, listener: () => void) => {
+        listeners.add(listener)
+        return () => listeners.delete(listener)
       }
     }
   }

@@ -17,7 +17,7 @@ vi.mock('../browser-page-channel-switch', () => ({
   switchBrowserPageChannel: mocks.switchBrowserPageChannel
 }))
 
-vi.mock('@/lib/worktree-runtime-owner', () => ({
+vi.mock('@/lib/workspace/ownership/worktree-runtime-owner', () => ({
   getExecutionHostIdForWorktree: () => mocks.executionHostId
 }))
 

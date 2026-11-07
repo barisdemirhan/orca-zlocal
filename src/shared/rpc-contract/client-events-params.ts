@@ -2,7 +2,11 @@ import { z } from 'zod'
 
 // Remote opt-in still requires the authenticated capability; ordinary streams opt out.
 export const ClientEventsSubscribeParams = z
-  .object({ agentHub: z.boolean().optional() })
+  .object({
+    agentHub: z.boolean().optional(),
+    // Only the desktop renderer opts in; main-process relays on the same socket cannot answer host requests.
+    browserHostRequests: z.boolean().optional()
+  })
   .nullable()
   .default({})
 

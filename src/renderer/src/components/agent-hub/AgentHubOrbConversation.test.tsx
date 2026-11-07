@@ -42,6 +42,7 @@ vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
     getSnapshot: () => new Map(),
     activate: () => () => {},
     subscribe: () => () => {},
+    subscribeSession: () => () => {},
     getSessionObservation: () => 'unverifiable'
   })
 }))

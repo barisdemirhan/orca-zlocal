@@ -4,8 +4,8 @@ import {
   structuredAgentSessionSendBody
 } from '../../../shared/agent-session/requests/structured-agent-session-send-mutation'
 import { createStructuredAgentSessionOperationId } from '../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
-import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
-import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/structured-agent-session-host-types'
+import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
+import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/host/structured-agent-session-host-types'
 
 /** Return an id only for a proven journal commit, reconciling throws after append to avoid a duplicate turn.
  *  Upstream's create-time firstMessage cannot reach a chat that already exists, so the Orb keeps this send. */

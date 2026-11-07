@@ -1,11 +1,11 @@
 import { translate } from '@/i18n/i18n'
-import { openRoutedHttpLink } from '@/lib/http-link-destinations'
+import { openRoutedHttpLink } from '@/lib/browser/navigation/http-link-destinations'
 import { resolveWorkspaceDirectory } from '@/lib/workspace-directory'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { resolveMarkdownLinkTarget } from '../editor/markdown/link-routing/markdown-internal-links'
 import { resolveMarkdownPreviewHref } from '../editor/markdown/link-routing/markdown-preview-links'
-import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
+import { openDetectedFilePath } from '../terminal-pane/links/files/terminal-file-open-routing'
 import { agentHubPeekSourceRoute } from './agent-hub-peek-browser-route'
 import {
   agentHubPeekFileItem,

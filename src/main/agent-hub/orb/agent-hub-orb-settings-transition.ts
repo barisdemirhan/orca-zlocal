@@ -2,7 +2,7 @@ import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle
 import type { AgentHubOrbSession } from '../../../shared/agent-hub-orb'
 import type { normalizeAgentHubOrbSettings } from '../../../shared/agent-hub-orb-settings'
 import { projectStructuredAgentSessionStatus } from '../../../shared/agent-session/view/structured-agent-session-projection'
-import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
+import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { AgentHubLedger } from '../../runtime/agent-hub/agent-hub-ledger'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'

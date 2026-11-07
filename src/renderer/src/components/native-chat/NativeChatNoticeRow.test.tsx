@@ -15,6 +15,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { MessageRow } from './NativeChatMessageRow'
 import { NativeChatNoticeRow } from './NativeChatNoticeRow'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
+import { NativeChatSignInContext, type NativeChatSignIn } from './native-chat-sign-in'
 
 import { i18n } from '@/i18n/i18n'
 import { agentSessionFailureWords } from '../../../../shared/agent-session/failures/agent-session-failure-words'
@@ -49,6 +50,7 @@ function orcaStopView(
 }
 
 const NO_OFFER = { offeredTurnItemId: null, continueNow: () => {} }
+const authAction = { signingIn: false, signIn: vi.fn() }
 
 function renderStatus(
   body: AgentJournalStatusItem,
@@ -57,6 +59,7 @@ function renderStatus(
   remoteHost = false,
   agentName?: string,
   offer: ContinueOffer = NO_OFFER,
+  signIn: NativeChatSignIn | null = null,
   presentation: 'chat' | 'orb' = 'chat'
 ) {
   const [message] = projectStructuredItemsToNativeChat([
@@ -74,12 +77,14 @@ function renderStatus(
     <TooltipProvider>
       <NativeChatPresentationContext value={presentation}>
         <NativeChatOrcaStopContext.Provider value={view}>
-          <MessageRow
-            message={message!}
-            agentName={agentName}
-            expandSignal={false}
-            onScrollMessageToTop={vi.fn()}
-          />
+          <NativeChatSignInContext.Provider value={signIn}>
+            <MessageRow
+              message={message!}
+              agentName={agentName}
+              expandSignal={false}
+              onScrollMessageToTop={vi.fn()}
+            />
+          </NativeChatSignInContext.Provider>
         </NativeChatOrcaStopContext.Provider>
       </NativeChatPresentationContext>
     </TooltipProvider>
@@ -208,6 +213,48 @@ describe('usage-limit reset clock changes', () => {
 })
 
 describe('notice rows', () => {
+  it('keeps the OMP status recovery action usable after switching language', async () => {
+    renderStatus(
+      {
+        kind: 'status',
+        tone: 'error',
+        ...agentSessionFailureWords(
+          { kind: 'modelNotSelected' },
+          { agentName: 'OMP', surface: 'row' }
+        )
+      },
+      null,
+      false,
+      false,
+      'OMP',
+      NO_OFFER,
+      { ...authAction, loginCommand: 'omp' }
+    )
+    await act(() => i18n.changeLanguage('fr'))
+    fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }))
+    expect(authAction.signIn).toHaveBeenCalledOnce()
+  })
+
+  it('does not offer account sign-in for a model selection failure without a terminal login', () => {
+    renderStatus(
+      {
+        kind: 'status',
+        tone: 'error',
+        ...agentSessionFailureWords(
+          { kind: 'modelNotSelected' },
+          { agentName: 'Claude', surface: 'row' }
+        )
+      },
+      null,
+      false,
+      false,
+      'Claude',
+      NO_OFFER,
+      authAction
+    )
+    expect(screen.queryByRole('button', { name: 'Sign in' })).not.toBeInTheDocument()
+  })
+
   it('updates a mounted auth row when the reader changes language', async () => {
     renderStatus(
       {
@@ -254,7 +301,7 @@ describe('notice rows', () => {
     ['raindrop', 'MCP client for `raindrop` failed to start: Transport channel closed.']
   ])('keeps the first %s startup error inside closed diagnostics', (name, text) => {
     const body = mcpStartupFailure(name, text)
-    const { container } = renderStatus(body, null, false, false, undefined, NO_OFFER, 'orb')
+    const { container } = renderStatus(body, null, false, false, undefined, NO_OFFER, null, 'orb')
     const disclosure = screen.getByText('MCP connection details').closest('details')
 
     expect(disclosure).not.toHaveAttribute('open')
@@ -297,7 +344,7 @@ describe('notice rows', () => {
   ] satisfies [string, AgentJournalStatusItem][])(
     'keeps a %s visible even when it mentions an MCP server',
     (_name, body) => {
-      const { container } = renderStatus(body, null, false, false, undefined, NO_OFFER, 'orb')
+      const { container } = renderStatus(body, null, false, false, undefined, NO_OFFER, null, 'orb')
       expect(screen.getByText(body.text, { selector: 'p' })).toBeInTheDocument()
       expect(container.querySelector('svg')).toBeInTheDocument()
       expect(screen.queryByText('MCP connection details')).toBeNull()
@@ -337,6 +384,7 @@ describe('notice rows', () => {
       false,
       undefined,
       NO_OFFER,
+      null,
       'orb'
     )
     expect(
@@ -577,6 +625,7 @@ describe('notice rows', () => {
         false,
         undefined,
         NO_OFFER,
+        null,
         'orb'
       )
       expect(screen.getByText(text, { selector: 'p' })).toBeInTheDocument()

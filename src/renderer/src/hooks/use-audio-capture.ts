@@ -1,10 +1,6 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
 import { MicrophoneCaptureSession } from '@/components/dictation/microphone-capture-session'
-import type {
-  StartAudioCaptureOptions,
-  StartAudioCaptureResult,
-  StopAudioCaptureOptions
-} from './audio-capture-types'
+import type { StartAudioCaptureOptions, StartAudioCaptureResult } from './audio-capture-types'
 export type { StartAudioCaptureResult } from './audio-capture-types'
 import {
   DEFAULT_DICTATION_METER,
@@ -14,6 +10,7 @@ import {
   toPublicDictationMeterState,
   type DictationMeterState
 } from '../../../shared/dictation-audio-meter'
+import { useAudioCaptureStopTail, type StopCaptureOptions } from './use-audio-capture-stop-tail'
 
 type BufferedAudioChunk = {
   samples: Float32Array
@@ -203,6 +200,7 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
           }
           void window.api.speech
             .feedAudio(samples, actualRate, sessionIdRef.current)
+            .then((limitReached) => limitReached && options.onAudioLimitReached?.())
             .catch(() => undefined)
         }
 
@@ -299,7 +297,7 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
   const getCapturedChunkCount = useCallback(() => capturedChunkCountRef.current, [])
 
   const stop = useCallback(
-    (options: StopAudioCaptureOptions = {}) => {
+    (options: StopCaptureOptions = {}) => {
       startRequestRef.current += 1
       isCapturingRef.current = false
       bufferAudioRef.current = false
@@ -322,9 +320,12 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
     [cleanupCaptureResources, resetBufferedAudio]
   )
 
+  const finish = useAudioCaptureStopTail(isCapturingRef, startRequestRef, stop)
+
   return {
     start,
     stop,
+    finish,
     flushBufferedAudio,
     discardBufferedAudio,
     getCapturedChunkCount,

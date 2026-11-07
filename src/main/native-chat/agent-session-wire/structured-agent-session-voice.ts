@@ -10,19 +10,17 @@ import {
   type AgentSessionVoiceStopParams,
   type AgentSessionVoiceTextParams
 } from '../../../shared/agent-session-voice'
-import type { StructuredAgentSessionCaller } from './structured-agent-session-host-types'
+import type { StructuredAgentSessionCaller } from './host/structured-agent-session-host-types'
 import {
   mutateStructuredAgentSession,
   runStructuredAgentSessionMutation,
   type StructuredAgentSessionMutationContext
-} from './structured-agent-session-mutation-context'
-import { openForProviderWrite } from './structured-agent-session-send-preparation'
-import {
-  openWithReadyStructuredAgentSessionChild,
-  runWithReadyStructuredAgentSessionOperation
-} from './structured-agent-session-ready-operation'
+} from './operations/structured-agent-session-mutation-context'
+import { openForProviderWrite } from './operations/structured-agent-session-send-preparation'
+import { runWithReadyStructuredAgentSessionOperation } from './operations/structured-agent-session-ready-operation'
+import { openWithReadyStructuredAgentSessionChild } from './operations/structured-agent-session-operation-child'
 import { codexVoiceTargetCapability } from './structured-agent-session-voice-capability'
-import type { MutationPlan } from './structured-agent-session-mutation-plans'
+import type { MutationPlan } from './operations/structured-agent-session-mutation-plans'
 import {
   appendStructuredVoiceText,
   ownsVoiceTextAttempt

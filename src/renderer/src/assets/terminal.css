@@ -149,7 +149,7 @@
 
 /* Two rims over the pane: the locate flash (::before) and Agent Hub's "Outline the focused
    terminal" (::after, so the flash still plays over it). */
-.pane.pane-focus-rim-flash::before,
+.pane-focus-rim-flash::before,
 :root[data-agent-hub-focused-pane-outline] .pane:focus-within::after {
   content: '';
   position: absolute;
@@ -159,7 +159,7 @@
   border-radius: 2px;
 }
 
-.pane.pane-focus-rim-flash::before {
+.pane-focus-rim-flash::before {
   border: 1.5px solid color-mix(in srgb, var(--terminal-pane-locate) 68%, transparent);
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--terminal-pane-locate) 34%, transparent),
@@ -213,7 +213,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pane.pane-focus-rim-flash::before {
+  .pane-focus-rim-flash::before {
     animation: none;
   }
 }

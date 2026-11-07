@@ -10,22 +10,22 @@ import {
 import { computeAgentSessionPayloadFingerprint } from '../../../shared/agent-session/lifecycle/agent-session-mutation-envelope'
 import { codexProviderHandle } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session/journal/agent-session-journal-types'
-import { claudeAndCodexAgents } from './structured-agent-session-adapter-router-test-support'
-import type { StructuredAgentSessionAdapter } from './structured-agent-session-adapter'
+import { claudeAndCodexAgents } from './providers/testing/structured-agent-session-adapter-router-test-support'
+import type { StructuredAgentSessionAdapter } from './providers/structured-agent-session-adapter'
 import type { StructuredAgentSessionVoiceAdapter } from './structured-agent-session-voice-adapter'
 import {
   HOST_TEST_SESSION as SESSION,
   HOST_TEST_THREAD as THREAD,
   hostTestAttachParams,
   hostTestOperationId
-} from './structured-agent-session-host-test-data'
+} from './host/testing/structured-agent-session-host-test-data'
 import {
   createRestTestRig,
   IDLE_MS,
   REST_TEST_CALLER as CALLER,
   sweepOnce,
   type RestTestRig
-} from './structured-agent-session-rest-test-rig'
+} from './host/testing/structured-agent-session-rest-test-rig'
 
 const OWNER = { voiceSessionId: 'voice-attempt-1', generation: 1 }
 const SDP = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'

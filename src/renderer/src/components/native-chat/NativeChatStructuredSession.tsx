@@ -44,7 +44,7 @@ import { useNativeChatComposerError } from './use-native-chat-composer-notice'
 import { useNativeChatProvisionalLaunch } from './use-native-chat-provisional-launch'
 import { useStructuredAgentSessionHostExecution } from './StructuredAgentSessionStatusBridge'
 import { useNativeChatRewindHost } from './use-native-chat-rewind-host'
-import { NativeChatRewindContext } from './native-chat-rewind-context'
+import { NativeChatRowActionsProvider } from './NativeChatRowActionsProvider'
 import { NativeChatQueuedMessageList } from './NativeChatQueuedMessageList'
 import {
   cancelStructuredPrompt,
@@ -64,14 +64,10 @@ import { useNativeChatHostSendGate } from './use-native-chat-host-send-gate'
 import { useNativeChatAvailabilityNotice } from './use-native-chat-availability-notice'
 import { useStructuredAgentSessionStartFailureFacts } from './use-structured-agent-session-start-failure-facts'
 import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-session/agent-session-approval-subject'
-import {
-  isClaudeSignInFailureKind,
-  NativeChatClaudeSignInContext,
-  useNativeChatClaudeSignIn
-} from './native-chat-claude-sign-in'
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { AgentHubOrbComposerState } from '../agent-hub/AgentHubOrbComposerState'
+import { NativeChatSignInContext, useNativeChatSignIn } from './native-chat-sign-in'
 
 export function NativeChatStructuredSession(
   props: Omit<NativeChatStructuredViewProps, 'mode'>
@@ -224,20 +220,21 @@ export function NativeChatStructuredSession(
   })
 
   const launch = { ...provisionalLaunch, retry: submits.retryLaunch }
+  const signIn = useNativeChatSignIn({
+    ...props,
+    worktreeId: ownerWorktreeId,
+    failure: provisionalLaunch.failure,
+    startFailures
+  })
   const availability = useNativeChatAvailabilityNotice({
     unavailable: controller.unavailable,
+    signIn: props.agent === 'claude' ? null : signIn,
     agent: props.agent,
     wslDistro: continuation.view.wslDistro,
     launchFailure: provisionalLaunch.lifecycle === 'failed' ? provisionalLaunch.failure : null,
     journalItems: controller.journalItems,
     submissions: controller.submissions,
     deliveryNotices
-  })
-  const claudeSignIn = useNativeChatClaudeSignIn({
-    agent: props.agent,
-    target: props.target,
-    failure: provisionalLaunch.failure,
-    failureRows: startFailures.filter((fact) => isClaudeSignInFailureKind(fact.kind)).length
   })
   // While Install shows, it says what to do; a start failure's "send again" or Retry can't help.
   const notices = structuredSessionNotices({
@@ -247,7 +244,7 @@ export function NativeChatStructuredSession(
     sessionError: viewState.kind === 'error' || !readFailure ? controller.error : readFailure.text,
     readRefusal: viewState.kind !== 'error' && readFailure ? controller.readRefusal : undefined,
     composerError: composerError ?? continuation.continueError,
-    claudeSignIn,
+    signIn,
     availability,
     hostPermission: hostSendGate.notice
   })
@@ -294,7 +291,7 @@ export function NativeChatStructuredSession(
           ) : viewState.kind === 'empty' ? (
             <NativeChatEmptyPane slot={install.slot} agent={props.agent} />
           ) : (
-            <NativeChatRewindContext.Provider value={controller.rewind.surface}>
+            <NativeChatRowActionsProvider pane={props} chat={controller}>
               <NativeChatUsageLimitActionsProvider
                 recovery={controller}
                 pane={props}
@@ -302,7 +299,7 @@ export function NativeChatStructuredSession(
                 messages={controller.messages}
                 view={continuation.view}
               >
-                <NativeChatClaudeSignInContext.Provider value={claudeSignIn}>
+                <NativeChatSignInContext.Provider value={signIn}>
                   <NativeChatMessageList
                     // A rewind or a /clear replaces the conversation; nothing the old one held carries over.
                     key={`${controller.epoch}:${controller.contextClear.clears}`}
@@ -326,9 +323,9 @@ export function NativeChatStructuredSession(
                     runtimeContext={imageRuntimeContext}
                     deliveryNotices={deliveryNotices}
                   />
-                </NativeChatClaudeSignInContext.Provider>
+                </NativeChatSignInContext.Provider>
               </NativeChatUsageLimitActionsProvider>
-            </NativeChatRewindContext.Provider>
+            </NativeChatRowActionsProvider>
           )}
         </NativeChatContextClearFade>
       </NativeChatCrewFrame>
@@ -348,8 +345,8 @@ export function NativeChatStructuredSession(
             sessionId={props.sessionId}
             paneKey={paneKey}
             isVisible={props.isVisible}
-            backgroundTasks={controller.backgroundTasks}
-            stopBackgroundTask={controller.stopBackgroundTask}
+            tasks={controller}
+            messageListRef={submits.messageListRef}
           />
           {prompt ? null : (
             <NativeChatStructuredComposerTabStrips

@@ -4,13 +4,13 @@ import type {
   AgentSessionVoiceOwner
 } from '../../../shared/agent-session-voice'
 import { refuse } from '../../../shared/agent-session/failures/agent-session-wire-refusals'
-import type { StructuredAgentSessionCaller } from './structured-agent-session-host-types'
+import type { StructuredAgentSessionCaller } from './host/structured-agent-session-host-types'
 import {
   mutateStructuredAgentSession,
   type StructuredAgentSessionMutationContext
-} from './structured-agent-session-mutation-context'
-import type { MutationPlan } from './structured-agent-session-mutation-plans'
-import { openForProviderWrite } from './structured-agent-session-send-preparation'
+} from './operations/structured-agent-session-mutation-context'
+import type { MutationPlan } from './operations/structured-agent-session-mutation-plans'
+import { openForProviderWrite } from './operations/structured-agent-session-send-preparation'
 
 export function ownsVoiceTextAttempt(
   active:

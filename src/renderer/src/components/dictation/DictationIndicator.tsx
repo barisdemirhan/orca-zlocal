@@ -11,7 +11,8 @@ import { DictationGrapes } from './DictationGrapes'
 import { useDictationMeter } from './dictation-meter-store'
 import { useDictationShownInMirror } from '../agent-hub/agent-hub-mirror-dictation-display'
 
-export function DictationIndicator() {
+// captureLive: the mic is recording (and buffering) while the speech engine is still starting.
+export function DictationIndicator({ captureLive }: { captureLive: boolean }) {
   const dictationState = useAppStore((state) => state.dictationState)
   const partialTranscript = useAppStore((state) => state.partialTranscript)
   const dictationMeter = useDictationMeter()
@@ -28,15 +29,15 @@ export function DictationIndicator() {
     return null
   }
 
-  const isListening = dictationState === 'listening'
+  const isLoadingModel = dictationState === 'starting' && captureLive
+  const isListening = dictationState === 'listening' || isLoadingModel
   const isClipping = isListening && dictationMeter.isClipping
   const isSpeaking = isListening && dictationMeter.isSpeaking && !isClipping
-  const lifecycleLabel =
-    dictationState === 'starting'
+  const lifecycleLabel = isListening
+    ? translate('auto.components.dictation.DictationIndicator.3de5a129e7', 'Listening')
+    : dictationState === 'starting'
       ? translate('auto.components.dictation.DictationIndicator.7f3660a7ba', 'Starting mic…')
-      : dictationState === 'stopping'
-        ? translate('auto.components.dictation.DictationIndicator.f082d0cb9d', 'Processing…')
-        : translate('auto.components.dictation.DictationIndicator.3de5a129e7', 'Listening')
+      : translate('auto.components.dictation.DictationIndicator.f082d0cb9d', 'Processing…')
   const label = isClipping
     ? translate('auto.components.dictation.DictationIndicator.4977162383', 'Too loud')
     : isSpeaking
@@ -68,11 +69,19 @@ export function DictationIndicator() {
         <DictationGrapes
           level={dictationMeter.level}
           active={dictationState !== 'stopping'}
-          transitioning={dictationState !== 'listening'}
+          transitioning={!isListening}
         />
         <span aria-hidden className="min-w-0 truncate font-medium">
           {label}
         </span>
+        {isLoadingModel ? (
+          <span aria-hidden className="min-w-0 truncate text-xs text-muted-foreground">
+            {translate(
+              'auto.components.dictation.DictationIndicator.loadingModel',
+              'Loading speech model…'
+            )}
+          </span>
+        ) : null}
         <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
           {announcedLabel}
         </span>

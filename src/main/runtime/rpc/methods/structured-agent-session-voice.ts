@@ -13,9 +13,9 @@ import {
   requireStructuredCleanupHost,
   requireStructuredCapability,
   structuredCallerFor
-} from './structured-agent-session-gate'
-import { bindStructuredAgentSessionStream } from './structured-agent-session-status-stream'
-import { structuredAgentSessionSubscriptionId } from './structured-agent-session-subscription-id'
+} from './structured-sessions/creation/structured-agent-session-gate'
+import { bindStructuredAgentSessionStream } from './structured-sessions/subscriptions/structured-agent-session-status-stream'
+import { structuredAgentSessionSubscriptionId } from './structured-sessions/subscriptions/structured-agent-session-subscription-id'
 
 function requireVoiceClient(ctx: RpcContext): void {
   requireStructuredCapability(ctx)

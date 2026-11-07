@@ -9,7 +9,7 @@ import {
 } from '../../shared/agent-session/journal/agent-session-journal-types'
 import type { AgentJournalItemIdentity } from '../../shared/agent-session/journal/agent-session-journal-identity'
 import { agentJournalItemKey } from '../../shared/agent-session/journal/agent-session-journal-item-key'
-import { estimateStructuredAgentSessionItemBytes } from '../native-chat/agent-session-wire/structured-agent-session-event-sink-estimate'
+import { estimateStructuredAgentSessionItemBytes } from '../native-chat/agent-session-wire/journal-ingress/structured-agent-session-event-sink-estimate'
 import { CodexRealtimeTranscriptSchema } from './codex-structured-realtime-items'
 import type { CodexStructuredSessionEvent } from './structured/session-lifecycle/codex-structured-session-state'
 

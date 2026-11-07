@@ -193,7 +193,6 @@ export function NativeChatQuestionCard({
       autoAdvance.schedule(() => advanceOrSubmit(next, otherText))
     }
   }
-  useNativeChatQuestionKeys(cardRef, shouldFocus && !isSubmitting, q.options.length, pickOption)
 
   useImperativeHandle(controlRef, () => ({
     chooseOption: (optionIndex: number): boolean => {
@@ -229,6 +228,20 @@ export function NativeChatQuestionCard({
     autoAdvance.cancel()
     setIndex(questionIndex)
   }
+  useNativeChatQuestionKeys(
+    cardRef,
+    shouldFocus && !isSubmitting,
+    q.options.length,
+    pickOption,
+    (delta) => {
+      const next = index + delta
+      if (next < 0 || next >= total) {
+        return false
+      }
+      goTo(next)
+      return true
+    }
+  )
   const cancel = (): void => {
     autoAdvance.cancel()
     onCancel()
@@ -289,6 +302,7 @@ export function NativeChatQuestionCard({
               <button
                 key={i}
                 type="button"
+                data-native-chat-question-step
                 disabled={isSubmitting}
                 onClick={() => goTo(i)}
                 className={cn(

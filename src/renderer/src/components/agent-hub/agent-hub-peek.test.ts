@@ -1,7 +1,7 @@
 /** @vitest-environment happy-dom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PortForwardEntry } from '../../../../shared/ssh-types'
-import { openWorkspaceBrowserTab } from '@/lib/workspace-browser-tab-open'
+import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'
 import { toast } from 'sonner'
 
 const mocks = vi.hoisted(() => {
@@ -36,7 +36,7 @@ vi.mock('@/lib/worktree-operation-route', () => ({
   resolveWorktreeOperationRoute: () => mocks.route,
   resolveWorktreeOperationRouteForHost: () => mocks.route
 }))
-vi.mock('../terminal-pane/terminal-file-path-mapping', () => ({
+vi.mock('../terminal-pane/host-files/terminal-file-path-mapping', () => ({
   getTerminalFileContext: () => ({
     target: mocks.route.runtimeEnvironmentId
       ? { kind: 'environment', environmentId: mocks.route.runtimeEnvironmentId }
@@ -45,7 +45,7 @@ vi.mock('../terminal-pane/terminal-file-path-mapping', () => ({
   })
 }))
 vi.mock('@/lib/workspace-directory', () => ({ resolveWorkspaceDirectory: () => '/a' }))
-vi.mock('@/lib/workspace-browser-tab-open', () => ({
+vi.mock('@/lib/browser/workspace/workspace-browser-tab-open', () => ({
   openWorkspaceBrowserTab: vi.fn(async () => {})
 }))
 vi.mock('sonner', () => ({ toast: { info: vi.fn(), error: vi.fn() } }))

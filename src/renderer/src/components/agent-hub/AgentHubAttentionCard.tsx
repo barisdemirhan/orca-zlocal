@@ -1,5 +1,5 @@
 import { getConnectionId } from '@/lib/connection-context'
-import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
+import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
 import { AgentHubPeekChips } from './AgentHubPeekChips'
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'

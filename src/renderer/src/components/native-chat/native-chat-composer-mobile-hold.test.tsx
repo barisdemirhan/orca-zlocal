@@ -23,7 +23,7 @@ vi.mock('@/store', () => {
     })
   }
 })
-vi.mock('../terminal-pane/terminal-fit-restore', () => ({
+vi.mock('../terminal-pane/viewport/terminal-fit-restore', () => ({
   restoreTerminalFitToDesktop: mocks.restoreTerminalFitToDesktop
 }))
 vi.mock('@/lib/pane-manager/pane-manager-registry', () => ({

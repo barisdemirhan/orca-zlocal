@@ -13,7 +13,7 @@ import {
 } from '@/store/slices/worktrees-slice-test-fixtures'
 import { readRuntimeFileContent } from '@/runtime/runtime-file-read-client'
 import type * as RuntimeFileClient from '@/runtime/runtime-file-read-client'
-import type * as HttpLinkRouting from '@/lib/http-link-routing'
+import type * as HttpLinkRouting from '@/lib/browser/navigation/http-link-routing'
 import { agentHubPeekFileItem } from './agent-hub-peek-routing'
 import { AgentHubPeekBrowser } from './AgentHubPeekBrowser'
 import { AgentHubPeekFile } from './AgentHubPeekFile'
@@ -22,13 +22,13 @@ import { agentHubWorkArea } from './agent-hub-floating-arrangement'
 import { agentHubPeekGeometry } from './agent-hub-peek-geometry'
 import { closeAgentHubPeek, openAgentHubPeek, readAgentHubPeek } from './agent-hub-peek-store'
 import type { MarkdownPreviewProps } from '../editor/markdown-preview/render-tree/markdown-preview-types'
-import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
-import type * as TerminalFileOpenRouting from '../terminal-pane/terminal-file-open-routing'
-import { handleTerminalFileLink } from '../terminal-pane/terminal-file-link-actions'
+import { openDetectedFilePath } from '../terminal-pane/links/files/terminal-file-open-routing'
+import type * as TerminalFileOpenRouting from '../terminal-pane/links/files/terminal-file-open-routing'
+import { handleTerminalFileLink } from '../terminal-pane/links/files/terminal-file-link-actions'
 import { closeLeftoverAgentHubPeekPages } from './agent-hub-peek-pages'
 
 const markdownPreview = vi.hoisted(() => vi.fn())
-vi.mock('../terminal-pane/terminal-file-open-routing', async (importOriginal) => {
+vi.mock('../terminal-pane/links/files/terminal-file-open-routing', async (importOriginal) => {
   const actual = await importOriginal<typeof TerminalFileOpenRouting>()
   return { ...actual, openDetectedFilePath: vi.fn() }
 })
@@ -36,7 +36,7 @@ vi.mock('@/runtime/runtime-file-read-client', async (importOriginal) => {
   const actual = await importOriginal<typeof RuntimeFileClient>()
   return { ...actual, readRuntimeFileContent: vi.fn() }
 })
-vi.mock('@/lib/http-link-routing', async (importOriginal) => {
+vi.mock('@/lib/browser/navigation/http-link-routing', async (importOriginal) => {
   const actual = await importOriginal<typeof HttpLinkRouting>()
   return { ...actual, resolveLocalhostHttpLinkDisplayUrl: vi.fn(async () => null) }
 })

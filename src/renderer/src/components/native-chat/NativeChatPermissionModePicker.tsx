@@ -38,7 +38,9 @@ export function NativeChatPermissionModeName(props: {
     <>
       <Icon className="size-3.5 shrink-0" aria-hidden />
       {props.truncate ? (
-        <span className="truncate @max-[30rem]/chat-actions:hidden">{label}</span>
+        <span data-composer-label className="truncate">
+          {label}
+        </span>
       ) : (
         <span>{label}</span>
       )}
@@ -134,10 +136,12 @@ function NativeChatPermissionModePickerInner({
               ) : (
                 <>
                   <Settings2 className="size-3.5 shrink-0" aria-hidden />
-                  <span className="truncate @max-[30rem]/chat-actions:hidden">{label}</span>
+                  <span data-composer-label className="truncate">
+                    {label}
+                  </span>
                 </>
               )}
-              <ChevronDown className="size-3 @max-[30rem]/chat-actions:hidden" />
+              <ChevronDown data-composer-label className="size-3" />
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>

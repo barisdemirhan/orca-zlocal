@@ -6,9 +6,9 @@ import { parsePaneKey, makePaneKey } from '../../../../shared/workspace-layout/s
 import { collectSleepingAgentSessionRecordsForWorktree } from '@/store/slices/agent-status/agent-status-recovery-collection'
 import { resolveWorkspaceTerminalHostAuthority } from '@/lib/workspace-terminal-host-authority'
 import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
-import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
-import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
-import { toRuntimePtyId } from '@/lib/agent-hibernation-pane-eligibility'
+import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
+import { toAgentHibernationRuntimeOwner } from '@/lib/agent-session/hibernation/agent-hibernation-runtime-owner'
+import { toRuntimePtyId } from '@/lib/agent-session/hibernation/agent-hibernation-pane-eligibility'
 import { requestBackgroundTerminalWorktreeMount } from '../terminal/background-terminal-worktree-mount'
 import {
   getPaneSpawnDeferral,

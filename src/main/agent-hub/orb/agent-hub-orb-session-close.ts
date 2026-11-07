@@ -1,7 +1,7 @@
 import type { AgentHubOrbSession } from '../../../shared/agent-hub-orb'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { isStructuredAgentId } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
-import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
+import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { structuredSessionCloseSettled } from '../../runtime/orchestration/terminal-authority/structured-sessions/structured-worker-authority'

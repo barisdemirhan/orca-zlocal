@@ -38,8 +38,12 @@ export function toMirroredPaneKey(
   return makePaneKey(toWebTerminalSurfaceTabId(surface.parentTabId), leafId)
 }
 
+/** A host frame's agent status in this client's pane keys. `frameWorktreeId` is the worktree the
+ *  frame publishes: older hosts omit it on agents restored after a restart, and clients judge a
+ *  row's ownership (and retraction) by worktree, so every reader must see the same owner. */
 export function remapHostAgentStatus(
   surface: TerminalSurface,
+  frameWorktreeId: string,
   retainedSurface?: TerminalSurface
 ): AgentStatusEntry | null {
   if (!surface.agentStatus) {
@@ -54,10 +58,14 @@ export function remapHostAgentStatus(
     hookAgent: surface.agentStatus.agentType
   })
   const spawnedParent = parsePaneKey(surface.agentStatus.spawnedBy?.paneKey ?? '')
+  const entry = normalizeCompatibleAgentStatusEntryForOwner(
+    surface.agentStatus,
+    ownerRecord?.agent,
+    { ownerIsLaunch: ownerRecord?.ownerIsLaunch === true }
+  )
   return {
-    ...normalizeCompatibleAgentStatusEntryForOwner(surface.agentStatus, ownerRecord?.agent, {
-      ownerIsLaunch: ownerRecord?.ownerIsLaunch === true
-    }),
+    ...entry,
+    worktreeId: entry.worktreeId || frameWorktreeId,
     paneKey,
     tabId: toWebTerminalSurfaceTabId(surface.parentTabId),
     spawnedBy: spawnedParent

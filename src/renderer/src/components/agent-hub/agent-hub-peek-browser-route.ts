@@ -5,7 +5,7 @@ import {
   resolveWorktreeOperationRouteForHost
 } from '@/lib/worktree-operation-route'
 import { browserUrlForPortForwardEntry } from '@/lib/workspace-ports/workspace-port-urls'
-import { resolveSshWorkspaceBrowserRouteEligibility } from '@/lib/ssh-workspace-browser-route-eligibility'
+import { resolveSshWorkspaceBrowserRouteEligibility } from '@/lib/browser/workspace/ssh-workspace-browser-route-eligibility'
 import {
   parseExecutionHostId,
   toRuntimeExecutionHostId,

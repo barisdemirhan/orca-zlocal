@@ -64,7 +64,7 @@ function ReplySurface({ compact = false, showField = true }) {
           <HubDictateButton compact={compact} />
         </form>
       ) : null}
-      <DictationIndicator />
+      <DictationIndicator captureLive={false} />
     </TooltipProvider>
   )
 }

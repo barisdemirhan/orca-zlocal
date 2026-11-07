@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type * as Rpc from '@/runtime/runtime-rpc-client'
-import type * as Owner from '@/lib/worktree-runtime-owner'
+import type * as Owner from '@/lib/workspace/ownership/worktree-runtime-owner'
 import type * as Route from '@/lib/terminal-worktree-route'
 import type * as Authority from '@/lib/workspace-terminal-host-authority'
 import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
@@ -14,7 +14,7 @@ vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
   ...(await original<typeof Rpc>()),
   runtimeEnvironmentSupportsCapability: capability
 }))
-vi.mock('@/lib/worktree-runtime-owner', async (original) => ({
+vi.mock('@/lib/workspace/ownership/worktree-runtime-owner', async (original) => ({
   ...(await original<typeof Owner>()),
   runtimeEnvironmentIdOrLocalUnlessTwin: () => 'old-host'
 }))

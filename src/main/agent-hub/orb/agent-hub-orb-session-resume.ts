@@ -1,7 +1,7 @@
 import type { AgentChatPermissionMode } from '../../../shared/agent-launch/permissions/agent-chat-permission-mode'
 import type { AgentHubOrbSession } from '../../../shared/agent-hub-orb'
 import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
-import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
+import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { replaceAgentHubOrbSession } from './agent-hub-orb-settings-transition'
 

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RuntimeStore } from './runtime-store-contract'
-import type { OrchestrationDb } from './orchestration/db'
+import type { OrchestrationDb } from './orchestration/db/orchestration-db'
 import { makeAgentStatusStoreWiring } from './agent-status-store-wiring.test-fixture'
-import { setStructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-registry'
+import { setStructuredAgentSessionHost } from '../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import { structuredWorkerIdentities } from './orchestration/terminal-authority/structured-sessions/structured-worker-identity'
 import { placeWorkerAgent } from './rpc/methods/orchestration/worker/worker-start-agent-placement'
 import { makeStructuredAgentStatusSubject } from '../../shared/agent-status/contracts/agent-status-subject'
@@ -21,7 +21,7 @@ const {
   makeWorkspaceSessionWithHeadlessTerminal
 } = await import('./orca-runtime-tests/orca-runtime-test-fixtures.spec')
 
-vi.mock('./rpc/methods/structured-agent-session-create', () => ({
+vi.mock('./rpc/methods/structured-sessions/creation/structured-agent-session-create', () => ({
   createStructuredAgentSessionForWorktree: async (args: { envelope: { sessionId: string } }) => ({
     ok: true,
     value: { sessionId: args.envelope.sessionId, fence: 7 }

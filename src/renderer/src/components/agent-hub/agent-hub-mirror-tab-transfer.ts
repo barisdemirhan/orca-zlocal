@@ -1,4 +1,4 @@
-import { createBrowserUuid } from '@/lib/browser-uuid'
+import { createNonSecureContextUuid as createBrowserUuid } from '../../../../shared/non-secure-context-uuid'
 import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import {
   AGENT_HUB_MIRROR_TAB_CAP,

@@ -12,6 +12,7 @@ import type { RuntimeNavigationTarget } from './runtime-navigation'
 import type { WorktreeSortOrderUpdate } from './worktree/sort-order-update'
 import type { SidebarInputsChangedEvent } from './sidebar-list/sidebar-inputs-feed-contract'
 import type { AgentHubEvent, AgentHubSnapshot } from './agent-hub-requests'
+import type { BrowserClientHostRequestEvent } from './browser/client-hosting/browser-client-host-request-protocol'
 
 export type RuntimeClientEvent =
   | { type: 'agentHub'; event: AgentHubEvent }
@@ -80,6 +81,8 @@ export type RuntimeClientEventStreamMessage =
       }
     })
   | RuntimeClientEvent
+  // Addressed to this subscriber only, never broadcast.
+  | BrowserClientHostRequestEvent
   | { type: 'end' }
 
 export type RuntimeActivateWorktreeEvent = Extract<RuntimeClientEvent, { type: 'activateWorktree' }>

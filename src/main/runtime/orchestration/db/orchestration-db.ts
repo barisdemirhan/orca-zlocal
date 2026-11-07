@@ -1,4 +1,4 @@
-import type { DecisionGateRow } from '../types'
+import type { DecisionGateRow } from './orchestration-records'
 import { CrewChanges } from '../crew/crew-changes'
 import Database from '../../../sqlite/sync-database'
 import { attachOrchestrationDbMethods } from './attach-orchestration-db-methods'

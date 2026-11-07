@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import type { PaneManager } from '@/lib/pane-manager/pane-manager'
-import type { PtyTransport } from './pty-transport-types'
+import type { PtyTransport } from './pty-transport/pty-transport-types'
 import {
   acquireTerminalInputMountLease,
   hasTerminalMountRetentionLease
 } from './terminal-mount-retention-leases'
-import { handleTerminalProgrammaticTextPaste } from './terminal-programmatic-text-paste'
+import { handleTerminalProgrammaticTextPaste } from './input/paste/terminal-programmatic-text-paste'
 
 type DictationInsertDetail = {
   text?: string

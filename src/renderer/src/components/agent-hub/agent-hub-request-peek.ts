@@ -11,10 +11,10 @@ import {
   resolveTerminalFileLink
 } from '../../../../shared/terminal/links/terminal-links'
 import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
-import { getTerminalFileContext } from '../terminal-pane/terminal-file-path-mapping'
+import { getTerminalFileContext } from '../terminal-pane/host-files/terminal-file-path-mapping'
 import { detectLanguage } from '@/lib/language-detect'
 import { useAppStore } from '@/store'
-import { openRoutedHttpLink } from '@/lib/http-link-destinations'
+import { openRoutedHttpLink } from '@/lib/browser/navigation/http-link-destinations'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
   agentHubPeekFileItem,

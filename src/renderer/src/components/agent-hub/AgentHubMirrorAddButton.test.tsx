@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/tui-agent-startup'
-import type { launchAgentBackgroundSession } from '@/lib/launch-agent-background-session'
+import type { launchAgentBackgroundSession } from '@/lib/agent-session/launch/background/launch-agent-background-session'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import { TooltipProvider } from '../ui/tooltip'
@@ -40,7 +40,7 @@ const fixture = vi.hoisted(() => ({
   openSettingsTarget: vi.fn()
 }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), message: vi.fn() } }))
-vi.mock('@/lib/launch-agent-background-session', () => ({
+vi.mock('@/lib/agent-session/launch/background/launch-agent-background-session', () => ({
   launchAgentBackgroundSession: fixture.launch
 }))
 vi.mock('@/hooks/useAgentDetectionTarget', () => ({

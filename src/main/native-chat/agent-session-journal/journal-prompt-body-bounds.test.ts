@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { AgentJournalItemBodySchema } from '../../../shared/agent-session/journal/agent-session-journal-schemas'
-import { boundJournalPromptBody } from './journal-prompt-body-bounds'
+import { boundJournalPromptBody } from './item-lifecycle/journal-prompt-body-bounds'
 
 it.each([undefined, 'allow_once', 'allow_always', 'future_permission_kind'])(
   'retains permission scope %s through bounded journal serialization',

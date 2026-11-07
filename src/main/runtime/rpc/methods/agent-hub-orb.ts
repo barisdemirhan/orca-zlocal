@@ -5,7 +5,7 @@ import {
   AgentHubOrbListParamsSchema,
   AgentHubOrbReleaseOperationParamsSchema
 } from '../../../../shared/agent-hub-orb-params'
-import { requireStructuredCapability } from './structured-agent-session-gate'
+import { requireStructuredCapability } from './structured-sessions/creation/structured-agent-session-gate'
 
 function orbFor(ctx: RpcContext, cleanup = false) {
   if (!cleanup) {

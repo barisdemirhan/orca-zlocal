@@ -46,9 +46,9 @@ vi.mock('../runtime/rpc/dispatcher', () => ({
       return Promise.resolve({ ok: true, result: {} })
     }
 
-    dispatchStreaming(
+    dispatchStreamingObjects(
       _request: unknown,
-      _emit: (response: string) => void,
+      _emit: (response: unknown) => void,
       options: AdvertisedClient
     ): Promise<void> {
       advertised.streaming.push(options)

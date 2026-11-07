@@ -4,7 +4,7 @@ import { useAppStore } from '@/store'
 import {
   adoptAgentBackgroundSessionTab,
   reserveAgentBackgroundSessionIdentity
-} from '@/lib/adopt-agent-background-session-tab'
+} from '@/lib/agent-session/launch/background/adopt-agent-background-session-tab'
 import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/tui-agent-startup'
 import type { TerminalLayoutSnapshot } from '../../../../shared/workspace-layout/terminal-tab-types'
 import { makePaneKey, parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
@@ -27,7 +27,7 @@ vi.mock('@/store', async () => {
   return { useAppStore: createTestStore() }
 })
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
-vi.mock('@/lib/launch-agent-background-session', () => ({
+vi.mock('@/lib/agent-session/launch/background/launch-agent-background-session', () => ({
   launchAgentBackgroundSession: async ({
     agent,
     worktreeId

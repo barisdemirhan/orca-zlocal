@@ -272,6 +272,7 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
 
   return {
     agentHubEnabled,
+    antigravityAccounts: rateLimits.antigravityAccounts,
     anyFetching,
     anyVisible,
     barRef,

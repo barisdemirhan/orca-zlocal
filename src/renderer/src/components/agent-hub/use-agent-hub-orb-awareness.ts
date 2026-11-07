@@ -9,7 +9,7 @@ import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
 import { collectAgentHubOrbAwareness } from './agent-hub-orb-awareness'
 import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
-import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
+import { toAgentHibernationRuntimeOwner } from '@/lib/agent-session/hibernation/agent-hibernation-runtime-owner'
 
 /** Reads the existing host feeds; no agent-selection state or per-agent polling. */
 export function useAgentHubOrbAwareness(

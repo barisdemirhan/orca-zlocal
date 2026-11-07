@@ -51,6 +51,7 @@ vi.mock('@/hooks/use-audio-capture', () => ({
     stop: mocks.stop,
     discardBufferedAudio: mocks.discard,
     flushBufferedAudio: mocks.flush,
+    finish: mocks.stop,
     getCapturedChunkCount: () => 1
   })
 }))

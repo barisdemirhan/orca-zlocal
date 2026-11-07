@@ -10,15 +10,15 @@ import {
   createStructuredAgentSessionId,
   structuredAgentSessionCreateParams
 } from '../../../shared/agent-session/structured-agent-session-create'
-import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-host'
-import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/structured-agent-session-host-types'
+import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
+import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/host/structured-agent-session-host-types'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import {
   commitStructuredAgentSessionCreate,
   prepareStructuredAgentSessionCreateForWorktree,
   type PreparedStructuredAgentSessionCreate
-} from '../../runtime/rpc/methods/structured-agent-session-create'
+} from '../../runtime/rpc/methods/structured-sessions/creation/structured-agent-session-create'
 import { sendAgentHubOrbOpeningPrompt } from './agent-hub-orb-opening-prompt-send'
 import { isAgentHubOrbDirectory } from './agent-hub-orb-directory'
 

@@ -4,7 +4,7 @@ import { useAppStore } from '../../store'
 import {
   selectEvictionExemptTerminalTabIds,
   selectEvictionExemptTerminalTabLayoutKey
-} from './terminal-eviction-exempt-tabs'
+} from './parking/retention/terminal-eviction-exempt-tabs'
 
 const EMPTY_TAB_IDS: ReadonlySet<string> = new Set()
 

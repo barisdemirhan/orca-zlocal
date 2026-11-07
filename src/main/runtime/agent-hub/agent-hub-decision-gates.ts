@@ -4,7 +4,8 @@ import type {
   AgentHubEvent,
   AgentHubGate
 } from '../../../shared/agent-hub-requests'
-import type { OrchestrationDb, DecisionGateRow } from '../orchestration/db'
+import type { OrchestrationDb } from '../orchestration/db/orchestration-db'
+import type { DecisionGateRow } from '../orchestration/db/orchestration-records'
 
 const requesterSchema = z.object({
   assignee_handle: z.string().nullable(),

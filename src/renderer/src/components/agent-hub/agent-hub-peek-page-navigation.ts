@@ -1,5 +1,5 @@
 import { translate } from '@/i18n/i18n'
-import { openWorkspaceBrowserTab } from '@/lib/workspace-browser-tab-open'
+import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'
 import { toast } from 'sonner'
 import type { AgentHubPeekItem } from './agent-hub-peek-store'
 

@@ -34,10 +34,10 @@ import { AgentHubRow } from './AgentHubRow'
 import { AgentHubMirrorTab } from './AgentHubMirrorTab'
 import { AgentHubPeek } from './AgentHubPeek'
 import { useRef } from 'react'
-import { openWorkspaceBrowserTab } from '@/lib/workspace-browser-tab-open'
+import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'
 import { fallbackAgentHubPeek } from './agent-hub-peek-routing'
 
-vi.mock('@/lib/workspace-browser-tab-open', () => ({
+vi.mock('@/lib/browser/workspace/workspace-browser-tab-open', () => ({
   openWorkspaceBrowserTab: vi.fn(async () => {})
 }))
 

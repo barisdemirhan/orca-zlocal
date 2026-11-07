@@ -1,11 +1,11 @@
 import { useCallback, useContext, type RefObject } from 'react'
 import type { CommentMarkdownLinkClickHandler } from '@/components/sidebar/CommentMarkdown'
 import type { LinkActionRequest } from '@/components/link-actions/link-action-request'
-import { openDetectedFilePath } from '@/components/terminal-pane/terminal-file-open-routing'
+import { openDetectedFilePath } from '@/components/terminal-pane/links/files/terminal-file-open-routing'
 import {
   isTerminalLinkActionActivation,
   isTerminalLinkDirectActivation
-} from '@/components/terminal-pane/terminal-link-activation'
+} from '@/components/terminal-pane/links/gestures/terminal-link-activation'
 import { useAppStore } from '../../store'
 import { routeNativeChatHref } from '../../../../shared/native-chat/native-chat-href-routing'
 import { resolveNativeChatFileLink, type NativeChatFileLinkContext } from './native-chat-file-link'

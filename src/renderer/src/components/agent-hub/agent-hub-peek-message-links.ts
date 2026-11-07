@@ -1,10 +1,10 @@
-import { openRoutedHttpLink } from '@/lib/http-link-destinations'
+import { openRoutedHttpLink } from '@/lib/browser/navigation/http-link-destinations'
 import {
   extractTerminalFileLinks,
   resolveTerminalFileLink
 } from '../../../../shared/terminal/links/terminal-links'
 import { extractTerminalHttpLinks } from '../../../../shared/terminal/links/terminal-http-url-extraction'
-import { openDetectedFilePath } from '../terminal-pane/terminal-file-open-routing'
+import { openDetectedFilePath } from '../terminal-pane/links/files/terminal-file-open-routing'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { agentHubPeekFileItem, agentHubPeekUrlItem } from './agent-hub-peek-routing'
 import type { AgentHubPeekItem } from './agent-hub-peek-store'

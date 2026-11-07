@@ -19,7 +19,7 @@ import {
 } from './agent-hub-orb-quota-notices'
 import type { AgentHubOrbNoticeDisplay } from './agent-hub-orb-notice-display'
 import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
-import { toAgentHibernationRuntimeOwner } from '@/lib/agent-hibernation-runtime-owner'
+import { toAgentHibernationRuntimeOwner } from '@/lib/agent-session/hibernation/agent-hibernation-runtime-owner'
 
 export type OrbAwarenessProjection = {
   snapshot: AgentHubOrbAwareness

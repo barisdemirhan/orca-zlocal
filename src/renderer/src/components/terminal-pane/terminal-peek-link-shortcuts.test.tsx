@@ -3,18 +3,18 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LinkActionPopover } from '@/components/link-actions/LinkActionPopover'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { registerHttpLinkStoreAccessor } from '@/lib/http-link-routing'
+import { registerHttpLinkStoreAccessor } from '@/lib/browser/navigation/http-link-routing'
 import type { LinkActionRequest } from '@/components/link-actions/link-action-request'
 import {
   handleNativeChatWebLink,
   nativeChatWebPeekSource
 } from '../native-chat/native-chat-web-link-actions'
-import { handleTerminalFileLink } from './terminal-file-link-actions'
-import { handleTerminalHttpLink } from './terminal-url-link-hit-testing'
+import { handleTerminalFileLink } from './links/files/terminal-file-link-actions'
+import { handleTerminalHttpLink } from './links/http/terminal-url-link-hit-testing'
 import type {
   TerminalLinkActionContext,
   TerminalLinkActionRequest
-} from './terminal-link-action-request'
+} from './links/terminal-link-action-request'
 import {
   closeAgentHubPeek,
   readAgentHubPeek,
@@ -49,17 +49,20 @@ vi.mock('@/lib/worktree-operation-route', () => ({
 }))
 vi.mock('@/lib/connection-context', () => ({ getConnectionIdForFile: () => mocks.connectionId }))
 vi.mock('@/lib/workspace-directory', () => ({ resolveWorkspaceDirectory: () => '/repo' }))
-vi.mock('./terminal-file-path-mapping', () => ({
+vi.mock('./host-files/terminal-file-path-mapping', async (original) => ({
+  ...(await original<object>()),
   getTerminalFileContext: () => ({ target: { kind: 'local' }, sourceHostResolved: true })
 }))
-vi.mock('./terminal-file-open-routing', () => ({
+vi.mock('./links/files/terminal-file-open-routing', () => ({
   getTerminalFileContext: () => ({ sourceHostResolved: true }),
   mapTerminalFilePath: (path: string) => path,
   openDetectedFilePath: mocks.openFile,
   shouldOpenTerminalFileWithSystemDefault: () => mocks.connectionId === null,
   terminalLinkWslDistro: () => null
 }))
-vi.mock('./terminal-worktree-path-link', () => ({ resolveKnownWorktreeRootPathLink: () => null }))
+vi.mock('./links/files/terminal-worktree-path-link', () => ({
+  resolveKnownWorktreeRootPathLink: () => null
+}))
 
 let unregisterHost = (): void => undefined
 

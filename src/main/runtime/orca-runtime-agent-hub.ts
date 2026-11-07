@@ -5,7 +5,7 @@ import type {
 import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-decision-gates'
 import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
-import type { OrchestrationDb } from './orchestration/db'
+import type { OrchestrationDb } from './orchestration/db/orchestration-db'
 import { OrcaRuntimeWithWindowlessTerminalActivity } from './orca-runtime-windowless-terminal-activity'
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
 import { registerOrbOperations } from './agent-hub/agent-hub-orb-operations'

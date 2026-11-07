@@ -2,16 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../../../shared/agent-session-voice'
 import { DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES } from '../../../ipc/desktop-renderer-runtime-capabilities'
 import { ELECTRON_REMOTE_RUNTIME_CLIENT_CAPABILITIES } from '../../../../shared/electron-remote-runtime-client-capabilities'
-import type { StructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-host'
+import type { StructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import {
   call,
   clearStructuredHostStub,
-  envelope,
   hostCalls,
-  installStructuredHostStub,
+  installStructuredHostStub
+} from './structured-sessions/protocol/structured-agent-session-rpc.test-fixture'
+import {
+  envelope,
   SESSION,
   STRUCTURED_CLIENT
-} from './structured-agent-session-rpc.test-fixture'
+} from './structured-sessions/protocol/structured-agent-session-rpc-client.test-fixture'
 
 const OWNER = { voiceSessionId: 'voice-attempt-1', generation: 1 }
 const SDP = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'
