@@ -120,7 +120,10 @@ describe('runtime environment browser client host handler', () => {
       'runtimeEnvironments:prepareBrowserClientHostPlacement'
     )
 
-    await expect(prepare(null, { selector: 'environment-a' })).resolves.toEqual({ kind: 'server' })
+    await expect(prepare(null, { selector: 'environment-a' })).resolves.toEqual({
+      kind: 'server',
+      statusUnavailable: true
+    })
     await expect(
       prepareRuntimeEnvironmentBrowserPlacement('/profile', {
         selector: 'environment-a',
