@@ -65,7 +65,14 @@ function ReplySurface({ compact = false, showField = true }) {
           <HubDictateButton compact={compact} />
         </form>
       ) : null}
-      <DictationIndicator captureLive={false} anchor={null} failure={null} queued={null} />
+      <DictationIndicator
+        captureLive={false}
+        anchor={null}
+        failure={null}
+        queued={null}
+        setup={null}
+        onSetupClose={() => {}}
+      />
     </TooltipProvider>
   )
 }
