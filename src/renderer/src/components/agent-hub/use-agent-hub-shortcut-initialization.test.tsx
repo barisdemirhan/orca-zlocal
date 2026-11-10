@@ -22,7 +22,9 @@ vi.mock('@/store', async () => {
   return { useAppStore }
 })
 vi.mock('@/lib/shortcut-platform', () => ({ getShortcutPlatform: () => 'darwin' }))
-vi.mock('@/store/plugins/catalog/plugin-contribution-catalog', () => ({ useEditablePluginCommands: () => [] }))
+vi.mock('@/store/plugins/catalog/plugin-contribution-catalog', () => ({
+  useEditablePluginCommands: () => []
+}))
 
 beforeEach(() => {
   useAppStore.setState((s) => ({

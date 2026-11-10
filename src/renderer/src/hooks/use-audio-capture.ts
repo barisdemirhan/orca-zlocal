@@ -10,6 +10,7 @@ import {
 } from '@/components/dictation/dictation-capture-worklet-protocol'
 import { DICTATION_SAMPLE_RATE } from '../../../shared/rpc-contract/speech-params'
 import { DICTATION_METER_WINDOW_MS } from '../../../shared/dictation-audio-meter'
+import { START_DICTATION_TIMEOUT_MS } from '../../../shared/dictation-finish-deadlines'
 import { useAudioCaptureMeter, type DictationMeterPublisher } from './use-audio-capture-meter'
 import { useAudioCaptureStopTail, type StopCaptureOptions } from './use-audio-capture-stop-tail'
 
@@ -18,7 +19,13 @@ type BufferedAudioChunk = {
   sessionId: string
 }
 
-const MAX_BUFFERED_AUDIO_SECONDS = 30
+type CaptureStartOptions = StartAudioCaptureOptions & {
+  /** Sees every 16 kHz frame as it's captured, before any buffering */
+  onFrame?: (samples: Float32Array) => void
+}
+
+// Holds everything said while the model loads, for as long as the host waits for it to load.
+const MAX_BUFFERED_AUDIO_SECONDS = START_DICTATION_TIMEOUT_MS / 1000
 const MAX_BUFFERED_AUDIO_BYTES = 8 * 1024 * 1024
 const CAPTURE_WORKLET_OPTIONS: DictationCaptureWorkletOptions = {
   outputSampleRate: DICTATION_SAMPLE_RATE,
@@ -112,9 +119,7 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
   )
 
   const start = useCallback(
-    async (
-      options: StartAudioCaptureOptions = {}
-    ): Promise<StartAudioCaptureResult | undefined> => {
+    async (options: CaptureStartOptions = {}): Promise<StartAudioCaptureResult | undefined> => {
       if (isCapturingRef.current) {
         return
       }
@@ -184,6 +189,7 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
             return
           }
           capturedChunkCountRef.current += 1
+          options.onFrame?.(data.samples)
           deliverFrame(data.samples, options.onAudioLimitReached)
         }
 

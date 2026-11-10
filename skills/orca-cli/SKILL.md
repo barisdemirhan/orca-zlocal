@@ -6,9 +6,11 @@ description: >-
   says "$orca-cli", "Orca worktree", "child worktree", "spawn codex/claude in a worktree",
   "read/wait/send Orca terminal", "handoff" / "handover" / "give this to another agent",
   "orca hub", "Agent Hub card" / "floating card" / "mirror" (open one, add a tab to it), or
-  "Orca browser". Prefer it over raw git worktree, ad hoc PTYs, or Computer Use when Orca state
-  is involved. Use Computer Use only when a visible window needs GUI control that a CLI,
-  filesystem, or API cannot do.
+  "Orca browser". Also use for opening, testing, screenshotting, or checking how a local or
+  external web page renders while working in Orca, unless the user or project names another
+  browser tool; plain HTTP or API calls (curl, fetch) do not need it. Prefer it over raw git
+  worktree, ad hoc PTYs, or Computer Use when Orca state is involved. Use Computer Use only
+  when a visible window needs GUI control that a CLI, filesystem, or API cannot do.
 ---
 
 # Orca CLI

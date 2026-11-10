@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { Profiler, createRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
+import { NO_DICTATION_LIVE_TEXT } from '@/store/slices/dictation/dictation'
 import { getDefaultSettings, getDefaultVoiceSettings } from '../../../../shared/constants'
 import type { DictationState } from '../../../../shared/speech-types'
 import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
@@ -15,12 +16,12 @@ vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   type StoreState = Pick<
     ReturnType<typeof useAppStore.getState>,
-    'dictationState' | 'partialTranscript' | 'keybindings' | 'settings'
+    'dictationState' | 'liveText' | 'keybindings' | 'settings'
   >
   return {
     useAppStore: create<StoreState>(() => ({
       dictationState: 'idle',
-      partialTranscript: '',
+      liveText: { committed: '', tentative: '', speechPending: false },
       keybindings: {},
       settings: null
     }))
@@ -41,7 +42,7 @@ beforeEach(() => {
   const settings = getDefaultSettings('/test')
   useAppStore.setState({
     dictationState: 'idle',
-    partialTranscript: '',
+    liveText: NO_DICTATION_LIVE_TEXT,
     keybindings: {},
     settings: { ...settings, voice: { ...getDefaultVoiceSettings(), enabled: true } }
   })
@@ -64,7 +65,7 @@ function ReplySurface({ compact = false, showField = true }) {
           <HubDictateButton compact={compact} />
         </form>
       ) : null}
-      <DictationIndicator captureLive={false} />
+      <DictationIndicator captureLive={false} anchor={null} failure={null} queued={null} />
     </TooltipProvider>
   )
 }
@@ -119,7 +120,11 @@ it.each([false, true])('keeps field-started dictation inline with compact=%s', (
   expect(screen.queryByTestId('dictation-indicator')).toBeNull()
   expect(screen.getByRole('status').textContent).toBe('Listening')
   expect(screen.getByText('Listening', { selector: 'span[aria-hidden]' })).toBeTruthy()
-  act(() => useAppStore.setState({ partialTranscript: 'Not inserted yet' }))
+  act(() =>
+    useAppStore.setState({
+      liveText: { committed: '', tentative: 'Not inserted yet', speechPending: false }
+    })
+  )
   expect(screen.queryByText('Not inserted yet')).toBeNull()
   expect(grapes.classList.contains('animate-pulse')).toBe(false)
   const quietGrape = grapes.firstElementChild?.getAttribute('style')

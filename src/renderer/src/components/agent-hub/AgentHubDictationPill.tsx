@@ -30,7 +30,7 @@ export function AgentHubDictationPill({
   stopHint?: string
   responsiveHint?: boolean
 }): React.JSX.Element {
-  const transcript = useAppStore((s) => (compact ? '' : s.partialTranscript.trim()))
+  const transcript = useAppStore((s) => (compact ? '' : s.liveText.tentative.trim()))
   const isHoldMode = useAppStore((s) => s.settings?.voice?.dictationMode === 'hold')
   const meter = useDictationMeter()
   const shortcut = useShortcutKeyDetails(stopActionId)
@@ -72,11 +72,7 @@ export function AgentHubDictationPill({
             : 'flex h-10 items-center gap-2 px-2'
         }
       >
-        <DictationGrapes
-          level={meter.level}
-          active={phase !== 'finishing'}
-          transitioning={!isListening}
-        />
+        <DictationGrapes level={meter.level} active={isListening} />
         <span aria-hidden className="min-w-0 truncate font-medium">
           {label}
         </span>

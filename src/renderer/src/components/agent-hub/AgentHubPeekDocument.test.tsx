@@ -13,8 +13,10 @@ const monacoEditor = vi.hoisted(() => ({
   create: vi.fn(),
   createModel: vi.fn()
 }))
-vi.mock('@/lib/monaco-setup', () => ({ monaco: { editor: monacoEditor } }))
-vi.mock('@/runtime/files/reads/runtime-file-read-client', () => ({ readRuntimeFileContent: vi.fn() }))
+vi.mock('@/lib/editor/monaco/monaco-setup', () => ({ monaco: { editor: monacoEditor } }))
+vi.mock('@/runtime/files/reads/runtime-file-read-client', () => ({
+  readRuntimeFileContent: vi.fn()
+}))
 vi.mock('mermaid', () => ({
   default: {
     initialize: vi.fn(),

@@ -16,9 +16,9 @@ import { MessageRow } from '@/components/native-chat/messages/rows/NativeChatMes
 import { NativeChatNoticeRow } from '@/components/native-chat/messages/notices/NativeChatNoticeRow'
 import { NativeChatPresentationContext } from '../native-chat-presentation-context'
 import {
-  NativeChatSignInContext,
+  NativeChatHostSetupContext,
   type NativeChatSignIn
-} from '@/components/native-chat/host-access/native-chat-sign-in'
+} from '@/components/native-chat/host-access/native-chat-host-setup'
 
 import { i18n } from '@/i18n/i18n'
 import { TranslationScopeProvider } from '@/i18n/translation-scope-provider'
@@ -55,6 +55,7 @@ function orcaStopView(
 
 const NO_OFFER = { offeredTurnItemId: null, continueNow: () => {} }
 const authAction = { signingIn: false, signIn: vi.fn() }
+const setupWith = (signIn: NativeChatSignIn | null) => ({ signIn, install: null })
 
 function renderStatus(
   body: AgentJournalStatusItem,
@@ -77,18 +78,19 @@ function renderStatus(
     }
   ])
   const view = orcaStopView(hostLabel, continueAvailable, remoteHost, offer)
+  const setup = setupWith(signIn)
   return render(
     <TooltipProvider>
       <NativeChatPresentationContext value={presentation}>
         <NativeChatOrcaStopContext.Provider value={view}>
-          <NativeChatSignInContext.Provider value={signIn}>
+          <NativeChatHostSetupContext.Provider value={setup}>
             <MessageRow
               message={message!}
               agentName={agentName}
               expandSignal={false}
               onScrollMessageToTop={vi.fn()}
             />
-          </NativeChatSignInContext.Provider>
+          </NativeChatHostSetupContext.Provider>
         </NativeChatOrcaStopContext.Provider>
       </NativeChatPresentationContext>
     </TooltipProvider>,

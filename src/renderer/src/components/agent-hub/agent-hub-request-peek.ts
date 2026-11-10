@@ -12,7 +12,7 @@ import {
 } from '../../../../shared/terminal/links/terminal-links'
 import { getRelativePathInsideWorktree } from '@/runtime/files/runtime-file-routing'
 import { getTerminalFileContext } from '../terminal-pane/host-files/terminal-file-path-mapping'
-import { detectLanguage } from '@/lib/language-detect'
+import { detectLanguage } from '../../../../shared/editor-language/editor-language-detect'
 import { useAppStore } from '@/store'
 import { openRoutedHttpLink } from '@/lib/browser/navigation/http-link-destinations'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'

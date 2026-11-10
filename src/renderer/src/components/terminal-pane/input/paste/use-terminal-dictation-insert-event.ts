@@ -7,6 +7,7 @@ import {
   hasTerminalMountRetentionLease
 } from '../../terminal-mount-retention-leases'
 import { handleTerminalProgrammaticTextPaste } from './terminal-programmatic-text-paste'
+import { AGENT_PROMPT_POST_PASTE_SUBMIT_DELAY_MS } from '../../../../../../shared/agent-launch/startup/agent-prompt-injection'
 
 export function useTerminalDictationInsertEvent({
   isActiveRef,
@@ -24,22 +25,37 @@ export function useTerminalDictationInsertEvent({
   // Dictation finishes into the pane it started in, even if this tab was switched away meanwhile.
   useEffect(
     () =>
-      registerDictationTerminalTarget(tabId, async (text, paneId) => {
-        // A retained (hidden) tab keeps its terminal mounted until the insertion lands.
-        const releaseLease = hasTerminalMountRetentionLease(worktreeIdRef.current, tabId)
-          ? acquireTerminalInputMountLease({ worktreeId: worktreeIdRef.current, tabId })
-          : undefined
-        try {
-          return await handleTerminalProgrammaticTextPaste({
-            detail: { tabId, text, paneId },
-            tabId,
-            getManager: () => managerRef.current,
-            getPaneTransports: () => paneTransportsRef.current,
-            // A hidden tab's terminal must not take focus from where the user went.
-            focusAfterPaste: () => isActiveRef.current
-          })
-        } finally {
-          releaseLease?.()
+      registerDictationTerminalTarget(tabId, {
+        insert: async (text, paneId) => {
+          // A retained (hidden) tab keeps its terminal mounted until the insertion lands.
+          const releaseLease = hasTerminalMountRetentionLease(worktreeIdRef.current, tabId)
+            ? acquireTerminalInputMountLease({ worktreeId: worktreeIdRef.current, tabId })
+            : undefined
+          try {
+            return await handleTerminalProgrammaticTextPaste({
+              detail: { tabId, text, paneId },
+              tabId,
+              getManager: () => managerRef.current,
+              getPaneTransports: () => paneTransportsRef.current,
+              // A hidden tab's terminal must not take focus from where the user went.
+              focusAfterPaste: () => isActiveRef.current
+            })
+          } finally {
+            releaseLease?.()
+          }
+        },
+        pressEnter: async (paneId, stillQueued) => {
+          // Like an agent prompt paste: the TUI must see the bracketed paste end before Enter.
+          await new Promise((resolve) =>
+            window.setTimeout(resolve, AGENT_PROMPT_POST_PASTE_SUBMIT_DELAY_MS)
+          )
+          if (!stillQueued()) {
+            return
+          }
+          managerRef.current
+            ?.getPanes()
+            .find((pane) => pane.id === paneId)
+            ?.terminal.input('\r')
         }
       }),
     [isActiveRef, managerRef, paneTransportsRef, tabId, worktreeIdRef]

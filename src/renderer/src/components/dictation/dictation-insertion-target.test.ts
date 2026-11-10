@@ -17,7 +17,7 @@ import {
   TEXT_CONTROL_PASTE_DIRECT_MAX_BYTES,
   TEXT_CONTROL_PASTE_MAX_BYTES
 } from '@/lib/text-control-paste'
-import { insertText } from './dictation-insertion-target'
+import { captureInsertionTarget, insertText } from './dictation-insertion-target'
 
 type DocumentWithExecCommand = Document & {
   execCommand?: (commandId: string, showUi?: boolean, value?: string) => boolean
@@ -29,6 +29,7 @@ afterEach(() => {
   document.body.replaceChildren()
   vi.useRealTimers()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
   Object.defineProperty(document, 'execCommand', {
     configurable: true,
     value: originalExecCommand
@@ -56,6 +57,24 @@ function installExecCommandMock(
 }
 
 describe('dictation insertion target', () => {
+  it('sends text dictated into a focused browser page to that page', async () => {
+    const insertDictationText = vi.fn(async () => true)
+    vi.stubGlobal('api', { browser: { insertDictationText } })
+    const viewport = document.createElement('div')
+    viewport.dataset.browserPageViewportId = 'page-1'
+    const guest = document.createElement('webview')
+    guest.tabIndex = 0
+    viewport.appendChild(guest)
+    document.body.appendChild(viewport)
+    guest.focus()
+
+    const target = captureInsertionTarget()
+    expect(target).toEqual({ kind: 'browser', browserPageId: 'page-1' })
+    await expect(insertText('hello', target!)).resolves.toBe(true)
+
+    expect(insertDictationText).toHaveBeenCalledWith({ browserPageId: 'page-1', text: 'hello' })
+  })
+
   it('pins the numeric origin through starting, listening and finishing after mirror removal', () => {
     const previous = useAppStore.getState()
     const tab: TerminalTab = {
@@ -72,8 +91,12 @@ describe('dictation insertion target', () => {
       settings: createGlobalSettingsFixture({ experimentalAgentHub: true }),
       tabsByWorktree: { 'wt-origin': [tab] }
     })
-    // Why: the personal build's voice branch addresses panes by leaf; this one by number.
-    const origin = { kind: 'terminal' as const, tabId: tab.id, paneId: 7, leafId: 'leaf-7' }
+    const origin = {
+      kind: 'terminal' as const,
+      tabId: tab.id,
+      paneId: 7,
+      pane: document.createElement('div')
+    }
     const target: React.RefObject<DictationInsertionTarget | null> = { current: origin }
     const { rerender, unmount } = renderHook(
       ({ state }: { state: DictationState }) => useDictationTerminalMountLease(state, target),

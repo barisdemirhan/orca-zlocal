@@ -77,7 +77,7 @@ import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-sess
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { AgentHubOrbComposerState } from '../agent-hub/AgentHubOrbComposerState'
-import { NativeChatSignInContext } from '@/components/native-chat/host-access/native-chat-sign-in'
+import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
 
 export function NativeChatStructuredSession(
   props: Omit<NativeChatStructuredViewProps, 'mode'>
@@ -231,7 +231,7 @@ export function NativeChatStructuredSession(
     transport
   })
 
-  const { signIn, notices } = useNativeChatStructuredPaneNotices({
+  const { setup, notices } = useNativeChatStructuredPaneNotices({
     props,
     ownerWorktreeId,
     provisionalLaunch,
@@ -301,7 +301,7 @@ export function NativeChatStructuredSession(
                 messages={controller.messages}
                 view={continuation.view}
               >
-                <NativeChatSignInContext.Provider value={signIn}>
+                <NativeChatHostSetupContext.Provider value={setup}>
                   <NativeChatMessageList
                     // A rewind or a /clear replaces the conversation; nothing the old one held carries over.
                     key={`${controller.epoch}:${controller.contextClear.clears}`}
@@ -325,7 +325,7 @@ export function NativeChatStructuredSession(
                     runtimeContext={imageRuntimeContext}
                     deliveryNotices={deliveryNotices}
                   />
-                </NativeChatSignInContext.Provider>
+                </NativeChatHostSetupContext.Provider>
               </NativeChatUsageLimitActionsProvider>
             </NativeChatRowActionsProvider>
           )}

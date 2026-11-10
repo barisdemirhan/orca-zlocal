@@ -23,6 +23,9 @@ src/renderer/src/components/native-chat/session/options/structured/use-structure
 # readHostModelCatalogSnapshot reads module state recorded after render (live-read-in-memo-block).
 src/renderer/src/components/agent-hub/use-agent-hub-orb-options.ts
 
+# Renders read modelBySession, which the usage scan replaces after render (live-read-in-memo-block).
+src/renderer/src/components/agent-hub/use-claude-session-model.ts
+
 # applyTerminalColdActivation mutates controller refs during render on the terminal hot path.
 src/renderer/src/components/use-terminal-controller.ts
 

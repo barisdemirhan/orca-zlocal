@@ -3,7 +3,7 @@ import { useAppStore } from '@/store'
 import type * as Rpc from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import type * as Owner from '@/lib/workspace/ownership/worktree-runtime-owner'
 import type * as Route from '@/lib/terminal-worktree-route'
-import type * as Authority from '@/lib/workspace-terminal-host-authority'
+import type * as Authority from '@/lib/workspace/ownership/workspace-terminal-host-authority'
 import { makeTab } from '@/store/terminals/terminal-tab.test-fixture'
 import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 import { makeWorkingEntryWithoutHistory } from '../activity/ActivityPrototypePage-test-fixtures'
@@ -23,7 +23,7 @@ vi.mock('@/lib/terminal-worktree-route', async (original) => ({
   ...(await original<typeof Route>()),
   resolveTerminalPtyOwner: () => ({ kind: 'runtime', environmentId: 'old-host' })
 }))
-vi.mock('@/lib/workspace-terminal-host-authority', async (original) => ({
+vi.mock('@/lib/workspace/ownership/workspace-terminal-host-authority', async (original) => ({
   ...(await original<typeof Authority>()),
   resolveWorkspaceTerminalHostAuthority: () => 'live'
 }))

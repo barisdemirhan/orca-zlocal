@@ -1,4 +1,4 @@
-import { detectLanguage } from '@/lib/language-detect'
+import { detectLanguage } from '../../../../shared/editor-language/editor-language-detect'
 import { hasBinaryFileExtension } from '../../../../shared/file-preview/binary-file-extensions'
 import type { AgentHubPeekItem } from './agent-hub-peek-store'
 

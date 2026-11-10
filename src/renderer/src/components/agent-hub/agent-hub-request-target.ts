@@ -3,7 +3,7 @@ import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id
 import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { AppState } from '@/store/types'
-import { resolveWorktreeOperationRoute } from '@/lib/worktree-operation-route'
+import { resolveWorktreeOperationRoute } from '@/lib/workspace/ownership/worktree-operation-route'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'

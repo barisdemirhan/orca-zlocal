@@ -23,10 +23,10 @@ function manifest(id: string, recommended = false): SpeechModelManifest {
   return {
     id,
     label: `Model ${id}`,
-    description: '',
     type: 'whisper',
     provider: 'local',
     language: 'en',
+    languages: ['en'],
     sampleRate: 16000,
     streaming: false,
     recommended

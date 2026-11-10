@@ -13,7 +13,7 @@ import { branchDisplayName } from '@/components/sidebar/workspace-card/identity/
 import { COMBOBOX_POPOVER_SURFACE } from '@/components/new-workspace/type-ahead-combobox-styles'
 import { translate } from '@/i18n/i18n'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
-import { selectExecutionHostDisplayLabel } from '@/lib/execution-host-display-label'
+import { selectExecutionHostDisplayLabel } from '@/runtime/hosts/display/execution-host-display-label'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { getIndexedRepoMap } from '@/store/repos/repository-catalog-index'

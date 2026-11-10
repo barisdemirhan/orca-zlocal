@@ -6,7 +6,9 @@ import { AgentHubPeekFile } from './AgentHubPeekFile'
 import { canRenderAgentHubPeekDocument } from './agent-hub-peek-document-budget'
 import type * as PeekDocumentBudgetModule from './agent-hub-peek-document-budget'
 
-vi.mock('@/runtime/files/reads/runtime-file-read-client', () => ({ readRuntimeFileContent: vi.fn() }))
+vi.mock('@/runtime/files/reads/runtime-file-read-client', () => ({
+  readRuntimeFileContent: vi.fn()
+}))
 vi.mock('./AgentHubPeekDocument', () => ({
   AgentHubPeekDocument: ({ content }: { content: string }) => <pre>{content}</pre>
 }))

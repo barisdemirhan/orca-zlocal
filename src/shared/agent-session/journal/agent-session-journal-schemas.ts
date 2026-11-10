@@ -117,7 +117,8 @@ const PromptOption = z.object({
   id: z.string(),
   label: z.string(),
   description: z.string().optional(),
-  permissionKind: z.string().optional()
+  permissionKind: z.string().optional(),
+  preview: z.string().optional()
 })
 
 const FreeTextInput = z.object({

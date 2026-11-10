@@ -28,11 +28,13 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('@/store', () => ({ useAppStore: { getState: () => mocks } }))
-vi.mock('@/lib/connection-context', () => ({ getConnectionIdForFile: () => mocks.connectionId }))
+vi.mock('@/lib/workspace/ownership/connection-context', () => ({
+  getConnectionIdForFile: () => mocks.connectionId
+}))
 vi.mock('@/lib/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: mocks.browser } })
 }))
-vi.mock('@/lib/worktree-operation-route', () => ({
+vi.mock('@/lib/workspace/ownership/worktree-operation-route', () => ({
   resolveWorktreeOperationRoute: () => mocks.route,
   resolveWorktreeOperationRouteForHost: () => mocks.route
 }))

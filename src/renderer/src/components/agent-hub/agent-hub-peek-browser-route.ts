@@ -3,7 +3,7 @@ import { getClientCreationActionPolicy } from '@/lib/client-creation-action-poli
 import {
   resolveWorktreeOperationRoute,
   resolveWorktreeOperationRouteForHost
-} from '@/lib/worktree-operation-route'
+} from '@/lib/workspace/ownership/worktree-operation-route'
 import { browserUrlForPortForwardEntry } from '@/lib/workspace-ports/workspace-port-urls'
 import { resolveSshWorkspaceBrowserRouteEligibility } from '@/lib/browser/workspace/ssh-workspace-browser-route-eligibility'
 import {

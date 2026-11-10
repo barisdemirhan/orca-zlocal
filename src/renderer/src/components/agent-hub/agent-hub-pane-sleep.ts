@@ -9,7 +9,7 @@ import {
   type AgentHubPaneTarget
 } from './agent-hub-pane-target'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
-import { resolveWorkspaceTerminalHostAuthority } from '@/lib/workspace-terminal-host-authority'
+import { resolveWorkspaceTerminalHostAuthority } from '@/lib/workspace/ownership/workspace-terminal-host-authority'
 import {
   agentHubSleepPaneKey,
   agentHubPaneSleepReason,

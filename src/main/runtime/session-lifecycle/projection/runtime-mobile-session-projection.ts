@@ -270,7 +270,8 @@ export function projectRuntimeMobileSessionTabs(
       )
     const { projectedTurnCompletedAt, agentStatus: framedAgentStatus } = frameAgentStatus(
       projectedAgentStatus.agentStatus,
-      snapshot.worktree
+      snapshot.worktree,
+      terminalPty
     )
     const rawTurnCompletedAt =
       hookAgentStatus?.live?.payload.turnCompletedAt ??

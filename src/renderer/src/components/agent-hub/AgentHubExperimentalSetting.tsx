@@ -25,7 +25,7 @@ export function AgentHubExperimentalSetting({
         'auto.components.settings.ExperimentalPane.agentHub.description',
         'One place for every agent and terminal: answer questions, approve commands, and jump to any pane.'
       )}
-      keywords={getExperimentalSearchEntry(t).agentHub.keywords}
+      keywords={getExperimentalSearchEntry().agentHub.keywords}
       className="space-y-3 py-2"
       id="experimental-agent-hub"
     >

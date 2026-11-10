@@ -37,7 +37,9 @@ vi.mock('@/store', async () => {
   }))
   return { useAppStore }
 })
-vi.mock('@/store/plugins/catalog/plugin-contribution-catalog', () => ({ useEditablePluginCommands: () => [] }))
+vi.mock('@/store/plugins/catalog/plugin-contribution-catalog', () => ({
+  useEditablePluginCommands: () => []
+}))
 vi.mock('../settings/shortcuts/use-mac-captured-digit-chords', () => ({
   useMacCapturedDigitChords: () => []
 }))

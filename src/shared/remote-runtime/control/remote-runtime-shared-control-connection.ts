@@ -2,7 +2,7 @@ import type { PairedE2EEClientHandshake } from '../e2ee/paired-e2ee-client-hands
 import type WebSocket from 'ws'
 import type { PairedRuntimeConnection } from '../pairing/paired-runtime-connection'
 import { remoteRuntimeClientCapabilities } from '../remote-runtime-client-capabilities'
-import { remoteRuntimeUnavailableError } from '../requests/remote-runtime-request-frames'
+import { isRetryHeld, openRefusal } from './remote-runtime-shared-control-hold'
 import { openSharedControlSocket } from './remote-runtime-shared-control-open'
 import { closeSharedControlAfterError } from './remote-runtime-shared-control-refusal'
 import * as sharedControlReady from './remote-runtime-shared-control-ready'
@@ -11,7 +11,7 @@ import { SharedControlReconnectScheduler } from './remote-runtime-shared-control
 import { requestSharedControl } from '../requests/remote-runtime-shared-control-requests'
 import { SharedControlRetiredRequestIds } from '../requests/remote-runtime-shared-control-retired-request-ids'
 import { SharedControlReadinessTimer } from './remote-runtime-shared-control-stability'
-import { rejectSharedControlReadyWaiters } from './remote-runtime-shared-control-state'
+import * as sharedControlState from './remote-runtime-shared-control-state'
 import { closeSharedControlSocket, LOCAL_CLOSE } from './remote-runtime-shared-control-socket-close'
 import { startSharedControlSubscription } from '../requests/remote-runtime-shared-control-subscription-start'
 import { SharedControlSocketGeneration } from './remote-runtime-shared-control-socket-generation'
@@ -49,12 +49,21 @@ export class RemoteRuntimeSharedControlConnection {
     private readonly connection: PairedRuntimeConnection,
     private readonly options: SharedControlTypes.RemoteRuntimeSharedControlConnectionOptions = {}
   ) {
-    this.diagnostics = new SharedControlDiagnosticsTracker(options, () => this.diagnosticsCounts())
+    this.diagnostics = new SharedControlDiagnosticsTracker(options, () => ({
+      state: this.state,
+      reconnecting: this.reconnect.isScheduled,
+      pendingRequestCount: this.pendingRequests.size,
+      subscriptionCount: this.subscriptions.size,
+      reconnectAttempt: this.reconnect.attemptCount,
+      unresponsiveSince: this.readiness.unresponsiveSince
+    }))
     this.readiness = new SharedControlReadinessTimer(options, {
       getState: () => this.state,
       getSocket: () => this.ws,
       resetAttempt: () => this.reconnect.resetAttempt(),
-      retire: this.handleSocketClosed
+      retire: this.handleSocketClosed,
+      probe: (timeoutMs) => this.request('status.get', { probe: true }, timeoutMs),
+      onHealthChanged: this.publishDiagnostics
     })
   }
   request<TResult>(
@@ -129,24 +138,13 @@ export class RemoteRuntimeSharedControlConnection {
     }
   }
 
-  private publishDiagnostics(): void {
-    this.diagnostics.publish()
-  }
+  private readonly publishDiagnostics = (): void => this.diagnostics.publish()
   isReady(): boolean {
     const { state, ws, handshake } = this
     return sharedControlReady.isSharedControlReady({ state, ws, handshake })
   }
   getDiagnostics(): SharedControlTypes.RemoteRuntimeSharedConnectionDiagnostics {
     return this.diagnostics.get()
-  }
-  private diagnosticsCounts() {
-    return {
-      state: this.state,
-      reconnecting: this.reconnect.isScheduled,
-      pendingRequestCount: this.pendingRequests.size,
-      subscriptionCount: this.subscriptions.size,
-      reconnectAttempt: this.reconnect.attemptCount
-    }
   }
   reconnectNow(): void {
     refreshRemoteRuntimeSharedControl({
@@ -169,8 +167,9 @@ export class RemoteRuntimeSharedControlConnection {
   }
 
   private open(): void {
-    if (this.intentionallyClosed) {
-      rejectSharedControlReadyWaiters(this.readyWaiters, remoteRuntimeUnavailableError())
+    const refusal = openRefusal(this.intentionallyClosed, this.options)
+    if (refusal) {
+      sharedControlState.rejectSharedControlReadyWaiters(this.readyWaiters, refusal)
       return
     }
     this.reconnect.clear()
@@ -204,6 +203,7 @@ export class RemoteRuntimeSharedControlConnection {
   }
 
   private handleFrame(frame: SharedControlTypes.SharedControlFrame, generation: number): void {
+    this.readiness.noteAnswer()
     handleRuntimeControlFrame({
       frame,
       socketGeneration: generation,
@@ -228,7 +228,7 @@ export class RemoteRuntimeSharedControlConnection {
         this.options.onReady?.()
         // Clear predecessor-attempt diagnostics on recovery so Connected cannot retain stale failure details.
         this.publishDiagnostics()
-        this.readiness.scheduleStableReset()
+        this.readiness.scheduleStableReset(generation)
       },
       replaySubscriptions: () => this.replaySubscriptions(),
       publishDiagnostics: () => this.publishDiagnostics()
@@ -278,7 +278,7 @@ export class RemoteRuntimeSharedControlConnection {
       retry: () =>
         this.reconnect.scheduleAfterSocketClose({
           intentionallyClosed: this.intentionallyClosed,
-          manuallyDisconnected: this.options.isManuallyDisconnected?.() ?? false,
+          manuallyDisconnected: isRetryHeld(this.options),
           capabilityPaused: this.options.isCapabilityPaused?.() ?? false,
           subscriptionCount: this.subscriptions.size,
           open: () => this.open()

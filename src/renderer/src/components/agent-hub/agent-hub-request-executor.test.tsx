@@ -44,7 +44,7 @@ vi.mock('@/lib/browser/workspace/workspace-browser-tab-open', () => ({
 vi.mock('@/lib/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: 'enabled' } })
 }))
-vi.mock('@/lib/connection-context', () => ({
+vi.mock('@/lib/workspace/ownership/connection-context', () => ({
   getConnectionIdForFile: () => null,
   getConnectionId: () => null
 }))

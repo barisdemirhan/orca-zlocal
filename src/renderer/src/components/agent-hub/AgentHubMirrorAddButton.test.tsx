@@ -520,7 +520,7 @@ it.each(['closed-mirror', 'full-mirror', 'missing-tab'] as const)(
     )
     expect(fixture.launch).toHaveBeenCalledOnce()
     expect(toast.error).not.toHaveBeenCalled()
-      await waitFor(() =>
+    await waitFor(() =>
       expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
     )
   }

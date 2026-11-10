@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
-import { getAgentLabel } from '@/lib/agent-catalog'
-import { ensureDetectedAgentsForWorktree } from '@/lib/agent-detection-target-inventory'
+import { getAgentLabel } from '@/lib/agent-catalog/agent-catalog'
+import { ensureDetectedAgentsForWorktree } from '@/lib/agent-session/launch/inventory/agent-detection-target-inventory'
 import { launchAgentInNewTab } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
 import { newAgentLaunchRequestId } from '@/lib/agent-session/launch/routing/agent-launch-request-id'
 import { useAppStore } from '@/store/index'
@@ -12,7 +12,7 @@ import { agentChoicePending } from '../../../host-chat-program'
 import { worktreeLaunchWorkspace } from '../routing/agent-launch-route-input'
 import { addLaunchedSessionToAgentHubMirror } from '@/components/agent-hub/agent-hub-mirror-continuation'
 import type { AgentSessionContinuationPlacement } from '@/lib/agent-session-continuation-placement'
-import type { AgentSessionContinuationMirrorSource } from '@/lib/agent-session-continuation'
+import type { AgentSessionContinuationMirrorSource } from '@/lib/agent-session/context/agent-session-continuation'
 import { isTuiAgentEnabled } from '../../../../../../shared/agent-launch/catalog/tui-agent-selection'
 import type { LaunchSource } from '../../../../../../shared/telemetry-property-schemas'
 import type { TuiAgent } from '../../../../../../shared/agent-launch/catalog/tui-agent'
@@ -20,12 +20,12 @@ import {
   adoptAgentSessionLaunchVerdict,
   planAgentSessionLaunch
 } from '@/lib/agent-session/launch/routing/agent-session-launch-plan'
-import type { AgentLaunchChoice } from '@/lib/agent-menu-selection'
+import type { AgentLaunchChoice } from '@/lib/agent-session/launch/routing/agent-menu-selection'
 import type { AgentLaunchRoute } from '@/lib/agent-session/launch/routing/agent-launch-routing'
 import { translate } from '@/i18n/i18n'
 import { resolveWorktreeDisplayName } from '@/lib/worktree-default-display-name'
 import { getResolvedExecutionHostIdForWorktree } from '@/lib/resolved-worktree-execution-host'
-import { workspaceNavigationToastAction } from '@/lib/workspace-navigation-toast-action'
+import { workspaceNavigationToastAction } from '@/lib/workspace/activation/workspace-navigation-toast-action'
 
 type LaunchAgentSessionContinuationArgs = {
   agent: TuiAgent

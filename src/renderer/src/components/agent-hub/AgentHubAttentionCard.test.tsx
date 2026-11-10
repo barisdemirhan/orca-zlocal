@@ -45,7 +45,9 @@ vi.mock('@/store', async () => {
   return { useAppStore: createTestStore() }
 })
 vi.mock('./use-agent-hub-live-pty', () => ({ useAgentHubLivePty: () => 'pty-1' }))
-vi.mock('../native-chat/host-access/use-native-chat-can-send', () => ({ useNativeChatCanSend: () => true }))
+vi.mock('../native-chat/host-access/use-native-chat-can-send', () => ({
+  useNativeChatCanSend: () => true
+}))
 vi.mock('../native-chat/session/terminal/send/use-native-chat-interactive-send', () => ({
   useNativeChatInteractiveSend: () => send
 }))

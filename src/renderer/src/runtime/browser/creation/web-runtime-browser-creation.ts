@@ -1,7 +1,6 @@
 import type { BrowserPageCreationPlacement } from '../../../../../shared/browser/client-hosting/browser-client-host-placement'
 import type { RuntimeRpcResponse } from '../../../../../shared/runtime-rpc-envelope'
-import type { BrowserTabCreateResult } from '../../../../../shared/runtime-browser-contracts'
-import { toast } from 'sonner'
+import type { BrowserTabCreateResult } from '../../../../../shared/browser/runtime/runtime-browser-contracts'
 import { translate } from '../../../i18n/i18n'
 import { useAppStore } from '../../../store/index'
 import { hasRuntimeRpcErrorCode } from '../../../../../shared/runtime-rpc-error-code'
@@ -61,15 +60,11 @@ export async function createWebRuntimeSessionBrowserTab(
     if (placementPreference !== 'server') {
       try {
         await pauseDuringE2eWebRuntimeBrowserClientHostPreparation()
-        const prepared = await window.api.runtimeEnvironments.prepareBrowserClientHostPlacement({
+        placement = await window.api.runtimeEnvironments.prepareBrowserClientHostPlacement({
           selector: environmentId,
           expectedPairingRevision: context.intentOwner.pairingRevision,
           preference: placementPreference
         })
-        placement = prepared
-        if ('statusUnavailable' in prepared) {
-          notifyStreamedForUnreadableStatus(environmentId)
-        }
       } catch (error) {
         console.warn('[web-runtime-session] failed to prepare client browser host:', error)
         throw new Error(
@@ -275,22 +270,3 @@ export async function createWebRuntimeSessionBrowserTab(
 }
 
 registerPairedBrowserTabCreator(createWebRuntimeSessionBrowserTab)
-
-// Why say so: "This device" is the user's setting, so a page that streams anyway needs a reason.
-function notifyStreamedForUnreadableStatus(environmentId: string): void {
-  const hostLabel =
-    useAppStore.getState().runtimeEnvironments?.find((env) => env.id === environmentId)?.name ??
-    environmentId
-  toast.info(
-    translate('browser.clientHosted.statusUnavailable', 'This page streams from {{value0}}', {
-      value0: hostLabel
-    }),
-    {
-      description: translate(
-        'browser.clientHosted.statusUnavailableDetail',
-        "Orca couldn't confirm {{value0}} can lend its network to this device. Use the address bar icon to reopen the page here.",
-        { value0: hostLabel }
-      )
-    }
-  )
-}

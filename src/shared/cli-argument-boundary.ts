@@ -66,6 +66,7 @@ export const CLI_BOOLEAN_FLAGS = new Set([
   'return-preamble',
   'rotate',
   'run-hooks',
+  'run-setup',
   'show-profile',
   'staged',
   'supervise',

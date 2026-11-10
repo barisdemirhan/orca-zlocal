@@ -17,7 +17,7 @@ vi.mock('@/store', async () => {
   return {
     useAppStore: create(() => ({
       keybindings: {},
-      partialTranscript: '',
+      liveText: { committed: '', tentative: '', speechPending: false },
       dictationState: 'listening',
       settings: { voice: { dictationMode: 'toggle' } }
     }))

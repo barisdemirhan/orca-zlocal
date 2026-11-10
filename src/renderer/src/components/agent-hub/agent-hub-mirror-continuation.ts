@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store'
-import { getAgentLabel } from '@/lib/agent-catalog'
+import { getAgentLabel } from '@/lib/agent-catalog/agent-catalog'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import { agentHubMirrorWindows, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
