@@ -20,7 +20,7 @@ import { toggleAgentHubMirrorViewing } from './agent-hub-mirror-viewing'
 import { usePruneClosedAgentHubMirrorSources } from './use-prune-closed-agent-hub-mirror-sources'
 
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 vi.mock('./agent-hub-mirror-source', async (original) => ({

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import { getStructuredAgentSessionStatusFeed } from '@/runtime/structured-agent-session-status-feed'
+import { getStructuredAgentSessionStatusFeed } from '@/runtime/native-chat/status/structured-agent-session-status-feed'
 import {
   structuredAgentSessionOwnerForTab,
   structuredAgentSessionTargetForHost
-} from '@/runtime/structured-agent-session-owner'
+} from '@/runtime/native-chat/session-ownership/structured-agent-session-owner'
 import { findAgentHubChatTab } from './agent-hub-chat-tabs'
 
 export function agentHubChatSwitchBlockedReason(): string {

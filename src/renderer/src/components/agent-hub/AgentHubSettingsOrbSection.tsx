@@ -8,7 +8,7 @@ import {
   agentHubOrbSupportsAsk,
   resolveAgentHubOrbMode
 } from '../../../../shared/agent-hub-orb-settings'
-import { nativeChatPermissionModeLabel } from '../native-chat/native-chat-permission-mode-labels'
+import { nativeChatPermissionModeLabel } from '../native-chat/session/options/controls/native-chat-permission-mode-labels'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import {

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/tui-agent-startup'
-import type { launchAgentBackgroundSession } from '@/lib/agent-session/launch/background/launch-agent-background-session'
+import type { launchAgentInNewTab } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import { TooltipProvider } from '../ui/tooltip'
@@ -33,15 +33,14 @@ import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
 const fixture = vi.hoisted(() => ({
   groups: Array<AgentHubGroupNode>(),
   disappeared: new Set<string>(),
-  launch: vi.fn<typeof launchAgentBackgroundSession>(),
-  release: vi.fn(),
+  launch: vi.fn<typeof launchAgentInNewTab>(),
   detected: Array<TuiAgent>('claude', 'codex', 'gemini'),
   openSettingsPage: vi.fn(),
   openSettingsTarget: vi.fn()
 }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), message: vi.fn() } }))
-vi.mock('@/lib/agent-session/launch/background/launch-agent-background-session', () => ({
-  launchAgentBackgroundSession: fixture.launch
+vi.mock('@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab', () => ({
+  launchAgentInNewTab: fixture.launch
 }))
 vi.mock('@/hooks/useAgentDetectionTarget', () => ({
   useAgentDetectionTargetForWorktree: () => ({ kind: 'local' })
@@ -55,6 +54,7 @@ vi.mock('@/store', async () => {
   return {
     useAppStore: create(() => ({
       tabsByWorktree,
+      terminalLayoutsByTabId: {},
       repos: [],
       worktreesByRepo: {},
       projectGroups: [],
@@ -158,12 +158,20 @@ function setup() {
 }
 
 function prepareLaunch() {
-  fixture.launch.mockImplementation(async ({ agent, worktreeId }) => {
+  fixture.launch.mockImplementation(({ agent, worktreeId }) => {
     const tab = makeTabWithIds('new-agent', worktreeId, agent)
     useAppStore.setState((state) => ({
       tabsByWorktree: {
         ...state.tabsByWorktree,
         [worktreeId]: [...(state.tabsByWorktree[worktreeId] ?? []), tab]
+      },
+      terminalLayoutsByTabId: {
+        ...state.terminalLayoutsByTabId,
+        [tab.id]: {
+          root: { type: 'leaf', leafId: '11111111-1111-4111-8111-111111111111' },
+          activeLeafId: '11111111-1111-4111-8111-111111111111',
+          expandedLeafId: null
+        }
       }
     }))
     const startupPlan = buildAgentStartupPlan({
@@ -177,12 +185,9 @@ function prepareLaunch() {
       throw new Error('No startup plan')
     }
     return {
-      tabId: tab.id,
-      paneKey: `${tab.id}:11111111-1111-4111-8111-111111111111`,
-      ptyId: tab.ptyId ?? 'pty-new',
+      surface: { kind: 'local-terminal', tabId: tab.id },
       startupPlan,
-      terminalOwnership: { release: fixture.release, finalize: async () => null },
-      releaseRuntimeObservers: () => {}
+      pasteDraftAfterLaunch: false
     }
   })
 }
@@ -369,11 +374,14 @@ it('launches in the active home workspace and adds and selects the returned pane
   await waitFor(() =>
     expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
   )
-  expect(fixture.launch).toHaveBeenCalledWith({
-    agent: 'claude',
-    worktreeId: worktree.id,
-    launchSource: 'tab_bar_quick_launch'
-  })
+  expect(fixture.launch).toHaveBeenCalledWith(
+    expect.objectContaining({
+      agent: 'claude',
+      worktreeId: worktree.id,
+      launchSource: 'tab_bar_quick_launch',
+      activate: false
+    })
+  )
   const mirror = readAgentHubMirrors().windows.find((window) => window.id === id)
   expect(mirror?.tabs).toHaveLength(2)
   expect(mirror?.tabs.find((tab) => tab.id === mirror.activeTabId)?.target).toMatchObject({
@@ -382,7 +390,6 @@ it('launches in the active home workspace and adds and selects the returned pane
     paneKey: 'new-agent:11111111-1111-4111-8111-111111111111'
   })
   expect(screen.getByTestId('mirror-focus').textContent).toBe('false')
-  expect(fixture.release).toHaveBeenCalledOnce()
   expect({
     worktree: useAppStore.getState().activeWorktreeId,
     tab: useAppStore.getState().activeTabId,
@@ -443,9 +450,11 @@ it.each(['reject', 'no-result'] as const)(
     setup()
     const before = readAgentHubMirrors()
     if (failure === 'reject') {
-      fixture.launch.mockRejectedValue(new Error('SSH connection lost'))
+      fixture.launch.mockImplementation(() => {
+        throw new Error('SSH connection lost')
+      })
     } else {
-      fixture.launch.mockResolvedValue(null)
+      fixture.launch.mockReturnValue(null)
     }
     fireEvent.click(await openNewAgent())
     await waitFor(() =>
@@ -470,46 +479,11 @@ it.each(['reject', 'no-result'] as const)(
 
 it('keeps the picker open after a failed launch from a workspace row', async () => {
   setup()
-  fixture.launch.mockResolvedValue(null)
+  fixture.launch.mockReturnValue(null)
   fireEvent.click(await openNewAgent('second'))
   await waitFor(() => expect(toast.error).toHaveBeenCalledOnce())
   expect(screen.getByRole('textbox', { name: 'Filter terminals' })).toBeTruthy()
   expect(screen.queryByRole('dialog', { name: 'New agent' })).toBeNull()
-})
-
-it('keeps focus on another typing field when a delayed launch closes the picker and prevents duplicate starts', async () => {
-  const { id } = setup()
-  prepareLaunch()
-  const launch = fixture.launch.getMockImplementation()
-  if (!launch) {
-    throw new Error('No launch implementation')
-  }
-  let resolve: () => void = () => {}
-  const ready = new Promise<void>((done) => {
-    resolve = done
-  })
-  fixture.launch.mockImplementation(async (args) => {
-    await ready
-    return launch(args)
-  })
-  const button = await openNewAgent()
-  fireEvent.click(button)
-  fireEvent.click(button)
-  expect(fixture.launch).toHaveBeenCalledOnce()
-  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-  fireEvent.click(screen.getByRole('button', { name: 'Add terminal to this mirror' }))
-  expect(screen.getByRole('button', { name: 'New agent' }).hasAttribute('disabled')).toBe(true)
-  const prompt = screen.getByRole('textbox', { name: 'Main prompt' })
-  prompt.focus()
-  await act(async () => resolve())
-  await waitFor(() =>
-    expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
-  )
-  await waitFor(() =>
-    expect(readAgentHubMirrors().windows.find((window) => window.id === id)?.tabs).toHaveLength(2)
-  )
-  expect(toast.error).not.toHaveBeenCalled()
-  expect(document.activeElement).toBe(prompt)
 })
 
 it.each(['closed-mirror', 'full-mirror', 'missing-tab'] as const)(
@@ -521,8 +495,8 @@ it.each(['closed-mirror', 'full-mirror', 'missing-tab'] as const)(
     if (!launch) {
       throw new Error('No launch implementation')
     }
-    fixture.launch.mockImplementation(async (args) => {
-      const launched = await launch(args)
+    fixture.launch.mockImplementation((args) => {
+      const launched = launch(args)
       if (failure === 'closed-mirror') {
         closeAgentHubMirror(id)
       } else if (failure === 'full-mirror') {
@@ -546,8 +520,7 @@ it.each(['closed-mirror', 'full-mirror', 'missing-tab'] as const)(
     )
     expect(fixture.launch).toHaveBeenCalledOnce()
     expect(toast.error).not.toHaveBeenCalled()
-    expect(fixture.release).toHaveBeenCalledOnce()
-    await waitFor(() =>
+      await waitFor(() =>
       expect(screen.queryByRole('textbox', { name: 'Filter terminals' })).toBeNull()
     )
   }

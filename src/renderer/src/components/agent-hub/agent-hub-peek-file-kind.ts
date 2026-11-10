@@ -1,5 +1,5 @@
 import { detectLanguage } from '@/lib/language-detect'
-import { hasBinaryFileExtension } from '../../../../shared/binary-file-extensions'
+import { hasBinaryFileExtension } from '../../../../shared/file-preview/binary-file-extensions'
 import type { AgentHubPeekItem } from './agent-hub-peek-store'
 
 type PeekFileKind = Extract<AgentHubPeekItem['content'], { filePath: string }>['kind'] | 'html'

@@ -6,13 +6,11 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
-import {
-  makeFolderWorkspace,
-  makeWorktree,
-  TEST_REPO
-} from '@/store/slices/worktrees-slice-test-fixtures'
-import { readRuntimeFileContent } from '@/runtime/runtime-file-read-client'
-import type * as RuntimeFileClient from '@/runtime/runtime-file-read-client'
+import { makeFolderWorkspace } from '@/store/folder-workspaces/folder-workspace.test-fixture'
+import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
+import { TEST_REPO } from '@/store/repos/repo.test-fixture'
+import { readRuntimeFileContent } from '@/runtime/files/reads/runtime-file-read-client'
+import type * as RuntimeFileClient from '@/runtime/files/reads/runtime-file-read-client'
 import type * as HttpLinkRouting from '@/lib/browser/navigation/http-link-routing'
 import { agentHubPeekFileItem } from './agent-hub-peek-routing'
 import { AgentHubPeekBrowser } from './AgentHubPeekBrowser'
@@ -32,7 +30,7 @@ vi.mock('../terminal-pane/links/files/terminal-file-open-routing', async (import
   const actual = await importOriginal<typeof TerminalFileOpenRouting>()
   return { ...actual, openDetectedFilePath: vi.fn() }
 })
-vi.mock('@/runtime/runtime-file-read-client', async (importOriginal) => {
+vi.mock('@/runtime/files/reads/runtime-file-read-client', async (importOriginal) => {
   const actual = await importOriginal<typeof RuntimeFileClient>()
   return { ...actual, readRuntimeFileContent: vi.fn() }
 })

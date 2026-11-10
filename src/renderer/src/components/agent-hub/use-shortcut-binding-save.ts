@@ -6,7 +6,9 @@ import {
   findKeybindingConflictsForDefinitions,
   formatKeybindingList,
   getEffectiveKeybindingsForDefinition,
+  getKeybindingResetBindings,
   normalizeKeybindingListForAction,
+  resolveKeybindingOverrides,
   type KeybindingActionId,
   type KeybindingOverrides
 } from '../../../../shared/keybindings'
@@ -30,9 +32,15 @@ export function useShortcutBindingSave(
   const mountedRef = useMountedRef()
   const [errors, setErrors] = useState<Partial<Record<KeybindingActionId, string>>>({})
   const checkConflicts = (actionIds: KeybindingActionId[], next: KeybindingOverrides): boolean => {
-    const conflict = findKeybindingConflictsForDefinitions(catalog.definitions, platform, next, {
-      ignoredActionIds: catalog.ignoredConflictActionIds
-    }).find((candidate) => candidate.actionIds.some((id) => actionIds.includes(id)))
+    const conflict = findKeybindingConflictsForDefinitions(
+      catalog.definitions,
+      platform,
+      resolveKeybindingOverrides(platform, next, snapshot?.defaultOverrides ?? {}),
+      {
+        ignoredActionIds: catalog.ignoredConflictActionIds,
+        includeMainProcessInterception: true
+      }
+    ).find((candidate) => candidate.actionIds.some((id) => actionIds.includes(id)))
     if (conflict) {
       const actionId = conflict.actionIds.find((id) => actionIds.includes(id))
       if (!actionId) {
@@ -83,18 +91,24 @@ export function useShortcutBindingSave(
       return false
     }
     const defaults = getEffectiveKeybindingsForDefinition(definition, platform, {})
-    const matchesDefault =
-      sameBindings(normalized, defaults) || (normalized.length === 0 && defaults.length === 0)
-    const clearsOverride = matchesDefault && !hasCommonBindingOverride(snapshot, actionId)
-    const next = clearsOverride
-      ? removeBindingOverride(keybindings, actionId)
-      : { ...keybindings, [actionId]: normalized }
+    const explicitOverrides = snapshot?.defaultOverrides
+      ? { ...snapshot.commonOverrides, ...snapshot.platformOverrides[platform] }
+      : keybindings
+    const shouldReset =
+      sameBindings(normalized, defaults) && !hasCommonBindingOverride(snapshot, actionId)
+    const nextBindings = shouldReset
+      ? getKeybindingResetBindings(actionId, platform, snapshot?.commonOverrides ?? {})
+      : normalized
+    const next =
+      nextBindings === null
+        ? removeBindingOverride(explicitOverrides, actionId)
+        : { ...explicitOverrides, [actionId]: nextBindings }
     if (!checkConflicts([actionId], next)) {
       return false
     }
     setErrors((previous) => ({ ...previous, [actionId]: undefined }))
     try {
-      await (clearsOverride ? resetOverride(actionId) : setOverride(actionId, normalized))
+      await (shouldReset ? resetOverride(actionId) : setOverride(actionId, normalized))
       return true
     } catch (failure) {
       if (mountedRef.current) {

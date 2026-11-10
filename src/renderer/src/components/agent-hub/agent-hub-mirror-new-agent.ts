@@ -1,7 +1,8 @@
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { launchAgentBackgroundSession } from '@/lib/agent-session/launch/background/launch-agent-background-session'
+import { launchAgentInNewTab } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
+import { newAgentLaunchRequestId } from '@/lib/agent-session/launch/routing/agent-launch-request-id'
 import { getAgentCatalog } from '@/lib/agent-catalog'
 import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
@@ -14,7 +15,7 @@ import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubMirrorWindows, AGENT_HUB_MIRROR_TAB_CAP } from './agent-hub-mirror-membership'
 import { agentHubMirrorTabCapReason } from './agent-hub-mirror-tab-actions'
 import { addAgentHubMirrorTab } from './agent-hub-mirror-tab-operations'
-import { agentHubMirrorPaneExists } from './agent-hub-mirror-source'
+import { agentHubMirrorPaneExists, agentHubMirrorShellLeafId } from './agent-hub-mirror-source'
 
 const REMOTE_TAB_WAIT_MS = 10_000
 
@@ -91,20 +92,37 @@ export async function startAgentInAgentHubMirror(
     )
   }
   try {
-    const launched = await launchAgentBackgroundSession({
+    const launched = launchAgentInNewTab({
+      requestId: newAgentLaunchRequestId(),
       agent,
       worktreeId: worktree.id,
-      launchSource: 'tab_bar_quick_launch'
+      launchSource: 'tab_bar_quick_launch',
+      activate: false
     })
     if (!launched) {
       throw new Error(
         translate('agentHub.mirror.newAgentUnavailable', 'The new terminal is not available.')
       )
     }
+    if ('refused' in launched) {
+      return false
+    }
     started = true
-    // A mirror is user-owned; it must never retain automation's retirement subscription.
-    launched.terminalOwnership?.release()
-    const resolved = await resolveLaunchedMirrorPane(worktree.id, launched.tabId, launched.paneKey)
+    if (launched.surface.kind !== 'local-terminal') {
+      reportWorkspace()
+      return true
+    }
+    const launchedTabId = launched.surface.tabId
+    const leafId = agentHubMirrorShellLeafId(
+      useAppStore.getState().terminalLayoutsByTabId[launchedTabId]
+    )
+    const resolved = leafId
+      ? await resolveLaunchedMirrorPane(
+          worktree.id,
+          launchedTabId,
+          makePaneKey(launchedTabId, leafId)
+        )
+      : null
     if (!resolved) {
       reportWorkspace()
       return true

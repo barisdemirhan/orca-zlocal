@@ -1,5 +1,6 @@
 import type { AppState } from '@/store/types'
-import { getIndexedAllWorktrees, getIndexedRepoMap } from '@/store/worktree-repo-index'
+import { getIndexedAllWorktrees } from '@/store/slices/worktrees/listing/worktree-catalog-index'
+import { getIndexedRepoMap } from '@/store/repos/repository-catalog-index'
 import { compareWorktreeDisplayName } from '@/lib/worktree-display-name-order'
 import { orderEmptyQueryWorktrees } from '@/lib/order-empty-query-worktrees'
 import {

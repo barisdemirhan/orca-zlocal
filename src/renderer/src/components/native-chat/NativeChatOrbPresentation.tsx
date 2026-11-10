@@ -2,10 +2,11 @@ import { useContext, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { ProviderFrameRow } from './NativeChatTranscriptChrome'
+import { ProviderFrameRow } from '@/components/native-chat/messages/diagnostics/NativeChatProviderDetails'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
-import { useNativeChatTranscriptProjection } from './use-native-chat-transcript-projection'
-import type { NativeChatTurnStatus, useNativeChatTurnStatus } from './use-native-chat-turn-status'
+import { useNativeChatTranscriptProjection } from './conversation/projection/use-native-chat-transcript-projection'
+import type { useNativeChatTurnStatus } from './conversation/turns/use-native-chat-turn-status'
+import type { NativeChatTurnStatus } from '../../../../shared/native-chat/transcript/native-chat-turn-status'
 import {
   nativeChatHookErrorSummary,
   nativeChatOrbConversationMessages,

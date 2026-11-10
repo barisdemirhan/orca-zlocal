@@ -25,7 +25,7 @@ import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle
 import { getStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
-import type { RuntimeStore } from '../../runtime/runtime-store-contract'
+import type { RuntimeStore } from '../../runtime/construction/runtime-store-contract'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
 import { agentHubOrbIdentityOptions, ensureAgentHubOrbDirectory } from './agent-hub-orb-directory'

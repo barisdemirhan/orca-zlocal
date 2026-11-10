@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createTestStore } from './store-test-helpers'
+import { createTestStore } from '@/store/testing/app-store-test-fixture'
 
 describe('direct terminal status model ownership', () => {
   it.each([undefined, 'claude-opus-5-5'])(

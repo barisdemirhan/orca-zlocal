@@ -1,12 +1,12 @@
 /** @vitest-environment happy-dom */
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { readRuntimeFileContent } from '@/runtime/runtime-file-read-client'
+import { readRuntimeFileContent } from '@/runtime/files/reads/runtime-file-read-client'
 import { AgentHubPeekFile } from './AgentHubPeekFile'
 import { canRenderAgentHubPeekDocument } from './agent-hub-peek-document-budget'
 import type * as PeekDocumentBudgetModule from './agent-hub-peek-document-budget'
 
-vi.mock('@/runtime/runtime-file-read-client', () => ({ readRuntimeFileContent: vi.fn() }))
+vi.mock('@/runtime/files/reads/runtime-file-read-client', () => ({ readRuntimeFileContent: vi.fn() }))
 vi.mock('./AgentHubPeekDocument', () => ({
   AgentHubPeekDocument: ({ content }: { content: string }) => <pre>{content}</pre>
 }))

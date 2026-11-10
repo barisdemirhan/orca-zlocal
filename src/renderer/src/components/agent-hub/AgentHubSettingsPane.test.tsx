@@ -10,11 +10,11 @@ import { AgentHubSettingsPane } from './AgentHubSettingsPane'
 import { AgentHubExperimentalSetting } from './AgentHubExperimentalSetting'
 import { AgentHubShortcutsDialog } from './AgentHubShortcutsDialog'
 import { setAgentHubShortcutsOpen } from './agent-hub-shortcuts-dialog'
-import { callStructuredAgentSession } from '@/runtime/structured-agent-session-client'
-import { ensureLocalRuntimeCapabilities } from '@/runtime/local-runtime-capabilities'
-import { resetHostStructuredAgentsForTests } from '@/runtime/host-structured-agents'
-import { resetHostModelCatalogSnapshotsForTests } from '@/runtime/host-model-catalog-snapshots'
-import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
+import { callStructuredAgentSession } from '@/runtime/native-chat/requests/structured-agent-session-call'
+import { ensureLocalRuntimeCapabilities } from '@/runtime/hosts/capabilities/local-runtime-capabilities'
+import { resetHostStructuredAgentsForTests } from '@/runtime/native-chat/agent-catalogs/host-structured-agents'
+import { resetHostModelCatalogSnapshotsForTests } from '@/runtime/native-chat/model-catalogs/host-model-catalog-snapshots'
+import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -37,17 +37,17 @@ vi.mock('@/store', async () => {
   }))
   return { useAppStore }
 })
-vi.mock('@/store/plugin-panels', () => ({ useEditablePluginCommands: () => [] }))
+vi.mock('@/store/plugins/catalog/plugin-contribution-catalog', () => ({ useEditablePluginCommands: () => [] }))
 vi.mock('../settings/shortcuts/use-mac-captured-digit-chords', () => ({
   useMacCapturedDigitChords: () => []
 }))
-vi.mock('@/runtime/runtime-rpc-client', () => ({
+vi.mock('@/runtime/rpc/calls/runtime-rpc-call', () => ({
   callRuntimeRpc: vi.fn(async () => ({ agents: [{ agent: 'custom-acp', capabilities: {} }] }))
 }))
-vi.mock('@/runtime/structured-agent-session-client', () => ({
+vi.mock('@/runtime/native-chat/requests/structured-agent-session-call', () => ({
   callStructuredAgentSession: vi.fn(async () => ({ origin: 'unknown' }))
 }))
-vi.mock('@/runtime/local-runtime-capabilities', async () => {
+vi.mock('@/runtime/hosts/capabilities/local-runtime-capabilities', async () => {
   const { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } =
     await import('../../../../shared/agent-session/structured-agent-session-surface-capabilities')
   const { STRUCTURED_AGENT_SESSION_REGISTERED_AGENTS_RUNTIME_CAPABILITY } =

@@ -3,8 +3,8 @@ import {
   agentSessionPromptQuestions,
   type AgentSessionPromptResponse
 } from '../../../../shared/agent-session/agent-session-question-answer'
-import { NativeChatApprovalCard } from './NativeChatApprovalCard'
-import { NativeChatStructuredQuestionCard } from './NativeChatStructuredQuestionCard'
+import { NativeChatApprovalCard } from './prompts/NativeChatApprovalCard'
+import { NativeChatStructuredQuestionCard } from './prompts/NativeChatStructuredQuestionCard'
 import { chatApprovalFromJournal } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
 import type { StructuredPromptItem } from '../../../../shared/agent-session/view/structured-agent-session-message-projection'
 

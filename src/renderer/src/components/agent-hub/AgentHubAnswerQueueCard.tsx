@@ -4,8 +4,8 @@ import { translate } from '@/i18n/i18n'
 import {
   NativeChatInteractiveCard,
   type NativeChatInteractiveCardControl
-} from '../native-chat/NativeChatInteractiveCard'
-import type { NativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
+} from '../native-chat/prompts/NativeChatInteractiveCard'
+import type { NativeChatInteractiveSend } from '../native-chat/session/terminal/send/use-native-chat-interactive-send'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubDictateButton } from './AgentHubDictateButton'
 import { useAgentHubQuickAnswer, quickAnswerTargetOf } from './use-agent-hub-quick-answer'

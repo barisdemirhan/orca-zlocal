@@ -16,7 +16,7 @@ import { createGlobalSettingsFixture } from '../../../../shared/global-settings-
 import type { AgentHubOrbSession, AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
 import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
 import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
-import { NativeChatSessionOptionPickers } from '../native-chat/NativeChatSessionOptionPickers'
+import { NativeChatSessionOptionPickers } from '../native-chat/session/options/controls/NativeChatSessionOptionPickers'
 import type { SessionOptionDescriptor } from '../../../../shared/native-chat/input/native-chat-session-options'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
@@ -103,7 +103,7 @@ vi.mock('@/lib/agent-session/structured-agent-session-tab-activation', () => ({
     id: `tab-${params.sessionId}`
   })
 }))
-vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
+vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () => ({
   getStructuredAgentSessionStatusFeed: () => mocks.feed
 }))
 const conversations: AgentHubOrbConversation[] = [

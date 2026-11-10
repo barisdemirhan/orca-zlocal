@@ -18,9 +18,9 @@ import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session
 import {
   getRuntimeEnvironmentRevision,
   replaceRuntimeEnvironmentRevisions
-} from '@/runtime/runtime-environment-revision'
+} from '@/runtime/rpc/environment-revisions/runtime-environment-revision'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
-import { useStructuredAgentSessionMutate } from '../native-chat/use-structured-agent-session-mutate'
+import { useStructuredAgentSessionMutate } from '../native-chat/session/structured/writes/use-structured-agent-session-mutate'
 import { readAgentHubOrbVoice } from './agent-hub-orb-voice-context'
 import { useAgentHubOrbVoice } from './use-agent-hub-orb-voice'
 import { openAgentHubOrb } from './agent-hub-orb-open'
@@ -69,13 +69,13 @@ vi.mock('@/store', () => ({
     { getState: () => mocks.state, subscribe: () => () => {} }
   )
 }))
-vi.mock('@/runtime/runtime-rpc-client', () => ({ callRuntimeRpc: mocks.call }))
-vi.mock('@/runtime/structured-agent-session-host-capability', () => ({
+vi.mock('@/runtime/rpc/calls/runtime-rpc-call', () => ({ callRuntimeRpc: mocks.call }))
+vi.mock('@/runtime/native-chat/host-capabilities/structured-agent-session-host-capability', () => ({
   structuredAgentSessionHostKey: (target: RuntimeClientTarget) =>
     target.kind === 'local' ? 'local' : `environment:${target.environmentId}`,
   useStructuredAgentSessionHostCapabilityState: () => 'supported'
 }))
-vi.mock('../native-chat/structured-agent-session-read-owner', () => ({
+vi.mock('../native-chat/session/structured/read/structured-agent-session-read-owner', () => ({
   getStructuredAgentSessionReadOwner: () => ({
     subscribe: () => () => {},
     getSnapshot: mocks.snapshot

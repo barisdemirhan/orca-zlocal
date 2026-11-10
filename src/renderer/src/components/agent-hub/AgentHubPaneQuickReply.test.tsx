@@ -52,7 +52,7 @@ const quick = vi.hoisted(() => {
   return state
 })
 const fullCard = vi.hoisted(() => ({ chooseOption: vi.fn(() => true), dismiss: () => {} }))
-vi.mock('../native-chat/NativeChatInteractiveCard', async () => {
+vi.mock('../native-chat/prompts/NativeChatInteractiveCard', async () => {
   const { useImperativeHandle } = await import('react')
   return {
     NativeChatInteractiveCard: ({
@@ -83,7 +83,7 @@ vi.mock('../native-chat/NativeChatInteractiveCard', async () => {
   }
 })
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 vi.mock('./use-agent-hub-quick-answer', async (original) => ({

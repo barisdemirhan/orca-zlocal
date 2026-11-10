@@ -17,7 +17,7 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
+vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () => ({
   getStructuredAgentSessionStatusFeed: () => ({
     activate: () => () => {},
     subscribe: (fn: () => void) => {
@@ -26,7 +26,7 @@ vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
     }
   })
 }))
-vi.mock('../native-chat/use-structured-agent-session-read', () => ({
+vi.mock('../native-chat/session/structured/read/use-structured-agent-session-read', () => ({
   useStructuredAgentSessionRead: mocks.read
 }))
 vi.mock('./agent-hub-orb-open', () => ({ openAgentHubOrb: vi.fn() }))

@@ -6,12 +6,14 @@ import {
   AgentHubOrbOpenParamsSchema,
   AgentHubOrbReleaseOperationParamsSchema
 } from '../agent-hub-orb-params'
+import { HostAccountLaunchEnvParams } from '../agent-launch/startup/host-account-launch-env'
 import { AgentSkillShareRequestSchema } from '../agent-skill-sharing-contract'
 import {
   AiVaultSearchRequestSchema,
   AiVaultSearchStatusRequestSchema,
   AiVaultSetSearchEnabledParamsSchema
 } from '../ai-vault/search/ai-vault-search-contract'
+import { AntigravityChatAuthConfigSchema } from '../antigravity-chat-auth-config'
 import {
   BrowserClientFileChannelAbortParams,
   BrowserClientFileChannelReadParams,
@@ -34,7 +36,6 @@ import {
   DesktopBrowserBridgeAttachParams,
   DesktopBrowserBridgeResultParams
 } from '../desktop-browser-bridge-protocol'
-import { HostAccountLaunchEnvParams } from '../host-account-launch-env'
 import { MobileWebBundleChunkParamsSchema } from '../mobile-web-bundle/bundle-rpc-contract'
 import { OrcadMigrationBlobChunkRequestSchema } from '../orcad-migration/orcad-migration-blob-transfer'
 import { OrcadMigrationSnapshotChunkRequestSchema } from '../orcad-migration/orcad-migration-scrollback'
@@ -43,8 +44,10 @@ import {
   OrcadPeerDesktopsParamsSchema
 } from '../orcad-peer-desktops-contract'
 import { OrcadTerminalCensusParamsSchema } from '../orcad-terminal-census'
-import { CrewSubscribeParams } from '../orchestration-crew'
+import { CrewSubscribeParams } from '../orchestration/orchestration-crew'
 import { RegisterDeviceKeyParamsSchema } from '../remote-runtime/pairing/device-key-registration-contract'
+import { PairingCreateOfferParamsSchema } from '../remote-runtime/pairing/pairing-create-offer-contract'
+import { ExchangePairingTicketParamsSchema } from '../remote-runtime/pairing/ticket-exchange-contract'
 import {
   PairingGetEndpointsParamsSchema,
   PairingProvisionRelayParamsSchema
@@ -70,6 +73,7 @@ import {
   SelectCodexAccountForTargetParams,
   SelectDataAccountParams
 } from './accounts-params'
+import { AgentActivityClearParams, AgentActivitySetReadParams } from './agent-activity-params'
 import { PrepareCodexForWslPaneParams } from './agent-hooks-params'
 import {
   AgentHubAnswerParams,
@@ -107,7 +111,6 @@ import {
 import {
   AntigravityAccountMutationParams,
   AntigravityAccountTargetParams,
-  AntigravityChatAuthConfigSchema,
   AntigravityChatSignInCompleteParams,
   AntigravityChatSignInFlowParams
 } from './antigravity-accounts-params'
@@ -120,6 +123,7 @@ import {
   AutomationUpdate
 } from './automation-params'
 import { CertificateProceed } from './browser-core-params'
+import { ExtensionList, ExtensionReload } from './browser-extension-params'
 import { MouseClick } from './browser-extras-params'
 import { BrowserIdentitySet, ProfileCreate } from './browser-identity-params'
 import { Screenshot, Snapshot } from './browser-observation-params'
@@ -175,7 +179,7 @@ import {
   Viewport,
   Wait
 } from './browser-params'
-import { ScreencastUnsubscribe } from './browser-screencast-params'
+import { ScreencastAck, ScreencastUnsubscribe } from './browser-screencast-params'
 import { BrowserOpenUrlParams, BrowserTabCreateParams } from './browser-tab-create-params'
 import { ClientEventsSubscribeParams, ClientEventsUnsubscribeParams } from './client-events-params'
 import {
@@ -281,8 +285,8 @@ import {
 } from './files-terminal-artifact-params'
 import {
   FolderWorkspaceCreate,
+  FolderWorkspaceDelete,
   FolderWorkspacePathStatus,
-  FolderWorkspaceSelector,
   FolderWorkspaceUpdate
 } from './folder-workspace-params'
 import {
@@ -293,8 +297,10 @@ import {
   GitCheckIgnored,
   GitCheckout,
   GitCommit,
+  GitCommitAction,
   GitCommitCompare,
   GitCommitDiff,
+  GitCreateBranch,
   GitDiff,
   GitDiscoverCommitMessageModels,
   GitFilePath,
@@ -304,11 +310,14 @@ import {
   GitHistory,
   GitPush,
   GitRebaseFromBase,
+  GitRefs,
   GitRemoteCommitUrl,
   GitRemoteFileUrl,
   GitResolveConflict,
+  GitSequencer,
   GitStatusParams,
   GitSubmoduleStatus,
+  GitSwitchBranch,
   GitTargetedRemote,
   WorktreeSelector as WorktreeSelectorOfGitParams
 } from './git-params'
@@ -658,7 +667,6 @@ import {
   QueuedMessageActionParams,
   QueuedMessagesResumeParams,
   RespondParams,
-  RespondToQuestionParams,
   RestartResumableParams,
   RestartResumeParams,
   RevealParams,
@@ -666,17 +674,19 @@ import {
   SendParams,
   SetOptionParams,
   SleepWorkspaceParams,
-  SubscribeParams,
   SubscribeTurnCompletionsParams,
   ThreadGoalParams,
   UnsubscribeParams
 } from './structured-agent-session-params'
+import { RespondToQuestionParams } from './structured-agent-session-question-params'
 import {
   QueuedMessageEditHoldParams,
   QueuedMessageMoveParams,
   QueuedMessageUpdateParams
 } from './structured-agent-session-queued-edit-params'
 import { RenameParams } from './structured-agent-session-rename-params'
+import { SendRecordedParams } from './structured-agent-session-send-recorded-params'
+import { SubscribeParams } from './structured-agent-session-subscribe-params'
 import {
   AppendVoiceTextParams,
   StartVoiceParams,
@@ -760,8 +770,8 @@ import {
   WorktreeResolveMrBase,
   WorktreeResolvePrBase,
   WorktreeRunApprovedSetup,
-  WorktreeSelector as WorktreeSelectorOfWorktreeParams,
   WorktreeSet,
+  WorktreeShow,
   WorktreeSleepParams,
   WorktreeSortOrder,
   WorktreeTeardownMissingTerminalsParams
@@ -829,6 +839,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'accounts.zcodePlanSaveApiKey': UsageCredentialApiKeyParams,
   'agent.launch': AgentLaunch,
   'agent.launchReplay': AgentLaunchReplay,
+  'agentActivity.clear': AgentActivityClearParams,
+  'agentActivity.setRead': AgentActivitySetReadParams,
   'agentHooks.prepareCodexForWslPane': PrepareCodexForWslPaneParams,
   'agentHub.answer': AgentHubAnswerParams,
   'agentHub.arrange': AgentHubArrangeParams,
@@ -890,6 +902,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentSession.reveal': RevealParams,
   'agentSession.rewind': RewindParams,
   'agentSession.send': SendParams,
+  'agentSession.sendRecorded': SendRecordedParams,
   'agentSession.setOption': SetOptionParams,
   'agentSession.sleepWorkspace': SleepWorkspaceParams,
   'agentSession.startVoice': StartVoiceParams,
@@ -958,6 +971,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'browser.drag': Drag,
   'browser.eval': Eval,
   'browser.exec': Exec,
+  'browser.extensionList': ExtensionList,
+  'browser.extensionReload': ExtensionReload,
   'browser.fill': Fill,
   'browser.find': Find,
   'browser.focus': Element,
@@ -993,6 +1008,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'browser.profileList': null,
   'browser.reload': ExpectUrlBrowserTarget,
   'browser.screencast': Screencast,
+  'browser.screencast.ack': ScreencastAck,
   'browser.screencast.unsubscribe': ScreencastUnsubscribe,
   'browser.screenshot': Screenshot,
   'browser.scroll': Scroll,
@@ -1116,7 +1132,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'files.writeIfUnchanged': FileWriteIfUnchanged,
   'files.writeTerminalArtifact': TerminalArtifactFileWrite,
   'folderWorkspace.create': FolderWorkspaceCreate,
-  'folderWorkspace.delete': FolderWorkspaceSelector,
+  'folderWorkspace.delete': FolderWorkspaceDelete,
   'folderWorkspace.getPathStatus': FolderWorkspacePathStatus,
   'folderWorkspace.list': null,
   'folderWorkspace.update': FolderWorkspaceUpdate,
@@ -1131,11 +1147,13 @@ export const RPC_PARAMS_BY_METHOD = {
   'git.cancelGeneratePullRequestFields': WorktreeSelectorOfGitParams,
   'git.checkIgnored': GitCheckIgnored,
   'git.checkout': GitCheckout,
+  'git.cherryPick': GitCommitAction,
   'git.commit': GitCommit,
   'git.commitCompare': GitCommitCompare,
   'git.commitDiff': GitCommitDiff,
   'git.completeMerge': WorktreeSelectorOfGitParams,
   'git.conflictOperation': WorktreeSelectorOfGitParams,
+  'git.createBranch': GitCreateBranch,
   'git.diff': GitDiff,
   'git.discard': GitFilePath,
   'git.discoverCommitMessageModels': GitDiscoverCommitMessageModels,
@@ -1150,12 +1168,17 @@ export const RPC_PARAMS_BY_METHOD = {
   'git.pull': GitTargetedRemote,
   'git.push': GitPush,
   'git.rebaseFromBase': GitRebaseFromBase,
+  'git.refs': GitRefs,
   'git.remoteCommitUrl': GitRemoteCommitUrl,
   'git.remoteFileUrl': GitRemoteFileUrl,
   'git.resolveConflict': GitResolveConflict,
+  'git.revert': GitCommitAction,
+  'git.sequencerAbort': GitSequencer,
+  'git.sequencerContinue': GitSequencer,
   'git.stage': GitFilePath,
   'git.status': GitStatusParams,
   'git.submoduleStatus': GitSubmoduleStatus,
+  'git.switchBranch': GitSwitchBranch,
   'git.unstage': GitFilePath,
   'git.upstreamStatus': GitTargetedRemote,
   'github.addIssueComment': IssueComment,
@@ -1411,7 +1434,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'orchestration.workerStart': WorkerStartParams,
   'orchestration.workerStop': WorkerDispatchParamsOfOrchestrationWorkerStopParams,
   'orchestration.workerTerminalUserInput': OrchestrationWorkerSubjectParams,
+  'pairing.createOffer': PairingCreateOfferParamsSchema,
   'pairing.delegatedMobileDevice.sync': DelegatedMobileDeviceSyncParamsSchema,
+  'pairing.exchangeTicket': ExchangePairingTicketParamsSchema,
   'pairing.getEndpoints': PairingGetEndpointsParamsSchema,
   'pairing.provisionRelay': PairingProvisionRelayParamsSchema,
   'pairing.registerDeviceKey': RegisterDeviceKeyParamsSchema,
@@ -1468,6 +1493,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'repo.add': RepoPath,
   'repo.addRemote': RepoAddRemote,
   'repo.baseRefDefault': RepoSelector,
+  'repo.checkCloneTarget': RepoClone,
   'repo.clone': RepoClone,
   'repo.create': RepoCreate,
   'repo.gitAvailable': null,
@@ -1650,7 +1676,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'worktree.rm': WorktreeRemove,
   'worktree.runApprovedSetup': WorktreeRunApprovedSetup,
   'worktree.set': WorktreeSet,
-  'worktree.show': WorktreeSelectorOfWorktreeParams,
+  'worktree.show': WorktreeShow,
   'worktree.sleep': WorktreeSleepParams,
   'worktree.teardownMissingTerminals': WorktreeTeardownMissingTerminalsParams
 } as const

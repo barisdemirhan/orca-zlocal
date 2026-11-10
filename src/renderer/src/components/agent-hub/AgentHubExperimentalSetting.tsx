@@ -1,10 +1,10 @@
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
-import { translate } from '@/i18n/i18n'
+import { useTranslate } from '@/i18n/use-translate'
 import { useAppStore } from '@/store'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { SearchableSetting } from '../settings/section-layout/SearchableSetting'
-import { SettingsSwitch } from '../settings/form-controls/SettingsFormControls'
+import { Switch } from '../ui/switch'
 import { getExperimentalSearchEntry } from '../settings/advanced/experimental-search'
 
 export function AgentHubExperimentalSetting({
@@ -14,39 +14,40 @@ export function AgentHubExperimentalSetting({
   settings: GlobalSettings
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }): React.JSX.Element {
+  const t = useTranslate()
   const openSettingsTarget = useAppStore((state) => state.openSettingsTarget)
   const enabled = settings.experimentalAgentHub === true
 
   return (
     <SearchableSetting
-      title={translate('auto.components.settings.ExperimentalPane.agentHub.title', 'Agent Hub')}
-      description={translate(
+      title={t('auto.components.settings.ExperimentalPane.agentHub.title', 'Agent Hub')}
+      description={t(
         'auto.components.settings.ExperimentalPane.agentHub.description',
         'One place for every agent and terminal: answer questions, approve commands, and jump to any pane.'
       )}
-      keywords={getExperimentalSearchEntry().agentHub.keywords}
+      keywords={getExperimentalSearchEntry(t).agentHub.keywords}
       className="space-y-3 py-2"
       id="experimental-agent-hub"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 shrink space-y-0.5">
           <Label>
-            {translate('auto.components.settings.ExperimentalPane.agentHub.title', 'Agent Hub')}
+            {t('auto.components.settings.ExperimentalPane.agentHub.title', 'Agent Hub')}
           </Label>
           <p className="text-xs text-muted-foreground">
-            {translate(
+            {t(
               'auto.components.settings.ExperimentalPane.agentHub.copy',
               'Adds a dock (or a status-bar item) listing agents that need you, are working, or just finished, plus every open terminal. Answer, approve, or open a live mirror without leaving your current workspace.'
             )}
           </p>
         </div>
-        <SettingsSwitch
+        <Switch
           checked={enabled}
-          ariaLabel={translate(
+          aria-label={t(
             'auto.components.settings.ExperimentalPane.agentHub.toggleLabel',
             'Toggle Agent Hub'
           )}
-          onChange={() => updateSettings({ experimentalAgentHub: !enabled })}
+          onCheckedChange={() => updateSettings({ experimentalAgentHub: !enabled })}
         />
       </div>
       {enabled ? (
@@ -56,7 +57,7 @@ export function AgentHubExperimentalSetting({
           size="xs"
           onClick={() => openSettingsTarget({ pane: 'agentHub', repoId: null })}
         >
-          {translate('auto.agentHub.settings.open', 'Open Agent Hub settings')}
+          {t('auto.agentHub.settings.open', 'Open Agent Hub settings')}
         </Button>
       ) : null}
     </SearchableSetting>

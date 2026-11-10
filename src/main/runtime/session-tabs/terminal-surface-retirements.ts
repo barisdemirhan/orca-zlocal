@@ -1,10 +1,10 @@
 import type { OrcaRuntimeWithBindPtyIncarnationHandle as BindPtyIncarnationHandleMethods } from '../terminal/identity/terminal-handle-bindings'
 import { OrcaRuntimeWithTouchMobileSessionTabsForWorktree } from './mobile-session-membership'
 import type { RetiredTerminalSurface } from '../terminal/surface/mobile-session-terminal-retirement'
-import type { RuntimeMobileSessionRetiredTerminalSurface } from '../../../shared/runtime-types'
+import type { RuntimeMobileSessionRetiredTerminalSurface } from '../../../shared/runtime-session-contracts'
 import { LOCAL_EXECUTION_HOST_ID, parseExecutionHostId } from '../../../shared/execution-host'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../shared/layout-owner-switch'
-import { keepsExitedPane } from '../exited-split-pane-layout-close'
+import { keepsExitedPane } from '../terminal/lifecycle/exited-split-pane-layout-close'
 import type { ExitedSplitPaneFacts } from '../terminal/lifecycle/exited-split-pane-rule'
 import {
   forgetClosedPaneOfExit,
@@ -14,11 +14,14 @@ import { retireTerminalSurfaceFromPersistence } from '../terminal/surface/mobile
 import { retireTerminalSurfacesFromSnapshot } from '../terminal/surface/mobile-session-terminal-retirement'
 import { attachRetirementProofsToSnapshot } from '../terminal/surface/mobile-session-terminal-retirement-proof'
 import { getRepoIdFromWorktreeId } from '../../../shared/worktree/id'
+import type { TerminalSurfaceCloseTarget } from '../../../shared/workspace-layout/terminal-surface-close-target'
 
 export abstract class OrcaRuntimeWithPersistTerminalSurfaceRetirements extends OrcaRuntimeWithTouchMobileSessionTabsForWorktree {
   protected abstract findHandleForPtyRecord(
     ...args: Parameters<BindPtyIncarnationHandleMethods['findHandleForPtyRecord']>
   ): ReturnType<BindPtyIncarnationHandleMethods['findHandleForPtyRecord']>
+
+  protected abstract pruneTerminalSpawnLineage(target: TerminalSurfaceCloseTarget): void
 
   /** Retire in the owning host partition; local writes strand SSH ghosts and alter foreign epochs. accepted=held surface, unpersisted=absent/refused partition, kept=main-retained exited pane. Remove closedPane in the same write. */
   protected stageTerminalSurfaceRetirements(

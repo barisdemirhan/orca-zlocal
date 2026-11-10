@@ -1,16 +1,17 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import type * as Rpc from '@/runtime/runtime-rpc-client'
+import type * as Rpc from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import type * as Owner from '@/lib/workspace/ownership/worktree-runtime-owner'
 import type * as Route from '@/lib/terminal-worktree-route'
 import type * as Authority from '@/lib/workspace-terminal-host-authority'
-import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
+import { makeTab } from '@/store/terminals/terminal-tab.test-fixture'
+import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 import { makeWorkingEntryWithoutHistory } from '../activity/ActivityPrototypePage-test-fixtures'
 import { sleepAgentHubPane } from './agent-hub-pane-sleep-operations'
 import { AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 
 const capability = vi.hoisted(() => vi.fn(async () => false))
-vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
+vi.mock('@/runtime/rpc/compatibility/runtime-capability-proof', async (original) => ({
   ...(await original<typeof Rpc>()),
   runtimeEnvironmentSupportsCapability: capability
 }))

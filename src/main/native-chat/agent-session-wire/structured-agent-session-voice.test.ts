@@ -21,11 +21,11 @@ import {
 } from './host/testing/structured-agent-session-host-test-data'
 import {
   createRestTestRig,
-  IDLE_MS,
   REST_TEST_CALLER as CALLER,
   sweepOnce,
   type RestTestRig
 } from './host/testing/structured-agent-session-rest-test-rig'
+import { STRUCTURED_AGENT_SESSION_IDLE_MS as IDLE_MS } from './termination/structured-agent-session-idle-sweep'
 
 const OWNER = { voiceSessionId: 'voice-attempt-1', generation: 1 }
 const SDP = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n'

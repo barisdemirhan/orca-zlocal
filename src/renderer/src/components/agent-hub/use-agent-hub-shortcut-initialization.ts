@@ -1,7 +1,7 @@
 import { isPairedWebClientWindow } from '@/lib/desktop-window-chrome'
 import { useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { useEditablePluginCommands } from '@/store/plugin-panels'
+import { useEditablePluginCommands } from '@/store/plugins/catalog/plugin-contribution-catalog'
 import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import { KEYBINDING_DEFINITIONS } from '../../../../shared/keybindings'
 import { buildPluginCommandKeybindingDefinitions } from '@/lib/plugin-command-keybindings'

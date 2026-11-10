@@ -2,7 +2,7 @@ import type { PasteTerminalTextDetail } from '@/constants/terminal'
 import type { PaneManager } from '@/lib/pane-manager/pane-manager'
 import type { PtyTransport } from '../../pty-transport/pty-transport-types'
 import { getShortcutPlatform } from '@/lib/shortcut-platform'
-import { recordTerminalUserInputForLeaf } from '../../terminal-input-activity'
+import { recordTerminalUserInputForLeaf } from '../terminal-input-activity'
 import { pasteTextIntoTerminalPane } from './terminal-pane-paste-dispatch'
 import { resolveTerminalPasteRuntime } from './terminal-paste-runtime'
 import { isTerminalPanePasteTargetCurrent } from './terminal-paste-target-state'
@@ -12,28 +12,21 @@ type HandleTerminalProgrammaticTextPasteArgs = {
   tabId: string
   getManager: () => PaneManager | null
   getPaneTransports: () => Map<number, PtyTransport>
-  shouldFocusAfterPaste?: () => boolean
-  onFinished?: () => void
-  /** False leaves focus where the user is; the pane takes the text by identity either way. */
-  focusTerminal?: boolean
+  focusAfterPaste?: () => boolean
 }
 
-export function handleTerminalProgrammaticTextPaste({
+export async function handleTerminalProgrammaticTextPaste({
   detail,
   tabId,
   getManager,
   getPaneTransports,
-  shouldFocusAfterPaste = () => true,
-  onFinished = () => {},
-  focusTerminal = true
-}: HandleTerminalProgrammaticTextPasteArgs): boolean {
+  focusAfterPaste = () => true
+}: HandleTerminalProgrammaticTextPasteArgs): Promise<boolean> {
   if (!detail?.tabId || detail.tabId !== tabId || !detail.text) {
-    onFinished()
     return false
   }
   const manager = getManager()
   if (!manager) {
-    onFinished()
     return false
   }
   const panes = manager.getPanes()
@@ -42,20 +35,11 @@ export function handleTerminalProgrammaticTextPaste({
       ? (panes.find((candidate) => candidate.id === detail.paneId) ?? null)
       : (manager.getActivePane() ?? panes[0])
   if (!pane) {
-    onFinished()
     return false
   }
   const paneTransports = getPaneTransports()
   const transport = paneTransports.get(pane.id)
   const ptyId = transport?.getPtyId() ?? null
-  const accepted = isTerminalPanePasteTargetCurrent({
-    manager,
-    paneTransports,
-    paneId: pane.id,
-    leafId: pane.leafId,
-    transport,
-    ptyId
-  })
   const isTargetCurrent = (): boolean =>
     isTerminalPanePasteTargetCurrent({
       manager: getManager(),
@@ -65,7 +49,7 @@ export function handleTerminalProgrammaticTextPaste({
       transport,
       ptyId
     })
-  void pasteTextIntoTerminalPane({
+  const result = await pasteTextIntoTerminalPane({
     pane,
     text: detail.text,
     source: 'programmatic',
@@ -80,15 +64,12 @@ export function handleTerminalProgrammaticTextPaste({
     isTargetCurrent,
     canContinue: isTargetCurrent
   })
-    .then((result) => {
-      if (result.status !== 'pasted') {
-        return
-      }
-      recordTerminalUserInputForLeaf(tabId, pane.leafId)
-      if (focusTerminal && shouldFocusAfterPaste()) {
-        pane.terminal.focus()
-      }
-    })
-    .finally(onFinished)
-  return accepted
+  if (result.status !== 'pasted') {
+    return false
+  }
+  recordTerminalUserInputForLeaf(tabId, pane.leafId)
+  if (focusAfterPaste()) {
+    pane.terminal.focus()
+  }
+  return true
 }

@@ -2,7 +2,7 @@ import { createNonSecureContextUuid as createBrowserUuid } from '../../../shared
 import {
   ORCHESTRATION_CONTRACT_VERSION,
   ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY
-} from '../../../shared/protocol-version'
+} from '../../../shared/orchestration/orchestration-runtime-capabilities'
 import { GateResolveByUserParams } from '../../../shared/rpc-contract/orchestration-gates-params'
 import type { AgentHubRendererApi } from '../../../shared/agent-hub-requests'
 import {
@@ -10,9 +10,9 @@ import {
   AgentHubRespondResultSchema
 } from '../../../shared/rpc-contract/agent-hub-params'
 import { readAgentHubDelivery } from '../../../shared/rpc-contract/agent-hub-events'
-import { subscribeRuntimeEnvironment } from './runtime-environment-pairing-refresh'
-import { getRuntimeEnvironmentRevision } from './runtime-environment-revision'
-import { runtimeEnvironmentSupportsCapability } from './runtime-rpc-client'
+import { subscribeRuntimeEnvironment } from './rpc/environment-revisions/runtime-environment-pairing-refresh'
+import { getRuntimeEnvironmentRevision } from './rpc/environment-revisions/runtime-environment-revision'
+import { runtimeEnvironmentSupportsCapability } from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import {
   isAgentHubUnsupportedError,
   retainAgentHubConsumerCapability

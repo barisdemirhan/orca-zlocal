@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
-import { NATIVE_CHAT_APPEARANCE_ROOT_CLASS } from './native-chat-appearance-style'
+import { NATIVE_CHAT_APPEARANCE_ROOT_CLASS } from './appearance/native-chat-appearance-style'
 import { useAgentHubOrbPanel } from '../agent-hub/agent-hub-orb-panel-store'
 import { registerRetainedPaneDestination } from '../tab-group/retained-pane-destinations'
 

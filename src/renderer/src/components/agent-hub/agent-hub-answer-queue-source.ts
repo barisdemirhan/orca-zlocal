@@ -13,7 +13,7 @@ import {
   parseInteractivePrompt,
   type InteractivePromptCard
 } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
-import { sayNativeChatApprovalTranslated } from '../native-chat/native-chat-interactive-prompt'
+import { sayNativeChatApprovalTranslated } from '../native-chat/prompts/native-chat-interactive-prompt'
 import { agentHubCardKey } from './agent-hub-answered-cards'
 import { agentHubStateSince } from './agent-hub-lists'
 import {

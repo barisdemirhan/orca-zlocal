@@ -1,6 +1,6 @@
 import type { AppState } from '@/store/types'
 import type { ExecutionHostId } from '../../../shared/execution-host'
-import { resolveNewBrowserTabProfile } from '@/store/slices/browser/browser-new-tab-profile'
+import { resolveNewBrowserTabProfile } from '@/store/slices/browser/profiles/browser-new-tab-profile'
 import type { TabSplitTarget } from '@/store/slices/tabs/tabs-slice-contract'
 
 /** Shared materialization for workspace and private client browser surfaces. */

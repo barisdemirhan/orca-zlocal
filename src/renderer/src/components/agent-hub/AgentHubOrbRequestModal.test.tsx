@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { NativeChatQuestionCard } from '../native-chat/NativeChatQuestionCard'
+import { NativeChatQuestionCard } from '../native-chat/prompts/NativeChatQuestionCard'
 import { NativeChatOrbPromptSlot } from '../native-chat/NativeChatOrbPromptSlot'
 import { AgentHubOrbRequestModal } from './AgentHubOrbRequestModal'
 import {

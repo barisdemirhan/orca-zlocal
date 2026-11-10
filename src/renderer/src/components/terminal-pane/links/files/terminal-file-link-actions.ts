@@ -17,6 +17,7 @@ import {
 } from '../terminal-link-action-request'
 import { resolveKnownWorktreeRootPathLink } from './terminal-worktree-path-link'
 import { translate } from '@/i18n/i18n'
+import type { Translate } from '@/i18n/use-translate'
 import { getRevealInFileManagerLabel, revealInFileManager } from '@/lib/reveal-in-file-manager'
 import { useAppStore } from '@/store/index'
 import { getLocalPathOpenOwnerForRoute, isLocalPathOpenBlocked } from '@/lib/local-path-open-guard'
@@ -40,6 +41,8 @@ export type TerminalFileLinkActionDeps = {
   onOpenFailure?: (failure: FileOpenFailure) => void
   /** The tab that owns the link; editor opens place themselves relative to its group. */
   sourceTabId?: string | null
+  /** Chat menus leave out "Open in new tab"; Open file already places the file beside the chat. */
+  omitOpenInNewTab?: boolean
 }
 
 export type FileLinkActions = Pick<
@@ -113,7 +116,8 @@ export function buildFileLinkActions(
   column: number | null,
   deps: TerminalFileLinkActionDeps,
   sourceOwner: HttpLinkSourceOwner | undefined,
-  peekSource?: AgentHubPeekLinkSource
+  peekSource?: AgentHubPeekLinkSource,
+  t: Translate = translate
 ): FileLinkActions {
   const mappedPath = mapTerminalFilePath(
     filePath,
@@ -140,11 +144,11 @@ export function buildFileLinkActions(
       ? canOpenWithSystemDefault
         ? {
             label: isMac
-              ? translate(
+              ? t(
                   'auto.components.terminal.pane.TerminalLinkActionPopover.openInFinder',
                   'Open in Finder'
                 )
-              : translate(
+              : t(
                   'auto.components.terminal.pane.TerminalLinkActionPopover.openFolder',
                   'Open folder'
                 ),
@@ -154,7 +158,7 @@ export function buildFileLinkActions(
         : null
       : canOpenWithSystemDefault
         ? {
-            label: translate(
+            label: t(
               'auto.components.terminal.pane.TerminalLinkActionPopover.openWithDefaultApp',
               'Open with default app'
             ),
@@ -165,7 +169,7 @@ export function buildFileLinkActions(
           /[/\\]$/.test(mappedPath)
           ? null
           : {
-              label: translate(
+              label: t(
                 'auto.components.terminal.pane.TerminalLinkActionPopover.downloadOpenWithDefaultApp',
                 'Download & open with default app'
               ),
@@ -189,17 +193,18 @@ export function buildFileLinkActions(
   const revealRow = canReveal
     ? {
         external: true,
-        label: getRevealInFileManagerLabel(),
+        label: getRevealInFileManagerLabel(t),
         run: () => revealInFileManager(mappedPath, revealOwner)
       }
     : null
   // Why: eligibility is unknown until the path resolves, so the row may still be refused then.
   const openInGroupRow =
+    !deps.omitOpenInNewTab &&
     !worktreeRoot &&
     fileContext.sourceHostResolved &&
     canOpenLinkInSourceGroup(useAppStore.getState(), deps.worktreeId, deps.sourceTabId)
       ? {
-          label: translate(
+          label: t(
             'auto.components.terminal.pane.TerminalLinkActionPopover.openInNewTab',
             'Open in new tab'
           ),
@@ -215,21 +220,22 @@ export function buildFileLinkActions(
   const secondaryActions = [peekRow, openInGroupRow, revealRow].filter((row) => row !== null)
   const rows =
     !worktreeRoot && canOpenWithSystemDefault && isHtmlFilePath(mappedPath)
-      ? buildHttpLinkActions(localHtmlFileDestinations(), (browserDestination) =>
-          openDetectedFilePath(filePath, line, column, { ...deps, browserDestination })
+      ? buildHttpLinkActions(
+          localHtmlFileDestinations(),
+          (browserDestination) =>
+            openDetectedFilePath(filePath, line, column, { ...deps, browserDestination }),
+          undefined,
+          t
         )
       : {
           primary: {
             shortcut: peekRow?.shortcut === 'primary' ? null : ('primary' as const),
             label: worktreeRoot
-              ? translate(
+              ? t(
                   'auto.components.terminal.pane.TerminalLinkActionPopover.switchWorkspace',
                   'Switch workspace'
                 )
-              : translate(
-                  'auto.components.terminal.pane.TerminalLinkActionPopover.openFile',
-                  'Open file'
-                ),
+              : t('auto.components.terminal.pane.TerminalLinkActionPopover.openFile', 'Open file'),
             run: () => openDetectedFilePath(filePath, line, column, deps)
           },
           ...(systemDefaultRow ? { alternate: systemDefaultRow } : {})

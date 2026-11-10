@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
-import { runtimeEnvironmentSupportsCapability } from '@/runtime/runtime-rpc-client'
+import { runtimeEnvironmentSupportsCapability } from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import { AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import { parsePaneKey, makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { collectSleepingAgentSessionRecordsForWorktree } from '@/store/slices/agent-status/agent-status-recovery-collection'

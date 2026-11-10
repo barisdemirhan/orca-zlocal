@@ -6,9 +6,9 @@ import { FLOATING_TERMINAL_WORKTREE_ID, getDefaultSettings } from '../../../../s
 import type { RuntimeMobileSessionTabsResult } from '../../../../shared/runtime-types'
 import { findStructuredAgentSessionTab } from '@/lib/agent-session/structured-agent-session-tab-activation'
 import { resetLocalStructuredSessionVersionForTests } from '@/runtime/local-structured-session-tabs-sync/inventory-generation-fence'
-import { LOCAL_STRUCTURED_SESSION_OWNER } from '@/runtime/local-structured-session-owner'
+import { LOCAL_STRUCTURED_SESSION_OWNER } from '@/runtime/native-chat/local-sessions/local-structured-session-owner'
 import { applyWebSessionTabsSnapshot } from '@/runtime/web-session-tabs-sync/snapshot-api'
-import { resetWebSessionTabsSyncTestState } from '@/runtime/web-session-tabs-sync-test-harness'
+import { resetWebSessionTabsSyncTestState } from '@/runtime/web-session-tabs-sync/testing/web-session-tabs-sync.test-fixture'
 import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { openAgentHubOrb } from './agent-hub-orb-open'
 

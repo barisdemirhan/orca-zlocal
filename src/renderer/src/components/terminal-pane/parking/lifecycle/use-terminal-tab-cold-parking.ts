@@ -38,7 +38,7 @@ import { selectSleepingRecordParkExemptTabIds } from '../retention/sleeping-reco
 import { usePendingStartupParkPresence } from '../retention/terminal-pending-startup-park-presence'
 import { canWatcherCoverParkedTerminalTab } from '../output-watchers/terminal-parked-tab-watchers'
 import { captureNewlyParkedTerminalTabs } from '../capture/parked-terminal-tab-capture-episodes'
-import { createTerminalTabActivationOrder } from '../../terminal-tab-activation-order'
+import { createTerminalTabActivationOrder } from '../retention/terminal-tab-activation-order'
 import { buildTerminalTabColdParkCandidates } from '../retention/terminal-tab-park-candidates'
 import {
   getTerminalParkingAssignmentsKey,
@@ -48,7 +48,7 @@ import {
 import {
   getTerminalPaneSplitMountLeaseTabIds,
   subscribeTerminalPaneSplitMountLeases
-} from '../../terminal-pane-split-request-routing'
+} from '../../layout/split/terminal-pane-split-request-routing'
 
 type TerminalOverlayTabAssignment = {
   groupId: string

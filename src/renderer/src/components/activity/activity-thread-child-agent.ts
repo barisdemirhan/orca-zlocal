@@ -51,19 +51,34 @@ function firstReportedTerminalHandle(thread: ChildAgentClassifiableThread): stri
 export function collectHiddenChildAgentPaneKeys(
   threads: readonly ChildAgentClassifiableThread[]
 ): Set<string> {
+  return classifyChildAgents(threads).hidden
+}
+
+/** Each child's parent and the children a hidden-children view folds away. */
+export function classifyChildAgents(threads: readonly ChildAgentClassifiableThread[]): {
+  parentPaneKeyByChild: Map<string, string>
+  hidden: Set<string>
+} {
   const livePaneKeys = new Set(
     threads.filter((thread) => thread.currentAgentState).map((thread) => thread.paneKey)
   )
+  const tree = buildChildAgentLineageTree(threads)
+  const parentPaneKeyByChild = new Map<string, string>()
+  for (const [parentPaneKey, children] of tree.childrenByParentPaneKey) {
+    for (const child of children) {
+      parentPaneKeyByChild.set(child.paneKey, parentPaneKey)
+    }
+  }
   const hidden = new Set<string>()
-  for (const paneKey of buildChildAgentLineageTree(threads).childPaneKeys) {
+  for (const paneKey of tree.childPaneKeys) {
     if (!livePaneKeys.has(paneKey)) {
       hidden.add(paneKey)
     }
   }
-  return hidden
+  return { parentPaneKeyByChild, hidden }
 }
 
-/** The lineage tree behind `collectHiddenChildAgentPaneKeys`, for surfaces that nest children under their parent. */
+/** The lineage tree behind `classifyChildAgents`, for surfaces that nest children under their parent. */
 export function buildChildAgentLineageTree(
   threads: readonly ChildAgentClassifiableThread[],
   includeSpawnedBy = false

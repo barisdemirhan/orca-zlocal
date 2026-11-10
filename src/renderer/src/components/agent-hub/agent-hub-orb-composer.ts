@@ -7,7 +7,7 @@ import {
   type RefObject
 } from 'react'
 import { useAppStore } from '@/store'
-import type { NativeChatComposerInput } from '../native-chat/native-chat-composer-input'
+import type { NativeChatComposerInput } from '../native-chat/composer/editor/native-chat-composer-input'
 import {
   DICTATION_CONTROL_EVENT,
   dispatchDictationControl

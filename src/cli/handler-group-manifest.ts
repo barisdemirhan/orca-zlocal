@@ -4,6 +4,7 @@ import { AGENT_HUB_HANDLER_GROUP } from './agent-hub-handler-group'
 import { JIRA_HANDLER_GROUP } from './jira-handler-group'
 import { LINEAR_HANDLER_GROUP } from './linear-handler-group'
 import { REFERENCE_HANDLER_GROUP } from './reference-handler-group'
+import { SERVE_PAIRING_HANDLER_GROUPS } from './serve-pairing-handler-groups'
 import { PLUGIN_HANDLER_GROUPS } from './plugin-handler-groups'
 import { HOST_HANDLER_GROUPS } from './host-handler-groups'
 import { WORKTREE_HANDLER_GROUPS } from './worktree-handler-groups'
@@ -26,10 +27,12 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
     keys: ['claude-teams', 'open', 'serve', 'status'],
     load: async () => (await import('./handlers/core.js')).CORE_HANDLERS
   },
+  ...SERVE_PAIRING_HANDLER_GROUPS,
   {
-    name: 'serve-restore',
-    keys: ['serve restore resume'],
-    load: async () => (await import('./handlers/serve-restore.js')).SERVE_RESTORE_HANDLERS
+    name: 'serve-reset-identity',
+    keys: ['serve reset-identity'],
+    load: async () =>
+      (await import('./handlers/serve-reset-identity.js')).SERVE_RESET_IDENTITY_HANDLERS
   },
   {
     name: 'serve-service',

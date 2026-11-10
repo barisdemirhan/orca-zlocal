@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
-import type { RuntimeFileReadArgs } from '@/runtime/runtime-file-client-types'
+import type { RuntimeFileReadArgs } from '@/runtime/files/runtime-file-client-types'
 
 /** The paired server that owns a peeked file, or null for local and SSH reads. */
 export function peekReadRuntimeEnvironmentId(

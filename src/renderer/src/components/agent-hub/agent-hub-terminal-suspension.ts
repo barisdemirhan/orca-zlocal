@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { useCallback, useEffect } from 'react'
 import { useAppStore } from '@/store'
-import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
+import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
 import { hasRuntimeRpcErrorCode } from '../../../../shared/runtime-rpc-error-code'
 import type { TerminalSuspensionResult } from '../../../../shared/terminal-suspension'
 import { resolveAgentHubTargetTerminal } from './agent-hub-target-terminal'

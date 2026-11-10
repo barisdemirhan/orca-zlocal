@@ -14,11 +14,11 @@ import { agentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubStateWord } from './agent-hub-copy'
 import { useAppStore } from '@/store'
 import { flushMicrotasks } from '@/store/slices/agent-status/agent-status-test-harness'
-import { makeUnifiedTab } from '@/store/slices/store-test-helpers'
+import { makeUnifiedTab } from '@/store/slices/tabs/tab-group.test-fixture'
 import type { AgentStatusPayload } from '@/store/slices/agent-status/agent-status-contract'
 
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 

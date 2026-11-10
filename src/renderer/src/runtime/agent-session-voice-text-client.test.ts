@@ -3,7 +3,7 @@ import { AppendVoiceTextParams } from '../../../shared/rpc-contract/structured-a
 import { appendAgentSessionVoiceText } from './agent-session-voice-text-client'
 
 const call = vi.hoisted(() => vi.fn())
-vi.mock('./runtime-rpc-client', () => ({ callRuntimeRpc: call }))
+vi.mock('./rpc/calls/runtime-rpc-call', () => ({ callRuntimeRpc: call }))
 afterEach(() => call.mockReset())
 
 const owner = { voiceSessionId: '11111111-1111-4111-8111-111111111111', generation: 1 }

@@ -27,7 +27,7 @@ import {
   AgentHubAnswerQueueCard,
   AgentHubAnswerQueueRequestCard
 } from './AgentHubAnswerQueueCard'
-import type { NativeChatInteractiveCardControl } from '../native-chat/NativeChatInteractiveCard'
+import type { NativeChatInteractiveCardControl } from '../native-chat/prompts/NativeChatInteractiveCard'
 
 type Props = {
   threads: readonly AgentPaneThread[]

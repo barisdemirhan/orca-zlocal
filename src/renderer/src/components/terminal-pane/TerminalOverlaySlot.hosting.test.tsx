@@ -30,7 +30,7 @@ vi.mock('./TerminalPane', async () => {
 })
 
 import { useAppStore } from '../../store'
-import { TerminalOverlaySlot } from './TerminalOverlaySlot'
+import { TerminalOverlaySlot } from './mounting/TerminalOverlaySlot'
 
 let container: HTMLDivElement
 let root: Root

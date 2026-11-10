@@ -5,7 +5,7 @@ import { absolutePathToFileUri } from '@/components/editor/markdown/link-routing
 import { getConnectionIdForFile } from '@/lib/connection-context'
 import { resolveWorkspaceDirectory } from '@/lib/workspace-directory'
 import { getTerminalFileContext } from '../terminal-pane/host-files/terminal-file-path-mapping'
-import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
+import { getRelativePathInsideWorktree } from '@/runtime/files/runtime-file-routing'
 import { userNamedFileAccess } from '@/lib/local-file-access'
 import type { HttpLinkSourceOwner } from '@/lib/browser/navigation/http-link-routing'
 import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'

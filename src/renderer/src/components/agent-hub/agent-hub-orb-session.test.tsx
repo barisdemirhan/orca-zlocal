@@ -25,16 +25,16 @@ vi.mock('@/store', async () => {
   }
 })
 vi.mock('@/hooks/use-now', () => ({ useNow: () => 0 }))
-vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
+vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () => ({
   getStructuredAgentSessionStatusFeed: () => ({
     activate: () => () => {},
     subscribe: () => () => {}
   })
 }))
-vi.mock('../native-chat/use-structured-agent-session-read', () => ({
+vi.mock('../native-chat/session/structured/read/use-structured-agent-session-read', () => ({
   useStructuredAgentSessionRead: () => ({ state: {} })
 }))
-vi.mock('../native-chat/use-structured-agent-session-transport-state', () => ({
+vi.mock('../native-chat/session/structured/use-structured-agent-session-transport-state', () => ({
   useStructuredAgentSessionTransportState: () => ({
     journalItems: [],
     isWorking: false,

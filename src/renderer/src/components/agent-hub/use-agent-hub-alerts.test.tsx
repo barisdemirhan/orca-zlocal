@@ -15,11 +15,11 @@ vi.mock('@/attention/agent-attention-notification-delivery', () => ({
   isNativeAgentBannerRefused: () => false,
   readAgentAttentionNotificationSound: () => undefined
 }))
-vi.mock('../terminal-pane/terminal-notification-pane-visibility', () => ({
+vi.mock('@/attention/orca-window-foreground-focus', () => ({
   isOrcaWindowForegroundFocused: () => false
 }))
 const view = vi.hoisted(() => ({ surfaceViewed: false, canvasOpen: false }))
-vi.mock('../terminal-pane/terminal-attention-surface', () => ({
+vi.mock('../terminal-pane/notifications/terminal-attention-surface', () => ({
   createTerminalAttentionSurface: () => ({ isSurfaceViewed: () => view.surfaceViewed })
 }))
 vi.mock('./agent-hub-canvas-store', () => ({ isAgentHubCanvasOpen: () => view.canvasOpen }))

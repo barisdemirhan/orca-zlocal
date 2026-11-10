@@ -10,7 +10,7 @@ import {
   extractTerminalFileLinks,
   resolveTerminalFileLink
 } from '../../../../shared/terminal/links/terminal-links'
-import { getRelativePathInsideWorktree } from '@/runtime/runtime-file-routing'
+import { getRelativePathInsideWorktree } from '@/runtime/files/runtime-file-routing'
 import { getTerminalFileContext } from '../terminal-pane/host-files/terminal-file-path-mapping'
 import { detectLanguage } from '@/lib/language-detect'
 import { useAppStore } from '@/store'
@@ -29,7 +29,7 @@ import {
   openAgentHubPeek,
   readAgentHubPeek
 } from './agent-hub-peek-store'
-import { findWorktreeById } from '@/store/slices/worktree-helpers'
+import { findWorktreeById } from '@/store/github/refresh/worktree-refresh'
 import { agentHubRequestHost } from './agent-hub-request-target'
 import type {
   AgentHubPeekControlAction,
@@ -45,7 +45,7 @@ function shownAgentHubPeekForHost(host: string) {
     return null
   }
   const state = useAppStore.getState()
-  const worktree = findWorktreeById(state.worktreesByRepo, item.worktreeId)
+  const worktree = findWorktreeById(state, item.worktreeId)
   return worktree && agentHubRequestHost(state, worktree) === host ? { peek, item } : null
 }
 

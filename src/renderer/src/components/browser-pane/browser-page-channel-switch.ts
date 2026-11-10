@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store'
-import { createWebRuntimeSessionBrowserTab } from '@/runtime/web-runtime-browser-creation'
+import { createWebRuntimeSessionBrowserTab } from '@/runtime/browser/creation/web-runtime-browser-creation'
 import type { BrowserClientHostedRemoteChoice } from '@/components/settings/browser/routing/browser-client-hosted-remote-copy'
 import { resolveBrowserReopenOnServerUrl } from './browser-reopen-on-server'
 

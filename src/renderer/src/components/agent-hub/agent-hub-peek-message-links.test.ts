@@ -7,7 +7,7 @@ import type { Worktree } from '../../../../shared/worktree/types'
 import { makeRepo, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 vi.mock('@/lib/client-creation-action-policy', () => ({

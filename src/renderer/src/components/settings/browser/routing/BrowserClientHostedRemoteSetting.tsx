@@ -1,3 +1,4 @@
+import { useTranslate } from '@/i18n/use-translate'
 import type { GlobalSettings } from '../../../../../../shared/global-settings-types'
 import { BROWSER_CLIENT_HOSTED_REMOTE_SETTINGS_TARGET_ID } from '@/lib/settings-navigation-types'
 import { SearchableSetting } from '../../section-layout/SearchableSetting'
@@ -17,8 +18,9 @@ export function BrowserClientHostedRemoteSetting({
   settings,
   updateSettings
 }: BrowserClientHostedRemoteSettingProps): React.JSX.Element {
-  const title = getBrowserClientHostedRemoteTitle()
-  const description = getBrowserClientHostedRemoteDescription()
+  const t = useTranslate()
+  const title = getBrowserClientHostedRemoteTitle(t)
+  const description = getBrowserClientHostedRemoteDescription(t)
 
   return (
     <SearchableSetting
@@ -50,7 +52,7 @@ export function BrowserClientHostedRemoteSetting({
             onChange={(value) =>
               updateSettings({ browserClientHostedRemoteEnabled: value === 'device' })
             }
-            options={getBrowserClientHostedRemoteOptions()}
+            options={getBrowserClientHostedRemoteOptions(t)}
           />
         }
       />

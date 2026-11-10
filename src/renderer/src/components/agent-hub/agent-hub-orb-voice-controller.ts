@@ -2,7 +2,7 @@ import { createOrbVoiceContext } from './agent-hub-orb-context-delivery'
 import { checkAgentHubOrbVoiceCapability } from './agent-hub-orb-voice-capability'
 import type { AgentSessionVoiceEvent } from '../../../../shared/agent-session-voice'
 import type { AgentSessionVoiceClient } from '@/runtime/agent-session-voice-client'
-import type { StructuredAgentSessionHostCapabilityState } from '@/runtime/structured-agent-session-host-capability'
+import type { StructuredAgentSessionHostCapabilityState } from '../../../../shared/agent-session/structured-agent-session-host-capability'
 import { microphoneCaptureIsBusy } from '../dictation/microphone-capture-lease'
 import {
   agentHubOrbVoiceMediaFailure,

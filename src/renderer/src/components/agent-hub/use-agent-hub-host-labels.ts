@@ -5,6 +5,7 @@ import { buildSidebarHostOptions } from '@/components/sidebar/worktree-list/cont
 import { getSettingsFocusedExecutionHostId } from '../../../../shared/execution-host'
 import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'
 import { getRepoHostIdentity } from '../../../../shared/repo-host-identity'
+import { getRenderableFolderWorkspaces } from '../../../../shared/sidebar-list/folder-workspace-lanes'
 import { repoOfWorktree } from '../../../../shared/sidebar-list/sidebar-feed-index'
 
 /**
@@ -15,6 +16,8 @@ import { repoOfWorktree } from '../../../../shared/sidebar-list/sidebar-feed-ind
 export function useAgentHubHostLabels(): ReadonlyMap<string, string> | undefined {
   const repos = useAppStore((s) => s.repos)
   const worktreesByRepo = useAppStore((s) => s.worktreesByRepo)
+  const folderWorkspaces = useAppStore((s) => s.folderWorkspaces)
+  const projectGroups = useAppStore((s) => s.projectGroups)
   const settings = useAppStore((s) => s.settings)
   const sshTargetLabels = useAppStore((s) => s.sshTargetLabels)
   const sshConnectionStates = useAppStore((s) => s.sshConnectionStates)
@@ -36,6 +39,7 @@ export function useAgentHubHostLabels(): ReadonlyMap<string, string> | undefined
     const reposByKey = new Map(repos.map((repo) => [getRepoHostIdentity(repo), repo]))
     return getMixedWorktreeHostContextLabels(
       Object.values(worktreesByRepo).flat(),
+      getRenderableFolderWorkspaces(folderWorkspaces, projectGroups),
       (worktree) => repoOfWorktree(repoMap, reposByKey, worktree),
       hostLabelById,
       getSettingsFocusedExecutionHostId(settings)
@@ -43,6 +47,8 @@ export function useAgentHubHostLabels(): ReadonlyMap<string, string> | undefined
   }, [
     repos,
     worktreesByRepo,
+    folderWorkspaces,
+    projectGroups,
     settings,
     sshTargetLabels,
     sshConnectionStates,

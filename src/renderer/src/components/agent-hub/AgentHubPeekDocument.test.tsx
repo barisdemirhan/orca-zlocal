@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
-import { readRuntimeFileContent } from '@/runtime/runtime-file-read-client'
+import { readRuntimeFileContent } from '@/runtime/files/reads/runtime-file-read-client'
 import type { AgentHubPeekContent } from './agent-hub-peek-store'
 import { AgentHubPeekFile } from './AgentHubPeekFile'
 
@@ -14,7 +14,7 @@ const monacoEditor = vi.hoisted(() => ({
   createModel: vi.fn()
 }))
 vi.mock('@/lib/monaco-setup', () => ({ monaco: { editor: monacoEditor } }))
-vi.mock('@/runtime/runtime-file-read-client', () => ({ readRuntimeFileContent: vi.fn() }))
+vi.mock('@/runtime/files/reads/runtime-file-read-client', () => ({ readRuntimeFileContent: vi.fn() }))
 vi.mock('mermaid', () => ({
   default: {
     initialize: vi.fn(),

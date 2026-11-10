@@ -12,18 +12,16 @@ import type { AgentSessionMutationResult } from '../../../shared/agent-session/a
 import type { RuntimeEnvironmentStatus } from '../../../shared/remote-runtime/host-status/runtime-host-status'
 import { structuredAgentSessionPayloadFingerprint } from '../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
 import type { RuntimeClientTarget } from '../../../shared/runtime-client-target'
-import { getRuntimeEnvironmentRevision } from './runtime-environment-revision'
-import { runtimeHostConnectionStateForEntry } from './runtime-host-connection-state'
-import { callRuntimeRpc } from './runtime-rpc-client'
-import {
-  callStructuredAgentSession,
-  subscribeStructuredAgentSessionMethod
-} from './structured-agent-session-client'
+import { getRuntimeEnvironmentRevision } from './rpc/environment-revisions/runtime-environment-revision'
+import { runtimeHostConnectionStateForEntry } from './hosts/connections/runtime-host-connection-state'
+import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
+import { callStructuredAgentSession } from './native-chat/requests/structured-agent-session-call'
+import { subscribeStructuredAgentSessionMethod } from './native-chat/requests/structured-agent-session-subscriptions'
 import type {
   StructuredAgentSessionWrite,
   StructuredAgentSessionVoiceStartObserver
-} from '../components/native-chat/use-structured-agent-session-mutate'
-import { structuredSessionOperationId } from '../components/native-chat/structured-agent-session-operation-id'
+} from '../components/native-chat/session/structured/writes/use-structured-agent-session-mutate'
+import { structuredSessionOperationId } from '../components/native-chat/session/structured/writes/structured-agent-session-operation-id'
 import { appendAgentSessionVoiceText } from './agent-session-voice-text-client'
 
 export class AgentSessionVoiceRefusal extends Error {}

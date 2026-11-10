@@ -8,7 +8,7 @@ import type { LinkActionRequest } from '@/components/link-actions/link-action-re
 import {
   handleNativeChatWebLink,
   nativeChatWebPeekSource
-} from '../native-chat/native-chat-web-link-actions'
+} from '../native-chat/links/actions/native-chat-web-link-actions'
 import { handleTerminalFileLink } from './links/files/terminal-file-link-actions'
 import { handleTerminalHttpLink } from './links/http/terminal-url-link-hit-testing'
 import type {

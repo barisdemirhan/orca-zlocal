@@ -6,7 +6,7 @@ import { translate } from '@/i18n/i18n'
 import {
   NATIVE_CHAT_PERMISSION_MODE_ICONS,
   nativeChatPermissionModeLabel
-} from '../native-chat/native-chat-permission-mode-labels'
+} from '../native-chat/session/options/controls/native-chat-permission-mode-labels'
 import { AgentHubOrbHeaderAction } from './AgentHubOrbConversationHeader'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'

@@ -1,6 +1,6 @@
 import type { AgentStatusEntry } from '../../../../../shared/agent-status/contracts/agent-status-types'
 import type { Worktree } from '../../../../../shared/worktree/types'
-import { findWorktreeById } from '../worktree-helpers'
+import { findFirstIndexedWorktree } from '@/lib/workspace/ownership/worktree-runtime-owner-index'
 
 /** Mirrored rows keep the host's checkpoint across a new turn; only a host frame replaces it. */
 export function hostKeepsProviderSession(
@@ -12,6 +12,6 @@ export function hostKeepsProviderSession(
   agentType: AgentStatusEntry['agentType']
 ): boolean {
   const worktreeId = args.routing?.worktreeId ?? existing?.worktreeId ?? ''
-  const worktree = findWorktreeById(args.state.worktreesByRepo, worktreeId)
+  const worktree = findFirstIndexedWorktree(args.state.worktreesByRepo, worktreeId)
   return existing?.agentType === agentType && worktree?.runtimeOwnerEnvironmentId !== undefined
 }

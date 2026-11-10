@@ -1,0 +1,133 @@
+import { memo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useAppStore } from '../../../store/index'
+import { isProvenProcessExit } from '../../../../../shared/terminal/pty/lifecycle/terminal-exit-cause'
+import { RetainedPaneHost } from '../../tab-group/RetainedPaneHost'
+import type { ActivityTerminalPortalTarget } from '../../activity/activity-terminal-portal'
+import TerminalPane from '../TerminalPane'
+import type { HiddenTerminalPrewarm } from '../controller/terminal-pane-types'
+import { closeTerminalTab } from '../../terminal/terminal-tab-actions'
+import { shouldDeferParkedPtyExitTabClose } from '../parking/output-watchers/terminal-parked-tab-watchers'
+
+type TerminalOverlaySlotProps = {
+  terminalTabId: string
+  terminalGeneration: number | undefined
+  worktreeId: string
+  worktreePath: string
+  startupCwd: string | undefined
+  groupId: string | undefined
+  isWorktreeActive: boolean
+  isVisible: boolean
+  isActive: boolean
+  /** Hover prewarm of a hidden reveal target. */
+  hiddenPrewarm?: HiddenTerminalPrewarm | null
+  /** Visible on the unfocused side of a split. */
+  dimmed?: boolean
+  activityTerminalPortal: ActivityTerminalPortalTarget | null
+  onFocusOwningGroup: ((groupId: string) => void) | undefined
+  consumeSuppressedPtyExit: (ptyId: string) => boolean
+  /** Read when a close is requested; the returned reaction runs once it lands. */
+  captureEmptiedReaction: () => () => void
+}
+
+export const TerminalOverlaySlot = memo(function TerminalOverlaySlot({
+  terminalTabId,
+  terminalGeneration,
+  worktreeId,
+  worktreePath,
+  startupCwd,
+  groupId,
+  isWorktreeActive,
+  isVisible,
+  isActive,
+  hiddenPrewarm = null,
+  dimmed = false,
+  activityTerminalPortal,
+  onFocusOwningGroup,
+  consumeSuppressedPtyExit,
+  captureEmptiedReaction
+}: TerminalOverlaySlotProps): React.JSX.Element {
+  // Why read once: switching host type remounts the pane and loses its TUI state.
+  const [stableHosting] = useState(
+    () => useAppStore.getState().settings?.experimentalAgentHub === true
+  )
+  const [shouldMeasureHiddenStartup, setShouldMeasureHiddenStartup] = useState(
+    () => useAppStore.getState().pendingStartupByTabId[terminalTabId] !== undefined
+  )
+  if (isVisible && shouldMeasureHiddenStartup) {
+    setShouldMeasureHiddenStartup(false)
+  }
+
+  // Drop with the reveal in one render, or a later lease release re-runs resume and steals focus.
+  const prewarm = isVisible || activityTerminalPortal !== null ? null : hiddenPrewarm
+  const terminalPane = (
+    <TerminalPane
+      key={`${terminalTabId}-${terminalGeneration ?? 0}`}
+      tabId={terminalTabId}
+      worktreeId={worktreeId}
+      cwd={startupCwd ?? worktreePath}
+      isActive={
+        stableHosting && activityTerminalPortal
+          ? activityTerminalPortal.active
+          : isActive || activityTerminalPortal?.active === true
+      }
+      // Why: split-group changes reparent TabGroupPanel subtrees. Keeping the
+      // TerminalPane mounted here preserves alt-screen TUI state while this
+      // flag still lets hidden tabs throttle rendering.
+      isVisible={isVisible || activityTerminalPortal !== null}
+      isWorktreeActive={isWorktreeActive || activityTerminalPortal !== null}
+      isolatedPaneKey={activityTerminalPortal?.paneKey ?? null}
+      measureWhileHidden={prewarm !== null}
+      warmRendererWhileHidden={prewarm === 'warm'}
+      hostedInMirror={stableHosting && activityTerminalPortal?.owner === 'agent-hub'}
+      onPtyExit={(ptyId, exitCode) => {
+        if (consumeSuppressedPtyExit(ptyId)) {
+          return
+        }
+        // A synthetic host-loss exit is not evidence that the user closed the tab.
+        if (exitCode !== undefined && !isProvenProcessExit(exitCode)) {
+          useAppStore.getState().markUnverifiedPtyLoss(terminalTabId)
+          return
+        }
+        // Parked multi-leaf tabs have no PaneManager; defer dead-leaf handling until reveal rather than close live siblings.
+        if (shouldDeferParkedPtyExitTabClose(terminalTabId, ptyId)) {
+          return
+        }
+        closeTerminalTab(terminalTabId, {
+          reason: 'pty-exit',
+          lifecyclePtyId: ptyId,
+          onClosed: captureEmptiedReaction()
+        })
+      }}
+      onCloseTab={(reason) => {
+        // Use the guarded close path so pinned terminals still require confirmation.
+        closeTerminalTab(terminalTabId, { reason, onClosed: captureEmptiedReaction() })
+      }}
+    />
+  )
+
+  if (!stableHosting && activityTerminalPortal) {
+    return createPortal(
+      terminalPane,
+      activityTerminalPortal.target,
+      `activity-terminal-${terminalTabId}`
+    )
+  }
+
+  return (
+    <RetainedPaneHost
+      groupId={groupId}
+      isVisible={isVisible}
+      measureWhileHidden={shouldMeasureHiddenStartup || prewarm !== null}
+      fitTerminal
+      dimmed={dimmed}
+      data-terminal-overlay-tab-id={terminalTabId}
+      onFocusOwningGroup={onFocusOwningGroup}
+      retainContent={stableHosting}
+      restoreFocusOnMove={activityTerminalPortal ? activityTerminalPortal.active : isActive}
+      destination={activityTerminalPortal?.target}
+    >
+      {terminalPane}
+    </RetainedPaneHost>
+  )
+})

@@ -12,7 +12,7 @@ import {
   PANE_KEY,
   PANE_KEY_2
 } from '../activity/ActivityPrototypePage-test-fixtures'
-import type { NativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
+import type { NativeChatInteractiveSend } from '../native-chat/session/terminal/send/use-native-chat-interactive-send'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubAnswerQueue } from './AgentHubAnswerQueue'
 import {
@@ -37,12 +37,12 @@ const send = vi.hoisted(() => ({
 const toast = vi.hoisted(() => vi.fn())
 vi.mock('sonner', () => ({ toast }))
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 vi.mock('./use-agent-hub-live-pty', () => ({ useAgentHubLivePty: () => 'pty-1' }))
-vi.mock('../native-chat/use-native-chat-can-send', () => ({ useNativeChatCanSend: () => true }))
-vi.mock('../native-chat/use-native-chat-interactive-send', () => ({
+vi.mock('../native-chat/host-access/use-native-chat-can-send', () => ({ useNativeChatCanSend: () => true }))
+vi.mock('../native-chat/session/terminal/send/use-native-chat-interactive-send', () => ({
   useNativeChatInteractiveSend: () => send
 }))
 vi.mock('./AgentHubDictateButton', () => ({

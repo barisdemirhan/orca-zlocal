@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store'
-import { destroyWorkspaceWebviews } from '@/store/slices/browser-webview-cleanup'
+import { destroyWorkspaceWebviews } from '@/store/slices/browser/cleanup/browser-webview-cleanup'
 import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
 
 export function closeAgentHubPeekBrowserTab(tabId: string): void {

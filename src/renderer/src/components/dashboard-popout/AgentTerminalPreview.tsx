@@ -23,6 +23,7 @@ import { terminalPreviewUnavailableMessage } from './terminal-preview-unavailabl
 import { resolveEffectiveTerminalAppearance } from '@/lib/terminal-theme'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
+import { usePluginFontReady } from '@/store/plugins/appearance/plugin-fonts'
 import { createPreviewGridClaim } from './preview-grid-claim'
 import { createPreviewBoxFit } from './preview-terminal-box-fit'
 import {
@@ -39,6 +40,7 @@ import {
 } from '@/components/link-actions/link-action-request'
 import { installDashboardPreviewLinkInteraction } from './dashboard-preview-link-interaction'
 import type { DashboardPreviewLinkSource } from './dashboard-preview-http-actions'
+import { useTranslate } from '@/i18n/use-translate'
 
 const PREVIEW_SCROLLBACK_ROWS = 24
 // Preview snapshots bound history; pane scrollback would only cost memory.
@@ -65,6 +67,7 @@ export function AgentTerminalPreview({
   linkSource?: DashboardPreviewLinkSource
   onBrowserForeground?: () => void
 }): React.JSX.Element {
+  const t = useTranslate()
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const { presentationRef, activateRef } = usePreviewPresentation(visible, focusOnActivate)
@@ -72,6 +75,7 @@ export function AgentTerminalPreview({
   const linkSourceRef = useRef(linkSource)
   const browserForegroundRef = useRef(onBrowserForeground)
   const settings = useAppStore((state) => state.settings)
+  const terminalFontReady = usePluginFontReady(settings?.terminalFontFamily)
   const systemPrefersDark = useSystemPrefersDark()
   const macOptionAsAlt = useEffectiveMacOptionAsAlt(settings?.terminalMacOptionAsAlt)
   // Read live settings without terminal remount, PTY reconnect or snapshot repaint.
@@ -352,7 +356,7 @@ export function AgentTerminalPreview({
     settings?.terminalLigatures
   ])
 
-  usePreviewAppearance(terminalRef, settings, macOptionAsAlt === 'true')
+  usePreviewAppearance(terminalRef, settings, macOptionAsAlt === 'true', terminalFontReady)
 
   return (
     // Why: a size FIXED by the viewport (not shrink-to-fit) + overflow-hidden
@@ -378,7 +382,7 @@ export function AgentTerminalPreview({
       ) : null}
       {ptyGone ? (
         <div className="absolute inset-0 flex items-center justify-center px-2.5 py-8 text-center text-[11px] text-muted-foreground">
-          {terminalPreviewUnavailableMessage({ ptyId })}
+          {terminalPreviewUnavailableMessage({ ptyId }, t)}
         </div>
       ) : null}
       <div

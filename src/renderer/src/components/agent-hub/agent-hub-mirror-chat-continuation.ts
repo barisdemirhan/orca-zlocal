@@ -12,11 +12,9 @@ import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 import { commitAgentHubMirrorState, readAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { readAgentHubChatWorking } from './agent-hub-chat-work-state'
-import {
-  readNativeChatComposerDraft,
-  structuredAgentSessionDraftScopeKey
-} from '../native-chat/native-chat-composer-draft-store'
-import { readStructuredChatTabSavedName } from '@/runtime/structured-chat-tab-name'
+import { readNativeChatComposerDraft } from '../native-chat/drafts/native-chat-composer-draft-store'
+import { structuredAgentSessionDraftScopeKey } from '../native-chat/drafts/native-chat-draft-scope'
+import { readStructuredChatTabSavedName } from '@/runtime/native-chat/naming/structured-chat-tab-name'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 
 const TERMINAL_ARRIVAL_TIMEOUT_MS = 5000

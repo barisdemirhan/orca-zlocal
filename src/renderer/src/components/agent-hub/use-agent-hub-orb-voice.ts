@@ -7,13 +7,13 @@ import { createAgentSessionVoiceClient } from '@/runtime/agent-session-voice-cli
 import {
   structuredAgentSessionOwnerForTab,
   structuredAgentSessionTargetForHost
-} from '@/runtime/structured-agent-session-owner'
+} from '@/runtime/native-chat/session-ownership/structured-agent-session-owner'
 import {
   structuredAgentSessionHostKey,
   useStructuredAgentSessionHostCapabilityState
-} from '@/runtime/structured-agent-session-host-capability'
-import { getStructuredAgentSessionReadOwner } from '../native-chat/structured-agent-session-read-owner'
-import { useStructuredAgentSessionMutate } from '../native-chat/use-structured-agent-session-mutate'
+} from '@/runtime/native-chat/host-capabilities/structured-agent-session-host-capability'
+import { getStructuredAgentSessionReadOwner } from '../native-chat/session/structured/read/structured-agent-session-read-owner'
+import { useStructuredAgentSessionMutate } from '../native-chat/session/structured/writes/use-structured-agent-session-mutate'
 import { AgentHubOrbVoiceController } from './agent-hub-orb-voice-controller'
 import { OrbDictationHold } from './agent-hub-orb-dictation-hold'
 import {

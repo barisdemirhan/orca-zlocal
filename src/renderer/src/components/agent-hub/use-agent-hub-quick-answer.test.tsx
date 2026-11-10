@@ -3,7 +3,7 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
-import type { NativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
+import type { NativeChatInteractiveSend } from '../native-chat/session/terminal/send/use-native-chat-interactive-send'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import {
   makeRepo,
@@ -33,12 +33,12 @@ const send = vi.hoisted(() => ({
   cancel: vi.fn()
 }))
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 vi.mock('./use-agent-hub-live-pty', () => ({ useAgentHubLivePty: () => 'pty-1' }))
-vi.mock('../native-chat/use-native-chat-can-send', () => ({ useNativeChatCanSend: () => true }))
-vi.mock('../native-chat/use-native-chat-interactive-send', () => ({
+vi.mock('../native-chat/host-access/use-native-chat-can-send', () => ({ useNativeChatCanSend: () => true }))
+vi.mock('../native-chat/session/terminal/send/use-native-chat-interactive-send', () => ({
   useNativeChatInteractiveSend: () => send
 }))
 

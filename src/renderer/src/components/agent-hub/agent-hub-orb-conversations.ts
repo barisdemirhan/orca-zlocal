@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
-import { getStructuredAgentSessionStatusFeed } from '@/runtime/structured-agent-session-status-feed'
+import { getStructuredAgentSessionStatusFeed } from '@/runtime/native-chat/status/structured-agent-session-status-feed'
 
 export function useAgentHubOrbConversations(sessionId: string, history: boolean) {
   const [conversations, setConversations] = useState<AgentHubOrbConversation[]>([])

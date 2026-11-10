@@ -4,8 +4,8 @@ import {
   isNativeAgentBannerRefused,
   readAgentAttentionNotificationSound
 } from '@/attention/agent-attention-notification-delivery'
-import { isOrcaWindowForegroundFocused } from '../terminal-pane/terminal-notification-pane-visibility'
-import { createTerminalAttentionSurface } from '../terminal-pane/terminal-attention-surface'
+import { isOrcaWindowForegroundFocused } from '@/attention/orca-window-foreground-focus'
+import { createTerminalAttentionSurface } from '../terminal-pane/notifications/terminal-attention-surface'
 import { pushAgentHubAlerts, pruneAgentHubRequestAlerts } from './agent-hub-alert-queue'
 import {
   agentHubAlertBaseline,

@@ -2,17 +2,17 @@
 import { cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session/agent-session-wire'
-import { resetHostModelCatalogSnapshotsForTests } from '@/runtime/host-model-catalog-snapshots'
+import { resetHostModelCatalogSnapshotsForTests } from '@/runtime/native-chat/model-catalogs/host-model-catalog-snapshots'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
 
 const mocks = vi.hoisted(() => ({ call: vi.fn() }))
-vi.mock('@/runtime/structured-agent-session-client', () => ({
+vi.mock('@/runtime/native-chat/requests/structured-agent-session-call', () => ({
   callStructuredAgentSession: mocks.call
 }))
-vi.mock('@/runtime/local-runtime-capabilities', () => ({
+vi.mock('@/runtime/hosts/capabilities/local-runtime-capabilities', () => ({
   ensureLocalRuntimeCapabilities: async () => ['agent-session.model-catalog.saved-only.v1']
 }))
-vi.mock('@/runtime/host-structured-agents', () => ({
+vi.mock('@/runtime/native-chat/agent-catalogs/host-structured-agents', () => ({
   subscribeHostStructuredAgents: () => () => {},
   readHostStructuredAgentsForRuntime: () => undefined,
   loadHostStructuredAgents: async () => {}

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   NativeChatQuestionCard,
   type NativeChatQuestionCardControl
-} from './NativeChatQuestionCard'
+} from './prompts/NativeChatQuestionCard'
 import type { AskAnswerSelection } from '../../../../shared/native-chat/input/native-chat-ask-answer'
 import type { AskPrompt } from '../../../../shared/native-chat/input/native-chat-ask-types'
 

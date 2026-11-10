@@ -14,7 +14,7 @@ import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 import { orbAsk } from './agent-hub-orb-test-fixtures'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
 import { AgentHubOrbComposerContext, useAgentHubOrbComposerBinding } from './agent-hub-orb-composer'
-import type { NativeChatComposerInput } from '../native-chat/native-chat-composer-input'
+import type { NativeChatComposerInput } from '../native-chat/composer/editor/native-chat-composer-input'
 import { AGENT_HUB_ORB_DOUBLE_CLICK_MS } from './use-agent-hub-orb-sphere-gestures'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 
@@ -37,7 +37,7 @@ vi.mock('./agent-hub-orb-conversations', () => ({
   })
 }))
 vi.mock('./AgentHubSettingsOrbSection', () => ({ AgentHubSettingsOrbSection: () => null }))
-vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
+vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () => ({
   getStructuredAgentSessionStatusFeed: () => ({
     getSnapshot: () => new Map(),
     activate: () => () => {},

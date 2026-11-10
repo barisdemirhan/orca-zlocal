@@ -15,6 +15,7 @@ import {
   type ShortcutFilter,
   type ShortcutRowsByGroup
 } from './ShortcutFilterRail'
+import type { Translate } from '../../../i18n/use-translate'
 
 const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
   'agentHub.toggleOrb',
@@ -35,21 +36,24 @@ const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
   'agentHub.previousMirrorTab'
 ])
 
-export function buildShortcutRowVisibility(options: {
-  groups: ShortcutGroup[]
-  keybindings: KeybindingOverrides
-  conflictByAction: Map<KeybindingActionId, string[]>
-  terminalShortcutPolicy: TerminalShortcutPolicy
-  platform: NodeJS.Platform
-  managedBrowserCreationEnabled: boolean
-  mobileEmulatorCreationEnabled: boolean
-  agentDashboardEnabled: boolean
-  agentHubEnabled: boolean
-  agentHubCanvasEnabled: boolean
-  settingsSearchQuery: string
-  shortcutQuery: string
-  shortcutFilter: ShortcutFilter
-}): {
+export function buildShortcutRowVisibility(
+  options: {
+    groups: ShortcutGroup[]
+    keybindings: KeybindingOverrides
+    conflictByAction: Map<KeybindingActionId, string[]>
+    terminalShortcutPolicy: TerminalShortcutPolicy
+    platform: NodeJS.Platform
+    managedBrowserCreationEnabled: boolean
+    mobileEmulatorCreationEnabled: boolean
+    agentDashboardEnabled: boolean
+    agentHubEnabled: boolean
+    agentHubCanvasEnabled: boolean
+    settingsSearchQuery: string
+    shortcutQuery: string
+    shortcutFilter: ShortcutFilter
+  },
+  t?: Translate
+): {
   filterCounts: Record<ShortcutFilter, number>
   shortcutRows: ShortcutRowsByGroup['rows']
   visibleShortcutCount: number
@@ -83,7 +87,8 @@ export function buildShortcutRowVisibility(options: {
           terminalStatus: getShortcutTerminalStatus(
             item,
             options.terminalShortcutPolicy,
-            effective.length > 0
+            effective.length > 0,
+            t
           )
         }
       })

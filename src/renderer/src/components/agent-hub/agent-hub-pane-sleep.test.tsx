@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
+import { makeTab } from '@/store/terminals/terminal-tab.test-fixture'
+import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 import { useAgentHubPaneSleep } from './agent-hub-pane-sleep'
 import type * as SleepOperations from './agent-hub-pane-sleep-operations'
 

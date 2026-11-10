@@ -5,7 +5,7 @@ import {
   type AgentChatPermissionMode
 } from '../../../../shared/agent-launch/permissions/agent-chat-permission-mode'
 import { agentHubOrbChosenMode } from '../../../../shared/agent-hub-orb-settings'
-import { getStructuredAgentSessionStatusFeed } from '@/runtime/structured-agent-session-status-feed'
+import { getStructuredAgentSessionStatusFeed } from '@/runtime/native-chat/status/structured-agent-session-status-feed'
 
 const LOCAL_TARGET = { kind: 'local' } as const
 

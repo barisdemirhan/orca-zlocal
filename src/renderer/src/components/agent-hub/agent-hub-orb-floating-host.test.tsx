@@ -15,7 +15,7 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-vi.mock('@/store/selectors', () => ({ selectFloatingVisibleTabCount: () => 1 }))
+vi.mock('@/store/workspaces/floating/floating-workspace-panel-selector', () => ({ selectFloatingVisibleTabCount: () => 1 }))
 afterEach(() => {
   cleanup()
   closeAgentHubOrbPanel()

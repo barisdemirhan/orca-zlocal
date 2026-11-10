@@ -175,7 +175,8 @@ export async function launchAgentSessionContinuation({
   const plan = launchChoice
     ? adoptAgentSessionLaunchVerdict({ ...request, ...launchChoice, worktreeId })
     : planAgentSessionLaunch(useAppStore.getState(), request)
-  if (!(await ensureAgentAvailable(agent, worktreeId, plan.route, signal))) {
+  // A dialog closed while detection ran must not start the session the user just left.
+  if (!(await ensureAgentAvailable(agent, worktreeId, plan.route, signal)) || signal?.aborted) {
     return false
   }
   const state = useAppStore.getState()
@@ -196,12 +197,22 @@ export async function launchAgentSessionContinuation({
     ...(splitGroupId ? { groupId: splitGroupId } : {}),
     agentSessionLaunchPlan: plan
   })
-  if (!result) {
+  if (!result || 'refused' in result) {
     if (splitGroupId) {
       useAppStore.getState().closeEmptyGroup(worktreeId, splitGroupId)
     }
-    notifyLaunchFailed(label)
     return false
+  }
+  // A launch still waiting on its host has opened nothing yet: the handoff counts once a chat or
+  // terminal exists, so a declined or cancelled one leaves the dialog open to retry.
+  if (result.surface.kind === 'host-published' && result.structuredSettlement) {
+    const settled = await result.structuredSettlement
+    if (settled.kind === 'cancelled' || settled.kind === 'failed') {
+      if (splitGroupId) {
+        useAppStore.getState().closeEmptyGroup(worktreeId, splitGroupId)
+      }
+      return false
+    }
   }
   if (mirror && mirrorWindowId && result.surface.kind === 'local-terminal') {
     const mirrored = addLaunchedSessionToAgentHubMirror({
@@ -234,16 +245,6 @@ export async function launchAgentSessionContinuation({
       })
   }
   return true
-}
-
-function notifyLaunchFailed(agentLabel: string): void {
-  toast.error(
-    translate(
-      'components.agentSessionContinuation.launchFailed',
-      'Could not start a new {{agent}} session.',
-      { agent: agentLabel }
-    )
-  )
 }
 
 function notifyDeliveryFailed(agentLabel: string, prompt: string): void {

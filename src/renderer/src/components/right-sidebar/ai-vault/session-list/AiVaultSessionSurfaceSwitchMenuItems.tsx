@@ -2,7 +2,7 @@ import { MessagesSquare, SquareTerminal } from 'lucide-react'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { ContextMenuItem } from '@/components/ui/context-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { translate } from '@/i18n/i18n'
+import { useTranslate } from '@/i18n/use-translate'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ResumeInNewCliTooltipText } from '../session-actions/ai-vault-session-cli-fork-copy'
 
@@ -27,6 +27,7 @@ export function AiVaultSessionSurfaceSwitchMenuItems({
   /** Why the terminal action is unavailable right now; its tooltip says so. */
   cliBlockedReason?: string
 }): React.JSX.Element {
+  const t = useTranslate()
   const Item = menuKind === 'context' ? ContextMenuItem : DropdownMenuItem
   return (
     <>
@@ -38,11 +39,11 @@ export function AiVaultSessionSurfaceSwitchMenuItems({
         >
           <MessagesSquare className="size-3.5" />
           {action === 'resume'
-            ? translate(
+            ? t(
                 'auto.components.right.sidebar.AiVaultSessionRow.resumeInNewNativeChat',
                 'Resume in New Chat'
               )
-            : translate(
+            : t(
                 'components.tab.bar.SortableTabContextMenu.switchToChatView',
                 'Continue in Chat UI'
               )}
@@ -62,11 +63,11 @@ export function AiVaultSessionSurfaceSwitchMenuItems({
                 <SquareTerminal className="size-3.5" />
               )}
               {action === 'resume'
-                ? translate(
+                ? t(
                     'auto.components.right.sidebar.AiVaultSessionRow.resumeInNewCli',
                     'Resume in New Terminal'
                   )
-                : translate(
+                : t(
                     'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
                     'Continue with Terminal Agent'
                   )}

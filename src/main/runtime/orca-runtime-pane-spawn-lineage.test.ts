@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { RpcDispatcher } from './rpc/dispatcher'
 import { TERMINAL_METHODS } from './rpc/methods/terminal/terminal'
-import type { RuntimeStore } from './runtime-store-contract'
-import { makeAgentStatusStoreWiring } from './agent-status-store-wiring.test-fixture'
+import type { RuntimeStore } from './construction/runtime-store-contract'
+import { makeAgentStatusStoreWiring } from './terminal/identity/agent-status-store-wiring.test-fixture'
 import { parseWorkspaceSession } from '../../shared/workspace-session/workspace-session-schema'
 
 // Preserve side-effect order: mocks, lifecycle, fixtures.

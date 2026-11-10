@@ -5,7 +5,7 @@ import { findAttachedAgentHubMirrorInput } from './agent-hub-mirror-input'
 import { useAppStore } from '@/store'
 
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 

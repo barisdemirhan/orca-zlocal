@@ -4,13 +4,13 @@ import { translate } from '@/i18n/i18n'
 import { toast } from 'sonner'
 import { isNewerApprovalSubject } from '../../../../shared/agent-session/agent-session-approval-subject'
 import type { StructuredAgentSessionState } from '../../../../shared/agent-session/structured-agent-session-reducer'
-import { respondToStructuredAgentSessionPrompt } from '../native-chat/structured-agent-session-prompt-response'
-import { useStructuredAgentSessionMutate } from '../native-chat/use-structured-agent-session-mutate'
+import { respondToStructuredAgentSessionPrompt } from '../native-chat/prompts/structured-agent-session-prompt-response'
+import { useStructuredAgentSessionMutate } from '../native-chat/session/structured/writes/use-structured-agent-session-mutate'
 import { HubOptionList } from './AgentHubAnswerBody'
 import { useAgentHubOrbAnswerKeys } from './agent-hub-orb-answer-keys'
 import type { AgentHubOrbAttention } from './agent-hub-orb-state'
 import { AGENT_HUB_ORB_TARGET } from './agent-hub-orb-state'
-import { supportsStructuredAgentSessionPromptCancel } from '@/runtime/structured-agent-session-client'
+import { supportsStructuredAgentSessionPromptCancel } from '@/runtime/native-chat/host-capabilities/structured-agent-session-host-support'
 
 export function AgentHubOrbPromptAnswer({
   attention,

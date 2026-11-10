@@ -4,7 +4,7 @@ import type { RuntimeClientEvent } from '../../../../shared/runtime-client-event
 import type { RpcContext } from '../core'
 import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import { RuntimeClientEventBus } from '../../client/events/runtime-client-event-bus'
-import { RuntimeSubscriptionRegistry } from '../../runtime-subscription-registry'
+import { RuntimeSubscriptionRegistry } from '../../client/runtime-subscription-registry'
 import { AgentHubLedger } from '../../agent-hub/agent-hub-ledger'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
 import { mapDispatcherError } from '../dispatcher-error-response'

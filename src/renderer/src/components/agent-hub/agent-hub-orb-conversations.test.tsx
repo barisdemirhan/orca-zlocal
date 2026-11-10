@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   listeners: new Set<() => void>()
 }))
 
-vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
+vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () => ({
   getStructuredAgentSessionStatusFeed: () => ({
     activate: () => () => {},
     getSnapshot: () => mocks.snapshot,

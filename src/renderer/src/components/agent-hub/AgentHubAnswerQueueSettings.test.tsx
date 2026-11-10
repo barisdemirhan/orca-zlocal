@@ -8,7 +8,7 @@ import { AgentHubAlertSettings } from './AgentHubAlertSettings'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 afterEach(cleanup)

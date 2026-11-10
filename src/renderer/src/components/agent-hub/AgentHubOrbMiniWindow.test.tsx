@@ -11,7 +11,7 @@ vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   return { useAppStore: create(() => ({ settings: undefined })) }
 })
-vi.mock('@/runtime/structured-agent-session-status-feed', () => ({
+vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () => ({
   getStructuredAgentSessionStatusFeed: () => ({
     getSnapshot: () => new Map(),
     activate: () => () => {},

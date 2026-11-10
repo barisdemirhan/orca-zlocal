@@ -15,9 +15,9 @@ import {
 } from '../../../../shared/agent-hub-capabilities'
 import {
   ORCHESTRATION_CONTRACT_VERSION,
-  ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY,
-  RUNTIME_CAPABILITIES
-} from '../../../../shared/protocol-version'
+  ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY
+} from '../../../../shared/orchestration/orchestration-runtime-capabilities'
+import { RUNTIME_CAPABILITIES } from '../../../../shared/protocol-version'
 
 const harness = createOrchestrationRpcHarness()
 let state: ReturnType<typeof harness.setup>

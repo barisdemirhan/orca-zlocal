@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AgentHookServer } from './server'
+import { AgentHookServer } from './server/agent-hook-server'
 
 const PANE = 'coordinator:11111111-1111-4111-8111-111111111111'
 const WORKER = 'worker:22222222-2222-4222-8222-222222222222'

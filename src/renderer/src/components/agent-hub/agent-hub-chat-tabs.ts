@@ -1,5 +1,5 @@
 import type { AppState } from '@/store/types'
-import type { StructuredChatTabNames } from '@/runtime/structured-chat-tab-name'
+import type { StructuredChatTabNames } from '@/runtime/native-chat/naming/structured-chat-tab-name'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import type { TerminalAgent } from '../../../../shared/agent-status/identity/terminal-agent'
 import { isStructuredTab } from '../../../../shared/agent-session/view/structured-agent-session-tab'

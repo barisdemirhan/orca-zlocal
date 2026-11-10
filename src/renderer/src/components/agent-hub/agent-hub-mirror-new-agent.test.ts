@@ -1,10 +1,6 @@
 /** @vitest-environment happy-dom */
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import {
-  adoptAgentBackgroundSessionTab,
-  reserveAgentBackgroundSessionIdentity
-} from '@/lib/agent-session/launch/background/adopt-agent-background-session-tab'
 import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/tui-agent-startup'
 import type { TerminalLayoutSnapshot } from '../../../../shared/workspace-layout/terminal-tab-types'
 import { makePaneKey, parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
@@ -23,12 +19,12 @@ const fixture = vi.hoisted(() => {
   return state
 })
 vi.mock('@/store', async () => {
-  const { createTestStore } = await import('@/store/slices/store-test-helpers')
+  const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
-vi.mock('@/lib/agent-session/launch/background/launch-agent-background-session', () => ({
-  launchAgentBackgroundSession: async ({
+vi.mock('@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab', () => ({
+  launchAgentInNewTab: ({
     agent,
     worktreeId
   }: {
@@ -45,36 +41,20 @@ vi.mock('@/lib/agent-session/launch/background/launch-agent-background-session',
     if (!startupPlan) {
       throw new Error('No startup plan')
     }
-    const store = useAppStore.getState()
-    const reserved = reserveAgentBackgroundSessionIdentity({
-      store,
-      agentType: agent,
-      worktreeId
-    })
     // Terminal mounts retain the first store-visible layout in initialLayoutRef.
     const stop = useAppStore.subscribe((state) => {
-      fixture.initialLayout ??= state.terminalLayoutsByTabId[reserved.reservedTabId] ?? null
+      const created = state.tabsByWorktree[worktreeId]?.at(-1)
+      fixture.initialLayout ??= created ? (state.terminalLayoutsByTabId[created.id] ?? null) : null
     })
     try {
-      const adopted = await adoptAgentBackgroundSessionTab({
-        store,
-        worktreeId,
-        ...reserved,
-        ptyId: 'pty-agent',
-        launchConfig: startupPlan.launchConfig,
-        runtimeTarget: { kind: 'local' },
-        runtimeTerminalHandle: null,
-        onRetire: () => {}
-      })
-      return adopted
-        ? {
-            tabId: adopted.tab.id,
-            paneKey: adopted.paneKey,
-            ptyId: 'pty-agent',
-            startupPlan,
-            terminalOwnership: adopted.terminalOwnership
-          }
-        : null
+      const tab = useAppStore
+        .getState()
+        .createTab(worktreeId, undefined, undefined, { activate: false })
+      return {
+        surface: { kind: 'local-terminal', tabId: tab.id },
+        startupPlan,
+        pasteDraftAfterLaunch: false
+      }
     } finally {
       stop()
     }

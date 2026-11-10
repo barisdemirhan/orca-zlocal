@@ -10,8 +10,8 @@ import type {
 import type { NativeChatSettledTurns } from '../../../../shared/native-chat/transcript/native-chat-turn-status'
 import { NativeChatMessageList } from './NativeChatMessageList'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
-import { installNativeChatMessageListTestViewport } from './native-chat-message-list-test-viewport'
-import type { NativeChatLiveSession } from './use-native-chat-live-session'
+import { installNativeChatMessageListTestViewport } from './viewport/virtualization/native-chat-message-list-test-viewport'
+import type { NativeChatLiveSession } from './session/terminal/read/native-chat-live-session-contract'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 const render = (ui: React.ReactElement) => renderBase(ui, { wrapper: TooltipProvider })

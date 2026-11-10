@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { translate } from '@/i18n/i18n'
-import { TerminalSleepingPaneOverlay } from '../terminal-pane/TerminalSleepingPaneOverlay'
+import { TerminalSleepingPaneOverlay } from '../terminal-pane/session-restore/spawn-deferral/TerminalSleepingPaneOverlay'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubPaneSleep } from './agent-hub-pane-sleep'
 

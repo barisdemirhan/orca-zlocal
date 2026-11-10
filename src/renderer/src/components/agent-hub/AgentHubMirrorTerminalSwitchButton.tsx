@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store'
 import { agentForksConversations } from '../../../../shared/agent-launch/startup/agent-resume-argv'
-import { NativeChatResumeInCliButton } from '../native-chat/NativeChatResumeInCliButton'
+import { NativeChatResumeInCliButton } from '../native-chat/pane/actions/NativeChatResumeInCliButton'
 import { agentHubChatSession, findAgentHubChatTab } from './agent-hub-chat-tabs'
 import {
   agentHubChatSwitchBlockedReason,

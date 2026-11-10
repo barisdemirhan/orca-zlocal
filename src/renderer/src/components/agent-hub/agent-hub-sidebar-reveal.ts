@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store'
 import { requestWorkspaceSidebarReveal } from '@/lib/scroll-to-current-workspace-status'
 import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/lib/floating-terminal'
-import { selectFloatingWorkspacePanelVisible } from '@/store/floating-workspace-panel-selector'
+import { selectFloatingWorkspacePanelVisible } from '@/store/workspaces/floating/floating-workspace-panel-selector'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { minimizeAllAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'

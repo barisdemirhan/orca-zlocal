@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { translate } from '@/i18n/i18n'
+import { useTranslate, type Translate } from '@/i18n/use-translate'
 import { getAgentCatalog, getAgentLabel } from '@/lib/agent-catalog'
 import {
   buildAgentSessionContinuationPrompt,
@@ -59,31 +59,31 @@ type AgentSessionContinuationDialogProps = {
   onStarted?: () => void
 }
 
-function placementLabel(placement: AgentSessionContinuationPlacement): string {
+function placementLabel(t: Translate, placement: AgentSessionContinuationPlacement): string {
   switch (placement) {
     case 'tab':
-      return translate('components.agentSessionContinuation.placementTab', 'New tab')
+      return t('components.agentSessionContinuation.placementTab', 'New tab')
     case 'pane':
-      return translate('components.agentSessionContinuation.placementPane', 'New pane')
+      return t('components.agentSessionContinuation.placementPane', 'New pane')
     case 'jump':
-      return translate('components.agentSessionContinuation.placementJump', 'Jump to it')
+      return t('components.agentSessionContinuation.placementJump', 'Jump to it')
   }
 }
 
-function placementDescription(placement: AgentSessionContinuationPlacement): string {
+function placementDescription(t: Translate, placement: AgentSessionContinuationPlacement): string {
   switch (placement) {
     case 'tab':
-      return translate(
+      return t(
         'components.agentSessionContinuation.placementTabDescription',
         'Adds it as a tab of this mirror and keeps you here.'
       )
     case 'pane':
-      return translate(
+      return t(
         'components.agentSessionContinuation.placementPaneDescription',
         'Splits beside this pane in its workspace and adds a mirror tab for the new one.'
       )
     case 'jump':
-      return translate(
+      return t(
         'components.agentSessionContinuation.placementJumpDescription',
         'Opens a new tab and switches the workspace to it.'
       )
@@ -99,6 +99,7 @@ export function AgentSessionContinuationDialog({
   onOpenChange,
   onStarted
 }: AgentSessionContinuationDialogProps): React.JSX.Element {
+  const t = useTranslate()
   const workspace = request ? worktreeLaunchWorkspace(request.worktreeId) : null
   const abortRef = useRef<AbortController | null>(null)
   const settings = useAppStore((state) => state.settings)
@@ -118,6 +119,10 @@ export function AgentSessionContinuationDialog({
     request: AgentSessionContinuationRequest | null
     placement: AgentSessionContinuationPlacement
   } | null>(null)
+  // One start's own token: a closed or reopened dialog no longer waits on a start it left behind.
+  const [startingFor, setStartingFor] = useState<{
+    request: AgentSessionContinuationRequest
+  } | null>(null)
   if (!open) {
     if (pick) {
       setPick(null)
@@ -128,13 +133,16 @@ export function AgentSessionContinuationDialog({
     if (placementPick) {
       setPlacementPick(null)
     }
+    if (startingFor) {
+      setStartingFor(null)
+    }
   }
   const contextMode = contextPick?.request === request ? contextPick.mode : 'focused'
   const placement =
     placementPick?.request === request
       ? placementPick.placement
       : DEFAULT_AGENT_SESSION_CONTINUATION_PLACEMENT
-  const [starting, setStarting] = useState(false)
+  const starting = open && startingFor?.request === request
   const [showStarting, setShowStarting] = useState(false)
   const disabledAgents = settings?.disabledTuiAgents ?? EMPTY_DISABLED_AGENTS
 
@@ -235,7 +243,10 @@ export function AgentSessionContinuationDialog({
     if (!prompt) {
       return
     }
-    setStarting(true)
+    const start = { request }
+    // Aborts when the dialog closes or moves to another request; a sent launch still settles.
+    const signal = abortRef.current?.signal
+    setStartingFor(start)
     const launched = await launchAgentSessionContinuation({
       agent: selectedAgent,
       prompt,
@@ -254,12 +265,13 @@ export function AgentSessionContinuationDialog({
           )
         : {}),
       launchSource: request.launchSource,
-      signal: abortRef.current?.signal,
+      signal,
       // Why: only a request from a mirror pane offers a placement; everywhere else keeps jumping.
       ...(request.mirrorSource ? { mirror: { ...request.mirrorSource, placement } } : {})
     })
-    setStarting(false)
-    if (launched) {
+    setStartingFor((current) => (current === start ? null : current))
+    // A late finish is reported by the launch's own owners, never by a dialog it no longer holds.
+    if (launched && !signal?.aborted) {
       onOpenChange(false)
       onStarted?.()
     }
@@ -274,25 +286,15 @@ export function AgentSessionContinuationDialog({
   const workingDirectory = sourceWorkingDirectory ?? request?.initialCwd
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!starting) {
-          onOpenChange(nextOpen)
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="min-w-0 sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-sm">
             <MessageSquarePlus className="size-4" />
-            {translate(
-              'components.agentSessionContinuation.dialogTitle',
-              'Hand Off to Another Agent'
-            )}
+            {t('components.agentSessionContinuation.dialogTitle', 'Hand Off to Another Agent')}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            {translate(
+            {t(
               'components.agentSessionContinuation.dialogDescription',
               'Start a fresh Agent session from this stopping point. The original session stays unchanged.'
             )}
@@ -303,11 +305,11 @@ export function AgentSessionContinuationDialog({
           <div className="min-w-0 rounded-md border border-border bg-muted/30 px-3 py-2">
             <div className="truncate text-xs font-medium">
               {sourceName ||
-                translate('components.agentSessionContinuation.untitledSession', 'Current session')}
+                t('components.agentSessionContinuation.untitledSession', 'Current session')}
             </div>
             <div className="mt-0.5 min-h-4 text-[11px] text-muted-foreground">
               {sourceAgentLabel
-                ? translate(
+                ? t(
                     'components.agentSessionContinuation.originalAgent',
                     'Original Agent: {{agent}}',
                     { agent: sourceAgentLabel }
@@ -318,7 +320,7 @@ export function AgentSessionContinuationDialog({
 
           <div className="min-w-0 space-y-1.5">
             <label className="text-xs font-medium">
-              {translate('components.agentSessionContinuation.agent', 'Agent')}
+              {t('components.agentSessionContinuation.agent', 'Agent')}
             </label>
             <AgentLaunchPicker
               draftScope={draftScope}
@@ -335,21 +337,21 @@ export function AgentSessionContinuationDialog({
             <div className="min-h-4">
               {preparing ? (
                 <p className="text-[11px] text-muted-foreground">
-                  {translate(
+                  {t(
                     'components.agentSessionContinuation.preparingContext',
                     'Preparing saved chat context…'
                   )}
                 </p>
               ) : detecting ? (
                 <p className="text-[11px] text-muted-foreground">
-                  {translate(
+                  {t(
                     'components.agentSessionContinuation.detectingAgents',
                     'Detecting Agents on this workspace host…'
                   )}
                 </p>
               ) : detectionFailed ? (
                 <p className="text-[11px] text-destructive">
-                  {translate(
+                  {t(
                     'components.agentSessionContinuation.detectionFailed',
                     'Could not detect Agents on this workspace host.'
                   )}
@@ -357,12 +359,12 @@ export function AgentSessionContinuationDialog({
               ) : destinationModel.state === 'settled' && rows.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground">
                   {onlySourceFamilyOffered && sourceAgentLabel
-                    ? translate(
+                    ? t(
                         'components.agentSessionContinuation.onlySourceFamilyDetected',
                         'Only Agents sharing the usage limit with {{agent}} are available on this workspace host. Enable or install a different Agent.',
                         { agent: sourceAgentLabel }
                       )
-                    : translate(
+                    : t(
                         'components.agentSessionContinuation.noAgents',
                         'No enabled Agents were detected on this workspace host.'
                       )}
@@ -373,7 +375,7 @@ export function AgentSessionContinuationDialog({
 
           <div className="min-w-0 space-y-1.5">
             <label className="text-xs font-medium">
-              {translate('components.agentSessionContinuation.context', 'Context')}
+              {t('components.agentSessionContinuation.context', 'Context')}
             </label>
             <Select
               disabled={controlsDisabled}
@@ -389,16 +391,13 @@ export function AgentSessionContinuationDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="focused">
-                  {translate(
+                  {t(
                     'components.agentSessionContinuation.modeFocused',
                     'Focused handoff (Recommended)'
                   )}
                 </SelectItem>
                 <SelectItem value="full" disabled={!hasFullContext}>
-                  {translate(
-                    'components.agentSessionContinuation.modeFull',
-                    'Full session transcript'
-                  )}
+                  {t('components.agentSessionContinuation.modeFull', 'Full session transcript')}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -407,20 +406,20 @@ export function AgentSessionContinuationDialog({
                 ? null
                 : !hasFullContext
                   ? request?.source.sourceKind === 'chat'
-                    ? translate(
+                    ? t(
                         'components.agentSessionContinuation.modeLoadedDescription',
                         'Uses recent messages currently loaded in this chat and the current workspace.'
                       )
-                    : translate(
+                    : t(
                         'components.agentSessionContinuation.modeCapturedDescription',
                         'Uses captured text and the current workspace.'
                       )
                   : contextMode === 'focused'
-                    ? translate(
+                    ? t(
                         'components.agentSessionContinuation.modeFocusedDescription',
                         'Uses the latest status and current workspace, reading older transcript details only when needed.'
                       )
-                    : translate(
+                    : t(
                         'components.agentSessionContinuation.modeFullDescription',
                         'Asks the new Agent to read the complete saved session before continuing. This can take longer and use significant context, plan usage, or API credits.'
                       )}
@@ -430,7 +429,7 @@ export function AgentSessionContinuationDialog({
           {request?.mirrorSource ? (
             <div className="min-w-0 space-y-1.5">
               <label className="text-xs font-medium">
-                {translate('components.agentSessionContinuation.openIn', 'Open in')}
+                {t('components.agentSessionContinuation.openIn', 'Open in')}
               </label>
               <Select
                 disabled={controlsDisabled}
@@ -448,13 +447,13 @@ export function AgentSessionContinuationDialog({
                 <SelectContent>
                   {AGENT_SESSION_CONTINUATION_PLACEMENTS.map((item) => (
                     <SelectItem key={item} value={item}>
-                      {placementLabel(item)}
+                      {placementLabel(t, item)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-[11px] leading-4 text-muted-foreground">
-                {placementDescription(placement)}
+                {placementDescription(t, placement)}
               </p>
             </div>
           ) : null}
@@ -462,7 +461,7 @@ export function AgentSessionContinuationDialog({
           <div className="min-h-4 text-[11px] text-muted-foreground">
             {workingDirectory ? (
               <>
-                {translate('components.agentSessionContinuation.startsIn', 'Starts in:')}{' '}
+                {t('components.agentSessionContinuation.startsIn', 'Starts in:')}{' '}
                 <span className="break-all font-mono text-foreground/80">{workingDirectory}</span>
               </>
             ) : null}
@@ -470,13 +469,8 @@ export function AgentSessionContinuationDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={starting}
-            onClick={() => onOpenChange(false)}
-          >
-            {translate('components.native-chat.question.cancel', 'Cancel')}
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            {t('components.native-chat.question.cancel', 'Cancel')}
           </Button>
           <Button
             type="button"
@@ -486,8 +480,8 @@ export function AgentSessionContinuationDialog({
           >
             {showStarting ? <Loader2 className="size-3.5 animate-spin" /> : null}
             {starting
-              ? translate('components.agentSessionContinuation.starting', 'Starting…')
-              : translate('components.agentSessionContinuation.startSession', 'Start New Session')}
+              ? t('components.agentSessionContinuation.starting', 'Starting…')
+              : t('components.agentSessionContinuation.startSession', 'Start New Session')}
           </Button>
         </DialogFooter>
       </DialogContent>

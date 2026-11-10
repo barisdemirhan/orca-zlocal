@@ -16,7 +16,7 @@ import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
 import { selectExecutionHostDisplayLabel } from '@/lib/execution-host-display-label'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
-import { getIndexedRepoMap } from '@/store/worktree-repo-index'
+import { getIndexedRepoMap } from '@/store/repos/repository-catalog-index'
 import { getWorktreeExecutionHostId } from '../../../../shared/execution-host'
 import {
   getWorktreeHostIdentity,

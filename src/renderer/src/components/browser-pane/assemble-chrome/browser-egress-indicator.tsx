@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Globe, Monitor, Server } from 'lucide-react'
-import { translate } from '@/i18n/i18n'
+import { useTranslate } from '@/i18n/use-translate'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -40,6 +40,7 @@ function EgressIndicatorButton({
   settingsSectionId: string
   renderControls?: (close: () => void) => React.ReactNode
 }): React.JSX.Element {
+  const t = useTranslate()
   const [open, setOpen] = useState(false)
   const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
   const openSettingsPage = useAppStore((s) => s.openSettingsPage)
@@ -92,7 +93,7 @@ function EgressIndicatorButton({
             openSettingsPage()
           }}
         >
-          {translate('browser.sshEgress.settingsLink', 'Routing settings')}
+          {t('browser.sshEgress.settingsLink', 'Routing settings')}
         </Button>
       </PopoverContent>
     </Popover>
@@ -105,6 +106,7 @@ export function SshEgressIndicator({
 }: {
   worktreeId: string
 }): React.JSX.Element | null {
+  const t = useTranslate()
   const executionHostId = useAppStore((s) => getExecutionHostIdForWorktree(s, worktreeId))
   const sshTargetLabels = useAppStore((s) => s.sshTargetLabels)
   const settings = useAppStore((s) => s.settings)
@@ -123,27 +125,20 @@ export function SshEgressIndicator({
       egress={routed ? 'ssh' : 'local'}
       description={
         routed
-          ? translate('browser.sshEgress.routedTooltip', 'Browsing through {{value0}}', {
+          ? t('browser.sshEgress.routedTooltip', 'Browsing through {{value0}}', {
               value0: hostLabel
             })
-          : translate(
-              'browser.sshEgress.localTooltip',
-              'Browsing from this device, not {{value0}}',
-              {
-                value0: hostLabel
-              }
-            )
+          : t('browser.sshEgress.localTooltip', 'Browsing from this device, not {{value0}}', {
+              value0: hostLabel
+            })
       }
       detail={
         routed
-          ? translate(
+          ? t(
               'browser.sshEgress.routedDetail',
               "Network traffic and DNS go through the workspace's SSH host."
             )
-          : translate(
-              'browser.sshEgress.localDetail',
-              'Pages load from this machine and its network.'
-            )
+          : t('browser.sshEgress.localDetail', 'Pages load from this machine and its network.')
       }
       settingsSectionId={BROWSER_SSH_WORKSPACE_ROUTING_SETTINGS_TARGET_ID}
     />
@@ -161,6 +156,7 @@ export function RemoteRuntimeEgressIndicator({
   /** The page this address bar belongs to, so the popover can move it to the other channel. */
   page?: { id: string; worktreeId: string; url: string | null }
 }): React.JSX.Element {
+  const t = useTranslate()
   const settings = useAppStore((s) => s.settings)
   const environmentName = useAppStore(
     (s) =>
@@ -181,20 +177,20 @@ export function RemoteRuntimeEgressIndicator({
       egress="remote"
       description={
         clientHosted
-          ? translate('browser.remoteEgress.clientHostedTooltip', 'Browsing through {{value0}}', {
+          ? t('browser.remoteEgress.clientHostedTooltip', 'Browsing through {{value0}}', {
               value0: hostLabel
             })
-          : translate('browser.remoteEgress.streamedTooltip', 'Browsing on {{value0}}', {
+          : t('browser.remoteEgress.streamedTooltip', 'Browsing on {{value0}}', {
               value0: hostLabel
             })
       }
       detail={
         clientHosted
-          ? translate(
+          ? t(
               'browser.remoteEgress.clientHostedDetail',
               'The page renders on this device. Network traffic and DNS go through the remote host.'
             )
-          : translate(
+          : t(
               'browser.remoteEgress.streamedDetail',
               'The page runs on the remote host and streams to this device.'
             )
@@ -231,8 +227,9 @@ function RemoteBrowserChannelControls({
     s.settings?.browserClientHostedRemoteEnabled === false ? 'server' : 'device'
   )
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const t = useTranslate()
   const [moving, setMoving] = useState(false)
-  const label = translate('browser.remoteEgress.channelLabel', 'Open new pages on')
+  const label = t('browser.remoteEgress.channelLabel', 'Open new pages on')
   return (
     <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
       <div className="text-xs text-muted-foreground">{label}</div>
@@ -254,7 +251,7 @@ function RemoteBrowserChannelControls({
           className="self-start"
           disabled={moving}
           data-testid="remote-egress-move-page"
-          title={translate(
+          title={t(
             'browser.remoteEgress.moveCaveat',
             'Opens a new page at this page’s last address and closes this one. Signed-in and other transient page state may differ.'
           )}
@@ -272,7 +269,7 @@ function RemoteBrowserChannelControls({
                   onMoved()
                 } else {
                   toast.error(
-                    translate(
+                    t(
                       'browser.remoteEgress.moveFailed',
                       "Couldn't reopen this page. Check the connection and try again."
                     )
@@ -286,8 +283,8 @@ function RemoteBrowserChannelControls({
           }}
         >
           {choice === 'device'
-            ? translate('browser.remoteEgress.moveHere', 'Reopen this page here')
-            : translate('browser.remoteEgress.moveToHost', 'Reopen this page on {{value0}}', {
+            ? t('browser.remoteEgress.moveHere', 'Reopen this page here')
+            : t('browser.remoteEgress.moveToHost', 'Reopen this page on {{value0}}', {
                 value0: hostLabel
               })}
         </Button>

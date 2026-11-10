@@ -12,11 +12,11 @@ import {
 import type { ManagedPane } from '@/lib/pane-manager/pane-manager'
 import { useAppStore } from '@/store'
 import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
-import { paneIsCoveredByNativeChat } from '../terminal-pane/native-chat-covered-pane'
+import { paneIsCoveredByNativeChat } from '../terminal-pane/chat/native-chat-covered-pane'
 import {
   NativeChatInteractiveCard,
   type NativeChatInteractiveCardControl
-} from '../native-chat/NativeChatInteractiveCard'
+} from '../native-chat/prompts/NativeChatInteractiveCard'
 import { HubOptionList } from './AgentHubAnswerBody'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubDictateButton } from './AgentHubDictateButton'

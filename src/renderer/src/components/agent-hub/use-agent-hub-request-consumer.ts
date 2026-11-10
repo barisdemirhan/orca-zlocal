@@ -5,7 +5,7 @@ import { isWebClientLocation } from '@/lib/web-client-location'
 import {
   isDisconnectedRuntimeHostState,
   runtimeHostConnectionStateForEntry
-} from '@/runtime/runtime-host-connection-state'
+} from '@/runtime/hosts/connections/runtime-host-connection-state'
 import { createAgentHubClient } from '@/runtime/agent-hub-client'
 import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import { lastVerifiedRuntimeStatus } from '../../../../shared/remote-runtime/host-status/runtime-host-status'

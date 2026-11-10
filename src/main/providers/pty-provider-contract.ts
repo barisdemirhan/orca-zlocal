@@ -6,9 +6,9 @@ import type {
   TerminalSuspensionOptions,
   TerminalSuspensionResult
 } from '../../shared/terminal-suspension'
-import type { SpawnIntent } from '../../shared/host-spawn-admission'
+import type { SpawnIntent } from '../../shared/terminal/pty/admission/spawn-admission-contract'
 import type { TuiAgent } from '../../shared/agent-launch/catalog/tui-agent'
-import type { AgentWorkspaceTrustSpawnRequest } from '../../shared/agent-workspace-trust-spawn-request'
+import type { AgentWorkspaceTrustSpawnRequest } from '../../shared/agent-launch/permissions/agent-workspace-trust-spawn-request'
 import type { PtyStartupIngressIntent } from '../../shared/terminal/pty/ingress/pty-startup-ingress-intent'
 import type { TerminalOscColorQueryReplyColors } from '../../shared/terminal/protocol/queries/terminal-osc-color-reply'
 import type { StartupCommandDelivery } from '../../shared/agent-launch/startup/codex-startup-delivery'

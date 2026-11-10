@@ -27,20 +27,20 @@ vi.mock('@/store', () => ({
     getState: () => ({ terminalLayoutsByTabId: mocks.layouts, settings: mocks.settings })
   }
 }))
-vi.mock('@/store/running-terminal-close-confirm', () => ({
+vi.mock('@/store/slices/tabs/closing/running-terminal-close-confirm', () => ({
   useRunningTerminalCloseConfirmStore: {
     getState: () => ({ requestRunningTerminalCloseConfirm: mocks.requestConfirm })
   }
 }))
-vi.mock('../terminal-pane/request-active-terminal-pane-close', () => ({
+vi.mock('../terminal-pane/layout/close/request-active-terminal-pane-close', () => ({
   requestActiveTerminalPaneClose: mocks.requestPane
 }))
-vi.mock('@/runtime/web-runtime-terminal-actions', () => ({
+vi.mock('@/runtime/hosted-terminals/actions/web-runtime-terminal-close', () => ({
   closeWebRuntimeTerminal: mocks.closeRemote
 }))
 vi.mock('../terminal/terminal-tab-actions', () => ({ closeTerminalTab: mocks.closeTerminalTab }))
 vi.mock('../terminal/pty-running-work-probe', () => ({ probePtyRunningWork: mocks.probe }))
-vi.mock('../terminal-pane/closed-terminal-leaf-notice', () => ({
+vi.mock('../terminal-pane/layout/close/closed-terminal-leaf-notice', () => ({
   applyClosedTerminalLeafNotice: mocks.closeLeaf
 }))
 

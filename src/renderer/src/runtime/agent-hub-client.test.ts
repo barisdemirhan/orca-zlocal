@@ -6,10 +6,10 @@ import type {
   AgentHubGate
 } from '../../../shared/agent-hub-requests'
 import { createAgentHubClient } from './agent-hub-client'
-import { runtimeEnvironmentSupportsCapability } from './runtime-rpc-client'
-import type * as RuntimeRpcClientModule from './runtime-rpc-client'
+import { runtimeEnvironmentSupportsCapability } from '@/runtime/rpc/compatibility/runtime-capability-proof'
+import type * as RuntimeRpcClientModule from './rpc/compatibility/runtime-capability-proof'
 
-vi.mock('./runtime-rpc-client', async (importOriginal) => ({
+vi.mock('./rpc/compatibility/runtime-capability-proof', async (importOriginal) => ({
   ...(await importOriginal<typeof RuntimeRpcClientModule>()),
   runtimeEnvironmentSupportsCapability: vi.fn(async () => true)
 }))

@@ -7,9 +7,9 @@ import type { AgentType } from '../../../../shared/agent-status/contracts/agent-
 import type { AskQuestion } from '../../../../shared/native-chat/input/native-chat-ask-types'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { parseInteractivePrompt } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
-import { sayNativeChatApprovalTranslated } from '../native-chat/native-chat-interactive-prompt'
-import { useNativeChatCanSend } from '../native-chat/use-native-chat-can-send'
-import { useNativeChatInteractiveSend } from '../native-chat/use-native-chat-interactive-send'
+import { sayNativeChatApprovalTranslated } from '../native-chat/prompts/native-chat-interactive-prompt'
+import { useNativeChatCanSend } from '../native-chat/host-access/use-native-chat-can-send'
+import { useNativeChatInteractiveSend } from '../native-chat/session/terminal/send/use-native-chat-interactive-send'
 import {
   approvalQuickOptions,
   questionOptions,

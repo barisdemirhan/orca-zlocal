@@ -1,4 +1,4 @@
-import { pairedHostClientCapabilities } from './paired-host-client-capabilities'
+import { pairedHostClientCapabilities } from './rpc/targets/paired-host-client-capabilities'
 
 type Lease = { consumers: number; queue: Promise<void> }
 const leases = new Map<string, Lease>()

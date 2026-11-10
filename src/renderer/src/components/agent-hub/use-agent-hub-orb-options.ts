@@ -4,14 +4,14 @@ import {
   loadHostStructuredAgents,
   readHostStructuredAgentsForRuntime,
   subscribeHostStructuredAgents
-} from '@/runtime/host-structured-agents'
+} from '@/runtime/native-chat/agent-catalogs/host-structured-agents'
 import {
   preloadHostModelCatalogSnapshots,
   recordHostModelCatalogSnapshot,
   readHostModelCatalogSnapshot
-} from '@/runtime/host-model-catalog-snapshots'
-import { ensureLocalRuntimeCapabilities } from '@/runtime/local-runtime-capabilities'
-import { callStructuredAgentSession } from '@/runtime/structured-agent-session-client'
+} from '@/runtime/native-chat/model-catalogs/host-model-catalog-snapshots'
+import { ensureLocalRuntimeCapabilities } from '@/runtime/hosts/capabilities/local-runtime-capabilities'
+import { callStructuredAgentSession } from '@/runtime/native-chat/requests/structured-agent-session-call'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session/agent-session-wire'
 import { structuredAgentSessionSeedCatalog } from '../../../../shared/agent-session/options/structured-agent-session-seed-catalog'

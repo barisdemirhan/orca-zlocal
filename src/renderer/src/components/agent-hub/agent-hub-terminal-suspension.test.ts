@@ -1,13 +1,14 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import type * as Rpc from '@/runtime/runtime-rpc-client'
+import type * as Rpc from '@/runtime/rpc/calls/runtime-rpc-call'
 import type * as Route from '@/lib/terminal-worktree-route'
-import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
+import { makeTab } from '@/store/terminals/terminal-tab.test-fixture'
+import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 import { changeAgentHubTerminalSuspension } from './agent-hub-terminal-suspension'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 const call = vi.hoisted(() => vi.fn())
-vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
+vi.mock('@/runtime/rpc/calls/runtime-rpc-call', async (original) => ({
   ...(await original<typeof Rpc>()),
   callRuntimeRpc: call
 }))

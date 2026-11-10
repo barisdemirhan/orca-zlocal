@@ -3,18 +3,20 @@ import type { RuntimeTerminalWriteOptions } from './runtime-terminal-writer'
 import { protectOrbTerminalWriteOptions } from './orb-terminal-write-options'
 import type { WriteSettlement } from '../../../../shared/terminal/pty/lifecycle/pty-write-settlement'
 import type { RuntimeLeafRecord } from '../records/runtime-terminal-state-records'
-import type { RuntimeTerminalPromptDelivery } from '../../../../shared/runtime-terminal-send-contract'
+import type {
+  RuntimeTerminalPromptDelivery,
+  RuntimeTerminalSend
+} from '../../../../shared/runtime-terminal-send-contract'
 import { OrcaRuntimeWithResolveTerminalPane } from '../recovery/resolve-terminal-pane'
 import { wrapTerminalBracketedPasteText } from '../../../../shared/terminal/input/terminal-bracketed-paste-text'
 import { PROVEN_ABSENT_LEAF_PTY_TTL_MS } from './proven-absent-leaf-pty'
-import { pruneExpiredProvenAbsentLeafPtyVerdicts } from '../../proven-absent-leaf-pty-verdicts'
-import type { RuntimeTerminalSend } from '../../../../shared/runtime-types'
+import { pruneExpiredProvenAbsentLeafPtyVerdicts } from './proven-absent-leaf-pty-verdicts'
 import type { RuntimeAgentPromptWriteOptions } from './agent-prompt-write-options'
 import type { TerminalHandleRecord } from '../identity/terminal-handle-records'
 import {
   assertTerminalInputWithinLimitWithYield,
   buildTerminalSendPayload
-} from '../../terminal-send-payload'
+} from './terminal-send-payload'
 import {
   agentPromptTakesLeadLine,
   buildAgentPromptPasteBytes
@@ -149,6 +151,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
     }
     // Before resolving the target: a terminal closed or replaced during the wait is then refused, not written.
     await this.waitForPtyEndpointReattach(this.handlePtyId(handle), options.signal)
+    const guarded = protectOrbTerminalWriteOptions(this, handle, options)
     const pty = this.getLivePtyForHandle(handle)
     if (pty) {
       if (!pty.pty.connected) {
@@ -166,7 +169,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
         pty.pty.ptyId,
         action,
         payload,
-        protectOrbTerminalWriteOptions(this, handle, options)
+        guarded
       )
       return {
         handle,
@@ -196,12 +199,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
       return { handle, accepted: false, bytesWritten: 0 }
     }
 
-    const writeSettlement = await this.writeTerminalAction(
-      leaf.ptyId,
-      action,
-      payload,
-      protectOrbTerminalWriteOptions(this, handle, options)
-    )
+    const writeSettlement = await this.writeTerminalAction(leaf.ptyId, action, payload, guarded)
 
     return {
       handle,
@@ -263,6 +261,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
       this.handlePtyId(handle),
       agentPromptObservationSignal(options)
     )
+    const guarded = protectOrbTerminalWriteOptions(this, handle, options)
     const pty = this.getLivePtyForHandle(handle)
     if (pty) {
       if (!pty.pty.connected) {
@@ -281,16 +280,10 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
         async () => {
           this.assertLiveTerminalHandleTargetsPty(handle, pty.pty.ptyId)
           this.assertAgentPromptGeneration(pty.pty.ptyId, generation)
-          return await this.writeTerminalAgentPrompt(
-            handle,
-            pty.pty.ptyId,
-            generation,
-            payload,
-            protectOrbTerminalWriteOptions(this, handle, {
-              ...options,
-              promptForSchedule: prompt
-            })
-          )
+          return await this.writeTerminalAgentPrompt(handle, pty.pty.ptyId, generation, payload, {
+            ...guarded,
+            promptForSchedule: prompt
+          })
         }
       )
       const bytesWritten = Buffer.byteLength(payload, 'utf8') + delivery.submits
@@ -319,16 +312,10 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
     const delivery = await this.serializeAgentPromptSubmission(leaf.ptyId, generation, async () => {
       this.assertLiveTerminalHandleTargetsPty(handle, leaf.ptyId!)
       this.assertAgentPromptGeneration(leaf.ptyId!, generation)
-      return await this.writeTerminalAgentPrompt(
-        handle,
-        leaf.ptyId!,
-        generation,
-        payload,
-        protectOrbTerminalWriteOptions(this, handle, {
-          ...options,
-          promptForSchedule: prompt
-        })
-      )
+      return await this.writeTerminalAgentPrompt(handle, leaf.ptyId!, generation, payload, {
+        ...guarded,
+        promptForSchedule: prompt
+      })
     })
     const bytesWritten = Buffer.byteLength(payload, 'utf8') + delivery.submits
     return {

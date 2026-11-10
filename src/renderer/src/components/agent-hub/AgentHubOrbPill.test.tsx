@@ -23,13 +23,13 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-vi.mock('../native-chat/use-structured-agent-session-mutate', () => ({
+vi.mock('../native-chat/session/structured/writes/use-structured-agent-session-mutate', () => ({
   useStructuredAgentSessionMutate: () => ({
     mutate: mocks.mutate,
     admit: () => ({ target: { kind: 'local' }, write: vi.fn(), mutate: mocks.mutate })
   })
 }))
-vi.mock('@/runtime/structured-agent-session-client', () => ({
+vi.mock('@/runtime/native-chat/host-capabilities/structured-agent-session-host-support', () => ({
   supportsStructuredAgentSessionQuestionAnswers: async () => true,
   supportsStructuredAgentSessionPromptCancel: async () => true
 }))

@@ -1,14 +1,15 @@
 // @vitest-environment happy-dom
 import { cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import type * as Rpc from '@/runtime/runtime-rpc-client'
+import type * as Rpc from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import type * as Owner from '@/lib/workspace/ownership/worktree-runtime-owner'
 import type * as Route from '@/lib/terminal-worktree-route'
-import { makeTab, makeWorktree } from '@/store/slices/store-test-helpers'
+import { makeTab } from '@/store/terminals/terminal-tab.test-fixture'
+import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 import { useAgentHubManualSleepHostReason } from './agent-hub-pane-sleep-operations'
 
 const capability = vi.hoisted(() => vi.fn(async () => false))
-vi.mock('@/runtime/runtime-rpc-client', async (original) => ({
+vi.mock('@/runtime/rpc/compatibility/runtime-capability-proof', async (original) => ({
   ...(await original<typeof Rpc>()),
   runtimeEnvironmentSupportsCapability: capability
 }))

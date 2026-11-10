@@ -8,8 +8,8 @@ import {
 } from './agent-hub-mirror-membership'
 import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
-import { runtimeHostConnectionStateForEntry } from '@/runtime/runtime-host-connection-state'
-import { selectRuntimeAwareSshStatus } from '@/store/slices/runtime-environment-ssh-selectors'
+import { runtimeHostConnectionStateForEntry } from '@/runtime/hosts/connections/runtime-host-connection-state'
+import { selectRuntimeAwareSshStatus } from '@/store/slices/ssh/runtime-environment-ssh-selectors'
 import { parseExecutionHostId } from '../../../../shared/execution-host'
 import { folderWorkspaceToWorktree } from '../../../../shared/folder-workspaces/folder-workspace-worktree'
 import {
@@ -17,7 +17,7 @@ import {
   getWorktreeHostIdentity
 } from '../../../../shared/worktree/host-qualified-identity'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
-import { collectLeafIdsInOrder } from '../terminal-pane/terminal-layout-leaf-ids'
+import { collectLeafIdsInOrder } from '@/components/terminal-pane/layout/terminal-layout-leaf-traversal'
 import { agentHubTabsByWorktree, isAgentHubChatTab } from './agent-hub-chat-tabs'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'

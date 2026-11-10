@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { createTestStore, makeWorktree, seedStore } from './store-test-helpers'
+import { createTestStore, seedStore } from '@/store/testing/app-store-test-fixture'
+import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 
 const PANE = 'tab-1:leaf-1'
 const providerSession = { key: 'session_id' as const, id: 'host-session' }

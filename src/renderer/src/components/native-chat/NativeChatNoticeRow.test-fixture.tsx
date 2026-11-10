@@ -3,12 +3,12 @@ import { vi } from 'vitest'
 import { projectStructuredItemsToNativeChat } from '../../../../shared/agent-session/view/structured-agent-session-projection'
 import type { AgentJournalStatusItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { MessageRow } from './NativeChatMessageRow'
+import { MessageRow } from './messages/rows/NativeChatMessageRow'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import {
   NativeChatOrcaStopContext,
   type NativeChatOrcaStopView
-} from './native-chat-orca-stop-context'
+} from './messages/notices/native-chat-orca-stop-context'
 
 type ContinueOffer = Pick<NativeChatOrcaStopView, 'offeredTurnItemId' | 'continueNow'> &
   Partial<Pick<NativeChatOrcaStopView, 'usageLimitTurnItemId' | 'continueUsageLimit'>>
@@ -39,7 +39,7 @@ export function renderStatus(
   agentName?: string,
   offer: ContinueOffer = NO_OFFER,
   presentation: 'chat' | 'orb' = 'chat'
-) {
+): ReturnType<typeof render> {
   const [message] = projectStructuredItemsToNativeChat([
     {
       itemId: 'notice',

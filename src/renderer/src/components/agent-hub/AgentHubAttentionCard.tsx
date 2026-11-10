@@ -15,7 +15,7 @@ import type { AgentPaneThread } from '../activity/activity-thread-types'
 import {
   NativeChatInteractiveCard,
   type NativeChatInteractiveCardControl
-} from '../native-chat/NativeChatInteractiveCard'
+} from '../native-chat/prompts/NativeChatInteractiveCard'
 import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat/native-chat-agent-support'
 import { nativeChatCardDismissKey } from '../../../../shared/native-chat/input/native-chat-prompt-dismiss-key'
 import { HubAvatar } from './AgentHubStateMarks'
