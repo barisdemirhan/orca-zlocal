@@ -1,4 +1,4 @@
-import { playDesktopNotificationSound } from '@/lib/desktop-notification-sound'
+import { playDesktopNotificationSound } from '@/lib/notifications/desktop-notification-sound'
 
 // Two quick rising notes; short enough to read as a ping, not a melody.
 const CHIME_NOTES_HZ = [880, 1318.5] as const

@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
-import { userNamedFileAccess } from '@/lib/local-file-access'
+import { userNamedFileAccess } from '@/lib/files/access/local-file-access'
 import { readRuntimeFileContent } from '@/runtime/files/reads/runtime-file-read-client'
 import type { RuntimeReadableFileContent } from '@/runtime/files/runtime-file-client-types'
 import { ImageViewer, MarkdownPreview, MediaViewer } from '../editor/editor-lazy-views'

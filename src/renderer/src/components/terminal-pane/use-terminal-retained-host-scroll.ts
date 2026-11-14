@@ -1,6 +1,7 @@
 import { useContext, useLayoutEffect } from 'react'
 import type { PaneManager } from '@/lib/pane-manager/pane-manager'
-import { captureScrollState, restoreScrollStateAfterLayout } from '@/lib/pane-manager/pane-scroll'
+import { restoreScrollStateAfterLayout } from '@/lib/pane-manager/terminal-scroll/pane-scroll'
+import { captureScrollState } from '@/lib/pane-manager/terminal-scroll/pane-scroll-snapshot'
 import { RetainedPaneMoveContext } from '../tab-group/retained-pane-move'
 
 export function useTerminalRetainedHostScroll(

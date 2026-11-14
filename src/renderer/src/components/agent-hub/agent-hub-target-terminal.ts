@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store'
 import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
-import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
+import { resolveTerminalPtyOwner } from '@/lib/workspace/ownership/terminal-worktree-route'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-session/hibernation/agent-hibernation-runtime-owner'
 import type { RuntimeTerminalResolvePane } from '../../../../shared/runtime-types'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'

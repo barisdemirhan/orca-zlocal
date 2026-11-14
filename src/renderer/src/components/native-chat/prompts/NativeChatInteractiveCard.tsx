@@ -103,10 +103,15 @@ export function NativeChatInteractiveCard({
     submittingRef.current = true
     const attempt = ++attemptRef.current
     setSubmitting(true)
-    void sendRawVerified(raw)
+    const startupDialog = card.kind === 'approval' ? card.approval.startupDialog : undefined
+    void sendRawVerified(raw, startupDialog)
       .catch(() => false)
       .then((delivered) => {
         if (!activeRef.current || attempt !== attemptRef.current) {
+          return
+        }
+        // The dialog stays up until its status settles; keep the lock so no message types into it.
+        if (delivered && startupDialog) {
           return
         }
         settle()
@@ -229,6 +234,7 @@ export function NativeChatInteractiveCard({
       isSubmitting={submitting}
       onChoose={choose}
       onCollapse={onCollapse}
+      onOpenTerminal={onAnswerInTerminal}
     />
   )
 }

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/tui-agent-startup'
-import type { launchAgentInNewTab } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
+import type { launchAgentInNewTabWithOutcome } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import { TooltipProvider } from '../ui/tooltip'
@@ -33,14 +33,14 @@ import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
 const fixture = vi.hoisted(() => ({
   groups: Array<AgentHubGroupNode>(),
   disappeared: new Set<string>(),
-  launch: vi.fn<typeof launchAgentInNewTab>(),
+  launch: vi.fn<typeof launchAgentInNewTabWithOutcome>(),
   detected: Array<TuiAgent>('claude', 'codex', 'gemini'),
   openSettingsPage: vi.fn(),
   openSettingsTarget: vi.fn()
 }))
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), message: vi.fn() } }))
 vi.mock('@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab', () => ({
-  launchAgentInNewTab: fixture.launch
+  launchAgentInNewTabWithOutcome: fixture.launch
 }))
 vi.mock('@/hooks/useAgentDetectionTarget', () => ({
   useAgentDetectionTargetForWorktree: () => ({ kind: 'local' })

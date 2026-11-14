@@ -1,4 +1,4 @@
-import { formatShortTimeAgo } from '@/lib/short-time-ago'
+import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import type { AgentChildRowModel } from '../../../../shared/agent-status/presentation/agent-child-row-model'
 import { agentChildRowText } from '../agent-child-row-text'

@@ -1,6 +1,6 @@
 import { translate } from '@/i18n/i18n'
 import { openRoutedHttpLink } from '@/lib/browser/navigation/http-link-destinations'
-import { resolveWorkspaceDirectory } from '@/lib/workspace-directory'
+import { resolveWorkspaceDirectory } from '@/lib/workspace/paths/workspace-directory'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { resolveMarkdownLinkTarget } from '../editor/markdown/link-routing/markdown-internal-links'

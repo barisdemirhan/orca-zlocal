@@ -7,7 +7,7 @@ import type { TerminalSuspensionOptions } from '../../../shared/terminal-suspens
 import { reapTerminalHostSession } from '../terminal-host-session-reaper'
 import { changeTerminalHostSuspension } from '../terminal-host-suspension'
 import type { Session } from '../sessions/session'
-import type { PtyProcessInspectionOptions } from '../../providers/pty-process-inspection'
+import type { PtyProcessInspectionOptions } from '../../providers/pty/process-inspection'
 import type { SessionInfo } from '../protocol/daemon-session-info'
 import type { TakePendingOutputResult } from '../protocol/daemon-rpc-contract'
 import type { TerminalSnapshot } from '../protocol/terminal-snapshot'

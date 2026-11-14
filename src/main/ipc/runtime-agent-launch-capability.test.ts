@@ -6,7 +6,7 @@ import {
   AGENT_HUB_REQUESTS_CAPABILITY,
   AGENT_HUB_GATES_CAPABILITY
 } from '../../shared/agent-hub-capabilities'
-import type { RpcCallerIdentity } from '../runtime/rpc/rpc-caller-identity'
+import type { RpcCallerIdentity } from '../runtime/rpc/callers/rpc-caller-identity'
 
 type AdvertisedClient = {
   clientKind?: 'mobile' | 'runtime'

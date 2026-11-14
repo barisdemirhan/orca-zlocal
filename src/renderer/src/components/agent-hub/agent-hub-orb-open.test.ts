@@ -41,7 +41,7 @@ vi.mock('@/lib/agent-session/structured-agent-session-tab-activation', () => ({
 vi.mock('@/runtime/local-structured-session-tabs-sync/inventory-refresh', () => ({
   refreshLocalStructuredSessionTabs: mocks.refresh
 }))
-vi.mock('@/lib/floating-workspace-panel-reveal', () => ({
+vi.mock('@/components/floating-terminal/floating-workspace-panel-reveal', () => ({
   revealFloatingWorkspacePanel: mocks.reveal
 }))
 beforeEach(() => {

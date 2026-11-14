@@ -4,12 +4,12 @@ import { useShallow } from 'zustand/react/shallow'
 import { Loader2, MessageSquareReply, SendHorizontal, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { isPairedWebClientWindow } from '@/lib/desktop-window-chrome'
+import { isPairedWebClientWindow } from '@/app-shell/chrome/desktop-window-chrome'
 import {
   focusPanePreservingOverlays,
   type OverlayFocusPane
-} from '@/lib/pane-manager/pane-overlay-focus'
-import type { ManagedPane } from '@/lib/pane-manager/pane-manager'
+} from '@/lib/pane-manager/pane-focus/pane-overlay-focus'
+import type { ManagedPane } from '@/lib/pane-manager/pane-manager-types'
 import { useAppStore } from '@/store'
 import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { paneIsCoveredByNativeChat } from '../terminal-pane/chat/native-chat-covered-pane'

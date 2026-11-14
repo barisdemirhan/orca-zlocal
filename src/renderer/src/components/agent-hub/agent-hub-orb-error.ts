@@ -1,4 +1,4 @@
-import { compactIpcErrorMessage } from '@/lib/ipc-error'
+import { compactIpcErrorMessage } from '@/runtime/errors/ipc-error'
 
 export function agentHubOrbErrorMessage(error: unknown, fallback: string): string {
   const message =

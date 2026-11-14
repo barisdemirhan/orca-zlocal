@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent } from 'react'
 import { translate } from '@/i18n/i18n'
-import { isEditableTarget } from '@/lib/editable-target'
+import { isEditableTarget } from '@/lib/text-input/focus/editable-target'
 import { HubOptionList } from './AgentHubAnswerBody'
 import type { AgentHubThreadAlert } from './agent-hub-alerts'
 import { quickAnswerTargetOf, useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'

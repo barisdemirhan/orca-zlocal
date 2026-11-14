@@ -1,13 +1,11 @@
 import { canonicalOrchestrationForRow } from '@/runtime/agent-orchestration/visible-agent-orchestration'
 import { resolveAgentSessionStartedAt } from '../../../../../shared/agent-session/lifecycle/agent-session-start-time'
 import { sameAgentStatusTerminalOwner } from '../../../../../shared/agent-status/identity/agent-status-terminal-owner'
+import { resolveAgentStatusLiveEntryTiming } from './agent-status-live-entry-timing'
 import type { AppState } from '../../types'
 import { resolveAgentStatusLiveEntryMainAgent } from './agent-status-live-entry-main-agent'
 import { resolveAgentStatusLiveEntryStateHistory } from '../../../../../shared/agent-status/lifecycle/agent-status-live-entry-state-history'
-import {
-  pickHostTurnEnd,
-  type AgentStatusEntry
-} from '../../../../../shared/agent-status/contracts/agent-status-types'
+import type { AgentStatusEntry } from '../../../../../shared/agent-status/contracts/agent-status-types'
 import type { MigrationUnsupportedPtyEntry } from '../../../../../shared/agent-status/contracts/agent-status-ipc-payload'
 import {
   agentProviderSessionsEqual,
@@ -123,24 +121,12 @@ export function buildAgentStatusLiveEntry(
   const promptInteractionKey =
     payload.promptInteractionKey ??
     (payload.prompt === existing?.prompt ? existing?.promptInteractionKey : undefined)
-  const stateStartedAt =
-    timing?.stateStartedAt ??
-    (commandCodeNewTurn
-      ? updatedAt
-      : existing && existing.state === payload.state
-        ? existing.stateStartedAt
-        : updatedAt)
-  // Clockless OSC repaints retain host turn start only within the same state; undated transitions must not inherit another turn.
-  const turnStartedAt =
-    timing?.turnStartedAt ??
-    (existing && existing.state === payload.state ? existing.turnStartedAt : undefined)
-  // Why: the end stamp and its disposition are one host fact, inherited together.
-  const turnEnd =
-    timing?.turnEndedAt !== undefined || timing?.turnEndDisposition !== undefined
-      ? pickHostTurnEnd(timing)
-      : existing && existing.state === payload.state
-        ? pickHostTurnEnd(existing)
-        : {}
+  const { stateStartedAt, turnStartedAt, turnEnd } = resolveAgentStatusLiveEntryTiming(
+    existing,
+    identity.agentType,
+    { payload, timing, routing, metadata, updatedAt },
+    commandCodeNewTurn
+  )
   if (
     existing &&
     shouldSuppressInheritedTerminalStatus({
@@ -215,6 +201,21 @@ export function buildAgentStatusLiveEntry(
   const programStatus =
     payload.programStatus === undefined ? existing?.programStatus : payload.programStatus
   const modelSource = identity.inheritedFromActivePane ? existing : payload
+  // Only the host names conversations. Its row naming the conversation is authoritative, a missing
+  // stamp included (a settled miss clears a pending null); an ID-less local update keeps the
+  // id only for the very same agent, owner and provider key (locator included).
+  const keepsExistingId =
+    existing?.orcaSessionId !== undefined &&
+    existing.agentType === identity.agentType &&
+    (routing?.connectionId === undefined ||
+      routing.connectionId === (existing.connectionId ?? null)) &&
+    agentProviderSessionsEqual(identity.agentType, existing.providerSession, providerSession)
+  const orcaSessionId =
+    metadata?.providerSession || metadata?.orcaSessionId !== undefined
+      ? metadata.orcaSessionId
+      : keepsExistingId
+        ? existing?.orcaSessionId
+        : undefined
   const entry: AgentStatusEntry = {
     state: payload.state,
     workingMode: payload.workingMode,
@@ -265,6 +266,7 @@ export function buildAgentStatusLiveEntry(
     ...liveEntryChildFields(existing, payload),
     ...(mainAgent ? { mainAgent } : {}),
     ...(providerSession ? { providerSession } : {}),
+    ...(orcaSessionId !== undefined ? { orcaSessionId } : {}),
     ...(launchAttested !== undefined ? { launchAttested } : {}),
     ...(metadata?.terminalResumeEligible === false
       ? { terminalResumeEligible: false as const }

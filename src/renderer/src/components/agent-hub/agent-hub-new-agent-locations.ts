@@ -1,8 +1,8 @@
 import type { AppState } from '@/store/types'
 import { getIndexedAllWorktrees } from '@/store/slices/worktrees/listing/worktree-catalog-index'
 import { getIndexedRepoMap } from '@/store/repos/repository-catalog-index'
-import { compareWorktreeDisplayName } from '@/lib/worktree-display-name-order'
-import { orderEmptyQueryWorktrees } from '@/lib/order-empty-query-worktrees'
+import { compareWorktreeDisplayName } from '@/lib/workspace/display/worktree-display-name-order'
+import { orderEmptyQueryWorktrees } from '@/lib/workspace/search/palette/order-empty-query-worktrees'
 import {
   getRepoDisplayLabelKey,
   getRepoDisplayLabelsByPath

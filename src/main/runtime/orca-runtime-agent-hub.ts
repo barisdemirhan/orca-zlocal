@@ -6,12 +6,12 @@ import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-de
 import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import type { OrchestrationDb } from './orchestration/db/orchestration-db'
-import { OrcaRuntimeWithWindowlessTerminalActivity } from './sidebar-inputs/orca-runtime-windowless-terminal-activity'
+import { OrcaRuntimeWithWindowlessTerminalActivity } from './sidebar-inputs/temporal/orca-runtime-windowless-terminal-activity'
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
 import { registerOrbOperations } from './agent-hub/agent-hub-orb-operations'
 import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
 import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
-import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surface-close-target'
+import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surfaces/terminal-surface-close-target'
 import { resolveStructuredWorkerAuthority } from './orchestration/terminal-authority/structured-sessions/structured-worker-authority'
 import {
   structuredAgentSessionPaneKey,

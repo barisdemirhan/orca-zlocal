@@ -1,6 +1,6 @@
 import type { RuntimeCapability } from '../../protocol-version'
 import type { RuntimeRpcResponse } from '../../runtime-rpc-envelope'
-import { ClientCapabilitiesUpdate } from '../../rpc-contract/runtime-client-capabilities-params'
+import { ClientCapabilitiesUpdate } from '../../rpc-contract/host-management/runtime-client-capabilities-params'
 
 export function retainRemoteRuntimeClientCapabilityUpdate<TResult>(
   options: { clientCapabilities?: readonly RuntimeCapability[] },

@@ -1,5 +1,5 @@
 import type { AgentStatusEntry } from '../../shared/agent-status/contracts/agent-status-types'
-import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surface-close-target'
+import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surfaces/terminal-surface-close-target'
 import type { WorkspaceSessionState } from '../../shared/workspace-session/workspace-session-state-types'
 import { parsePaneKey } from '../../shared/workspace-layout/stable-pane-id'
 import { terminalLayoutContainsLeaf } from '../../shared/workspace-session/workspace-session-pane-ownership'

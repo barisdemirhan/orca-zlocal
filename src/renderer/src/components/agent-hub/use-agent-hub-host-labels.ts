@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import { useAppStore } from '@/store'
-import { getMixedWorktreeHostContextLabels } from '../../../../shared/sidebar-list/host-labels'
+import { getMixedWorktreeHostContextLabels } from '../../../../shared/sidebar-list/hosts/host-labels'
 import { buildSidebarHostOptions } from '@/components/sidebar/worktree-list/controls/sidebar-host-options'
 import { getSettingsFocusedExecutionHostId } from '../../../../shared/execution-host'
 import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'
 import { getRepoHostIdentity } from '../../../../shared/repo-host-identity'
-import { getRenderableFolderWorkspaces } from '../../../../shared/sidebar-list/folder-workspace-lanes'
-import { repoOfWorktree } from '../../../../shared/sidebar-list/sidebar-feed-index'
+import { getRenderableFolderWorkspaces } from '../../../../shared/sidebar-list/folders/folder-workspace-lanes'
+import { repoOfWorktree } from '../../../../shared/sidebar-list/feed/sidebar-feed-index'
 
 /**
  * "Local Mac" / SSH host / server labels keyed by worktree host identity, only when the workspaces

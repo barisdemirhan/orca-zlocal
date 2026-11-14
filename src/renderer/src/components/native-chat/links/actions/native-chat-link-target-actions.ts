@@ -20,7 +20,7 @@ import {
 } from './native-chat-http-link-source-owner'
 import { nativeChatWebLinkActions, nativeChatWebPeekSource } from './native-chat-web-link-actions'
 import type { AgentHubPeekLinkSource } from '../../../agent-hub/agent-hub-peek-routing'
-import { showFileLinkOpenFailureToast } from '@/lib/file-link-open-failure-toast'
+import { showFileLinkOpenFailureToast } from '@/lib/files/open/file-link-open-failure-toast'
 import type { Translate } from '@/i18n/use-translate'
 
 /** Who owns a chat http(s) link and where it may open: the rows its popover and menu offer. */
@@ -68,7 +68,8 @@ export function nativeChatFileLinkActions(
     { ...nativeChatFileOpenDeps(target, context), omitOpenInNewTab: true },
     resolveNativeChatHttpLinkSourceOwner(useAppStore.getState(), context.worktreeId),
     peekSource,
-    t
+    t,
+    target.isDirectoryHint ? { directoryHint: true } : undefined
   )
 }
 
@@ -143,19 +144,23 @@ export function nativeChatLinkActions(
   return {
     destination: route.url,
     kind: 'url',
-    ...nativeChatWebLinkActions(route.url, {
-      ...routing,
-      worktreeId: context.worktreeId,
-      sourceTabId: context.sourceTabId,
-      peekSource: nativeChatWebPeekSource(
-        route.url,
-        {
-          worktreeId: context.worktreeId,
-          sourceTabId: context.sourceTabId,
-          sourceOwner: routing.sourceOwner
-        },
-        event
-      )
-    }, t)
+    ...nativeChatWebLinkActions(
+      route.url,
+      {
+        ...routing,
+        worktreeId: context.worktreeId,
+        sourceTabId: context.sourceTabId,
+        peekSource: nativeChatWebPeekSource(
+          route.url,
+          {
+            worktreeId: context.worktreeId,
+            sourceTabId: context.sourceTabId,
+            sourceOwner: routing.sourceOwner
+          },
+          event
+        )
+      },
+      t
+    )
   }
 }

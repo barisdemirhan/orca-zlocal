@@ -53,7 +53,7 @@ vi.mock('@/store', async () => {
 vi.mock('@dnd-kit/sortable', () => ({
   useSortable: () => ({ attributes: {}, listeners: {}, setNodeRef: vi.fn() })
 }))
-vi.mock('@/lib/use-tab-agent', () => ({
+vi.mock('@/lib/agent-session/tab-identity/use-tab-agent', () => ({
   useTabAgent: (tab: TerminalTab) => tab.launchAgent ?? null
 }))
 vi.mock('../tab-bar/SortableTabContextMenu', () => ({

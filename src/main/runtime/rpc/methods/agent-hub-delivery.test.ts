@@ -7,10 +7,10 @@ import { RuntimeClientEventBus } from '../../client/events/runtime-client-event-
 import { RuntimeSubscriptionRegistry } from '../../client/runtime-subscription-registry'
 import { AgentHubLedger } from '../../agent-hub/agent-hub-ledger'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
-import { mapDispatcherError } from '../dispatcher-error-response'
+import { mapDispatcherError } from '../responses/dispatcher-error-response'
 import { AGENT_HUB_METHODS } from './agent-hub'
 import { CLIENT_EVENT_METHODS } from './client-events/client-events'
-import { ClientEventsSubscribeParams } from '../../../../shared/rpc-contract/client-events-params'
+import { ClientEventsSubscribeParams } from '../../../../shared/rpc-contract/client-ui/client-events-params'
 import { resolveAgentHubPanes } from './agent-hub-caller'
 import { readAgentHubDelivery } from '../../../../shared/rpc-contract/agent-hub-events'
 

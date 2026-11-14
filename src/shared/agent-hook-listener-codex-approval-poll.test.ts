@@ -8,8 +8,8 @@ import {
   createHookListenerState,
   type HookListenerState
 } from './agent-hook-listener/listener-state'
-import { pollCodexTranscriptStatus } from './agent-hook-listener/providers/codex-transcript-poll'
-import { reconcileRemoteCodexState } from './agent-hook-listener/providers/codex-state'
+import { pollCodexTranscriptStatus } from './agent-hook-listener/providers/codex/codex-transcript-poll'
+import { reconcileRemoteCodexState } from './agent-hook-listener/providers/codex/codex-state'
 import {
   shouldPollHookTranscript,
   transcriptPollUpdate

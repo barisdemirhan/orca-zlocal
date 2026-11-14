@@ -4,7 +4,7 @@ import type { OrchestrationDb } from './orchestration/db/orchestration-db'
 import { makeAgentStatusStoreWiring } from './terminal/identity/agent-status-store-wiring.test-fixture'
 import { setStructuredAgentSessionHost } from '../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import { structuredWorkerIdentities } from './orchestration/terminal-authority/structured-sessions/structured-worker-identity'
-import { placeWorkerAgent } from './rpc/methods/orchestration/worker/worker-start-agent-placement'
+import { placeWorkerAgent } from './rpc/methods/orchestration/worker/start/placement/worker-start-agent-placement'
 import { makeStructuredAgentStatusSubject } from '../../shared/agent-status/contracts/agent-status-subject'
 import {
   structuredAgentSessionPaneKey,

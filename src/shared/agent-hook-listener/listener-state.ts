@@ -9,12 +9,12 @@ import {
   type AgentStatusLegacyAdmissionMode
 } from '../agent-status/transport/agent-status-legacy-adapter'
 import type { AgentStatusLegacyIngressCaller } from '../agent-status/transport/agent-status-legacy-ingress-manifest'
-import type { ClaudeLaunchedBackgroundTasks } from './providers/claude-owed-task-notifications'
+import type { ClaudeLaunchedBackgroundTasks } from './providers/claude/background-tasks/claude-owed-task-notifications'
 import type { ClaudeSubagentRoster } from '../claude-subagent-roster'
 import type { ClaudeToolRequest } from './claude-tool-request-identity'
 import type { CodexSubagentRoster } from '../codex-subagent-roster'
 import type { CodexSubagentTranscriptState } from '../codex-subagent-transcript'
-import type { CodexAsyncQuestions } from './providers/codex-async-questions'
+import type { CodexAsyncQuestions } from './providers/codex/codex-async-questions'
 import type { MuseSessionLogState } from '../muse-session-log'
 import type { AgentHookEventPayload, ToolSnapshot } from './listener-event'
 import {
@@ -24,7 +24,8 @@ import {
   movePaneScopedSetEntries
 } from './pane-scoped-cache-entries'
 import type { JcodeUserPromptEvidence } from '../jcode-session-files'
-import type { ClaudeHumanPromptContext } from './providers/claude-human-notifications'
+import type { ClaudeHumanPromptContext } from './providers/claude/claude-human-notifications'
+import type { JcodeHelperPermissionWait } from './providers/jcode/jcode-helper-permission-wait'
 import type { HookRootAttempt } from './presence/hook-process-root-evidence'
 import {
   moveOpenCodeSessionBindings,
@@ -48,6 +49,8 @@ export type HookListenerState = {
   antigravityChildWorkByPaneKey: Map<string, { subagentParent?: string; commands?: Set<string> }>
   /** Journal-backed prompt for each jcode pane's current turn; see readJcodeTurnPrompt. */
   jcodeTurnPromptByPaneKey: Map<string, JcodeUserPromptEvidence | null>
+  /** Open swarm-helper permission requests per jcode pane; see routeJcodeHelperHook. */
+  jcodeHelperPermissionWaitByPaneKey: Map<string, JcodeHelperPermissionWait>
   ampCompletedCacheKeys: Set<string>
   /** Live subagents/teammates per Claude pane; survives turn boundaries since background children outlive the lead turn. */
   claudeSubagentRosterByPaneKey: Map<string, ClaudeSubagentRoster>
@@ -151,6 +154,7 @@ export function createHookListenerState(
     antigravityCompletedTranscriptByPaneKey: new Map(),
     antigravityChildWorkByPaneKey: new Map(),
     jcodeTurnPromptByPaneKey: new Map(),
+    jcodeHelperPermissionWaitByPaneKey: new Map(),
     ampCompletedCacheKeys: new Set(),
     claudeSubagentRosterByPaneKey: new Map(),
     claudeLeadStateByPaneKey: new Map(),
@@ -228,6 +232,7 @@ export function clearPaneCacheState(state: HookListenerState, paneKey: string): 
   deletePaneScopedCacheEntry(state.lastPromptByPaneKey, paneKey)
   deletePaneScopedCacheEntry(state.lastToolByPaneKey, paneKey)
   deletePaneScopedCacheEntry(state.jcodeTurnPromptByPaneKey, paneKey)
+  deletePaneScopedCacheEntry(state.jcodeHelperPermissionWaitByPaneKey, paneKey)
   deleteLegacyAgentStatus(state, paneKey)
   for (const key of state.lastStatusByPaneKey.keys()) {
     if (key.startsWith(`${paneKey}\0`)) {
@@ -279,6 +284,7 @@ export function movePaneCacheState(
   movePaneScopedMapEntries(state.antigravityCompletedTranscriptByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.antigravityChildWorkByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.jcodeTurnPromptByPaneKey, fromPaneKey, toPaneKey)
+  movePaneScopedMapEntries(state.jcodeHelperPermissionWaitByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedSetEntries(state.ampCompletedCacheKeys, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeConsumedCompactPromptIdByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeSubagentRosterByPaneKey, fromPaneKey, toPaneKey)
@@ -327,6 +333,7 @@ export function clearAllListenerCaches(state: HookListenerState): void {
   state.antigravityCompletedTranscriptByPaneKey.clear()
   state.antigravityChildWorkByPaneKey.clear()
   state.jcodeTurnPromptByPaneKey.clear()
+  state.jcodeHelperPermissionWaitByPaneKey.clear()
   state.ampCompletedCacheKeys.clear()
   state.claudeConsumedCompactPromptIdByPaneKey.clear()
   state.warnedVersions.clear()

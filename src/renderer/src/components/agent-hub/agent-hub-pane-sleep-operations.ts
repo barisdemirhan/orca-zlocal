@@ -5,7 +5,7 @@ import { AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY } from '../../../../shared/agent
 import { parsePaneKey, makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { collectSleepingAgentSessionRecordsForWorktree } from '@/store/slices/agent-status/agent-status-recovery-collection'
 import { resolveWorkspaceTerminalHostAuthority } from '@/lib/workspace/ownership/workspace-terminal-host-authority'
-import { resolveTerminalPtyOwner } from '@/lib/terminal-worktree-route'
+import { resolveTerminalPtyOwner } from '@/lib/workspace/ownership/terminal-worktree-route'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-session/hibernation/agent-hibernation-runtime-owner'
 import { toRuntimePtyId } from '@/lib/agent-session/hibernation/agent-hibernation-pane-eligibility'
@@ -13,7 +13,7 @@ import { requestBackgroundTerminalWorktreeMount } from '../terminal/background-t
 import {
   getPaneSpawnDeferral,
   subscribePaneSpawnDeferrals
-} from '@/lib/pane-spawn-deferral-registry'
+} from '@/components/terminal-pane/session-restore/spawn-deferral/pane-spawn-deferral-registry'
 import { WAKE_HIBERNATED_AGENTS_WORKTREE_EVENT } from '@/constants/terminal'
 import { resolveAgentHubPtyId, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import {

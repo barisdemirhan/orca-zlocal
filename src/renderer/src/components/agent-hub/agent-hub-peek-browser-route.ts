@@ -1,5 +1,5 @@
 import { useAppStore } from '@/store'
-import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
+import { getClientCreationActionPolicy } from '@/lib/workspace/creation/surface-policy/client-creation-action-policy'
 import {
   resolveWorktreeOperationRoute,
   resolveWorktreeOperationRouteForHost

@@ -5,11 +5,11 @@ vi.mock('../store', () => ({
   useAppStore: Object.assign(vi.fn(), { getState: () => ({}) })
 }))
 
-vi.mock('@/lib/floating-workspace-terminal-actions', () => ({
+vi.mock('@/components/floating-terminal/floating-workspace-terminal-actions', () => ({
   isFloatingWorkspacePanelFocused: () => false
 }))
 
-vi.mock('@/lib/terminal-shortcut-capture-notification', () => ({
+vi.mock('@/lib/notifications/terminal-shortcut-capture-notification', () => ({
   showTerminalShortcutCaptureNotification: vi.fn()
 }))
 

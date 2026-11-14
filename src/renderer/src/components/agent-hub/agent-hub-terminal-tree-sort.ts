@@ -6,7 +6,7 @@ import type { Worktree } from '../../../../shared/worktree/types'
 import {
   buildWorktreeComparator,
   sortWorktreesSmart
-} from '../../../../shared/sidebar-list/smart-sort'
+} from '../../../../shared/sidebar-list/sorting/smart-sort'
 import { agentHubIndicatorKind, agentHubStateSince } from './agent-hub-lists'
 import type {
   AgentHubGroupNode,

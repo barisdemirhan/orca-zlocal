@@ -1,5 +1,5 @@
 import type { KeybindingActionId } from '../../../../shared/keybindings'
-import { getShortcutPlatform } from '@/lib/shortcut-platform'
+import { getShortcutPlatform } from '@/lib/keyboard/shortcut-platform'
 
 export function agentHubSuggestedBindings(
   platform: NodeJS.Platform

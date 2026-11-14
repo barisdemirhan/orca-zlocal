@@ -5,6 +5,7 @@ import {
   type AgentLineageSourceRow,
   type AgentRowLineageTree
 } from '../dashboard/agent-row-lineage-model'
+import { isRunningActivityState } from './activity-event-state'
 import type { ActivityLiveAgentState } from './activity-thread-types'
 
 type ChildAgentLineageEntry = Pick<
@@ -16,7 +17,7 @@ type ChildAgentLineageEntry = Pick<
 export type ChildAgentClassifiableThread = {
   paneKey: string
   paneEntry?: ChildAgentLineageEntry
-  /** Non-null while the pane's own turn is live (working, monitoring or waiting on the user). */
+  /** Running while the pane's own turn is live (working, monitoring or waiting on the user); unverifiable is not. */
   currentAgentState?: ActivityLiveAgentState | null
   currentAgentEntry?: ChildAgentLineageEntry | null
   latestEvent?: { entry: ChildAgentLineageEntry } | null
@@ -60,7 +61,9 @@ export function classifyChildAgents(threads: readonly ChildAgentClassifiableThre
   hidden: Set<string>
 } {
   const livePaneKeys = new Set(
-    threads.filter((thread) => thread.currentAgentState).map((thread) => thread.paneKey)
+    threads
+      .filter((thread) => isRunningActivityState(thread.currentAgentState))
+      .map((thread) => thread.paneKey)
   )
   const tree = buildChildAgentLineageTree(threads)
   const parentPaneKeyByChild = new Map<string, string>()

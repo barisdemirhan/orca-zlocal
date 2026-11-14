@@ -3,7 +3,7 @@ import { TabGroupSplitNodeTree } from '@/components/tab-group/TabGroupSplitNodeT
 import { WorkspaceTabDragLayer } from '@/components/tab-group/WorkspaceTabDragLayer'
 import { WorkspacePaneOverlayLayers } from '@/components/WorkspacePaneOverlayLayers'
 import { isTerminalImeInputContextRefreshing } from '@/components/terminal-pane/input/ime/terminal-ime-input-context-refresh'
-import { buildDuplicatedBrowserTabOptions } from '@/lib/duplicate-browser-tab-options'
+import { buildDuplicatedBrowserTabOptions } from '@/lib/browser/workspace/duplicate-browser-tab-options'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { FloatingTerminalEmptyState } from './FloatingTerminalEmptyState'
 import { renderFloatingTerminalOrchestrationCard } from './FloatingTerminalOrchestrationCard'
@@ -217,7 +217,11 @@ export function renderFloatingTerminalPanelSurface(
                   // Why the flex frame: the tree's nodes size themselves as flex items (flex-1), so
                   // the host must own their rect with a flex container — same contract as
                   // WorktreeSplitSurface. In a block parent every pane collapses to 0px.
-                  <div className="absolute inset-0 flex" data-floating-workspace-surface-frame>
+                  // Reserve a 4px east resize lane when unmaximized so xterm's scrollbar stays uncovered.
+                  <div
+                    className={`absolute inset-y-0 left-0 flex ${maximized ? 'right-0' : 'right-1'}`}
+                    data-floating-workspace-surface-frame
+                  >
                     <TabGroupSplitNodeTree
                       layout={surface.layout}
                       worktreeId={FLOATING_TERMINAL_WORKTREE_ID}

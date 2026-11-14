@@ -16,7 +16,7 @@ import type { DictationInsertionTarget } from './dictation-insertion-target'
 import {
   TEXT_CONTROL_PASTE_DIRECT_MAX_BYTES,
   TEXT_CONTROL_PASTE_MAX_BYTES
-} from '@/lib/text-control-paste'
+} from '@/lib/text-input/paste/text-control-paste-model'
 import { captureInsertionTarget, insertText } from './dictation-insertion-target'
 
 type DocumentWithExecCommand = Document & {

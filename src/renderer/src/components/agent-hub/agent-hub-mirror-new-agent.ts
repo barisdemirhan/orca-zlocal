@@ -1,10 +1,10 @@
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { launchAgentInNewTab } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
-import { newAgentLaunchRequestId } from '@/lib/agent-session/launch/routing/agent-launch-request-id'
+import { launchAgentInNewTabWithOutcome } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
+import { createNonSecureContextUuid } from '../../../../shared/non-secure-context-uuid'
 import { getAgentCatalog } from '@/lib/agent-catalog/agent-catalog'
-import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
+import { getActivityThreadWorkspaceTitle } from '@/lib/workspace/activity/activity-thread-display'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
 import { makePaneKey, parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { toWebTerminalSurfaceTabId } from '../../../../shared/workspace-layout/terminal-surface-id'
@@ -92,8 +92,8 @@ export async function startAgentInAgentHubMirror(
     )
   }
   try {
-    const launched = launchAgentInNewTab({
-      requestId: newAgentLaunchRequestId(),
+    const launched = launchAgentInNewTabWithOutcome({
+      requestId: createNonSecureContextUuid(),
       agent,
       worktreeId: worktree.id,
       launchSource: 'tab_bar_quick_launch',

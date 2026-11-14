@@ -25,7 +25,9 @@ export type ClaudeLeadTurnState = {
   }
   /** End time of the main agent turn closed while background inventory kept the pane `working`. Repeated on the later all-clear `done`. */
   turnCompletedAt?: number
-  /** Main agent state a child-induced wait displaced, restored when the wait clears; can't invent 'working' since the done-gate only downgrades done→working, never back. */
+  /** Claude hook model. Later events that omit it keep the last reported value. */
+  model?: string
+  /** Restore the lead state displaced by a child wait; inventing working cannot later fold back to done. */
   stateBeforeWait?: Pick<
     ClaudeLeadTurnState,
     'state' | 'outcome' | 'stateStartedAt' | 'turnCompletedAt' | 'taskWakeupTurn'

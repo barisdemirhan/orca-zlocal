@@ -7,7 +7,7 @@ import { ORCHESTRATION_GATE_METHODS } from './orchestration/gates/gates'
 import { createOrchestrationRpcHarness } from './orchestration/rpc-test-harness'
 import { CLIENT_EVENT_METHODS } from './client-events/client-events'
 import { AGENT_HUB_ORB_METHODS } from './agent-hub-orb'
-import { ClientEventsSubscribeParams } from '../../../../shared/rpc-contract/client-events-params'
+import { ClientEventsSubscribeParams } from '../../../../shared/rpc-contract/client-ui/client-events-params'
 import { readAgentHubDelivery } from '../../../../shared/rpc-contract/agent-hub-events'
 import {
   AGENT_HUB_GATES_CAPABILITY,

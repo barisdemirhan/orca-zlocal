@@ -1,5 +1,6 @@
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { markHydratedBrowserPageHandles } from '@/store/slices/browser/hosts/browser-initialization-presentation-ownership'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -69,6 +70,13 @@ vi.mock('../editor/editor-lazy-views', () => ({
 }))
 
 const initial = useAppStore.getState()
+const resetStore = (): void =>
+  useAppStore.setState({
+    ...initial,
+    remoteBrowserPageHandlesByPageId: markHydratedBrowserPageHandles({
+      ...initial.remoteBrowserPageHandlesByPageId
+    })
+  })
 const WORKSPACE_ID = 'repo1::/workspace'
 const readFile = vi.mocked(readRuntimeFileContent)
 
@@ -114,7 +122,7 @@ beforeEach(() => {
     isImage: true,
     mimeType: 'image/png'
   })
-  useAppStore.setState(initial)
+  resetStore()
   Object.defineProperty(window, 'api', {
     configurable: true,
     value: { shell: { openUrl: vi.fn() } }
@@ -124,7 +132,7 @@ afterEach(() => {
   cleanup()
   closeAgentHubPeek()
   closeLeftoverAgentHubPeekPages()
-  useAppStore.setState(initial)
+  resetStore()
   vi.clearAllMocks()
 })
 

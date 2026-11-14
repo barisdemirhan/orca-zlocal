@@ -41,7 +41,7 @@ vi.mock('@/lib/browser/workspace/workspace-browser-tab-open', () => ({
   openWorkspaceBrowserTab: vi.fn(async () => {})
 }))
 
-vi.mock('@/lib/client-creation-action-policy', () => ({
+vi.mock('@/lib/workspace/creation/surface-policy/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: 'enabled' } })
 }))
 vi.mock('@/lib/workspace/ownership/connection-context', () => ({

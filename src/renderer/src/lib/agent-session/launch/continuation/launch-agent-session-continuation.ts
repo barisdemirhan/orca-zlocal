@@ -1,14 +1,15 @@
 import { toast } from 'sonner'
 import { getAgentLabel } from '@/lib/agent-catalog/agent-catalog'
 import { ensureDetectedAgentsForWorktree } from '@/lib/agent-session/launch/inventory/agent-detection-target-inventory'
-import { launchAgentInNewTab } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
-import { newAgentLaunchRequestId } from '@/lib/agent-session/launch/routing/agent-launch-request-id'
+import { launchAgentInNewTabWithOutcome } from '@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab'
+
+import { createNonSecureContextUuid } from '../../../../../../shared/non-secure-context-uuid'
 import { useAppStore } from '@/store/index'
 import {
   acquireAgentLaunchChoices,
   AgentLaunchChoiceCancelled
-} from '../../../host-chat-program-acquisition'
-import { agentChoicePending } from '../../../host-chat-program'
+} from '../inventory/host-chat-program-acquisition'
+import { agentChoicePending } from '../inventory/host-chat-program'
 import { worktreeLaunchWorkspace } from '../routing/agent-launch-route-input'
 import { addLaunchedSessionToAgentHubMirror } from '@/components/agent-hub/agent-hub-mirror-continuation'
 import type { AgentSessionContinuationPlacement } from '@/lib/agent-session-continuation-placement'
@@ -23,8 +24,8 @@ import {
 import type { AgentLaunchChoice } from '@/lib/agent-session/launch/routing/agent-menu-selection'
 import type { AgentLaunchRoute } from '@/lib/agent-session/launch/routing/agent-launch-routing'
 import { translate } from '@/i18n/i18n'
-import { resolveWorktreeDisplayName } from '@/lib/worktree-default-display-name'
-import { getResolvedExecutionHostIdForWorktree } from '@/lib/resolved-worktree-execution-host'
+import { resolveWorktreeDisplayName } from '@/lib/workspace/display/worktree-default-display-name'
+import { getResolvedExecutionHostIdForWorktree } from '@/lib/workspace/ownership/resolved-worktree-execution-host'
 import { workspaceNavigationToastAction } from '@/lib/workspace/activation/workspace-navigation-toast-action'
 
 type LaunchAgentSessionContinuationArgs = {
@@ -167,7 +168,7 @@ export async function launchAgentSessionContinuation({
     ...(delivery.chatSessionOptions !== undefined
       ? { chatLaunchOptions: delivery.chatSessionOptions }
       : {}),
-    requestId: newAgentLaunchRequestId(),
+    requestId: createNonSecureContextUuid(),
     workspace: worktreeLaunchWorkspace(worktreeId),
     tuiCustomization: { cwd: initialCwd }
   }
@@ -192,7 +193,7 @@ export async function launchAgentSessionContinuation({
           activate: false
         }) ?? null)
       : null
-  const result = launchAgentInNewTab({
+  const result = launchAgentInNewTabWithOutcome({
     ...delivery,
     ...(splitGroupId ? { groupId: splitGroupId } : {}),
     agentSessionLaunchPlan: plan

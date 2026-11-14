@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { TerminalCreateParams, TerminalSplit } from './terminal-unary-params'
+import { TerminalCreateParams, TerminalSplit } from './terminal/terminal-unary-params'
 
 describe('terminal creator params compatibility', () => {
   it('accepts the caller on new hosts and strips it on the unchanged legacy object schemas', () => {

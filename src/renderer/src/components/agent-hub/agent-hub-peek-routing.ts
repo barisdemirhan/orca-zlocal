@@ -3,15 +3,15 @@ import type { LinkAction } from '@/components/link-actions/link-action-request'
 import { PictureInPicture2 } from 'lucide-react'
 import { absolutePathToFileUri } from '@/components/editor/markdown/link-routing/markdown-internal-links'
 import { getConnectionIdForFile } from '@/lib/workspace/ownership/connection-context'
-import { resolveWorkspaceDirectory } from '@/lib/workspace-directory'
+import { resolveWorkspaceDirectory } from '@/lib/workspace/paths/workspace-directory'
 import { getTerminalFileContext } from '../terminal-pane/host-files/terminal-file-path-mapping'
 import { getRelativePathInsideWorktree } from '@/runtime/files/runtime-file-routing'
-import { userNamedFileAccess } from '@/lib/local-file-access'
+import { userNamedFileAccess } from '@/lib/files/access/local-file-access'
 import type { HttpLinkSourceOwner } from '@/lib/browser/navigation/http-link-routing'
 import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
-import { getClientCreationActionPolicy } from '@/lib/client-creation-action-policy'
+import { getClientCreationActionPolicy } from '@/lib/workspace/creation/surface-policy/client-creation-action-policy'
 import {
   agentHubPeekBrowserRoute,
   agentHubPeekSourceRoute,

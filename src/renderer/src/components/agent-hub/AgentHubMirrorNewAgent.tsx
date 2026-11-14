@@ -9,7 +9,7 @@ import {
 import { translate } from '@/i18n/i18n'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
-import { getActivityThreadWorkspaceTitle } from '@/lib/activity-thread-display'
+import { getActivityThreadWorkspaceTitle } from '@/lib/workspace/activity/activity-thread-display'
 import { QuickLaunchAgentMenuItems } from '../tab-bar/QuickLaunchButton'
 
 export type AgentHubMirrorNewAgentProps = {

@@ -24,7 +24,7 @@ vi.mock('@/store', async () => {
 })
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 vi.mock('@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab', () => ({
-  launchAgentInNewTab: ({
+  launchAgentInNewTabWithOutcome: ({
     agent,
     worktreeId
   }: {

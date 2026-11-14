@@ -31,7 +31,7 @@ vi.mock('@/store', () => ({ useAppStore: { getState: () => mocks } }))
 vi.mock('@/lib/workspace/ownership/connection-context', () => ({
   getConnectionIdForFile: () => mocks.connectionId
 }))
-vi.mock('@/lib/client-creation-action-policy', () => ({
+vi.mock('@/lib/workspace/creation/surface-policy/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: mocks.browser } })
 }))
 vi.mock('@/lib/workspace/ownership/worktree-operation-route', () => ({
@@ -46,7 +46,7 @@ vi.mock('../terminal-pane/host-files/terminal-file-path-mapping', () => ({
     sourceHostResolved: true
   })
 }))
-vi.mock('@/lib/workspace-directory', () => ({ resolveWorkspaceDirectory: () => '/a' }))
+vi.mock('@/lib/workspace/paths/workspace-directory', () => ({ resolveWorkspaceDirectory: () => '/a' }))
 vi.mock('@/lib/browser/workspace/workspace-browser-tab-open', () => ({
   openWorkspaceBrowserTab: vi.fn(async () => {})
 }))

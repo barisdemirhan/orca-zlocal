@@ -72,6 +72,7 @@ function ReplySurface({ compact = false, showField = true }) {
         queued={null}
         setup={null}
         onSetupClose={() => {}}
+        cleanup={{ cleaning: false, notice: null, dismissNotice: () => {} }}
       />
     </TooltipProvider>
   )

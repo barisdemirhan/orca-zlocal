@@ -1,6 +1,6 @@
 import type { RpcContext, RpcRequest } from './core'
 import type { AgentHubOrbOperationTarget } from '../../../shared/agent-hub-orb-operation'
-import { resolveOrchestrationSessionCaller } from './orchestration-session-caller'
+import { resolveOrchestrationSessionCaller } from './orchestration/callers/orchestration-session-caller'
 import { readOrbOperations } from '../agent-hub/agent-hub-orb-operations'
 
 export async function invokeWithOrbProtection<T>(
@@ -69,10 +69,14 @@ export async function invokeWithOrbProtection<T>(
   if (!sessionId || !isOrb) {
     return invoke(context.signal)
   }
-  const resolved = await resolveOrchestrationSessionCaller(context.runtime, request, {
-    pairedDeviceId: context.pairedDeviceId
-  })
-  if (resolved.caller?.sessionId !== sessionId || context.caller?.kind !== 'local-cli') {
+  const resolved = await resolveOrchestrationSessionCaller(
+    context.runtime,
+    request,
+    { pairedDeviceId: context.pairedDeviceId },
+    undefined
+  )
+  const resolvedSessionId = resolved.caller?.kind === 'peer' ? undefined : resolved.caller?.sessionId
+  if (resolvedSessionId !== sessionId || context.caller?.kind !== 'local-cli') {
     return invoke(context.signal)
   }
   return operations.run(sessionId, target, request.method, invoke, context.signal)

@@ -3,7 +3,7 @@ import { useAppStore } from '@/store'
 import { useEditablePluginCommands } from '@/store/plugins/catalog/plugin-contribution-catalog'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
-import { getShortcutPlatform } from '@/lib/shortcut-platform'
+import { getShortcutPlatform } from '@/lib/keyboard/shortcut-platform'
 import {
   getEffectiveKeybindingsForDefinition,
   keybindingFromInputForAction,

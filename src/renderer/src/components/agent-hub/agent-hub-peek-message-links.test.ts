@@ -10,7 +10,7 @@ vi.mock('@/store', async () => {
   const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
-vi.mock('@/lib/client-creation-action-policy', () => ({
+vi.mock('@/lib/workspace/creation/surface-policy/client-creation-action-policy', () => ({
   getClientCreationActionPolicy: () => ({ 'managed-browser': { state: 'enabled' } })
 }))
 

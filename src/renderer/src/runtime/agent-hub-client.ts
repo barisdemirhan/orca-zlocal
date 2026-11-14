@@ -3,7 +3,7 @@ import {
   ORCHESTRATION_CONTRACT_VERSION,
   ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY
 } from '../../../shared/orchestration/orchestration-runtime-capabilities'
-import { GateResolveByUserParams } from '../../../shared/rpc-contract/orchestration-gates-params'
+import { GateResolveByUserParams } from '../../../shared/rpc-contract/orchestration/orchestration-gates-params'
 import type { AgentHubRendererApi } from '../../../shared/agent-hub-requests'
 import {
   AgentHubRespondParams,

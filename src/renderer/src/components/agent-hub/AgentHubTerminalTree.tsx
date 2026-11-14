@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
 import { Folder, GitBranch, Search } from 'lucide-react'
-import { formatShortTimeAgo } from '@/lib/short-time-ago'
+import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { HubChip, HubKeys } from './AgentHubInlineLabels'

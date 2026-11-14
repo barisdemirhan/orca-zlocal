@@ -3,7 +3,7 @@ import { AgentHubOrbSessionOperationGuard } from '../../../agent-hub/AgentHubOrb
 import { useShallow } from 'zustand/react/shallow'
 import type { Tab, TabGroup } from '../../../../../../shared/tab-types'
 import { useAppStore } from '@/store'
-import { useThemeBackgroundStore } from '@/store/appearance/theme-background'
+import { useWindowBackdropActive } from '@/app-shell/appearance/window-backdrop'
 import {
   structuredAgentSessionOwnerForTab,
   structuredAgentSessionTargetForHost
@@ -60,7 +60,7 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
   const destination = orbDestination ?? mirror?.element ?? null
   const visible = orbDestination ? chatVisible : mirror ? mirror.visible : isActive
   const focused = orbDestination ? chatVisible : mirror ? mirror.focused : isFocusedGroup
-  const themeBackgroundActive = useThemeBackgroundStore((state) => state.active)
+  const backdropActive = useWindowBackdropActive()
   if (!target) {
     return null
   }
@@ -68,8 +68,8 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
     <RetainedPaneHost
       groupId={groupId}
       isVisible={isActive}
-      // Why not over a theme image: the chat is translucent there, so a dim would bleed the image in.
-      dimmed={hasSplitGroups && !isFocusedGroup && !themeBackgroundActive}
+      // Why not over a backdrop: dimming the translucent chat also dims its text.
+      dimmed={hasSplitGroups && !isFocusedGroup && !backdropActive}
       data-structured-agent-session-overlay-tab-id={tab.id}
       onFocusOwningGroup={onFocusOwningGroup}
       retainContent

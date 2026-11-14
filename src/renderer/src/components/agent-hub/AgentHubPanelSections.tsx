@@ -1,6 +1,6 @@
 import type { Ref } from 'react'
 import { CheckCheck, ChevronLeft, ChevronRight, PictureInPicture2 } from 'lucide-react'
-import { formatShortTimeAgo } from '@/lib/short-time-ago'
+import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/activity-thread-types'

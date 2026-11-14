@@ -17,7 +17,7 @@ import {
   getWorktreeHostIdentity
 } from '../../../../shared/worktree/host-qualified-identity'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
-import { collectLeafIdsInOrder } from '@/components/terminal-pane/layout/terminal-layout-leaf-traversal'
+import { collectLayoutLeafIdsInOrder } from '../../../../shared/workspace-layout/terminal-topology/terminal-pane-tree'
 import { agentHubTabsByWorktree, isAgentHubChatTab } from './agent-hub-chat-tabs'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'
@@ -78,7 +78,7 @@ export function agentHubMirrorPaneExists(
     layout &&
     parsed?.tabId === tabId &&
     (layout.activeLeafId === parsed.leafId ||
-      collectLeafIdsInOrder(layout.root).includes(parsed.leafId) ||
+      collectLayoutLeafIdsInOrder(layout.root).includes(parsed.leafId) ||
       Object.hasOwn(layout.ptyIdsByLeafId ?? {}, parsed.leafId))
   )
 }
@@ -90,7 +90,7 @@ export function agentHubMirrorShellLeafId(
   if (!layout) {
     return null
   }
-  const leafIds = collectLeafIdsInOrder(layout.root)
+  const leafIds = collectLayoutLeafIdsInOrder(layout.root)
   if (leafIds.length === 0 || (layout.activeLeafId && leafIds.includes(layout.activeLeafId))) {
     return layout.activeLeafId
   }

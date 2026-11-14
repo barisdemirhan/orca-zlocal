@@ -1,8 +1,8 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type * as Rpc from '@/runtime/rpc/calls/runtime-rpc-call'
-import type * as Route from '@/lib/terminal-worktree-route'
-import { makeTab } from '@/store/terminals/terminal-tab.test-fixture'
+import type * as Route from '@/lib/workspace/ownership/terminal-worktree-route'
+import { makeTab } from '@/store/terminals/testing/terminal-tab.test-fixture'
 import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 import { changeAgentHubTerminalSuspension } from './agent-hub-terminal-suspension'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -12,7 +12,7 @@ vi.mock('@/runtime/rpc/calls/runtime-rpc-call', async (original) => ({
   ...(await original<typeof Rpc>()),
   callRuntimeRpc: call
 }))
-vi.mock('@/lib/terminal-worktree-route', async (original) => ({
+vi.mock('@/lib/workspace/ownership/terminal-worktree-route', async (original) => ({
   ...(await original<typeof Route>()),
   resolveTerminalPtyOwner: () => ({ kind: 'non-runtime' })
 }))
