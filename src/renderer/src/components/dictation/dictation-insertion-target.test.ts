@@ -11,7 +11,6 @@ import {
   setTerminalMirrorMountLeases
 } from '../terminal-pane/terminal-mount-retention-leases'
 import type { DictationState } from '../../../../shared/speech-types'
-import type { DictationInsertionTarget } from './dictation-insertion-target'
 
 import {
   TEXT_CONTROL_PASTE_DIRECT_MAX_BYTES,
@@ -95,23 +94,25 @@ describe('dictation insertion target', () => {
       kind: 'terminal' as const,
       tabId: tab.id,
       paneId: 7,
+      leafId: 'leaf-7',
       pane: document.createElement('div')
     }
-    const target: React.RefObject<DictationInsertionTarget | null> = { current: origin }
-    const { rerender, unmount } = renderHook(
-      ({ state }: { state: DictationState }) => useDictationTerminalMountLease(state, target),
-      { initialProps: { state: 'starting' } }
+    const { result, rerender, unmount } = renderHook(
+      ({ state }: { state: DictationState }) => useDictationTerminalMountLease(state),
+      { initialProps: { state: 'idle' } }
     )
     try {
+      result.current.current = origin
+      rerender({ state: 'starting' })
       expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(true)
       act(() => setTerminalMirrorMountLeases([]))
       rerender({ state: 'listening' })
       expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(true)
       rerender({ state: 'stopping' })
       expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(true)
-      target.current = null
       rerender({ state: 'idle' })
       expect(hasTerminalMountRetentionLease('wt-origin', tab.id)).toBe(false)
+      expect(result.current.current).toBeNull()
     } finally {
       unmount()
       useAppStore.setState(previous, true)

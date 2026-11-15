@@ -4,15 +4,19 @@ import type { DictationState } from '../../../../shared/speech-types'
 import type { DictationInsertionTarget } from './dictation-insertion-target'
 import { acquireTerminalInputMountLease } from '../terminal-pane/terminal-mount-retention-leases'
 
+/** Returns the ref the controller stores its captured target in; cleared when dictation ends. */
 export function useDictationTerminalMountLease(
-  state: DictationState,
-  target: React.RefObject<DictationInsertionTarget | null>
-): void {
+  state: DictationState
+): React.RefObject<DictationInsertionTarget | null> {
+  const target = useRef<DictationInsertionTarget | null>(null)
   const releaseRef = useRef<(() => void) | null>(null)
   useLayoutEffect(() => {
     if (state === 'idle' || state === 'error') {
       releaseRef.current?.()
       releaseRef.current = null
+      if (state === 'idle') {
+        target.current = null
+      }
       return
     }
     const origin = target.current
@@ -33,4 +37,5 @@ export function useDictationTerminalMountLease(
     }
   }, [state, target])
   useLayoutEffect(() => () => releaseRef.current?.(), [])
+  return target
 }

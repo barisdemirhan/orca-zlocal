@@ -1,8 +1,8 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState } from 'react'
 import { useAppStore } from '@/store'
 import { useAudioCapture } from '@/hooks/use-audio-capture'
 import { DictationIndicator } from './DictationIndicator'
-import { captureInsertionTarget, type DictationInsertionTarget } from './dictation-insertion-target'
+import { captureInsertionTarget } from './dictation-insertion-target'
 import { captureDictationContext } from './dictation-context'
 import { dictationPillAnchorFor, type DictationPillAnchor } from './dictation-pill-anchor'
 import {
@@ -30,6 +30,7 @@ import {
 import { useHoldDictationGesture } from './use-hold-dictation-gesture'
 import { publishDictationMeter } from './dictation-meter-store'
 import { useDictationTerminalMountLease } from './use-dictation-terminal-mount-lease'
+import { useDictationCancelCapability } from './use-dictation-cancel-capability'
 import { useDictationSilenceStop } from './use-dictation-silence-stop'
 import { stopAfterSilenceSeconds } from '../../../../shared/dictation-silence-stop'
 import { useDictationSpeechEvents } from './use-dictation-speech-events'
@@ -63,8 +64,8 @@ export function DictationController() {
   } = useAudioCapture(publishDictationMeter)
 
   const sessionRef = useRef<DictationSession>(initialDictationSession)
-  const insertionTargetRef = useRef<DictationInsertionTarget | null>(null)
-  useDictationTerminalMountLease(dictationState, insertionTargetRef)
+  const insertionTargetRef = useDictationTerminalMountLease(dictationState)
+  useDictationCancelCapability()
   // Inserts the current session's finals where dictation started.
   const deliverRef = useRef<((text: string) => void) | null>(null)
   const [stoppedSessions] = useState(createDictationStoppedSessions)
@@ -93,7 +94,6 @@ export function DictationController() {
       sessionRef.current = next
       if (next.sessionId === null) {
         deliverRef.current = null
-        insertionTargetRef.current = null
       }
       if (next.sessionId !== previous.sessionId) {
         setLiveText(NO_DICTATION_LIVE_TEXT)
@@ -333,6 +333,7 @@ export function DictationController() {
   }, [
     settings,
     dispatch,
+    insertionTargetRef,
     startCapture,
     flushBufferedAudio,
     discardBufferedAudio,
@@ -367,17 +368,6 @@ export function DictationController() {
       void startDictation()
     }
   }, [startDictation, stopDictation, hasPendingStart, invalidatePendingStart])
-
-  // Agent Hub asks whether this controller handles its cancel action before offering one.
-  useEffect(() => {
-    const answer = (event: Event): void => {
-      if (event instanceof CustomEvent) {
-        event.detail.cancel = true
-      }
-    }
-    document.addEventListener('dictation:capabilities', answer)
-    return () => document.removeEventListener('dictation:capabilities', answer)
-  }, [])
 
   useDictationControls(settings?.voice, dictationState, {
     start: () => void startDictation(),

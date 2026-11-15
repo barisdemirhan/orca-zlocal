@@ -61,7 +61,7 @@ vi.mock('@/hooks/use-audio-capture', () => ({
 }))
 vi.mock('./DictationIndicator', () => ({ DictationIndicator: () => null }))
 vi.mock('./use-dictation-terminal-mount-lease', () => ({
-  useDictationTerminalMountLease: () => {}
+  useDictationTerminalMountLease: () => ({ current: null })
 }))
 vi.mock(import('./dictation-insertion-target'), async (original) => ({
   ...(await original()),

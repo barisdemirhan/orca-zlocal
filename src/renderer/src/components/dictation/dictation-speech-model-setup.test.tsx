@@ -55,8 +55,8 @@ beforeEach(() => {
     configurable: true,
     value: {
       ui: {
-        onDictationKeyDown: (callback: () => void) => {
-          pressShortcut = callback
+        onDictationKeyDown: (callback: (data?: { improve: boolean }) => void) => {
+          pressShortcut = () => callback({ improve: false })
           return () => {}
         }
       },
