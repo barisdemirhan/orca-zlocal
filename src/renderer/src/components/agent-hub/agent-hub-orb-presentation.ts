@@ -1,5 +1,5 @@
 import { translate } from '@/i18n/i18n'
-import type { DictationState } from '../../../../shared/speech-types'
+import type { DictationState } from '../../../../shared/speech/speech-types'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 import type { AgentHubOrbPhase } from './agent-hub-orb-phase'
 import type { AgentHubOrbVoiceSnapshot } from './agent-hub-orb-voice-state'

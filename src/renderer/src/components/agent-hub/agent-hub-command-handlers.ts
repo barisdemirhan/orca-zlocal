@@ -1,5 +1,5 @@
 import { agentHubMirrorTabCommandAvailable } from './agent-hub-mirror-tab-command'
-import type { KeybindingActionId } from '../../../../shared/keybindings'
+import type { KeybindingActionId } from '../../../../shared/keybindings/types'
 import { getAgentHubCommands, type AgentHubCommands } from './agent-hub-commands'
 import {
   agentHubOrbConversationCommandAvailable,

@@ -2,16 +2,11 @@ import { useState } from 'react'
 import { useAppStore } from '@/store'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
-import {
-  findKeybindingConflictsForDefinitions,
-  formatKeybindingList,
-  getEffectiveKeybindingsForDefinition,
-  getKeybindingResetBindings,
-  normalizeKeybindingListForAction,
-  resolveKeybindingOverrides,
-  type KeybindingActionId,
-  type KeybindingOverrides
-} from '../../../../shared/keybindings'
+import { findKeybindingConflictsForDefinitions, formatKeybindingList } from '../../../../shared/keybindings/formatting'
+import { getEffectiveKeybindingsForDefinition } from '../../../../shared/keybindings/effective'
+import { getKeybindingResetBindings, resolveKeybindingOverrides } from '../../../../shared/keybindings/profile-defaults'
+import { normalizeKeybindingListForAction } from '../../../../shared/keybindings/normalization'
+import type { KeybindingActionId, KeybindingOverrides } from '../../../../shared/keybindings/types'
 import type { ShortcutDefinitionCatalog } from '../settings/shortcuts/shortcut-definition-catalog'
 import { keybindingValidationErrorText } from '../settings/shortcuts/keybinding-diagnostic-text'
 import {

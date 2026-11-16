@@ -5,11 +5,11 @@ import {
   AgentHubOrbSessionManager,
   createAgentHubOrbSessionManager
 } from './agent-hub-orb-session-manager'
-import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host-test-harness'
+import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host.test-fixture'
 import {
   HOST_TEST_NOW,
   HOST_TEST_THREAD
-} from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host-test-data'
+} from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host-test-data.test-fixture'
 import { setStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import { openTestAgentSessionRecordStore } from '../../runtime/agent-session/records/agent-session-record-store-test-harness'
 import { createGlobalSettingsFixture } from '../../../shared/global-settings-test-fixture'
@@ -25,9 +25,9 @@ import {
   structuredAgentSessionSendBody,
   structuredAgentSessionMessageSendMutation
 } from '../../../shared/agent-session/requests/structured-agent-session-send-mutation'
-import { createStructuredAgentSessionOperationId } from '../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
+import { createStructuredAgentSessionOperationId } from '../../../shared/agent-session/lifecycle/operations/structured-agent-session-mutation'
 import { randomUUID } from 'node:crypto'
-import { claudeProviderHandle } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
+import { claudeProviderHandle } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 import {
   committedMobileSessionTabClose,
   refusedMobileSessionTabClose

@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import { useAppStore } from '@/store'
-import type { DictationState } from '../../../../shared/speech-types'
+import type { DictationState } from '../../../../shared/speech/speech-types'
 import type { DictationInsertionTarget } from './dictation-insertion-target'
 import { acquireTerminalInputMountLease } from '../terminal-pane/terminal-mount-retention-leases'
 

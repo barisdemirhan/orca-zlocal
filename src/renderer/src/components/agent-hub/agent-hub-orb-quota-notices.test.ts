@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEmptyRateLimitState } from '../../../../shared/rate-limit-state-factory'
+import { createEmptyRateLimitState } from '../../../../shared/agent-usage/rate-limits/rate-limit-state-factory'
 import { makeTab } from '@/store/terminals/testing/terminal-tab.test-fixture'
 import { makeWorktree } from '@/store/slices/worktrees/worktree.test-fixture'
 import {

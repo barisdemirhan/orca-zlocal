@@ -5,7 +5,7 @@ import {
   type AgentHubOrbSession
 } from '../../../shared/agent-hub-orb'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
-import type { StructuredAgentId } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle'
+import type { StructuredAgentId } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle'
 import {
   createStructuredAgentSessionId,
   structuredAgentSessionCreateParams
@@ -13,11 +13,14 @@ import {
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/host/structured-agent-session-host-types'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
-import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
+import type {
+  PreparedStructuredAgentSessionCreate,
+  StructuredAgentSessionCommitRuntime,
+  StructuredAgentSessionPrepareRuntime
+} from '../../runtime/rpc/methods/structured-sessions/creation/structured-agent-session-create-types'
 import {
   commitStructuredAgentSessionCreate,
-  prepareStructuredAgentSessionCreateForWorktree,
-  type PreparedStructuredAgentSessionCreate
+  prepareStructuredAgentSessionCreateForWorktree
 } from '../../runtime/rpc/methods/structured-sessions/creation/structured-agent-session-create'
 import { sendAgentHubOrbOpeningPrompt } from './agent-hub-orb-opening-prompt-send'
 import { isAgentHubOrbDirectory } from './agent-hub-orb-directory'
@@ -53,13 +56,7 @@ async function resolveAgentHubOrbModel(input: {
 }
 
 export async function prepareAgentHubOrbSessionCreate(input: {
-  runtime: Pick<
-    OrcaRuntimeService,
-    | 'resolveStructuredAgentSessionCreateIntent'
-    | 'getAgentProviderSessionRows'
-    | 'resolveStructuredAgentSessionLocalWorkspacePath'
-    | 'getStructuredAgentCliSourceRoute'
-  >
+  runtime: StructuredAgentSessionPrepareRuntime
   host: StructuredAgentSessionHost
   caller: StructuredAgentSessionCaller
   agent: StructuredAgentId
@@ -78,8 +75,7 @@ export async function prepareAgentHubOrbSessionCreate(input: {
     ensureHost: async () => input.host,
     caller: input.caller,
     ...create,
-    origin: AGENT_HUB_ORB_ORIGIN,
-    hostLaunchDirectory: input.cwd,
+    orb: { origin: AGENT_HUB_ORB_ORIGIN, hostLaunchDirectory: input.cwd },
     options: { ...(input.model ? { model: input.model } : {}), ...input.permissionOptions }
   })
   const model = await resolveAgentHubOrbModel({
@@ -93,7 +89,7 @@ export async function prepareAgentHubOrbSessionCreate(input: {
 }
 
 export async function commitAgentHubOrbSessionCreate(input: {
-  runtime: Pick<OrcaRuntimeService, 'publishStructuredAgentSessionTab'>
+  runtime: StructuredAgentSessionCommitRuntime
   caller: StructuredAgentSessionCaller
   prepared: PreparedStructuredAgentSessionCreate
 }): Promise<AgentHubOrbSession> {

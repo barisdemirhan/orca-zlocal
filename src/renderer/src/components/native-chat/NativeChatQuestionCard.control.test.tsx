@@ -7,8 +7,8 @@ import {
   NativeChatQuestionCard,
   type NativeChatQuestionCardControl
 } from './prompts/NativeChatQuestionCard'
-import type { AskAnswerSelection } from '../../../../shared/native-chat/input/native-chat-ask-answer'
-import type { AskPrompt } from '../../../../shared/native-chat/input/native-chat-ask-types'
+import type { AskAnswerSelection } from '../../../../shared/native-chat/input/questions/native-chat-ask-answer'
+import type { AskPrompt } from '../../../../shared/native-chat/input/questions/native-chat-ask-types'
 
 // The Agent Hub answers with number keys through controlRef; these pin that a digit
 // behaves like the agent's own selector: pick-and-submit for single select, toggle otherwise.

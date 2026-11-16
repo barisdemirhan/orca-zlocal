@@ -1,7 +1,7 @@
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { KeybindingOverrides } from '../../../../shared/keybindings'
+import type { KeybindingOverrides } from '../../../../shared/keybindings/types'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubShortcutSetting } from './AgentHubShortcutSetting'

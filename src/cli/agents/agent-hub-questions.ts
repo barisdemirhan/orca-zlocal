@@ -2,15 +2,15 @@ import type { CommandHandler, HandlerContext } from '../dispatch/dispatch'
 import { getOptionalStringFlag, getRepeatedStringFlag } from '../arguments/flags'
 import { printResult } from '../output/command-result-output'
 import { RuntimeClient } from '../runtime/client'
-import { RuntimeClientError } from '../runtime/types'
+import { RuntimeClientError } from '../runtime/connection/types'
 import type {
   AgentHubAnswerResult,
   AgentHubQuestion,
   AgentHubQuestionsResult
 } from '../../shared/agent-hub-questions'
-import { hostScopeCensusIsComplete } from '../../shared/runtime-listing-host-scope'
-import type { RuntimeListingHostScope } from '../../shared/runtime-listing-host-scope'
-import type { RuntimeWorktreePsResult } from '../../shared/runtime-types'
+import { hostScopeCensusIsComplete } from '../../shared/execution-host/runtime-listing-host-scope'
+import type { RuntimeListingHostScope } from '../../shared/execution-host/runtime-listing-host-scope'
+import type { RuntimeWorktreePsResult } from '../../shared/worktree/catalog/runtime-worktree-contracts'
 import { AGENT_HUB_ANSWER_MAX_VERIFY_MS } from '../../shared/rpc-contract/agent-hub-params'
 
 const LIST_TIMEOUT_MS = 15_000

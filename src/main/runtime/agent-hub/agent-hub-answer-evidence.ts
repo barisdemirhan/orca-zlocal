@@ -1,4 +1,4 @@
-import { delayUnlessAborted } from '../../../shared/abort-aware-delay'
+import { delayUnlessAborted } from '../../../shared/concurrency/abort-aware-delay'
 import type { AgentHubAnswerEvidence } from '../../../shared/agent-hub-questions'
 import type { AgentStatusIpcPayload } from '../../../shared/agent-status/contracts/agent-status-ipc-payload'
 import { hookRowAgentPhase } from '../../../shared/agent-status/lifecycle/agent-transitions'

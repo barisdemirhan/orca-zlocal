@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import {
-  findKeybindingConflicts,
-  findKeybindingConflictsForDefinitions,
-  KEYBINDING_DEFINITIONS,
-  normalizeKeybindingListForAction,
-  getEffectiveKeybindingsForDefinition,
-  getKeybindingDefinition,
-  type KeybindingOverrides
-} from '../../../../shared/keybindings'
+import { findKeybindingConflicts, findKeybindingConflictsForDefinitions } from '../../../../shared/keybindings/formatting'
+import { KEYBINDING_DEFINITIONS, getKeybindingDefinition } from '../../../../shared/keybindings/definitions'
+import { normalizeKeybindingListForAction } from '../../../../shared/keybindings/normalization'
+import { getEffectiveKeybindingsForDefinition } from '../../../../shared/keybindings/effective'
+import type { KeybindingOverrides } from '../../../../shared/keybindings/types'
 import { agentHubSuggestedBindings } from './agent-hub-shortcut-suggestions'
 
 const PLATFORMS: readonly NodeJS.Platform[] = ['darwin', 'linux', 'win32']

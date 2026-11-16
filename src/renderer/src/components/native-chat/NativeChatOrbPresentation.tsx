@@ -6,7 +6,7 @@ import { ProviderFrameRow } from '@/components/native-chat/messages/diagnostics/
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { useNativeChatTranscriptProjection } from './conversation/projection/use-native-chat-transcript-projection'
 import type { useNativeChatTurnStatus } from './conversation/turns/use-native-chat-turn-status'
-import type { NativeChatTurnStatus } from '../../../../shared/native-chat/transcript/native-chat-turn-status'
+import type { NativeChatTurnStatus } from '../../../../shared/native-chat/transcript/turns/native-chat-turn-status'
 import {
   nativeChatHookErrorSummary,
   nativeChatOrbConversationMessages,

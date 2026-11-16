@@ -3,7 +3,7 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { useAgentHubShortcutInitialization } from './use-agent-hub-shortcut-initialization'
-import type { KeybindingOverrides, KeybindingFileSnapshot } from '../../../../shared/keybindings'
+import type { KeybindingOverrides, KeybindingFileSnapshot } from '../../../../shared/keybindings/types'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')

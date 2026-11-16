@@ -1,13 +1,13 @@
 import type { AgentJournalRenderItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
 import type { AgentSessionLatestTurn } from '../../../../shared/agent-session/agent-session-wire'
-import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
+import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 import {
   getWorktreeExecutionHostId,
   LOCAL_EXECUTION_HOST_ID
 } from '../../../../shared/execution-host'
 import { toolInputCommand } from '../../../../shared/native-chat/tools/native-chat-tool-summary'
 import { agentSessionCurrentContextRows } from '../../../../shared/agent-session/agent-session-context-clear'
-import { readAgentJournalTurnOutcome } from '../../../../shared/agent-session/lifecycle/agent-session-turn-record'
+import { readAgentJournalTurnOutcome } from '../../../../shared/agent-session/lifecycle/records/agent-session-turn-record'
 import {
   pendingStructuredSessionPrompts,
   type StructuredPromptItem

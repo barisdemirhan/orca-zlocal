@@ -3,7 +3,10 @@ import type { AgentChatPermissionChoice } from '../../../../shared/agent-launch/
 import type { AgentSessionJournalIdentity } from '../../../../shared/agent-session/journal/agent-session-journal-identity'
 import type { AgentSessionExecutionLocation } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { StructuredAgentSessionAdapter as Adapter } from './structured-agent-session-adapter'
-import type { StructuredAgentSessionVoiceAdapter } from '../structured-agent-session-voice-adapter'
+import {
+  routeStructuredAgentSessionVoice,
+  type StructuredAgentSessionVoiceAdapter
+} from '../structured-agent-session-voice-adapter'
 import type { StructuredAgentSessionAcquisitionReceipt } from '../startup/structured-agent-session-startup-attempt-contract'
 import type {
   StructuredAgentRegistration,
@@ -97,9 +100,6 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
     }
   }
 
-  captureConversationTitleOwner: NonNullable<Adapter['captureConversationTitleOwner']> = (record) =>
-    this.liveOwnerOrNull(record.sessionId)?.captureConversationTitleOwner?.(record) ?? null
-
   renameProviderSession: NonNullable<Adapter['renameProviderSession']> = (input) =>
     this.capabilityOwner(
       input.record.sessionId,
@@ -154,27 +154,10 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
   heldSends = (sessionId: string): ReadonlySet<string> | undefined =>
     this.liveOwnerOrNull(sessionId)?.heldSends?.(sessionId)
 
-  readonly voice: StructuredAgentSessionVoiceAdapter = {
-    start: (input) =>
-      this.owner(input.sessionId).voice?.start(input) ??
-      Promise.resolve({ ok: false, rejected: 'Live voice is unavailable for this provider.' }),
-    appendText: (input) =>
-      this.liveOwnerOrNull(input.sessionId)?.voice?.appendText(input) ?? Promise.resolve(false),
-    stop: (input) =>
-      this.liveOwnerOrNull(input.sessionId)?.voice?.stop(input) ??
-      Promise.resolve({
-        voiceSessionId: input.voiceSessionId,
-        generation: input.generation,
-        state: 'off'
-      }),
-    holds: (sessionId) => this.liveOwnerOrNull(sessionId)?.voice?.holds(sessionId) === true,
-    capability: (sessionId) =>
-      this.liveOwnerOrNull(sessionId)?.voice?.capability(sessionId) ??
-      Promise.resolve({
-        supported: null,
-        reason: 'Native voice support will be checked when this conversation connects.'
-      })
-  }
+  readonly voice: StructuredAgentSessionVoiceAdapter = routeStructuredAgentSessionVoice(
+    (id) => this.owner(id),
+    (id) => this.liveOwnerOrNull(id)
+  )
 
   holdsLiveProviderProcess = (sessionId: string, acquisitionGeneration: string): boolean =>
     this.liveOwnerOrNull(sessionId)?.holdsLiveProviderProcess?.(sessionId, acquisitionGeneration) ??
@@ -227,8 +210,10 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
 
   canSetOptionWhileIdle: Adapter['canSetOptionWhileIdle'] = (input) =>
     this.liveOwnerOrNull(input.sessionId)?.canSetOptionWhileIdle?.(input) === true
-  readAppliedInputOptions: Adapter['readAppliedInputOptions'] = (input) =>
-    this.liveOwnerOrNull(input.sessionId)?.readAppliedInputOptions?.(input) ?? null
+  captureMessageSteeringInputs: Adapter['captureMessageSteeringInputs'] = (input) =>
+    this.liveOwnerOrNull(input.sessionId)?.captureMessageSteeringInputs?.(input) ?? {
+      kind: 'codex-unavailable'
+    }
 
   projectOptions: Adapter['projectOptions'] = (sessionId, options) =>
     this.liveOwnerOrNull(sessionId)?.projectOptions?.(sessionId, options)

@@ -1,6 +1,6 @@
 import type { AppState } from '@/store/types'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
-import type { Repo } from '../../../../shared/repo-types'
+import type { Repo } from '../../../../shared/repository/repo-types'
 import { AGENT_STATUS_STALE_AFTER_MS } from '../../../../shared/agent-status/contracts/agent-status-freshness'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {

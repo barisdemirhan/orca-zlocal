@@ -1,5 +1,5 @@
 import { translate } from '@/i18n/i18n'
-import type { AskQuestion } from '../../../../shared/native-chat/input/native-chat-ask-types'
+import type { AskQuestion } from '../../../../shared/native-chat/input/questions/native-chat-ask-types'
 import { splitRecommendedOptionLabel } from '../native-chat/native-chat-option-label'
 
 export type AgentHubAnswerOption = {

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { FloatingTerminalPanelBounds } from './floating-terminal-panel-bounds'
+import type { FloatingTerminalPanelBounds } from './geometry/floating-terminal-panel-bounds'
 
 const PLACE_EVENT = 'orca:floating-workspace-place'
 

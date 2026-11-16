@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PortForwardEntry } from '../../../../shared/ssh-types'
+import type { PortForwardEntry } from '../../../../shared/remote-runtime/ssh/ssh-types'
 import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'
 import { toast } from 'sonner'
 

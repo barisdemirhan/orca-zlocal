@@ -1,4 +1,4 @@
-import { DESKTOP_AWAY_SECONDS } from '../../shared/desktop-away-threshold'
+import { DESKTOP_AWAY_SECONDS } from '../../shared/app-lifecycle/presence/desktop-away-threshold'
 import type { AgentHubPresence } from '../../shared/agent-hub-requests'
 
 type IdleMonitor = {

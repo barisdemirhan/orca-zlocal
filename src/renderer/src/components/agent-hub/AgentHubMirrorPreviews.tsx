@@ -3,7 +3,7 @@ import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
-import { AgentTerminalPreview } from '../dashboard-popout/AgentTerminalPreview'
+import { AgentTerminalPreview } from '../dashboard/terminal-preview/AgentTerminalPreview'
 import {
   shownAgentHubMirrorTarget,
   type AgentHubMirrorWindowState,

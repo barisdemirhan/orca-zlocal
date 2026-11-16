@@ -1,7 +1,7 @@
 import { useMemo, useState, type RefObject } from 'react'
 import { Popover, PopoverAnchor, PopoverArrow, PopoverContent } from '@/components/ui/popover'
 import { useAppStore } from '@/store'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 import { useAgentHubOrbPanel, closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { cancelDictation } from './agent-hub-dictation-cancel'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'

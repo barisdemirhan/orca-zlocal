@@ -17,7 +17,7 @@ import {
   type NativeChatInteractiveCardControl
 } from '../native-chat/prompts/NativeChatInteractiveCard'
 import { nativeChatApprovalAcceptKey } from '../../../../shared/native-chat/native-chat-agent-support'
-import { nativeChatCardDismissKey } from '../../../../shared/native-chat/input/native-chat-prompt-dismiss-key'
+import { nativeChatCardDismissKey } from '../../../../shared/native-chat/input/approvals/native-chat-prompt-dismiss-key'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubChip, HubCrumb, HubKeys } from './AgentHubInlineLabels'
 import {

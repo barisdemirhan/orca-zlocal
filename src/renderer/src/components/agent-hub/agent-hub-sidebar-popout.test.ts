@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { DashboardAgentRow } from '../dashboard/useDashboardData'
+import type { DashboardAgentRow } from '../dashboard/rows/dashboard-agent-row'
 import {
   makeRepo,
   makeWorktree,

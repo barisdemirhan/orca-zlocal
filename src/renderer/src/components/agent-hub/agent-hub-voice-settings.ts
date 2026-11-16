@@ -2,7 +2,7 @@ import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { getDefaultVoiceSettings } from '../../../../shared/constants'
-import type { VoiceSettings } from '../../../../shared/speech-types'
+import type { VoiceSettings } from '../../../../shared/speech/speech-types'
 import { handleVoiceDictationToggle } from '../settings/voice/voice-dictation-toggle'
 
 export function updateAgentHubVoiceSettings(updates: Partial<VoiceSettings>): void {

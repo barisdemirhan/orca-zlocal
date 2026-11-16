@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { ProcessTableRow } from '../../shared/process-table-snapshot'
+import type { ProcessTableRow } from '../../shared/process-observation/tables/process-table-snapshot'
 import { ClaudeAttachHookRouter } from './claude-attach-hook-routing'
 
 const WORKTREE = 'repo::/work/yulaf'

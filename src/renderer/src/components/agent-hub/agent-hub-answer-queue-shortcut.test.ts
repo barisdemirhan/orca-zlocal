@@ -1,8 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import {
-  getEffectiveKeybindingsForDefinition,
-  getKeybindingDefinition
-} from '../../../../shared/keybindings'
+import { getEffectiveKeybindingsForDefinition } from '../../../../shared/keybindings/effective'
+import { getKeybindingDefinition } from '../../../../shared/keybindings/definitions'
 import { registerAgentHubAnswerQueueCommand, registerAgentHubCommands } from './agent-hub-commands'
 import { agentHubCommandHandlers } from './agent-hub-command-handlers'
 import {

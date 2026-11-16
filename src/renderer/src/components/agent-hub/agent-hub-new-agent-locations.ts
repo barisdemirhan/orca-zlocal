@@ -6,7 +6,7 @@ import { orderEmptyQueryWorktrees } from '@/lib/workspace/search/palette/order-e
 import {
   getRepoDisplayLabelKey,
   getRepoDisplayLabelsByPath
-} from '../../../../shared/repo-display-labels'
+} from '../../../../shared/repository/appearance/repo-display-labels'
 import { getDeleteStateForWorktreeHost } from '../sidebar/workspace-actions/deletion/worktree-delete-state-host-match'
 import {
   folderWorkspaceRepoId,

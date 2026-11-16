@@ -3,8 +3,8 @@ import type * as NodeFs from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
-import { resolveCodexApprovalsReviewer } from './codex-subagent-reviewer'
-import type { JsonlCursor } from './codex-rollout-jsonl-cursor'
+import { resolveCodexApprovalsReviewer } from './agent-hook-listener/providers/codex/codex-subagent-reviewer'
+import type { JsonlCursor } from './agent-hook-listener/providers/codex/codex-rollout-jsonl-cursor'
 
 const readLengths = vi.hoisted(() => new Array<number>())
 vi.mock('node:fs', async (importOriginal) => {

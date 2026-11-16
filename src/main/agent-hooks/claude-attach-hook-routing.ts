@@ -1,9 +1,9 @@
 import { parsePaneKey } from '../../shared/workspace-layout/stable-pane-id'
 import { readAgentProcessIdentity } from '../../shared/agent-status/process/agent-process-presence'
 import type { AgentHookSource } from '../../shared/agent-hook-listener/transport/agent-hook-relay'
-import type { ProcessTableRow } from '../../shared/process-table-snapshot'
-import { getProcessTableSnapshot } from '../../shared/process-table-snapshot-reader'
-import { collectDescendantsFromIndex, getProcessTableIndex } from '../../shared/process-table-index'
+import type { ProcessTableRow } from '../../shared/process-observation/tables/process-table-snapshot'
+import { getProcessTableSnapshot } from '../../shared/process-observation/tables/process-table-snapshot-reader'
+import { collectDescendantsFromIndex, getProcessTableIndex } from '../../shared/process-observation/tables/process-table-index'
 import { listRegisteredPtys, type PtyRegistration } from '../memory/pty-registry'
 
 const CLAUDE_ATTACH_COMMAND = /(?:^|[\\/\s])claude(?:\.exe)?\s+attach(?:\s|$)/

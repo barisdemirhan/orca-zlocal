@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { bindTabStripContentResizeObservers } from './tab-strip-content-resize-observers'
 import {
+  EMPTY_TAB_STRIP_OVERFLOW_STATE,
   computeTabStripOverflowState,
   sameTabStripOverflowState,
+  scrollStripSidewaysOnWheel,
   type TabStripOverflowState
 } from './tab-strip-scroll-metrics'
 import { isTabStripPointerGestureActive } from './tab-strip-pointer-gesture'
@@ -29,9 +31,7 @@ const TAB_STRIP_MIN_SCROLL_STEP_PX = 120
 
 export function bindTabStripWheelScroll(el: HTMLElement, onScroll: () => void): () => void {
   const onWheel = (event: WheelEvent): void => {
-    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-      event.preventDefault()
-      el.scrollLeft += event.deltaY
+    if (scrollStripSidewaysOnWheel(el, event)) {
       onScroll()
     }
   }
@@ -57,12 +57,6 @@ export function scrollTabStripByStep(
 function isTabStripScrolledToEnd(el: HTMLElement): boolean {
   const max = Math.max(0, el.scrollWidth - el.clientWidth)
   return el.scrollLeft >= max - 2
-}
-
-const EMPTY_TAB_STRIP_OVERFLOW_STATE: TabStripOverflowState = {
-  hasOverflow: false,
-  canScrollStart: false,
-  canScrollEnd: false
 }
 
 export function useTabStripOverflowNavigation({

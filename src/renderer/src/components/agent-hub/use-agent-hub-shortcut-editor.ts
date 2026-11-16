@@ -4,12 +4,9 @@ import { useEditablePluginCommands } from '@/store/plugins/catalog/plugin-contri
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
 import { getShortcutPlatform } from '@/lib/keyboard/shortcut-platform'
-import {
-  getEffectiveKeybindingsForDefinition,
-  keybindingFromInputForAction,
-  type KeybindingActionId,
-  type KeybindingInput
-} from '../../../../shared/keybindings'
+import { getEffectiveKeybindingsForDefinition } from '../../../../shared/keybindings/effective'
+import { keybindingFromInputForAction } from '../../../../shared/keybindings/input'
+import type { KeybindingActionId, KeybindingInput } from '../../../../shared/keybindings/types'
 import { buildShortcutDefinitionCatalog } from '../settings/shortcuts/shortcut-definition-catalog'
 import { EMPTY_DISABLED_TUI_AGENTS } from '../settings/shortcuts/shortcut-groups'
 import { useMacCapturedDigitChords } from '../settings/shortcuts/use-mac-captured-digit-chords'

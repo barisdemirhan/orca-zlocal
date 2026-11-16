@@ -33,7 +33,7 @@ vi.mock('./runtime/launch', async (importOriginal) => ({
   serveOrcaApp: serveOrcaAppMock
 }))
 
-vi.mock('./runtime/metadata', async (importOriginal) => ({
+vi.mock('./runtime/profile/metadata', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   getDefaultUserDataPath: getDefaultUserDataPathMock
 }))
@@ -43,7 +43,7 @@ vi.mock('../shared/remote-runtime/host-store/runtime-environment-store', async (
   listEnvironments: listEnvironmentsMock
 }))
 
-vi.mock('./runtime/environments', () => ({
+vi.mock('./runtime/pairing/environments', () => ({
   addEnvironmentFromPairingCode: addEnvironmentFromPairingCodeMock,
   listEnvironments: listEnvironmentsMock,
   removeEnvironment: vi.fn(),
@@ -56,7 +56,7 @@ vi.mock('child_process', async () => {
 })
 
 import { main } from './index'
-import { RuntimeClientError } from './runtime/types'
+import { RuntimeClientError } from './runtime/connection/types'
 import { okFixture } from './runtime/fixtures/runtime-rpc-fixtures'
 import { useWorktreeAwarenessEnvironment } from './index-test-harness'
 

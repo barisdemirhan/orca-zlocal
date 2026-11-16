@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { RuntimeClient } from '../runtime/client'
-import { RuntimeClientError } from '../runtime/types'
+import { RuntimeClientError } from '../runtime/connection/types'
 import { normalizeCommandPositionals, parseArgs } from '../arguments/args'
 import { specPaths } from '../discovery/command-spec'
 import { AGENT_HUB_COMMAND_SPECS } from '../specs/agent-hub'

@@ -2,7 +2,7 @@ import type { ParsedAgentStatusPayload } from '../../../agent-status/contracts/a
 import {
   claudeTeammateIdMatchesName,
   upsertWorkingClaudeSubagent
-} from '../../../claude-subagent-roster'
+} from './lifecycle/claude-subagent-roster'
 import type { HookListenerState } from '../../listener-state'
 import { clearActiveToolFieldsUpdate, readFirstString } from '../../interactive-tool'
 import { resolveToolState } from '../../prompt-fields'

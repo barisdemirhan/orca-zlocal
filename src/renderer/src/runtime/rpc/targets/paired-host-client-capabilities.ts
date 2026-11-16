@@ -1,7 +1,7 @@
-import { ELECTRON_REMOTE_RUNTIME_CLIENT_CAPABILITIES } from '../../../../../shared/electron-remote-runtime-client-capabilities'
+import { ELECTRON_REMOTE_RUNTIME_CLIENT_CAPABILITIES } from '../../../../../shared/remote-runtime/protocol/electron-remote-runtime-client-capabilities'
 import { remoteRuntimeClientCapabilities } from '../../../../../shared/remote-runtime/remote-runtime-client-capabilities'
 import { isWebClientLocation } from '@/app-shell/platform/web-client-location'
-import { WEB_RUNTIME_CLIENT_CAPABILITIES } from '../../../../../shared/web-runtime-client-capabilities'
+import { WEB_RUNTIME_CLIENT_CAPABILITIES } from '../../../../../shared/remote-runtime/protocol/web-runtime-client-capabilities'
 import {
   AGENT_HUB_REQUESTS_CAPABILITY,
   AGENT_HUB_GATES_CAPABILITY

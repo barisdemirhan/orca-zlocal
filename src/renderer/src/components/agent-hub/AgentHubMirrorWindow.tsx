@@ -30,7 +30,7 @@ import type { AgentHubThreadAlert } from './agent-hub-alerts'
 import type { AgentHubMirrorFamily } from './agent-hub-mirror-family'
 import { useAgentHubFamilyBarShown } from './agent-hub-family-bar'
 import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 import { returnRetainedPaneDestinationHome } from '../tab-group/retained-pane-destinations'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
 

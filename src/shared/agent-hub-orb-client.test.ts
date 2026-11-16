@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { createAgentHubOrbApi, createDisabledAgentHubOrbApi } from './agent-hub-orb-client'
-import type { RuntimeRpcResponse } from './runtime-rpc-envelope'
+import type { RuntimeRpcResponse } from './remote-runtime/rpc/runtime-rpc-envelope'
 
 it('routes Orb reads and opens over the existing runtime transport and validates host responses', async () => {
   const call = vi.fn(async (): Promise<RuntimeRpcResponse<unknown>> => ({

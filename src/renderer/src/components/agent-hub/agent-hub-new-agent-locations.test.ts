@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { FolderWorkspace } from '../../../../shared/folder-workspaces/folder-workspace-types'
-import type { ProjectGroup } from '../../../../shared/project-group-types'
+import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
 import { makeRepo, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import { buildAgentHubNewAgentLocations } from './agent-hub-new-agent-locations'
 

@@ -16,7 +16,7 @@ import {
 } from '../../shared/rpc-contract/agent-hub-params'
 import { agentHubCallerFlags, parseAgentHubParams, printAgentHubCommand } from './agent-hub-command'
 import { agentHubAsk } from './agent-hub-ask'
-import { RuntimeClientError } from '../runtime/types'
+import { RuntimeClientError } from '../runtime/connection/types'
 
 function agentHubPeekLink({ flags, cwd }: HandlerContext): string {
   const link = getOptionalStringFlag(flags, 'link')

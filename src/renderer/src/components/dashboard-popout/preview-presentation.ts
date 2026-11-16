@@ -2,8 +2,8 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { Terminal } from '@xterm/xterm'
 import type { DashboardCardTerminalInput } from '../../../../shared/dashboard-snapshot'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
-import { buildPreviewAppearanceOptions } from './preview-terminal-options'
-import { syncPreviewTerminalLigatures } from './preview-terminal-ligatures'
+import { buildPreviewAppearanceOptions } from '../standalone-terminal/rendering/preview-terminal-options'
+import { syncPreviewTerminalLigatures } from '../standalone-terminal/rendering/preview-terminal-ligatures'
 
 type PreviewPresentation = { visible: boolean; focusOnActivate: boolean | undefined }
 

@@ -1,7 +1,7 @@
 import { createServer } from 'node:http'
 import path from 'node:path'
 import { runProcess } from '@orca/process-host'
-import type { RuntimeTerminalListResult } from '../../src/shared/runtime-terminal-contracts'
+import type { RuntimeTerminalListResult } from '../../src/shared/terminal/runtime/runtime-terminal-contracts'
 import { test, expect } from './helpers/orca-app'
 import { orcaCliResult } from './helpers/compiled-orca-cli'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'

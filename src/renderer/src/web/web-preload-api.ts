@@ -1,6 +1,6 @@
 import type { PreloadApi } from '../../../preload/api-types'
 import { createDisabledAgentHubOrbApi } from '../../../shared/agent-hub-orb-client'
-import type { StatsSummary } from '../../../shared/process-stats-types'
+import type { StatsSummary } from '../../../shared/diagnostics/process-stats-types'
 import { createWebE2EApi } from './preload-api/web-e2e-api'
 import {
   createClaudeAccountsApi,

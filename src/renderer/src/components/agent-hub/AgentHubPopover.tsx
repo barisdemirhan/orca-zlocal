@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store'
 import { PopoverArrow, PopoverContent } from '@/components/ui/popover'
 import { normalizeAgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
 import type { AgentHubPopoverOffsets } from './use-agent-hub-canvas-welcome'

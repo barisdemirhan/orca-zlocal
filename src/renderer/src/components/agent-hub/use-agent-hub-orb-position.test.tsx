@@ -3,7 +3,7 @@ import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
-import { getDefaultFloatingTerminalTriggerPosition } from '../floating-terminal/floating-terminal-trigger-position'
+import { getDefaultFloatingTerminalTriggerPosition } from '../floating-terminal/trigger/floating-terminal-trigger-position'
 import { useAgentHubOrbPosition } from './use-agent-hub-orb-position'
 
 vi.mock('@/store', async () => {

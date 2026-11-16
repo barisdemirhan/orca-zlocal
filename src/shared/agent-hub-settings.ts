@@ -1,5 +1,5 @@
 import type { PersistedUIState } from './persisted-ui-state-types'
-import type { StructuredAgentId } from './agent-session/lifecycle/agent-session-provider-handle'
+import type { StructuredAgentId } from './agent-session/lifecycle/provider-handles/agent-session-provider-handle'
 import type { AgentHubOrbTint, AgentHubOrbTone } from './agent-hub-orb-identity'
 
 /** Where the Agent Hub lives: a draggable dock on a window edge, or a status-bar item. */

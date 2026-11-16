@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { getAppEnvironment } from '../../../shared/app-environment'
+import { getAppEnvironment } from '../../../shared/app-lifecycle/app-environment'
 
 const ORB_DIRNAME = 'orb'
 

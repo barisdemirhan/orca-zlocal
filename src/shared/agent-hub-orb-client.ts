@@ -1,4 +1,4 @@
-import type { RuntimeRpcResponse } from './runtime-rpc-envelope'
+import type { RuntimeRpcResponse } from './remote-runtime/rpc/runtime-rpc-envelope'
 import type { AgentHubOrbApi } from './agent-hub-orb'
 import {
   AgentHubOrbConversationSchema,

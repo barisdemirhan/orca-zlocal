@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { AgentHubOrbSessionManager } from './agent-hub-orb-session-manager'
-import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host-test-harness'
+import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host.test-fixture'
 import { setStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { createGlobalSettingsFixture } from '../../../shared/global-settings-test-fixture'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
-import { claudeProviderHandle } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
+import { claudeProviderHandle } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 import {
   HOST_TEST_NOW,
   HOST_TEST_THREAD
-} from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host-test-data'
+} from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host-test-data.test-fixture'
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session/journal/agent-session-journal-types'
 import { createAgentModelCatalogService } from '../../native-chat/agent-model-catalog/agent-model-catalog-service'
 import { AgentModelCatalogStore } from '../../native-chat/agent-model-catalog/agent-model-catalog-store'

@@ -12,7 +12,7 @@ import {
 } from '../sidebar/workspace-chrome-metrics'
 import { AgentHubCanvasLayoutSwitch } from './AgentHubCanvasLayoutSwitch'
 import { AgentHubCanvasFocusShade } from './AgentHubMirrorFocusShade'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 
 /**
  * The page mirrors live on while the canvas setting is on: a dotted surface over the main

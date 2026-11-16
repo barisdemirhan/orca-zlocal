@@ -1,10 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
-import { getEffectiveKeybindingsForDefinition } from '../../../../../shared/keybindings/effective'
-import { getKeybindingDefinition } from '../../../../../shared/keybindings/definitions'
-import { keybindingFromInputForAction } from '../../../../../shared/keybindings/input'
-import { EMPTY_DISABLED_TUI_AGENTS } from './shortcut-groups'
 import { useAppStore } from '../../../store/index'
 import { KeybindingsFileActions } from './KeybindingsFileActions'
 import { SettingsSubsectionHeader } from '../form-controls/SettingsFormControls'
@@ -15,35 +11,15 @@ import { ShortcutTerminalPolicyControl } from './ShortcutTerminalPolicyControl'
 import { getTerminalShortcutPolicySearchEntry } from './shortcuts-search'
 import { matchesSettingsSearch } from '../search/settings-search'
 import { clearRecordingActionForShortcutMutation } from './shortcut-recording-state'
-import {
-  adjustRecordingIndexAfterRemove,
-  appendBinding,
-  removeBindingAt,
-  replaceBindingAt
-} from './shortcut-binding-list-mutations'
-import { useMountedRef } from '@/hooks/useMountedRef'
+import { adjustRecordingIndexAfterRemove, removeBindingAt } from './shortcut-binding-list-mutations'
 import { useTranslate } from '@/i18n/use-translate'
-import { useEditablePluginCommands } from '@/store/plugins/catalog/plugin-contribution-catalog'
-import { buildShortcutDefinitionCatalog } from './shortcut-definition-catalog'
 import { getClientCreationActionPolicy } from '@/lib/workspace/creation/surface-policy/client-creation-action-policy'
 import { buildShortcutRowVisibility } from './shortcut-row-visibility'
-import { useMacCapturedDigitChords } from './use-mac-captured-digit-chords'
-import { keybindingValidationErrorText } from './keybinding-diagnostic-text'
 import { KeybindingFileDiagnostics } from './KeybindingFileDiagnostics'
 import { SettingsGroup } from '../section-layout/SettingsGroup'
-import { useShortcutBindingSave } from '../../agent-hub/use-shortcut-binding-save'
-import type {
-  KeybindingActionId,
-  KeybindingDefinition,
-  KeybindingInput
-} from '../../../../../shared/keybindings/types'
-
-const isMac = navigator.userAgent.includes('Mac')
-const platform: NodeJS.Platform = isMac
-  ? 'darwin'
-  : navigator.userAgent.includes('Windows')
-    ? 'win32'
-    : 'linux'
+import { useKeybindingActionEditor } from './use-keybinding-action-editor'
+import { useShortcutRecorderFocus } from './use-shortcut-recorder-focus'
+import type { KeybindingActionId, KeybindingInput } from '../../../../../shared/keybindings/types'
 
 export function ShortcutsPane(): React.JSX.Element {
   const t = useTranslate()
@@ -53,13 +29,20 @@ export function ShortcutsPane(): React.JSX.Element {
     (state) => state.settings?.terminalShortcutPolicy ?? 'orca-first'
   )
   const updateSettings = useAppStore((state) => state.updateSettings)
-  const keybindings = useAppStore((state) => state.keybindings)
-  const keybindingSnapshot = useAppStore((state) => state.keybindingSnapshot)
-  const disabledTuiAgents = useAppStore(
-    (state) => state.settings?.disabledTuiAgents ?? EMPTY_DISABLED_TUI_AGENTS
-  )
   const disableKeybindingAction = useAppStore((state) => state.disableKeybindingAction)
-  const pluginCommands = useEditablePluginCommands()
+  const {
+    platform,
+    catalog,
+    keybindings,
+    keybindingSnapshot,
+    errors,
+    setErrors,
+    clearError,
+    mountedRef,
+    effectiveBindingsForAction,
+    saveBindings,
+    captureBinding: captureBindingAt
+  } = useKeybindingActionEditor()
   const [managedBrowserCreationEnabled, mobileEmulatorCreationEnabled] = useAppStore(
     useShallow((state) => {
       const policy = getClientCreationActionPolicy(state, state.activeWorktreeId)
@@ -74,7 +57,6 @@ export function ShortcutsPane(): React.JSX.Element {
   )
   const agentHubEnabled = useAppStore((state) => state.settings?.experimentalAgentHub === true)
   const agentHubCanvasEnabled = useAppStore((state) => state.settings?.agentHubCanvas !== false)
-  const mountedRef = useMountedRef()
   const [recordingActionId, setRecordingActionId] = useState<KeybindingActionId | null>(null)
   const [recordingBindingIndex, setRecordingBindingIndex] = useState<number | null>(null)
   const [disableMemory, setDisableMemory] = useState<Partial<Record<KeybindingActionId, string[]>>>(
@@ -82,51 +64,10 @@ export function ShortcutsPane(): React.JSX.Element {
   )
   const [shortcutQuery, setShortcutQuery] = useState('')
   const [shortcutFilter, setShortcutFilter] = useState<ShortcutFilter>('all')
-  const macCapturedDigitChords = useMacCapturedDigitChords({ enabled: isMac })
-  const missionControlConflictMessage = t(
-    'auto.components.settings.shortcutDefinitionCatalog.missionControlConflict',
-    'Blocked by Mission Control. Remap here or change it in System Settings.'
-  )
 
-  // Suspend global shortcuts so recorded chords reach the editor.
-  useEffect(() => {
-    window.api.ui.setShortcutRecorderFocused(recordingActionId !== null)
-    return () => window.api.ui.setShortcutRecorderFocused(false)
-  }, [recordingActionId])
+  useShortcutRecorderFocus(recordingActionId !== null)
 
-  const catalog = useMemo(
-    () =>
-      buildShortcutDefinitionCatalog(
-        {
-          disabledTuiAgents,
-          pluginCommands,
-          keybindings,
-          platform,
-          macCapturedDigitChords,
-          missionControlConflictMessage
-        },
-        t
-      ),
-    [
-      disabledTuiAgents,
-      keybindings,
-      macCapturedDigitChords,
-      missionControlConflictMessage,
-      pluginCommands,
-      t
-    ]
-  )
-  const { groups, definitionsByAction, conflictByAction } = catalog
-  const { errors, setErrors, saveBindings } = useShortcutBindingSave(platform, catalog)
-  const definitionForAction = (actionId: KeybindingActionId): KeybindingDefinition | null =>
-    definitionsByAction.get(actionId) ?? getKeybindingDefinition(actionId)
-  const effectiveBindingsForAction = (
-    actionId: KeybindingActionId,
-    overrides = keybindings
-  ): string[] => {
-    const definition = definitionForAction(actionId)
-    return definition ? getEffectiveKeybindingsForDefinition(definition, platform, overrides) : []
-  }
+  const { groups, conflictByAction } = catalog
   const { filterCounts, shortcutRows, visibleShortcutCount, visibleShortcutGroups } = useMemo(
     () =>
       buildShortcutRowVisibility(
@@ -156,6 +97,7 @@ export function ShortcutsPane(): React.JSX.Element {
       keybindings,
       managedBrowserCreationEnabled,
       mobileEmulatorCreationEnabled,
+      platform,
       searchQuery,
       shortcutFilter,
       shortcutQuery,
@@ -168,18 +110,7 @@ export function ShortcutsPane(): React.JSX.Element {
     actionId: KeybindingActionId,
     input: KeybindingInput
   ): Promise<void> => {
-    const captured = keybindingFromInputForAction(actionId, input, platform)
-    if (!captured.ok) {
-      setErrors((prev) => ({ ...prev, [actionId]: keybindingValidationErrorText(captured) }))
-      return
-    }
-
-    const current = effectiveBindingsForAction(actionId)
-    const next =
-      recordingBindingIndex === null || recordingBindingIndex >= current.length
-        ? appendBinding(current, captured.value)
-        : replaceBindingAt(current, recordingBindingIndex, captured.value)
-    if ((await saveBindings(actionId, next)) && mountedRef.current) {
+    if (await captureBindingAt(actionId, input, recordingBindingIndex)) {
       setRecordingActionId(null)
       setRecordingBindingIndex(null)
     }
@@ -207,10 +138,6 @@ export function ShortcutsPane(): React.JSX.Element {
         }))
       }
     }
-  }
-
-  const clearError = (actionId: KeybindingActionId): void => {
-    setErrors((prev) => ({ ...prev, [actionId]: undefined }))
   }
 
   const clearRecordingForAction = (actionId: KeybindingActionId): void => {
@@ -282,13 +209,14 @@ export function ShortcutsPane(): React.JSX.Element {
             onStartRecordingAt={(actionId, index) => {
               setRecordingActionId(actionId)
               setRecordingBindingIndex(index)
-              clearError(actionId)
+              // Click-away keeps a row's error; drop every stale one once any new recording starts.
+              setErrors({})
             }}
             onAppendBinding={(actionId) => {
               const current = effectiveBindingsForAction(actionId)
               setRecordingActionId(actionId)
               setRecordingBindingIndex(current.length)
-              clearError(actionId)
+              setErrors({})
             }}
             onCancelRecording={() => {
               setRecordingActionId(null)

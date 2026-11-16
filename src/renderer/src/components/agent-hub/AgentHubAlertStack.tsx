@@ -22,7 +22,7 @@ import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAnchorBinding } from './use-anchor-binding'
 import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 
 const ALERT_VISIBLE_MS = 7000
 const GAP = 10

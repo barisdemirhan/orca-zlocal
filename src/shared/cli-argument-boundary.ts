@@ -6,6 +6,7 @@ export const CLI_BOOLEAN_FLAGS = new Set([
   'multi',
   'sound',
   'accept-changed-state',
+  'activate',
   'agent-wait',
   'all',
   'all-hosts',

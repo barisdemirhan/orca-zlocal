@@ -20,7 +20,7 @@ import {
   AGENT_HUB_ORB_PI_PERMISSION_REASON
 } from '../../../shared/agent-hub-orb-settings'
 import type { AgentHubSettings } from '../../../shared/agent-hub-settings'
-import { isStructuredAgentId } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
+import { isStructuredAgentId } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
 import { getStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'

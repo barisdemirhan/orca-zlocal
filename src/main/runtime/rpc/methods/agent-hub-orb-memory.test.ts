@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { OrcaRuntimeService } from '../../orca-runtime'
-import type { RuntimeClientEvent } from '../../../../shared/runtime-client-events'
+import type { RuntimeClientEvent } from '../../../../shared/remote-runtime/session-graph/runtime-client-events'
 import { AgentHubLedger } from '../../agent-hub/agent-hub-ledger'
 import { AGENT_HUB_METHODS } from './agent-hub'
 import { AGENT_HUB_ORB_MEMORY_METHODS } from './agent-hub-orb-memory'

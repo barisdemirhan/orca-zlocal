@@ -1,5 +1,5 @@
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
-import type { DashboardAgentRow } from '../dashboard/useDashboardData'
+import type { DashboardAgentRow } from '../dashboard/rows/dashboard-agent-row'
 import { paneTargetFromTerminalRow, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import { agentHubRowOfTab } from './agent-hub-tab-row'
 import type { AgentHubGroupNode } from './agent-hub-terminal-tree'

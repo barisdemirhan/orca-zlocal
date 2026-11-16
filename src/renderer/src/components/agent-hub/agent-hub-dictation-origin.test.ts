@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DictationState } from '../../../../shared/speech-types'
+import type { DictationState } from '../../../../shared/speech/speech-types'
 
 const store = vi.hoisted(() => {
   type State = { dictationState: DictationState }

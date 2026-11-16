@@ -3,7 +3,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
-import type { RuntimeStatus } from '../../../../shared/runtime-types'
+import type { RuntimeStatus } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
 import type {
   AgentHubDelivery,
   AgentHubGate,

@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { pluginCommandKeybindingActionId } from '../../../../shared/plugins/contributions/plugin-command-actions'
-import { KEYBINDING_DEFINITIONS } from '../../../../shared/keybindings'
+import { KEYBINDING_DEFINITIONS } from '../../../../shared/keybindings/definitions'
 import { agentHubSuggestedBindings } from './agent-hub-shortcut-suggestions'
 import {
   availableAgentHubSuggestions,

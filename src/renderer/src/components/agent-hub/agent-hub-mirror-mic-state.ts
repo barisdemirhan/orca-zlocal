@@ -3,7 +3,7 @@ import type {
   DictationState,
   SpeechModelManifest,
   SpeechModelState
-} from '../../../../shared/speech-types'
+} from '../../../../shared/speech/speech-types'
 
 /** The terminal pane a dictation started in. */
 export type AgentHubDictationPane = { tabId: string; leafId: string | null }

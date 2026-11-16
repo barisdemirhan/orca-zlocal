@@ -1,7 +1,7 @@
 /** Agent Hub consumers must opt in through the trusted desktop renderer. */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { RuntimeCapability } from '../../shared/protocol-version'
+import type { RuntimeCapability } from '../../shared/remote-runtime/protocol/protocol-version'
 import {
   AGENT_HUB_REQUESTS_CAPABILITY,
   AGENT_HUB_GATES_CAPABILITY

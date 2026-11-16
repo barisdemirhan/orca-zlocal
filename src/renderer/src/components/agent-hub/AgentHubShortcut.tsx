@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store'
 import { formatShortcutKeyComboDetails } from '@/hooks/useShortcutLabel'
-import { isKeybindingActionId } from '../../../../shared/keybindings'
+import { isKeybindingActionId } from '../../../../shared/keybindings/definitions'
 import { ShortcutKeyCombo } from '../ShortcutKeyCombo'
 import { ContextMenuShortcut } from '../ui/context-menu'
 import { DropdownMenuShortcut } from '../ui/dropdown-menu'

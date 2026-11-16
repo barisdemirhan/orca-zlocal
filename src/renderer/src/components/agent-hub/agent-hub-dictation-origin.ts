@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
-import type { DictationState } from '../../../../shared/speech-types'
+import type { DictationState } from '../../../../shared/speech/speech-types'
 import {
   isDictationRunning,
   type AgentHubDictationPane,

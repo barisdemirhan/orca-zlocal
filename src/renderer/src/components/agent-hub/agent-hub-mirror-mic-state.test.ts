@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { SpeechModelManifest, SpeechModelState } from '../../../../shared/speech-types'
+import type { SpeechModelManifest, SpeechModelState } from '../../../../shared/speech/speech-types'
 import {
   agentHubMirrorDictationPane,
   agentHubMirrorMicState,

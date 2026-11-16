@@ -19,7 +19,7 @@ vi.mock('./use-agent-hub-live-pty', () => ({
   useAgentHubLivePty: (_workspace: string, tab: string) => tab
 }))
 vi.mock('./agent-hub-pane-target', () => ({ resolveAgentHubTerminalInput: () => null }))
-vi.mock('../dashboard-popout/AgentTerminalPreview', async () => {
+vi.mock('../dashboard/terminal-preview/AgentTerminalPreview', async () => {
   const { useEffect } = await import('react')
   return {
     AgentTerminalPreview: ({

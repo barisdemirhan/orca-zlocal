@@ -1,4 +1,8 @@
 import {
+  admitClosingStructuredAgentSession,
+  type StructuredAgentSessionCloseWork
+} from './structured-agent-session-close-work'
+import {
   createStructuredAgentSessionStopStartingChild,
   cutClosingStructuredAgentSession,
   type StructuredAgentSessionConversationLifetimeHost
@@ -17,10 +21,10 @@ import {
   beginFinalizedStructuredAgentSessionClose,
   holdClosedStructuredAgentSessionSends,
   closeStructuredAgentSessionConversationUnderSerialize,
-  stopStructuredAgentSessionAgentUnderSerialize
+  stopStructuredAgentSessionAgentUnderSerialize,
+  type StructuredAgentSessionCloseCause
 } from './structured-agent-session-host-lifetime'
 
-import type { StructuredAgentSessionCloseCause } from './structured-agent-session-host-lifetime'
 import type { StructuredAgentSessionStopEnding } from './structured-agent-session-host-stop-event'
 import type {
   StructuredAgentSessionHostSession,
@@ -82,8 +86,6 @@ export function createStructuredAgentSessionConversationLifetime(
     const record = deps().store.getConversation(sessionId)
     return record !== null && deps().hasOpenDispatch?.(record) === true
   }
-  const providerHoldsDispatch = (sessionId: string): boolean =>
-    deps().adapter.holdsDispatch?.(sessionId) === true
 
   const holdStopClose = async <T>(
     sessionId: string,
@@ -188,16 +190,13 @@ export function createStructuredAgentSessionConversationLifetime(
       replacedRuntime: (sessionId) => deps().store.replacedRuntime(sessionId)
     },
     hasOpenDispatch,
-    providerHoldsDispatch,
+    providerHoldsDispatch: (sessionId) => deps().adapter.holdsDispatch?.(sessionId) === true,
     providerHoldsVoice: (sessionId) => deps().adapter.voice?.holds(sessionId) === true,
     confirmIdle: (sessionId) => deps().adapter.confirmIdle?.(sessionId),
     // Host eviction is reportable interruption, not personal cancellation.
     stopAgent: (sessionId) => stopAgent(sessionId, { cause: 'evict', resting: true }),
     // Word handed-over and queued startup failures from the same hostStopped fact.
-    stopStartingAgent: (sessionId) =>
-      stopStructuredAgentSessionAgentUnderSerialize(host.context(), sessionId, {
-        cause: 'host-stop'
-      }),
+    stopStartingAgent: (sessionId) => stopAgent(sessionId, { cause: 'host-stop' }),
     startTimed: (sessionId, child) =>
       host.context().runtimeState.startupAttempts.onClock(sessionId, child),
     closeConversation: (sessionId) => closeConversation(sessionId, true),
@@ -255,7 +254,7 @@ export function createStructuredAgentSessionConversationLifetime(
               startKey: failed.generation,
               ...structuredAgentSessionStartFailure(cause, wording)
             },
-            oldestQueuedSubmission(session)?.clientMessageId ?? null
+            (await oldestQueuedSubmission(session))?.clientMessageId ?? null
           ).catch((writeError: unknown) =>
             deps().logger.warn('recording a failed provider open failed', {
               scope: 'provider-open-failure',
@@ -303,16 +302,18 @@ export function createStructuredAgentSessionConversationLifetime(
         return session
       })
     },
-    /** Close resources while retaining durable chat/history and personal unsent text for the next turn. */
-    /** `admit` decides in the session lane, after any send admitted first; false throws. A close
-     *  that may yet be refused cuts no handover or start before then. */
-    close: (sessionId: string, cause: StructuredAgentSessionCloseCause, admit?: () => boolean) => {
+    /** Retain history and unsent text; a refused close cuts no handover or start. */
+    close: (
+      sessionId: string,
+      cause: StructuredAgentSessionCloseCause,
+      admit?: (work: StructuredAgentSessionCloseWork) => boolean
+    ) => {
       if (!admit) {
         cutClosingStructuredAgentSession(host, sessionId)
       }
       return serialize(sessionId, async () => {
         if (admit) {
-          cutClosingStructuredAgentSession(host, sessionId, admit)
+          await admitClosingStructuredAgentSession(host, sessionId, admit)
         }
         readRefusals.forget(sessionId)
         if (deps().store.selectWritableRecord(sessionId).kind !== 'unreadable') {

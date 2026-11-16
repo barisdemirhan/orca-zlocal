@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 import { useAppStore } from '@/store'
 import { useEditablePluginCommands } from '@/store/plugins/catalog/plugin-contribution-catalog'
 import { getShortcutPlatform } from '@/lib/keyboard/shortcut-platform'
-import { KEYBINDING_DEFINITIONS } from '../../../../shared/keybindings'
+import { KEYBINDING_DEFINITIONS } from '../../../../shared/keybindings/definitions'
 import { buildPluginCommandKeybindingDefinitions } from '@/lib/plugins/commands/plugin-command-keybindings'
 import { initializeAgentHubShortcutsOnce } from './agent-hub-shortcut-initialization'
 

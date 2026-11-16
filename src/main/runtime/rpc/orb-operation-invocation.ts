@@ -3,12 +3,15 @@ import type { AgentHubOrbOperationTarget } from '../../../shared/agent-hub-orb-o
 import { resolveOrchestrationSessionCaller } from './orchestration/callers/orchestration-session-caller'
 import { readOrbOperations } from '../agent-hub/agent-hub-orb-operations'
 
-export async function invokeWithOrbProtection<T>(
+/** Runs `handler` with `context`, under Orb protection when the current Orb sends to a terminal or session. */
+export async function invokeWithOrbProtection<P, C extends RpcContext, T>(
   request: RpcRequest,
-  params: unknown,
-  context: RpcContext,
-  invoke: (signal: AbortSignal | undefined) => Promise<T> | T
+  params: P,
+  handler: (params: P, context: C) => Promise<T> | T,
+  context: C
 ): Promise<T> {
+  const invoke = (signal: AbortSignal | undefined): Promise<T> | T =>
+    handler(params, { ...context, signal })
   if (request.method !== 'terminal.send' && request.method !== 'agentSession.send') {
     return invoke(context.signal)
   }
@@ -75,7 +78,8 @@ export async function invokeWithOrbProtection<T>(
     { pairedDeviceId: context.pairedDeviceId },
     undefined
   )
-  const resolvedSessionId = resolved.caller?.kind === 'peer' ? undefined : resolved.caller?.sessionId
+  const resolvedSessionId =
+    resolved.caller?.kind === 'peer' ? undefined : resolved.caller?.sessionId
   if (resolvedSessionId !== sessionId || context.caller?.kind !== 'local-cli') {
     return invoke(context.signal)
   }

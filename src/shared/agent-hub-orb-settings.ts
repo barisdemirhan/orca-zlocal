@@ -10,7 +10,7 @@ import {
   normalizeAgentHubOrbTint,
   normalizeAgentHubOrbTone
 } from './agent-hub-orb-identity'
-import { isStructuredAgentId } from './agent-session/lifecycle/agent-session-provider-handle-encoding'
+import { isStructuredAgentId } from './agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 
 export const AGENT_HUB_ORB_PI_PERMISSION_REASON =
   'Pi requires Full access. Choose another agent to ask before running commands.'

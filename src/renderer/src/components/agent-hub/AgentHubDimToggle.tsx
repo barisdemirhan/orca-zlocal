@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
-import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/components/floating-terminal/floating-terminal'
+import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/components/floating-terminal/workspace/floating-workspace-open-intent'
 import { useAppStore } from '@/store'
 import {
   agentHubFloatingDimMode,

@@ -1,7 +1,7 @@
 import { ZodError } from 'zod'
 import type { HandlerContext } from '../dispatch/dispatch'
 import { getOptionalStringFlag } from '../arguments/flags'
-import { RuntimeClientError } from '../runtime/types'
+import { RuntimeClientError } from '../runtime/connection/types'
 import { printResult } from '../output/command-result-output'
 import { formatAgentHubResult } from './agent-hub-output'
 import { getCallerAgentSessionId, getCallerTerminalHandle } from '../caller-terminal-handle'

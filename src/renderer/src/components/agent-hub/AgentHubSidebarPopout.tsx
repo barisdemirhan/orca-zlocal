@@ -4,7 +4,7 @@ import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { Button } from '../ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
-import type { DashboardAgentRow } from '../dashboard/useDashboardData'
+import type { DashboardAgentRow } from '../dashboard/rows/dashboard-agent-row'
 import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
 import {
   agentHubSidebarPopoutTarget,

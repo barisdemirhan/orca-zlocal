@@ -17,7 +17,7 @@ import {
   ORCHESTRATION_CONTRACT_VERSION,
   ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY
 } from '../../../../shared/orchestration/orchestration-runtime-capabilities'
-import { RUNTIME_CAPABILITIES } from '../../../../shared/protocol-version'
+import { RUNTIME_CAPABILITIES } from '../../../../shared/remote-runtime/protocol/protocol-version'
 
 const harness = createOrchestrationRpcHarness()
 let state: ReturnType<typeof harness.setup>

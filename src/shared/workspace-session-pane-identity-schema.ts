@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { salvagedOptional, salvagingRecord } from './zod-salvage'
+import { salvagedOptional, salvagingRecord } from './validation/zod-salvage'
 
 export const workspaceSessionPaneIdentityFields = {
   terminalSpawnedByPaneKey: salvagedOptional(

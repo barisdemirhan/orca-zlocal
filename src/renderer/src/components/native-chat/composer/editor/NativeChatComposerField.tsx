@@ -5,8 +5,8 @@ import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react
 import { flushSync } from 'react-dom'
 import type { useImeEnterGestureOwnership } from '@/lib/text-input/ime/ime-composition-keyboard-event'
 import { cn } from '@/lib/class-names'
-import type { ComposerAutocomplete } from '../../../../../../shared/native-chat/input/native-chat-composer-autocomplete'
-import type { NativeChatPickerItem } from '../../../../../../shared/native-chat/input/native-chat-picker-items'
+import type { ComposerAutocomplete } from '../../../../../../shared/native-chat/input/composer/native-chat-composer-autocomplete'
+import type { NativeChatPickerItem } from '../../../../../../shared/native-chat/input/composer/native-chat-picker-items'
 import { NativeChatMentionMenu, NativeChatPickerMenu } from '../pickers/NativeChatAutocompleteMenus'
 import type { NativeChatMentionFiles } from '../pickers/use-native-chat-mention-files'
 import { NativeChatComposerActions } from '../controls/NativeChatComposerActions'
@@ -33,8 +33,8 @@ import {
 import { AgentHubOrbComposerDictationOverlay } from '../../../agent-hub/AgentHubOrbComposerDictationOverlay'
 import { useAgentHubOrbVoiceContext } from '../../../agent-hub/agent-hub-orb-voice-context'
 import { agentHubOrbVoiceNotice } from '../../../agent-hub/agent-hub-orb-voice-state'
-import type { NativeChatFollowUpBehavior } from '../../../../../../shared/native-chat/input/native-chat-follow-up-behavior'
-import type { NativeChatSteerChordPreview } from '../../../../../../shared/native-chat/input/use-native-chat-steer-chord-preview'
+import type { NativeChatFollowUpBehavior } from '../../../../../../shared/native-chat/input/composer/native-chat-follow-up-behavior'
+import type { NativeChatSteerChordPreview } from '../../../../../../shared/native-chat/input/composer/use-native-chat-steer-chord-preview'
 
 function noop(): void {}
 
@@ -400,7 +400,7 @@ export function NativeChatComposerField({
                 className={cn(
                   'w-full bg-transparent px-2 py-1 text-sm outline-none',
                   launch
-                    ? 'min-h-7 max-h-[calc(6lh+0.5rem)] text-foreground placeholder:text-muted-foreground [&_p.is-editor-empty:first-child]:before:!h-auto [&_p.is-editor-empty:first-child]:before:w-full [&_p.is-editor-empty:first-child]:before:mr-[-100%]'
+                    ? 'min-h-7 max-h-[calc(6lh+0.5rem)] text-foreground placeholder:text-muted-foreground [&_p.is-editor-empty:only-child]:before:!h-auto [&_p.is-editor-empty:only-child]:before:w-full [&_p.is-editor-empty:only-child]:before:mr-[-100%]'
                     : 'min-h-12 max-h-[calc(8lh+0.5rem)] text-chat-foreground-strong placeholder:text-chat-foreground-faint pointer-coarse:min-h-14',
                   'overflow-y-auto scrollbar-sleek',
                   // Why: the editor is a contenteditable, which `:disabled` never matches.

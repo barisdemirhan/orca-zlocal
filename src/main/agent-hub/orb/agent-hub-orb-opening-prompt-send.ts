@@ -3,7 +3,7 @@ import {
   structuredAgentSessionMessageSendMutation,
   structuredAgentSessionSendBody
 } from '../../../shared/agent-session/requests/structured-agent-session-send-mutation'
-import { createStructuredAgentSessionOperationId } from '../../../shared/agent-session/lifecycle/structured-agent-session-mutation'
+import { createStructuredAgentSessionOperationId } from '../../../shared/agent-session/lifecycle/operations/structured-agent-session-mutation'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/host/structured-agent-session-host-types'
 

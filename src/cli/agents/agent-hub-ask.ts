@@ -7,7 +7,7 @@ import {
 } from '../arguments/flags'
 import { printResult } from '../output/command-result-output'
 import { quoteCliCommandArgument } from '../arguments/shell-command-quote'
-import { RuntimeClientError } from '../runtime/types'
+import { RuntimeClientError } from '../runtime/connection/types'
 import { resolveOrchestrationCliExecutable } from '../orchestration/recovery/orchestration-recovery-command'
 import { AgentHubAskParams } from '../../shared/rpc-contract/agent-hub-params'
 import type { AgentHubAnswer } from '../../shared/agent-hub-requests'

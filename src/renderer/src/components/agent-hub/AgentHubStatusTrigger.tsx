@@ -1,4 +1,4 @@
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 import { DockCounters } from './AgentHubDockParts'
 import type { AgentHubCounts } from './agent-hub-lists'
 

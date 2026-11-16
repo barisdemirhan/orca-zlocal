@@ -14,7 +14,7 @@ import {
 import { SwitchIndicator } from '@/components/ui/switch'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import type { SpeechModelManifest } from '../../../../shared/speech-types'
+import type { SpeechModelManifest } from '../../../../shared/speech/speech-types'
 import { agentHubVoiceModelChoices } from './agent-hub-mirror-mic-state'
 import {
   openAgentHubVoiceSettings,

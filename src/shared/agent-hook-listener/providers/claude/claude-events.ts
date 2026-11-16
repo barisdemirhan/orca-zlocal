@@ -6,7 +6,7 @@ import {
   isAgentStatusHeldOpenByChildWork
 } from '../../../agent-status/lifecycle/agent-lead-status-fold'
 import { isAskUserQuestionTool } from '../../../agent-status/lifecycle/agent-question-answered-intent'
-import { readClaudeBackgroundAgentTasks } from '../../../claude-background-task-inventory'
+import { readClaudeBackgroundAgentTasks } from './background-tasks/claude-background-task-inventory'
 import {
   claudeRosterHasRestoredSnapshotSubagent,
   claudeRosterHasRuntimeWorkingSubagent,
@@ -14,7 +14,7 @@ import {
   isClaudeChildTurnEndEvent,
   reapUnconfirmedRestoredClaudeSubagents,
   upsertWorkingClaudeSubagent
-} from '../../../claude-subagent-roster'
+} from './lifecycle/claude-subagent-roster'
 import type { HookListenerState } from '../../listener-state'
 import type { ClaudeLeadTurnState } from '../../main-agent-turn-state'
 import { readFirstString } from '../../interactive-tool'

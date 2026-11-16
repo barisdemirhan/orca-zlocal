@@ -1,4 +1,4 @@
-import type { KeybindingActionId } from '../../../../shared/keybindings'
+import type { KeybindingActionId } from '../../../../shared/keybindings/types'
 import { getShortcutPlatform } from '@/lib/keyboard/shortcut-platform'
 
 export function agentHubSuggestedBindings(

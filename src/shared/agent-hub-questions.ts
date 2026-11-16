@@ -1,4 +1,4 @@
-import type { RuntimeListingHostScope } from './runtime-listing-host-scope'
+import type { RuntimeListingHostScope } from './execution-host/runtime-listing-host-scope'
 
 /** Where a waiting question lives: the agent's own terminal prompt, a hub ask, a gate, or a card only Orca's views settle. */
 export type AgentHubQuestionSource = 'agent-prompt' | 'hub-ask' | 'gate' | 'consent' | 'memory'

@@ -1,4 +1,4 @@
-import type { StructuredAgentId } from './agent-session/lifecycle/agent-session-provider-handle'
+import type { StructuredAgentId } from './agent-session/lifecycle/provider-handles/agent-session-provider-handle'
 
 export const AGENT_HUB_ORB_ORIGIN = 'agent-hub-orb' as const
 export const AGENT_HUB_ORB_OPENING_PROMPT =

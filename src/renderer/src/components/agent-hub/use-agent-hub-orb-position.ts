@@ -7,7 +7,7 @@ import {
 import { clampAgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { useViewportSize } from './use-viewport-size'
 import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
-import { getDefaultFloatingTerminalTriggerPosition } from '../floating-terminal/floating-terminal-trigger-position'
+import { getDefaultFloatingTerminalTriggerPosition } from '../floating-terminal/trigger/floating-terminal-trigger-position'
 
 const ORB_SIZE = { width: 48, height: 48 }
 type Position = { x: number; y: number }

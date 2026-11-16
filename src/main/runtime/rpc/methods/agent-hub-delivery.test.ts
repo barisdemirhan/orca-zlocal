@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { OrcaRuntimeService } from '../../orca-runtime'
-import type { RuntimeClientEvent } from '../../../../shared/runtime-client-events'
+import type { RuntimeClientEvent } from '../../../../shared/remote-runtime/session-graph/runtime-client-events'
 import type { RpcContext } from '../core'
 import { AGENT_HUB_REQUESTS_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import { RuntimeClientEventBus } from '../../client/events/runtime-client-event-bus'

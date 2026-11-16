@@ -1,7 +1,7 @@
 import {
   codexApprovalUsesTurnReviewer,
   codexTurnApprovalsAreAutoReviewed
-} from '../../../codex-subagent-reviewer'
+} from './codex-subagent-reviewer'
 import type { HookListenerState } from '../../listener-state'
 
 /**

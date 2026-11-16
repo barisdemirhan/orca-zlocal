@@ -12,7 +12,7 @@ import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
 import { AGENT_HUB_TRAY_VISIBLE, foldAgentHubTray } from './agent-hub-mirror-tray'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAnchorBinding } from './use-anchor-binding'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 
 export type AgentHubTrayItem = {
   key: string

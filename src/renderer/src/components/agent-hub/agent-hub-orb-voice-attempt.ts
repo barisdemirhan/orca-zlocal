@@ -3,7 +3,7 @@ import type {
   AgentSessionVoiceEvent
 } from '../../../../shared/agent-session-voice'
 import type { AgentSessionVoiceClient } from '@/runtime/agent-session-voice-client'
-import { createNonSecureContextUuid as createBrowserUuid } from '../../../../shared/non-secure-context-uuid'
+import { createNonSecureContextUuid as createBrowserUuid } from '../../../../shared/identifiers/non-secure-context-uuid'
 import type { AgentHubOrbVoiceMedia } from './agent-hub-orb-voice-media'
 import { AgentHubOrbVoicePlayback } from './agent-hub-orb-voice-playback'
 

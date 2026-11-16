@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import { buildSidebarHostOptions } from '../sidebar/worktree-list/controls/sidebar-host-options'
-import { getHostDisplayLabelOverrides } from '../../../../shared/host-setting-overrides'
+import { getHostDisplayLabelOverrides } from '../../../../shared/execution-host/host-setting-overrides'
 import {
   getSettingsFocusedExecutionHostId,
   getWorktreeExecutionHostId,

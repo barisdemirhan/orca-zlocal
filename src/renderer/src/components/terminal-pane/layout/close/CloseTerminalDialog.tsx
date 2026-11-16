@@ -18,7 +18,6 @@ export default function CloseTerminalDialog({
   open,
   copyKind = 'command',
   allowDontAskAgain = true,
-  tabLabel,
   subjectKey,
   onCancel,
   onConfirm
@@ -26,8 +25,6 @@ export default function CloseTerminalDialog({
   open: boolean
   copyKind?: CloseTerminalDialogCopyKind
   allowDontAskAgain?: boolean
-  /** Name off-focus tab-strip/middle-click targets; omit for focused-pane keyboard closes. */
-  tabLabel?: string
   /** Changing queued subject clears the previous tab’s opt-out without reopening the dialog. */
   subjectKey?: string
   onCancel: () => void
@@ -54,8 +51,6 @@ export default function CloseTerminalDialog({
     }
   }
 
-  const trimmedTabLabel = tabLabel?.trim()
-
   return (
     <Dialog
       open={open}
@@ -69,7 +64,6 @@ export default function CloseTerminalDialog({
         <CloseTerminalDialogBody
           copyKind={copyKind}
           allowDontAskAgain={allowDontAskAgain}
-          trimmedTabLabel={trimmedTabLabel}
           checkboxId={checkboxId}
           dontAskAgain={dontAskAgain}
           setDontAskAgain={setDontAskAgain}
@@ -85,7 +79,6 @@ export default function CloseTerminalDialog({
 function CloseTerminalDialogBody({
   copyKind,
   allowDontAskAgain,
-  trimmedTabLabel,
   checkboxId,
   dontAskAgain,
   setDontAskAgain,
@@ -94,7 +87,6 @@ function CloseTerminalDialogBody({
 }: {
   copyKind: CloseTerminalDialogCopyKind
   allowDontAskAgain: boolean
-  trimmedTabLabel: string | undefined
   checkboxId: string
   dontAskAgain: boolean
   setDontAskAgain: (value: boolean) => void
@@ -135,19 +127,6 @@ function CloseTerminalDialogBody({
                 )}
         </DialogDescription>
       </DialogHeader>
-      {copyKind === 'agent' ? (
-        <p className="text-xs text-muted-foreground">
-          {t(
-            'auto.components.terminal.pane.CloseTerminalDialog.automatic_resume_warning',
-            'This terminal will not resume automatically. Cancel and put the workspace to sleep to resume it later.'
-          )}
-        </p>
-      ) : null}
-      {trimmedTabLabel ? (
-        <p className="truncate text-xs font-medium text-foreground" title={trimmedTabLabel}>
-          {trimmedTabLabel}
-        </p>
-      ) : null}
       {allowDontAskAgain ? (
         <div className="flex items-center gap-2">
           <Checkbox

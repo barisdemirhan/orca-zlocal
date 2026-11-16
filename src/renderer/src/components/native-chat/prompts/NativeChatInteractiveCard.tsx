@@ -1,4 +1,4 @@
-import { nativeChatAskDismissKey } from '../../../../../shared/native-chat/input/native-chat-ask-dismiss-key'
+import { nativeChatAskDismissKey } from '../../../../../shared/native-chat/input/questions/native-chat-ask-dismiss-key'
 import {
   useCallback,
   useImperativeHandle,

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '@/store'
 import { watchProviderAccounts } from '@/runtime/provider-accounts/observations/runtime-provider-accounts-client'
-import type { RateLimitState } from '../../../../shared/rate-limit-types'
+import type { RateLimitState } from '../../../../shared/agent-usage/rate-limits/rate-limit-types'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import type { AgentHubLists } from './agent-hub-lists'
 import { useAgentHubRequests } from './agent-hub-requests-store'

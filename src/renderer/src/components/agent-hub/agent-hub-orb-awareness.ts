@@ -1,7 +1,7 @@
 import type { AppState } from '@/store/types'
 import type { AgentHubRequest } from '../../../../shared/agent-hub-requests'
 import type { AgentHubOrbAwareness } from '../../../../shared/agent-hub-orb-awareness'
-import type { RateLimitState } from '../../../../shared/rate-limit-types'
+import type { RateLimitState } from '../../../../shared/agent-usage/rate-limits/rate-limit-types'
 import {
   activityThreadStatusId,
   activityThreadRowCopy

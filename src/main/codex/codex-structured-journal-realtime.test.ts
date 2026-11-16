@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { AgentJournalRenderItemSchema } from '../../shared/agent-session/journal/agent-session-journal-schemas'
-import { codexProviderHandle } from '../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
+import { codexProviderHandle } from '../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 import { projectStructuredItemsToNativeChat } from '../../shared/agent-session/view/structured-agent-session-projection'
 import {
   closeTestJournalHostDatabase,
@@ -11,7 +11,7 @@ import {
   type TestJournalOptions
 } from '../native-chat/agent-session-journal/store-lifecycle/journal-host-database-test-support'
 import { createDeferredStructuredAgentSessionEventSink } from '../native-chat/agent-session-wire/journal-ingress/structured-agent-session-event-sink'
-import { testEventSinkLogging } from '../native-chat/agent-session-wire/host/testing/structured-agent-session-logger-test-support'
+import { testEventSinkLogging } from '../native-chat/agent-session-wire/host/testing/structured-agent-session-logger.test-fixture'
 import { createCodexJournalTranslator } from './structured/journal/codex-structured-journal-translation'
 import type { CodexTimelineEntry } from './codex-structured-realtime-timeline'
 

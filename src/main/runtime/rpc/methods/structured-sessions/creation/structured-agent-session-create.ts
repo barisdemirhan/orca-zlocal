@@ -1,6 +1,6 @@
 import type { StructuredSessionSurface } from '../../../../agent-session/structured-agent-session-close'
 import { structuredAgentSessionTabId } from '../../../../../../shared/agent-session/view/structured-agent-session-projection'
-import { seededPermissionMode } from '../../../../../../shared/native-chat/input/native-chat-session-option-defaults'
+import { seededPermissionMode } from '../../../../../../shared/native-chat/input/session-options/native-chat-session-option-defaults'
 // Resolve the host launch identity, then commit an at-rest create or the compatible acquired path.
 
 import { assertAgentPromptRequestActive } from '../../../../terminal/input/agent-prompt-signals'
@@ -10,16 +10,13 @@ import {
   agentSessionRefusalError,
   AgentSessionRefusalError
 } from '../../../../../../shared/agent-session/failures/agent-session-wire-refusals'
-import { computeAgentSessionPayloadFingerprint } from '../../../../../../shared/agent-session/lifecycle/agent-session-mutation-envelope'
+import { computeAgentSessionPayloadFingerprint } from '../../../../../../shared/agent-session/lifecycle/operations/agent-session-mutation-envelope'
 import type {
   AgentSessionAttachResult,
   AgentSessionMutationEnvelope,
   AgentSessionMutationResult
 } from '../../../../../../shared/agent-session/agent-session-wire'
-import {
-  attachFingerprintFields,
-  type AgentSessionAttachParams
-} from '../../../../../native-chat/agent-session-wire/acquisition/structured-agent-session-attach'
+import { attachFingerprintFields } from '../../../../../native-chat/agent-session-wire/acquisition/structured-agent-session-attach'
 import type { StructuredAgentSessionHost } from '../../../../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { StructuredAgentSessionCaller } from '../../../../../native-chat/agent-session-wire/host/structured-agent-session-host-types'
 import type {
@@ -28,28 +25,17 @@ import type {
 } from '../../../../../../shared/agent-session/structured-agent-session-create'
 import '../../../../../native-chat/agent-session-wire/options/structured-agent-session-options-read'
 import { structuredAgentSessionOptionOverridesRefusal } from '../../../../../native-chat/agent-session-wire/options/structured-agent-session-option-intent'
-import type { StructuredAgentSessionCreateOptions } from '../../../../../native-chat/agent-session-wire/acquisition/structured-agent-session-create'
 import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type * as CreateTypes from './structured-agent-session-create-types'
 import {
   captureStructuredAgentCliSource,
   type StructuredAgentCliSourceEvidence
 } from '../../../../../native-chat/conversation-adoption/structured-agent-cli-source'
-import type { StructuredAgentId } from '../../../../../../shared/agent-session/lifecycle/agent-session-provider-handle'
+import type { StructuredAgentId } from '../../../../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle'
 import { resolveUncommittedStructuredCreate } from './structured-agent-session-precommit-refusal'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../../shared/layout-owner-switch'
 import { structuredAgentSessionClosedBeforeCreate } from './structured-agent-session-close-before-create'
 import type { ChatTabPlacement } from '../../../../agent-session/agent-session-tab-layout'
-
-export type PreparedStructuredAgentSessionCreate = {
-  host: StructuredAgentSessionHost
-  attachParams: AgentSessionAttachParams
-  hostLaunchDirectory?: string
-  catalogModels?: StructuredAgentSessionCreateOptions['catalogModels']
-  /** Null when the caller supplied its own location; only a resolved worktree publishes a tab. */
-  tab: { workspaceId: string; agent: StructuredAgentId } | null
-  /** Absent for older clients and provider-dependent in-process callers. */
-  atRest?: { firstMessage?: StructuredAgentSessionFirstMessage }
-}
 
 /** New creates keep the immutable client intent in the ledger; legacy creates keep attach identity. */
 export function structuredAgentSessionCreateIntentFingerprint(params: {
@@ -81,13 +67,7 @@ export function structuredAgentSessionCreateIntentFingerprint(params: {
 
 /** Run throwing pre-commit work inside resolveUncommittedStructuredCreate so clients receive a no-effects refusal. */
 export async function prepareStructuredAgentSessionCreateForWorktree(args: {
-  runtime: Pick<
-    OrcaRuntimeService,
-    | 'resolveStructuredAgentSessionCreateIntent'
-    | 'getAgentProviderSessionRows'
-    | 'resolveStructuredAgentSessionLocalWorkspacePath'
-    | 'getStructuredAgentCliSourceRoute'
-  >
+  runtime: CreateTypes.StructuredAgentSessionPrepareRuntime
   /** Installs the host lazily; called at the same point the RPC handler always installed it. */
   ensureHost: () => Promise<StructuredAgentSessionHost>
   envelope: AgentSessionMutationEnvelope
@@ -100,13 +80,13 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
   /** Explicit picks override seed keys at rest; acquired in-process launches replace the seed. */
   optionsMode?: 'replace-model-selection'
   options?: Readonly<Record<string, string>>
-  origin?: 'agent-hub-orb'
-  hostLaunchDirectory?: string
+  /** An Orb session launches in the Orb's own folder and stays out of the user's chats. */
+  orb?: { origin: 'agent-hub-orb'; hostLaunchDirectory: string }
   /** Use the caller-reserved tab id at publication; absent, derive the legacy id. Keep it outside launch fingerprints. */
   tabId?: string
   firstMessage?: StructuredAgentSessionFirstMessage
   atRest?: boolean
-}): Promise<PreparedStructuredAgentSessionCreate> {
+}): Promise<CreateTypes.PreparedStructuredAgentSessionCreate> {
   const fork = args.forkFrom
   if (fork && (args.resumeFrom || args.options || args.optionsMode || args.atRest !== true)) {
     throw agentSessionRefusalError('agent_session_operation_invalid', {
@@ -130,14 +110,15 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
     agent: args.agent,
     callerKey: args.caller.callerKey,
     structuredAgentCliSourceEvidence,
-    ...(args.hostLaunchDirectory ? { hostLaunchDirectory: args.hostLaunchDirectory } : {}),
+    ...(args.orb ? { hostLaunchDirectory: args.orb.hostLaunchDirectory } : {}),
     ...(args.resumeFrom ? { resumeFrom: args.resumeFrom } : {}),
     ...(args.forkFrom ? { forkFrom: args.forkFrom } : {})
   })
+  const origin = args.orb?.origin
   const attachFingerprint = computeAgentSessionPayloadFingerprint({
     method: 'agentSession.attach',
     sessionId: args.envelope.sessionId,
-    fields: attachFingerprintFields({ ...resolved, origin: args.origin, envelope: args.envelope })
+    fields: attachFingerprintFields({ ...resolved, origin, envelope: args.envelope })
   })
   host ??= await args.ensureHost()
   const priorOperation =
@@ -180,7 +161,7 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
     attachParams: {
       ...resolvedAttach,
       ...(picked ? { options: picked } : {}),
-      ...(args.origin ? { origin: args.origin } : {}),
+      ...(origin ? { origin } : {}),
       ...(args.tabId ? { surfaceTabId: args.tabId } : {}),
       provider: resolved.provider,
       agent: resolved.agent,
@@ -193,9 +174,9 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
 
 /** The commit half. Past `attach`, a failure no longer proves the session does not exist. */
 export async function commitStructuredAgentSessionCreate(args: {
-  runtime: Pick<OrcaRuntimeService, 'publishStructuredAgentSessionTab'>
+  runtime: CreateTypes.StructuredAgentSessionCommitRuntime
   caller: StructuredAgentSessionCaller
-  prepared: PreparedStructuredAgentSessionCreate
+  prepared: CreateTypes.PreparedStructuredAgentSessionCreate
   activate: boolean
   capture?: (surface: StructuredSessionSurface) => void
   /** This machine's window made the create and opens the chat's tab where it reserved it. */

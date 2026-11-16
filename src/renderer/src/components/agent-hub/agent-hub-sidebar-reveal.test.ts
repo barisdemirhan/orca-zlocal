@@ -3,7 +3,7 @@ import type * as MirrorSource from './agent-hub-mirror-source'
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { SCROLL_TO_CURRENT_WORKSPACE_REVEAL_REQUEST_EVENT } from '@/lib/workspace/navigation/scroll-to-current-workspace-status'
-import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/components/floating-terminal/floating-terminal'
+import { TOGGLE_FLOATING_TERMINAL_EVENT } from '@/components/floating-terminal/workspace/floating-workspace-open-intent'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import {

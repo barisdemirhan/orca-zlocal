@@ -1,4 +1,4 @@
-import { createNonSecureContextUuid as createBrowserUuid } from '../../../shared/non-secure-context-uuid'
+import { createNonSecureContextUuid as createBrowserUuid } from '../../../shared/identifiers/non-secure-context-uuid'
 import {
   ORCHESTRATION_CONTRACT_VERSION,
   ORCHESTRATION_USER_GATE_RESOLVE_RUNTIME_CAPABILITY

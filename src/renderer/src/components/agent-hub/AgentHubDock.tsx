@@ -14,7 +14,7 @@ import {
   type AgentHubDockPosition,
   type AgentHubDockSize
 } from '../../../../shared/agent-hub-settings'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/status-bar-context-menu-policy'
+import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
 import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT

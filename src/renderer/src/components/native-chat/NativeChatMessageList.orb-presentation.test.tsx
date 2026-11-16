@@ -7,7 +7,7 @@ import type {
   NativeChatMessage,
   NativeChatTextBlock
 } from '../../../../shared/native-chat/native-chat-types'
-import type { NativeChatSettledTurns } from '../../../../shared/native-chat/transcript/native-chat-turn-status'
+import type { NativeChatSettledTurns } from '../../../../shared/native-chat/transcript/turns/native-chat-turn-status'
 import { NativeChatMessageList } from './NativeChatMessageList'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { installNativeChatMessageListTestViewport } from './viewport/virtualization/native-chat-message-list-test-viewport'

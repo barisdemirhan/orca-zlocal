@@ -3,8 +3,9 @@ import { selectableStructuredSubmission } from './structured-agent-session-input
 
 import { isQueuedAgentJournalSubmission } from '../../../../shared/agent-session/requests/agent-session-queued-submission'
 import { hostStructuredAgentSessionCurrentWork } from '../observations/structured-agent-session-host-current-work'
+import { readHostStructuredAgentSessionWork } from '../observations/structured-agent-session-read-work'
 import { holdClosedStructuredAgentSessionSends } from '../termination/structured-agent-session-host-lifetime'
-import type { AgentSessionJournal } from '../../agent-session-journal/journal-store'
+import type { SqlAgentSessionJournal as AgentSessionJournal } from '../../agent-session-journal/journal-sql-store'
 import {
   openStructuredAgentSessionConversation,
   resettleOpenStructuredAgentSessionConversation,
@@ -19,13 +20,9 @@ import type { StructuredAgentSessionDeliveryLoopDeps } from './structured-agent-
 import { structuredAgentSessionCommandRunning } from '../operations/structured-agent-session-command-turn'
 import type { StructuredAgentSessionStartClaim } from '../startup/structured-agent-session-agent-start'
 import type { StructuredAgentSessionStartReadiness } from '../startup/structured-agent-session-start-readiness'
-import type {
-  StructuredAgentSessionHostDeps,
-  StructuredAgentSessionHostSession,
-  StructuredAgentSessionProviderChildIdentity
-} from '../host/structured-agent-session-host-types'
+import type * as HostTypes from '../host/structured-agent-session-host-types'
 import { structuredAgentSessionConversationFence } from '../host/structured-agent-session-provider-child'
-import { structuredAgentSessionFailureWordsContext } from '../operations/structured-agent-session-send-preparation'
+import { readStructuredAgentSessionFailureWordsContext } from '../operations/structured-agent-session-send-preparation'
 import { settleInterruptedStructuredAgentSessionCommands } from '../rewind/structured-rewind-recovery'
 import {
   retireOutgrownStructuredAgentSessionChild,
@@ -36,7 +33,6 @@ import {
   structuredAgentSessionInputCompilerPermission,
   structuredAgentSessionImmediatePermission
 } from '../options/structured-agent-session-launch-permission'
-import { acceptedNoLaterThan } from '../startup/structured-agent-session-start-failure-row'
 import type { StructuredAgentSessionAcquireAborts } from '../startup/structured-agent-session-acquire-aborts'
 import { settleStructuredAgentSessionLeftovers } from '../termination/structured-agent-session-leftover-settlement'
 import { createStructuredAgentSessionRanRecorder } from '../options/structured-agent-session-ran-options'
@@ -46,7 +42,7 @@ export type StructuredAgentSessionConversationDelivery = {
   open: (
     sessionId: string,
     options?: StructuredAgentSessionConversationOpenOptions
-  ) => Promise<StructuredAgentSessionHostSession | null>
+  ) => Promise<HostTypes.StructuredAgentSessionHostSession | null>
   /** Queue commit wakes under serialization so they cannot race a loop’s stopping decision. */
   afterCommit: (sessionId: string, journal: AgentSessionJournal) => void
   /** Settle edges affect status/steer holds without rows or renewed idle activity. */
@@ -59,17 +55,20 @@ export type StructuredAgentSessionConversationDelivery = {
 }
 
 export function createStructuredAgentSessionConversationDelivery(input: {
-  deps: StructuredAgentSessionHostDeps
+  deps: HostTypes.StructuredAgentSessionHostDeps
   acquireAborts: Pick<StructuredAgentSessionAcquireAborts, 'begin'>
-  sessions: Map<string, StructuredAgentSessionHostSession>
+  sessions: Map<string, HostTypes.StructuredAgentSessionHostSession>
   serialize: <T>(sessionId: string, task: () => Promise<T>) => Promise<T>
   trackStart: <T>(start: Promise<T>) => Promise<T>
-  startProviderChild: (sessionId: string, startedFor: string) => StructuredAgentSessionStartClaim
+  startProviderChild: (
+    sessionId: string,
+    startedFor: string
+  ) => Promise<StructuredAgentSessionStartClaim>
   deliveryOrder: StructuredAgentSessionDeliveryOrder
   startFlights?: StructuredAgentSessionDeliveryLoopDeps['startFlights']
   readiness: (
     sessionId: string,
-    child: StructuredAgentSessionProviderChildIdentity
+    child: HostTypes.StructuredAgentSessionProviderChildIdentity
   ) => StructuredAgentSessionStartReadiness | null
   /** Stops a child the chat outgrew, so the start after it reads a new login, account or permission
    *  mode. */
@@ -87,11 +86,10 @@ export function createStructuredAgentSessionConversationDelivery(input: {
   >
 }): StructuredAgentSessionConversationDelivery {
   const { deps, sessions } = input
-  const captureTitleSourceUnavailable = (sessionId: string, journal: AgentSessionJournal) =>
-    deps.conversationNaming?.captureTitleSourceUnavailable?.(sessionId, journal)
+  const workHost = { store: deps.store, sessions }
   const retainedWork = (sessionId: string, continuingId?: string) => ({
     currentWork: () =>
-      hostStructuredAgentSessionCurrentWork({ store: deps.store, sessions }, sessionId),
+      readHostStructuredAgentSessionWork(workHost, sessionId, { kind: 'child-work' }),
     childWork: () => input.clientDelivery.readChildWork(sessionId),
     childWorkOpen: () => input.clientDelivery.childWorkOpen(sessionId),
     hasOpenDispatch: () => {
@@ -104,7 +102,7 @@ export function createStructuredAgentSessionConversationDelivery(input: {
     providerHoldsVoice: () => deps.adapter.voice?.holds(sessionId) === true
   })
   const loop = new StructuredAgentSessionDeliveryLoop({
-    captureTitleSourceUnavailable,
+    activityChanged: (id) => sessions.get(id)?.workChanged?.(),
     sessions,
     adapter: deps.adapter,
     agents: deps.agents,
@@ -114,7 +112,7 @@ export function createStructuredAgentSessionConversationDelivery(input: {
     stopPermissionTransitionChild: input.stopPermissionTransitionChild,
     retireOutgrownChild: async (sessionId, continuingId, next) => {
       // Defer retirement while personal Stop holds handover; its next step decides.
-      const session = input.clientDelivery.readStopping(sessionId)
+      const session = (await input.clientDelivery.readStopping(sessionId))
         ? undefined
         : sessions.get(sessionId)
       await retireOutgrownStructuredAgentSessionChild(sessionId, session, {
@@ -154,12 +152,9 @@ export function createStructuredAgentSessionConversationDelivery(input: {
       const record = deps.store.getRecord(sessionId)
       return record ? structuredAgentSessionImmediatePermission(deps, record) : null
     },
-    retainedWork: (sessionId, id) => {
+    retainedWork: async (sessionId, id) => {
       const session = sessions.get(sessionId)
-      return (
-        !!session &&
-        structuredAgentSessionChildOwesWork(session.journal, retainedWork(sessionId, id))
-      )
+      return !!session && (await structuredAgentSessionChildOwesWork(retainedWork(sessionId, id)))
     },
     readiness: input.readiness,
     startFlights: input.startFlights,
@@ -173,11 +168,11 @@ export function createStructuredAgentSessionConversationDelivery(input: {
         ? true
         : holdClosedStructuredAgentSessionSends(deps, sessionId, session.journal, {
             mark: 'settled',
-            which: acceptedNoLaterThan(session.journal, ended.endedAt)
+            select: { acceptedThrough: ended.endedAt }
           })
     },
-    failureTextContext: (sessionId) =>
-      structuredAgentSessionFailureWordsContext(
+    failureTextContext: async (sessionId) =>
+      readStructuredAgentSessionFailureWordsContext(
         deps.store.getConversation(sessionId),
         sessions.get(sessionId)?.journal
       ),
@@ -191,7 +186,7 @@ export function createStructuredAgentSessionConversationDelivery(input: {
           deps,
           sessionId,
           session.journal,
-          { mark: 'settled', unrun: (s) => s.clientMessageId === id && s.fence === fence },
+          { mark: 'settled', unrun: { only: { clientMessageId: id, fence } } },
           cause
         ))
       ) {
@@ -213,8 +208,9 @@ export function createStructuredAgentSessionConversationDelivery(input: {
         }
       }
     },
-    currentWork: (sessionId) =>
-      hostStructuredAgentSessionCurrentWork({ store: deps.store, sessions }, sessionId),
+    currentWork: (sessionId) => hostStructuredAgentSessionCurrentWork(workHost, sessionId),
+    readWork: (sessionId) => (operation) =>
+      readHostStructuredAgentSessionWork(workHost, sessionId, operation),
     readChildWork: input.clientDelivery.readChildWork,
     workChanged: (sessionId) => input.clientDelivery.publishGenerationEnded(sessionId),
     childWorkOpen: input.clientDelivery.childWorkOpen,
@@ -236,37 +232,38 @@ export function createStructuredAgentSessionConversationDelivery(input: {
     input.clientDelivery.publishRestored(sessionId)
     await settleInterruptedStructuredAgentSessionCommands(deps, sessionId, session)
     input.clientDelivery.publishRestored(sessionId)
-    if (session.journal.inputOrder.recoverableSubmissions().some(isQueuedAgentJournalSubmission)) {
+    if (
+      (await session.journal.reads.input({ kind: 'recoverable-submissions' })).submissions.some(
+        isQueuedAgentJournalSubmission
+      )
+    ) {
       loop.wake(sessionId)
     }
   }
   const wakesQueued = new Set<string>()
   const afterCommit = (sessionId: string, journal: AgentSessionJournal): void => {
-    input.deliveryOrder.reconcile(sessionId, journal)
     if (wakesQueued.has(sessionId)) {
-      return
-    }
-    const sourceUnavailable = captureTitleSourceUnavailable(sessionId, journal)
-    const work = hostStructuredAgentSessionCurrentWork({ store: deps.store, sessions }, sessionId)
-    if (
-      !work ||
-      structuredAgentSessionCommandRunning(work) ||
-      !selectableStructuredSubmission(journal, work)
-    ) {
-      if (!loop.isRunning(sessionId)) {
-        sourceUnavailable?.()
-      }
       return
     }
     wakesQueued.add(sessionId)
     void input
       .serialize(sessionId, async () => {
         wakesQueued.delete(sessionId)
-        loop.wake(sessionId)
+        await input.deliveryOrder.reconcile(sessionId, journal)
+        const work = await hostStructuredAgentSessionCurrentWork(
+          { store: deps.store, sessions },
+          sessionId
+        )
+        if (
+          work &&
+          !structuredAgentSessionCommandRunning(work) &&
+          (await selectableStructuredSubmission(journal, work))
+        ) {
+          void loop.wake(sessionId)
+        }
       })
       .catch((error: unknown) => {
         wakesQueued.delete(sessionId)
-        sourceUnavailable?.()
         deps.logger.warn('waking the delivery loop after a commit failed', {
           scope: 'delivery-wake',
           sessionId,

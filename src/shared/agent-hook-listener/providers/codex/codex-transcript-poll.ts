@@ -1,19 +1,19 @@
-import { record } from '../../../codex-rollout-jsonl-cursor'
+import { record } from './codex-rollout-jsonl-cursor'
 import {
   hasPendingCodexSubagentIdentity,
   retryPendingCodexSubagentIdentities,
   upsertCodexSubagent
-} from '../../../codex-subagent-roster'
+} from './codex-subagent-roster'
 import {
   codexTranscriptTurnEnd,
   reconcileCodexSubagentTranscript,
   type CodexSubagentTranscriptState
-} from '../../../codex-subagent-transcript'
+} from './codex-subagent-transcript'
 import { normalizeHookPayload } from '../../normalization/normalize-hook-payload'
 import {
   codexTurnApprovalsAreAutoReviewed,
   reconcileCodexSubagentReviewer
-} from '../../../codex-subagent-reviewer'
+} from './codex-subagent-reviewer'
 import type { AgentHookEventPayload } from '../../listener-event'
 import type { HookListenerState } from '../../listener-state'
 import { resolveToolState } from '../../prompt-fields'

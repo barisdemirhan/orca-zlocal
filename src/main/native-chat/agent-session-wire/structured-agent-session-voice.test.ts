@@ -7,10 +7,10 @@ import {
   agentSessionVoiceStartFields,
   agentSessionVoiceStopFields
 } from '../../../shared/agent-session-voice'
-import { computeAgentSessionPayloadFingerprint } from '../../../shared/agent-session/lifecycle/agent-session-mutation-envelope'
-import { codexProviderHandle } from '../../../shared/agent-session/lifecycle/agent-session-provider-handle-encoding'
+import { computeAgentSessionPayloadFingerprint } from '../../../shared/agent-session/lifecycle/operations/agent-session-mutation-envelope'
+import { codexProviderHandle } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session/journal/agent-session-journal-types'
-import { claudeAndCodexAgents } from './providers/testing/structured-agent-session-adapter-router-test-support'
+import { claudeAndCodexAgents } from './providers/testing/structured-agent-session-adapter-router.test-fixture'
 import type { StructuredAgentSessionAdapter } from './providers/structured-agent-session-adapter'
 import type { StructuredAgentSessionVoiceAdapter } from './structured-agent-session-voice-adapter'
 import {
@@ -18,13 +18,13 @@ import {
   HOST_TEST_THREAD as THREAD,
   hostTestAttachParams,
   hostTestOperationId
-} from './host/testing/structured-agent-session-host-test-data'
+} from './host/testing/structured-agent-session-host-test-data.test-fixture'
 import {
   createRestTestRig,
   REST_TEST_CALLER as CALLER,
   sweepOnce,
   type RestTestRig
-} from './host/testing/structured-agent-session-rest-test-rig'
+} from './host/testing/structured-agent-session-rest-test-rig.test-fixture'
 import { STRUCTURED_AGENT_SESSION_IDLE_MS as IDLE_MS } from './termination/structured-agent-session-idle-sweep'
 
 const OWNER = { voiceSessionId: 'voice-attempt-1', generation: 1 }

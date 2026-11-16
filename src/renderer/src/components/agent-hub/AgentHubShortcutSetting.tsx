@@ -1,5 +1,6 @@
 import { translate } from '@/i18n/i18n'
-import { KEYBINDING_DEFINITIONS, formatKeybindingList } from '../../../../shared/keybindings'
+import { KEYBINDING_DEFINITIONS } from '../../../../shared/keybindings/definitions'
+import { formatKeybindingList } from '../../../../shared/keybindings/formatting'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { ShortcutRecorderButton } from '../settings/shortcuts/ShortcutRecorderButton'
