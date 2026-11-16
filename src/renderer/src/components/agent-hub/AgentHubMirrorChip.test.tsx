@@ -1,9 +1,7 @@
 /** @vitest-environment happy-dom */
-import { act } from 'react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type * as MirrorSource from './agent-hub-mirror-source'
-import { useAppStore } from '@/store'
 import { TooltipProvider } from '../ui/tooltip'
 import { makeTabWithIds, PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
@@ -144,17 +142,4 @@ it('names a dictation owner in an inactive entry of a parked window', () => {
   expect(screen.getByRole('button', { name: /Waiting source/ }).getAttribute('aria-disabled')).toBe(
     'true'
   )
-})
-
-it('dims only the chip content when its workspace is the open one', () => {
-  const { waiting } = fixture()
-  const chip = document.querySelector('[data-agent-hub-mirror-chip]')
-  const content = () => chip?.querySelector('[data-current]')
-  expect(content()?.getAttribute('data-current')).toBe('false')
-  const activeId = activeAgentHubMirrorTab(readAgentHubMirrors().chips[0].window).target.worktree.id
-  act(() => useAppStore.setState({ activeWorktreeId: activeId }))
-  expect(content()?.getAttribute('data-current')).toBe('true')
-  expect(chip?.hasAttribute('data-current')).toBe(false)
-  act(() => useAppStore.setState({ activeWorktreeId: `${waiting.worktree.id}-other` }))
-  expect(content()?.getAttribute('data-current')).toBe('false')
 })

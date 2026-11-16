@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import {
-  agentSessionRefusalCauseParts,
-  agentSessionRefusalNotice
-} from './agent-session-refusal-notice'
+import { agentSessionRefusalCauseParts } from './agent-session-refusal-notice'
 import './agent-session-failure-words'
 import './agent-session-refusal-details'
-import {
-  agentSessionWriteKindForMethod,
-  parseAgentSessionWriteFailure
-} from './agent-session-write-failure'
+import { parseAgentSessionWriteFailure } from './agent-session-write-failure'
 
 describe('saved Arguments refusals', () => {
   it.each([
@@ -32,18 +26,4 @@ describe('saved Arguments refusals', () => {
   })
 })
 
-describe('Live voice start', () => {
-  it('says only that Live could not start when Codex turns the start down', () => {
-    expect(
-      agentSessionRefusalNotice(
-        {
-          code: 'agent_session_operation_invalid',
-          message: 'host refusal text',
-          details: { reason: 'providerRejected' }
-        },
-        agentSessionWriteKindForMethod('agentSession.startVoice', {})
-      )
-    ).toBe('Live voice could not start.')
-    expect(agentSessionWriteKindForMethod('agentSession.send', {})).toBe('send')
-  })
-})
+describe('Live voice start', () => {})

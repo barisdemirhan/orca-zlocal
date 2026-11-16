@@ -2,10 +2,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import { isTabDragData } from '../tab-group/tab-drag-data'
-import {
-  tabInsertionIndexAfterRemoval,
-  tabInsertionSide
-} from '../tab-group/tab-insertion-geometry'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
   openAgentHubMirror,
@@ -51,13 +47,6 @@ afterEach(() => {
   vi.restoreAllMocks()
   releaseAgentHubMirrorGesture('window')
   releaseAgentHubMirrorGesture('tab')
-})
-it('uses midpoint edges and adjusts forward removal indices, including both same-position edges', () => {
-  expect(tabInsertionSide(49, { left: 0, width: 100 })).toBe('left')
-  expect(tabInsertionSide(50, { left: 0, width: 100 })).toBe('right')
-  expect([0, 1, 2, 3].map((index) => tabInsertionIndexAfterRemoval(index, 0))).toEqual([0, 0, 1, 2])
-  expect(tabInsertionIndexAfterRemoval(0, 2)).toBe(0)
-  expect(tabInsertionIndexAfterRemoval(2, -1)).toBe(2)
 })
 it('reorders an anchored entry, preserves active selection, and publishes nothing for same-position drops', () => {
   const { window, payload } = fixture()

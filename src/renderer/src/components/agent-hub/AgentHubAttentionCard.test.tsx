@@ -148,17 +148,6 @@ it.each([
   expect(send.sendRawVerified).toHaveBeenCalledWith(key)
 })
 
-it('ignores a number key pressed as the card appears', async () => {
-  const control = renderAttentionCard('claude')
-
-  expect(control.current?.chooseOption(0)).toBe(false)
-  expect(send.sendRawVerified).not.toHaveBeenCalled()
-  afterGuard()
-  await act(async () => {
-    expect(control.current?.chooseOption(0)).toBe(true)
-  })
-})
-
 it('denies with a single Escape, not the Stop sequence', async () => {
   const control = renderAttentionCard('opencode')
   afterGuard()

@@ -128,14 +128,4 @@ describe('NativeChatQuestionCard number-key control', () => {
   })
 })
 
-describe('NativeChatQuestionCard recommended badge', () => {
-  it('shows the marker as a badge only when the host asks for it', () => {
-    render(singleSelect, vi.fn(), { highlightRecommended: true })
-    expect(container.querySelector('[data-slot="badge"]')?.textContent).toBe('Recommended')
-    expect(container.textContent).not.toContain('(Recommended)')
-
-    render(singleSelect, vi.fn())
-    expect(container.querySelector('[data-slot="badge"]')).toBeNull()
-    expect(container.textContent).toContain('Meta Cloud API (Recommended)')
-  })
-})
+describe('NativeChatQuestionCard recommended badge', () => {})

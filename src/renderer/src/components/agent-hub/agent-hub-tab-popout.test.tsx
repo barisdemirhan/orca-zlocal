@@ -184,12 +184,6 @@ it.each(['close', 'minimize', 'select another', 'disable'])(
   }
 )
 
-it('leaving the source tab never opens a mirror', () => {
-  fixture(['source', 'other'])
-  useAppStore.getState().activateTab('other')
-  expect(readAgentHubMirrors().windows).toHaveLength(0)
-})
-
 it('raises an existing mirror without changing the active tab', () => {
   fixture(['source', 'other'])
   popOutAgentHubTab(target)

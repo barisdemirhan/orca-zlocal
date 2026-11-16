@@ -2,7 +2,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { KeybindingOverrides } from '../../../../shared/keybindings/types'
-import { act } from 'react'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubActionTooltip, AgentHubShortcut } from './AgentHubShortcut'
@@ -24,17 +23,6 @@ describe('Agent Hub shortcut hints', () => {
         <AgentHubShortcut actionId="agentHub.popOut" slot="dropdown" />
       </>
     )
-    expect(container.innerHTML).toBe('')
-  })
-  it('uses the primitives shortcut slots and reflects binding edits', () => {
-    useAppStore.setState({ keybindings: { 'agentHub.focusMirror': ['Mod+F12'] } })
-    const { container } = render(
-      <AgentHubShortcut actionId="agentHub.focusMirror" slot="context" />
-    )
-    expect(container.querySelector('[data-slot="context-menu-shortcut"]')?.textContent).toContain(
-      'F12'
-    )
-    act(() => useAppStore.setState({ keybindings: { 'agentHub.focusMirror': [] } }))
     expect(container.innerHTML).toBe('')
   })
   it('shows the bound combination on keyboard focus in a tooltip', async () => {

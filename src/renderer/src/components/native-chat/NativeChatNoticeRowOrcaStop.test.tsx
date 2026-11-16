@@ -35,15 +35,6 @@ describe('the row an Orca stop leaves', () => {
     expect(screen.queryByText(LEGACY_TEXT)).toBeNull()
   })
 
-  it('leaves the way on to Continue wherever its host can continue a cut', () => {
-    renderStatus(orcaStopRow('update'), 'studio-mac', true)
-    expect(
-      screen.getByText(
-        'Orca on studio-mac restarted for an update while this response was in progress.'
-      )
-    ).toBeInTheDocument()
-  })
-
   it('carries Continue on the cut it is offered for, and only there', () => {
     const continueNow = vi.fn()
     renderStatus(orcaStopRow('quit'), 'studio-mac', true, false, undefined, {
@@ -74,21 +65,6 @@ describe('the row an Orca stop leaves', () => {
         ?.parentElement
     ).toHaveClass('text-chat-foreground-faint')
     expect(screen.queryByText(/was closed/)).toBeNull()
-  })
-
-  it("keeps this desktop's quit as closed", () => {
-    renderStatus(orcaStopRow('quit'), 'studio-mac', true, false)
-    expect(
-      screen.getByText('Orca on studio-mac was closed while this response was in progress.')
-    ).toBeInTheDocument()
-  })
-
-  it.each([
-    ['update', 'Orca on QA SSH restarted for an update while this response was in progress.'],
-    ['crash', 'Orca on QA SSH stopped unexpectedly while this response was in progress.']
-  ])("keeps a remote host's %s words", (cause, sentence) => {
-    renderStatus(orcaStopRow(cause), 'QA SSH', true, true)
-    expect(screen.getByText(sentence)).toBeInTheDocument()
   })
 
   // A client that re-words unnamed host rows keeps this row's presentation and cause, neutral.

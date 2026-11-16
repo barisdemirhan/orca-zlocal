@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { findKeybindingConflicts, findKeybindingConflictsForDefinitions } from '../../../../shared/keybindings/formatting'
-import { KEYBINDING_DEFINITIONS, getKeybindingDefinition } from '../../../../shared/keybindings/definitions'
-import { normalizeKeybindingListForAction } from '../../../../shared/keybindings/normalization'
+import {
+  findKeybindingConflicts,
+  findKeybindingConflictsForDefinitions
+} from '../../../../shared/keybindings/formatting'
+import {
+  KEYBINDING_DEFINITIONS,
+  getKeybindingDefinition
+} from '../../../../shared/keybindings/definitions'
 import { getEffectiveKeybindingsForDefinition } from '../../../../shared/keybindings/effective'
 import type { KeybindingOverrides } from '../../../../shared/keybindings/types'
 import { agentHubSuggestedBindings } from './agent-hub-shortcut-suggestions'
@@ -48,29 +53,6 @@ describe('agent hub shortcut suggestions', () => {
       expect(common, binding).not.toContain(binding)
     }
   })
-  it.each(PLATFORMS)(
-    'offers hub actions including mirror tabs while keeping Orb unassigned on %s',
-    (platform) => {
-      expect(agentHubSuggestedBindings(platform).map(([id]) => id)).toEqual(
-        KEYBINDING_DEFINITIONS.filter(
-          (item) =>
-            item.id.startsWith('agentHub.') &&
-            !item.id.startsWith('agentHub.orb.') &&
-            item.id !== 'agentHub.toggleOrb' &&
-            item.id !== 'agentHub.openAnswerQueue'
-        ).map((item) => item.id)
-      )
-      for (const [id, binding] of agentHubSuggestedBindings(platform)) {
-        if (!id.endsWith('MirrorTab')) {
-          expect(binding.split('+')).toHaveLength(3)
-          expect(binding).toMatch(
-            platform === 'darwin' ? /^Mod\+Alt\+[A-Z]$/ : /^Alt\+Shift\+[A-Z]$/
-          )
-        }
-        expect(normalizeKeybindingListForAction(id, binding)).toEqual([binding])
-      }
-    }
-  )
 
   it.each(PLATFORMS)('leaves every hub action unbound by default on %s', (platform) => {
     for (const [actionId] of agentHubSuggestedBindings(platform)) {

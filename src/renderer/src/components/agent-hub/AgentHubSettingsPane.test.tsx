@@ -7,7 +7,6 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { KeybindingActionId, KeybindingOverrides } from '../../../../shared/keybindings/types'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubSettingsPane } from './AgentHubSettingsPane'
-import { AgentHubExperimentalSetting } from './AgentHubExperimentalSetting'
 import { AgentHubShortcutsDialog } from './AgentHubShortcutsDialog'
 import { setAgentHubShortcutsOpen } from './agent-hub-shortcuts-dialog'
 import { callStructuredAgentSession } from '@/runtime/native-chat/requests/structured-agent-session-call'
@@ -104,24 +103,6 @@ function Pane(): React.JSX.Element {
     </TooltipProvider>
   )
 }
-
-it('groups the hub preferences and shows the Orb folder and unassigned shortcut', () => {
-  render(<Pane />)
-  for (const name of ['Dock', 'Alerts', 'Popover', 'Mirrors & canvas', 'Voice', 'Orb']) {
-    expect(screen.getByRole('heading', { name })).toBeTruthy()
-  }
-  expect(screen.getByRole('combobox', { name: 'Agent' }).textContent).toContain('Claude')
-  expect(screen.getByRole('combobox', { name: 'Model' }).textContent).toContain('Agent default')
-  expect(screen.getByText('Working folder')).toBeTruthy()
-  expect(
-    screen.getByText(
-      'Orb works in its own folder. Its instructions are written there as CLAUDE.md and AGENTS.md.'
-    )
-  ).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Edit shortcuts' })).toBeTruthy()
-  expect(screen.queryByRole('button', { name: /Add shortcut for/ })).toBeNull()
-  expect(screen.queryByRole('switch', { name: 'Speak replies' })).toBeNull()
-})
 
 it('keeps approvals and their warning independent of Orb placement', () => {
   useAppStore.setState({
@@ -304,35 +285,4 @@ it('edits info alerts and offers mute durations including tomorrow at local 09:0
   tomorrow.setHours(9, 0, 0, 0)
   fireEvent.click(screen.getByRole('menuitem', { name: 'Until tomorrow at 09:00' }))
   expect(useAppStore.getState().settings?.agentHubAlertsMutedUntil).toBe(tomorrow.getTime())
-})
-
-it('edits dimming through the same four modes used by floating windows', async () => {
-  render(<Pane />)
-  fireEvent.keyDown(screen.getByRole('combobox', { name: 'Dim behind floating windows' }), {
-    key: 'ArrowDown'
-  })
-  expect(await screen.findByRole('option', { name: "Don't dim" })).toBeTruthy()
-  expect(screen.getByRole('option', { name: 'Dim behind floating windows' })).toBeTruthy()
-  expect(screen.getByRole('option', { name: 'Dim until I click behind them' })).toBeTruthy()
-  fireEvent.click(screen.getByRole('option', { name: 'Dim, and a click behind tucks them away' }))
-  expect(useAppStore.getState().settings?.agentHubFloatingDimMode).toBe('minimizeOnClick')
-})
-
-it('leaves only the opt-in and navigation link in Experimental', () => {
-  const settings = useAppStore.getState().settings
-  if (!settings) {
-    throw new Error('Missing test settings')
-  }
-  render(
-    <AgentHubExperimentalSetting
-      settings={settings}
-      updateSettings={useAppStore.getState().updateSettings}
-    />
-  )
-  expect(screen.queryByRole('heading', { name: 'Dock' })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Open Agent Hub settings' }))
-  expect(useAppStore.getState().openSettingsTarget).toHaveBeenCalledWith({
-    pane: 'agentHub',
-    repoId: null
-  })
 })

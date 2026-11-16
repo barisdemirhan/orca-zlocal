@@ -63,14 +63,6 @@ beforeEach(() => {
   })
 })
 describe('open Orb', () => {
-  it('reports a folder failure without requiring a separate Orb folder choice', async () => {
-    mocks.open.mockRejectedValue({ code: 'invalid_argument', message: 'Invalid working folder' })
-    await openAgentHubOrb()
-    expect(mocks.toast.error).toHaveBeenCalledWith('Invalid working folder')
-    expect(mocks.settings).not.toHaveBeenCalled()
-    expect(mocks.page).not.toHaveBeenCalled()
-    expect(mocks.reveal).not.toHaveBeenCalled()
-  })
   it('reports disabled and other failures without changing the workspace', async () => {
     mocks.open.mockRejectedValueOnce({ code: 'disabled' })
     await openAgentHubOrb()

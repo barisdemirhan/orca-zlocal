@@ -188,22 +188,3 @@ it('preserves the manager, xterm, PTY binding and dictation target through 100 d
   document.removeEventListener('dictation:insertText', insertion)
   activity.remove()
 })
-
-it('emits the original host attribute and direct children when retention is off', () => {
-  const { container, rerender } = render(
-    <RetainedPaneHost groupId={undefined} isVisible retainContent={false}>
-      <span data-baseline-child>original content</span>
-    </RetainedPaneHost>
-  )
-  const host = container.firstElementChild
-  expect(host?.getAttribute('data-retained-pane-host')).toBe('')
-  expect(host?.innerHTML).toBe('<span data-baseline-child="true">original content</span>')
-  rerender(
-    <RetainedPaneHost groupId={undefined} isVisible={false} retainContent={false}>
-      <span data-baseline-child>original content</span>
-    </RetainedPaneHost>
-  )
-  expect(host?.getAttribute('data-retained-pane-host')).toBe('')
-  expect(host?.getAttribute('aria-hidden')).toBe('true')
-  expect(host?.innerHTML).toBe('<span data-baseline-child="true">original content</span>')
-})

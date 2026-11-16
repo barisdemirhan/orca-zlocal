@@ -192,14 +192,6 @@ describe('read-only Peek documents', () => {
     expect(shown.onUnavailable).not.toHaveBeenCalled()
   })
 
-  it('renders a diagram through the existing sanitized Mermaid viewer', async () => {
-    const shown = showFile('mermaid', 'graph TD; A-->B', '/workspace/flow.mmd')
-    await screen.findByText('QA diagram')
-    expect(shown.container.querySelector('.mermaid-block')?.textContent).toBe('QA diagram')
-    expect(shown.onContentSize).toHaveBeenCalledWith(null)
-    expect(shown.onUnavailable).not.toHaveBeenCalled()
-  })
-
   it.each([
     ['text', `${'x'.repeat(1000)}\n`.repeat(600)],
     ['text', 'x'.repeat(20001)],

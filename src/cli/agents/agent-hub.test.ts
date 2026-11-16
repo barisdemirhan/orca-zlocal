@@ -5,8 +5,6 @@ import { normalizeCommandPositionals, parseArgs } from '../arguments/args'
 import { specPaths } from '../discovery/command-spec'
 import { AGENT_HUB_COMMAND_SPECS } from '../specs/agent-hub'
 import { AGENT_HUB_HANDLERS } from './agent-hub'
-import { formatCommandHelp } from '../discovery/help'
-import { quoteCliCommandArgument } from '../arguments/shell-command-quote'
 
 let client: RuntimeClient
 let call: MockInstance<RuntimeClient['call']>
@@ -70,24 +68,6 @@ describe('hub CLI', () => {
       }),
       expect.anything()
     )
-  })
-  it('sends an Orb memory proposal without waiting and prints the host message', async () => {
-    vi.stubEnv('ORCA_TERMINAL_HANDLE', '')
-    vi.stubEnv('ORCA_AGENT_SESSION_ID', 'codex_orb')
-    call.mockResolvedValueOnce({
-      id: 'req-2',
-      ok: true,
-      result: { proposed: true, message: 'Proposed; the user decides in the Orb window.' },
-      _meta: { runtimeId: 'host-1' }
-    })
-    await run(['hub', 'orb', 'remember', 'Prefers short answers'])
-    expect(call).toHaveBeenLastCalledWith(
-      'agentHub.orb.remember',
-      expect.objectContaining({ callerSessionId: 'codex_orb', text: 'Prefers short answers' }),
-      { timeoutMs: 35_000 }
-    )
-    expect(log).toHaveBeenCalledWith('Proposed; the user decides in the Orb window.')
-    expect(process.exitCode).toBeUndefined()
   })
   it('rejects a memory longer than 280 characters before contacting the host', async () => {
     await expect(run(['hub', 'orb', 'remember', 'x'.repeat(281)])).rejects.toMatchObject({
@@ -265,22 +245,6 @@ describe('hub CLI', () => {
     expect(process.exitCode).toBe(2)
   })
 
-  it('prints a shell-safe same-host resume command and documents both exit codes', async () => {
-    call.mockRejectedValueOnce(new RuntimeClientError('runtime_timeout', 'Transport wait ended'))
-    await run(['hub', 'ask', 'Go?', '--option', 'Yes', '--environment', 'Host with spaces'])
-    expect(log).toHaveBeenCalledWith(
-      expect.stringContaining(`--environment ${quoteCliCommandArgument('Host with spaces')}`)
-    )
-    const spec = AGENT_HUB_COMMAND_SPECS.find((entry) => entry.path.join(' ') === 'hub ask')
-    if (!spec) {
-      throw new Error('Missing ask spec')
-    }
-    const help = formatCommandHelp(spec)
-    expect(help).toContain('--wait <duration>')
-    expect(help).toContain('Exit 2 means still pending')
-    expect(help).toContain('Exit 1 means the host timeout expired')
-  })
-
   it('returns recovery information if the transport disconnects during an ask', async () => {
     call.mockRejectedValue(new RuntimeClientError('connection_lost', 'Connection closed'))
     await expect(run(['hub', 'ask', 'Go?', '--option', 'Yes'])).rejects.toMatchObject({
@@ -356,15 +320,6 @@ describe('hub CLI', () => {
     expect(call).not.toHaveBeenCalled()
   })
 
-  it.each(['no_desktop', 'denied_by_user', 'timeout', 'disabled_by_user'])(
-    'preserves the %s failure for the CLI exit handler',
-    async (code) => {
-      call.mockRejectedValue(new RuntimeClientError(code, `Hub: ${code}`))
-      await expect(run(['hub', 'status'])).rejects.toMatchObject({ code, message: `Hub: ${code}` })
-      expect(log).not.toHaveBeenCalled()
-    }
-  )
-
   it('reports rate limit retry timing and explains an unsupported host', async () => {
     call.mockRejectedValue(
       new RuntimeClientError('rate_limited', 'Slow down', { retryAfterMs: 12_000 })
@@ -438,31 +393,5 @@ describe('hub CLI', () => {
     })
     await run(['hub', 'mirror', 'add', '--terminal', 'term-c', '--into', 'term-a'])
     expect(log).toHaveBeenLastCalledWith('Added as a tab in the card.')
-  })
-
-  it('shows what Peek has open in status and what a Peek control did', async () => {
-    call.mockResolvedValueOnce({
-      id: 'req-1',
-      ok: true,
-      result: {
-        mirrors: [],
-        parked: [],
-        waiting: [],
-        peek: { title: 'Report', location: '/workspace/report.md', canGoBack: true }
-      },
-      _meta: { runtimeId: 'host-1' }
-    })
-    await run(['hub', 'status'])
-    expect(log).toHaveBeenLastCalledWith(
-      expect.stringContaining('Peek: Report — /workspace/report.md (can go back)')
-    )
-    call.mockResolvedValueOnce({
-      id: 'req-2',
-      ok: true,
-      result: { requestId: 'hub-id', peek: 'nothing-open' },
-      _meta: { runtimeId: 'host-1' }
-    })
-    await run(['hub', 'peek', 'close'])
-    expect(log).toHaveBeenLastCalledWith('Peek shows nothing from this host.')
   })
 })

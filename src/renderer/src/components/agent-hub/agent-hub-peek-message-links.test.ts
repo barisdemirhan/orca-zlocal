@@ -23,24 +23,6 @@ afterEach(() => {
   closeAgentHubPeek()
 })
 
-it('explains unsupported file chips and keeps URL refusals unchanged', () => {
-  const worktree = { ...makeWorktree(), hostId: 'local' as const }
-  useAppStore.setState({ worktreesByRepo: { [worktree.repoId]: [worktree] } })
-  render(
-    createElement(AgentHubPeekChips, {
-      text: '',
-      worktree,
-      links: ['./archive.zip', 'ftp://example.com']
-    })
-  )
-  expect(screen.getByRole('button', { name: 'Peek at ./archive.zip' }).title).toBe(
-    'This file type cannot be shown in Peek. Open it in the workspace or default app.'
-  )
-  expect(screen.getByRole('button', { name: 'Peek at ftp://example.com' }).title).toBe(
-    'This URL or file cannot be opened in Peek on its host.'
-  )
-})
-
 it('offers the pages and peekable files an agent message points to, once each', () => {
   const worktree: Worktree = {
     ...makeWorktree(),

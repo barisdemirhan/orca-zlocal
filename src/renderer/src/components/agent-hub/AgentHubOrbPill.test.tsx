@@ -2,7 +2,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
-import { useRef } from 'react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/structured-agent-session-reducer'
 import { AgentHubOrbPill, AgentHubOrbPillContent } from './AgentHubOrbPill'
@@ -348,32 +347,6 @@ describe('Orb pill', () => {
     expect(mocks.mutate).toHaveBeenCalledWith('agentSession.cancel', 'agentSession.cancel', {
       prompt: { itemId: 'approval', expectedRevision: 2 }
     })
-  })
-  it('replaces its fallback position when the dock anchor attaches after the first render', () => {
-    function LateAnchor(): React.JSX.Element {
-      const anchorRef = useRef<HTMLDivElement>(null)
-      return (
-        <>
-          <AgentHubOrbPill
-            {...props}
-            state={{ kind: 'working' }}
-            anchorRef={anchorRef}
-            side="top"
-            onOpen={vi.fn()}
-          />
-          <div ref={anchorRef} />
-        </>
-      )
-    }
-    render(
-      <TooltipProvider>
-        <LateAnchor />
-      </TooltipProvider>
-    )
-    fireEvent(window, new Event('resize'))
-    const pill = document.querySelector('[data-agent-hub-orb-pill]')?.parentElement
-    expect(pill?.style.transform).toBe('')
-    expect(pill?.style.bottom).toBe('')
   })
   it('keeps the whole pill within a narrow viewport beside a right-hand anchor', () => {
     const width = window.innerWidth

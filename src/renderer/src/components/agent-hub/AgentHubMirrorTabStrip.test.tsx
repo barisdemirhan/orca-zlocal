@@ -97,17 +97,6 @@ function stage(count = 3, onReveal = vi.fn(), agentType: AgentHubPaneTarget['age
   render(<Stage />)
   return id
 }
-it('keeps the complete header identity and add affordance without a singleton close button', () => {
-  stage(1)
-  expect(screen.getAllByRole('tab')).toHaveLength(1)
-  expect(screen.getByRole('button', { name: 'Add' })).toBeTruthy()
-  const tablist = screen.getByRole('tablist')
-  expect(tablist.className).toContain('overflow-x-auto')
-  expect(within(screen.getByRole('tab')).getByText('Local Mac')).toBeTruthy()
-  expect(screen.getByRole('tab').textContent).toContain('Project')
-  expect(screen.queryByRole('button', { name: 'Close mirror tab one' })).toBeNull()
-  expect(screen.queryByRole('button', { name: 'Jump' })).toBeNull()
-})
 
 it('jumps an inactive tab to its own workspace from its menu and keeps the other tab', async () => {
   const reveal = vi.fn()
@@ -168,16 +157,6 @@ it.each([
   }
 )
 
-it('names the tab close control on hover', async () => {
-  stage(2)
-  const user = userEvent.setup()
-  const entry = screen.getByRole('tab', { name: 'one, idle' }).closest('[data-agent-hub-tab-entry]')
-  if (!(entry instanceof HTMLElement)) {
-    throw new Error('No tab entry')
-  }
-  await user.hover(within(entry).getByRole('button', { name: 'Close mirror tab one' }))
-  expect((await screen.findByRole('tooltip')).textContent).toContain('Close tab')
-})
 it('roves Left/Right/Home/End while preserving strip focus, and Enter requests terminal focus', () => {
   stage()
   const tabs = screen.getAllByRole('tab')

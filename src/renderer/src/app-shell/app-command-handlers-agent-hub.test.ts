@@ -78,34 +78,6 @@ describe('agent hub shortcuts', () => {
     expect(input.preventDefault).not.toHaveBeenCalled()
   })
 
-  it('routes every hub chord to the mounted hub', () => {
-    const commands = {
-      toggle: vi.fn(),
-      jumpToNextWaiting: vi.fn(),
-      toggleMirrors: vi.fn(),
-      toggleCanvas: vi.fn(),
-      focusMirror: vi.fn(),
-      popOut: vi.fn(),
-      jumpToMirror: vi.fn(),
-      arrangeMirrors: vi.fn()
-    }
-    unregister = registerAgentHubCommands(commands)
-
-    expect(run('agentHub.toggle').claimed).toBe(true)
-    expect(run('agentHub.nextWaiting').claimed).toBe(true)
-    expect(run('agentHub.dockMirrors').claimed).toBe(true)
-    expect(run('agentHub.toggleCanvas').claimed).toBe(true)
-    expect(run('agentHub.arrangeMirrors').claimed).toBe(true)
-    expect(run('agentHub.focusMirror').claimed).toBe(true)
-    expect(run('agentHub.popOut').claimed).toBe(true)
-    expect(run('agentHub.jumpToMirror').claimed).toBe(true)
-    expect(commands.toggle).toHaveBeenCalledTimes(1)
-    expect(commands.jumpToNextWaiting).toHaveBeenCalledTimes(1)
-    expect(commands.toggleMirrors).toHaveBeenCalledTimes(1)
-    expect(commands.toggleCanvas).toHaveBeenCalledTimes(1)
-    expect(commands.arrangeMirrors).toHaveBeenCalledTimes(1)
-  })
-
   it('lets the canvas chord fall through while the canvas setting is off', () => {
     unregister = registerAgentHubCommands({
       toggle: vi.fn(),

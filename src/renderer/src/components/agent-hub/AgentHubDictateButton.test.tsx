@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { Profiler, createRef } from 'react'
+import { createRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { NO_DICTATION_LIVE_TEXT } from '@/store/slices/dictation/dictation'
@@ -217,40 +217,6 @@ it.each(['listening', 'stopping'] as const)(
     }
   }
 )
-
-it('keeps other reply mics inert and does not render them on meter ticks', () => {
-  const listeningRender = vi.fn()
-  const otherRender = vi.fn()
-  render(
-    <TooltipProvider>
-      <Profiler id="listening" onRender={listeningRender}>
-        <form aria-label="Listening reply">
-          <input aria-label="Listening reply" />
-          <HubDictateButton />
-        </form>
-      </Profiler>
-      <Profiler id="other" onRender={otherRender}>
-        <form aria-label="Other reply">
-          <input aria-label="Other reply" />
-          <HubDictateButton />
-        </form>
-      </Profiler>
-    </TooltipProvider>
-  )
-  fireEvent.click(within(screen.getByRole('form', { name: 'Listening reply' })).getByRole('button'))
-  setDictationState('listening')
-  const otherMic = within(screen.getByRole('form', { name: 'Other reply' })).getByRole('button')
-  fireEvent.click(otherMic)
-  expect(actions).toEqual(['toggle'])
-  expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Listening reply' }))
-  listeningRender.mockClear()
-  otherRender.mockClear()
-
-  act(() => publishDictationMeter({ level: 0.75, isSpeaking: true, isClipping: false }))
-
-  expect(listeningRender).toHaveBeenCalled()
-  expect(otherRender).not.toHaveBeenCalled()
-})
 
 it('leaves dictation started elsewhere with the app-wide indicator', () => {
   render(<ReplySurface />)

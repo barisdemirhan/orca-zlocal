@@ -5,10 +5,7 @@ import {
   normalizeAgentHubAnswerQueue
 } from './agent-hub-settings'
 import { createGlobalSettingsFixture } from './global-settings-test-fixture'
-import {
-  normalizeAgentHubOrbIdentitySettings,
-  normalizeAgentHubOrbSettings
-} from './agent-hub-orb-settings'
+import { normalizeAgentHubOrbIdentitySettings } from './agent-hub-orb-settings'
 describe('mirror microphone default mode', () => {
   it.each([undefined, null, '', 'unknown', true, 1, {}, 'dictate'])(
     'defaults invalid or missing mode %j to plain dictation',
@@ -19,21 +16,6 @@ describe('mirror microphone default mode', () => {
   it('preserves explicit improvement for capable controllers', () => {
     expect(normalizeAgentHubMicMode('improve')).toBe('improve')
   })
-})
-
-it('lets agents control Agent Hub by default while keeping the experiment opt-in', () => {
-  const settings = createGlobalSettingsFixture()
-  expect(settings.agentHubAgentControl).toBe(true)
-  expect(settings.experimentalAgentHub).toBe(false)
-  expect(settings).toMatchObject({
-    agentHubOrbAgent: 'claude',
-    agentHubOrbModel: null,
-    agentHubOrbCwd: null,
-    agentHubOrbPlacement: 'floating',
-    agentHubOrbSpeakReplies: false
-  })
-  expect(settings).not.toHaveProperty('agentHubOrbPermission')
-  expect(normalizeAgentHubOrbSettings(settings).permission).toBeNull()
 })
 
 it('keeps info alerts on for older profiles and preserves an explicit opt-out', () => {

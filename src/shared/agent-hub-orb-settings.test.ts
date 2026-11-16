@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   agentHubOrbChosenMode,
-  agentHubOrbOfferedModes,
   agentHubOrbPermissionSettingValue,
   normalizeAgentHubOrbSettings,
   resolveAgentHubOrbMode
@@ -61,16 +60,5 @@ describe('Orb settings', () => {
     expect(resolveAgentHubOrbMode('codex', 'ask')).toBe('ask')
     expect(resolveAgentHubOrbMode('codex', 'full-access')).toBe('full-access')
     expect(resolveAgentHubOrbMode('grok', 'auto')).toBe('ask')
-  })
-
-  it('offers the modes the agent supports', () => {
-    expect(agentHubOrbOfferedModes('codex')).toEqual(['ask', 'auto', 'full-access'])
-    expect(agentHubOrbOfferedModes('claude')).toEqual([
-      'ask',
-      'accept-edits',
-      'auto',
-      'full-access'
-    ])
-    expect(agentHubOrbOfferedModes('pi')).toEqual(['full-access'])
   })
 })

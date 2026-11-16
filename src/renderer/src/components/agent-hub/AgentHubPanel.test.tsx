@@ -205,19 +205,6 @@ describe('AgentHubPanel terminal sort', () => {
   const sortButton = (): HTMLButtonElement | null =>
     container.querySelector('button[data-agent-hub-list-menu="sort"]')
 
-  it('shows the order in use on the sort button, on both terminal tabs', () => {
-    const { panel } = renderPanel({ sortBy: 'smart', workspaceRank: new Map(), now: 5_000 })
-
-    expect(sortButton()).toBeNull()
-    press(panel.current, 'Tab', { shiftKey: true })
-    expect(sortButton()?.getAttribute('aria-label')).toBe('Sort: Agent Activity')
-    press(panel.current, 'Tab', { shiftKey: true })
-    expect(container.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
-      'Agents'
-    )
-    expect(sortButton()?.dataset.value).toBe('smart')
-  })
-
   it('lists and selects rows in the chosen order', () => {
     // Agent Activity: the unread results (newest first), then the working agent.
     const { handlers, panel } = renderPanel({

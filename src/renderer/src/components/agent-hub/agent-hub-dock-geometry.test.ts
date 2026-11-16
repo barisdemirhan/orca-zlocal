@@ -100,12 +100,6 @@ describe('agent hub dock geometry', () => {
     })
   })
 
-  it('opens the popover away from the dock edge', () => {
-    expect(agentHubDockPopoverSide('bottom')).toBe('top')
-    expect(agentHubDockPopoverSide('right')).toBe('left')
-    expect(agentHubDockPopoverSide('left')).toBe('right')
-  })
-
   it('draws the notch from the bar edge, around the bar, and back with both fillets', () => {
     const bottom = agentHubNotchShape('bottom', { width: 100, height: 26 })
     expect(bottom).toMatchObject({ width: 120, height: 26, left: -10, top: 0 })

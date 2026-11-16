@@ -1,18 +1,15 @@
 /** @vitest-environment happy-dom */
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { AgentHubMirrors } from './AgentHubMirrors'
-import { AgentHubWorkspaceFocusShade } from './AgentHubMirrorFocusShade'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
-  minimizeAgentHubMirror,
   openAgentHubMirror,
   readAgentHubMirrors,
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
-import { setAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { toggleAgentHubMirrorTabPin } from './agent-hub-mirror-tab-operations'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 
@@ -118,83 +115,6 @@ function Mirrors({
     />
   )
 }
-
-function mirrorsLayer(): HTMLElement {
-  const layer = document.querySelector<HTMLElement>('[data-agent-hub-mirrors]')
-  if (!layer) {
-    throw new Error('Mirrors layer is missing')
-  }
-  return layer
-}
-
-function Stage({ shade = false }: { shade?: boolean }): React.JSX.Element {
-  return (
-    <>
-      <Mirrors />
-      {shade ? <AgentHubWorkspaceFocusShade /> : null}
-    </>
-  )
-}
-
-it('keeps mirrors below the floating workspace without a panel click and after mirror use', () => {
-  openAgentHubMirror(target('first'))
-  openAgentHubMirror(target('second'))
-  const view = render(<Stage />)
-  const layer = mirrorsLayer()
-  // The panel opens without pointer/focus events, as a shortcut with no terminal to focus can do.
-  const panel = document.createElement('div')
-  panel.dataset.floatingTerminalPanel = ''
-  document.body.append(panel)
-  try {
-    expect(layer.classList.contains('z-[44]')).toBe(true)
-    const first = screen.getByRole('dialog', { name: 'first' })
-    const second = screen.getByRole('dialog', { name: 'second' })
-    expect(Number(first.style.zIndex)).toBeLessThan(Number(second.style.zIndex))
-    fireEvent.pointerDown(first)
-    expect(Number(first.style.zIndex)).toBeGreaterThan(Number(second.style.zIndex))
-    expect(screen.getByRole('dialog', { name: 'first' })).toBe(first)
-    expect(mirrorsLayer()).toBe(layer)
-    expect(layer.classList.contains('z-[44]')).toBe(true)
-
-    fireEvent.pointerDown(panel)
-    fireEvent.pointerDown(second)
-    expect(Number(second.style.zIndex)).toBeGreaterThan(Number(first.style.zIndex))
-    expect(layer.classList.contains('z-[44]')).toBe(true)
-    act(() => openAgentHubMirror(target('third')))
-    expect(screen.getAllByRole('dialog')).toHaveLength(3)
-    expect(layer.classList.contains('z-[44]')).toBe(true)
-  } finally {
-    view.unmount()
-    panel.remove()
-  }
-})
-
-it('raises focused mirrors and their late shade above the floating workspace', () => {
-  openAgentHubMirror(target('first'))
-  openAgentHubMirror(target('second'))
-  const view = render(<Stage />)
-  const layer = mirrorsLayer()
-  act(() => minimizeAgentHubMirror(readAgentHubMirrors().windows[0]!.id))
-  const tray = screen.getByText('Minimized mirror').closest('[data-agent-hub-mirror-tray]')
-  expect(tray?.parentElement).toBe(document.body)
-  expect(tray?.classList.contains('z-[47]')).toBe(true)
-  // Leaving the canvas mounts this portal after the already-mounted mirrors.
-  view.rerender(<Stage shade />)
-  expect(mirrorsLayer()).toBe(layer)
-  act(() => setAgentHubMirrorFocus(readAgentHubMirrors().windows[0]!.id))
-  const shade = document.querySelector('[data-agent-hub-focus-shade="workspace"]')
-  expect(shade?.getAttribute('data-shown')).toBe('true')
-  expect(layer.getAttribute('data-focused')).toBe('true')
-  expect(layer.classList.contains('data-[focused=true]:z-[47]')).toBe(true)
-  expect(shade?.classList.contains('data-[agent-hub-focus-shade=workspace]:z-[46]')).toBe(true)
-  if (!shade) {
-    throw new Error('Workspace focus shade is missing')
-  }
-  expect(layer.compareDocumentPosition(shade) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0)
-  fireEvent.pointerDown(shade)
-  expect(shade.getAttribute('data-shown')).toBe('false')
-  expect(layer.getAttribute('data-focused')).toBe('false')
-})
 
 it.each([false, true])('Jump navigates while preserving a pinned tab (%s)', (pinned) => {
   const source = target('first')

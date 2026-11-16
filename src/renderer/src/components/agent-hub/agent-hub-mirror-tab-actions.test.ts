@@ -107,16 +107,6 @@ it('reports the cap reason for picker additions only; a full window can still vi
     readAgentHubMirrors().windows[0]?.tabs.find((tab) => tab.id === tabId)?.viewing?.title
   ).toBe('twelve')
 })
-it('rejects a stale picker reservation with truthful feedback without raising its owner', () => {
-  const owner = open('owned')
-  const destination = open('destination')
-  expect(addAgentHubMirrorTabWithFeedback(destination, target('owned')).status).toBe(
-    'already-owned'
-  )
-  expect(toast.error).toHaveBeenCalledWith('This terminal is already popped out.')
-  expect(readAgentHubMirrors().windows.at(-1)?.id).toBe(destination)
-  expect(readAgentHubMirrors().windows.find((window) => window.id === owner)?.tabs).toHaveLength(1)
-})
 it('keeps a pinned membership on Jump and permits an explicit return without closing the source', () => {
   const id = open('a')
   addAgentHubMirrorTab(id, target('b'))

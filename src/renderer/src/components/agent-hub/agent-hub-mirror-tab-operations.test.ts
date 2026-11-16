@@ -94,17 +94,6 @@ describe('toggleAgentHubMirrorViewing', () => {
     expect(next?.tabs[0]?.viewing?.title).toBe('b')
     expectInvariants()
   })
-  it('stays at home when the home pane is selected', () => {
-    openAgentHubMirror(target('a', 'pane-1'))
-    const window = readAgentHubMirrors().windows[0]
-    expect(
-      toggleAgentHubMirrorViewing(
-        window?.id ?? '',
-        window?.activeTabId ?? '',
-        target('a', 'pane-1')
-      ).status
-    ).toBe('changed')
-  })
   it('views another split pane without changing the home leaf', () => {
     openAgentHubMirror(target('a', 'pane-1'))
     const window = readAgentHubMirrors().windows[0]

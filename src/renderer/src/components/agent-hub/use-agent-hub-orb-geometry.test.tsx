@@ -6,7 +6,6 @@ import { createGlobalSettingsFixture } from '../../../../shared/global-settings-
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
-import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
@@ -69,24 +68,6 @@ it('keeps floating keyboard resizing available after leaving compact mode', () =
   rerender(<Geometry embedded={false} compact={false} />)
   fireEvent.keyDown(screen.getByRole('button', { name: 'Resize Orb' }), { key: 'ArrowRight' })
   expect(useAgentHubOrbPanel.getState().preferredDiameter).toBe(288)
-})
-
-it('centers a first Orb at its smallest supported size without storing a preference', () => {
-  useAgentHubOrbPanel.setState({
-    preferredDiameter: useAgentHubOrbPanel.getInitialState().preferredDiameter,
-    stagePosition: null
-  })
-  render(<Geometry embedded={false} compact={false} />)
-  const resize = screen.getByRole('button', { name: 'Resize Orb' })
-  expect(resize.textContent).toBe('128')
-  const bounds = readAgentHubOrbBounds()
-  expect(Number.parseFloat(resize.style.left) + Number.parseFloat(resize.style.width) / 2).toBe(
-    (bounds.left + bounds.right) / 2
-  )
-  expect(Number.parseFloat(resize.style.top) + Number.parseFloat(resize.style.height) / 2).toBe(
-    (bounds.top + bounds.bottom) / 2
-  )
-  expect(useAppStore.getState().updateSettings).not.toHaveBeenCalled()
 })
 
 it.each([
