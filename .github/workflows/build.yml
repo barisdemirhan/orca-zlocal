@@ -1,0 +1,210 @@
+name: build
+run-name: build ${{ inputs.ref }}
+
+# Builds one commit of the personal Orca dist branch. Nothing here signs, publishes or holds a secret:
+# the Mac that dispatched the run downloads the outputs, checks their attestations, then packages,
+# signs and notarizes locally.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Full commit SHA of the dist branch to build
+        required: true
+        type: string
+      base:
+        description: Full commit SHA of the upstream release the dist branch sits on
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: build-${{ inputs.ref }}
+  cancel-in-progress: false
+
+jobs:
+  vet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Vet inputs
+        env:
+          REF: ${{ inputs.ref }}
+          BASE: ${{ inputs.base }}
+        run: |
+          [[ "$REF" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::ref must be a full commit SHA"; exit 1; }
+          [[ "$BASE" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::base must be a full commit SHA"; exit 1; }
+
+  typecheck:
+    needs: vet
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tc
+
+  lint:
+    needs: vet
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          # The changed-code-quality step diffs against the upstream release.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir mobile install --frozen-lockfile
+      - run: pnpm lint
+        env:
+          ORCA_CODE_QUALITY_BASE: ${{ inputs.base }}
+
+  test:
+    needs: vet
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node config/scripts/electron-installation/platform-layout/install-electron-package-binary.mjs
+      - name: Test shard ${{ matrix.shard }}/4
+        env:
+          ORCA_BACKGROUND_LAUNCH: '1'
+          SHARD: ${{ matrix.shard }}
+        run: |
+          node config/scripts/workspace-package-build/build-workspace-packages.mjs
+          node config/scripts/native-build/node-addons/ensure-native-runtime.mjs --runtime=node
+          node config/scripts/test-runtime/execution-policy/run-vitest.mjs run --config config/vitest.config.ts \
+            --shard="$SHARD/4" --maxWorkers=4
+
+  javascript:
+    needs: vet
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir mobile install --frozen-lockfile
+      # The same step list as build:desktop minus its typecheck, which the typecheck job runs.
+      - run: pnpm run build:desktop:assets
+      - name: Pack out/
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          [ "$(git rev-parse HEAD)" = "$REF" ]
+          mkdir -p .ci-out
+          tar -czf .ci-out/orca-javascript.tar.gz out
+          printf '{"kind":"javascript","source":"%s","sha256":"%s"}\n' "$REF" \
+            "$(sha256sum .ci-out/orca-javascript.tar.gz | cut -d' ' -f1)" > .ci-out/orca-javascript.json
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: .ci-out/orca-javascript.*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: orca-javascript
+          path: .ci-out/
+          retention-days: 1
+          if-no-files-found: error
+
+  mac-helpers:
+    needs: vet
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+      - run: node config/scripts/native-build/macos/build-computer-macos.mjs
+      - run: node config/scripts/native-build/macos/build-keyboard-layout-macos.mjs
+      - run: node config/scripts/native-build/macos/build-process-footprint-macos.mjs
+      - run: node config/scripts/native-build/macos/build-notification-status-macos.mjs
+      - name: Pack the helper products
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          [ "$(git rev-parse HEAD)" = "$REF" ]
+          mkdir -p .ci-out
+          tar -czf .ci-out/orca-mac-helpers.tar.gz \
+            "native/computer-use-macos/.build/release/Orca Computer Use.app" \
+            native/computer-use-macos/.build/release/orca-computer-use-macos \
+            native/notification-status-macos/.build/release/orca-notification-status \
+            native/keyboard-layout-macos/.build/release/orca-keyboard-layout \
+            native/process-footprint-macos/.build/release/orca-process-footprint
+          printf '{"kind":"mac-helpers","source":"%s","sha256":"%s"}\n' "$REF" \
+            "$(shasum -a 256 .ci-out/orca-mac-helpers.tar.gz | cut -d' ' -f1)" > .ci-out/orca-mac-helpers.json
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: .ci-out/orca-mac-helpers.*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: orca-mac-helpers
+          path: .ci-out/
+          retention-days: 1
+          if-no-files-found: error
