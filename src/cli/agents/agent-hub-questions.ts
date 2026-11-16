@@ -72,7 +72,7 @@ async function targets(ctx: HandlerContext): Promise<HostTarget[]> {
       host: 'local',
       environment: null
     },
-    ...listEnvironments(userDataPath).map((environment) => ({
+    ...(await listEnvironments(userDataPath)).map((environment) => ({
       connect: () => new RuntimeClient(userDataPath, undefined, null, environment.id),
       host: environment.name,
       environment: environment.name

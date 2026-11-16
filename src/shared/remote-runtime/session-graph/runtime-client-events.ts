@@ -12,10 +12,12 @@ import type { RuntimeNavigationTarget } from './runtime-navigation'
 import type { WorktreeSortOrderUpdate } from '../../worktree/metadata/sort-order-update'
 import type { WorkspaceMetadataSet } from '../../worktree/metadata/workspace-metadata-set'
 import type { SidebarInputsChangedEvent } from '../../sidebar-list/feed/sidebar-inputs-feed-contract'
+import type { AgentHubEvent, AgentHubSnapshot } from '../../agent-hub-requests'
 import type { BrowserClientHostRequestEvent } from '../../browser/client-hosting/browser-client-host-request-protocol'
 import type { WorkspaceCleanupRunFinishedEvent } from '../../workspace-cleanup/workspace-cleanup-run'
 
 export type RuntimeClientEvent =
+  | { type: 'agentHub'; event: AgentHubEvent }
   | {
       type: 'notificationAttentionAcknowledged'
       acknowledgement: NotificationAttentionAcknowledgement
@@ -95,6 +97,7 @@ export type RuntimeClientEventStreamMessage =
         nativeChatCiResultLines?: boolean
         repos?: unknown[]
         sshStates?: { targetId: string; state: SshConnectionState }[]
+        agentHub?: AgentHubSnapshot
       }
     })
   | RuntimeClientEvent

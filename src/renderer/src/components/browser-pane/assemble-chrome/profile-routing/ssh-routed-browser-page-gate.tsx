@@ -3,6 +3,7 @@ import { Globe } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useTranslate, type Translate } from '@/i18n/use-translate'
 import { Button } from '@/components/ui/button'
+import type { ExecutionHostId } from '../../../../../../shared/execution-host'
 import { DOC_PREVIEW_PARTITION } from '../../../../../../shared/document-preview/doc-preview-scheme'
 import { webviewRegistry } from '../../host-guest/webview-registry'
 import { replacePersistentWebview } from '../../host-guest/browser-webview-disposal'
@@ -15,11 +16,13 @@ import {
 /** Require a proxy-verified partition before mounting SSH browser guests; local egress is allowed only through explicit global or per-target opt-outs. */
 export function SshRoutedBrowserPageGate({
   worktreeId,
+  sourceExecutionHostId,
   sessionProfileId,
   pageIds,
   children
 }: {
   worktreeId: string
+  sourceExecutionHostId?: ExecutionHostId
   sessionProfileId: string | null
   /** Pages this gate guards; their guests are destroyed whenever they could browse off the verified route. */
   pageIds: readonly string[]
@@ -28,7 +31,8 @@ export function SshRoutedBrowserPageGate({
   const t = useTranslate()
   const { state, retry, tryWithoutProbe, browseFromThisDevice } = useSshWorkspaceBrowserRoute(
     worktreeId,
-    sessionProfileId
+    sessionProfileId,
+    sourceExecutionHostId
   )
   const unrouted = state.kind === 'unrouted'
   const routedPartition = state.kind === 'ready' ? state.partition : null
