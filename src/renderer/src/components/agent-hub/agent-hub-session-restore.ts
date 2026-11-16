@@ -2,6 +2,7 @@ import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import {
   isAgentHubCanvasOpen,
+  openAgentHubCanvas,
   readAgentHubCanvasParked,
   rememberAgentHubCanvasParked
 } from './agent-hub-canvas-store'
@@ -30,6 +31,8 @@ type AgentHubSessionState = Parameters<typeof agentHubTerminalTreeFromState>[0]
 export type AgentHubRestoredSession = {
   mirrors: AgentHubReopenedMirror[]
   canvasParked: string[]
+  /** The last session ended on the canvas: it opens again around the restored mirrors. */
+  canvasOpen: boolean
   hiddenFamilyRoots: string[]
 }
 /** Resolve live source ownership after hydration; a missing precise leaf follows its surviving tab. */
@@ -104,6 +107,7 @@ export function resolveAgentHubSession(
   return {
     mirrors,
     canvasParked: options.canvas ? snapshot.canvasParked.filter((id) => parked.has(id)) : [],
+    canvasOpen: options.canvas && snapshot.canvasOpen,
     hiddenFamilyRoots: snapshot.hiddenFamilyRoots.filter((root) =>
       tabIds.has(parsePaneKey(root)?.tabId ?? '')
     )
@@ -116,6 +120,9 @@ export function applyAgentHubSession(restored: AgentHubRestoredSession): void {
   reopenAgentHubMirrors(restored.mirrors)
   const parked = new Set(readAgentHubMirrors().chips.map((chip) => chip.window.id))
   rememberAgentHubCanvasParked(restored.canvasParked.filter((id) => parked.has(id)))
+  if (restored.canvasOpen) {
+    openAgentHubCanvas(true)
+  }
 }
 function savedMirror(
   window: AgentHubMirrorWindowState,

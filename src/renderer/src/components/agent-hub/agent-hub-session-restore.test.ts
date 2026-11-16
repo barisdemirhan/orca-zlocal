@@ -218,7 +218,7 @@ describe('resolving a saved hub session against the store', () => {
     expect(place?.x).toBeGreaterThanOrEqual(0)
   })
 
-  it('keeps the windows parked when the canvas is on and was left', () => {
+  it('keeps the windows parked when the canvas was left, and reopens a canvas left open', () => {
     const state = storeWith({ 'tab-a': LEAF_A, 'tab-b': LEAF_B })
     const snapshot = snapshotOf([saved('tab-a'), saved('tab-b', { minimized: true })], {
       canvasParked: ['window-tab-b', 'window-tab-gone']
@@ -232,6 +232,16 @@ describe('resolving a saved hub session against the store', () => {
     const floating = resolveAgentHubSession(snapshot, state, options)
     expect(floating.mirrors.map((mirror) => mirror.minimized)).toEqual([false, true])
     expect(floating.canvasParked).toEqual([])
+    expect(floating.canvasOpen).toBe(false)
+
+    // Left on the canvas: it opens again with its windows where they were.
+    const onCanvas = resolveAgentHubSession(
+      snapshotOf([saved('tab-a'), saved('tab-b', { minimized: true })], { canvasOpen: true }),
+      state,
+      { ...options, canvas: true }
+    )
+    expect(onCanvas.canvasOpen).toBe(true)
+    expect(onCanvas.mirrors.map((mirror) => mirror.minimized)).toEqual([false, true])
   })
 
   it('drops hidden worker bars of tabs that are gone', () => {
