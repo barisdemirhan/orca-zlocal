@@ -126,7 +126,7 @@ export function AgentHubMirrorAddButton({
               event.stopPropagation()
             }
           }}
-          className="w-132 max-w-[calc(100vw-2rem)]"
+          className="w-152 max-w-[calc(100vw-2rem)]"
         >
           <AgentHubMirrorPickerBody
             windowId={windowId}

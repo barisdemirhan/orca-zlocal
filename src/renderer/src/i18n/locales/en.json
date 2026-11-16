@@ -24606,6 +24606,10 @@
       "none": "Not in a window",
       "emptyNone": "Every terminal is in a window"
     },
+    "hostFilter": {
+      "title": "Host",
+      "any": "All hosts"
+    },
     "peek": {
       "kindWeb": "Web",
       "kindImage": "Image",

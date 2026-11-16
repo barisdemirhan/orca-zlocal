@@ -97,8 +97,12 @@ export function filterAgentHubTerminalTreeRows(
 }
 
 /** Whether a search or filter narrows the list, which unfolds everything it leaves. */
-export function isAgentHubTreeNarrowed(query: string, windowFilter: string = 'any'): boolean {
-  return query.trim() !== '' || windowFilter !== 'any'
+export function isAgentHubTreeNarrowed(
+  query: string,
+  windowFilter: string = 'any',
+  host: string | null = null
+): boolean {
+  return query.trim() !== '' || windowFilter !== 'any' || host !== null
 }
 
 /** A group starts collapsed when it holds only shells; the user's toggle wins after that. */

@@ -1,5 +1,10 @@
 import { ListFilter } from 'lucide-react'
-import { DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
 import { AgentHubListMenu } from './AgentHubListMenu'
 import {
@@ -7,27 +12,40 @@ import {
   agentHubWindowFilterOption,
   type AgentHubWindowFilter
 } from './agent-hub-window-filter'
+import type { AgentHubHostFilter } from './use-agent-hub-host-filter'
 
-/** Narrows the list to terminals open in a window, minimized to a chip, or in neither. */
+const ALL_HOSTS = '\u0000all-hosts'
+
+/**
+ * Narrows the list to terminals open in a window, minimized to a chip, or in neither, and to
+ * one host when the terminals span several.
+ */
 export function AgentHubWindowFilterMenu({
   filter,
   onFilterChange,
+  host,
   onClosed
 }: {
   filter: AgentHubWindowFilter
   onFilterChange: (filter: AgentHubWindowFilter) => void
+  host?: Pick<AgentHubHostFilter, 'value' | 'options' | 'onChange'>
   onClosed: () => void
 }): React.JSX.Element {
+  const hostLabel = host?.options.find((option) => option.id === host.value)?.label
+  const parts = [
+    ...(filter === 'any' ? [] : [agentHubWindowFilterOption(filter).label()]),
+    ...(hostLabel ? [hostLabel] : [])
+  ]
   return (
     <AgentHubListMenu
       menu="window-filter"
       value={filter}
-      active={filter !== 'any'}
+      active={parts.length > 0}
       label={
-        filter === 'any'
+        parts.length === 0
           ? translate('agentHub.windowFilter.label', 'Filter by window')
           : translate('agentHub.windowFilter.labelActive', 'Filter: {{value0}}', {
-              value0: agentHubWindowFilterOption(filter).label()
+              value0: parts.join(' · ')
             })
       }
       icon={<ListFilter className="size-3.5" />}
@@ -49,6 +67,25 @@ export function AgentHubWindowFilterMenu({
           </DropdownMenuRadioItem>
         ))}
       </DropdownMenuRadioGroup>
+      {host && host.options.length > 0 ? (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>{translate('agentHub.hostFilter.title', 'Host')}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={host.value ?? ALL_HOSTS}
+            onValueChange={(value) => host.onChange(value === ALL_HOSTS ? null : value)}
+          >
+            <DropdownMenuRadioItem value={ALL_HOSTS}>
+              {translate('agentHub.hostFilter.any', 'All hosts')}
+            </DropdownMenuRadioItem>
+            {host.options.map((option) => (
+              <DropdownMenuRadioItem key={option.id} value={option.id}>
+                <span className="truncate">{option.label}</span>
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </>
+      ) : null}
     </AgentHubListMenu>
   )
 }

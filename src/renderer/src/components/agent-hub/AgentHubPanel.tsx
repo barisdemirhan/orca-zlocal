@@ -64,6 +64,7 @@ import { useHeldAgentHubTree } from './use-held-agent-hub-tree'
 import type { AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
 import { isAgentHubTreeNarrowed, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
 import type { AgentHubWindowFilter } from './agent-hub-window-filter'
+import { useAgentHubHostFilter } from './use-agent-hub-host-filter'
 
 export type AgentHubOpenRequest = {
   target: AgentHubPaneTarget
@@ -149,6 +150,7 @@ export function AgentHubPanel({
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [query, setQuery] = useState('')
   const [windowFilter, setWindowFilter] = useState<AgentHubWindowFilter>('any')
+  const hostFilter = useAgentHubHostFilter(tree, () => setSelectedIndex(-1))
   const [collapseOverrides, setCollapseOverrides] = useState<ReadonlyMap<string, boolean>>(
     () => new Map()
   )
@@ -184,12 +186,14 @@ export function AgentHubPanel({
     tab === 'agents' ? agentTree : tree,
     query,
     treeOrder,
-    windowFilter
+    windowFilter,
+    hostFilter.rowTest
   )
   const filteredTree = useHeldAgentHubTree(
     sortedTree,
-    `${tab}\u0000${treeOrder.sortBy}\u0000${query}\u0000${windowFilter}`
+    `${tab}\u0000${treeOrder.sortBy}\u0000${query}\u0000${windowFilter}\u0000${hostFilter.value}`
   )
+  const narrowed = isAgentHubTreeNarrowed(query, windowFilter, hostFilter.value)
   const items = useMemo<HubItem[]>(() => {
     if (tab === 'inbox') {
       return lists.finished.map(threadItem)
@@ -197,13 +201,10 @@ export function AgentHubPanel({
     if (tab === 'running') {
       return visibleAgentHubRunningThreads(lists.working, lineage, expandedKeys).map(threadItem)
     }
-    return visibleAgentHubTreeRows(
-      filteredTree,
-      collapseOverrides,
-      isAgentHubTreeNarrowed(query, windowFilter),
-      expandedKeys
-    ).map(rowItem)
-  }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, query, windowFilter])
+    return visibleAgentHubTreeRows(filteredTree, collapseOverrides, narrowed, expandedKeys).map(
+      rowItem
+    )
+  }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, narrowed])
   const activeIndex = Math.min(selectedIndex, items.length - 1)
   const selectedKey = items[activeIndex]?.key ?? null
   const popoutTarget =
@@ -385,7 +386,8 @@ export function AgentHubPanel({
               onChange: (next) => {
                 setWindowFilter(next)
                 setSelectedIndex(-1)
-              }
+              },
+              host: hostFilter
             }}
             sortBy={treeOrder.sortBy}
             onSortChange={(sortBy) => {

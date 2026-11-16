@@ -113,7 +113,7 @@ export function AgentHubPopoverContent({
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       collisionPadding={{ top: 8, bottom: 32, left: 8, right: 8 }}
       surface="panel"
-      className="w-132 max-w-[calc(100vw-2rem)]"
+      className="w-152 max-w-[calc(100vw-2rem)]"
       data-agent-hub-panel
       onOpenAutoFocus={(event) => {
         // Why: the panel root owns the arrow/number keys, so it takes focus, not the first button.

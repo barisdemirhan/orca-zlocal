@@ -12,6 +12,7 @@ import { AgentHubRow } from './AgentHubRow'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
 import { AgentHubTerminalSortMenu } from './AgentHubTerminalSortMenu'
 import { AgentHubWindowFilterMenu } from './AgentHubWindowFilterMenu'
+import type { AgentHubHostFilter } from './use-agent-hub-host-filter'
 import { agentHubWindowFilterOption, type AgentHubWindowFilter } from './agent-hub-window-filter'
 import { agentHubStateWord } from './agent-hub-copy'
 import {
@@ -171,6 +172,7 @@ export function AgentHubTerminalTree({
   windowFilter?: {
     value: AgentHubWindowFilter
     onChange: (filter: AgentHubWindowFilter) => void
+    host?: Pick<AgentHubHostFilter, 'value' | 'options' | 'onChange'>
   }
   query: string
   onQueryChange: (query: string) => void
@@ -197,7 +199,7 @@ export function AgentHubTerminalTree({
     selectionListId: selectionMode ? listId : undefined,
     onToggleChildren,
     expandedKeys,
-    narrowed: isAgentHubTreeNarrowed(query, windowFilter?.value),
+    narrowed: isAgentHubTreeNarrowed(query, windowFilter?.value, windowFilter?.host?.value),
     selectedKey,
     now,
     onOpen,
@@ -239,6 +241,7 @@ export function AgentHubTerminalTree({
             <AgentHubWindowFilterMenu
               filter={windowFilter.value}
               onFilterChange={windowFilter.onChange}
+              host={windowFilter.host}
               onClosed={() => searchRef.current?.focus()}
             />
           ) : null}

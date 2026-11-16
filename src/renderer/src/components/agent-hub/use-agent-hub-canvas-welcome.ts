@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { agentHubWorkArea } from './agent-hub-floating-arrangement'
 
 // The panel's footprint when full: its fixed width and its tallest height.
-const PANEL_WIDTH = 528
+const PANEL_WIDTH = 608
 const PANEL_MAX_HEIGHT = 640
 
 export type AgentHubPopoverOffsets = { sideOffset: number; alignOffset: number }
