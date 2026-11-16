@@ -6,7 +6,7 @@ import {
 } from './terminal-pane/terminal-mount-retention-leases'
 import { useTerminalStartupActivation } from './terminal/use-terminal-startup-activation'
 import { useTerminalParkingWorkspaceChanges } from './terminal-pane/parking/use-terminal-parking-workspace-changes'
-import { getTerminalTabOwnerWorktreeId } from '@/store/terminals/ownership/terminal-tab-owner-index'
+import { addParkedStateChangedWorktreesToDirty } from './terminal-watcher-parked-state-changes'
 import { findActivityTerminalPortal } from './activity/activity-terminal-portal'
 import {
   syncParkedTerminalTabWatchersForWorkspaces,
@@ -19,7 +19,6 @@ import {
   terminalWatcherLiveWorkspaceIds
 } from './terminal-pane/parking/output-watchers/terminal-parked-watcher-registry'
 
-import { useAppStore } from '@/store'
 import type { TerminalColdActivationController } from './terminal-cold-activation'
 import { selectParkedEquivalentMountTabIds } from './terminal/startup-terminal-tab-hold'
 
@@ -151,36 +150,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
           dirty.add(portal.worktreeId)
         }
       }
-      if (previous.effectiveParkedTerminalWorktreeIds !== effectiveParkedTerminalWorktreeIds) {
-        for (const id of previous.effectiveParkedTerminalWorktreeIds) {
-          if (!effectiveParkedTerminalWorktreeIds.has(id)) {
-            dirty.add(id)
-          }
-        }
-        for (const id of effectiveParkedTerminalWorktreeIds) {
-          if (!previous.effectiveParkedTerminalWorktreeIds.has(id)) {
-            dirty.add(id)
-          }
-        }
-      }
-      if (previous.evictionExemptTerminalTabIds !== evictionExemptTerminalTabIds) {
-        const state = useAppStore.getState()
-        for (const tabId of new Set([
-          ...previous.evictionExemptTerminalTabIds,
-          ...evictionExemptTerminalTabIds
-        ])) {
-          if (
-            previous.evictionExemptTerminalTabIds.has(tabId) ===
-            evictionExemptTerminalTabIds.has(tabId)
-          ) {
-            continue
-          }
-          const id = getTerminalTabOwnerWorktreeId(state.tabsByWorktree, tabId)
-          if (id) {
-            dirty.add(id)
-          }
-        }
-      }
+      addParkedStateChangedWorktreesToDirty(dirty, previous, controller)
       if (previous.anyMountedWorktreeHasLayout !== anyMountedWorktreeHasLayout) {
         for (const id of mountedWorktreeIdsRef.current) {
           dirty.add(id)

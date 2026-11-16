@@ -17,14 +17,14 @@ import { HOOK_REQUEST_SLOWLORIS_MS } from '../../../shared/agent-hook-listener/l
 import { isHookRequestTruncatedError } from '../../../shared/agent-hook-listener/transport/agent-hook-transport-interference'
 import { clearAllListenerCaches } from '../../../shared/agent-hook-listener/listener-state'
 import { trackEmptyPaneKeyHook } from './server-transport-rules'
-import { AgentHookServerStatusHookLifecycle } from './server-status-hook-lifecycle'
+import { AgentHookServerRuntimeStateReset } from './server-runtime-state-reset'
 import { OPENCODE_STARTUP_PROMPT_CLAIM_PATH } from '../../../shared/agent-launch/startup/opencode-startup-prompt'
 import { CLAUDE_AGENT_VIEW_PATH } from '../../../shared/agent-hook-listener/providers/claude/view/claude-agent-view'
 import { ClaudeAttachHookRouter } from '../claude-attach-hook-routing'
 
 import type { HookServerStartOptions } from './server-types'
 
-export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHookLifecycle {
+export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeStateReset {
   private readonly startup = new AgentHookStartup()
   protected claudeAttachHookRouter = new ClaudeAttachHookRouter()
 
@@ -271,40 +271,7 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHook
     this.onPaneStatusCleared = null
     this.onTransportInterference = null
     this.transportInterference.reset()
-    for (const timer of this.assistantMessageRetryTimers.values()) {
-      clearTimeout(timer)
-    }
-    this.assistantMessageRetryTimers.clear()
-    this.hookSilenceRechecks.clear()
-    this.programStatusFacetRepublishes.clear()
-    this.clearAllTranscriptPolls()
-    this.claudeOwedNotificationExpiry.clearAll()
-    this.endpointDir = null
-    this.endpointFilePathCache = null
-    this.endpointFileWritten = false
-    this.setStatusFilePath(null)
-    this.closeStatusSnapshotWriter()
-    this.agentIdentities.close()
-    this.clearRuntimeStatusQueries()
-    this.hydratedAuthorityCommitments = Object.freeze([])
-    this.hydratedLaunchTokenHashByPaneKey.clear()
-    this.persistedAuthorityCommitmentsByPaneKey.clear()
-    this.revokedHydratedAuthorityCommitments = new WeakSet()
-    this.currentAuthorityObservations.clear()
-    this.promptSentDedupeByPaneKey.clear()
-    this.closedAgentStatusTabIds.clear()
-    this.closedAgentStatusPaneKeys.clear()
-    this.restartedStatusLaunchTokenHashByPaneKey.clear()
-    this.retiredPaneFencesByKey.clear()
-    this.connectionTimestampWatermarkById.clear()
-    this.evidenceObservedAtByPaneKey.clear()
-    this.programStatusFacets.clear()
-    this.activeHookTurnCompletedAtByPaneKey.clear()
-    this.legacyPaneKeyAliases.clear()
-    this.paneKeyAliasPersistenceListener = null
-    this.ownerStateInitialized = false
-    // Leave the endpoint: stale files fail open, and unlinking can race another Orca instance.
-    this.providerRowsByTab = null
+    this.resetHookRuntimeState()
     clearAllListenerCaches(this.state)
     if (!options?.keepStatus) {
       this.resetCanonicalStatus()

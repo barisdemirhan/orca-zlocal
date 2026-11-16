@@ -1,8 +1,5 @@
-import { basename, dirname, join } from 'node:path'
-
 import {
   readJsonlCursor,
-  readTranscriptDirectory,
   record,
   type JsonlCursor,
   type JsonRecord
@@ -18,6 +15,7 @@ import {
 } from './codex-subagent-reviewer'
 import type { CodexApprovalsReviewer } from './codex-subagent-reviewer'
 
+import { SAFE_THREAD_ID, resolveChildTranscript } from './codex-child-transcript-path'
 import { codexSubagentPathLabel } from './codex-agent-path'
 import {
   finishCodexSubagent,
@@ -30,7 +28,6 @@ import {
 // Why: retire a child whose rollout stays unreadable this long, else a deleted/never-written file pins a phantom row forever.
 const CHILD_UNREADABLE_GRACE_MS = 60_000
 const MAX_TRACKED_TURN_ENDS = 16
-const SAFE_THREAD_ID = /^[A-Za-z0-9-]{1,64}$/
 
 type TrackedTranscriptSubagent = JsonlCursor & {
   description?: string
@@ -53,59 +50,6 @@ export type CodexSubagentTranscriptState = {
   pendingApprovalPathsByAgentId: Map<string | undefined, string>
   /** Who resolves this turn's approvals in the parent rollout. */
   approvalsReviewer?: CodexApprovalsReviewer
-}
-
-// Why: Codex files each rollout under its OWN local start date, so a session running past midnight spawns children into a sibling day directory.
-function childDayDirectory(parentPath: string, startedAt: number): string | undefined {
-  const dayDir = dirname(parentPath)
-  const monthDir = dirname(dayDir)
-  const yearDir = dirname(monthDir)
-  if (
-    !/^\d{2}$/.test(basename(dayDir)) ||
-    !/^\d{2}$/.test(basename(monthDir)) ||
-    !/^\d{4}$/.test(basename(yearDir)) ||
-    !Number.isFinite(startedAt)
-  ) {
-    return undefined
-  }
-  const startedOn = new Date(startedAt)
-  if (Number.isNaN(startedOn.getTime())) {
-    return undefined
-  }
-  const pad = (value: number): string => String(value).padStart(2, '0')
-  return join(
-    dirname(yearDir),
-    String(startedOn.getFullYear()).padStart(4, '0'),
-    pad(startedOn.getMonth() + 1),
-    pad(startedOn.getDate())
-  )
-}
-
-function resolveChildTranscript(
-  parentPath: string,
-  threadId: string,
-  startedAt: number,
-  entriesByDirectory: Map<string, string[]>
-): string | undefined {
-  if (!SAFE_THREAD_ID.test(threadId)) {
-    return undefined
-  }
-  const suffix = `-${threadId}.jsonl`
-  const parentDir = dirname(parentPath)
-  const childDir = childDayDirectory(parentPath, startedAt)
-  const directories = childDir && childDir !== parentDir ? [parentDir, childDir] : [parentDir]
-  for (const directory of directories) {
-    let entries = entriesByDirectory.get(directory)
-    if (!entries) {
-      entries = readTranscriptDirectory(directory)
-      entriesByDirectory.set(directory, entries)
-    }
-    const fileName = entries.find((entry) => entry.endsWith(suffix))
-    if (fileName) {
-      return join(directory, fileName)
-    }
-  }
-  return undefined
 }
 
 function readActivity(recordValue: JsonRecord):

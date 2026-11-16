@@ -12,7 +12,8 @@ import {
   foldAgentLeadStatus
 } from '../../../agent-status/lifecycle/agent-lead-status-fold'
 import { createMuseSessionLogState, readMusePendingUserInput } from './muse-session-log'
-import type { HookListenerState, MusePaneState } from '../../listener-state'
+import type { HookListenerState } from '../../listener-state'
+import type { MusePaneState } from '../../provider-pane-turn-state'
 import {
   resolvePrompt,
   resolveToolState,

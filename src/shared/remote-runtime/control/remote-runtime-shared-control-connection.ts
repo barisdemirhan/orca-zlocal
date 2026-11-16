@@ -12,6 +12,7 @@ import { SharedControlReconnectScheduler } from './remote-runtime-shared-control
 import { SharedControlRetiredRequestIds } from '../requests/remote-runtime-shared-control-retired-request-ids'
 import { SharedControlReadinessTimer } from './remote-runtime-shared-control-stability'
 import * as sharedControlState from './remote-runtime-shared-control-state'
+import { rejectSharedControlOpenFailure } from './remote-runtime-shared-control-open-failure'
 import { closeSharedControlSocket, LOCAL_CLOSE } from './remote-runtime-shared-control-socket-close'
 import { SharedControlSocketGeneration } from './remote-runtime-shared-control-socket-generation'
 import { refreshRemoteRuntimeSharedControl } from './remote-runtime-shared-control-refresh'
@@ -78,10 +79,9 @@ export class RemoteRuntimeSharedControlConnection {
     })
   }
   request<TResult>(...args: Parameters<SharedControlRequests['request']>) {
-    const [method, params] = args
     return this.requests
       .request<TResult>(...args)
-      .then(retainRemoteRuntimeClientCapabilityUpdate<TResult>(this.options, method, params))
+      .then(retainRemoteRuntimeClientCapabilityUpdate<TResult>(this.options, args[0], args[1]))
   }
   subscribe<TResult>(
     method: string,
@@ -185,14 +185,11 @@ export class RemoteRuntimeSharedControlConnection {
         this.publishDiagnostics()
       }
     }).catch((error: unknown) => {
-      if (!this.socketGeneration.isCurrent(generation)) {
-        return
+      if (
+        rejectSharedControlOpenFailure(this.socketGeneration, generation, this.readyWaiters, error)
+      ) {
+        this.opening = null
       }
-      this.opening = null
-      sharedControlState.rejectSharedControlReadyWaiters(
-        this.readyWaiters,
-        error instanceof Error ? error : new Error(String(error))
-      )
     })
   }
 

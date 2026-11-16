@@ -14,7 +14,7 @@ import { NativeChatComposerField } from './editor/NativeChatComposerField'
 import { useNativeChatComposerAttachments } from '../attachments/chips/use-native-chat-composer-attachments'
 import { nativeChatComposerSendState } from './submit/native-chat-composer-send-state'
 import { useNativeChatSteerChordPreview } from './controls/use-native-chat-steer-chord-preview'
-import { useNativeChatComposerHandle } from './editor/use-native-chat-composer-handle'
+import { useNativeChatComposerPasteIntake } from './editor/use-native-chat-composer-paste-intake'
 import { useNativeChatFileDrops } from '../attachments/intake/use-native-chat-file-drops'
 import { useNativeChatComposerKeyDown } from './editor/use-native-chat-composer-keydown'
 import { useNativeChatSendLifecycle } from '../session/terminal/send/use-native-chat-send-lifecycle'
@@ -177,35 +177,23 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
 
     const localHandle = useRef<C.NativeChatComposerHandle>(null)
     const root = useRef<HTMLDivElement>(null)
-    const handlePasteEvent = useNativeChatComposerHandle(localHandle, {
+    const handlePasteEvent = useNativeChatComposerPasteIntake({
+      handleRef: localHandle,
       resend: (text, imagePaths) => !structuredTransport && sendPty({ text, imagePaths }),
-      attachmentScopeKey: draftScopeKey,
+      draftScopeKey,
+      paneKey,
+      targetPtyId,
+      structuredTransport,
       textareaRef,
       isComposing: imeEnterGesture.isComposing,
       caret,
       setDraft,
       setCaret,
       setActiveSuggestion,
-      targetKey: JSON.stringify([
-        paneKey,
-        targetPtyId,
-        structuredTransport?.sessionId,
-        structuredTransport?.worktreeId,
-        structuredTransport?.runtimeEnvironmentId
-      ]),
       agent,
       disabled,
-      resolveAttachmentOwner: fileDrops.resolveAttachmentOwner,
-      attachResolvedPaths,
-      attachCopiedFiles: fileDrops.attachExternalPaths,
-      captureCopiedFiles: fileDrops.captureCopiedFiles,
-      captureExternalPaths: fileDrops.captureExternalPaths,
-      beginPendingImageAttachment: attachments.beginPendingImageAttachment,
-      // Settles into the scope cache, which outlives a composer a prompt card unmounted.
-      resolvePendingImageAttachment: attachments.pendingChips.resolve,
-      revealPendingImageAttachment: attachments.revealPendingImageAttachment,
-      dropPendingImageAttachment: attachments.dropPendingImageAttachment,
-      pastedTextEditor: structuredTransport ? attachments.scopeEditor : null,
+      fileDrops,
+      attachments,
       setNotice
     })
 

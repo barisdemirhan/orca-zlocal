@@ -2,6 +2,7 @@ import * as z from 'zod'
 import { TERMINAL_KITTY_FILE_MAX_BYTES } from '../../terminal/images/terminal-kitty-file'
 import { OptionalFiniteNumber, OptionalString, requiredString } from '../rpc-param-primitives'
 import { isTuiAgent } from '../../agent-launch/catalog/tui-agent-config'
+import { TerminalSurfaceCloseCapture } from './terminal-surface-close-capture'
 import { SpawnIntentParam } from './agent-session-params'
 import {
   canonicalizeWindowsShellOverride,
@@ -20,28 +21,6 @@ export const WindowsShellOverrideParam = z
   })
   // Canonicalize host-side to the .exe spellings exact-matched by spawn, even if the client did not.
   .transform((shell) => canonicalizeWindowsShellOverride(shell) ?? shell)
-
-const TerminalSurfaceCloseIdentity = z.object({
-  worktreeId: requiredString('Missing worktree id'),
-  tabId: requiredString('Missing tab id'),
-  leafId: requiredString('Missing leaf id'),
-  createdAt: z.number().finite().nullable(),
-  generation: z.number().int().nonnegative(),
-  hasLeaf: z.boolean(),
-  ptyId: z.string().nullable(),
-  incarnationId: z.string().nullable()
-})
-const TerminalSurfaceCloseCapture = z.object({
-  identity: TerminalSurfaceCloseIdentity,
-  holders: z
-    .array(
-      z.object({
-        hostId: OptionalExecutionHostId.unwrap(),
-        identity: TerminalSurfaceCloseIdentity.nullable()
-      })
-    )
-    .max(64)
-})
 
 export const TerminalHandle = z.object({
   terminal: requiredString('Missing terminal handle'),

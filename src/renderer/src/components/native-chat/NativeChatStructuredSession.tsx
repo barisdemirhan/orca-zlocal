@@ -3,7 +3,6 @@ import {
   NativeChatCrewFrame,
   NativeChatCrewPanel
 } from '@/components/orchestration-crew/NativeChatCrewPanel'
-import { NativeChatUsageLimitActionsProvider } from '@/components/native-chat/usage/NativeChatUsageLimitActions'
 import { useNativeChatHandOff } from '@/components/native-chat/pane/actions/use-native-chat-hand-off'
 import { cn } from '@/lib/class-names'
 import { NATIVE_CHAT_APPEARANCE_ROOT_CLASS } from '@/components/native-chat/appearance/native-chat-appearance-style'
@@ -16,12 +15,7 @@ import { NativeChatComposer } from '@/components/native-chat/composer/NativeChat
 import type { NativeChatComposerHandle } from '@/components/native-chat/composer/native-chat-composer-types'
 import type { NativeChatOptionPickerRequest } from '@/components/native-chat/session/options/controls/native-chat-option-picker-request'
 import { structuredAgentSessionDraftScopeKey } from '@/components/native-chat/drafts/native-chat-draft-scope'
-import { NativeChatEmptyState } from '@/components/native-chat/host-access/NativeChatEmptyState'
-import { NativeChatEmptyPane } from '@/components/native-chat/host-access/NativeChatEmptyPane'
-import { NativeChatLoadingCue } from '@/components/native-chat/host-access/NativeChatLoadingCue'
-import { NativeChatSubagentTranscripts } from '@/components/native-chat/subagents/NativeChatSubagentTranscripts'
 import { useStructuredNativeChatSubagents } from '@/components/native-chat/subagents/use-structured-native-chat-subagents'
-import { NativeChatContextClearFade } from '@/components/native-chat/conversation/projection/NativeChatContextClearFade'
 import { useStructuredNativeChatSubmitReveal } from '@/components/native-chat/pane/actions/use-structured-native-chat-submit-reveal'
 import { useStructuredPromptResponseHold } from '@/components/native-chat/prompts/use-structured-prompt-response-hold'
 import { nativeChatStructuredAsyncQuestion } from '@/components/native-chat/prompts/NativeChatStructuredAsyncQuestion'
@@ -32,7 +26,6 @@ import {
 import { useNativeChatRootInputRouting } from '@/components/native-chat/composer/focus/use-native-chat-root-input-routing'
 import { useNativeChatFontSize } from '@/components/native-chat/appearance/use-native-chat-font-size'
 import { useNativeChatFind } from '@/components/native-chat/viewport/find/use-native-chat-find'
-import { NativeChatFindBar } from '@/components/native-chat/viewport/find/NativeChatFindBar'
 import { nativeChatQueueFollowUps } from '../../../../shared/native-chat/input/composer/native-chat-follow-up-behavior'
 import { LinkActionPopover } from '@/components/link-actions/LinkActionPopover'
 import { useNativeChatLinkActions } from '@/components/native-chat/links/actions/use-native-chat-link-actions'
@@ -54,7 +47,6 @@ import { useNativeChatComposerError } from '@/components/native-chat/composer/co
 import { useNativeChatProvisionalLaunch } from '@/components/native-chat/host-access/use-native-chat-provisional-launch'
 import { useStructuredAgentSessionHostExecution } from '@/components/native-chat/session/status/structured-agent-session-status-hooks'
 import { useNativeChatRewindHost } from '@/components/native-chat/messages/actions/use-native-chat-rewind-host'
-import { NativeChatRowActionsProvider } from '@/components/native-chat/messages/actions/NativeChatRowActionsProvider'
 import { useNativeChatPaneFork } from '@/components/native-chat/messages/actions/use-native-chat-fork'
 import { NativeChatQueuedMessageList } from '@/components/native-chat/queue/NativeChatQueuedMessageList'
 import {
@@ -74,13 +66,12 @@ import { useNativeChatHostOutageNotice } from '@/components/native-chat/host-acc
 import { useNativeChatHostSendGate } from '@/components/native-chat/host-access/use-native-chat-host-send-gate'
 import { useStructuredAgentSessionStartFailureFacts } from '@/components/native-chat/messages/notices/use-structured-agent-session-start-failure-facts'
 import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-session/agent-session-approval-subject'
+import { NativeChatStructuredHistoryView } from './NativeChatStructuredHistoryView'
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { AgentHubOrbComposerState } from '../agent-hub/AgentHubOrbComposerState'
-import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
 import {
   NativeChatPartyWorkerApprovalStack,
-  NativeChatWorkerApprovalTimeline,
   nativeChatWorkerApprovalParty
 } from '@/components/native-chat/worker-approvals/NativeChatWorkerApprovals'
 
@@ -285,68 +276,27 @@ export function NativeChatStructuredSession(
       <NativeChatCrewFrame
         panel={<NativeChatCrewPanel {...props} composerRef={composerRef} canMention={canMention} />}
       >
-        <NativeChatContextClearFade
-          // A read failure stays in view: no divider may come to end the fade.
-          clearing={controller.contextClear.clearing && viewState.kind !== 'error'}
-          overlay={
-            find.isOpen ? <NativeChatFindBar find={find} isVisible={props.isVisible} /> : null
-          }
-        >
-          {viewState.kind === 'loading' || (viewState.kind === 'error' && !readFailure) ? (
-            historyPhase !== 'unread' && <NativeChatLoadingCue />
-          ) : viewState.kind === 'error' ? (
-            <NativeChatEmptyState
-              kind="error"
-              retrying={!readFailure?.final}
-              {...(readFailure?.named ? { headline: readFailure.text } : {})}
-            />
-          ) : viewState.kind === 'empty' ? (
-            <NativeChatEmptyPane slot={install.slot} agent={props.agent} />
-          ) : (
-            <NativeChatRowActionsProvider pane={props} chat={controller} forks={forks}>
-              <NativeChatUsageLimitActionsProvider
-                recovery={controller}
-                pane={props}
-                directory={fileLinkContext}
-                messages={controller.messages}
-                view={continuation.view}
-              >
-                <NativeChatHostSetupContext.Provider value={setup}>
-                  <NativeChatWorkerApprovalTimeline party={workerApprovalParty}>
-                    {(timedRows) => (
-                      <NativeChatSubagentTranscripts
-                        find={find}
-                        // A rewind or a /clear replaces the conversation; nothing the old one held carries over.
-                        key={`${controller.epoch}:${controller.contextClear.clears}`}
-                        paneKey={paneKey}
-                        ref={submits.messageListRef}
-                        session={session}
-                        journalItems={controller.journalItems}
-                        journalSubmissions={controller.submissions}
-                        journalLatestTurn={controller.latestTurn}
-                        journalHostWork={controller.hostWork}
-                        subagentRoster={controller.subagentRoster}
-                        railOutline={controller.railOutline}
-                        isVisible={props.isVisible}
-                        isWorking={controller.isWorking}
-                        expandSignal={false}
-                        workingStartedAt={controller.workingStartedAt}
-                        settledTurns={controller.settledTurns}
-                        awaitingInput={prompt === null ? null : 'shown'}
-                        turnActivity={controller.turnActivity}
-                        stopping={stopControls.stopping}
-                        structuredAttachments
-                        runtimeContext={imageRuntimeContext}
-                        deliveryNotices={deliveryNotices}
-                        timedRows={timedRows}
-                      />
-                    )}
-                  </NativeChatWorkerApprovalTimeline>
-                </NativeChatHostSetupContext.Provider>
-              </NativeChatUsageLimitActionsProvider>
-            </NativeChatRowActionsProvider>
-          )}
-        </NativeChatContextClearFade>
+        <NativeChatStructuredHistoryView
+          pane={props}
+          paneKey={paneKey}
+          viewState={viewState}
+          readFailure={readFailure}
+          historyPhase={historyPhase}
+          install={install}
+          controller={controller}
+          forks={forks}
+          fileLinkContext={fileLinkContext}
+          continuationView={continuation.view}
+          setup={setup}
+          workerApprovalParty={workerApprovalParty}
+          find={find}
+          submits={submits}
+          session={session}
+          awaitingInput={prompt !== null}
+          stopping={stopControls.stopping}
+          deliveryNotices={deliveryNotices}
+          runtimeContext={imageRuntimeContext}
+        />
       </NativeChatCrewFrame>
       {readFailure?.final ? null : (
         <>

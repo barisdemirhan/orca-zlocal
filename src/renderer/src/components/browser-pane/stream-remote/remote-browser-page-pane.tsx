@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/index'
 import '../../../../../shared/remote-runtime/protocol/protocol-version'
-import { BROWSER_CERTIFICATE_TRUST_RUNTIME_CAPABILITY } from '../../../../../shared/browser/runtime/browser-runtime-capabilities'
 import type { BrowserPage as BrowserPageState } from '../../../../../shared/browser/workspaces/browser-workspace-types'
-import { runtimeEnvironmentSupportsCapability } from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import '@/lib/browser/documents/file-preview'
 import { convertBrowserPageToWorkspaceDoc } from '@/lib/browser/documents/file-preview-page-conversion'
 import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'
@@ -24,6 +22,7 @@ import type {
   BrowserPageStateWriter
 } from '../describe-page/browser-page-types'
 import type { RemoteBrowserPaneNotice } from './remote-browser-page-input-model'
+import { useRemoteCertificateTrustSupport } from './use-remote-certificate-trust-support'
 import { useRemoteBrowserPageLifecycle } from './use-remote-browser-page-lifecycle'
 import { useRemoteBrowserPageStream } from './use-remote-browser-page-stream'
 import { useRemoteBrowserPageNavigation } from './use-remote-browser-page-navigation'
@@ -91,33 +90,10 @@ export function RemoteBrowserPagePane({
   )
   const stagedPage = remotePageHandle?.staged === true
 
-  // Why: runtimes predating browser.certificate-trust.v1 can't honor a proceed request, so hide "Proceed Anyway" until support is advertised.
-  const [remoteCertificateTrustSupported, setRemoteCertificateTrustSupported] = useState(false)
-  const certificateChallengeId = certificateFailure?.challengeId ?? null
-  useEffect(() => {
-    if (!remotePageHandle?.environmentId || !certificateChallengeId) {
-      setRemoteCertificateTrustSupported(false)
-      return
-    }
-    let cancelled = false
-    void runtimeEnvironmentSupportsCapability(
-      remotePageHandle?.environmentId,
-      BROWSER_CERTIFICATE_TRUST_RUNTIME_CAPABILITY
-    )
-      .then((supported) => {
-        if (!cancelled) {
-          setRemoteCertificateTrustSupported(supported)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setRemoteCertificateTrustSupported(false)
-        }
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [remotePageHandle?.environmentId, certificateChallengeId])
+  const remoteCertificateTrustSupported = useRemoteCertificateTrustSupport(
+    remotePageHandle?.environmentId,
+    certificateFailure?.challengeId ?? null
+  )
 
   const {
     enqueueRemoteInput,
