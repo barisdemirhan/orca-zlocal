@@ -1,7 +1,6 @@
 import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
 import type { AgentHubOrbSession } from '../../../shared/agent-hub-orb'
 import type { normalizeAgentHubOrbSettings } from '../../../shared/agent-hub-orb-settings'
-import { projectStructuredAgentSessionStatus } from '../../../shared/agent-session/view/structured-agent-session-projection'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { AgentHubLedger } from '../../runtime/agent-hub/agent-hub-ledger'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
@@ -70,8 +69,8 @@ export async function requireIdleAgentHubOrbSession(
   hub: Pick<AgentHubLedger, 'snapshot'>,
   sessionId: string
 ): Promise<void> {
-  const snapshot = await host.journalSnapshot(sessionId)
   const fence = host.deps.store.getRecord(sessionId)?.lease.runtimeFence
+  const { summary } = await (await host.attentionReads.journal(sessionId)).statusState(fence)
   const pendingAsk = hub
     .snapshot()
     .requests.some(
@@ -80,10 +79,7 @@ export async function requireIdleAgentHubOrbSession(
         request.caller.kind === 'orb' &&
         request.caller.sessionId === sessionId
     )
-  if (
-    pendingAsk ||
-    projectStructuredAgentSessionStatus(snapshot.items, snapshot.submissions, fence) !== 'idle'
-  ) {
+  if (pendingAsk || (summary.status ?? 'idle') !== 'idle') {
     throw new AgentHubError(
       'invalid_argument',
       'Orb is still using its current agent, model, and permissions while work or a question is pending. Finish or stop its work and answer pending questions, then reopen Orb to apply the saved settings.'

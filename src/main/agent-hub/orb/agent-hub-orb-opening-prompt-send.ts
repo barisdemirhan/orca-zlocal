@@ -31,9 +31,9 @@ export async function sendAgentHubOrbOpeningPrompt(args: {
   } catch (error) {
     // Settlement can fail after append; reconcile the journal before reporting a failure.
     try {
-      const committed = (await args.host.journalSnapshot(args.sessionId)).submissions.find(
-        (submission) => submission.clientMessageId === clientMessageId
-      )
+      const committed = await (
+        await args.host.attentionReads.journal(args.sessionId)
+      ).submission(clientMessageId)
       if (committed) {
         return clientMessageId
       }

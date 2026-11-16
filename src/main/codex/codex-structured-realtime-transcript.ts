@@ -8,7 +8,6 @@ import {
   type AgentJournalMessageItem
 } from '../../shared/agent-session/journal/agent-session-journal-types'
 import type { AgentJournalItemIdentity } from '../../shared/agent-session/journal/agent-session-journal-identity'
-import { agentJournalItemKey } from '../../shared/agent-session/journal/agent-session-journal-item-key'
 import { estimateStructuredAgentSessionItemBytes } from '../native-chat/agent-session-wire/journal-ingress/structured-agent-session-event-sink-estimate'
 import { CodexRealtimeTranscriptSchema } from './codex-structured-realtime-items'
 import type { CodexStructuredSessionEvent } from './structured/session-lifecycle/codex-structured-session-state'
@@ -44,10 +43,9 @@ export function appendCodexRealtimeTranscript(
   } satisfies AgentJournalMessageItem
   const options = { turnScope: AGENT_JOURNAL_THREAD_SCOPE }
   if (sink.tryReviseResolvedItemAndPublish) {
-    const itemId = agentJournalItemKey(identity)
     return sink.tryReviseResolvedItemAndPublish(
       estimateStructuredAgentSessionItemBytes(identity, body),
-      (journal) => (journal.itemBody(itemId) ? null : { identity, body }),
+      { kind: 'text-snapshot', identity, body },
       options
     )
   }

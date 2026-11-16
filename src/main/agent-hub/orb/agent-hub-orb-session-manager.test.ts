@@ -5,6 +5,7 @@ import {
   AgentHubOrbSessionManager,
   createAgentHubOrbSessionManager
 } from './agent-hub-orb-session-manager'
+import { readTestHostJournal } from '../../native-chat/agent-session-journal/journal-observation.test-support'
 import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host.test-fixture'
 import {
   HOST_TEST_NOW,
@@ -369,7 +370,7 @@ describe('Orb conversations on the structured host', () => {
     await manager.close()
     vi.mocked(Date.now).mockReturnValue(HOST_TEST_NOW)
     const second = await manager.open({ model: 'model-2' })
-    const read = vi.spyOn(state.host, 'journalSnapshot')
+    const read = vi.spyOn(state.host.attentionReads, 'journal')
     const entries = await manager.list(1)
     expect(read).toHaveBeenCalledExactlyOnceWith(first.sessionId)
     expect(entries[0].sessionId).toBe(first.sessionId)
@@ -377,30 +378,6 @@ describe('Orb conversations on the structured host', () => {
     expect((await manager.list()).map((entry) => entry.sessionId)).toEqual([
       first.sessionId,
       second.sessionId
-    ])
-  })
-  it('reads long journals without passing every timestamp as a function argument', async () => {
-    const current = await manager.open()
-    await state.host.send(
-      { callerKey: 'desktop' },
-      structuredAgentSessionMessageSendMutation({
-        sessionId: current.sessionId,
-        clientOperationId: createStructuredAgentSessionOperationId(randomUUID),
-        expectedRuntimeFence: state.store.getRecord(current.sessionId)?.lease.runtimeFence ?? 1,
-        body: structuredAgentSessionSendBody('Long journal', [])
-      })
-    )
-    const snapshot = await state.host.journalSnapshot(current.sessionId)
-    const item = snapshot.items[0]
-    if (!item) {
-      throw new Error('Expected the sent message in the journal')
-    }
-    vi.spyOn(state.host, 'journalSnapshot').mockResolvedValue({
-      ...snapshot,
-      items: Array.from({ length: 150_000 }, () => ({ ...item, observedAt: HOST_TEST_NOW + 1 }))
-    })
-    expect(await manager.list(1)).toMatchObject([
-      { sessionId: current.sessionId, lastActiveAt: HOST_TEST_NOW + 1 }
     ])
   })
   it('runs in the Orb folder whatever the saved Orb or floating folders say', async () => {
@@ -428,7 +405,7 @@ describe('Orb conversations on the structured host', () => {
       )
     }
     expect(agentHubOrbInstructionsMarkdown()).toContain(AGENT_HUB_ORB_OPENING_PROMPT)
-    const snapshot = await state.host.journalSnapshot(opened.sessionId)
+    const snapshot = await readTestHostJournal(state.host, opened.sessionId)
     expect(snapshot.submissions).toHaveLength(0)
     expect(snapshot.items).toHaveLength(0)
   })
@@ -448,7 +425,7 @@ describe('Orb conversations on the structured host', () => {
     expect(settings.agentHubOrbCwd).toBe(chosen)
     expect(state.store.getRecord(opened.sessionId)?.launchDirectory).toBe(chosen)
     // Why: outside the Orb folder no instruction file is read, so the prompt is the first message.
-    const snapshot = await state.host.journalSnapshot(opened.sessionId)
+    const snapshot = await readTestHostJournal(state.host, opened.sessionId)
     expect(snapshot.submissions).toHaveLength(1)
     expect(JSON.stringify(snapshot.items)).toContain(AGENT_HUB_ORB_OPENING_PROMPT)
   })
@@ -466,7 +443,7 @@ describe('Orb conversations on the structured host', () => {
       permissionMode: 'auto'
     })
     expect(records[0]?.options).toBeUndefined()
-    const snapshot = await state.host.journalSnapshot(first.sessionId)
+    const snapshot = await readTestHostJournal(state.host, first.sessionId)
     expect(snapshot.submissions).toHaveLength(0)
     const reopened = await openTestAgentSessionRecordStore(state.root)
     expect(reopened.getRecord(first.sessionId)?.origin).toBe('agent-hub-orb')
@@ -548,7 +525,7 @@ describe('Orb conversations on the structured host', () => {
         body: structuredAgentSessionSendBody('Earlier Orb question', [])
       })
     )
-    const before = await state.host.journalSnapshot(previous.sessionId)
+    const before = await readTestHostJournal(state.host, previous.sessionId)
     await state.host.setSessionTabVisibility(previous.sessionId, false)
     await state.host.close(previous.sessionId, 'user-close')
     const resumed = await manager.open({ resume: { sessionId: previous.sessionId } })
@@ -559,7 +536,7 @@ describe('Orb conversations on the structured host', () => {
       origin: 'agent-hub-orb',
       options: { model: 'previous-model' }
     })
-    const snapshot = await state.host.journalSnapshot(resumed.sessionId)
+    const snapshot = await readTestHostJournal(state.host, resumed.sessionId)
     expect(JSON.stringify(snapshot.items)).toContain('Earlier Orb question')
     expect(snapshot.submissions).toHaveLength(before.submissions.length)
     expect(manager.current()).toEqual(resumed)
@@ -576,7 +553,7 @@ describe('Orb conversations on the structured host', () => {
     await expect(manager.open()).resolves.toMatchObject({
       sessionId: state.store.listRecords()[0].sessionId
     })
-    const snapshot = await state.host.journalSnapshot(state.store.listRecords()[0].sessionId)
+    const snapshot = await readTestHostJournal(state.host, state.store.listRecords()[0].sessionId)
     expect(snapshot.submissions).toHaveLength(1)
     expect(JSON.stringify(snapshot.items)).toContain(AGENT_HUB_ORB_OPENING_PROMPT)
   })
@@ -666,6 +643,6 @@ describe('Orb conversations on the structured host', () => {
     expect(attach).toHaveBeenCalledOnce()
     expect(state.store.listRecords()).toHaveLength(1)
     expect(state.host.getSessionTabId(current.sessionId)).toBe(current.tabId)
-    expect((await state.host.journalSnapshot(current.sessionId)).submissions).toHaveLength(0)
+    expect((await readTestHostJournal(state.host, current.sessionId)).submissions).toHaveLength(0)
   })
 })

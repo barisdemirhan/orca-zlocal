@@ -10,6 +10,7 @@ import {
 import { computeAgentSessionPayloadFingerprint } from '../../../shared/agent-session/lifecycle/operations/agent-session-mutation-envelope'
 import { codexProviderHandle } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session/journal/agent-session-journal-types'
+import { readTestHostJournal } from '../agent-session-journal/journal-observation.test-support'
 import { claudeAndCodexAgents } from './providers/testing/structured-agent-session-adapter-router.test-fixture'
 import type { StructuredAgentSessionAdapter } from './providers/structured-agent-session-adapter'
 import type { StructuredAgentSessionVoiceAdapter } from './structured-agent-session-voice-adapter'
@@ -212,7 +213,7 @@ describe('voice at the structured host mutation boundary', () => {
     expect((await rig.host.voice.start(CALLER, start)).ok).toBe(true)
     expect((await rig.host.voice.stop(CALLER, stopParams())).ok).toBe(true)
     expect(cancelTurn).not.toHaveBeenCalled()
-    const snapshot = await rig.host.journalSnapshot(SESSION)
+    const snapshot = await readTestHostJournal(rig.host, SESSION)
     expect(snapshot.submissions).toHaveLength(0)
     expect(snapshot.items.find((item) => item.body.kind === 'approval')?.body).toMatchObject({
       resolution: { state: 'pending' }

@@ -18,31 +18,21 @@ export async function listAgentHubOrbConversations(
     if (!isStructuredAgentId(record.provider)) {
       continue
     }
-    const snapshot = await host.journalSnapshot(record.sessionId)
-    let lastActiveAt = record.updatedAt
-    for (const item of snapshot.items) {
-      lastActiveAt = Math.max(lastActiveAt, item.observedAt)
-    }
-    const messages = snapshot.items.flatMap((item) => {
-      if (item.body.kind !== 'message') {
-        return []
-      }
-      const text = item.body.blocks
-        .flatMap((block) => (block.type === 'text' ? [block.text] : []))
-        .join(' ')
-        .trim()
-      return [{ role: item.body.role, text }]
-    })
-    const firstUser = messages.find(
-      (message) => message.role === 'user' && message.text && !isOrbOpeningText(message.text)
+    const [reads, outline] = await Promise.all([
+      host.attentionReads.journal(record.sessionId),
+      host.conversationOutline(record.sessionId)
+    ])
+    const lastActiveAt = Math.max(record.updatedAt, await reads.lastActivityAt())
+    const firstUser = outline.entries.find(
+      (entry) => entry.preview && !isOrbOpeningText(entry.preview)
     )
-    const lastReply = messages.findLast((message) => message.role === 'assistant')?.text
+    const lastReply = outline.entries.findLast((entry) => entry.reply)?.reply
     conversations.push({
       sessionId: record.sessionId,
       agent: record.provider,
       ...(record.options?.model ? { model: record.options.model } : {}),
       // Empty means untitled; the renderer shows a translated placeholder.
-      title: (record.conversationName || firstUser?.text || '').slice(0, 120),
+      title: (record.conversationName || firstUser?.preview || '').slice(0, 120),
       startedAt: record.createdAt,
       lastActiveAt,
       ...(lastReply ? { lastReply: lastReply.slice(0, 240) } : {})

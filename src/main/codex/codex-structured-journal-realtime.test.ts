@@ -12,6 +12,10 @@ import {
 } from '../native-chat/agent-session-journal/store-lifecycle/journal-host-database-test-support'
 import { createDeferredStructuredAgentSessionEventSink } from '../native-chat/agent-session-wire/journal-ingress/structured-agent-session-event-sink'
 import { testEventSinkLogging } from '../native-chat/agent-session-wire/host/testing/structured-agent-session-logger.test-fixture'
+import {
+  readTestJournalItems,
+  readTestJournalSnapshot
+} from '../native-chat/agent-session-journal/journal-observation.test-support'
 import { createCodexJournalTranslator } from './structured/journal/codex-structured-journal-translation'
 import type { CodexTimelineEntry } from './codex-structured-realtime-timeline'
 
@@ -57,7 +61,6 @@ async function conversation() {
     now: () => 1_000
   } satisfies TestJournalOptions
   let journal = await journals.open(options)
-  const initialCursor = journal.cursor()
   const deferred = createDeferredStructuredAgentSessionEventSink(testEventSinkLogging(SESSION))
   deferred.bind({ journal, fence: 1, publish: () => {} })
   let translator = createCodexJournalTranslator({
@@ -89,11 +92,11 @@ async function conversation() {
     },
     snapshot: async () => {
       expect(await deferred.drained()).toEqual({ ok: true })
-      return journal.snapshot()
+      return readTestJournalSnapshot(journal)
     },
     rows: async () => {
       expect(await deferred.drained()).toEqual({ ok: true })
-      return journal.readSince(initialCursor)
+      return readTestJournalItems(journal)
     },
     reopen: async () => {
       translator.dispose()
@@ -269,12 +272,8 @@ describe('Codex canonical spoken messages in the real journal', () => {
       item: { ...USER_FINAL, sdp: 'private-sdp', audio: 'private-pcm', partial: 'private-draft' }
     })
     const written = await chat.rows()
-    expect(written.ok).toBe(true)
-    if (!written.ok) {
-      throw new Error('Journal rows could not be read')
-    }
-    expect(written.rows).toHaveLength(1)
-    const saved = JSON.stringify([written.rows, await chat.snapshot()])
+    expect(written).toHaveLength(1)
+    const saved = JSON.stringify([written, await chat.snapshot()])
     expect(saved).toContain('List the current changes.')
     for (const privateValue of [
       'private-sdp',

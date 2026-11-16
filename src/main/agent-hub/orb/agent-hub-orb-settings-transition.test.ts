@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { AgentHubOrbSessionManager } from './agent-hub-orb-session-manager'
+import { readTestHostJournal } from '../../native-chat/agent-session-journal/journal-observation.test-support'
 import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host.test-fixture'
 import { setStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import { OrcaRuntimeService } from '../../runtime/orca-runtime'
@@ -110,7 +111,7 @@ afterEach(async () => {
 })
 
 async function settle(sessionId: string): Promise<void> {
-  const snapshot = await state.host.journalSnapshot(sessionId)
+  const snapshot = await readTestHostJournal(state.host, sessionId)
   for (const submission of snapshot.submissions) {
     await state.host.waitForSendSettlement(sessionId, submission.clientMessageId)
   }

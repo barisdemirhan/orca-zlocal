@@ -137,8 +137,8 @@ export async function ensureAgentHubOrbOpeningPrompt(
   if (isAgentHubOrbDirectory(record.launchDirectory, orbDirectory)) {
     return
   }
-  const snapshot = await host.journalSnapshot(sessionId)
-  if (snapshot.items.length > 0 || snapshot.submissions.length > 0) {
+  const reads = await host.attentionReads.journal(sessionId)
+  if ((await reads.hasItems()) || (await reads.pendingSubmissions()).length > 0) {
     return
   }
   const committed = await sendAgentHubOrbOpeningPrompt({
