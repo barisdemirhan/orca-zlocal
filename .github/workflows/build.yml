@@ -69,6 +69,13 @@ jobs:
           # The changed-code-quality step diffs against the upstream release.
           fetch-depth: 0
           persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ci-tools
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+      - name: Move the comparison script out of the tree
+        run: mv ci-tools/.github/scripts/compare-with-base.sh "$RUNNER_TEMP/" && rm -rf ci-tools
       - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
         with:
           install: false
@@ -81,9 +88,14 @@ jobs:
             mobile/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm --dir mobile install --frozen-lockfile
-      - run: pnpm lint
+      - name: Lint, failing only on findings the upstream release does not have
         env:
           ORCA_CODE_QUALITY_BASE: ${{ inputs.base }}
+          BASE: ${{ inputs.base }}
+        run: |
+          set -o pipefail
+          if pnpm lint 2>&1 | tee "$RUNNER_TEMP/lint.log"; then exit 0; fi
+          "$RUNNER_TEMP/compare-with-base.sh" lint "$RUNNER_TEMP/lint.log"
 
   test:
     needs: vet
@@ -100,6 +112,13 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ci-tools
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+      - name: Move the comparison script out of the tree
+        run: mv ci-tools/.github/scripts/compare-with-base.sh "$RUNNER_TEMP/" && rm -rf ci-tools
       - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
         with:
           install: false
@@ -113,11 +132,14 @@ jobs:
         env:
           ORCA_BACKGROUND_LAUNCH: '1'
           SHARD: ${{ matrix.shard }}
+          BASE: ${{ inputs.base }}
         run: |
+          set -o pipefail
           node config/scripts/workspace-package-build/build-workspace-packages.mjs
           node config/scripts/native-build/node-addons/ensure-native-runtime.mjs --runtime=node
-          node config/scripts/test-runtime/execution-policy/run-vitest.mjs run --config config/vitest.config.ts \
-            --shard="$SHARD/4" --maxWorkers=4
+          if node config/scripts/test-runtime/execution-policy/run-vitest.mjs run --config config/vitest.config.ts \
+            --shard="$SHARD/4" --maxWorkers=4 2>&1 | tee "$RUNNER_TEMP/vitest.log"; then exit 0; fi
+          "$RUNNER_TEMP/compare-with-base.sh" tests "$RUNNER_TEMP/vitest.log"
 
   javascript:
     needs: vet
@@ -151,17 +173,17 @@ jobs:
           REF: ${{ inputs.ref }}
         run: |
           [ "$(git rev-parse HEAD)" = "$REF" ]
-          mkdir -p .ci-out
-          tar -czf .ci-out/orca-javascript.tar.gz out
+          mkdir -p ci-out
+          tar -czf ci-out/orca-javascript.tar.gz out
           printf '{"kind":"javascript","source":"%s","sha256":"%s"}\n' "$REF" \
-            "$(sha256sum .ci-out/orca-javascript.tar.gz | cut -d' ' -f1)" > .ci-out/orca-javascript.json
+            "$(sha256sum ci-out/orca-javascript.tar.gz | cut -d' ' -f1)" > ci-out/orca-javascript.json
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: .ci-out/orca-javascript.*
+          subject-path: ci-out/orca-javascript.*
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: orca-javascript
-          path: .ci-out/
+          path: ci-out/
           retention-days: 1
           if-no-files-found: error
 
@@ -190,21 +212,21 @@ jobs:
           REF: ${{ inputs.ref }}
         run: |
           [ "$(git rev-parse HEAD)" = "$REF" ]
-          mkdir -p .ci-out
-          tar -czf .ci-out/orca-mac-helpers.tar.gz \
+          mkdir -p ci-out
+          tar -czf ci-out/orca-mac-helpers.tar.gz \
             "native/computer-use-macos/.build/release/Orca Computer Use.app" \
             native/computer-use-macos/.build/release/orca-computer-use-macos \
             native/notification-status-macos/.build/release/orca-notification-status \
             native/keyboard-layout-macos/.build/release/orca-keyboard-layout \
             native/process-footprint-macos/.build/release/orca-process-footprint
           printf '{"kind":"mac-helpers","source":"%s","sha256":"%s"}\n' "$REF" \
-            "$(shasum -a 256 .ci-out/orca-mac-helpers.tar.gz | cut -d' ' -f1)" > .ci-out/orca-mac-helpers.json
+            "$(shasum -a 256 ci-out/orca-mac-helpers.tar.gz | cut -d' ' -f1)" > ci-out/orca-mac-helpers.json
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: .ci-out/orca-mac-helpers.*
+          subject-path: ci-out/orca-mac-helpers.*
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: orca-mac-helpers
-          path: .ci-out/
+          path: ci-out/
           retention-days: 1
           if-no-files-found: error
