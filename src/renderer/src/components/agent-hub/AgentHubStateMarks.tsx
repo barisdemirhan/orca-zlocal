@@ -1,4 +1,4 @@
-import { SquareTerminal } from 'lucide-react'
+import { Moon, SquareTerminal } from 'lucide-react'
 import { AgentIcon } from '@/components/agent/icons/AgentIcon'
 import { agentTypeToIconAgent } from '../../../../shared/agent-status/presentation/agent-type-icon-agent'
 import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
@@ -23,10 +23,13 @@ export function HubStateIndicator({ kind }: { kind: AgentHubIndicatorKind }): Re
 /** 26px agent badge with the state dot on its corner; shells get a quiet terminal glyph. */
 export function HubAvatar({
   agentType,
-  kind
+  kind,
+  sleeping = false
 }: {
   agentType: AgentType | null
   kind: AgentHubIndicatorKind | null
+  /** A slept session: the badge dims and a moon replaces the state dot. */
+  sleeping?: boolean
 }): React.JSX.Element {
   const agent = agentTypeToIconAgent(agentType)
   return (
@@ -34,8 +37,20 @@ export function HubAvatar({
       data-shell={agent === null}
       className="relative grid size-6.5 shrink-0 place-items-center rounded-lg bg-foreground/[0.07] text-muted-foreground data-[shell=true]:bg-foreground/[0.03]"
     >
-      {agent ? <AgentIcon agent={agent} size={14} /> : <SquareTerminal className="size-3.5" />}
-      {agent && kind ? (
+      <span
+        data-sleeping={sleeping}
+        className="grid place-items-center data-[sleeping=true]:opacity-45"
+      >
+        {agent ? <AgentIcon agent={agent} size={14} /> : <SquareTerminal className="size-3.5" />}
+      </span>
+      {sleeping ? (
+        <span
+          aria-hidden
+          className="absolute -right-1 -bottom-1 grid size-3.5 place-items-center rounded-full bg-popover text-muted-foreground ring-1 ring-border"
+        >
+          <Moon className="size-2.5" />
+        </span>
+      ) : agent && kind ? (
         <span
           aria-hidden
           data-kind={kind}

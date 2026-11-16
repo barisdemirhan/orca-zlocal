@@ -19,6 +19,7 @@ import {
 import { paneTargetFromThread, type AgentHubLocation } from './agent-hub-pane-target'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
+import { useAgentHubSleepingTargetTest } from './agent-hub-pane-sleep'
 
 /** A minimized mirror in the tray beside the hub: click to restore; it speaks up when its agent does. */
 export function AgentHubMirrorChip({
@@ -56,6 +57,7 @@ export function AgentHubMirrorChip({
   // Put back at launch: it is simply there, without the arriving animation.
   const [restored] = useState(isAgentHubMirrorStageQuiet)
   const target = activeAgentHubMirrorTab(chip.window).target
+  const isSleeping = useAgentHubSleepingTargetTest()
   const title = useAgentHubTargetTitle(target)
   const current = useAgentHubWorktreeCurrent(target.worktree.id)
 
@@ -97,7 +99,11 @@ export function AgentHubMirrorChip({
           className="flex h-full min-w-0 flex-1 items-center gap-2 pr-1 pl-2 transition-opacity data-[current=true]:opacity-55 data-[current=true]:hover:opacity-100"
         >
           <HubStateIndicator kind={kind} />
-          <HubAvatar agentType={target.agentType} kind={thread ? kind : null} />
+          <HubAvatar
+            agentType={target.agentType}
+            kind={thread ? kind : null}
+            sleeping={isSleeping(target)}
+          />
           <span className="min-w-0 flex-1 text-xs leading-tight">
             <span className="block truncate font-semibold">{title}</span>
             <span className="block truncate [&>span]:text-[11px]">

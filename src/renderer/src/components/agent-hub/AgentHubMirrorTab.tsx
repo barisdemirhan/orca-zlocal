@@ -23,6 +23,7 @@ import { claimAgentHubMirrorGesture } from './agent-hub-mirror-gesture'
 import { AgentHubMirrorTabMenu } from './AgentHubMirrorTabMenu'
 import { AgentHubThreadHoverCard } from './AgentHubThreadHoverCard'
 import { useAgentHubProgress } from './use-agent-hub-progress'
+import { useAgentHubSleepingTargetTest } from './agent-hub-pane-sleep'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
 import {
   showAgentHubFamilyBar,
@@ -61,6 +62,7 @@ export function AgentHubMirrorTab({
   const title = useAgentHubTargetTitle(tab.target)
   const progress = useAgentHubProgress(tab.viewing ?? tab.target)
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
+  const sleeping = useAgentHubSleepingTargetTest()(tab.target)
   const drag = useAgentHubMirrorDrag()
   const familyBarShown = useAgentHubFamilyBarShown(familyRoot)
   const [editing, setEditing] = useState(false)
@@ -111,7 +113,7 @@ export function AgentHubMirrorTab({
       aria-selected={active}
       aria-label={translate('agentHub.mirror.tabLabel', '{{value0}}, {{value1}}', {
         value0: title,
-        value1: agentHubStateWord(thread)
+        value1: sleeping ? translate('agentHub.sleep.group', 'Sleeping') : agentHubStateWord(thread)
       })}
       tabIndex={active ? 0 : -1}
       data-agent-hub-tab-id={tab.id}
@@ -133,9 +135,10 @@ export function AgentHubMirrorTab({
       className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none group-hover/tab:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
       {tab.isPinned ? <Pin aria-hidden className="size-3 shrink-0" /> : null}
-      <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} />
+      <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} sleeping={sleeping} />
       <div
-        className="min-w-0 flex-1 text-[13px] leading-tight"
+        data-sleeping={sleeping}
+        className="min-w-0 flex-1 text-[13px] leading-tight data-[sleeping=true]:opacity-60"
         onDoubleClick={() => onSelect(false)}
       >
         <AgentHubMirrorTitle target={tab.target} onEditingChange={setEditing} />
