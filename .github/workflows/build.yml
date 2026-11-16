@@ -111,7 +111,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref }}
+          # The cross-version wire tests check out older releases by tag; give them full history.
+          fetch-depth: 0
           persist-credentials: false
+      - name: Fetch upstream release tags
+        run: git fetch --quiet --no-recurse-submodules https://github.com/stablyai/orca.git 'refs/tags/v*:refs/tags/v*'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: ci-tools
