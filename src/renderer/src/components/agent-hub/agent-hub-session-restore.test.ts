@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
@@ -86,8 +87,7 @@ function storeWith(tabs: Record<string, string>) {
       Object.entries(tabs).map(([id, leafId]) => [id, layout(leafId)])
     ),
     runtimePaneTitlesByTabId: {},
-    agentStatusByPaneKey: {},
-    retainedAgentsByPaneKey: {},
+    agentStatusByPaneKey: acceptedAgentStatuses(),
     sleepingAgentSessionsByPaneKey: {},
     paneForegroundAgentByPaneKey: {},
     ptyIdsByTabId: {}

@@ -20,7 +20,6 @@ type AgentHubTerminalTreeState = Pick<
   | 'terminalLayoutsByTabId'
   | 'runtimePaneTitlesByTabId'
   | 'agentStatusByPaneKey'
-  | 'retainedAgentsByPaneKey'
   | 'sleepingAgentSessionsByPaneKey'
   | 'paneForegroundAgentByPaneKey'
   | 'ptyIdsByTabId'
@@ -70,7 +69,6 @@ export function useAgentHubTerminalTree(
       terminalLayoutsByTabId: s.terminalLayoutsByTabId,
       runtimePaneTitlesByTabId: s.runtimePaneTitlesByTabId,
       agentStatusByPaneKey: s.agentStatusByPaneKey,
-      retainedAgentsByPaneKey: s.retainedAgentsByPaneKey,
       sleepingAgentSessionsByPaneKey: s.sleepingAgentSessionsByPaneKey,
       paneForegroundAgentByPaneKey: s.paneForegroundAgentByPaneKey,
       ptyIdsByTabId: s.ptyIdsByTabId

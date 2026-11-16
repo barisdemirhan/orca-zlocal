@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { AgentSubagentSnapshot } from '../../../../shared/agent-status/contracts/agent-status-subagent-snapshot'
 import { buildActivityEvents } from '../activity/activity-event-builder'
@@ -30,7 +31,7 @@ export function agentHubThreadsFor(fixtures: AgentHubThreadFixture[]): AgentPane
   return makeThreads(
     buildActivityEvents({
       chatNames: new Map(),
-      agentStatusByPaneKey: Object.fromEntries(
+      agentStatusByPaneKey: acceptedAgentStatuses(
         fixtures.map((fixture) => [
           fixture.paneKey,
           {
@@ -59,7 +60,6 @@ export function agentHubThreadsFor(fixtures: AgentHubThreadFixture[]): AgentPane
           } satisfies AgentStatusEntry
         ])
       ),
-      retainedAgentsByPaneKey: {},
       tabsByWorktree: { [worktree.id]: tabs },
       worktreeMap: new Map([[worktree.id, worktree]]),
       repoMap: new Map([[repo.id, repo]]),

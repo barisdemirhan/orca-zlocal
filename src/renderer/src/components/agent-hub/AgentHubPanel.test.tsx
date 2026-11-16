@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
@@ -69,12 +70,13 @@ function fixture() {
   const threads = makeThreads(
     buildActivityEvents({
       chatNames: new Map(),
-      agentStatusByPaneKey: {
-        [PANE_KEY]: entry(PANE_KEY, 'working', 3_000),
-        [PANE_KEY_2]: entry(PANE_KEY_2, 'done', 1_000),
-        [PANE_KEY_3]: entry(PANE_KEY_3, 'done', 2_000)
-      },
-      retainedAgentsByPaneKey: {},
+      agentStatusByPaneKey: acceptedAgentStatuses(
+        Object.entries({
+          [PANE_KEY]: entry(PANE_KEY, 'working', 3_000),
+          [PANE_KEY_2]: entry(PANE_KEY_2, 'done', 1_000),
+          [PANE_KEY_3]: entry(PANE_KEY_3, 'done', 2_000)
+        })
+      ),
       tabsByWorktree: { [worktree.id]: tabs },
       worktreeMap: new Map([[worktree.id, worktree]]),
       repoMap: new Map([[repo.id, repo]]),
@@ -387,8 +389,7 @@ describe('AgentHubPanel inbox card', () => {
     const threads = makeThreads(
       buildActivityEvents({
         chatNames: new Map(),
-        agentStatusByPaneKey: entries,
-        retainedAgentsByPaneKey: {},
+        agentStatusByPaneKey: acceptedAgentStatuses(Object.entries(entries)),
         tabsByWorktree: { [worktree.id]: tabs },
         worktreeMap: new Map([[worktree.id, worktree]]),
         repoMap: new Map([[repo.id, repo]]),

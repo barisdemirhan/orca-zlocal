@@ -310,7 +310,7 @@ function PaneQuickReply({
   /** The prompt's own key: a new question in the same turn starts a fresh card. */
   cardKey: string
 }): React.JSX.Element | null {
-  const agentType = useAppStore((s) => s.agentStatusByPaneKey[paneKey]?.agentType ?? null)
+  const agentType = useAppStore((s) => s.agentStatusByPaneKey.get(paneKey)?.agentType ?? null)
   // A chat view over this pane shows the agent's own card; the terminal below it is not in use.
   if (!agentType || paneIsCoveredByNativeChat(pane)) {
     return null
@@ -350,7 +350,7 @@ export function AgentHubPaneQuickReplyPortals({
       const prompts: Record<string, string> = {}
       for (const pane of panes) {
         const paneKey = makePaneKey(tabId, pane.leafId)
-        const entry = s.agentStatusByPaneKey[paneKey]
+        const entry = s.agentStatusByPaneKey.get(paneKey)
         if (entry?.interactivePrompt && entry.agentType) {
           prompts[paneKey] =
             `${entry.stateStartedAt}\u0000${agentHubCardKey(paneKey, entry.stateStartedAt, entry.interactivePrompt)}`

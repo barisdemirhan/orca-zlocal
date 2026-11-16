@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import type * as MirrorSource from './agent-hub-mirror-source'
 /** @vitest-environment happy-dom */
 import { act } from 'react'
@@ -36,8 +37,7 @@ vi.mock('@/store', async () => {
       activeTabType: 'terminal',
       terminalLayoutsByTabId: {},
       runtimePaneTitlesByTabId: {},
-      agentStatusByPaneKey: {},
-      retainedAgentsByPaneKey: {},
+      agentStatusByPaneKey: acceptedAgentStatuses(),
       sleepingAgentSessionsByPaneKey: {},
       paneForegroundAgentByPaneKey: {},
       ptyIdsByTabId: {},

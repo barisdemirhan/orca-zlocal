@@ -91,7 +91,7 @@ export function AgentHubAttentionCard({
   const quick = useAgentHubQuickAnswer(quickAnswerTargetOf(thread))
   const { card, send, ptyId, chosen, canAnswer, simpleQuestion, approval, cardKey } = quick
   const interactivePrompt = useAppStore(
-    (s) => s.agentStatusByPaneKey[paneKey]?.interactivePrompt ?? null
+    (s) => s.agentStatusByPaneKey.get(paneKey)?.interactivePrompt ?? null
   )
   const nativeControlRef = useRef<NativeChatInteractiveCardControl>(null)
   // The native card no longer hides itself after an answer: hide it until a different prompt

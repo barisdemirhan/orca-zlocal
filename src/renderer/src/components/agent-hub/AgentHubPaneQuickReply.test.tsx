@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -160,7 +161,7 @@ beforeEach(() => {
   ]
   useAppStore.setState({
     settings: { ...getDefaultSettings('/home/u'), experimentalAgentHub: true },
-    agentStatusByPaneKey: {}
+    agentStatusByPaneKey: acceptedAgentStatuses()
   })
 })
 afterEach(() => {
@@ -174,7 +175,11 @@ it('opens in the asking pane with its options and answers by click or number key
   renderPortals(pane)
   expect(card()).toBeNull()
 
-  act(() => useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } }))
+  act(() =>
+    useAppStore.setState({
+      agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking }))
+    })
+  )
   expect(card()?.closest('.pane')).toBe(pane.container)
   expect(quick.targets.at(-1)).toMatchObject({
     worktreeId: 'wt-1',
@@ -207,7 +212,11 @@ it("takes several questions in the agent's full card, keeping the keys until all
   }
   const pane = mountPane()
   renderPortals(pane)
-  act(() => useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } }))
+  act(() =>
+    useAppStore.setState({
+      agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking }))
+    })
+  )
   expect(screen.getByTestId('full-card').textContent).toBe('Plan? / Ship?')
   expect(openCard().textContent).toContain('is asking')
 
@@ -239,7 +248,7 @@ it('dictates only into the full card answer, and refuses while that field is dis
       experimentalAgentHub: true,
       voice: { ...getDefaultVoiceSettings(), enabled: true }
     },
-    agentStatusByPaneKey: { [PANE_KEY]: asking },
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking })),
     dictationState: 'idle'
   })
   const pane = mountPane()
@@ -270,7 +279,11 @@ it('dictates only into the full card answer, and refuses while that field is dis
 it('shows the answer going out instead of standing still', () => {
   quick.answer.chosen = 1
   renderPortals(mountPane())
-  act(() => useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } }))
+  act(() =>
+    useAppStore.setState({
+      agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking }))
+    })
+  )
   expect(openCard().getAttribute('aria-busy')).toBe('true')
   expect(screen.getByRole('status').textContent).toContain('Sending…')
   // A second click on any option cannot send again.
@@ -280,19 +293,23 @@ it('shows the answer going out instead of standing still', () => {
 it('takes the keys only from its own terminal, and hands them back when it leaves', () => {
   const pane = mountPane()
   pane.terminal.focus()
-  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } })
+  useAppStore.setState({
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking }))
+  })
   renderPortals(pane)
   expect(document.activeElement).toBe(openCard())
 
   // The prompt clears while the card has the keys: the terminal gets them back.
-  act(() => useAppStore.setState({ agentStatusByPaneKey: {} }))
+  act(() => useAppStore.setState({ agentStatusByPaneKey: acceptedAgentStatuses() }))
   expect(card()).toBeNull()
   expect(document.activeElement?.classList.contains('xterm-helper-textarea')).toBe(true)
 })
 
 it('closes on Esc for this prompt, hands the keys to the terminal, and returns for the next', () => {
   const pane = mountPane()
-  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } })
+  useAppStore.setState({
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking }))
+  })
   renderPortals(pane)
   expect(card()).not.toBeNull()
 
@@ -316,7 +333,9 @@ it('closes on Esc for this prompt, hands the keys to the terminal, and returns f
   quick.answer.cardKey = agentHubCardKey(PANE_KEY, 1_000, secondPrompt)
   act(() =>
     useAppStore.setState({
-      agentStatusByPaneKey: { [PANE_KEY]: { ...asking, interactivePrompt: secondPrompt } }
+      agentStatusByPaneKey: acceptedAgentStatuses(
+        Object.entries({ [PANE_KEY]: { ...asking, interactivePrompt: secondPrompt } })
+      )
     })
   )
   expect(card()).not.toBeNull()
@@ -326,7 +345,9 @@ it('closes on Esc for this prompt, hands the keys to the terminal, and returns f
   quick.answer.cardKey = agentHubCardKey(PANE_KEY, 2_000, asking.interactivePrompt ?? null)
   act(() =>
     useAppStore.setState({
-      agentStatusByPaneKey: { [PANE_KEY]: { ...asking, stateStartedAt: 2_000, updatedAt: 2_000 } }
+      agentStatusByPaneKey: acceptedAgentStatuses(
+        Object.entries({ [PANE_KEY]: { ...asking, stateStartedAt: 2_000, updatedAt: 2_000 } })
+      )
     })
   )
   expect(card()).not.toBeNull()
@@ -336,7 +357,9 @@ it('closes on Esc for this prompt, hands the keys to the terminal, and returns f
 it('keeps the draft when Escape belongs to IME composition', () => {
   quick.answer.simpleQuestion = { question: 'Keep it?', multiSelect: false, options: [] }
   const pane = mountPane()
-  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } })
+  useAppStore.setState({
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking }))
+  })
   renderPortals(pane)
   const input = screen.getByRole('textbox', { name: 'Your own answer…' })
   fireEvent.change(input, { target: { value: '日本語' } })
@@ -352,7 +375,9 @@ it('stays away from a pane a chat view covers', () => {
   const shell = document.createElement('div')
   shell.className = 'native-chat-pane-shell'
   pane.container.append(shell)
-  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: asking } })
+  useAppStore.setState({
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking }))
+  })
   renderPortals(pane)
   expect(card()).toBeNull()
 })
@@ -360,7 +385,7 @@ it('stays away from a pane a chat view covers', () => {
 it('stays away while the setting or Agent Hub is off, and in a paired web-client window', () => {
   const pane = mountPane()
   useAppStore.setState({
-    agentStatusByPaneKey: { [PANE_KEY]: asking },
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: asking })),
     settings: {
       ...getDefaultSettings('/home/u'),
       experimentalAgentHub: true,

@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -110,7 +111,7 @@ const requestPresentationOf: React.ComponentProps<
 
 function publish(threads: readonly AgentPaneThread[]): void {
   useAppStore.setState({
-    agentStatusByPaneKey: Object.fromEntries(
+    agentStatusByPaneKey: acceptedAgentStatuses(
       threads.flatMap((item) =>
         item.currentAgentEntry ? [[item.paneKey, item.currentAgentEntry]] : []
       )
@@ -163,7 +164,7 @@ beforeEach(() => {
       experimentalAgentHub: true,
       agentHubAnswerQueue: true
     },
-    agentStatusByPaneKey: {},
+    agentStatusByPaneKey: acceptedAgentStatuses(),
     repos: [makeRepo()],
     sshTargetLabels: new Map(),
     sshConnectionStates: new Map(),
@@ -396,7 +397,12 @@ it('keeps a remote question and disables sending while its host is unverifiable'
   })
   const view = mount([first])
   expect(currentDialog().textContent).toContain('Build server')
-  act(() => useAppStore.setState({ agentStatusByPaneKey: {}, sshConnectionStates: new Map() }))
+  act(() =>
+    useAppStore.setState({
+      agentStatusByPaneKey: acceptedAgentStatuses(),
+      sshConnectionStates: new Map()
+    })
+  )
   view.rerender(queueView([]))
   expect(currentDialog().textContent).toContain('Choose a release?')
   expect(currentDialog().textContent).toContain('unverifiable')
@@ -433,7 +439,9 @@ it('removes a stopped agent even when its old structured prompt remains in the s
   }
   act(() =>
     useAppStore.setState({
-      agentStatusByPaneKey: { [PANE_KEY]: { ...entry, state: 'done' } }
+      agentStatusByPaneKey: acceptedAgentStatuses(
+        Object.entries({ [PANE_KEY]: { ...entry, state: 'done' } })
+      )
     })
   )
   expect(screen.getByRole('status').textContent).toContain('All caught up')

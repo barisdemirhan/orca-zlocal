@@ -100,7 +100,6 @@ describe('RunningTerminalCloseDialog', () => {
     await act(async () => {
       useRunningTerminalCloseConfirmStore.getState().requestRunningTerminalCloseConfirm({
         terminalTabId: 'tab-1',
-        tabLabel: 'dev server',
         ...request
       })
     })

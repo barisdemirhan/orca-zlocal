@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import { describe, expect, it } from 'vitest'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
@@ -71,19 +72,20 @@ function treeInput(): AgentHubTerminalTreeInput {
   const threads = makeThreads(
     buildActivityEvents({
       chatNames: new Map(),
-      agentStatusByPaneKey: {
-        [PANE_KEY]: {
-          state: 'waiting',
-          prompt: 'Plan onboarding',
-          updatedAt: 1_000,
-          stateStartedAt: 1_000,
-          paneKey: PANE_KEY,
-          terminalTitle: 'Claude',
-          stateHistory: [],
-          agentType: 'claude'
-        } satisfies AgentStatusEntry
-      },
-      retainedAgentsByPaneKey: {},
+      agentStatusByPaneKey: acceptedAgentStatuses(
+        Object.entries({
+          [PANE_KEY]: {
+            state: 'waiting',
+            prompt: 'Plan onboarding',
+            updatedAt: 1_000,
+            stateStartedAt: 1_000,
+            paneKey: PANE_KEY,
+            terminalTitle: 'Claude',
+            stateHistory: [],
+            agentType: 'claude'
+          } satisfies AgentStatusEntry
+        })
+      ),
       tabsByWorktree,
       worktreeMap: new Map([[wtMobile.id, wtMobile]]),
       repoMap: new Map([[mobile.id, mobile]]),
@@ -114,7 +116,11 @@ describe('buildAgentHubTerminalTree', () => {
   it('nests terminals under group, project and workspace in sidebar order', () => {
     const groups = buildAgentHubTerminalTree(treeInput())
 
-    expect(groups.map((node) => node.label)).toEqual(['Northwind', 'Ungrouped', 'Floating terminal'])
+    expect(groups.map((node) => node.label)).toEqual([
+      'Northwind',
+      'Ungrouped',
+      'Floating terminal'
+    ])
     expect(groups[0]?.workspaces.map((workspace) => workspace.projectLabel)).toEqual([
       'mobile',
       'api'

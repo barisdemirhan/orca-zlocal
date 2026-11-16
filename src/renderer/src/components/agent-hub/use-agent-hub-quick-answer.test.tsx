@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -59,12 +60,13 @@ function threadWith(interactivePrompt: string) {
     agentType: 'claude',
     interactivePrompt
   }
-  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: entry } })
+  useAppStore.setState({
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: entry }))
+  })
   const [thread] = makeThreads(
     buildActivityEvents({
       chatNames: new Map(),
-      agentStatusByPaneKey: { [PANE_KEY]: entry },
-      retainedAgentsByPaneKey: {},
+      agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: entry })),
       tabsByWorktree: { [worktree.id]: [tab] },
       worktreeMap: new Map([[worktree.id, worktree]]),
       repoMap: new Map([[repo.id, repo]]),

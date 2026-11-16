@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 // @vitest-environment happy-dom
 import { act, createRef } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -90,12 +91,13 @@ function renderAttentionCard(
     agentType,
     interactivePrompt
   }
-  useAppStore.setState({ agentStatusByPaneKey: { [PANE_KEY]: entry } })
+  useAppStore.setState({
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: entry }))
+  })
   const [thread] = makeThreads(
     buildActivityEvents({
       chatNames: new Map(),
-      agentStatusByPaneKey: { [PANE_KEY]: entry },
-      retainedAgentsByPaneKey: {},
+      agentStatusByPaneKey: acceptedAgentStatuses(Object.entries({ [PANE_KEY]: entry })),
       tabsByWorktree: { [worktree.id]: [tab] },
       worktreeMap: new Map([[worktree.id, worktree]]),
       repoMap: new Map([[repo.id, repo]]),

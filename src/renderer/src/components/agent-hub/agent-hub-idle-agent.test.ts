@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import { describe, expect, it } from 'vitest'
 import {
   LEAF_ID,
@@ -11,8 +12,7 @@ import { resolveAgentHubIdleAgent, type AgentHubIdleAgentSignals } from './agent
 const none: AgentHubIdleAgentSignals = {
   terminalLayoutsByTabId: {},
   runtimePaneTitlesByTabId: {},
-  agentStatusByPaneKey: {},
-  retainedAgentsByPaneKey: {},
+  agentStatusByPaneKey: acceptedAgentStatuses(),
   sleepingAgentSessionsByPaneKey: {},
   paneForegroundAgentByPaneKey: {},
   ptyIdsByTabId: {},

@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   normalizeAgentHubTerminalSort,
@@ -166,8 +167,7 @@ function fixture(agents: AgentFixture[] = AGENTS) {
   const threads = makeThreads(
     buildActivityEvents({
       chatNames: new Map(),
-      agentStatusByPaneKey,
-      retainedAgentsByPaneKey: {},
+      agentStatusByPaneKey: acceptedAgentStatuses(Object.entries(agentStatusByPaneKey)),
       tabsByWorktree,
       worktreeMap: new Map(worktrees.map((item) => [item.id, item])),
       repoMap: new Map(repos.map((item) => [item.id, item])),
@@ -203,7 +203,7 @@ function fixture(agents: AgentFixture[] = AGENTS) {
   })
   const sources = (live: boolean): AgentHubWorkspaceRankSources => ({
     tabsByWorktree,
-    agentStatusByPaneKey,
+    agentStatusByPaneKey: acceptedAgentStatuses(Object.entries(agentStatusByPaneKey)),
     runtimePaneTitlesByTabId: {},
     ptyIdsByTabId: live ? { 'm-ask': ['pty-m-ask'] } : {},
     migrationUnsupportedByPtyId: {},

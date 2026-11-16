@@ -81,12 +81,11 @@ describe('sidebar pop-out eligibility', () => {
     expect(agentHubSidebarPopoutTarget(agent, tree, true, null)?.paneKey).toBe(PANE_KEY)
     expect(agentHubSidebarPopoutTarget(agent, [], true, 'other')).toBeNull()
   })
-  it('does not invent panes for retained or embedded child agents', () => {
+  it('does not invent panes for embedded child agents', () => {
     const { agent, tree } = fixture()
-    for (const rowSource of ['retained', 'subagent'] as const) {
-      expect(agentHubSidebarPopoutTarget({ ...agent, rowSource }, tree, true, null)).toBeNull()
-      expect(canPopOutAgentHubSidebarRow({ ...agent, rowSource }, null)).toBe(false)
-    }
+    const rowSource = 'subagent'
+    expect(agentHubSidebarPopoutTarget({ ...agent, rowSource }, tree, true, null)).toBeNull()
+    expect(canPopOutAgentHubSidebarRow({ ...agent, rowSource }, null)).toBe(false)
   })
   it('decides row eligibility from row data without the terminal tree', () => {
     const { agent, worktreeId } = fixture()

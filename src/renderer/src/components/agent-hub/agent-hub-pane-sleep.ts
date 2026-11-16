@@ -123,7 +123,7 @@ export function useAgentHubPaneSleep(target: AgentHubPaneTarget) {
   useAgentHubTerminalSuspension(target)
   const sleepingTest = useAgentHubSleepingTargetTest()
   const paneKey = agentHubSleepPaneKey(target)
-  useAppStore((state) => (paneKey ? state.agentStatusByPaneKey[paneKey] : undefined))
+  useAppStore((state) => (paneKey ? state.agentStatusByPaneKey.get(paneKey) : undefined))
   const sleeping = sleepingTest(target)
   const unverifiable = useAppStore(
     (state) => resolveWorkspaceTerminalHostAuthority(state, target.worktree.id) === 'unverifiable'
@@ -163,7 +163,7 @@ export function useAgentHubPaneTarget(
   const folders = useAppStore((state) => state.folderWorkspaces)
   const repos = useAppStore((state) => state.repos)
   const tabs = useAppStore((state) => state.tabsByWorktree[worktreeId])
-  const entry = useAppStore((state) => state.agentStatusByPaneKey[paneKey])
+  const entry = useAppStore((state) => state.agentStatusByPaneKey.get(paneKey))
   const record = useAppStore((state) => state.sleepingAgentSessionsByPaneKey[paneKey])
   return useMemo(() => {
     const row = agentHubRowOfTab(

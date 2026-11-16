@@ -91,10 +91,10 @@ export type AgentHubQuickAnswer = {
 export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): AgentHubQuickAnswer {
   const { paneKey, tabId, agentType } = target
   const interactivePrompt = useAppStore(
-    (s) => s.agentStatusByPaneKey[paneKey]?.interactivePrompt ?? null
+    (s) => s.agentStatusByPaneKey.get(paneKey)?.interactivePrompt ?? null
   )
   const toolName = useAppStore((s) => {
-    const entry = s.agentStatusByPaneKey[paneKey]
+    const entry = s.agentStatusByPaneKey.get(paneKey)
     return entry?.interactivePrompt ? (entry.toolName ?? null) : null
   })
   const card = useMemo(

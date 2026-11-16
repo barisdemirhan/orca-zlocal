@@ -69,7 +69,7 @@ export function useAgentHubAnswerQueueSource(threads: readonly AgentPaneThread[]
     const items: AgentHubAnswerQueueItem[] = []
     const defaultHost = getSettingsFocusedExecutionHostId(state.settings)
     for (const thread of threads) {
-      const entry = state.agentStatusByPaneKey[thread.paneKey]
+      const entry = state.agentStatusByPaneKey.get(thread.paneKey)
       const hostId = getWorktreeExecutionHostId(
         thread.worktree,
         thread.repo ?? undefined,

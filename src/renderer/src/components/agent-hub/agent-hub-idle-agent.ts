@@ -16,7 +16,6 @@ export type AgentHubIdleAgentSignals = Pick<
   | 'terminalLayoutsByTabId'
   | 'runtimePaneTitlesByTabId'
   | 'agentStatusByPaneKey'
-  | 'retainedAgentsByPaneKey'
   | 'sleepingAgentSessionsByPaneKey'
   | 'paneForegroundAgentByPaneKey'
   | 'ptyIdsByTabId'
@@ -65,7 +64,6 @@ export function resolveAgentHubIdleAgent(
     launchAgent: tab.launchAgent,
     layout,
     agentStatusByPaneKey: signals.agentStatusByPaneKey,
-    retainedAgentsByPaneKey: signals.retainedAgentsByPaneKey,
     sleepingAgentSessionsByPaneKey: signals.sleepingAgentSessionsByPaneKey,
     paneForegroundAgentByPaneKey: signals.paneForegroundAgentByPaneKey
   })

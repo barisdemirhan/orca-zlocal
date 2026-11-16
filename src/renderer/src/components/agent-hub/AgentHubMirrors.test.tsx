@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -25,7 +26,7 @@ vi.mock('@/store', async () => {
       terminalLayoutsByTabId: {},
       ptyIdsByTabId: {},
       sleepingAgentSessionsByPaneKey: {},
-      agentStatusByPaneKey: {},
+      agentStatusByPaneKey: acceptedAgentStatuses(),
       dictationState: 'idle'
     }))
   }

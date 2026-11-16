@@ -141,14 +141,14 @@ it.each(['working'] as const)(
     const hook = observe()
     expect(hook.result.current?.kind).toBe('work')
     const epoch = useAppStore.getState().agentStatusEpoch
-    expect(useAppStore.getState().agentStatusByPaneKey[PANE_KEY]?.stateHistory).toEqual(
+    expect(useAppStore.getState().agentStatusByPaneKey.get(PANE_KEY)?.stateHistory).toEqual(
       expect.arrayContaining([expect.objectContaining({ state: 'done' })])
     )
     await act(async () => {
       await flushMicrotasks()
       vi.advanceTimersByTime(AGENT_STATUS_STALE_AFTER_MS + 1)
     })
-    expect(useAppStore.getState().agentStatusByPaneKey[PANE_KEY]?.state).toBe(state)
+    expect(useAppStore.getState().agentStatusByPaneKey.get(PANE_KEY)?.state).toBe(state)
     expect(useAppStore.getState().agentStatusEpoch).toBeGreaterThan(epoch)
     expect(hook.result.current).toEqual({
       kind: 'idle',

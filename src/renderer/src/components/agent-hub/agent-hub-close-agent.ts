@@ -19,7 +19,7 @@ function countLeaves(node: TerminalPaneLayoutNode | null | undefined): number {
 }
 
 /** A mounted pane runs its full user-close path; an unmounted one has its PTY stopped here. */
-function closeSplitLeaf(tabId: string, leafId: string, title: string, confirmed: boolean): void {
+function closeSplitLeaf(tabId: string, leafId: string, confirmed: boolean): void {
   if (requestActiveTerminalPaneClose(tabId, { leafId, confirm: !confirmed })) {
     return
   }
@@ -33,7 +33,7 @@ function closeSplitLeaf(tabId: string, leafId: string, title: string, confirmed:
   if (confirmed) {
     close()
   } else {
-    guardRunningTerminalClose({ terminalTabId: tabId, tabLabel: title, onClose: close })
+    guardRunningTerminalClose({ terminalTabId: tabId, onClose: close })
   }
 }
 
@@ -46,7 +46,6 @@ export function closeAgentHubAgent(
   if (isAgentHubChatTab(useAppStore.getState(), tabId)) {
     useRunningTerminalCloseConfirmStore.getState().requestRunningTerminalCloseConfirm({
       terminalTabId: tabId,
-      tabLabel: target.title,
       copyKind: 'agent',
       allowSkipConfirm: false,
       onConfirm: () => {
@@ -61,7 +60,7 @@ export function closeAgentHubAgent(
 
   const close = (confirmed: boolean): void => {
     if (splitLeaf) {
-      closeSplitLeaf(tabId, splitLeaf, target.title, confirmed)
+      closeSplitLeaf(tabId, splitLeaf, confirmed)
       return
     }
     closeTerminalTab(tabId, { reason: 'user', skipRunningProcessConfirm: confirmed })
@@ -72,7 +71,6 @@ export function closeAgentHubAgent(
   if (isAgent || ((kind === 'work' || kind === 'ask') && skipConfirm !== true)) {
     useRunningTerminalCloseConfirmStore.getState().requestRunningTerminalCloseConfirm({
       terminalTabId: tabId,
-      tabLabel: target.title,
       copyKind: 'agent',
       allowSkipConfirm: !isAgent,
       onConfirm: () => close(true)

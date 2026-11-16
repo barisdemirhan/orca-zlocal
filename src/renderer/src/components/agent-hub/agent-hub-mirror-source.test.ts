@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import { beforeEach, expect, it, vi } from 'vitest'
 import {
   makeRepo,
@@ -46,8 +47,7 @@ const state = () => ({
     }
   },
   runtimePaneTitlesByTabId: {},
-  agentStatusByPaneKey: {},
-  retainedAgentsByPaneKey: {},
+  agentStatusByPaneKey: acceptedAgentStatuses(),
   sleepingAgentSessionsByPaneKey: {},
   paneForegroundAgentByPaneKey: {},
   ptyIdsByTabId: {},
@@ -241,17 +241,19 @@ it('keeps a pinned done agent through unknown remote inventory and restore, then
     chips: []
   })
   useAppStore.setState({
-    agentStatusByPaneKey: {
-      [agent.paneKey]: {
-        state: 'done',
-        prompt: '',
-        updatedAt: 1000,
-        stateStartedAt: 1000,
-        stateHistory: [],
-        paneKey: agent.paneKey,
-        agentType: 'claude'
-      }
-    }
+    agentStatusByPaneKey: acceptedAgentStatuses(
+      Object.entries({
+        [agent.paneKey]: {
+          state: 'done',
+          prompt: '',
+          updatedAt: 1000,
+          stateStartedAt: 1000,
+          stateHistory: [],
+          paneKey: agent.paneKey,
+          agentType: 'claude'
+        }
+      })
+    )
   })
   pruneClosedAgentHubMirrorSources()
   expect(readAgentHubMirrors().windows[0]?.id).toBe(original.id)

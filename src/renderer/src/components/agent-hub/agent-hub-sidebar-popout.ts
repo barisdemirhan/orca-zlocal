@@ -9,7 +9,7 @@ export function canPopOutAgentHubSidebarRow(
   agent: DashboardAgentRow,
   visibleWorkspaceId: string | null
 ): boolean {
-  if (agent.rowSource === 'subagent' || agent.rowSource === 'retained') {
+  if (agent.rowSource === 'subagent') {
     return false
   }
   const pane = parsePaneKey(agent.paneKey)

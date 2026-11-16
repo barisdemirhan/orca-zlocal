@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type * as Rpc from '@/runtime/rpc/compatibility/runtime-capability-proof'
@@ -51,16 +52,18 @@ it('never stops an older remote host that may discard the explicit-wake checkpoi
         ptyIdsByLeafId: { [leafId]: 'pty' }
       }
     },
-    agentStatusByPaneKey: {
-      [paneKey]: {
-        ...makeWorkingEntryWithoutHistory(),
-        paneKey,
-        tabId: 'tab',
-        worktreeId: 'wt',
-        agentType: 'codex',
-        providerSession: { key: 'session_id', id: 'saved-session' }
-      }
-    },
+    agentStatusByPaneKey: acceptedAgentStatuses(
+      Object.entries({
+        [paneKey]: {
+          ...makeWorkingEntryWithoutHistory(),
+          paneKey,
+          tabId: 'tab',
+          worktreeId: 'wt',
+          agentType: 'codex',
+          providerSession: { key: 'session_id', id: 'saved-session' }
+        }
+      })
+    ),
     shutdownCompletedAgentPaneForHibernation: shutdown
   })
   const target = { worktree, tab, repo: null, paneKey, agentType: 'codex' as const, title: 'Agent' }

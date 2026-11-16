@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import { describe, expect, it } from 'vitest'
 import {
   PANE_KEY,
@@ -36,19 +37,20 @@ describe('CLI-started agents in Hub', () => {
     const threads = makeThreads(
       buildActivityEvents({
         chatNames: new Map(),
-        agentStatusByPaneKey: {
-          [PANE_KEY]: { ...common, stateHistory: [], paneKey: PANE_KEY, agentType: 'claude' },
-          [workerPane]: {
-            ...common,
-            stateHistory: [],
-            paneKey: workerPane,
-            worktreeId: worktree.id,
-            agentType: 'codex',
-            orchestration: { taskId: 'task-worker', dispatchId: 'ctx-worker' },
-            spawnedBy: { paneKey: PANE_KEY }
-          }
-        },
-        retainedAgentsByPaneKey: {},
+        agentStatusByPaneKey: acceptedAgentStatuses(
+          Object.entries({
+            [PANE_KEY]: { ...common, stateHistory: [], paneKey: PANE_KEY, agentType: 'claude' },
+            [workerPane]: {
+              ...common,
+              stateHistory: [],
+              paneKey: workerPane,
+              worktreeId: worktree.id,
+              agentType: 'codex',
+              orchestration: { taskId: 'task-worker', dispatchId: 'ctx-worker' },
+              spawnedBy: { paneKey: PANE_KEY }
+            }
+          })
+        ),
         tabsByWorktree: { [worktree.id]: [makeTabWithIds('tab-1', worktree.id)] },
         worktreeMap: new Map([[worktree.id, worktree]]),
         repoMap: new Map([['repo-1', makeRepo()]]),

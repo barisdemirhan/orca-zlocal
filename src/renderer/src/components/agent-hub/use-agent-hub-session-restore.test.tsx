@@ -1,3 +1,4 @@
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
@@ -130,8 +131,7 @@ beforeEach(() => {
     },
     terminalLayoutsByTabId: {},
     runtimePaneTitlesByTabId: {},
-    agentStatusByPaneKey: {},
-    retainedAgentsByPaneKey: {},
+    agentStatusByPaneKey: acceptedAgentStatuses(),
     sleepingAgentSessionsByPaneKey: {},
     paneForegroundAgentByPaneKey: {},
     ptyIdsByTabId: {}
