@@ -4453,7 +4453,6 @@
       "src/shared/agent-cli-install-dir-fallback.test.ts": 130,
       "src/shared/agent-launch/startup/agent-command-line-intent.test.ts": 95,
       "src/shared/agent-hook-listener/transport/agent-hook-endpoint-temp-cleanup.test.ts": 55,
-      "src/shared/agent-hook-listener/normalization/agent-hook-listener-claude-elicitation.test.ts": 229,
       "src/shared/agent-hook-listener/normalization/agent-hook-listener-codex-approval-ownership.test.ts": 258,
       "src/shared/agent-hook-listener/providers/codex/agent-hook-listener-codex-main-agent.test.ts": 207,
       "src/shared/agent-hook-listener/normalization/agent-hook-listener-codex-subagent-names.test.ts": 260,
