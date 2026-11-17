@@ -15,6 +15,12 @@ on:
         description: Full commit SHA of the upstream release the dist branch sits on
         required: true
         type: string
+      only:
+        description: Run every job (all) or only the Linux package (linux-deb)
+        required: false
+        default: all
+        type: choice
+        options: [all, linux-deb]
 
 permissions: {}
 
@@ -37,6 +43,7 @@ jobs:
 
   typecheck:
     needs: vet
+    if: inputs.only != 'linux-deb'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -60,6 +67,7 @@ jobs:
   # not hold back the personal build. The job still shows red with its findings.
   lint:
     needs: vet
+    if: inputs.only != 'linux-deb'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     continue-on-error: true
@@ -105,6 +113,7 @@ jobs:
 
   test:
     needs: vet
+    if: inputs.only != 'linux-deb'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -153,6 +162,7 @@ jobs:
 
   javascript:
     needs: vet
+    if: inputs.only != 'linux-deb'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -199,6 +209,7 @@ jobs:
 
   mac-helpers:
     needs: vet
+    if: inputs.only != 'linux-deb'
     runs-on: macos-15
     timeout-minutes: 45
     permissions:
@@ -237,6 +248,62 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: orca-mac-helpers
+          path: ci-out/
+          retention-days: 1
+          if-no-files-found: error
+
+  # The deb pd installs with dpkg and cb unpacks to /opt/Orca. Unsigned: dpkg needs no signature, and
+  # the Mac checks this attestation before relaying the file.
+  linux-deb:
+    needs: vet
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+      - name: Install rpm for electron-builder's fpm backend
+        run: sudo apt-get update -q && sudo apt-get install -y -q rpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir mobile install --frozen-lockfile
+      # Built on its own first: inside the packaging run its X11 test failed on the old build host.
+      - run: node config/scripts/native-build/linux/build-wayland-clipboard.mjs --arch x64
+      - run: pnpm run build:desktop:assets
+      - run: pnpm run ensure:electron-runtime
+      - name: Package the deb
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          [ "$(git rev-parse HEAD)" = "$REF" ]
+          base=$(node -p 'const [a,b,c]=require("./package.json").version.split(".");[a,b,Number(c)+1].join(".")')
+          version="$base-zlocal.$(date +%s).${REF:0:12}"
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --linux deb --x64 \
+            -c.extraMetadata.version="$version" --publish never
+          mkdir -p ci-out
+          mv dist/orca-ide_*_amd64.deb ci-out/orca-linux-deb.deb
+          printf '{"kind":"linux-deb","source":"%s","version":"%s","sha256":"%s"}\n' "$REF" "$version" \
+            "$(sha256sum ci-out/orca-linux-deb.deb | cut -d' ' -f1)" > ci-out/orca-linux-deb.json
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ci-out/orca-linux-deb.*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: orca-linux-deb
           path: ci-out/
           retention-days: 1
           if-no-files-found: error
