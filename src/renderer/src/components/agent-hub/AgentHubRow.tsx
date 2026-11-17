@@ -29,7 +29,8 @@ export function AgentHubRow({
   onJump,
   onMarkRead,
   onClose,
-  selectionMode = false
+  selectionMode = false,
+  sleeping = false
 }: {
   kind: AgentHubIndicatorKind
   agentType: AgentType | null
@@ -55,6 +56,7 @@ export function AgentHubRow({
   /** Ends the row's agent and closes its pane; absent hides the button. */
   onClose?: () => void
   selectionMode?: boolean
+  sleeping?: boolean
 }): React.JSX.Element {
   const progress = useAgentHubProgress(mirrorTarget)
   const current = useAppStore(
@@ -81,9 +83,14 @@ export function AgentHubRow({
       <span className="grid w-3 shrink-0 place-items-center">
         <HubStateIndicator kind={kind} />
       </span>
-      <HubAvatar agentType={agentType} kind={agentType ? kind : null} />
+      <HubAvatar agentType={agentType} kind={agentType ? kind : null} sleeping={sleeping} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium">{title}</span>
+        <span
+          data-sleeping={sleeping}
+          className="block truncate text-[13px] font-medium data-[sleeping=true]:opacity-60"
+        >
+          {title}
+        </span>
         {progress || subtitle ? (
           <span className="block truncate text-xs text-muted-foreground">
             {progress ?? subtitle}

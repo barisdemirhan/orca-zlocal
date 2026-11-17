@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { paneTargetFromTerminalRow } from './agent-hub-pane-target'
+import { paneTargetFromTerminalRow, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import { Folder, GitBranch, Search } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { translate } from '@/i18n/i18n'
@@ -15,6 +15,9 @@ import { AgentHubWindowFilterMenu } from './AgentHubWindowFilterMenu'
 import type { AgentHubHostFilter } from './use-agent-hub-host-filter'
 import { agentHubWindowFilterOption, type AgentHubWindowFilter } from './agent-hub-window-filter'
 import { agentHubStateWord } from './agent-hub-copy'
+import { useAgentHubSleepingTargetTest } from './agent-hub-pane-sleep'
+import { WorktreeHostContextBadge } from '@/components/sidebar/workspace-card/host/WorktreeHostContextBadge'
+import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import {
   agentHubIndicatorKind,
   agentHubStateSince,
@@ -37,10 +40,17 @@ function rowKind(row: AgentHubTerminalRow): AgentHubIndicatorKind {
   return row.thread ? agentHubIndicatorKind(row.thread) : 'idle'
 }
 
-function rowSubtitle(row: AgentHubTerminalRow): string {
+function rowSubtitle(row: AgentHubTerminalRow, sleeping: boolean): string {
   const agent = row.thread?.agentType ?? row.idleAgent
   const who = agent ? `@${agent}` : translate('agentHub.terminals.shell', 'shell')
-  return `${who} · ${agentHubStateWord(row.thread)}`
+  const state = sleeping
+    ? translate('agentHub.sleep.group', 'Sleeping')
+    : agentHubStateWord(row.thread)
+  return `${who} · ${state}`
+}
+
+function WorkspaceHostBadge({ label }: { label: string | undefined }): React.JSX.Element | null {
+  return label ? <WorktreeHostContextBadge label={label} /> : null
 }
 
 function GroupSummary({ group }: { group: AgentHubGroupNode }): React.JSX.Element {
@@ -63,6 +73,7 @@ type TreeRowContext = {
   narrowed: boolean
   selectedKey: string | null
   now: number
+  isSleeping: (target: AgentHubPaneTarget) => boolean
   selectionMode?: boolean
   selectionListId?: string
   onToggleChildren?: (key: string) => void
@@ -83,6 +94,7 @@ function TreeRow({
 }): React.JSX.Element {
   const { now } = context
   const kind = rowKind(row)
+  const sleeping = context.isSleeping(paneTargetFromTerminalRow(row))
   const tool = row.thread && kind === 'work' ? agentHubToolName(row.thread) : null
   const subagents =
     !context.selectionMode && row.paneKey ? context.lineage.childrenOf(row.paneKey).subagents : []
@@ -94,7 +106,8 @@ function TreeRow({
         kind={kind}
         agentType={row.thread?.agentType ?? row.idleAgent}
         title={row.title}
-        subtitle={rowSubtitle(row)}
+        subtitle={rowSubtitle(row, sleeping)}
+        sleeping={sleeping}
         worktreeId={row.worktree.id}
         chips={
           kind === 'ask' && row.thread ? (
@@ -192,6 +205,8 @@ export function AgentHubTerminalTree({
   onJump: (row: AgentHubTerminalRow) => void
 }): React.JSX.Element {
   const listId = useId()
+  const isSleeping = useAgentHubSleepingTargetTest()
+  const hostLabels = new Map((windowFilter?.host?.options ?? []).map((o) => [o.id, o.label]))
   const trimmedQuery = query.trim()
   const rowContext: TreeRowContext = {
     lineage,
@@ -202,6 +217,7 @@ export function AgentHubTerminalTree({
     narrowed: isAgentHubTreeNarrowed(query, windowFilter?.value, windowFilter?.host?.value),
     selectedKey,
     now,
+    isSleeping,
     onOpen,
     onPopout,
     onJump
@@ -318,6 +334,9 @@ export function AgentHubTerminalTree({
                           <span className="truncate">{workspace.workspaceLabel}</span>
                         </>
                       ) : null}
+                      <WorkspaceHostBadge
+                        label={hostLabels.get(getWorktreeHostIdentity(workspace.worktree))}
+                      />
                       {renderWorkspaceAction ? (
                         <div className="ml-auto">{renderWorkspaceAction(workspace)}</div>
                       ) : null}
