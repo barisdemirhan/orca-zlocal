@@ -45,7 +45,8 @@ export function appendCodexRealtimeTranscript(
   if (sink.tryReviseResolvedItemAndPublish) {
     return sink.tryReviseResolvedItemAndPublish(
       estimateStructuredAgentSessionItemBytes(identity, body),
-      { kind: 'text-snapshot', identity, body },
+      // turn-open writes only an absent row, so duplicate and replayed finals keep the first commit.
+      { kind: 'turn-open', identity, body },
       options
     )
   }

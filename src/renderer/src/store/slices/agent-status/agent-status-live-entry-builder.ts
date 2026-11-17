@@ -113,15 +113,17 @@ export function buildAgentStatusLiveEntry(
     runtimeMergedOrchestration ??
     (payload.state === 'done' ? existing?.orchestration : undefined)
   const conversation = localAgentConversationAcceptance(args, identity.agentType)
+  const hostKeepsCheckpoint = hostKeepsProviderSession(args, existing, identity.agentType)
   const predecessorEligible =
-    hostKeepsProviderSession(args, existing, identity.agentType) ||
+    hostKeepsCheckpoint ||
     canReuseStatusProviderSession(existing, {
       agentType: identity.agentType,
       state: payload.state
     })
   const existingProviderSession = predecessorEligible ? existing?.providerSession : undefined
   const providerSession =
-    metadata?.providerSession ?? (!conversation.reset ? existingProviderSession : undefined)
+    metadata?.providerSession ??
+    (!conversation.reset || hostKeepsCheckpoint ? existingProviderSession : undefined)
   const providerSessionChanged =
     Boolean(metadata?.providerSession && existingProviderSession) &&
     !agentProviderSessionsEqual(

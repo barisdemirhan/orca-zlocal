@@ -32,8 +32,7 @@ export const CLIENT_EVENT_METHODS = [
       const gates = Boolean(desktop && clientCapabilities?.includes(AGENT_HUB_GATES_CAPABILITY))
       await new Promise<void>((resolve) => {
         const unregisterDesktop = desktop ? runtime.agentHub.registerDesktop(desktop) : () => {}
-        // Why: mobile discards terminalSideEffects; excluding it stops the
-        // per-OSC batch frames from crossing the relay.
+        // Mobile discards terminalSideEffects; filter per-OSC batch frames before they cross the relay.
         const unsubscribe = runtime.onClientEvent(
           (event) => {
             if (
@@ -98,19 +97,8 @@ export const CLIENT_EVENT_METHODS = [
           onAbort()
           return
         }
-        runtime.registerSubscriptionCleanup(
-          subscriptionId,
-          () => {
-            unsubscribe()
-            unregisterHostVolunteer?.()
-            unsubscribeTelemetry?.()
-            emit({ type: 'end' })
-            resolve()
-          },
-          connectionId
-        )
 
-        // Why: listener-first snapshotting closes the subscribe race while restoring state missed during disconnects.
+        // Listen before snapshotting to close the subscribe race and replay sleep state missed during disconnect.
         for (const event of runtime.getTerminalSleepClientEventSnapshot?.() ?? []) {
           emit(event)
         }
