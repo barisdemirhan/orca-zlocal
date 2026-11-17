@@ -25,7 +25,8 @@ prepare_base() {
 }
 
 # Vitest prints one "FAIL <project> <file> > <suite> > <test>" line per failed test; the key drops the project.
-failed_tests() { strip_ansi < "$1" | grep -E '^ FAIL ' | sed -E 's/^ FAIL +[^ ]+ +//' | sort -u; }
+# A clean run has no FAIL line; grep's exit 1 must not end the script under pipefail.
+failed_tests() { strip_ansi < "$1" | { grep -E '^ FAIL ' || true; } | sed -E 's/^ FAIL +[^ ]+ +//' | sort -u; }
 files_of() { sed -E 's/ > .*//; s/ \[.*//' | sort -u; }
 
 run_tests() {
@@ -76,7 +77,7 @@ compare_tests() {
 
 # Durations and pnpm's own echo differ between runs; drop them so only findings are compared.
 normalize() {
-  strip_ansi | sed -E 's/[0-9]+(\.[0-9]+)?m?s\b//g; s/\(verified [^)]*\)//g' | grep -vE '^(\$|>) |^\s*$|ELIFECYCLE' | sort -u
+  strip_ansi | sed -E 's/[0-9]+(\.[0-9]+)?m?s\b//g; s/\(verified [^)]*\)//g' | { grep -vE '^(\$|>) |^\s*$|ELIFECYCLE' || true; } | sort -u
 }
 
 run_step() {
