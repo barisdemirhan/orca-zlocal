@@ -4,6 +4,8 @@ import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 const origins = new Map<string, AgentHubMirrorGeometry>()
 // Windows the user moved, resized or arranged: their place outlives closing them.
 const kept = new Set<string>()
+// Windows dropped with Option/Alt on the canvas: they stay off the dots until placed again.
+const free = new Set<string>()
 const listeners = new Set<() => void>()
 
 function emit(): void {
@@ -32,6 +34,18 @@ export function keepAgentHubMirrorPlace(key: string): void {
   }
 }
 
+export function setAgentHubMirrorPlaceFree(key: string, isFree: boolean): void {
+  if (isFree) {
+    free.add(key)
+  } else {
+    free.delete(key)
+  }
+}
+
+export function isAgentHubMirrorPlaceFree(key: string): boolean {
+  return free.has(key)
+}
+
 export function isAgentHubMirrorPlaceKept(key: string): boolean {
   return kept.has(key)
 }
@@ -45,6 +59,7 @@ export function readAgentHubMirrorOrigin(key: string): AgentHubMirrorGeometry | 
 export function forgetUnkeptAgentHubMirrorPlace(key: string): void {
   if (!kept.has(key)) {
     origins.delete(key)
+    free.delete(key)
   }
 }
 
@@ -52,6 +67,7 @@ export function forgetUnkeptAgentHubMirrorPlace(key: string): void {
 export function releaseAgentHubMirrorPlace(key: string): void {
   origins.delete(key)
   kept.delete(key)
+  free.delete(key)
 }
 
 /** The window at `fromKey` now shows another pane: that pane's mirror stands where it stood. */
@@ -61,6 +77,9 @@ export function copyAgentHubMirrorPlace(fromKey: string, toKey: string): void {
     origins.set(toKey, origin)
     if (kept.has(fromKey)) {
       kept.add(toKey)
+    }
+    if (free.has(fromKey)) {
+      free.add(toKey)
     }
   }
 }
@@ -75,4 +94,5 @@ export function subscribeAgentHubMirrorPlaces(listener: () => void): () => void 
 export function resetAgentHubMirrorPlacesForTest(): void {
   origins.clear()
   kept.clear()
+  free.clear()
 }

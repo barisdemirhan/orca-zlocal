@@ -14,7 +14,11 @@ import {
 } from './agent-hub-floating-arrange'
 import type { AgentHubMirrorGeometry } from './agent-hub-mirror-geometry'
 import { endAgentHubMirrorFocus, readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
-import { keepAgentHubMirrorPlace, readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
+import {
+  keepAgentHubMirrorPlace,
+  readAgentHubMirrorOrigin,
+  setAgentHubMirrorPlaceFree
+} from './agent-hub-mirror-places'
 import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { openAgentHubMirror, readAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -44,7 +48,15 @@ export function requestAgentHubMirrorPlacement(
   key: string,
   geometry: AgentHubMirrorGeometry
 ): void {
-  placements = new Map([[key, geometry]])
+  requestAgentHubMirrorPlacements(new Map([[key, geometry]]))
+}
+
+/** Hands just these mirrors a new place (kept like a chosen one); the others stay as they are. */
+export function requestAgentHubMirrorPlacements(
+  next: ReadonlyMap<string, AgentHubMirrorGeometry>
+): void {
+  next.forEach((_geometry, key) => keepAgentHubMirrorPlace(key))
+  placements = new Map(next)
   version += 1
   listeners.forEach((listener) => listener())
 }
@@ -114,7 +126,12 @@ export function arrangeAgentHubFloatingWindowsOnScreen(layout: AgentHubFloatingL
       Math.round(a.rect.top / ROW_BAND) - Math.round(b.rect.top / ROW_BAND) ||
       a.rect.left - b.rect.left
   )
-  const places = arrangeAgentHubFloatingWindows(windows.length, agentHubWorkArea(), layout)
+  const places = arrangeAgentHubFloatingWindows(
+    windows.length,
+    agentHubWorkArea(),
+    layout,
+    isAgentHubCanvasOpen()
+  )
   const next = new Map<string, AgentHubMirrorGeometry>()
   windows.forEach((floating, index) => {
     const place = places[index]
@@ -125,6 +142,7 @@ export function arrangeAgentHubFloatingWindowsOnScreen(layout: AgentHubFloatingL
       requestFloatingWorkspaceBounds(place)
     } else {
       keepAgentHubMirrorPlace(floating.key)
+      setAgentHubMirrorPlaceFree(floating.key, false)
       next.set(floating.key, {
         x: place.left,
         y: place.top,

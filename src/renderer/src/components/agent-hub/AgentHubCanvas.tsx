@@ -10,6 +10,7 @@ import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
 } from '../sidebar/workspace-chrome-metrics'
+import { CANVAS_DOT_PITCH } from './agent-hub-canvas-dot-grid'
 import { AgentHubCanvasLayoutSwitch } from './AgentHubCanvasLayoutSwitch'
 import { AgentHubCanvasFocusShade } from './AgentHubMirrorFocusShade'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
@@ -32,6 +33,7 @@ export function AgentHubCanvas({
   const sidebarWidth = useAppStore((s) => s.sidebarWidth)
   const setSidebarOpen = useAppStore((s) => s.setSidebarOpen)
   const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
+  const left = sidebarOpen ? `var(--workspace-sidebar-live-width, ${sidebarWidth}px)` : '0px'
   return createPortal(
     <div
       data-agent-hub-canvas
@@ -39,13 +41,17 @@ export function AgentHubCanvas({
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       style={{
         // Why the live width: the sidebar's own width is committed only when a resize ends.
-        left: sidebarOpen ? `var(--workspace-sidebar-live-width, ${sidebarWidth}px)` : 0,
-        bottom: statusBarHeight
+        left,
+        bottom: statusBarHeight,
+        // Why: dot centres sit at multiples of the pitch in window coordinates, so the sidebar's
+        // width moves the canvas but not the dots, and windows snap to the same grid.
+        backgroundSize: `${CANVAS_DOT_PITCH}px ${CANVAS_DOT_PITCH}px`,
+        backgroundPosition: `calc(${left} * -1 - ${CANVAS_DOT_PITCH / 2}px) ${-CANVAS_DOT_PITCH / 2}px`
       }}
       // Why preventDefault: a click on the canvas must not pull focus off the mirror typed in.
       onMouseDown={(event) => event.preventDefault()}
       // Why z-[43]: the dim's layer (unused here), below the mirrors (44) and the dock (47).
-      className="fixed top-0 right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_14%,transparent)_1px,transparent_1px)] bg-size-[22px_22px] duration-150 fade-in-0"
+      className="fixed top-0 right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_14%,transparent)_1px,transparent_1px)] duration-150 fade-in-0"
     >
       {/* First, so the canvas's own controls stay lit and usable over it. */}
       <AgentHubCanvasFocusShade />

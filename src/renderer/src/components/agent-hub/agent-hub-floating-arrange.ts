@@ -1,4 +1,5 @@
 import type { AgentHubFloatingLayout } from '../../../../shared/agent-hub-settings'
+import { arrangeWindowsInCanvasDots } from './agent-hub-canvas-dot-grid'
 
 export type { AgentHubFloatingLayout }
 
@@ -43,15 +44,20 @@ function shapeFor(
 /**
  * Even, centred places for `count` floating windows inside `area` (the room between the
  * sidebars, under the title bar and above the status bar): a grid, one row, or one column, with
- * the same gap everywhere and a short last row centred under the others.
+ * the same gap everywhere and a short last row centred under the others. On the canvas
+ * (`onDots`) the places are whole dot cells instead.
  */
 export function arrangeAgentHubFloatingWindows(
   count: number,
   area: AgentHubRect,
-  layout: AgentHubFloatingLayout
+  layout: AgentHubFloatingLayout,
+  onDots = false
 ): AgentHubRect[] {
   if (count <= 0) {
     return []
+  }
+  if (onDots) {
+    return arrangeWindowsInCanvasDots(count, area, layout)
   }
   const { cols, rows } = shapeFor(count, area, layout)
   const fit = (room: number, cells: number, min: number, max: number): number =>

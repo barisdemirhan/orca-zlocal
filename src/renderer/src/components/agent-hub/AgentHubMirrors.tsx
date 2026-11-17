@@ -1,3 +1,4 @@
+import { useAgentHubCanvasSettle } from './use-mirror-canvas-settle'
 import { AgentHubMirrorPreviews } from './AgentHubMirrorPreviews'
 import { AgentHubMirrorTabDragLayer } from './AgentHubMirrorTabDragLayer'
 import { AgentHubMirrorTabStrip } from './AgentHubMirrorTabStrip'
@@ -162,6 +163,7 @@ export function AgentHubMirrors({
   // Each mirror's microphone needs to know which pane a dictation started in.
   useEffect(trackAgentHubDictationOrigin, [])
   usePruneClosedAgentHubMirrorSources(threads)
+  useAgentHubCanvasSettle()
 
   if (windows.length === 0 && chips.length === 0) {
     return null

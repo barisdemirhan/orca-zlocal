@@ -1,22 +1,23 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { AgentHubMirrorSnapPreview } from './AgentHubMirrorSnapGhost'
+import { dropPlan, sameMirrorBox, viewportSize } from './mirror-window-canvas-snap'
+import { claimMirrorPlace, rememberLastMirrorSize } from './mirror-window-claim-place'
+import { useMirrorSnapPreview } from './use-mirror-snap-preview'
 import {
-  agentHubMirrorOpenGeometry,
-  agentHubMirrorOpenRegion,
   clampAgentHubMirrorGeometry,
-  defaultAgentHubMirrorSize,
   type AgentHubMirrorGeometry
 } from './agent-hub-mirror-geometry'
 import {
-  agentHubWorkArea,
   readAgentHubMirrorPlacement,
+  requestAgentHubMirrorPlacements,
   useAgentHubArrangeVersion
 } from './agent-hub-floating-arrangement'
+import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import {
   keepAgentHubMirrorPlace,
-  readAgentHubMirrorOrigin,
-  rememberAgentHubMirrorOrigin
+  rememberAgentHubMirrorOrigin,
+  setAgentHubMirrorPlaceFree
 } from './agent-hub-mirror-places'
-import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
 import { useMirrorWindowFocus } from './use-mirror-window-focus'
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
@@ -30,9 +31,6 @@ import {
 const SETTLE_MS = 340
 const MOVE_THRESHOLD_PX = 3
 
-// Why module scope: a new mirror opens at the size the user last gave one this session.
-let lastResizedTo: { width: number; height: number } | null = null
-
 type DragState = {
   mode: 'move' | 'resize'
   /** A move captures the pointer only once it travels, so a double-click still reaches the title. */
@@ -41,39 +39,8 @@ type DragState = {
   pointerY: number
   start: AgentHubMirrorGeometry
   next: AgentHubMirrorGeometry
-}
-
-function viewportSize(): { width: number; height: number } {
-  return { width: window.innerWidth, height: window.innerHeight }
-}
-
-/**
- * A window's first place: where it stood before (see readAgentHubMirrorOrigin), else centred in the work area (beside the hub's
- * panel while that is open), stepping off the mirrors already open. The place is remembered at
- * once, so windows opening in the same commit step off each other too; asking again returns it.
- */
-function claimMirrorPlace(key: string, besideHubPanel: boolean): AgentHubMirrorGeometry {
-  const viewport = viewportSize()
-  const remembered = readAgentHubMirrorOrigin(key)
-  if (remembered) {
-    return clampAgentHubMirrorGeometry(remembered, viewport, remembered)
-  }
-  const panel = besideHubPanel
-    ? document.querySelector('[data-agent-hub-panel]')?.getBoundingClientRect()
-    : null
-  const taken = readAgentHubMirrors().windows.flatMap(
-    (open) => readAgentHubMirrorOrigin(open.id) ?? []
-  )
-  const place = clampAgentHubMirrorGeometry(
-    agentHubMirrorOpenGeometry(
-      lastResizedTo ?? defaultAgentHubMirrorSize(viewport),
-      agentHubMirrorOpenRegion(agentHubWorkArea(), panel ?? null),
-      taken
-    ),
-    viewport
-  )
-  rememberAgentHubMirrorOrigin(key, place)
-  return place
+  /** Option/Alt held: free placement, no snapping and no neighbours adapting. */
+  altKey: boolean
 }
 
 /**
@@ -91,6 +58,8 @@ export function useMirrorWindowGeometry(
   focus: AgentHubMirrorFocusState
   /** True briefly after the windows are arranged or a focus starts or ends, so the move can glide. */
   settling: boolean
+  /** On the canvas while dragging or resizing: where the window will land. */
+  snapPreview: AgentHubMirrorSnapPreview | null
   sectionRef: React.RefObject<HTMLElement | null>
   beginDrag: (mode: DragState['mode']) => (event: React.PointerEvent<HTMLElement>) => void
   onPointerMove: (event: React.PointerEvent<HTMLElement>) => void
@@ -103,6 +72,7 @@ export function useMirrorWindowGeometry(
   const sectionRef = useRef<HTMLElement | null>(null)
   const dragRef = useRef<DragState | null>(null)
   const frameRef = useRef<number | null>(null)
+  const { snapPreview, schedulePreview, clearPreview } = useMirrorSnapPreview(key, dragRef)
   const cancelDrag = useCallback(() => {
     const drag = dragRef.current
     dragRef.current = null
@@ -113,13 +83,14 @@ export function useMirrorWindowGeometry(
       cancelAnimationFrame(frameRef.current)
     }
     frameRef.current = null
+    clearPreview()
     if (sectionRef.current) {
       sectionRef.current.style.translate = ''
     }
     if (drag?.mode === 'resize') {
       setGeometry(drag.start)
     }
-  }, [])
+  }, [clearPreview])
   useEffect(() => {
     const escape = (event: KeyboardEvent): void => {
       if (event.key === 'Escape' && dragRef.current) {
@@ -198,8 +169,12 @@ export function useMirrorWindowGeometry(
   }, [geometry, key])
 
   useEffect(() => {
-    const onResize = (): void =>
-      setGeometry((current) => clampAgentHubMirrorGeometry(current, viewportSize()))
+    // Why not on the canvas: its one settle pass moves all windows together.
+    const onResize = (): void => {
+      if (!isAgentHubCanvasOpen()) {
+        setGeometry((current) => clampAgentHubMirrorGeometry(current, viewportSize()))
+      }
+    }
     window.addEventListener('resize', onResize)
     return () => {
       window.removeEventListener('resize', onResize)
@@ -231,56 +206,63 @@ export function useMirrorWindowGeometry(
           pointerX: event.clientX,
           pointerY: event.clientY,
           start: geometry,
-          next: geometry
+          next: geometry,
+          altKey: event.altKey
         }
       },
     [geometry, focused]
   )
 
-  const onPointerMove = useCallback((event: React.PointerEvent<HTMLElement>): void => {
-    const drag = dragRef.current
-    if (!drag) {
-      return
-    }
-    const dx = event.clientX - drag.pointerX
-    const dy = event.clientY - drag.pointerY
-    if (!drag.captured && event.buttons === 0) {
-      // The button came up outside the title bar before the pointer was captured.
-      dragRef.current = null
-      releaseAgentHubMirrorGesture('window')
-      return
-    }
-    if (!drag.captured) {
-      if (Math.hypot(dx, dy) < MOVE_THRESHOLD_PX) {
+  const onPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLElement>): void => {
+      const drag = dragRef.current
+      if (!drag) {
         return
       }
-      drag.captured = true
-      event.currentTarget.setPointerCapture(event.pointerId)
-    }
-    if (drag.mode === 'move') {
+      drag.altKey = event.altKey
+      const dx = event.clientX - drag.pointerX
+      const dy = event.clientY - drag.pointerY
+      if (!drag.captured && event.buttons === 0) {
+        // The button came up outside the title bar before the pointer was captured.
+        dragRef.current = null
+        releaseAgentHubMirrorGesture('window')
+        return
+      }
+      if (!drag.captured) {
+        if (Math.hypot(dx, dy) < MOVE_THRESHOLD_PX) {
+          return
+        }
+        drag.captured = true
+        event.currentTarget.setPointerCapture(event.pointerId)
+      }
+      if (drag.mode === 'move') {
+        drag.next = clampAgentHubMirrorGeometry(
+          { ...drag.start, x: drag.start.x + dx, y: drag.start.y + dy },
+          viewportSize()
+        )
+        if (sectionRef.current) {
+          sectionRef.current.style.translate = `${drag.next.x - drag.start.x}px ${drag.next.y - drag.start.y}px`
+        }
+        schedulePreview()
+        return
+      }
       drag.next = clampAgentHubMirrorGeometry(
-        { ...drag.start, x: drag.start.x + dx, y: drag.start.y + dy },
+        { ...drag.start, width: drag.start.width + dx, height: drag.start.height + dy },
         viewportSize()
       )
-      if (sectionRef.current) {
-        sectionRef.current.style.translate = `${drag.next.x - drag.start.x}px ${drag.next.y - drag.start.y}px`
+      schedulePreview()
+      if (frameRef.current === null) {
+        frameRef.current = requestAnimationFrame(() => {
+          frameRef.current = null
+          const pending = dragRef.current
+          if (pending?.mode === 'resize') {
+            setGeometry(pending.next)
+          }
+        })
       }
-      return
-    }
-    drag.next = clampAgentHubMirrorGeometry(
-      { ...drag.start, width: drag.start.width + dx, height: drag.start.height + dy },
-      viewportSize()
-    )
-    if (frameRef.current === null) {
-      frameRef.current = requestAnimationFrame(() => {
-        frameRef.current = null
-        const pending = dragRef.current
-        if (pending?.mode === 'resize') {
-          setGeometry(pending.next)
-        }
-      })
-    }
-  }, [])
+    },
+    [schedulePreview]
+  )
 
   const endDrag = useCallback(
     (event: React.PointerEvent<HTMLElement>): void => {
@@ -294,10 +276,23 @@ export function useMirrorWindowGeometry(
         if (event.currentTarget.hasPointerCapture(event.pointerId)) {
           event.currentTarget.releasePointerCapture(event.pointerId)
         }
-        setGeometry(drag.next)
+        const plan = dropPlan(key, drag)
+        if (plan || (drag.altKey && isAgentHubCanvasOpen())) {
+          setAgentHubMirrorPlaceFree(key, !plan)
+        }
+        if (plan) {
+          // The drop glides from where the pointer left the window to its dots.
+          shownBefore.current = drag.next
+          setSettling(true)
+          if (plan.neighbours.size > 0) {
+            requestAgentHubMirrorPlacements(plan.neighbours)
+          }
+        }
+        setGeometry(plan?.target ?? drag.next)
         keepAgentHubMirrorPlace(key)
         if (drag.mode === 'resize') {
-          lastResizedTo = { width: drag.next.width, height: drag.next.height }
+          const landed = plan?.target ?? drag.next
+          rememberLastMirrorSize({ width: landed.width, height: landed.height })
         }
       }
       releaseAgentHubMirrorGesture('window')
@@ -309,15 +304,11 @@ export function useMirrorWindowGeometry(
     geometry: shownGeometry,
     focus: focus.state,
     settling,
+    snapPreview,
     sectionRef,
     beginDrag,
     onPointerMove,
     endDrag,
     cancelDrag
   }
-}
-
-// Why by value: the focus box is derived anew on every render.
-function sameMirrorBox(a: AgentHubMirrorGeometry, b: AgentHubMirrorGeometry): boolean {
-  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height
 }

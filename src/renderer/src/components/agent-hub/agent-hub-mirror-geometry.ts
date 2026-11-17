@@ -1,5 +1,10 @@
 import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
 import type { AgentHubRect } from './agent-hub-floating-arrange'
+import {
+  CANVAS_DOT_PITCH,
+  focusRectInCanvasDots,
+  snapRectToCanvasDots
+} from './agent-hub-canvas-dot-grid'
 
 export type AgentHubMirrorGeometry = { x: number; y: number; width: number; height: number }
 
@@ -68,12 +73,14 @@ export function agentHubMirrorOpenRegion(
 
 /**
  * Where a new mirror opens: centred in `region`, stepping diagonally off the windows already
- * there (`taken`, their top-left corners) and never leaving the region.
+ * there (`taken`, their top-left corners) and never leaving the region. On the canvas
+ * (`onDots`) it lands on dots and steps one dot at a time.
  */
 export function agentHubMirrorOpenGeometry(
   size: Size,
   region: AgentHubRect,
-  taken: readonly { x: number; y: number }[]
+  taken: readonly { x: number; y: number }[],
+  onDots = false
 ): AgentHubMirrorGeometry {
   const fit = (wanted: number, room: number, min: number): number =>
     Math.max(min, Math.min(wanted, room - EDGE_GAP * 2))
@@ -81,20 +88,28 @@ export function agentHubMirrorOpenGeometry(
   const height = fit(size.height, region.height, MIN_HEIGHT)
   const within = (value: number, start: number, room: number): number =>
     Math.round(Math.min(Math.max(start, value), Math.max(start, start + room)))
-  const place = (slot: number): AgentHubMirrorGeometry => ({
-    x: within(
-      region.left + (region.width - width) / 2 + slot * CASCADE_STEP,
-      region.left,
-      region.width - width
-    ),
-    y: within(
-      region.top + (region.height - height) / 2 + slot * CASCADE_STEP,
-      region.top,
-      region.height - height
-    ),
-    width,
-    height
-  })
+  const step = onDots ? CANVAS_DOT_PITCH : CASCADE_STEP
+  const place = (slot: number): AgentHubMirrorGeometry => {
+    const free = {
+      x: within(
+        region.left + (region.width - width) / 2 + slot * step,
+        region.left,
+        region.width - width
+      ),
+      y: within(
+        region.top + (region.height - height) / 2 + slot * step,
+        region.top,
+        region.height - height
+      ),
+      width,
+      height
+    }
+    if (!onDots) {
+      return free
+    }
+    const snapped = snapRectToCanvasDots({ left: free.x, top: free.y, width, height }, region)
+    return { x: snapped.left, y: snapped.top, width: snapped.width, height: snapped.height }
+  }
   // Down-right until the region's edge (steps past it land on a taken spot), then up-left.
   for (let index = 0; index <= CASCADE_SLOTS * 2; index += 1) {
     const candidate = place(index <= CASCADE_SLOTS ? index : CASCADE_SLOTS - index)
@@ -112,12 +127,26 @@ export function agentHubMirrorOpenGeometry(
 /**
  * The box a focused mirror shows in: centred in the work area and filling it up to a margin,
  * capped so a very large window does not stretch the terminal past a comfortable read, and
- * never under the mirror's minimum size.
+ * never under the mirror's minimum size. On the canvas (`onDots`) the box sits on dots, at least
+ * two dots clear of the area's edges.
  */
 export function agentHubMirrorFocusGeometry(
   area: AgentHubRect,
-  viewport: Viewport
+  viewport: Viewport,
+  onDots = false
 ): AgentHubMirrorGeometry {
+  if (onDots) {
+    const box = focusRectInCanvasDots(
+      area,
+      Math.max(FOCUS_MARGIN, CANVAS_DOT_PITCH * 2),
+      FOCUS_MAX_WIDTH,
+      FOCUS_MAX_HEIGHT
+    )
+    return clampAgentHubMirrorGeometry(
+      { x: box.left, y: box.top, width: box.width, height: box.height },
+      viewport
+    )
+  }
   const width = Math.max(MIN_WIDTH, Math.min(FOCUS_MAX_WIDTH, area.width - FOCUS_MARGIN * 2))
   const height = Math.max(MIN_HEIGHT, Math.min(FOCUS_MAX_HEIGHT, area.height - FOCUS_MARGIN * 2))
   return clampAgentHubMirrorGeometry(

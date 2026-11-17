@@ -1,4 +1,5 @@
 import { useAppStore } from '@/store'
+import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { agentHubWorkArea } from './agent-hub-floating-arrangement'
 import { useAgentHubMirrorFocus, type AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
 import {
@@ -20,6 +21,8 @@ export function useMirrorWindowFocus(key: string): {
   const viewport = useViewportSize()
   // Why subscribed: the work area is read from the shell (and the dock), not passed in.
   useAppStore((s) => `${s.sidebarOpen}:${s.sidebarWidth}:${s.statusBarVisible}`)
-  const box = focused ? agentHubMirrorFocusGeometry(agentHubWorkArea(), viewport) : null
+  const box = focused
+    ? agentHubMirrorFocusGeometry(agentHubWorkArea(), viewport, isAgentHubCanvasOpen())
+    : null
   return { state: focused ? 'focused' : focusedKey === null ? null : 'shadowed', box }
 }
