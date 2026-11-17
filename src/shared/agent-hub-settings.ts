@@ -49,6 +49,8 @@ export type AgentHubSettings = {
   agentHubOrbDiameter?: number
   /** The sphere sits small beside the dock instead of floating. */
   agentHubOrbPinned?: boolean
+  /** The mini chat window's size once resized; null or absent means the default. */
+  agentHubOrbMiniSize?: { width: number; height: number } | null
   agentHubOrbDefaultAction?: AgentHubOrbAction
   agentHubOrbAlternateAction?: AgentHubOrbAction
   agentHubOrbSpeakReplies?: boolean

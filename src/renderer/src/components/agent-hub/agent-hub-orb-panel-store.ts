@@ -29,6 +29,8 @@ type OrbPanelState = {
   pinned: boolean
   /** Where the mini window was last left; it opens on the sphere until then. */
   miniPosition: { x: number; y: number } | null
+  /** The mini window's size while resizing and once chosen; null is the default size. */
+  miniSize: { width: number; height: number } | null
   /** The one-line box under the sphere; a plain click on a sleeping Orb opens straight into it. */
   quickInputOpen: boolean
   /** The reply whose bubble was closed; kept here so the sphere coming back does not reopen it. */
@@ -53,6 +55,7 @@ export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   stagePosition: null,
   pinned: false,
   miniPosition: null,
+  miniSize: null,
   quickInputOpen: false,
   dismissedCaption: null,
   requestDestination: null,

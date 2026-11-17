@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useAppStore } from '@/store'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
 import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
@@ -22,6 +23,18 @@ export function useAgentHubOrbMiniWindowDrag(): {
   onPointerCancel: (event: React.PointerEvent<HTMLElement>) => void
 } {
   const wanted = useAgentHubOrbPanel((s) => s.miniPosition ?? s.stagePosition)
+  const size = useAgentHubOrbPanel((s) => s.miniSize)
+  const savedSize = useAppStore((s) => s.settings?.agentHubOrbMiniSize)
+  const restored = useRef(false)
+  useLayoutEffect(() => {
+    if (restored.current || !savedSize) {
+      return
+    }
+    restored.current = true
+    if (useAgentHubOrbPanel.getState().miniSize === null) {
+      useAgentHubOrbPanel.setState({ miniSize: savedSize })
+    }
+  }, [savedSize])
   const [bounds, setBounds] = useState(readAgentHubOrbBounds)
   const drag = useRef<Drag | null>(null)
   useEffect(() => {
@@ -30,7 +43,7 @@ export function useAgentHubOrbMiniWindowDrag(): {
     window.addEventListener('resize', measure)
     return () => window.removeEventListener('resize', measure)
   }, [])
-  const frame = placeAgentHubOrbMiniWindow(wanted, bounds)
+  const frame = placeAgentHubOrbMiniWindow(wanted, bounds, size)
   const finish = (event: React.PointerEvent<HTMLElement>): void => {
     if (drag.current?.pointerId !== event.pointerId) {
       return
@@ -67,7 +80,8 @@ export function useAgentHubOrbMiniWindowDrag(): {
           x: active.origin.x + event.clientX - active.pointer.x,
           y: active.origin.y + event.clientY - active.pointer.y
         },
-        readAgentHubOrbBounds()
+        readAgentHubOrbBounds(),
+        useAgentHubOrbPanel.getState().miniSize
       )
       useAgentHubOrbPanel.setState({ miniPosition: { x: moved.x, y: moved.y } })
       event.preventDefault()

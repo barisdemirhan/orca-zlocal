@@ -12,6 +12,7 @@ import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
 import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbMiniWindowDrag } from './use-agent-hub-orb-mini-window-drag'
+import { useAgentHubOrbMiniWindowResize } from './use-agent-hub-orb-mini-window-resize'
 import { useAgentHubOrbPermissionMode } from './use-agent-hub-orb-permission-mode'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 import './agent-hub-orb-stage.css'
@@ -50,78 +51,121 @@ export function AgentHubOrbMiniWindow({
     return () => container.remove()
   }, [container])
   const { frame, ...drag } = useAgentHubOrbMiniWindowDrag()
+  const resize = useAgentHubOrbMiniWindowResize(frame)
   const permission = useAgentHubOrbPermissionMode(sessionId)
   const PermissionIcon = permission ? NATIVE_CHAT_PERMISSION_MODE_ICONS[permission] : null
   const title = useAgentHubOrbName()
   const backLabel = translate('agentHub.orb.backToOrb', 'Back to Orb')
   const permissionLabel = permission ? nativeChatPermissionModeLabel(permission) : ''
   return createPortal(
-    <section
-      aria-label={title}
-      data-agent-hub-orb-mini-window
-      className="agent-hub-orb-mini-window fixed z-[47] flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-floating"
-      style={{ left: frame.x, top: frame.y, width: frame.width, height: frame.height }}
-    >
-      <header
-        className="flex shrink-0 cursor-grab touch-none select-none items-center gap-1.5 border-b border-border py-1.5 pr-1.5 pl-2 active:cursor-grabbing"
-        {...drag}
+    <>
+      <section
+        aria-label={title}
+        data-agent-hub-orb-mini-window
+        className="agent-hub-orb-mini-window fixed z-[47] flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-floating"
+        style={{ left: frame.x, top: frame.y, width: frame.width, height: frame.height }}
       >
-        <AgentHubActionTooltip label={backLabel} actionId="agentHub.orb.toggleConversation">
-          <button
-            type="button"
-            aria-label={backLabel}
-            className="-ml-1 inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md pr-1.5 pl-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            onClick={onMinimize}
-          >
-            <ChevronLeft aria-hidden className="size-3.5" />
-            <span className="inline-flex size-5">
-              <AgentHubOrbSphere {...sphere} />
-            </span>
-            <span className="text-sm font-semibold text-foreground">{title}</span>
-          </button>
-        </AgentHubActionTooltip>
-        {agentLabel ? (
-          <span className="min-w-0 truncate text-xs text-muted-foreground">{agentLabel}</span>
-        ) : null}
-        {permission && PermissionIcon ? (
-          <AgentHubActionTooltip label={permissionLabel}>
-            <Badge variant="outline" aria-label={permissionLabel} className="shrink-0">
-              <PermissionIcon aria-hidden />
-            </Badge>
+        <header
+          className="flex shrink-0 cursor-grab touch-none select-none items-center gap-1.5 border-b border-border py-1.5 pr-1.5 pl-2 active:cursor-grabbing"
+          {...drag}
+        >
+          <AgentHubActionTooltip label={backLabel} actionId="agentHub.orb.toggleConversation">
+            <button
+              type="button"
+              aria-label={backLabel}
+              className="-ml-1 inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md pr-1.5 pl-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              onClick={onMinimize}
+            >
+              <ChevronLeft aria-hidden className="size-3.5" />
+              <span className="inline-flex size-5">
+                <AgentHubOrbSphere {...sphere} />
+              </span>
+              <span className="text-sm font-semibold text-foreground">{title}</span>
+            </button>
           </AgentHubActionTooltip>
-        ) : null}
-        <span className="flex-1" />
-        <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.openFullChat', 'Open full chat')}
-          onClick={onShowChat}
+          {agentLabel ? (
+            <span className="min-w-0 truncate text-xs text-muted-foreground">{agentLabel}</span>
+          ) : null}
+          {permission && PermissionIcon ? (
+            <AgentHubActionTooltip label={permissionLabel}>
+              <Badge variant="outline" aria-label={permissionLabel} className="shrink-0">
+                <PermissionIcon aria-hidden />
+              </Badge>
+            </AgentHubActionTooltip>
+          ) : null}
+          <span className="flex-1" />
+          <AgentHubOrbHeaderAction
+            label={translate('agentHub.orb.openFullChat', 'Open full chat')}
+            onClick={onShowChat}
+          >
+            <Maximize2 />
+          </AgentHubOrbHeaderAction>
+          <AgentHubOrbHeaderAction
+            label={translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name: title })}
+            disabled={busy}
+            onClick={onSleep}
+          >
+            <Moon />
+          </AgentHubOrbHeaderAction>
+          <AgentHubOrbHeaderAction
+            label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name: title })}
+            onClick={onHide}
+          >
+            <X />
+          </AgentHubOrbHeaderAction>
+        </header>
+        <div
+          ref={setAgentHubOrbRequestDestination}
+          data-agent-hub-orb-request-host
+          className="agent-hub-orb-request-host scrollbar-sleek"
+          hidden={!requestVisible}
         >
-          <Maximize2 />
-        </AgentHubOrbHeaderAction>
-        <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name: title })}
-          disabled={busy}
-          onClick={onSleep}
-        >
-          <Moon />
-        </AgentHubOrbHeaderAction>
-        <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name: title })}
-          onClick={onHide}
-        >
-          <X />
-        </AgentHubOrbHeaderAction>
-      </header>
+          {request}
+        </div>
+        {memory}
+        {children}
+      </section>
       <div
-        ref={setAgentHubOrbRequestDestination}
-        data-agent-hub-orb-request-host
-        className="agent-hub-orb-request-host scrollbar-sleek"
-        hidden={!requestVisible}
+        aria-hidden
+        data-agent-hub-orb-mini-resize="right"
+        className="fixed z-[47] w-1.5 cursor-ew-resize touch-none"
+        style={{
+          left: frame.x + frame.width,
+          top: frame.y + 8,
+          height: Math.max(0, frame.height - 16)
+        }}
+        {...resize.handlers('right')}
+      />
+      <div
+        aria-hidden
+        data-agent-hub-orb-mini-resize="bottom"
+        className="fixed z-[47] h-1.5 cursor-ns-resize touch-none"
+        style={{
+          left: frame.x + 8,
+          top: frame.y + frame.height,
+          width: Math.max(0, frame.width - 16)
+        }}
+        {...resize.handlers('bottom')}
+      />
+      <div
+        aria-hidden
+        data-agent-hub-orb-mini-resize="corner"
+        className="fixed z-[48] size-4 cursor-nwse-resize touch-none text-muted-foreground/50"
+        style={{ left: frame.x + frame.width - 8, top: frame.y + frame.height - 8 }}
+        onDoubleClick={resize.reset}
+        {...resize.handlers('corner')}
       >
-        {request}
+        <svg
+          viewBox="0 0 16 16"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1"
+        >
+          <path d="M13 6 6 13M13 10l-3 3" strokeLinecap="round" />
+        </svg>
       </div>
-      {memory}
-      {children}
-    </section>,
+    </>,
     container
   )
 }
