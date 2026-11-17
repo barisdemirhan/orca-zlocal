@@ -112,7 +112,13 @@ describe('Agent Hub ask over the local runtime socket', () => {
       }
       expect(pending).toMatchObject({
         status: 'pending',
-        resume: ['orca', 'hub', 'ask', '--resume', pending.requestId]
+        resume: [
+          process.platform === 'linux' ? 'orca-ide' : 'orca',
+          'hub',
+          'ask',
+          '--resume',
+          pending.requestId
+        ]
       })
       expect(process.exitCode).toBe(2)
       expect(fixture.runtime.agentHub.snapshot().requests).toMatchObject([
