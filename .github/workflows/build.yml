@@ -59,7 +59,7 @@ jobs:
   lint:
     needs: vet
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: read
     steps:
@@ -86,6 +86,9 @@ jobs:
           cache-dependency-path: |
             pnpm-lock.yaml
             mobile/pnpm-lock.yaml
+      # Type-aware lint runs twice when a step fails (here and on the release); a lost runner left no log.
+      - name: Add swap
+        run: sudo fallocate -l 8G /swap-extra && sudo chmod 600 /swap-extra && sudo mkswap -q /swap-extra && sudo swapon /swap-extra
       - run: pnpm install --frozen-lockfile
       - run: pnpm --dir mobile install --frozen-lockfile
       - name: Lint, failing only on findings the upstream release does not have
@@ -94,7 +97,7 @@ jobs:
           BASE: ${{ inputs.base }}
         run: |
           set -o pipefail
-          if pnpm lint 2>&1 | tee "$RUNNER_TEMP/lint.log"; then exit 0; fi
+          if pnpm lint --maxWorkers=1 --timings 2>&1 | tee "$RUNNER_TEMP/lint.log"; then exit 0; fi
           "$RUNNER_TEMP/compare-with-base.sh" lint "$RUNNER_TEMP/lint.log"
 
   test:
