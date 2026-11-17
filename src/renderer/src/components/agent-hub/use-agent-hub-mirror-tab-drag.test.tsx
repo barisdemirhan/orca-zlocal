@@ -4,6 +4,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import type * as DragPassthrough from '../browser-pane/host-guest/drag/webview-drag-passthrough'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,
@@ -25,7 +26,8 @@ import {
 } from './agent-hub-mirror-focus'
 
 const lease = vi.hoisted(() => ({ acquire: vi.fn(), release: vi.fn() }))
-vi.mock('../browser-pane/host-guest/webview-registry', () => ({
+vi.mock('../browser-pane/host-guest/drag/webview-drag-passthrough', async (original) => ({
+  ...(await original<typeof DragPassthrough>()),
   acquireWebviewsDragPassthrough: () => {
     lease.acquire()
     return lease.release

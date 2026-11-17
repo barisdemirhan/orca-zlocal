@@ -24,7 +24,11 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('@/store', () => ({
   useAppStore: {
-    getState: () => ({ terminalLayoutsByTabId: mocks.layouts, settings: mocks.settings })
+    getState: () => ({
+      terminalLayoutsByTabId: mocks.layouts,
+      settings: mocks.settings,
+      agentStatusByPaneKey: new Map()
+    })
   }
 }))
 vi.mock('@/store/slices/tabs/closing/running-terminal-close-confirm', () => ({

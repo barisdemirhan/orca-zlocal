@@ -25,5 +25,3 @@ describe('saved Arguments refusals', () => {
     expect(agentSessionRefusalCauseParts(refused)).toEqual([])
   })
 })
-
-describe('Live voice start', () => {})

@@ -16,6 +16,7 @@ import { openTestAgentSessionRecordStore } from '../../runtime/agent-session/rec
 import { createGlobalSettingsFixture } from '../../../shared/global-settings-test-fixture'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { AGENT_JOURNAL_THREAD_SCOPE } from '../../../shared/agent-session/journal/agent-session-journal-types'
+import { agentJournalItemKey } from '../../../shared/agent-session/journal/agent-session-journal-item-key'
 import { AGENT_HUB_ORB_OPENING_PROMPT } from '../../../shared/agent-hub-orb'
 import {
   AGENT_HUB_ORB_INSTRUCTION_FILES,
@@ -476,14 +477,20 @@ describe('Orb conversations on the structured host', () => {
     if (!events) {
       throw new Error('No acquired provider')
     }
+    const turn = { provider: 'codex' as const, threadId: HOST_TEST_THREAD, turnId: 'turn-1' }
     events.appendItem(
-      { provider: 'codex', threadId: HOST_TEST_THREAD, turnId: 'turn-1', ordinal: 55 },
+      { ...turn, ordinal: 54 },
+      { kind: 'turn', turnId: 'turn-1', state: 'completed' },
+      { turnScope: AGENT_JOURNAL_THREAD_SCOPE }
+    )
+    events.appendItem(
+      { ...turn, ordinal: 55 },
       {
         kind: 'message',
         role: 'assistant',
         blocks: [{ type: 'text', text: 'Two workers are waiting.' }]
       },
-      { turnScope: AGENT_JOURNAL_THREAD_SCOPE }
+      { turnScope: { kind: 'turn', turnItemId: agentJournalItemKey({ ...turn, ordinal: 54 }) } }
     )
     events.appendItem(
       { provider: 'codex', threadId: HOST_TEST_THREAD, turnId: 'turn-1', ordinal: 56 },

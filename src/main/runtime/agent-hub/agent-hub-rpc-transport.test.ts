@@ -26,8 +26,8 @@ type AgentHubCli = {
 
 /** Loads the CLI by path so the node project does not pull CLI sources into its file list. */
 async function loadAgentHubCli(): Promise<AgentHubCli> {
-  const clientPath = '../../../cli/runtime-client'
-  const handlersPath = '../../../cli/handlers/agent-hub'
+  const clientPath = '../../../cli/runtime/client'
+  const handlersPath = '../../../cli/agents/agent-hub'
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: dynamic import of a module whose export is checked in the CLI project.
   const clientModule = (await import(clientPath)) as Pick<AgentHubCli, 'RuntimeClient'>
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: dynamic import of a module whose export is checked in the CLI project.

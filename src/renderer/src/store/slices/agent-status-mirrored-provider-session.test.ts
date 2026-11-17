@@ -32,7 +32,7 @@ function runDoneThenWorking(runtimeOwnerEnvironmentId?: string) {
   set('working', 1, { providerSession })
   set('done', 2)
   set('working', 3)
-  return store.getState().agentStatusByPaneKey[PANE]
+  return store.getState().agentStatusByPaneKey.get(PANE)
 }
 
 describe('provider session across a new turn', () => {

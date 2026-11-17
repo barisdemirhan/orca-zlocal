@@ -8,5 +8,3 @@ describe('agentHubOrbSphereAction', () => {
     expect(agentHubOrbSphereAction({ liveActive: false, dictating: false })).toBe('quick-input')
   })
 })
-
-describe('agentHubOrbPillShown', () => {})

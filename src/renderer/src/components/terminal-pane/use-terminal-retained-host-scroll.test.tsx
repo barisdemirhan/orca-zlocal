@@ -10,8 +10,10 @@ import {
 import { useTerminalRetainedHostScroll } from './use-terminal-retained-host-scroll'
 
 const scroll = vi.hoisted(() => ({ capture: vi.fn(), restore: vi.fn() }))
+vi.mock('@/lib/pane-manager/terminal-scroll/pane-scroll-snapshot', () => ({
+  captureScrollState: scroll.capture
+}))
 vi.mock('@/lib/pane-manager/terminal-scroll/pane-scroll', () => ({
-  captureScrollState: scroll.capture,
   restoreScrollStateAfterLayout: scroll.restore
 }))
 afterEach(() => {

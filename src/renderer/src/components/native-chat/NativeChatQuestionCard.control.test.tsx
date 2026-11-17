@@ -127,5 +127,3 @@ describe('NativeChatQuestionCard number-key control', () => {
     ])
   })
 })
-
-describe('NativeChatQuestionCard recommended badge', () => {})

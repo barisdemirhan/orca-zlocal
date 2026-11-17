@@ -19,8 +19,8 @@ describe('direct terminal status model ownership', () => {
         agentType: 'codex',
         model: 'gpt-6.1-sol'
       })
-      expect(store.getState().agentStatusByPaneKey[paneKey]?.agentType).toBe('claude')
-      expect(store.getState().agentStatusByPaneKey[paneKey]?.model).toBe(model)
+      expect(store.getState().agentStatusByPaneKey.get(paneKey)?.agentType).toBe('claude')
+      expect(store.getState().agentStatusByPaneKey.get(paneKey)?.model).toBe(model)
     }
   )
 })

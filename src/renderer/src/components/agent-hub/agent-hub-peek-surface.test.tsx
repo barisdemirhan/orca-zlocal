@@ -125,7 +125,7 @@ beforeEach(() => {
   resetStore()
   Object.defineProperty(window, 'api', {
     configurable: true,
-    value: { shell: { openUrl: vi.fn() } }
+    value: { shell: { openUrl: vi.fn() }, browser: { unregisterGuest: vi.fn(async () => {}) } }
   })
 })
 afterEach(() => {
@@ -453,7 +453,11 @@ describe('private Peek pages', () => {
     const lookup = vi.fn(async () => addresses)
     Object.defineProperty(window, 'api', {
       configurable: true,
-      value: { shell: { openUrl: vi.fn() }, hostNames: { lookup } }
+      value: {
+        shell: { openUrl: vi.fn() },
+        hostNames: { lookup },
+        browser: { unregisterGuest: vi.fn(async () => {}) }
+      }
     })
     const onUnavailable = vi.fn()
     render(

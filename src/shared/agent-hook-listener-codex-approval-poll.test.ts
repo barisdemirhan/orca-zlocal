@@ -189,7 +189,7 @@ describe('Codex approval ownership learned after its hook', () => {
       })
       setReviewer(path, 'auto_review')
 
-      const polled = poll(original)
+      const polled = agentId ? pollOrKeep(original) : poll(original)
       expect(polled.payload.state).toBe('waiting')
       expect(polled.payload.interactivePrompt).toBe(original.payload.interactivePrompt)
       if (agentId) {

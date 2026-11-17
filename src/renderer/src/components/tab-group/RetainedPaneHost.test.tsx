@@ -6,7 +6,11 @@ import { RetainedPaneHost } from './RetainedPaneHost'
 import { registerTabGroupBody } from './tab-group-body-geometry'
 import { PaneManager } from '@/lib/pane-manager/pane-manager'
 import { Terminal } from '@xterm/headless'
-import { captureInsertionTarget, insertText } from '../dictation/dictation-insertion-target'
+import {
+  captureInsertionTarget,
+  insertText,
+  registerDictationTerminalTarget
+} from '../dictation/dictation-insertion-target'
 import { returnRetainedPaneDestinationHome } from './retained-pane-destinations'
 
 const disconnect = vi.fn()
@@ -154,8 +158,11 @@ it('preserves the manager, xterm, PTY binding and dictation target through 100 d
   const textarea = view.getByRole('textbox')
   textarea.focus()
   const captured = captureInsertionTarget()
-  const insertion = vi.fn()
-  document.addEventListener('dictation:insertText', insertion)
+  const insertion = vi.fn(async () => true)
+  const unregisterTerminalTarget = registerDictationTerminalTarget('tab-retained', {
+    insert: insertion,
+    pressEnter: vi.fn(async () => {})
+  })
   for (let index = 0; index < 100; index++) {
     view.rerender(renderHost(index % 2 ? activity : mirror))
     expect((index % 2 ? activity : mirror).contains(root)).toBe(true)
@@ -172,11 +179,8 @@ it('preserves the manager, xterm, PTY binding and dictation target through 100 d
   if (!captured) {
     throw new Error('Dictation origin missing')
   }
-  insertText('retained origin', captured)
-  expect(insertion.mock.calls[0][0].detail).toMatchObject({
-    text: 'retained origin',
-    tabId: 'tab-retained'
-  })
+  void insertText('retained origin', captured)
+  expect(insertion).toHaveBeenCalledWith('retained origin', 7)
   view.rerender(renderHost(mirror))
   returnRetainedPaneDestinationHome(mirror)
   expect(home?.contains(root)).toBe(true)
@@ -185,6 +189,6 @@ it('preserves the manager, xterm, PTY binding and dictation target through 100 d
   expect(cleanupMount).not.toHaveBeenCalled()
   view.unmount()
   expect(cleanupMount).toHaveBeenCalledOnce()
-  document.removeEventListener('dictation:insertText', insertion)
+  unregisterTerminalTarget()
   activity.remove()
 })
