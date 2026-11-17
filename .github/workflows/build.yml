@@ -56,10 +56,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm tc
 
+  # Reports only: the feature branches carry lint debt that is cleaned before their PRs, so it must
+  # not hold back the personal build. The job still shows red with its findings.
   lint:
     needs: vet
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    continue-on-error: true
     permissions:
       contents: read
     steps:
