@@ -60,7 +60,8 @@ export default function CloseTerminalDialog({
         }
       }}
     >
-      <DialogContent className="max-w-sm" showCloseButton={false}>
+      {/* Why above popovers: the Agent Hub panel can ask for this, and it must not hide it. */}
+      <DialogContent className="z-[65] max-w-sm" overlayClassName="z-[65]" showCloseButton={false}>
         <CloseTerminalDialogBody
           copyKind={copyKind}
           allowDontAskAgain={allowDontAskAgain}

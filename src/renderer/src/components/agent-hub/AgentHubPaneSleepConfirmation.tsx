@@ -55,6 +55,9 @@ function SleepConfirmation({
       }}
     >
       <DialogContent
+        // Why above popovers: asked from the hub panel, which must stay open behind it.
+        className="z-[65]"
+        overlayClassName="z-[65]"
         showCloseButton={!busy}
         onCloseAutoFocus={(event) => {
           if (origin?.isConnected) {

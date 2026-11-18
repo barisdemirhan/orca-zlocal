@@ -86,6 +86,13 @@ function inMirrorLayer(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest('[data-agent-hub-mirrors]') !== null
 }
 
+// A confirmation the hub opened (stop agent, sleep) sits in its own dialog layer above the panel.
+function inDialogLayer(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element && target.closest('[role="dialog"], [role="alertdialog"]') !== null
+  )
+}
+
 /** The hub's popover: the panel, anchored to the dock or the status-bar trigger. */
 export function AgentHubPopoverContent({
   side,
@@ -134,11 +141,17 @@ export function AgentHubPopoverContent({
         if (inMirrorLayer(event.target)) {
           event.preventDefault()
           body.rootRef.current?.focus()
+        } else if (inDialogLayer(event.target)) {
+          // Why: answering the hub's own confirmation must not close the hub behind it.
+          event.preventDefault()
         }
       }}
       onInteractOutside={(event) => {
         // Why: the dock's own buttons switch tabs; treating them as "outside" would close first.
-        if (event.target instanceof Node && anchorRef.current?.contains(event.target)) {
+        if (
+          (event.target instanceof Node && anchorRef.current?.contains(event.target)) ||
+          inDialogLayer(event.target)
+        ) {
           event.preventDefault()
         } else if (inMirrorLayer(event.target)) {
           // A click on a mirror closes the hub and keeps the focus it just gave that terminal.
