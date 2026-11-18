@@ -37,6 +37,7 @@ const state = () => ({
   worktreesByRepo: { [repo.id]: [worktree] },
   folderWorkspaces: [],
   tabsByWorktree: { [worktree.id]: [tab] },
+  unifiedTabsByWorktree: {},
   terminalLayoutsByTabId: {
     [tab.id]: {
       root: { type: 'leaf' as const, leafId },
@@ -229,6 +230,19 @@ it('prunes a chat that was the last tab of its workspace once its unified bucket
   useAppStore.setState({ unifiedTabsByWorktree: { [worktree.id]: [] } })
   pruneClosedAgentHubMirrorSources()
   expect(readAgentHubMirrors().windows).toHaveLength(0)
+})
+it('keeps a terminal whose unified tab names it by entity id while its terminal bucket is missing', () => {
+  openAgentHubMirror(target)
+  const unifiedTerminal = {
+    id: 'unified-terminal-1',
+    entityId: tab.id,
+    contentType: 'terminal',
+    worktreeId: worktree.id,
+    label: 'Terminal'
+  } as Tab
+  useAppStore.setState({ tabsByWorktree: {}, unifiedTabsByWorktree: { [worktree.id]: [unifiedTerminal] } })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
 })
 it('does not treat another host inventory with equal workspace and tab ids as source closure', () => {
   openAgentHubMirror({ ...target, paneKey: makePaneKey(tab.id, leafId) })
