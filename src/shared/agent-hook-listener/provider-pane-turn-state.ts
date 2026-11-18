@@ -1,5 +1,5 @@
-import type { AgentMainAgentStatus } from '../agent-status/lifecycle/main-agent-status'
-import type { MuseSessionLogState } from './providers/muse/muse-session-log'
+import type { ClaudeHumanPromptContext } from './providers/claude/claude-human-notifications'
+import { deletePaneScopedCacheEntry, movePaneScopedMapEntries } from './pane-scoped-cache-entries'
 
 export type HermesPaneTurn = {
   ended: boolean
@@ -9,19 +9,30 @@ export type HermesPaneTurn = {
   sessionId: string
 }
 
-export type MusePaneState = {
-  /** Internal reminder/subagent sessions; their hooks inherit the pane env and fire even after Stop. */
-  childSessionIds: Set<string>
-  /** Spawned subagents between SubagentStart and SubagentStop, by child session id, with their last hook time. */
-  runningChildren: Map<string, number>
-  /** Main-agent status as last derived, so restatements keep its clock. */
-  mainAgent?: AgentMainAgentStatus
-  log?: MuseSessionLogState
-  /** Muse emits PermissionRequest for auto-approved calls too; only Notification confirms a visible prompt. */
-  pendingApproval?: { toolName?: string; toolInput?: unknown }
-}
-
 export type GrokActiveTurn = {
   promptId?: string
   sessionId?: string
+}
+
+export type GeminiPendingPermission = { sessionId?: string; toolCallId?: string; toolName?: string }
+
+/** Per-pane waits on a human answer that the hub surfaces; torn down with the pane's turn. */
+export type HumanTurnMaps = {
+  claudeHumanPromptContextByPaneKey: Map<string, ClaudeHumanPromptContext>
+  geminiPermissionByPaneKey: Map<string, GeminiPendingPermission>
+}
+
+export function forgetHumanTurns(state: HumanTurnMaps, paneKey: string): void {
+  deletePaneScopedCacheEntry(state.claudeHumanPromptContextByPaneKey, paneKey)
+  state.geminiPermissionByPaneKey.delete(paneKey)
+}
+
+export function moveHumanTurns(state: HumanTurnMaps, fromPaneKey: string, toPaneKey: string): void {
+  movePaneScopedMapEntries(state.claudeHumanPromptContextByPaneKey, fromPaneKey, toPaneKey)
+  movePaneScopedMapEntries(state.geminiPermissionByPaneKey, fromPaneKey, toPaneKey)
+}
+
+export function clearHumanTurns(state: HumanTurnMaps): void {
+  state.claudeHumanPromptContextByPaneKey.clear()
+  state.geminiPermissionByPaneKey.clear()
 }

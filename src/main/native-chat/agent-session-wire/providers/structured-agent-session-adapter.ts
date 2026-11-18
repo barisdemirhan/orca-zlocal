@@ -2,7 +2,7 @@ import type { StructuredMessageSteeringInputs } from '../../../../shared/agent-s
 import type {
   AgentSessionMcpOperation,
   AgentSessionMcpResult
-} from '../../../../shared/agent-session/agent-session-mcp'
+} from '../../../../shared/agent-session/options/protocol/agent-session-mcp'
 import type { PrepareStructuredRewind } from './structured-agent-session-rewind-contract'
 import type { ProviderProcessCloseOptions } from '../../../provider-process/provider-process-close'
 import type { NativeCopyCoverage } from '../../agent-session-journal/context-epochs/journal-history-origin'
@@ -33,20 +33,19 @@ import type {
   AgentSessionRecord
 } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { StructuredAgentSessionAtRestCommands } from '../options/structured-agent-session-at-rest-commands'
-import type { StructuredAgentSessionVoiceAdapter as NativeVoice } from '../structured-agent-session-voice-adapter'
 import type { AgentSessionSlashCommand } from '../../../../shared/agent-session/agent-session-wire'
-import type { AgentSessionThreadGoalChange } from '../../../../shared/agent-session/agent-session-thread-goal-wire'
+import type { AgentSessionThreadGoalChange } from '../../../../shared/agent-session/thread-goals/agent-session-thread-goal-wire'
 import type { SubmissionRejectionFact } from '../../../../shared/agent-session/failures/agent-session-failure'
 import type {
   AgentSessionCloseObserver,
-  StructuredAgentSessionAdapterStop
+  StructuredAgentSessionAdapterControls
 } from './structured-agent-session-adapter-stop'
 /** `unknown` (no timely, correlated answer) skips this idle stop and asks again later. */
 export type AgentSessionIdleConfirmation = 'idle' | 'busy' | 'unknown'
 
 import type { AgentJournalDispatchRejection } from '../../../../shared/agent-session/failures/agent-session-failure-words'
 import type { AgentSessionExecutionOptions } from '../../../../shared/agent-session/options/protocol/agent-session-execution-options'
-import type { AgentSessionPromptResponse } from '../../../../shared/agent-session/agent-session-question-answer'
+import type { AgentSessionPromptResponse } from '../../../../shared/agent-session/requests/prompts/agent-session-question-answer'
 import type {
   StructuredAgentSessionStartupAttempt,
   StructuredAgentSessionAcquisitionReceipt as AcquisitionReceipt
@@ -179,15 +178,20 @@ export type StructuredAgentSessionSetOptionInput = {
   signal?: AbortSignal
 }
 
-type SessionControls = StructuredAgentSessionAdapterStop & { voice?: NativeVoice }
-
-export type StructuredAgentSessionAdapter = SessionControls & {
+export type StructuredAgentSessionAdapter = StructuredAgentSessionAdapterControls & {
   readAccountUsage?(record: AgentSessionRecord, signal: AbortSignal): Promise<CodexAccountUsageRead>
   /** The `/mcp` panel's read or action on the chat's MCP servers; never enters the mutation queue. */
   manageMcp?(
     record: AgentSessionRecord,
     operation: AgentSessionMcpOperation
   ): Promise<AgentSessionMcpResult>
+  /** Records the person's approval of one action the agent's automatic review denied; the retry is
+   *  still reviewed. False: no running agent to record it. */
+  approveAutoReviewDenial?(input: {
+    sessionId: string
+    threadId: string
+    event: Record<string, unknown>
+  }): Promise<boolean>
   /** Opens the published process under the host's startup signal. */
   open: StructuredAgentSessionProviderOpen
   supportsCreate?(location: AgentSessionExecutionLocation, agent: string): boolean

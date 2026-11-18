@@ -1,4 +1,4 @@
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
 import { Button } from '../ui/button'

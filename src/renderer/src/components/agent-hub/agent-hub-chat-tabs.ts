@@ -1,9 +1,9 @@
 import type { AppState } from '@/store/types'
 import type { StructuredChatTabNames } from '@/runtime/native-chat/naming/structured-chat-tab-name'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/workspace/identity/floating-workspace-id'
 import type { TerminalAgent } from '../../../../shared/agent-status/identity/terminal-agent'
 import { isStructuredTab } from '../../../../shared/agent-session/view/structured-agent-session-tab'
-import type { Tab } from '../../../../shared/tab-types'
+import type { Tab } from '../../../../shared/workspace-layout/tab-groups/tab-types'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import { terminalTabFromAgentSessionTab } from '../activity/activity-event-builder-context'
 

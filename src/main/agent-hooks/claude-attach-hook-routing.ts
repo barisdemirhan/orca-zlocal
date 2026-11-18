@@ -3,7 +3,10 @@ import { readAgentProcessIdentity } from '../../shared/agent-status/process/agen
 import type { AgentHookSource } from '../../shared/agent-hook-listener/transport/agent-hook-relay'
 import type { ProcessTableRow } from '../../shared/process-observation/tables/process-table-snapshot'
 import { getProcessTableSnapshot } from '../../shared/process-observation/tables/process-table-snapshot-reader'
-import { collectDescendantsFromIndex, getProcessTableIndex } from '../../shared/process-observation/tables/process-table-index'
+import {
+  collectDescendantsFromIndex,
+  getProcessTableIndex
+} from '../../shared/process-observation/tables/process-table-index'
 import { listRegisteredPtys, type PtyRegistration } from '../memory/pty-registry'
 
 const CLAUDE_ATTACH_COMMAND = /(?:^|[\\/\s])claude(?:\.exe)?\s+attach(?:\s|$)/

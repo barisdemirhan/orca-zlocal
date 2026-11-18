@@ -2,8 +2,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { getDefaultSettings } from '../../../../shared/constants'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import { getDefaultSettings } from '../../../../shared/orca-profiles/constants'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { AgentHubAlertSettings } from './AgentHubAlertSettings'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 

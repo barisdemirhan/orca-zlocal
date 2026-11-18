@@ -79,7 +79,11 @@ describe('Agent Hub request projection', () => {
     expect(state.get('local')?.pendingAsks.size).toBe(1)
     expect(state.get('local')?.progressByPane.get(base.target.paneKey)?.text).toBe('local')
     state = reduceAgentHubRequests(state, 'workhost', { ...ask, options: [...ask.options] })
-    state = reduceAgentHubRequests(state, 'workhost', { ...base, kind: 'closed', reason: 'timeout' })
+    state = reduceAgentHubRequests(state, 'workhost', {
+      ...base,
+      kind: 'closed',
+      reason: 'timeout'
+    })
     expect(state.get('workhost')?.pendingAsks.size).toBe(0)
     expect(state.get('local')?.pendingAsks.size).toBe(1)
   })

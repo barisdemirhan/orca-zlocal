@@ -1,8 +1,8 @@
 import { useRef } from 'react'
-import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
+import { RetainedPaneHost } from '../tab-group/retained-pane/RetainedPaneHost'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/workspace/identity/floating-workspace-id'
 import { AgentTerminalPreview } from '../dashboard/terminal-preview/AgentTerminalPreview'
 import {
   shownAgentHubMirrorTarget,

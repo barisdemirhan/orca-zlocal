@@ -9,15 +9,13 @@ import {
   type FileLinkActions,
   type TerminalFileLinkActionDeps
 } from '@/components/terminal-pane/links/files/terminal-file-link-actions'
-import { routeNativeChatHref } from '../../../../../../shared/native-chat/native-chat-href-routing'
+import { routeNativeChatHref } from '../../../../../../shared/native-chat/file-access/native-chat-href-routing'
 import { useAppStore } from '../../../../store/index'
 import { resolveNativeChatFileLink, type NativeChatResolvedFileLink } from './native-chat-file-link'
 import { openDetectedFilePath } from '@/components/terminal-pane/links/files/terminal-file-open-routing'
 import type { NativeChatFileLinkContext } from './native-chat-file-link-context'
-import {
-  canNativeChatOpenOwnedBrowser,
-  resolveNativeChatHttpLinkSourceOwner
-} from './native-chat-http-link-source-owner'
+import { resolveNativeChatHttpLinkSourceOwner } from './native-chat-http-link-source-owner'
+import { canOpenRemoteLinkInWorkspaceBrowser } from '@/lib/browser/workspace/workspace-browser-route-eligibility'
 import { nativeChatWebLinkActions, nativeChatWebPeekSource } from './native-chat-web-link-actions'
 import type { AgentHubPeekLinkSource } from '../../../agent-hub/agent-hub-peek-routing'
 import { showFileLinkOpenFailureToast } from '@/lib/files/open/file-link-open-failure-toast'
@@ -34,7 +32,7 @@ export function resolveNativeChatHttpLinkRouting(
     destinations: httpLinkActionDestinationsFor(
       state.settings,
       sourceOwner,
-      canNativeChatOpenOwnedBrowser(state, worktreeId, sourceOwner)
+      canOpenRemoteLinkInWorkspaceBrowser(state, worktreeId, sourceOwner)
     )
   }
 }

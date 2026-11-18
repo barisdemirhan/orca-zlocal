@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
 import { toRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import {
@@ -301,7 +301,10 @@ describe('Agent Hub non-card actions', () => {
     )
     expect(result).toEqual({ kind: 'ack' })
     expect(openWorkspaceBrowserTab).toHaveBeenCalledWith(
-      expect.objectContaining({ expectedRuntimeEnvironmentId: 'workhost', url: 'http://localhost:3000' })
+      expect.objectContaining({
+        expectedRuntimeEnvironmentId: 'workhost',
+        url: 'http://localhost:3000'
+      })
     )
     expect(readAgentHubPeek()?.history).toHaveLength(2)
     const pairedContext = { threads: [remote], lists: buildAgentHubLists([remote]) }
@@ -490,8 +493,12 @@ describe('Agent Hub non-card actions', () => {
       }
     }
     expect(
-      findAgentHubRequestTarget(useAppStore.getState(), [...threads, remote], 'workhost', base.target)
-        ?.worktree
+      findAgentHubRequestTarget(
+        useAppStore.getState(),
+        [...threads, remote],
+        'workhost',
+        base.target
+      )?.worktree
     ).toBe(remote.worktree)
     expect(
       findAgentHubRequestTarget(
@@ -561,7 +568,9 @@ describe('Agent Hub non-card actions', () => {
       </TooltipProvider>
     )
     expect(screen.getAllByText('Building now')).toHaveLength(2)
-    act(() => applyAgentHubDelivery('workhost', { ...base, kind: 'progress', text: 'Remote progress' }))
+    act(() =>
+      applyAgentHubDelivery('workhost', { ...base, kind: 'progress', text: 'Remote progress' })
+    )
     expect(screen.queryByText('Remote progress')).toBeNull()
     act(() => applyAgentHubDelivery('local', { ...base, kind: 'progress', text: null }))
     expect(screen.queryByText('Building now')).toBeNull()

@@ -1,6 +1,10 @@
 import { findKeybindingConflictsForDefinitions } from '../../../../shared/keybindings/formatting'
 import { getEffectiveKeybindingsForDefinition } from '../../../../shared/keybindings/effective'
-import type { KeybindingDefinition, KeybindingOverrides, KeybindingActionId } from '../../../../shared/keybindings/types'
+import type {
+  KeybindingDefinition,
+  KeybindingOverrides,
+  KeybindingActionId
+} from '../../../../shared/keybindings/types'
 import type { AgentHubSettings } from '../../../../shared/agent-hub-settings'
 import { agentHubSuggestedBindings } from './agent-hub-shortcut-suggestions'
 

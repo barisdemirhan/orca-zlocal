@@ -9,9 +9,9 @@ import {
   type RpcResponse
 } from '../core'
 
+import { computerUseErrorRecoveryData } from '../../../../shared/computer/computer-use-error-recovery'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
-import { computerUseErrorRecoveryData } from '../../../../shared/computer-use-error-recovery'
 import { errorResponse, mapEmulatorError, mapRuntimeError } from './rpc-response'
 import { PluginHookDeniedError } from '../../../plugins/hooks/plugin-hook-dispatch'
 

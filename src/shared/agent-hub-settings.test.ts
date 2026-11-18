@@ -4,7 +4,7 @@ import {
   normalizeAgentHubAlertOnInfo,
   normalizeAgentHubAnswerQueue
 } from './agent-hub-settings'
-import { createGlobalSettingsFixture } from './global-settings-test-fixture'
+import { createGlobalSettingsFixture } from './settings/global-settings-test-fixture'
 import { normalizeAgentHubOrbIdentitySettings } from './agent-hub-orb-settings'
 describe('mirror microphone default mode', () => {
   it.each([undefined, null, '', 'unknown', true, 1, {}, 'dictate'])(

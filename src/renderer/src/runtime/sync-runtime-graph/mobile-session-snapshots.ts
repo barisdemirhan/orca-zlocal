@@ -32,7 +32,12 @@ import {
   canReuseMobileSessionSnapshot
 } from './mobile-session-capture'
 import { selectFolderWorkspaces } from '@/store/workspaces/catalog/workspace-record-fields'
-import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../shared/layout-owner-switch'
+import {
+  collectDirtyMobileSessionWorkspaces,
+  mobileSessionWorkspaceSourcesUnchanged,
+  readMobileSessionWorkspaceSources
+} from './mobile-session-dirty-workspaces'
+import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../shared/workspace-layout/layout-owner-switch'
 import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
 import type { AppState } from '@/store/types'
 import type { RuntimeMobileSessionTabsSnapshot } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
@@ -71,6 +76,11 @@ export function buildMobileSessionTabSnapshots(
   const snapshots: RuntimeMobileSessionTabsSnapshot[] = []
   // WHY: Peek is a private viewport, not an execution workspace that peers can select.
   worktreeIds.delete(AGENT_HUB_PEEK_WORKTREE_ID)
+  const sources = { state, publication: publicationInputs, ambiguousTerminalTabIds }
+  const dirtyWorkspaces = collectDirtyMobileSessionWorkspaces(
+    graphState.mobileSessionPublicationSources,
+    sources
+  )
 
   for (const worktreeId of worktreeIds) {
     const workspaceScope = parseWorkspaceKey(worktreeId)
@@ -81,14 +91,37 @@ export function buildMobileSessionTabSnapshots(
       graphState.mobileSessionSnapshotCacheByWorktree.delete(worktreeId)
       continue
     }
+    const cached = graphState.mobileSessionSnapshotCacheByWorktree.get(worktreeId)
+    if (
+      cached &&
+      dirtyWorkspaces !== 'all' &&
+      !dirtyWorkspaces.has(worktreeId) &&
+      cached.inputs.mountedSurfaceCaptureByTabId.size === 0 &&
+      mobileSessionWorkspaceSourcesUnchanged(
+        cached.sources,
+        state,
+        worktreeId,
+        publicationInputs,
+        openFileIndexes.crossPlacedWorkspaces
+      )
+    ) {
+      snapshots.push(cached.snapshot)
+      continue
+    }
+    const worktreeSources = readMobileSessionWorkspaceSources(
+      state,
+      worktreeId,
+      publicationInputs,
+      openFileIndexes.crossPlacedWorkspaces
+    )
     const inputs = buildMobileSessionWorktreeInputs(
       state,
       worktreeId,
       publicationInputs,
       ambiguousTerminalTabIds
     )
-    const cached = graphState.mobileSessionSnapshotCacheByWorktree.get(worktreeId)
     if (cached && canReuseMobileSessionSnapshot(cached.inputs, inputs)) {
+      cached.sources = worktreeSources
       snapshots.push(cached.snapshot)
       continue
     }
@@ -238,6 +271,7 @@ export function buildMobileSessionTabSnapshots(
               ...content
             }
       graphState.mobileSessionSnapshotCacheByWorktree.set(worktreeId, {
+        sources: worktreeSources,
         inputs,
         content,
         snapshot
@@ -252,7 +286,12 @@ export function buildMobileSessionTabSnapshots(
       snapshotVersion: candidateVersion,
       ...content
     }
-    graphState.mobileSessionSnapshotCacheByWorktree.set(worktreeId, { inputs, content, snapshot })
+    graphState.mobileSessionSnapshotCacheByWorktree.set(worktreeId, {
+      sources: worktreeSources,
+      inputs,
+      content,
+      snapshot
+    })
     snapshots.push(snapshot)
   }
   for (const worktreeId of graphState.mobileSessionSnapshotCacheByWorktree.keys()) {
@@ -260,5 +299,7 @@ export function buildMobileSessionTabSnapshots(
       graphState.mobileSessionSnapshotCacheByWorktree.delete(worktreeId)
     }
   }
+  // Recorded last: a build that throws midway leaves the next one comparing against older sources.
+  graphState.mobileSessionPublicationSources = sources
   return snapshots
 }

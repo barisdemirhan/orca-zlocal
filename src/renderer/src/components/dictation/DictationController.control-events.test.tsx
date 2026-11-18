@@ -27,8 +27,8 @@ const mocks = vi.hoisted(() => {
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const { createGlobalSettingsFixture } =
-    await import('../../../../shared/global-settings-test-fixture')
-  const { getDefaultVoiceSettings } = await import('../../../../shared/constants')
+    await import('../../../../shared/settings/global-settings-test-fixture')
+  const { getDefaultVoiceSettings } = await import('../../../../shared/orca-profiles/constants')
   const store = create(() => ({
     dictationState: 'idle',
     liveText: { committed: '', tentative: '', speechPending: false },

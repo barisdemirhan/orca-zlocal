@@ -1,4 +1,4 @@
-import type { ExecutionHostId } from '../../../../../shared/execution-host'
+import type { ExecutionHostId } from '../../../../../shared/execution-host/execution-host'
 
 export const SCROLL_TO_CURRENT_WORKSPACE_REVEAL_REQUEST_EVENT =
   'orca-scroll-to-current-workspace-reveal-request'

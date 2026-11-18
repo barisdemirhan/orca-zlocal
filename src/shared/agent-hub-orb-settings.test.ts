@@ -5,7 +5,7 @@ import {
   normalizeAgentHubOrbSettings,
   resolveAgentHubOrbMode
 } from './agent-hub-orb-settings'
-import { createGlobalSettingsFixture } from './global-settings-test-fixture'
+import { createGlobalSettingsFixture } from './settings/global-settings-test-fixture'
 
 describe('Orb settings', () => {
   it('keeps absent saved fields compatible with the shipped defaults', () => {

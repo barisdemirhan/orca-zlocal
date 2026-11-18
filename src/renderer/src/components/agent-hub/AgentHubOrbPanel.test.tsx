@@ -12,13 +12,13 @@ import {
   useAgentHubOrbPanel
 } from './agent-hub-orb-panel-store'
 import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
 import type { AgentHubOrbSession, AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
 import { trackAgentHubDictationOrigin } from './agent-hub-dictation-origin'
-import { RetainedPaneHost } from '../tab-group/RetainedPaneHost'
+import { RetainedPaneHost } from '../tab-group/retained-pane/RetainedPaneHost'
 import { NativeChatSessionOptionPickers } from '../native-chat/session/options/controls/NativeChatSessionOptionPickers'
 import type { SessionOptionDescriptor } from '../../../../shared/native-chat/input/native-chat-session-options'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubRequest } from '../../../../shared/agent-hub-requests'
 import { applyAgentHubDelivery, clearAgentHubRequestHost } from './agent-hub-requests-store'
@@ -70,7 +70,7 @@ vi.mock('./use-agent-hub-orb-voice', () => ({ useAgentHubOrbVoice: () => mocks.v
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const { createGlobalSettingsFixture } =
-    await import('../../../../shared/global-settings-test-fixture')
+    await import('../../../../shared/settings/global-settings-test-fixture')
   const useAppStore = create(() => ({
     dictationState: 'idle',
     unifiedTabsByWorktree: {},

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import type { AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
 import { AgentHubOrbHistory } from './AgentHubOrbHistory'
 import { AgentHubSettingsOrbSection } from './AgentHubSettingsOrbSection'

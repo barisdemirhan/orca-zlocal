@@ -7,7 +7,7 @@ import {
   getSettingsFocusedExecutionHostId,
   getWorktreeExecutionHostId,
   getExecutionHostLabel
-} from '../../../../shared/execution-host'
+} from '../../../../shared/execution-host/execution-host'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
 import {
   parseInteractivePrompt,

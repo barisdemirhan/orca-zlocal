@@ -2,7 +2,7 @@ import type {
   TerminalSuspensionOptions,
   TerminalSuspensionResult
 } from '../../../../shared/terminal-suspension'
-import type { DeveloperPermissionStatus } from '../../../../shared/developer-permissions-types'
+import type { DeveloperPermissionStatus } from '../../../../shared/app-lifecycle/permissions/developer-permissions-types'
 import {
   AUTOMATIC_WORK_RESUME_UNSUPPORTED,
   type AutomaticWorkResumeOutcome,

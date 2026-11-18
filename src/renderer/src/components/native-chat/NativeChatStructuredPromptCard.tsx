@@ -2,7 +2,7 @@ import type { RefObject } from 'react'
 import {
   agentSessionPromptQuestions,
   type AgentSessionPromptResponse
-} from '../../../../shared/agent-session/agent-session-question-answer'
+} from '../../../../shared/agent-session/requests/prompts/agent-session-question-answer'
 import { NativeChatApprovalCard } from './prompts/NativeChatApprovalCard'
 import { NativeChatStructuredQuestionCard } from './prompts/NativeChatStructuredQuestionCard'
 import { chatApprovalFromJournal } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'

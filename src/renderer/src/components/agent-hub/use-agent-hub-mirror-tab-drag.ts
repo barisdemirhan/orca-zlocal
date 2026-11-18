@@ -7,10 +7,10 @@ import {
   type DragMoveEvent,
   type DragStartEvent
 } from '@dnd-kit/core'
-import { TabDragPointerSensor } from '../tab-group/tab-drag-pointer-sensor'
-import { getDragPointer } from '../tab-group/tab-drag-pointer'
-import { useTabDragGestureLifecycle } from '../tab-group/tab-drag-gesture-lifecycle'
-import { getTabDragActivationDistance } from '../tab-group/useTabDragSplit'
+import { TabDragPointerSensor } from '../tab-group/drag/tab-drag-pointer-sensor'
+import { getDragPointer } from '../tab-group/drag/tab-drag-pointer'
+import { useTabDragGestureLifecycle } from '../tab-group/drag/tab-drag-gesture-lifecycle'
+import { getTabDragActivationDistance } from '../tab-group/drag/useTabDragSplit'
 import { isAgentHubMirrorTabDrag, type AgentHubMirrorTabDrag } from './agent-hub-mirror-drag-data'
 import {
   currentMirrorDragEntry,

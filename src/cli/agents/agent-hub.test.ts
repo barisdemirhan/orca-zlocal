@@ -209,7 +209,10 @@ describe('hub CLI', () => {
       result: { status: 'pending', requestId },
       _meta: { runtimeId: 'host-1' }
     })
-    await run(['hub', 'ask', '--resume', requestId, '--wait', '2s', '--environment', 'workhost'], true)
+    await run(
+      ['hub', 'ask', '--resume', requestId, '--wait', '2s', '--environment', 'workhost'],
+      true
+    )
     expect(call).toHaveBeenCalledWith(
       'agentHub.ask',
       expect.objectContaining({ resume: requestId, waitMs: 2_000 }),

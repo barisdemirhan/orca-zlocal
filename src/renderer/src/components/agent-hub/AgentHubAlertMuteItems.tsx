@@ -1,4 +1,4 @@
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { DropdownMenuItem } from '../ui/dropdown-menu'
 import { clearAgentHubAlerts } from './agent-hub-alert-queue'
 import {

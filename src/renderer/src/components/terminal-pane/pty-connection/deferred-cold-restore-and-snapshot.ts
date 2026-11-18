@@ -3,7 +3,7 @@ import { useAppStore } from '@/store/index'
 import type { PtyReplayDataMeta } from '../pty-transport/pty-transport-types'
 import { INITIAL_MODE_2031_REPLY_SCAN_STATE } from '../../../../../shared/terminal/protocol/queries/terminal-color-scheme-protocol'
 import { recordPaneWakeThroughLayoutOwner } from '@/store/terminals/sleep/terminal-sleep-layout-owner'
-import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../shared/layout-owner-switch'
+import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../shared/workspace-layout/layout-owner-switch'
 import {
   clearPaneSpawnDeferral,
   setPaneSpawnDeferral
@@ -23,7 +23,6 @@ import { bindStartFreshSpawn } from './spawn/fresh-spawn-start'
 import { bindFreshSpawnFollowReset } from './output/fresh-spawn-follow-reset'
 import { bindReplacedProcessInputModes } from './output/replaced-process-input-modes'
 import { deferHiddenAgentResume } from './spawn/hidden-agent-resume-deferral'
-import { holdInPlaceResumeUntilSettled } from './startup/in-place-resume-hold'
 import { attachToMainResumedSleepPane, mainResumedSleepPane } from './spawn/main-resumed-sleep-pane'
 import { bindPendingStartupCommandDelivery } from './startup/pending-startup-command-delivery'
 import { startPaneThroughMainThenAttach } from './spawn/main-pane-start-request'
@@ -150,12 +149,7 @@ export function bindDeferredColdRestoreAndSnapshot(session: ConnectPanePtySessio
     }
     return startPaneThroughMainThenAttach(session, () => {
       session.applyColdRestoreAgentResumeStartup(startup)
-      const spawned = session.startFreshSpawn(startup, options)
-      // Switch point: main's layout shows this pane unbound while the start runs.
-      if (ORCA_LAYOUT_OWNER_IS_MAIN) {
-        holdInPlaceResumeUntilSettled(() => !session.disposed, startup, spawned)
-      }
-      return spawned
+      return session.startFreshSpawn(startup, options)
     })
   }
   session.startFreshColdRestoreAgentResume = (

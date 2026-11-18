@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/structured-agent-session-reducer'
+import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/view/live-read/structured-agent-session-reducer'
 import type { AgentHubAlert } from './agent-hub-alerts'
 import type { AgentHubCounts } from './agent-hub-lists'
 import { AgentHubRoot } from './AgentHubRoot'
@@ -35,7 +35,7 @@ import {
 const mocks = vi.hoisted(() => ({ orb: vi.fn(), open: vi.fn(), threads: vi.fn() }))
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
-  const { getDefaultSettings } = await import('../../../../shared/constants')
+  const { getDefaultSettings } = await import('../../../../shared/orca-profiles/constants')
   return {
     useAppStore: create(() => ({
       settings: { ...getDefaultSettings('/test'), agentHubDockAutoHide: true },

@@ -6,7 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
 import { toast } from 'sonner'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
 import type { AgentHubRequest, AgentHubResponse } from '../../../../shared/agent-hub-requests'
 import { AgentHubInboxBody } from './AgentHubPanelSections'
 import type { AgentHubCardControl } from './AgentHubAttentionCard'
@@ -249,7 +249,10 @@ it.each([
     render(<Inbox />)
     expect(screen.getByText('@claude wants to close the mirror of Target terminal')).toBeTruthy()
     await act(async () => fireEvent.click(screen.getByRole('button', { name: label })))
-    expect(respond).toHaveBeenCalledWith('workhost', consent.requestId, { kind: 'consent', decision })
+    expect(respond).toHaveBeenCalledWith('workhost', consent.requestId, {
+      kind: 'consent',
+      decision
+    })
     close(consent)
     expect(screen.queryByRole('button', { name: label })).toBeNull()
   }

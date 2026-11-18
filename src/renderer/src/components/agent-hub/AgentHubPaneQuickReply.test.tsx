@@ -4,7 +4,10 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
-import { getDefaultSettings, getDefaultVoiceSettings } from '../../../../shared/constants'
+import {
+  getDefaultSettings,
+  getDefaultVoiceSettings
+} from '../../../../shared/orca-profiles/constants'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
 import { TooltipProvider } from '../ui/tooltip'

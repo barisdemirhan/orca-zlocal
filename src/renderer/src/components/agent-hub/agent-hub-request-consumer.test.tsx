@@ -2,7 +2,7 @@
 import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
 import type { RuntimeStatus } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
 import type {
   AgentHubDelivery,
@@ -184,9 +184,9 @@ it('consumes every connected capable environment independently of the selected h
     clients.get('workhost')?.receive?.({ ...base, kind: 'progress', text: 'First host' })
     clients.get('other')?.receive?.({ ...base, kind: 'progress', text: 'Second host' })
   })
-  expect(readAgentHubRequests().get('workhost')?.progressByPane.get(base.target.paneKey)?.text).toBe(
-    'First host'
-  )
+  expect(
+    readAgentHubRequests().get('workhost')?.progressByPane.get(base.target.paneKey)?.text
+  ).toBe('First host')
   expect(readAgentHubRequests().get('other')?.progressByPane.get(base.target.paneKey)?.text).toBe(
     'Second host'
   )
@@ -255,7 +255,11 @@ it('fences an in-flight answer when its host reconnects without marking the new 
   act(() => previous?.receive?.(ask))
   let answer: Promise<void> | undefined
   act(() => {
-    answer = answerAgentHubRequest('workhost', ask.requestId, { kind: 'ask', answer: 'Yes', index: 1 })
+    answer = answerAgentHubRequest('workhost', ask.requestId, {
+      kind: 'ask',
+      answer: 'Yes',
+      index: 1
+    })
     useAppStore.setState({
       runtimeStatusByEnvironmentId: new Map([
         [
@@ -281,7 +285,11 @@ it('routes gate answers through the current host gate method and never through a
   render(<Harness />)
   const gate = agentHubGateRequest()
   act(() => clients.get('workhost')?.receive?.(gate))
-  await answerAgentHubRequest('workhost', gate.gateId, { kind: 'ask', answer: 'Custom', index: null })
+  await answerAgentHubRequest('workhost', gate.gateId, {
+    kind: 'ask',
+    answer: 'Custom',
+    index: null
+  })
   expect(clients.get('workhost')?.resolveGate).toHaveBeenCalledExactlyOnceWith(gate, 'Custom')
   expect(clients.get('workhost')?.respond).not.toHaveBeenCalled()
   expect(clients.get('local')?.resolveGate).not.toHaveBeenCalled()

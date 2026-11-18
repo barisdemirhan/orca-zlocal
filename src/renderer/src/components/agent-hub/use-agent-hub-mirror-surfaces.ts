@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/workspace/identity/floating-workspace-id'
 import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import {
   setAgentHubTerminalPortals,

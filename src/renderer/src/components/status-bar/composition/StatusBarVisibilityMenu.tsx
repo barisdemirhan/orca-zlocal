@@ -1,4 +1,5 @@
-import { Activity, Plug, Server } from 'lucide-react'
+import { Activity, GitCommitHorizontal, Plug, Server } from 'lucide-react'
+import { useAppStore } from '@/store'
 import React from 'react'
 import {
   DropdownMenu,
@@ -26,8 +27,8 @@ export function StatusBarVisibilityMenu({
   controller: StatusBarController
 }): React.JSX.Element {
   const t = useTranslate()
+  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   const {
-    agentHubEnabled,
     detectedAgentIds,
     menuOpen,
     menuPoint,
@@ -203,6 +204,13 @@ export function StatusBarVisibilityMenu({
         >
           <Plug className="size-3.5" />
           {t('auto.components.status.bar.StatusBar.9659e38343', 'Ports')}
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem
+          checked={statusBarItems.includes('git-blame')}
+          onCheckedChange={() => toggleStatusBarItem('git-blame')}
+        >
+          <GitCommitHorizontal className="size-3.5" />
+          {t('editor.gitBlame.statusBarItem', 'Git Blame')}
         </DropdownMenuCheckboxItem>
         {agentHubEnabled && !isPairedWebClientWindow() ? <AgentHubStatusBarMenuItem /> : null}
       </DropdownMenuContent>

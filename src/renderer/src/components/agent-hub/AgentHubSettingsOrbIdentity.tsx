@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/class-names'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import {
   AGENT_HUB_ORB_DEFAULT_NAME,
   AGENT_HUB_ORB_NAME_MAX_LENGTH,

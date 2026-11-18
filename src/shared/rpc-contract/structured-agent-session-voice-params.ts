@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { isAgentSessionVoiceSdp } from '../agent-session-voice'
 import { MutationEnvelope } from './structured-agent-session/structured-agent-session-mutation-envelope'
-import { Identifier, SessionId } from './structured-agent-session/structured-agent-session-identifiers'
+import {
+  Identifier,
+  SessionId
+} from './structured-agent-session/structured-agent-session-identifiers'
 
 const VoiceOwner = {
   voiceSessionId: Identifier('Invalid voice session id'),

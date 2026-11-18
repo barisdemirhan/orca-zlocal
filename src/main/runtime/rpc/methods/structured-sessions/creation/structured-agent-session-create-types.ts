@@ -3,7 +3,7 @@ import type { AgentSessionAttachParams } from '../../../../../native-chat/agent-
 import type { StructuredAgentSessionHost } from '../../../../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { StructuredAgentSessionCreateOptions } from '../../../../../native-chat/agent-session-wire/acquisition/structured-agent-session-create'
 import type { StructuredAgentId } from '../../../../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle'
-import type { StructuredAgentSessionFirstMessage } from '../../../../../../shared/agent-session/structured-agent-session-create'
+import type { StructuredAgentSessionFirstMessage } from '../../../../../../shared/agent-session/lifecycle/operations/structured-agent-session-create'
 
 /** The runtime slices a structured session create reads, so the Orb can create one too. */
 export type StructuredAgentSessionPrepareRuntime = Pick<

@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo } from 'react'
 import { DndContext, DragOverlay } from '@dnd-kit/core'
 import { Ban } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
-import { TabDragProvider } from '../tab-group/tab-drag-context'
+import { TabDragProvider } from '../tab-group/drag/tab-drag-context'
 import { useAgentHubMirrorTabDrag } from './use-agent-hub-mirror-tab-drag'
 import {
   canAcceptMirrorTabDrop,

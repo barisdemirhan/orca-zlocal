@@ -47,7 +47,13 @@ describe('answer queue ordering and evidence', () => {
   it('removes resolved and stopped prompts while retaining an unverifiable host', () => {
     expect(reconcile([first, second], [], new Set(['ssh:workhost']))).toEqual([second])
     expect(
-      reconcile([first, second], [first, second], new Set(['ssh:workhost']), false, new Set(['second']))
+      reconcile(
+        [first, second],
+        [first, second],
+        new Set(['ssh:workhost']),
+        false,
+        new Set(['second'])
+      )
     ).toEqual([first])
   })
 

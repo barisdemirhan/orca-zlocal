@@ -33,8 +33,8 @@ import { agentHubMirrorTabCapReason } from './agent-hub-mirror-tab-actions'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useMenuOpeningClickGuard } from './use-menu-opening-click-guard'
 import { useAppStore } from '@/store'
-import { TabSessionSurfaceSwitchMenuItems } from '../tab-bar/TabSessionSurfaceSwitchMenuItems'
-import { useSortableTabContextMenu } from '../tab-bar/use-sortable-tab-context-menu'
+import { TabSessionSurfaceSwitchMenuItems } from '../tab-bar/session-actions/TabSessionSurfaceSwitchMenuItems'
+import { useSortableTabContextMenu } from '../tab-bar/terminal-tabs/use-sortable-tab-context-menu'
 import { agentHubChatSession, findAgentHubChatTab } from './agent-hub-chat-tabs'
 import {
   agentHubChatSwitchBlockedReason,

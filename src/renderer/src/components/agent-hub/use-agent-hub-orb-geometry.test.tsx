@@ -2,15 +2,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const { createGlobalSettingsFixture } =
-    await import('../../../../shared/global-settings-test-fixture')
+    await import('../../../../shared/settings/global-settings-test-fixture')
   const useAppStore = create(() => ({
     settings: createGlobalSettingsFixture(),
     updateSettings: vi.fn((updates: Partial<GlobalSettings>) => {

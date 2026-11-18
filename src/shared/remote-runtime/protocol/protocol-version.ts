@@ -8,7 +8,7 @@ import * as agentLaunchCapabilities from '../../agent-launch/contracts/agent-lau
 import {
   AGENT_SESSION_BOUNDARY_RUNTIME_CAPABILITY,
   AGENT_SESSION_RUNTIME_CAPABILITIES
-} from '../../agent-session/agent-session-runtime-capabilities'
+} from '../../agent-session/capabilities/agent-session-runtime-capabilities'
 import { AI_VAULT_RUNTIME_CAPABILITIES } from '../../ai-vault/contracts/ai-vault-runtime-capabilities'
 import {
   AGENT_HUB_REQUESTS_CAPABILITY,
@@ -16,7 +16,10 @@ import {
 } from '../../agent-hub-capabilities'
 import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../agent-session-voice'
 export { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../agent-session-voice'
-export { AGENT_HUB_REQUESTS_CAPABILITY, AGENT_HUB_GATES_CAPABILITY } from '../../agent-hub-capabilities'
+export {
+  AGENT_HUB_REQUESTS_CAPABILITY,
+  AGENT_HUB_GATES_CAPABILITY
+} from '../../agent-hub-capabilities'
 import {
   AUTOMATION_RUNTIME_CAPABILITIES,
   AUTOMATION_RUNTIME_CLIENT_CAPABILITIES

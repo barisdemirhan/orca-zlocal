@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { createPendingWorkerLaunchReceipt } from './rpc/methods/orchestration/worker/start/launch/worker-launch-preferences'
 import type { RuntimeStore } from './construction/runtime-store-contract'
 import type { OrchestrationDb } from './orchestration/db/orchestration-db'
 import { makeAgentStatusStoreWiring } from './terminal/identity/agent-status-store-wiring.test-fixture'
@@ -87,7 +88,10 @@ describe('worker-start spawn lineage', () => {
           detail: 'structured worker'
         },
         agent: 'codex',
-        launchPreferences: undefined,
+        launch: {
+          preferences: undefined,
+          receipt: createPendingWorkerLaunchReceipt({ agent: 'codex' })
+        },
         effects: [],
         onStage: () => {}
       })

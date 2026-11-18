@@ -4,8 +4,8 @@ import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
 import { formatShortcutKeyComboDetails } from '@/hooks/useShortcutLabel'
 import { useAppStore } from '@/store'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { TabStripScrollIndicator } from './TabStripScrollIndicator'
-import { getTabStripScrollMaskClassName } from './tab-strip-scroll-metrics'
+import { TabStripScrollIndicator } from './strip/TabStripScrollIndicator'
+import { getTabStripScrollMaskClassName } from './strip/tab-strip-scroll-metrics'
 import type { useCreateRowScroller } from './use-create-row-scroller'
 
 type CreateRowScroller = ReturnType<typeof useCreateRowScroller>

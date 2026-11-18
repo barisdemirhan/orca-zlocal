@@ -1,4 +1,4 @@
-import type { PersistedUIState } from './persisted-ui-state-types'
+import type { PersistedUIState } from './orca-profiles/persisted-ui-state-types'
 import type { StructuredAgentId } from './agent-session/lifecycle/provider-handles/agent-session-provider-handle'
 import type { AgentHubOrbTint, AgentHubOrbTone } from './agent-hub-orb-identity'
 

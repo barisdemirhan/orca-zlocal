@@ -1,7 +1,7 @@
 /** @vitest-environment happy-dom */
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
-import { isTabDragData } from '../tab-group/tab-drag-data'
+import { isTabDragData } from '../tab-group/drag/tab-drag-data'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
   openAgentHubMirror,

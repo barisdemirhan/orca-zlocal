@@ -4,9 +4,9 @@ import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host
 import {
   getWorktreeExecutionHostId,
   LOCAL_EXECUTION_HOST_ID
-} from '../../../../shared/execution-host'
+} from '../../../../shared/execution-host/execution-host'
 import { toolInputCommand } from '../../../../shared/native-chat/tools/native-chat-tool-summary'
-import { agentSessionCurrentContextRows } from '../../../../shared/agent-session/agent-session-context-clear'
+import { agentSessionCurrentContextRows } from '../../../../shared/agent-session/conversation-context/agent-session-context-clear'
 import { readAgentJournalTurnOutcome } from '../../../../shared/agent-session/lifecycle/records/agent-session-turn-record'
 import {
   pendingStructuredSessionPrompts,

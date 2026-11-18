@@ -7,11 +7,9 @@ import { NativeChatPresentationContext } from './native-chat-presentation-contex
 import { useNativeChatTranscriptProjection } from './conversation/projection/use-native-chat-transcript-projection'
 import type { useNativeChatTurnStatus } from './conversation/turns/use-native-chat-turn-status'
 import type { NativeChatTurnStatus } from '../../../../shared/native-chat/transcript/turns/native-chat-turn-status'
-import {
-  nativeChatHookErrorSummary,
-  nativeChatOrbConversationMessages,
-  type NativeChatConnectionWarning
-} from '../../../../shared/native-chat/native-chat-provider-frame-summary'
+import type { NativeChatConnectionWarning } from '../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
+import { nativeChatOrbConversationMessages } from '../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
+import { nativeChatHookErrorSummary } from '../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
 
 // Orb hides zero-second turn bars; ordinary chat keeps them.
 function worthShowing(status: NativeChatTurnStatus): boolean {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useAppStore } from '@/store/index'
-import type { ExecutionHostId } from '../../../../../shared/execution-host'
+import type { ExecutionHostId } from '../../../../../shared/execution-host/execution-host'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
 import { isClientHostedBrowserPageHandle } from '@/store/slices/browser/hosts/browser-host-state'
 import type { BrowserWorkspace as BrowserWorkspaceState } from '../../../../../shared/browser/workspaces/browser-workspace-types'

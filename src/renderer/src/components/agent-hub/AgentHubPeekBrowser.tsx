@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
-import type { ExecutionHostId } from '../../../../shared/execution-host'
+import type { ExecutionHostId } from '../../../../shared/execution-host/execution-host'
 import BrowserPane from '../browser-pane/BrowserPane'
 import { DeferredBrowserContent } from '../browser-pane/assemble-chrome/DeferredBrowserContent'
 import { registerBrowserOverlaySlotViewport } from '../browser-pane/host-guest/viewport/browser-page-viewport'

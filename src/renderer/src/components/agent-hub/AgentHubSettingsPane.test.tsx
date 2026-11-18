@@ -2,8 +2,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import type { KeybindingActionId, KeybindingOverrides } from '../../../../shared/keybindings/types'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubSettingsPane } from './AgentHubSettingsPane'
@@ -18,7 +18,7 @@ import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const { createGlobalSettingsFixture } =
-    await import('../../../../shared/global-settings-test-fixture')
+    await import('../../../../shared/settings/global-settings-test-fixture')
   const keybindings: KeybindingOverrides = {}
   const useAppStore = create(() => ({
     settings: createGlobalSettingsFixture({ experimentalAgentHub: true }),
@@ -50,9 +50,9 @@ vi.mock('@/runtime/native-chat/requests/structured-agent-session-call', () => ({
 }))
 vi.mock('@/runtime/hosts/capabilities/local-runtime-capabilities', async () => {
   const { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } =
-    await import('../../../../shared/agent-session/structured-agent-session-surface-capabilities')
+    await import('../../../../shared/agent-session/capabilities/structured-agent-session-surface-capabilities')
   const { STRUCTURED_AGENT_SESSION_REGISTERED_AGENTS_RUNTIME_CAPABILITY } =
-    await import('../../../../shared/agent-session/structured-agent-session-surface-capabilities')
+    await import('../../../../shared/agent-session/capabilities/structured-agent-session-surface-capabilities')
   return {
     ensureLocalRuntimeCapabilities: vi.fn(async () => [
       AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY,

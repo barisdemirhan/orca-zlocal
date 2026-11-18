@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import type { Terminal } from '@xterm/xterm'
-import type { DashboardCardTerminalInput } from '../../../../../shared/dashboard-snapshot'
-import type { GlobalSettings } from '../../../../../shared/global-settings-types'
+import type { DashboardCardTerminalInput } from '../../../../../shared/agent-status/presentation/dashboard-snapshot'
+import type { GlobalSettings } from '../../../../../shared/settings/global-settings-types'
 import { buildPreviewAppearanceOptions } from '../../standalone-terminal/rendering/preview-terminal-options'
 import { syncPreviewTerminalLigatures } from '../../standalone-terminal/rendering/preview-terminal-ligatures'
 

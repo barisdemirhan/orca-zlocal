@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
 import type { Repo } from '../../../../shared/repository/repo-types'
-import type { Tab } from '../../../../shared/tab-types'
+import type { Tab } from '../../../../shared/workspace-layout/tab-groups/tab-types'
 import { agentHubTabsByWorktree } from './agent-hub-chat-tabs'
 import { buildActivityEvents } from '../activity/activity-event-builder'
 import {

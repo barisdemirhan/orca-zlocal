@@ -4,12 +4,9 @@ import {
   AGENT_HUB_ORB_OPENING_PROMPT,
   type AgentHubOrbSession
 } from '../../../shared/agent-hub-orb'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/workspace/identity/floating-workspace-id'
 import type { StructuredAgentId } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle'
-import {
-  createStructuredAgentSessionId,
-  structuredAgentSessionCreateParams
-} from '../../../shared/agent-session/structured-agent-session-create'
+import { structuredAgentSessionCreateParams } from '../../../shared/agent-session/lifecycle/operations/structured-agent-session-create'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { StructuredAgentSessionCaller } from '../../native-chat/agent-session-wire/host/structured-agent-session-host-types'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
@@ -24,6 +21,11 @@ import {
 } from '../../runtime/rpc/methods/structured-sessions/creation/structured-agent-session-create'
 import { sendAgentHubOrbOpeningPrompt } from './agent-hub-orb-opening-prompt-send'
 import { isAgentHubOrbDirectory } from './agent-hub-orb-directory'
+
+// Provider-prefixed, underscore-only suffix: the shape the host accepts for a chat it adopts.
+function createOrbSessionId(agent: StructuredAgentId): string {
+  return `${agent}_${randomUUID().replaceAll('-', '_')}`
+}
 
 async function resolveAgentHubOrbModel(input: {
   host: StructuredAgentSessionHost
@@ -65,7 +67,7 @@ export async function prepareAgentHubOrbSessionCreate(input: {
   permissionOptions: Record<string, string>
 }) {
   const create = structuredAgentSessionCreateParams({
-    sessionId: createStructuredAgentSessionId(input.agent, randomUUID),
+    sessionId: createOrbSessionId(input.agent),
     worktree: FLOATING_TERMINAL_WORKTREE_ID,
     agent: input.agent,
     randomUuid: randomUUID

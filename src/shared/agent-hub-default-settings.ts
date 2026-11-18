@@ -1,4 +1,4 @@
-import type { GlobalSettings } from './global-settings-types'
+import type { GlobalSettings } from './settings/global-settings-types'
 import { DEFAULT_AGENT_HUB_DOCK_POSITION } from './agent-hub-settings'
 
 type AgentHubSettingKey = Extract<

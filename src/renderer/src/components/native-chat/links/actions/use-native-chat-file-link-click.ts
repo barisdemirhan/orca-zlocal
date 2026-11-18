@@ -7,7 +7,7 @@ import {
   isTerminalLinkDirectActivation
 } from '@/components/terminal-pane/links/gestures/terminal-link-activation'
 import { useAppStore } from '../../../../store/index'
-import { routeNativeChatHref } from '../../../../../../shared/native-chat/native-chat-href-routing'
+import { routeNativeChatHref } from '../../../../../../shared/native-chat/file-access/native-chat-href-routing'
 import { resolveNativeChatFileLink } from './native-chat-file-link'
 import type { NativeChatFileLinkContext } from './native-chat-file-link-context'
 import { nativeChatPlainLinkClickBehavior } from './native-chat-link-click-behavior'

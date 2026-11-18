@@ -1,4 +1,5 @@
 import { PanelsTopLeft, RefreshCw } from 'lucide-react'
+import { useAppStore } from '@/store'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { lazyWithRetry } from '@/app-shell/startup/lazy-with-retry'
@@ -40,6 +41,7 @@ import { useStatusBarController } from './composition/use-status-bar-controller'
 import { isOwnerNotSetUpPlaceholder } from './usage/owner-usage-rate-limits'
 import { StatusBarVisibilityMenu } from './composition/StatusBarVisibilityMenu'
 import { isPairedWebClientWindow } from '@/app-shell/chrome/desktop-window-chrome'
+import { GitBlameStatusSegment } from './GitBlameStatusSegment'
 
 const PetStatusSegment = lazyWithRetry(() =>
   import('./PetStatusSegment').then((module) => ({ default: module.PetStatusSegment }))
@@ -76,11 +78,11 @@ export function StatusBarSurface({
   // Memoized labels still need to follow language changes.
   useTranslation()
   const controller = useStatusBarController(floatingTerminalOpen)
+  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   if (!controller) {
     return null
   }
   const {
-    agentHubEnabled,
     antigravityAccounts,
     anyFetching,
     anyVisible,
@@ -111,6 +113,7 @@ export function StatusBarSurface({
     showEmptyUsageCta,
     showFloatingTerminalToggle,
     showFloatingWorkspaceAttentionDot,
+    showGitBlame,
     showPorts,
     showResourceUsage,
     showSsh,
@@ -331,6 +334,7 @@ export function StatusBarSurface({
           <SkillUpdateStatusSegment iconOnly={segmentsIconOnly} />
           <NativeChatResumeStatusSegment iconOnly={segmentsIconOnly} />
           <UpdateStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
+          {showGitBlame ? <GitBlameStatusSegment iconOnly={segmentsIconOnly} /> : null}
           <React.Suspense fallback={null}>
             {agentHubEnabled && !isPairedWebClientWindow() ? (
               <AgentHubRoot iconOnly={segmentsIconOnly} />

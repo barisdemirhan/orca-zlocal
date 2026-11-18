@@ -46,7 +46,9 @@ vi.mock('../terminal-pane/host-files/terminal-file-path-mapping', () => ({
     sourceHostResolved: true
   })
 }))
-vi.mock('@/lib/workspace/paths/workspace-directory', () => ({ resolveWorkspaceDirectory: () => '/a' }))
+vi.mock('@/lib/workspace/paths/workspace-directory', () => ({
+  resolveWorkspaceDirectory: () => '/a'
+}))
 vi.mock('@/lib/browser/workspace/workspace-browser-tab-open', () => ({
   openWorkspaceBrowserTab: vi.fn(async () => {})
 }))

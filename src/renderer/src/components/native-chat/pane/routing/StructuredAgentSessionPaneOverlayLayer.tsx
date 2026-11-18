@@ -1,15 +1,19 @@
-import { memo, useCallback, useMemo } from 'react'
+import { Activity, memo, useCallback, useMemo } from 'react'
 import { AgentHubOrbSessionOperationGuard } from '../../../agent-hub/AgentHubOrbOperationOverlay'
 import { useShallow } from 'zustand/react/shallow'
-import type { Tab, TabGroup } from '../../../../../../shared/tab-types'
+import type { Tab, TabGroup } from '../../../../../../shared/workspace-layout/tab-groups/tab-types'
 import { useAppStore } from '@/store'
 import { useWindowBackdropActive } from '@/app-shell/appearance/window-backdrop'
 import {
   structuredAgentSessionOwnerForTab,
   structuredAgentSessionTargetForHost
 } from '@/runtime/native-chat/session-ownership/structured-agent-session-owner'
-import { RetainedPaneHost } from '../../../tab-group/RetainedPaneHost'
+import { ActivityPortalContainer } from '@/components/ui/activity-portal-container'
+import { RetainedPaneHost } from '../../../tab-group/retained-pane/RetainedPaneHost'
 import NativeChatView from '../../NativeChatView'
+import { NativeChatComposerEditorOwner } from '../../composer/editor/native-chat-composer-editor-owner'
+import { NativeChatHostOutageOwner } from '../../host-access/native-chat-host-outage-owner'
+import { NativeChatPaneLifetime } from '../ownership/native-chat-pane-lifetime'
 import { isStructuredTab } from '../../../../../../shared/agent-session/view/structured-agent-session-tab'
 import { useAgentHubChatDestination } from '../../../agent-hub/agent-hub-chat-destinations'
 import { useAgentHubOrbPanel } from '../../../agent-hub/agent-hub-orb-panel-store'
@@ -34,6 +38,7 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
   groupId,
   isActive,
   isFocusedGroup,
+  preparingHandoff,
   hasSplitGroups,
   onFocusOwningGroup
 }: {
@@ -41,6 +46,7 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
   groupId: string | undefined
   isActive: boolean
   isFocusedGroup: boolean
+  preparingHandoff: boolean
   hasSplitGroups: boolean
   onFocusOwningGroup: ((groupId: string) => void) | undefined
 }): React.JSX.Element | null {
@@ -60,6 +66,8 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
   const destination = orbDestination ?? mirror?.element ?? null
   const visible = orbDestination ? chatVisible : mirror ? mirror.visible : isActive
   const focused = orbDestination ? chatVisible : mirror ? mirror.focused : isFocusedGroup
+  // A hub mirror or the Orb shows the chat elsewhere, so it stays connected while the tab is hidden.
+  const effectsConnected = visible || preparingHandoff
   const backdropActive = useWindowBackdropActive()
   if (!target) {
     return null
@@ -75,27 +83,37 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
       retainContent
       destination={destination}
     >
-      <AgentHubOrbComposerContext value={orbDestination ? tab.id : null}>
-        <NativeChatPresentationContext value={orbDestination ? 'orb' : 'chat'}>
-          <AgentHubOrbVoiceContext value={voice}>
-            <AgentHubOrbSessionOperationGuard
-              host={target.kind === 'environment' ? target.environmentId : 'local'}
-              sessionId={tab.entityId}
-            >
-              <NativeChatView
-                mode="structured"
-                tabId={tab.id}
-                groupId={destination ? undefined : groupId}
-                sessionId={tab.entityId}
-                agent={tab.agentSessionAgent}
-                isVisible={visible}
-                isFocusedGroup={focused}
-                target={target}
-              />
-            </AgentHubOrbSessionOperationGuard>
-          </AgentHubOrbVoiceContext>
-        </NativeChatPresentationContext>
-      </AgentHubOrbComposerContext>
+      <NativeChatPaneLifetime key={`${owner}:${tab.entityId}`} isVisible={effectsConnected}>
+        <NativeChatHostOutageOwner target={target}>
+          <NativeChatComposerEditorOwner>
+            <ActivityPortalContainer visible={visible}>
+              <Activity mode={effectsConnected ? 'visible' : 'hidden'}>
+                <AgentHubOrbComposerContext value={orbDestination ? tab.id : null}>
+                  <NativeChatPresentationContext value={orbDestination ? 'orb' : 'chat'}>
+                    <AgentHubOrbVoiceContext value={voice}>
+                      <AgentHubOrbSessionOperationGuard
+                        host={target.kind === 'environment' ? target.environmentId : 'local'}
+                        sessionId={tab.entityId}
+                      >
+                        <NativeChatView
+                          mode="structured"
+                          tabId={tab.id}
+                          groupId={destination ? undefined : groupId}
+                          sessionId={tab.entityId}
+                          agent={tab.agentSessionAgent}
+                          isVisible={visible}
+                          isFocusedGroup={focused}
+                          target={target}
+                        />
+                      </AgentHubOrbSessionOperationGuard>
+                    </AgentHubOrbVoiceContext>
+                  </NativeChatPresentationContext>
+                </AgentHubOrbComposerContext>
+              </Activity>
+            </ActivityPortalContainer>
+          </NativeChatComposerEditorOwner>
+        </NativeChatHostOutageOwner>
+      </NativeChatPaneLifetime>
     </RetainedPaneHost>
   )
 })
@@ -108,11 +126,18 @@ const StructuredAgentSessionPaneOverlayLayer = memo(
     worktreeId: string
     isWorktreeActive: boolean
   }): React.JSX.Element {
-    const { unifiedTabs, groups, activeGroupId } = useAppStore(
+    const { unifiedTabs, groups, activeGroupId, preparingHandoff } = useAppStore(
       useShallow((state) => ({
         unifiedTabs: state.unifiedTabsByWorktree[worktreeId] ?? EMPTY_UNIFIED_TABS,
         groups: state.groupsByWorktree[worktreeId] ?? EMPTY_GROUPS,
-        activeGroupId: state.activeGroupIdByWorktree[worktreeId]
+        activeGroupId: state.activeGroupIdByWorktree[worktreeId],
+        preparingHandoff: Boolean(
+          state.activeView === 'terminal' &&
+          state.activePendingCreationId &&
+          state.pendingWorktreeCreations[state.activePendingCreationId]?.worktreeId ===
+            worktreeId &&
+          state.pendingWorktreeCreations[state.activePendingCreationId]?.chatInputHandedOff
+        )
       }))
     )
     const focusGroup = useAppStore((state) => state.focusGroup)
@@ -137,6 +162,7 @@ const StructuredAgentSessionPaneOverlayLayer = memo(
             tab={tab}
             groupId={tab.groupId}
             isActive={Boolean(isWorktreeActive && groupActiveTabById.get(tab.groupId) === tab.id)}
+            preparingHandoff={preparingHandoff && groupActiveTabById.get(tab.groupId) === tab.id}
             isFocusedGroup={Boolean(
               isWorktreeActive &&
               groupActiveTabById.get(tab.groupId) === tab.id &&

@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
 import { buildChildAgentLineageTree } from '../activity/activity-thread-child-agent'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { projectResolvedWorktreeLineage } from '../../../../shared/resolved-worktree-lineage'
+import { projectResolvedWorktreeLineage } from '../../../../shared/worktree/lineage/resolved-worktree-lineage'
 import type { WorktreeLineage } from '../../../../shared/worktree/lineage-types'
 import { PANE_KEY, PANE_KEY_2 } from '../activity/ActivityPrototypePage-test-fixtures'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'

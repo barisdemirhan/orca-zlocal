@@ -47,8 +47,12 @@ vi.mock('@/lib/workspace/ownership/worktree-operation-route', () => ({
   resolveWorktreeOperationRoute: () => mocks.route,
   resolveWorktreeOperationRouteForHost: () => mocks.route
 }))
-vi.mock('@/lib/workspace/ownership/connection-context', () => ({ getConnectionIdForFile: () => mocks.connectionId }))
-vi.mock('@/lib/workspace/paths/workspace-directory', () => ({ resolveWorkspaceDirectory: () => '/repo' }))
+vi.mock('@/lib/workspace/ownership/connection-context', () => ({
+  getConnectionIdForFile: () => mocks.connectionId
+}))
+vi.mock('@/lib/workspace/paths/workspace-directory', () => ({
+  resolveWorkspaceDirectory: () => '/repo'
+}))
 vi.mock('./host-files/terminal-file-path-mapping', async (original) => ({
   ...(await original<object>()),
   getTerminalFileContext: () => ({ target: { kind: 'local' }, sourceHostResolved: true })

@@ -1,5 +1,5 @@
 import type { CommandSpec } from '../discovery/command-spec'
-import { CLI_GLOBAL_FLAGS as GLOBAL_FLAGS } from '../../shared/cli-argument-boundary'
+import { CLI_GLOBAL_FLAGS as GLOBAL_FLAGS } from '../../shared/cli/cli-argument-boundary'
 
 function hubSpec(
   verb: string[],
@@ -85,7 +85,10 @@ export const AGENT_HUB_COMMAND_SPECS: CommandSpec[] = [
     summary: 'List waiting agent questions, hub asks and gates with their options',
     usage: 'orca hub questions [--environment <name> | --all-hosts] [--json]',
     allowedFlags: [...GLOBAL_FLAGS, 'all-hosts'],
-    examples: ['orca hub questions --all-hosts --json', 'orca hub questions --environment workhost'],
+    examples: [
+      'orca hub questions --all-hosts --json',
+      'orca hub questions --environment workhost'
+    ],
     notes: [
       'Each host is reported as ok, unsupported (older Orca) or unreachable. An empty list means "none" only for an ok host whose coverage is complete; this is never a global guarantee.',
       '--all-hosts asks this machine and every saved environment. Older hosts still show which agents wait, as read-only rows with reason host_unsupported.',

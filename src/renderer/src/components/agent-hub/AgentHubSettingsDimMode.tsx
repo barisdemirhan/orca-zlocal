@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { agentHubFloatingDimMode } from '../../../../shared/agent-hub-settings'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { SettingsRow } from '../settings/form-controls/SettingsFormControls'
 import { AGENT_HUB_DIM_MODES, agentHubDimModeLabel } from './agent-hub-dim-mode-options'

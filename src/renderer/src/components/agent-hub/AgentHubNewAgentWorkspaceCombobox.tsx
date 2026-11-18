@@ -17,7 +17,7 @@ import { selectExecutionHostDisplayLabel } from '@/runtime/hosts/display/executi
 import { cn } from '@/lib/class-names'
 import { useAppStore } from '@/store'
 import { getIndexedRepoMap } from '@/store/repos/repository-catalog-index'
-import { getWorktreeExecutionHostId } from '../../../../shared/execution-host'
+import { getWorktreeExecutionHostId } from '../../../../shared/execution-host/execution-host'
 import {
   getWorktreeHostIdentity,
   type HostScopedWorktreeKey

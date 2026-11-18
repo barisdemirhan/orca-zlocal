@@ -1,7 +1,7 @@
 import { agentHubThreadCardKey } from './agent-hub-answered-cards'
-import type { NotificationSettings } from '../../../../shared/notification-settings-types'
+import type { NotificationSettings } from '../../../../shared/notifications/notification-settings-types'
 import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { parseExecutionHostId } from '../../../../shared/execution-host'
+import { parseExecutionHostId } from '../../../../shared/execution-host/execution-host'
 import { agentHubIsApproval, agentHubStateSince, type AgentHubLists } from './agent-hub-lists'
 import {
   agentHubRequestKey,

@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
 import { readRuntimeFileContent } from '@/runtime/files/reads/runtime-file-read-client'
 import type { AgentHubPeekContent } from './agent-hub-peek-store'
 import { AgentHubPeekFile } from './AgentHubPeekFile'

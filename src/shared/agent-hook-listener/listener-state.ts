@@ -15,7 +15,9 @@ import type { ClaudeToolRequest } from './claude-tool-request-identity'
 import type { CodexSubagentRoster } from './providers/codex/codex-subagent-roster'
 import type { CodexSubagentTranscriptState } from './providers/codex/codex-subagent-transcript'
 import type { CodexAsyncQuestions } from './providers/codex/codex-async-questions'
-import type { GrokActiveTurn, HermesPaneTurn, MusePaneState } from './provider-pane-turn-state'
+import type { GrokActiveTurn, HermesPaneTurn, HumanTurnMaps } from './provider-pane-turn-state'
+import { clearHumanTurns, forgetHumanTurns, moveHumanTurns } from './provider-pane-turn-state'
+import type { MusePaneState } from './providers/muse/muse-pane-state'
 import type { AgentHookEventPayload, ToolSnapshot } from './listener-event'
 import {
   deletePaneScopedCacheEntry,
@@ -24,7 +26,6 @@ import {
   movePaneScopedSetEntries
 } from './pane-scoped-cache-entries'
 import type { JcodeUserPromptEvidence } from './providers/jcode/jcode-session-files'
-import type { ClaudeHumanPromptContext } from './providers/claude/claude-human-notifications'
 import type { JcodeHelperPermissionWait } from './providers/jcode/jcode-helper-permission-wait'
 import type { HookRootAttempt } from './presence/hook-process-root-evidence'
 import {
@@ -34,7 +35,7 @@ import {
 } from './opencode-session-registry'
 
 /** Per-listener-instance caches needing per-PTY teardown; Orca's main process and the relay each get their own, never shared. */
-export type HookListenerState = {
+export type HookListenerState = HumanTurnMaps & {
   warnedVersions: Set<string>
   warnedEnvs: Set<string>
   lastPromptByPaneKey: Map<string, string>
@@ -70,11 +71,6 @@ export type HookListenerState = {
   claudeConsumedCompactPromptIdByPaneKey: Map<string, string>
   /** Lead session_id changes retire replaced-conversation claims even without SessionStart (/clear/relaunch/resume). */
   claudeSessionOwnerByPaneKey: Map<string, string>
-  claudeHumanPromptContextByPaneKey: Map<string, ClaudeHumanPromptContext>
-  geminiPermissionByPaneKey: Map<
-    string,
-    { sessionId?: string; toolCallId?: string; toolName?: string }
-  >
   /** Execution-host evidence attempts for processes acquiring a pane, by pane and process identity. */
   hookRootAttempts: Map<string, HookRootAttempt>
   /** Live thread-spawn children per Codex pane. */
@@ -103,6 +99,8 @@ export type HookListenerState = {
   lastLaunchTokenByPaneKey: Map<string, string>
   /** Hermes turn per pane, so tool hooks from its post-turn background review can be ignored. */
   hermesTurnByPaneKey: Map<string, HermesPaneTurn>
+  /** DSH child sessions named by SubagentStart; the bridge stamps their hooks with their own session_id. */
+  dshChildSessionIdsByPaneKey: Map<string, Set<string>>
 }
 
 const legacyStatusAdapterByState = new WeakMap<HookListenerState, AgentStatusLegacyAdapter>()
@@ -155,7 +153,8 @@ export function createHookListenerState(
     musePaneStateByPaneKey: new Map(),
     opencodeSessionPaneBySessionId: new Map(),
     lastLaunchTokenByPaneKey: new Map(),
-    hermesTurnByPaneKey: new Map()
+    hermesTurnByPaneKey: new Map(),
+    dshChildSessionIdsByPaneKey: new Map()
   }
   legacyStatusAdapterByState.set(state, adapter)
   return state
@@ -220,8 +219,7 @@ export function clearPaneProcessCacheState(state: HookListenerState, paneKey: st
   state.claudeActiveSessionCronPaneKeys.delete(paneKey)
   state.claudeLaunchedBackgroundTasksByPaneKey.delete(paneKey)
   state.claudeSessionOwnerByPaneKey.delete(paneKey)
-  deletePaneScopedCacheEntry(state.claudeHumanPromptContextByPaneKey, paneKey)
-  state.geminiPermissionByPaneKey.delete(paneKey)
+  forgetHumanTurns(state, paneKey)
   state.codexSubagentRosterByPaneKey.delete(paneKey)
   state.codexSubagentTranscriptByPaneKey.delete(paneKey)
   state.codexLeadStateByPaneKey.delete(paneKey)
@@ -235,6 +233,7 @@ export function clearPaneProcessCacheState(state: HookListenerState, paneKey: st
   unbindOpenCodeSessionsOfPane(state, paneKey)
   deletePaneScopedCacheEntry(state.lastLaunchTokenByPaneKey, paneKey)
   state.hermesTurnByPaneKey.delete(paneKey)
+  state.dshChildSessionIdsByPaneKey.delete(paneKey)
   // Unfinished evidence and exit intent belong to the ended process.
   deletePaneScopedCacheEntry(state.hookRootAttempts, paneKey)
 }
@@ -278,8 +277,7 @@ export function movePaneCacheState(
   movePaneScopedSetEntries(state.claudeActiveSessionCronPaneKeys, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeLaunchedBackgroundTasksByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeSessionOwnerByPaneKey, fromPaneKey, toPaneKey)
-  movePaneScopedMapEntries(state.claudeHumanPromptContextByPaneKey, fromPaneKey, toPaneKey)
-  movePaneScopedMapEntries(state.geminiPermissionByPaneKey, fromPaneKey, toPaneKey)
+  moveHumanTurns(state, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexSubagentRosterByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexSubagentTranscriptByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexLeadStateByPaneKey, fromPaneKey, toPaneKey)
@@ -293,6 +291,7 @@ export function movePaneCacheState(
   moveOpenCodeSessionBindings(state, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.lastLaunchTokenByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.hermesTurnByPaneKey, fromPaneKey, toPaneKey)
+  movePaneScopedMapEntries(state.dshChildSessionIdsByPaneKey, fromPaneKey, toPaneKey)
 }
 
 export function clearPaneTurnCacheState(state: HookListenerState, paneKey: string): void {
@@ -305,8 +304,7 @@ export function clearPaneTurnCacheState(state: HookListenerState, paneKey: strin
   state.grokActiveTurnByPaneKey.delete(paneKey)
   state.grokMainAgentStatusByPaneKey.delete(paneKey)
   state.grokBackgroundTasksByPaneKey.delete(paneKey)
-  deletePaneScopedCacheEntry(state.claudeHumanPromptContextByPaneKey, paneKey)
-  state.geminiPermissionByPaneKey.delete(paneKey)
+  forgetHumanTurns(state, paneKey)
 }
 
 export function clearAllListenerCaches(state: HookListenerState): void {
@@ -329,8 +327,7 @@ export function clearAllListenerCaches(state: HookListenerState): void {
   state.claudeActiveSessionCronPaneKeys.clear()
   state.claudeLaunchedBackgroundTasksByPaneKey.clear()
   state.claudeSessionOwnerByPaneKey.clear()
-  state.claudeHumanPromptContextByPaneKey.clear()
-  state.geminiPermissionByPaneKey.clear()
+  clearHumanTurns(state)
   state.codexSubagentRosterByPaneKey.clear()
   state.codexSubagentTranscriptByPaneKey.clear()
   state.codexLeadStateByPaneKey.clear()
@@ -344,5 +341,6 @@ export function clearAllListenerCaches(state: HookListenerState): void {
   state.opencodeSessionPaneBySessionId.clear()
   state.lastLaunchTokenByPaneKey.clear()
   state.hermesTurnByPaneKey.clear()
+  state.dshChildSessionIdsByPaneKey.clear()
   state.hookRootAttempts.clear()
 }

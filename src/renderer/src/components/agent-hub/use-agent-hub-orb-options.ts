@@ -12,10 +12,10 @@ import {
 } from '@/runtime/native-chat/model-catalogs/host-model-catalog-snapshots'
 import { ensureLocalRuntimeCapabilities } from '@/runtime/hosts/capabilities/local-runtime-capabilities'
 import { callStructuredAgentSession } from '@/runtime/native-chat/requests/structured-agent-session-call'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/workspace/identity/floating-workspace-id'
 import type { AgentSessionModelCatalogResult } from '../../../../shared/agent-session/agent-session-wire'
 import { structuredAgentSessionSeedCatalog } from '../../../../shared/agent-session/options/model-catalog/structured-agent-session-seed-catalog'
-import { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } from '../../../../shared/agent-session/structured-agent-session-surface-capabilities'
+import { AGENT_SESSION_MODEL_CATALOG_SAVED_ONLY_RUNTIME_CAPABILITY } from '../../../../shared/agent-session/capabilities/structured-agent-session-surface-capabilities'
 
 const LOCAL = { kind: 'local' } as const
 const readAgents = () => readHostStructuredAgentsForRuntime('local', null)

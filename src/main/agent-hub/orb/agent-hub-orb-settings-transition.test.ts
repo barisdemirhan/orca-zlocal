@@ -4,8 +4,8 @@ import { readTestHostJournal } from '../../native-chat/agent-session-journal/jou
 import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host.test-fixture'
 import { setStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import { OrcaRuntimeService } from '../../runtime/orca-runtime'
-import { createGlobalSettingsFixture } from '../../../shared/global-settings-test-fixture'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
+import { createGlobalSettingsFixture } from '../../../shared/settings/global-settings-test-fixture'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/workspace/identity/floating-workspace-id'
 import { claudeProviderHandle } from '../../../shared/agent-session/lifecycle/provider-handles/agent-session-provider-handle-encoding'
 import {
   HOST_TEST_NOW,

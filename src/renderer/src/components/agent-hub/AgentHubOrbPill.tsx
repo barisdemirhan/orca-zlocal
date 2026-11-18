@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import { useNow } from '@/hooks/use-now'
 import { useAppStore } from '@/store'
-import type { StructuredAgentSessionState } from '../../../../shared/agent-session/structured-agent-session-reducer'
+import type { StructuredAgentSessionState } from '../../../../shared/agent-session/view/live-read/structured-agent-session-reducer'
 import { cancelDictation } from './agent-hub-dictation-cancel'
 import { AgentHubDictationPill } from './AgentHubDictationPill'
 import { AgentHubOrbMark } from './AgentHubOrbButton'

@@ -4,7 +4,7 @@ import { showBlockedNotificationFallbackToast } from '@/lib/notifications/blocke
 import type {
   NotificationDispatchRequest,
   NotificationDispatchResult
-} from '../../../shared/notification-settings-types'
+} from '../../../shared/notifications/notification-settings-types'
 
 // The latest native verdict, for a surface that would otherwise assume a banner (and its sound).
 let nativeBannerRefused = false

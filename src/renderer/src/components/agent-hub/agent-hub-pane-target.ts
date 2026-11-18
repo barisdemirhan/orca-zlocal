@@ -1,6 +1,6 @@
 import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
 import type { AppState } from '@/store/types'
-import type { DashboardCardTerminalInput } from '../../../../shared/dashboard-snapshot'
+import type { DashboardCardTerminalInput } from '../../../../shared/agent-status/presentation/dashboard-snapshot'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { AgentType } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { Repo } from '../../../../shared/repository/repo-types'

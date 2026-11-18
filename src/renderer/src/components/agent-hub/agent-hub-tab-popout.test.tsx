@@ -17,7 +17,7 @@ import {
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
-import type { Tab, TabGroup } from '../../../../shared/tab-types'
+import type { Tab, TabGroup } from '../../../../shared/workspace-layout/tab-groups/tab-types'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')

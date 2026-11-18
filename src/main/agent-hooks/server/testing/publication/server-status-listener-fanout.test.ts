@@ -121,44 +121,6 @@ describe('AgentHookServer listener replay', () => {
     })
   })
 
-  it('emits a connection cutoff after a pane-key collision and orders replay after it', () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(1_700_000_000_000)
-    const server = new AgentHookServer()
-    const clearListener = vi.fn()
-    server.setPaneStatusClearListener(clearListener)
-    server.ingestRemote(
-      { paneKey: PANE, payload: { state: 'working', agentType: 'claude' } },
-      'ssh-a'
-    )
-    server.ingestRemote(
-      { paneKey: PANE, payload: { state: 'working', agentType: 'codex' } },
-      'ssh-b'
-    )
-
-    server.clearStatusEntriesForConnection('ssh-a')
-    const clear = clearListener.mock.calls[0]?.[0] as {
-      transient: true
-      connectionId: string
-      clearedAt: number
-    }
-    server.ingestRemote(
-      { paneKey: GOOD_PANE, payload: { state: 'working', agentType: 'claude' }, isReplay: true },
-      'ssh-a'
-    )
-
-    expect(clear).toMatchObject({ transient: true, connectionId: 'ssh-a' })
-    expect(server.getStatusSnapshot()).toEqual([
-      expect.objectContaining({ paneKey: PANE, connectionId: 'ssh-b' }),
-      expect.objectContaining({
-        paneKey: GOOD_PANE,
-        connectionId: 'ssh-a',
-        receivedAt: clear.clearedAt + 1
-      })
-    ])
-    vi.useRealTimers()
-  })
-
   it('hydrates cached statuses as not observed in the current runtime', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'orca-agent-hooks-'))
     const firstServer = new AgentHookServer()

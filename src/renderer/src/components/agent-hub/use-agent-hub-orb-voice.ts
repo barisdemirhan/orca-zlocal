@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useSyncExternalStore } fro
 import { useAppStore } from '@/store'
 import type { AgentHubOrbSession } from '../../../../shared/agent-hub-orb'
 import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../../../shared/agent-session-voice'
-import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/structured-agent-session-reducer'
+import { EMPTY_STRUCTURED_AGENT_SESSION } from '../../../../shared/agent-session/view/live-read/structured-agent-session-reducer'
 import { createAgentSessionVoiceClient } from '@/runtime/agent-session-voice-client'
 import {
   structuredAgentSessionOwnerForTab,

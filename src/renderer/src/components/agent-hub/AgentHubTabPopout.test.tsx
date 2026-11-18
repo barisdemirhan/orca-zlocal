@@ -5,15 +5,15 @@ import { act } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
+import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/workspace/identity/floating-workspace-id'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import {
   makeTabWithIds,
   makeRepo,
   makeWorktree
 } from '../activity/ActivityPrototypePage-test-fixtures'
-import SortableTab from '../tab-bar/SortableTab'
-import BrowserTab from '../tab-bar/BrowserTab'
+import SortableTab from '../tab-bar/terminal-tabs/SortableTab'
+import BrowserTab from '../tab-bar/browser-tabs/BrowserTab'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubFloatingPopoutProvider } from './AgentHubTabPopout'
 import { readAgentHubMirrors, resetAgentHubMirrorsForTest } from './agent-hub-mirror-store'
@@ -172,6 +172,8 @@ describe('floating terminal pop-out', () => {
   it('has a bound shortcut on focus and no context menu; the tab menu still works', async () => {
     fixture()
     const button = screen.getByRole('button', { name: 'Pop out' })
+    // Tooltips open only for keyboard focus.
+    fireEvent.keyDown(window, { key: 'Tab' })
     fireEvent.focus(button)
     await waitFor(() => expect(screen.getByRole('tooltip').textContent).toContain('F7'))
     fireEvent.contextMenu(button)

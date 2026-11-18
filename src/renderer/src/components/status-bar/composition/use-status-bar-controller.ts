@@ -54,7 +54,6 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
   const ensureDetectedAgents = useAppStore((s) => s.ensureDetectedAgents)
   // Why: pet segment is driven purely by experimentalPet, not statusBarItems, to avoid double-toggling the surface (see design doc).
   const petEnabled = useAppStore((s) => s.settings?.experimentalPet === true)
-  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   const toggleStatusBarItem = useAppStore((s) => s.toggleStatusBarItem)
   const usageEmptyStateDismissed = useAppStore((s) => s.usageEmptyStateDismissed)
   const mountedRef = useRef(true)
@@ -184,6 +183,7 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
   const showSsh = statusBarItems.includes('ssh')
   const showResourceUsage = statusBarItems.includes('resource-usage')
   const showPorts = statusBarItems.includes('ports')
+  const showGitBlame = statusBarItems.includes('git-blame')
   const showFloatingTerminalToggle =
     floatingTerminalEnabled && floatingTerminalTriggerLocation === 'status-bar'
   // Why: meter-only children (excludes resource-usage) so the % display callout anchors to a real meter cluster.
@@ -281,7 +281,6 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
   }
 
   return {
-    agentHubEnabled,
     antigravityAccounts: rateLimits.antigravityAccounts,
     anyFetching,
     anyVisible,
@@ -316,6 +315,7 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
     showEmptyUsageCta,
     showFloatingTerminalToggle,
     showFloatingWorkspaceAttentionDot,
+    showGitBlame,
     showPorts,
     showResourceUsage,
     showSsh,

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAppStore } from '../store'
-import { RetainedPaneHost } from './tab-group/RetainedPaneHost'
+import { RetainedPaneHost } from './tab-group/retained-pane/RetainedPaneHost'
 import { useTerminalMountRetentionLeases } from './terminal-pane/terminal-mount-retention-leases'
 import TerminalPane from './terminal-pane/TerminalPane'
 import { TerminalRestoringPlaceholder } from './terminal-pane/mounting/TerminalRestoringPlaceholder'

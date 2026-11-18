@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
 import type { AgentHubOrbSession } from '../../../../shared/agent-hub-orb'
 import { useAgentHubOrb } from './agent-hub-orb-session'
 import { openAgentHubOrb } from './agent-hub-orb-open'
@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({ current: vi.fn() }))
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const { createGlobalSettingsFixture } =
-    await import('../../../../shared/global-settings-test-fixture')
+    await import('../../../../shared/settings/global-settings-test-fixture')
   return {
     useAppStore: create(() => ({
       settings: createGlobalSettingsFixture(),

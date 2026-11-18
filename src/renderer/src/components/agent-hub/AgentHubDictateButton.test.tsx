@@ -4,7 +4,10 @@ import { createRef } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { NO_DICTATION_LIVE_TEXT } from '@/store/slices/dictation/dictation'
-import { getDefaultSettings, getDefaultVoiceSettings } from '../../../../shared/constants'
+import {
+  getDefaultSettings,
+  getDefaultVoiceSettings
+} from '../../../../shared/orca-profiles/constants'
 import type { DictationState } from '../../../../shared/speech/speech-types'
 import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 import { publishDictationMeter, resetDictationMeter } from '../dictation/dictation-meter-store'

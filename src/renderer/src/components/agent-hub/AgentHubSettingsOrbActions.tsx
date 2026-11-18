@@ -1,6 +1,6 @@
 import { translate } from '@/i18n/i18n'
 import { getShortcutPlatform } from '@/lib/keyboard/shortcut-platform'
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import type { AgentHubOrbAction } from '../../../../shared/agent-hub-settings'
 import { agentHubOrbLaunchAction } from '../../../../shared/agent-hub-orb-settings'
 import {

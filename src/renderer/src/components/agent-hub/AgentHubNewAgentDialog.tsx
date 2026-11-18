@@ -18,7 +18,10 @@ import { useDetectedAgents } from '@/hooks/useDetectedAgents'
 import { translate } from '@/i18n/i18n'
 import { getAgentCatalog } from '@/lib/agent-catalog/agent-catalog'
 import type { NewWorkspaceProjectOption } from '@/lib/workspace/creation/new-workspace-project-options'
-import { getScreenSubmitModifierLabel, isScreenSubmitShortcut } from '@/lib/keyboard/screen-submit-shortcut'
+import {
+  getScreenSubmitModifierLabel,
+  isScreenSubmitShortcut
+} from '@/lib/keyboard/screen-submit-shortcut'
 import { useAppStore } from '@/store'
 import { projectGroupIdFromRepoId } from '../../../../shared/folder-workspaces/folder-workspace-worktree'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'

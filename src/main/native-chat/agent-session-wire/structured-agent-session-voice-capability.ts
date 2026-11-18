@@ -1,5 +1,5 @@
 import type { AgentSessionVoiceCapability } from '../../../shared/agent-session-voice'
-import { LOCAL_EXECUTION_HOST_ID } from '../../../shared/execution-host'
+import { LOCAL_EXECUTION_HOST_ID } from '../../../shared/execution-host/execution-host'
 import type { StructuredAgentSessionMutationContext } from './operations/structured-agent-session-mutation-context'
 
 /** Whether the conversation's own host and provider can run native Codex Live voice. */

@@ -46,7 +46,10 @@ function tree(...workspaces: [Worktree, string, AgentHubTerminalRow[]][]): Agent
 
 const api = makeWorktreeWithId('wt-api', 'repo-api')
 const web = makeWorktreeWithId('wt-web', 'repo-web')
-const remoteApi: Worktree = { ...makeWorktreeWithId('wt-api-workhost', 'repo-api'), hostId: 'runtime:workhost' }
+const remoteApi: Worktree = {
+  ...makeWorktreeWithId('wt-api-workhost', 'repo-api'),
+  hostId: 'runtime:workhost'
+}
 
 describe('agent hub picker project filter', () => {
   it('keys a project per host, and each folder workspace on its own', () => {

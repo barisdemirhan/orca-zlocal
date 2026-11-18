@@ -2,7 +2,10 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { getDefaultSettings, getDefaultVoiceSettings } from '../../../../shared/constants'
+import {
+  getDefaultSettings,
+  getDefaultVoiceSettings
+} from '../../../../shared/orca-profiles/constants'
 import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'

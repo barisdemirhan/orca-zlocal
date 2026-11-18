@@ -2,14 +2,14 @@
 import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import { createGlobalSettingsFixture } from '../../../../shared/global-settings-test-fixture'
+import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
 import { getDefaultFloatingTerminalTriggerPosition } from '../floating-terminal/trigger/floating-terminal-trigger-position'
 import { useAgentHubOrbPosition } from './use-agent-hub-orb-position'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')
   const { createGlobalSettingsFixture } =
-    await import('../../../../shared/global-settings-test-fixture')
+    await import('../../../../shared/settings/global-settings-test-fixture')
   return {
     useAppStore: create(() => ({
       settings: createGlobalSettingsFixture(),

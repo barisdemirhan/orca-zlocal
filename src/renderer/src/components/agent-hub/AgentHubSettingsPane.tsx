@@ -1,4 +1,4 @@
-import type { GlobalSettings } from '../../../../shared/global-settings-types'
+import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { translate } from '@/i18n/i18n'
 import { SettingsRow, SettingsSwitchRow } from '../settings/form-controls/SettingsFormControls'
 import { useAgentHubPreferences } from './use-agent-hub-settings'

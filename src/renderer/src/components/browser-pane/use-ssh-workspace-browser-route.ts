@@ -8,7 +8,7 @@ import {
   sshWorkspaceBrowserRouteKey,
   verifiedPartitionByRoute
 } from './ssh-workspace-browser-verified-routes'
-import type { ExecutionHostId } from '../../../../shared/execution-host'
+import type { ExecutionHostId } from '../../../../shared/execution-host/execution-host'
 
 export type SshWorkspaceBrowserRouteErrorKind = 'forwarding-blocked' | 'ssh-unavailable' | 'unknown'
 
