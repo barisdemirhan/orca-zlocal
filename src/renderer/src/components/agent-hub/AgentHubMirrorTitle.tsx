@@ -30,18 +30,15 @@ export function AgentHubMirrorTitle({
 }): React.JSX.Element {
   const title = useAgentHubTargetTitle(target)
   const setTabCustomTitle = useAppStore((s) => s.setTabCustomTitle)
-  // A chat's name lives on its host and is changed from the chat's own tab.
-  const renamable = useAppStore((s) => !isAgentHubChatTab(s, target.tab.id))
+  const isChat = useAppStore((s) => isAgentHubChatTab(s, target.tab.id))
   const [editing, setEditing] = useState(false)
   useEffect(() => onEditingChange?.(editing), [editing, onEditingChange])
   if (!editing) {
     return (
       <div
         className="truncate font-semibold"
-        title={
-          renamable ? translate('agentHub.mirror.renameHint', 'Double-click to rename') : undefined
-        }
-        onDoubleClick={renamable ? () => setEditing(true) : undefined}
+        title={translate('agentHub.mirror.renameHint', 'Double-click to rename')}
+        onDoubleClick={() => setEditing(true)}
       >
         {title}
       </div>
@@ -50,6 +47,13 @@ export function AgentHubMirrorTitle({
   const commit = (value: string): void => {
     setEditing(false)
     const next = value.trim()
+    // A chat is named on its host and can't go nameless, so an empty or unchanged name is a no-op.
+    if (isChat) {
+      if (next && next !== title) {
+        setTabCustomTitle(target.tab.id, next)
+      }
+      return
+    }
     // Clearing the name, or typing the derived one back, returns the tab to its automatic title.
     setTabCustomTitle(target.tab.id, next && next !== target.title ? next : null)
   }
