@@ -163,7 +163,9 @@ export function isAgentHubMirrorSourceClosed(
       })
   const tabs = moved ? tabsByWorktree[moved.worktree.id] : currentTabs
   if (!tabs) {
-    return false
+    // A loaded workspace keeps its unified bucket after its last tab (often a chat) closes.
+    const unified = state.unifiedTabsByWorktree?.[target.worktree.id]
+    return Boolean(unified?.every((tab) => tab.id !== target.tab.id))
   }
   if (!tabs.some((tab) => tab.id === target.tab.id)) {
     return true

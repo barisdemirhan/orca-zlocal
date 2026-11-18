@@ -10,6 +10,8 @@ import {
   resolveAgentHubMirrorTarget
 } from './agent-hub-mirror-source'
 import { useAppStore } from '@/store'
+import { agentHubChatTerminalTab } from './agent-hub-chat-tabs'
+import type { Tab } from '../../../../shared/workspace-layout/tab-groups/tab-types'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,
@@ -211,6 +213,23 @@ it('follows a pinned source moved on the same host and prunes it after closure i
   expect(readAgentHubMirrors()).toEqual({ windows: [], chips: [] })
 })
 
+it('prunes a chat that was the last tab of its workspace once its unified bucket empties', () => {
+  const chat = {
+    id: 'agent-chat-tab-v1-1',
+    entityId: 'session-1',
+    contentType: 'agent-session',
+    worktreeId: worktree.id,
+    label: 'Chat',
+    agentSessionAgent: 'codex'
+  } as Tab
+  useAppStore.setState({ tabsByWorktree: {}, unifiedTabsByWorktree: { [worktree.id]: [chat] } })
+  openAgentHubMirror({ ...target, tab: agentHubChatTerminalTab(chat) })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors().windows).toHaveLength(1)
+  useAppStore.setState({ unifiedTabsByWorktree: { [worktree.id]: [] } })
+  pruneClosedAgentHubMirrorSources()
+  expect(readAgentHubMirrors().windows).toHaveLength(0)
+})
 it('does not treat another host inventory with equal workspace and tab ids as source closure', () => {
   openAgentHubMirror({ ...target, paneKey: makePaneKey(tab.id, leafId) })
   const original = readAgentHubMirrors().windows[0]!
