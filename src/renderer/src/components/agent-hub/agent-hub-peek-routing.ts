@@ -115,10 +115,10 @@ export function agentHubPeekFileItem(
     if (!context.sourceHostResolved) {
       return null
     }
-    const relativePath = getRelativePathInsideWorktree(worktreePath, filePath)
-    if (route.runtimeEnvironmentId && !relativePath) {
-      return null
-    }
+    // Why: on a paired host, relativePath === filePath marks a file outside every workspace; the read asks the host for a grant.
+    const relativePath =
+      getRelativePathInsideWorktree(worktreePath, filePath) ??
+      (route.runtimeEnvironmentId ? filePath : null)
     const sshConnectionId = route.runtimeEnvironmentId
       ? null
       : (connectionId ?? context.connectionId ?? null)

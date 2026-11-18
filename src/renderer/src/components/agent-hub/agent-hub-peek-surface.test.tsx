@@ -380,17 +380,25 @@ describe('Peek file ownership', () => {
     }
   )
 
-  it('does not offer a paired path outside its owning workspace as a local read', () => {
+  it('reads a paired path outside its owning workspace on its host, never locally', () => {
     seedOwner('runtime:workhost')
-    expect(
-      agentHubPeekFileItem('/outside/preview.png', {
-        worktreeId: WORKSPACE_ID,
-        onPairedRuntime: true,
-        event: undefined,
-        openInWorkspace: vi.fn(),
-        openExternally: null
-      })
-    ).toBeNull()
+    const item = agentHubPeekFileItem('/outside/preview.png', {
+      worktreeId: WORKSPACE_ID,
+      onPairedRuntime: true,
+      event: undefined,
+      openInWorkspace: vi.fn(),
+      openExternally: null
+    })
+    expect(item?.content).toMatchObject({
+      kind: 'image',
+      connectionId: null,
+      readContext: {
+        target: { kind: 'environment', environmentId: 'workhost' },
+        filePath: '/outside/preview.png',
+        relativePath: '/outside/preview.png'
+      }
+    })
+    expect(item?.content).not.toHaveProperty('readContext.access')
     expect(readFile).not.toHaveBeenCalled()
   })
 
