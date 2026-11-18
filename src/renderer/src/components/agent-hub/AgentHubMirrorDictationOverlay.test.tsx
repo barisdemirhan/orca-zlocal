@@ -6,7 +6,7 @@ import {
   getDefaultSettings,
   getDefaultVoiceSettings
 } from '../../../../shared/orca-profiles/constants'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'

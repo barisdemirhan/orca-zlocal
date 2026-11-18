@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { useNow } from '@/hooks/use-now'
-import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
+import { useNow } from '@/lib/window-activity/use-now'
+import { useAgentPaneThreads } from '../activity/threads/use-agent-pane-threads'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { useAgentHubLists } from './use-agent-hub-lists'
 import { useAgentHubPreferences } from './use-agent-hub-settings'

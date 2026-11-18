@@ -5,11 +5,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { AgentHubActionTooltip, AgentHubShortcut } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { MAC_TRAFFIC_LIGHTS_WIDTH } from '@/app-shell/app-window-chrome'
+import { MAC_TRAFFIC_LIGHTS_WIDTH } from '@/app-shell/chrome/app-window-chrome'
 import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
-} from '../sidebar/workspace-chrome-metrics'
+} from '../../app-shell/chrome/workspace-chrome-metrics'
 import { CANVAS_DOT_PITCH } from './agent-hub-canvas-dot-grid'
 import { AgentHubCanvasLayoutSwitch } from './AgentHubCanvasLayoutSwitch'
 import { AgentHubCanvasFocusShade } from './AgentHubMirrorFocusShade'

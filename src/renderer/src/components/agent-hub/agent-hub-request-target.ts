@@ -4,8 +4,8 @@ import { parseRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remot
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { AppState } from '@/store/types'
 import { resolveWorktreeOperationRoute } from '@/lib/workspace/ownership/worktree-operation-route'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
+import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 import {
   paneTargetFromThread,

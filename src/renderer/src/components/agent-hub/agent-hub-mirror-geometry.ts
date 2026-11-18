@@ -1,4 +1,4 @@
-import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
+import { STATUS_BAR_RESERVE_HEIGHT } from '../../app-shell/chrome/workspace-chrome-metrics'
 import type { AgentHubRect } from './agent-hub-floating-arrange'
 import {
   CANVAS_DOT_PITCH,

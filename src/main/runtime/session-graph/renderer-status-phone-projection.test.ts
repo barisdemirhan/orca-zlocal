@@ -4,17 +4,19 @@ import type { RendererStatusPublication } from '../../../shared/agent-status/ren
 import type { RuntimeMobileSessionTabsResult } from '../../../shared/remote-runtime/session-graph/runtime-session-contracts'
 import { publishHeadlessRuntimeGraph } from './headless-runtime-graph'
 
-vi.mock('../../../shared/layout-owner-switch', () => ({ ORCA_LAYOUT_OWNER_IS_MAIN: false }))
-await import('../orca-runtime-tests/runtime-test-module-registration.spec')
+vi.mock('../../../shared/workspace-layout/layout-owner-switch', () => ({
+  ORCA_LAYOUT_OWNER_IS_MAIN: false
+}))
+await import('../construction/test-context/runtime-test-module-registration.spec')
 const { electronMocks } = await import('../orca-runtime-test-mocks/setup.spec')
 const { OrcaRuntimeService } = await import('../orca-runtime')
-await import('../orca-runtime-tests/orca-runtime-test-lifecycle.spec')
+await import('../construction/test-context/orca-runtime-test-lifecycle.spec')
 const {
   HEADLESS_LEAF_ID,
   TEST_WORKTREE_ID,
   makeRuntimeStoreWithWorkspaceSession,
   makeWorkspaceSessionWithHeadlessTerminal
-} = await import('../orca-runtime-tests/orca-runtime-test-fixtures.spec')
+} = await import('../construction/test-context/orca-runtime-test-fixtures.spec')
 
 beforeEach(() => {
   vi.useFakeTimers()

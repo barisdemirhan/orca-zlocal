@@ -1,4 +1,4 @@
-import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
+import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
 import type { AppState } from '@/store/types'
 import type { DashboardCardTerminalInput } from '../../../../shared/agent-status/presentation/dashboard-snapshot'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
@@ -10,7 +10,7 @@ import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualif
 import { getActivityThreadWorkspaceTitle } from '@/lib/workspace/activity/activity-thread-display'
 import { readDashboardClientHost } from '../dashboard/snapshot/dashboard-client-host'
 import { resolveDashboardCardTerminalInput } from '../dashboard/snapshot/dashboard-card-terminal-input'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'
 
 /** A pane the hub can mirror or reveal: an agent pane, or a shell tab's active pane. */

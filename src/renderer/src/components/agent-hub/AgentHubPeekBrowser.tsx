@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import type { ExecutionHostId } from '../../../../shared/execution-host/execution-host'
-import BrowserPane from '../browser-pane/BrowserPane'
+import BrowserPane from '../browser-pane/assemble-chrome/browser-workspace-pane'
 import { DeferredBrowserContent } from '../browser-pane/assemble-chrome/DeferredBrowserContent'
 import { registerBrowserOverlaySlotViewport } from '../browser-pane/host-guest/viewport/browser-page-viewport'
 import { createWorkspaceClientBrowserTab } from '@/lib/workspace-client-browser-tab'

@@ -6,11 +6,7 @@ import { useAppStore } from '@/store'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { openAgentHubVoiceSettings } from './agent-hub-voice-settings'
-import {
-  makeRepo,
-  makeTabWithIds,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 
 const control = vi.hoisted(() => {
   const initial: { state: AgentHubMirrorMicState } = { state: 'idle' }

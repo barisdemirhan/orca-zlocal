@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
 import { createAgentHubMirrorWindow } from './agent-hub-mirror-membership'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import {
   agentHubMirrorsToggleAction,
   foldAgentHubTray,

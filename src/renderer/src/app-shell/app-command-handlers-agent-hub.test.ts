@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { AppShortcutState, ShortcutDispatchInput } from './app-command-handlers'
+import type {
+  AppShortcutState,
+  ShortcutDispatchInput
+} from '../lib/app-commands/app-command-handlers'
 
 vi.mock('../store', () => ({
   useAppStore: Object.assign(vi.fn(), { getState: () => ({}) })
@@ -18,7 +21,7 @@ vi.mock('@/components/agent-hub/agent-hub-mirror-tab-command', () => ({
   agentHubMirrorTabCommandAvailable: () => mirrorTabAvailable.value
 }))
 
-import { createAppCommandHandlers } from './app-command-handlers'
+import { createAppCommandHandlers } from '../lib/app-commands/app-command-handlers'
 import { registerAgentHubCommands } from '@/components/agent-hub/agent-hub-commands'
 
 function shortcutState(): AppShortcutState {

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { useNow } from '@/hooks/use-now'
+import { useNow } from '@/lib/window-activity/use-now'
 import { useAppStore } from '@/store'
 import { useRepoMap } from '@/store/repos/use-repository-catalog'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'

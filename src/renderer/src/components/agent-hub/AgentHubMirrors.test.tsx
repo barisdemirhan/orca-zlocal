@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -12,7 +12,7 @@ import {
   resetAgentHubMirrorsForTest
 } from './agent-hub-mirror-store'
 import { toggleAgentHubMirrorTabPin } from './agent-hub-mirror-tab-operations'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')

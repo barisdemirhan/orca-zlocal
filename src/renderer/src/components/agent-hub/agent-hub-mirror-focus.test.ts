@@ -1,7 +1,7 @@
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import { readAgentHubMirrorOrigin, rememberAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import {

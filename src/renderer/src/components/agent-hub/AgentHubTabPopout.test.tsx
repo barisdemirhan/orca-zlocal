@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import type * as MirrorSource from './agent-hub-mirror-source'
 /** @vitest-environment happy-dom */
 import { act } from 'react'
@@ -7,11 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/workspace/identity/floating-workspace-id'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
-import {
-  makeTabWithIds,
-  makeRepo,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeRepo, makeWorktree } from './agent-hub-activity-test-fixtures'
 import SortableTab from '../tab-bar/terminal-tabs/SortableTab'
 import BrowserTab from '../tab-bar/browser-tabs/BrowserTab'
 import { TooltipProvider } from '../ui/tooltip'
@@ -56,7 +52,7 @@ vi.mock('@dnd-kit/sortable', () => ({
 vi.mock('@/lib/agent-session/tab-identity/use-tab-agent', () => ({
   useTabAgent: (tab: TerminalTab) => tab.launchAgent ?? null
 }))
-vi.mock('../tab-bar/SortableTabContextMenu', () => ({
+vi.mock('../tab-bar/terminal-tabs/SortableTabContextMenu', () => ({
   SortableTabContextMenu: ({ open }: { open: boolean }) =>
     open ? <div role="menu">Terminal menu</div> : null
 }))

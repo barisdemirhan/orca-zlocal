@@ -1,5 +1,5 @@
 import type { AgentHubRequestBase, AgentHubRequest } from '../../../../shared/agent-hub-requests'
-import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY } from './agent-hub-activity-test-fixtures'
 
 export function agentHubRequestBase(
   requestId = '93b0c108-34c6-4e45-9d13-d8f4170d7456'

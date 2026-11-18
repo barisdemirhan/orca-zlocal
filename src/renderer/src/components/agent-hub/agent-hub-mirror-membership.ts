@@ -1,6 +1,6 @@
 import { createNonSecureContextUuid as createBrowserUuid } from '../../../../shared/identifiers/non-secure-context-uuid'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import {
   agentHubTargetShowsThread,
   agentHubPaneTargetKey,

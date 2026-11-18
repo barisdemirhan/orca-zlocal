@@ -5,7 +5,7 @@ import type { TerminalAgent } from '../../../../shared/agent-status/identity/ter
 import { isStructuredTab } from '../../../../shared/agent-session/view/structured-agent-session-tab'
 import type { Tab } from '../../../../shared/workspace-layout/tab-groups/tab-types'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
-import { terminalTabFromAgentSessionTab } from '../activity/activity-event-builder-context'
+import { terminalTabFromAgentSessionTab } from '../activity/events/activity-event-builder-context'
 
 type ChatTabState = Partial<Pick<AppState, 'unifiedTabsByWorktree'>>
 

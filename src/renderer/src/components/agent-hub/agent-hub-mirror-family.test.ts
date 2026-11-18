@@ -5,7 +5,7 @@ import {
   PANE_KEY,
   PANE_KEY_2,
   PANE_KEY_3
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import {
   agentHubMirrorFamily,

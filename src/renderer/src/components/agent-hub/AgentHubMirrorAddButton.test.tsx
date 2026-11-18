@@ -9,11 +9,7 @@ import type { launchAgentInNewTabWithOutcome } from '@/lib/agent-session/launch/
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import { TooltipProvider } from '../ui/tooltip'
-import {
-  makeRepo,
-  makeTabWithIds,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import { buildAgentHubTerminalTree, type AgentHubGroupNode } from './agent-hub-terminal-tree'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { AgentHubMirrorAddButton } from './AgentHubMirrorAddButton'
@@ -42,10 +38,10 @@ vi.mock('sonner', () => ({ toast: { error: vi.fn(), message: vi.fn() } }))
 vi.mock('@/lib/agent-session/launch/new-tab/launch-agent-in-new-tab', () => ({
   launchAgentInNewTabWithOutcome: fixture.launch
 }))
-vi.mock('@/hooks/useAgentDetectionTarget', () => ({
+vi.mock('@/lib/agent-session/launch/inventory/useAgentDetectionTarget', () => ({
   useAgentDetectionTargetForWorktree: () => ({ kind: 'local' })
 }))
-vi.mock('@/hooks/useDetectedAgents', () => ({
+vi.mock('@/lib/agent-session/launch/inventory/useDetectedAgents', () => ({
   useDetectedAgents: () => ({ detectedIds: fixture.detected })
 }))
 vi.mock('@/store', async () => {

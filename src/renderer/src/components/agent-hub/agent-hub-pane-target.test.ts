@@ -5,7 +5,7 @@ import {
   LEAF_ID,
   LEAF_ID_2,
   PANE_KEY
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import {
   agentHubLocation,

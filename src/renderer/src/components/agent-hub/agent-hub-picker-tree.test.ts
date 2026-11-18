@@ -4,7 +4,7 @@ import {
   makeWorktree,
   PANE_KEY,
   PANE_KEY_2
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import { buildAgentHubTerminalTree } from './agent-hub-terminal-tree'
 import {
   availableAgentHubPickerTree,

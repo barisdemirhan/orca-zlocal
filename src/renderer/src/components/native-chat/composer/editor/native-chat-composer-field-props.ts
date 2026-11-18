@@ -27,6 +27,8 @@ export type NativeChatComposerFieldProps = {
   hasPty: boolean
   canSend: boolean
   unavailableHint?: string | undefined
+  /** The agent's suggested next prompt, shown in the placeholder's place; Tab takes it. */
+  promptSuggestion?: string | undefined
   autocomplete: ComposerAutocomplete
   mentionFiles: NativeChatMentionFiles
   activeSuggestion: number

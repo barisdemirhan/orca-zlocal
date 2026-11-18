@@ -18,7 +18,7 @@ import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/
 import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
-} from '../sidebar/workspace-chrome-metrics'
+} from '../../app-shell/chrome/workspace-chrome-metrics'
 import { AgentHubDockArrangeButton } from './AgentHubDockArrangeButton'
 import { AgentHubDockMenu } from './AgentHubDockMenu'
 import {

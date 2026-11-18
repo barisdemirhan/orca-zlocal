@@ -6,7 +6,7 @@ import { cn } from '@/lib/class-names'
 import { getIntlLocale, translate } from '@/i18n/i18n'
 import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import type { AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
-import { useNow } from '@/hooks/use-now'
+import { useNow } from '@/lib/window-activity/use-now'
 
 function dayKey(time: number): string {
   const date = new Date(time)

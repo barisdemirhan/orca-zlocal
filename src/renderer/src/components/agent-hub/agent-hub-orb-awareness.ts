@@ -5,8 +5,8 @@ import type { RateLimitState } from '../../../../shared/agent-usage/rate-limits/
 import {
   activityThreadStatusId,
   activityThreadRowCopy
-} from '../activity/activity-thread-presentation'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+} from '../activity/threads/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { parseInteractivePrompt } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
 import { agentHubPromptText, agentHubStateSince, type AgentHubLists } from './agent-hub-lists'
 import { agentHubInboxRequests, type AgentHubRequestsState } from './agent-hub-requests-store'

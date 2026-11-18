@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { useAppStore } from '@/store'
-import { PANE_KEY, PANE_KEY_2 } from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY, PANE_KEY_2 } from './agent-hub-activity-test-fixtures'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
 import { buildAgentHubLists } from './agent-hub-lists'
 import { collectAgentHubOrbAwareness } from './agent-hub-orb-awareness'

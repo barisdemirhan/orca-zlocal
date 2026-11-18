@@ -1,4 +1,4 @@
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { agentHubRequestKey, type AgentHubInboxRequest } from './agent-hub-requests-store'
 
 export type AgentHubInboxCard =

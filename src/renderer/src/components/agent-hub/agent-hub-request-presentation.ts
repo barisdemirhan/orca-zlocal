@@ -5,7 +5,7 @@ import type {
   AgentHubRequestBase,
   AgentHubMirrorAction
 } from '../../../../shared/agent-hub-requests'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { findAgentHubRequestTarget } from './agent-hub-request-target'
 import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
 

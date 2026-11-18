@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   normalizeAgentHubTerminalSort,
@@ -11,14 +11,14 @@ import type { Repo } from '../../../../shared/repository/repo-types'
 import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { Worktree } from '../../../../shared/worktree/types'
-import { buildActivityEvents } from '../activity/activity-event-builder'
+import { buildActivityEvents } from '../activity/events/activity-event-builder'
 import {
   LEAF_ID,
   makeRepo,
   makeTabWithIds,
   makeThreads,
   makeWorktreeWithId
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import {
   agentOnlyAgentHubTree,
   buildAgentHubTerminalTree,

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react'
 import { agentHubOrbPillShown } from './agent-hub-orb-sphere-action'
 import { useAppStore } from '@/store'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { AgentHubOrbButton } from './AgentHubOrbButton'
 import { AgentHubFloatingOrb } from './AgentHubFloatingOrb'
 import { AgentHubOrbPill } from './AgentHubOrbPill'

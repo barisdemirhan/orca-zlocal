@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/index'
 import '../../../../../shared/remote-runtime/protocol/protocol-version'
+import {
+  BROWSER_CERTIFICATE_TRUST_RUNTIME_CAPABILITY,
+  BROWSER_TAB_HISTORY_STATE_RUNTIME_CAPABILITY
+} from '../../../../../shared/browser/runtime/browser-runtime-capabilities'
 import type { BrowserPage as BrowserPageState } from '../../../../../shared/browser/workspaces/browser-workspace-types'
+import { useRuntimeEnvironmentCapability } from '@/runtime/rpc/compatibility/use-runtime-environment-capability'
 import '@/lib/browser/documents/file-preview'
 import { convertBrowserPageToWorkspaceDoc } from '@/lib/browser/documents/file-preview-page-conversion'
 import { openWorkspaceBrowserTab } from '@/lib/browser/workspace/workspace-browser-tab-open'
@@ -22,7 +27,6 @@ import type {
   BrowserPageStateWriter
 } from '../describe-page/browser-page-types'
 import type { RemoteBrowserPaneNotice } from './remote-browser-page-input-model'
-import { useRemoteCertificateTrustSupport } from './use-remote-certificate-trust-support'
 import { useRemoteBrowserPageLifecycle } from './use-remote-browser-page-lifecycle'
 import { useRemoteBrowserPageStream } from './use-remote-browser-page-stream'
 import { useRemoteBrowserPageNavigation } from './use-remote-browser-page-navigation'
@@ -89,10 +93,17 @@ export function RemoteBrowserPagePane({
     (s) => s.remoteBrowserPageHandlesByPageId[browserTab.id] ?? null
   )
   const stagedPage = remotePageHandle?.staged === true
+  // Older hosts publish canGoBack/canGoForward as always false; keep both arrows enabled for them.
+  const historyStateKnown = useRuntimeEnvironmentCapability(
+    runtimeEnvironmentId,
+    BROWSER_TAB_HISTORY_STATE_RUNTIME_CAPABILITY
+  )
+  const history = historyStateKnown ? browserTab : { canGoBack: true, canGoForward: true }
 
-  const remoteCertificateTrustSupported = useRemoteCertificateTrustSupport(
-    remotePageHandle?.environmentId,
-    certificateFailure?.challengeId ?? null
+  // Why: runtimes predating browser.certificate-trust.v1 can't honor a proceed request, so hide "Proceed Anyway" until support is advertised.
+  const remoteCertificateTrustSupported = useRuntimeEnvironmentCapability(
+    certificateFailure?.challengeId ? remotePageHandle?.environmentId : null,
+    BROWSER_CERTIFICATE_TRUST_RUNTIME_CAPABILITY
   )
 
   const {
@@ -316,6 +327,7 @@ export function RemoteBrowserPagePane({
         <RemoteBrowserPageContextMenu
           contextMenu={contextMenu}
           onDismiss={() => setContextMenu(null)}
+          history={history}
           onOpenLinkInOrcaBrowser={() => {
             const linkUrl = contextMenu.linkUrl!
             setContextMenu(null)
@@ -364,6 +376,7 @@ export function RemoteBrowserPagePane({
         markup={markup}
         frameUrl={frameUrl}
         isActive={isActive}
+        history={history}
         onBack={() => void runRemoteNavigation('browser.back')}
         onForward={() => void runRemoteNavigation('browser.forward')}
         onReload={() => void runRemoteNavigation('browser.reload')}

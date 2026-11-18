@@ -9,7 +9,7 @@ import {
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, expect, it, vi } from 'vitest'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { TooltipProvider } from '../ui/tooltip'
 import { AgentHubMirrorTabMenu } from './AgentHubMirrorTabMenu'

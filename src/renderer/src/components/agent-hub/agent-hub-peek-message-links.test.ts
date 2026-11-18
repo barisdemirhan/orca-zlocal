@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createElement } from 'react'
 import { useAppStore } from '@/store'
 import type { Worktree } from '../../../../shared/worktree/types'
-import { makeRepo, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeWorktree } from './agent-hub-activity-test-fixtures'
 
 vi.mock('@/store', async () => {
   const { createTestStore } = await import('@/store/testing/app-store-test-fixture')

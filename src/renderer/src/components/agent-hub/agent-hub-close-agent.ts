@@ -1,5 +1,5 @@
-import { closeTerminalTab } from '../terminal/terminal-tab-actions'
-import { guardRunningTerminalClose } from '../terminal/running-terminal-close-guard'
+import { closeTerminalTab } from '../terminal/tab-lifecycle/terminal-tab-actions'
+import { guardRunningTerminalClose } from '../terminal/tab-lifecycle/running-terminal-close-guard'
 import { applyClosedTerminalLeafNotice } from '../terminal-pane/layout/close/closed-terminal-leaf-notice'
 import { requestActiveTerminalPaneClose } from '../terminal-pane/layout/close/request-active-terminal-pane-close'
 import { closeWebRuntimeTerminal } from '@/runtime/hosted-terminals/actions/web-runtime-terminal-close'

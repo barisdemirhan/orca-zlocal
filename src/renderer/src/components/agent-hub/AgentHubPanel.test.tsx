@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
-import { buildActivityEvents } from '../activity/activity-event-builder'
+import { buildActivityEvents } from '../activity/events/activity-event-builder'
 import {
   makeRepo,
   makeTabWithIds,
@@ -19,7 +19,7 @@ import {
   PANE_KEY,
   PANE_KEY_2,
   PANE_KEY_3
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import { AgentHubPanel } from './AgentHubPanel'
 import { AgentHubRow } from './AgentHubRow'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'

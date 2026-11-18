@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -9,7 +9,7 @@ import {
   getDefaultVoiceSettings
 } from '../../../../shared/orca-profiles/constants'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
-import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY } from './agent-hub-activity-test-fixtures'
 import { TooltipProvider } from '../ui/tooltip'
 import { DICTATION_CONTROL_EVENT } from '../dictation/dictation-control-events'
 import { AgentHubPaneQuickReplyPortals } from './AgentHubPaneQuickReply'

@@ -39,7 +39,7 @@ vi.mock('@/lib/browser/navigation/http-link-routing', async (importOriginal) => 
   const actual = await importOriginal<typeof HttpLinkRouting>()
   return { ...actual, resolveLocalhostHttpLinkDisplayUrl: vi.fn(async () => null) }
 })
-vi.mock('../browser-pane/BrowserPane', () => ({
+vi.mock('../browser-pane/assemble-chrome/browser-workspace-pane', () => ({
   default: ({ routingWorktreeId }: { routingWorktreeId?: string }) => (
     <output data-testid="browser-route">{routingWorktreeId ?? 'local'}</output>
   )

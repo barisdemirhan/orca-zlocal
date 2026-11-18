@@ -6,7 +6,7 @@ import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import {
   setAgentHubTerminalPortals,
   type ActivityTerminalPortalTarget
-} from '../activity/activity-terminal-portal'
+} from '../activity/terminal-portal/activity-terminal-portal'
 import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
 import { useAgentHubBorrowedTabs } from './agent-hub-borrowed-tabs'
 import { setAgentHubChatDestinations } from './agent-hub-chat-destinations'

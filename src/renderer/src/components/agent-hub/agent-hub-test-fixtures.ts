@@ -1,14 +1,14 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { AgentSubagentSnapshot } from '../../../../shared/agent-status/contracts/agent-status-subagent-snapshot'
-import { buildActivityEvents } from '../activity/activity-event-builder'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { buildActivityEvents } from '../activity/events/activity-event-builder'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import {
   makeRepo,
   makeTabWithIds,
   makeThreads,
   makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 
 export type AgentHubThreadFixture = {
   paneKey: string

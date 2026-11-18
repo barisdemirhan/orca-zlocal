@@ -3,10 +3,7 @@ import type { AgentChatPermissionChoice } from '../../../../shared/agent-launch/
 import type { AgentSessionJournalIdentity } from '../../../../shared/agent-session/journal/agent-session-journal-identity'
 import type { AgentSessionExecutionLocation } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { StructuredAgentSessionAdapter as Adapter } from './structured-agent-session-adapter'
-import {
-  routeStructuredAgentSessionVoice,
-  type StructuredAgentSessionVoiceAdapter
-} from '../structured-agent-session-voice-adapter'
+import { routeStructuredAgentSessionVoice } from '../structured-agent-session-voice-adapter'
 import type { StructuredAgentSessionAcquisitionReceipt } from '../startup/structured-agent-session-startup-attempt-contract'
 import type {
   StructuredAgentRegistration,
@@ -61,6 +58,13 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
   ): boolean | undefined =>
     this.liveOwnerOrNull(sessionId)?.permissionModeRequiresAcquisition?.(sessionId, mode)
 
+  applyPermissionMode: NonNullable<Adapter['applyPermissionMode']> = async (input) => {
+    await this.liveOwnerOrNull(input.sessionId)?.applyPermissionMode?.(input)
+  }
+
+  runningPermissionMode: NonNullable<Adapter['runningPermissionMode']> = (sessionId) =>
+    this.liveOwnerOrNull(sessionId)?.runningPermissionMode?.(sessionId)
+
   settlePermissionTransition: NonNullable<Adapter['settlePermissionTransition']> = (input) =>
     this.liveOwnerOrNull(input.sessionId)?.settlePermissionTransition?.(input) ??
     Promise.resolve(true)
@@ -97,6 +101,13 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
   stopProviderNaming = (): void => {
     for (const adapter of this.adapters()) {
       adapter.stopProviderNaming?.()
+    }
+  }
+
+  // Every adapter, so a session still starting hears it; only one that holds the session acts.
+  promptSuggestionInterestChanged = (sessionId: string, wanted: boolean): void => {
+    for (const adapter of this.adapters()) {
+      adapter.promptSuggestionInterestChanged?.(sessionId, wanted)
     }
   }
 
@@ -154,7 +165,7 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
   heldSends = (sessionId: string): ReadonlySet<string> | undefined =>
     this.liveOwnerOrNull(sessionId)?.heldSends?.(sessionId)
 
-  readonly voice: StructuredAgentSessionVoiceAdapter = routeStructuredAgentSessionVoice(
+  readonly voice = routeStructuredAgentSessionVoice(
     (id) => this.owner(id),
     (id) => this.liveOwnerOrNull(id)
   )

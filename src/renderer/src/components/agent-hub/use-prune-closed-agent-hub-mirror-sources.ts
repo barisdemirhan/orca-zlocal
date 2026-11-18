@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useAppStore } from '@/store'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { clearAgentHubMirrorViewing } from './agent-hub-mirror-membership'
 import { agentHubTargetShowsThread } from './agent-hub-pane-target'
 import {

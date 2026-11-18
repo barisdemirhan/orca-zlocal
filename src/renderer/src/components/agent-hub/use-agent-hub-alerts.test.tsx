@@ -1,7 +1,7 @@
 /** @vitest-environment happy-dom */
 import { renderHook } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
-import { PANE_KEY, PANE_KEY_2 } from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY, PANE_KEY_2 } from './agent-hub-activity-test-fixtures'
 import { pushAgentHubAlerts } from './agent-hub-alert-queue'
 import { buildAgentHubLists } from './agent-hub-lists'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'

@@ -53,8 +53,9 @@ export function resolveAgentSessionContinuationTranscriptPath(
     return null
   }
   const agent = source.sourceAgent
+  // A database row reference names a whole store, never one readable transcript.
   if (
-    (agent === 'opencode' || agent === 'opencode2') &&
+    (agent === 'opencode' || agent === 'opencode2' || agent === 'hermes') &&
     splitOpenCodeSqliteCandidate(path, agent)
   ) {
     return null

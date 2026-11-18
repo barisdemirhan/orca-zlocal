@@ -19,7 +19,7 @@ import {
   agentHubFloatingDimMode,
   type AgentHubFloatingDimMode
 } from '../../../../shared/agent-hub-settings'
-import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
+import { STATUS_BAR_RESERVE_HEIGHT } from '../../app-shell/chrome/workspace-chrome-metrics'
 import {
   setFloatingWindowsSpotlit,
   useAnyFloatingWindowOpen,

@@ -1,5 +1,5 @@
 import { AgentHubShortcut } from './AgentHubShortcut'
-import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
+import { AgentWorkingSpinner } from '@/components/agent/status/AgentWorkingSpinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { AgentHubDockEdge } from '../../../../shared/agent-hub-settings'

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { FolderWorkspace } from '../../../../shared/folder-workspaces/folder-workspace-types'
 import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
-import { makeRepo, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeWorktree } from './agent-hub-activity-test-fixtures'
 import { buildAgentHubNewAgentLocations } from './agent-hub-new-agent-locations'
 
 type LocationState = Parameters<typeof buildAgentHubNewAgentLocations>[0]

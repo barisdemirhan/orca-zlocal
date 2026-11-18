@@ -13,7 +13,7 @@ import {
   PANE_KEY,
   PANE_KEY_2,
   makeRepo
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import type { AgentHubRequest } from '../../../../shared/agent-hub-requests'
 import { agentHubRequestBase } from './agent-hub-request-test-fixtures'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'

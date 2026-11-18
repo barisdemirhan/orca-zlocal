@@ -1,7 +1,7 @@
 import { Moon, SquareTerminal } from 'lucide-react'
 import { AgentIcon } from '@/components/agent/icons/AgentIcon'
 import { agentTypeToIconAgent } from '../../../../shared/agent-status/presentation/agent-type-icon-agent'
-import { AgentWorkingSpinner } from '@/components/AgentWorkingSpinner'
+import { AgentWorkingSpinner } from '@/components/agent/status/AgentWorkingSpinner'
 import type { AgentType } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { AgentHubCounts, AgentHubIndicatorKind } from './agent-hub-lists'
 

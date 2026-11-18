@@ -3,13 +3,13 @@ import { useAppStore } from '@/store'
 import { runtimeEnvironmentSupportsCapability } from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import { AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import { parsePaneKey, makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
-import { collectSleepingAgentSessionRecordsForWorktree } from '@/store/slices/agent-status/agent-status-recovery-collection'
+import { collectSleepingAgentSessionRecordsForWorktree } from '@/store/slices/agent-status/sleep-recovery/agent-status-recovery-collection'
 import { resolveWorkspaceTerminalHostAuthority } from '@/lib/workspace/ownership/workspace-terminal-host-authority'
 import { resolveTerminalPtyOwner } from '@/lib/workspace/ownership/terminal-worktree-route'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
 import { toAgentHibernationRuntimeOwner } from '@/lib/agent-session/hibernation/agent-hibernation-runtime-owner'
 import { toRuntimePtyId } from '@/lib/agent-session/hibernation/agent-hibernation-pane-eligibility'
-import { requestBackgroundTerminalWorktreeMount } from '../terminal/background-terminal-worktree-mount'
+import { requestBackgroundTerminalWorktreeMount } from '../terminal/workspace-mounting/background-terminal-worktree-mount'
 import {
   getPaneSpawnDeferral,
   subscribePaneSpawnDeferrals

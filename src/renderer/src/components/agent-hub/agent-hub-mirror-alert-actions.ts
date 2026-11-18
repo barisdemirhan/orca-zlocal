@@ -1,6 +1,6 @@
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
-import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubTrayItem } from './AgentHubMirrorTray'
 import type { AgentHubAlert, AgentHubRequestAlert } from './agent-hub-alerts'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'

@@ -22,6 +22,7 @@ import { ensureDecisionGateResolverColumn } from './schema/decision-gate-resolve
 import { backfillStructuredWorkerOrcaSessionIds } from './schema/structured-worker-orca-session-backfill'
 import { reconcileSettledWorkerDispatches } from './worker-dispatch/worker-dispatch-settlement'
 import { refreshOutstandingDeliveryTrigger } from './schema/migrate-v41'
+import { installWorkerTerminalPriorOwnerIndex } from './worker-terminal/worker-terminal-prior-owner-index'
 
 class OrchestrationDbCore {
   readonly crewChanges = new CrewChanges()
@@ -57,6 +58,7 @@ class OrchestrationDbCore {
     migrate.call(this as unknown as OrchestrationDb)
     ensureDecisionGateResolverColumn(this.db)
     refreshOutstandingDeliveryTrigger(this.db)
+    installWorkerTerminalPriorOwnerIndex(this)
     for (const [table, columns] of [
       ['messages', ['answer_sender_snapshot']],
       ['federation_relay_items', ['answer_sender_report']]

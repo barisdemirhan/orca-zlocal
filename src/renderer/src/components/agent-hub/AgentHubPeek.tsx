@@ -38,7 +38,7 @@ import { agentHubPeekPageItem } from './agent-hub-peek-page-navigation'
 import { openAgentHubPeekMarkdownLink } from './agent-hub-peek-markdown-links'
 import { useViewportSize } from './use-viewport-size'
 import { useAppStore } from '@/store'
-import { STATUS_BAR_RESERVE_HEIGHT } from '../sidebar/workspace-chrome-metrics'
+import { STATUS_BAR_RESERVE_HEIGHT } from '../../app-shell/chrome/workspace-chrome-metrics'
 
 function kindLabel(item: AgentHubPeekItem): string {
   switch (item.content.kind) {

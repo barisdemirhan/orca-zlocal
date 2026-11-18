@@ -3,15 +3,15 @@ import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { ArrowUpRight, Crosshair, PictureInPicture2, Plus } from 'lucide-react'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
-import { useNow } from '@/hooks/use-now'
+import { useNow } from '@/lib/window-activity/use-now'
 import { translate } from '@/i18n/i18n'
 import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { formatAgentTypeLabel } from '../../../../shared/agent-status/presentation/agent-type-label'
 import {
   activityThreadRowCopy,
   threadAgentStateLabel
-} from '../activity/activity-thread-presentation'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+} from '../activity/threads/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import { HubChip, HubCrumb } from './AgentHubInlineLabels'
 import { agentHubIndicatorKind, agentHubStateSince, agentHubToolName } from './agent-hub-lists'

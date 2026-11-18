@@ -3,7 +3,7 @@ import {
   agentHubMirrorWindows,
   type AgentHubMirrorState
 } from './agent-hub-mirror-membership'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { paneTargetFromTerminalRow, paneTargetFromThread } from './agent-hub-pane-target'
 import {
   countRows,

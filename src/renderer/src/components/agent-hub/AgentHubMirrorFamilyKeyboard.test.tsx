@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -10,7 +10,7 @@ import {
   PANE_KEY_3,
   makeTabWithIds,
   makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import { activeAgentHubMirrorTab, shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
 import { selectAgentHubMirrorFamilyMember } from './agent-hub-mirror-tab-actions'
 import { returnAgentHubMirrorTabHome } from './agent-hub-mirror-viewing'

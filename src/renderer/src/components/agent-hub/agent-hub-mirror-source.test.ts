@@ -1,10 +1,6 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import { beforeEach, expect, it, vi } from 'vitest'
-import {
-  makeRepo,
-  makeTabWithIds,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { RuntimeStatus } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'

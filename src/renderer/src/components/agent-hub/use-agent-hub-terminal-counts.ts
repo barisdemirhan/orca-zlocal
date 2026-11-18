@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
 
 export type AgentHubTerminalCountInput = {

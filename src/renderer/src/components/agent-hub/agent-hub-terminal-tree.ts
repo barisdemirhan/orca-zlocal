@@ -5,8 +5,8 @@ import type { Repo } from '../../../../shared/repository/repo-types'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { TerminalAgent } from '../../../../shared/agent-status/identity/terminal-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
-import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { agentHubSection, type AgentHubCounts } from './agent-hub-lists'
 
 /** One terminal pane: an agent pane carries its thread, a plain shell tab does not. */

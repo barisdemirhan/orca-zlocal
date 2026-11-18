@@ -6,11 +6,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
 import type { AgentHubRequest, AgentHubResponse } from '../../../../shared/agent-hub-requests'
 import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
-import {
-  makeRepo,
-  makeWorktree,
-  makeTabWithIds
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeWorktree, makeTabWithIds } from './agent-hub-activity-test-fixtures'
 import { AgentHubAlertStack } from './AgentHubAlertStack'
 import { useAgentHubAlerts } from './use-agent-hub-alerts'
 import { useAgentHubPreferences, type AgentHubPreferences } from './use-agent-hub-settings'

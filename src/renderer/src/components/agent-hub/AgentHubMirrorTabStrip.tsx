@@ -4,7 +4,7 @@ import { AgentHubMirrorTab } from './AgentHubMirrorTab'
 import { useAgentHubMirrorDrag } from './AgentHubMirrorTabDragLayer'
 import { useMirrorTabStripScroll } from './use-mirror-tab-strip-scroll'
 import { translate } from '@/i18n/i18n'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import {
   shownAgentHubMirrorTarget,

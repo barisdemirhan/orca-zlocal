@@ -2,12 +2,11 @@ import {
   CLAUDE_MODEL_FALLBACK_COPY,
   claudeModelFallbackLabels
 } from '../../../../../../shared/native-chat/transcript/notices/claude-model-fallback'
-import { NativeChatUsageLimitAutoContinue } from '../../usage/NativeChatUsageLimitAutoContinue'
-import { NativeChatUsageLimitActions } from '../../usage/NativeChatUsageLimitActions'
+import { NativeChatUsageLimitRow } from '../../usage/NativeChatUsageLimitRow'
 import { agentSessionGoalControlWords } from '../../session/goals/agent-session-goal-control-words'
 import { AlertCircle, AlertTriangle, Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useContext, useSyncExternalStore } from 'react'
+import { useContext } from 'react'
 import { NativeChatForkedFromRow } from './NativeChatForkedFromRow'
 import { NativeChatAutoReviewDenialRow } from './NativeChatAutoReviewDenialRow'
 import { NativeChatPullRequestEventLine } from './NativeChatPullRequestEventLine'
@@ -43,12 +42,13 @@ import { readWholeAgentSessionFailureFact } from '../../../../../../shared/agent
 import { agentSessionFailureSentence } from '../../../../../../shared/agent-session/failures/agent-session-failure-words'
 import { sayAgentSessionFailureTranslated } from './agent-session-failure-words-text'
 import { nativeChatAntigravitySignInContent } from '../../host-access/native-chat-antigravity-settings'
-import { formatUsageLimitResetClock } from '../../../../../../shared/agent-session/failures/agent-session-usage-limit'
 import { NativeChatPresentationContext } from '../../native-chat-presentation-context'
-import { nativeChatHookErrorSummary } from '../../../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
-import { nativeChatCodexApiErrorSummary } from '../../../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
-import { nativeChatApprovedReviewSummary } from '../../../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
-import { isCodexMcpStartupNotice } from '../../../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
+import {
+  isCodexMcpStartupNotice,
+  nativeChatApprovedReviewSummary,
+  nativeChatCodexApiErrorSummary,
+  nativeChatHookErrorSummary
+} from '../../../../../../shared/native-chat/transcript/notices/native-chat-provider-frame-summary'
 
 const HOST_STATUS_WORDS: Record<AgentSessionHostStatusPresentation, () => string> = {
   'history-repaired': () =>
@@ -244,9 +244,6 @@ export function NativeChatNoticeRow({
     failure?.account,
     t
   )
-  const usageLimitContinue =
-    block.usageLimitTurnItemId !== undefined &&
-    block.usageLimitTurnItemId === orcaStopView.usageLimitTurnItemId
   // Reword only text fully described by its fact; other host text may carry command advice.
   const factSurface =
     failure &&
@@ -277,38 +274,41 @@ export function NativeChatNoticeRow({
         { continueAvailable, remoteHost },
         sayNativeChatOrcaStopTranslated
       )
-    : failure?.kind === 'usageLimitReached'
+    : failure && factSurface
       ? agentSessionFailureSentence(
           failure,
-          'row',
-          {
-            agentName,
-            usageLimitReset: formatUsageLimitResetClock
-          },
+          factSurface,
+          { agentName },
           sayAgentSessionFailureTranslated
         )
-      : failure && factSurface
+      : failure && wslMissingSurface && wslDistro
         ? agentSessionFailureSentence(
             failure,
-            factSurface,
-            { agentName },
+            wslMissingSurface,
+            { agentName, wslDistro },
             sayAgentSessionFailureTranslated
           )
-        : failure && wslMissingSurface && wslDistro
-          ? agentSessionFailureSentence(
-              failure,
-              wslMissingSurface,
-              { agentName, wslDistro },
-              sayAgentSessionFailureTranslated
-            )
-          : orb
-            ? (nativeChatHookErrorSummary(block) ??
-              nativeChatCodexApiErrorSummary(block) ??
-              agentSessionRestartNoteText(block.text, t) ??
-              agentSessionGoalControlWords(block.text))
-            : (agentSessionRestartNoteText(block.text, t) ??
-              agentSessionGoalControlWords(block.text))
+        : orb
+          ? (nativeChatHookErrorSummary(block) ??
+            nativeChatCodexApiErrorSummary(block) ??
+            agentSessionRestartNoteText(block.text, t) ??
+            agentSessionGoalControlWords(block.text))
+          : (agentSessionRestartNoteText(block.text, t) ?? agentSessionGoalControlWords(block.text))
   const failureDetail = agentSessionFailureDetailText(failure)
+  if (block.orcaStop === undefined && failure?.kind === 'usageLimitReached') {
+    return (
+      <NativeChatUsageLimitRow
+        block={block}
+        failure={failure}
+        agentName={agentName}
+        detail={failureDetail?.trim() ? failureDetail : undefined}
+        active={
+          block.usageLimitTurnItemId !== undefined &&
+          block.usageLimitTurnItemId === orcaStopView.usageLimitTurnItemId
+        }
+      />
+    )
+  }
   const detail = failureDetail?.trim() !== text.trim() ? failureDetail : undefined
   const tone = named ? 'notice' : look.kind === 'line' ? look.tone : null
   const Icon =
@@ -334,20 +334,8 @@ export function NativeChatNoticeRow({
         </p>
         {continueOffered ? (
           <NativeChatInterruptedContinueButton onContinue={orcaStopView.continueNow} />
-        ) : usageLimitContinue ? (
-          <UsageLimitContinueNow
-            resetsAt={
-              failure?.kind === 'usageLimitReached'
-                ? (orcaStopView.usageLimitContinueAt ?? failure.usageLimit?.resetsAt)
-                : undefined
-            }
-          />
         ) : null}
       </div>
-      {usageLimitContinue ? <NativeChatUsageLimitActions /> : null}
-      {usageLimitContinue && orcaStopView.usageLimitAutoContinue ? (
-        <NativeChatUsageLimitAutoContinue state={orcaStopView.usageLimitAutoContinue} />
-      ) : null}
       <NativeChatSetupButton failureKind={block.failure?.kind} />
       {block.providerFrame || detail ? (
         <ProviderFrameRow
@@ -357,52 +345,5 @@ export function NativeChatNoticeRow({
         />
       ) : null}
     </div>
-  )
-}
-
-// The clock subscription only invalidates the view; fresh wall time owns reset eligibility.
-function UsageLimitContinueNow({
-  resetsAt
-}: {
-  resetsAt: number | undefined
-}): React.JSX.Element | null {
-  const t = useTranslate()
-  const orcaStopView = useNativeChatOrcaStopView()
-  const resetPassed = useSyncExternalStore(
-    (invalidate) => {
-      if (resetsAt === undefined) {
-        return () => {}
-      }
-      let timer: ReturnType<typeof setTimeout> | undefined
-      const refresh = (): void => {
-        clearTimeout(timer)
-        const delay = resetsAt - Date.now()
-        timer = delay > 0 ? setTimeout(refresh, Math.min(delay, 2_147_483_647)) : undefined
-        invalidate()
-      }
-      refresh()
-      window.addEventListener('focus', refresh)
-      document.addEventListener('visibilitychange', refresh)
-      return () => {
-        clearTimeout(timer)
-        window.removeEventListener('focus', refresh)
-        document.removeEventListener('visibilitychange', refresh)
-      }
-    },
-    () => resetsAt !== undefined && Date.now() >= resetsAt
-  )
-  if (!resetPassed) {
-    return null
-  }
-  return (
-    <NativeChatInterruptedContinueButton
-      label={t('components.native-chat.usageLimitActions.continueNow', 'Continue Now')}
-      onContinue={orcaStopView.continueUsageLimit}
-      disabled={orcaStopView.usageLimitContinueDisabled}
-      explanation={t(
-        'components.native-chat.interruptedContinue.usageLimitExplanation',
-        'Asks the agent to continue where it left off. Use it once the limit resets.'
-      )}
-    />
   )
 }

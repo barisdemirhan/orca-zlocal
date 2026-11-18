@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { DialogCancel } from '@/components/ui/dialog-parts'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -19,12 +20,18 @@ export default function CloseTerminalDialog({
   copyKind = 'command',
   allowDontAskAgain = true,
   subjectKey,
+  workspaceName,
+  onSleepInstead,
   onCancel,
   onConfirm
 }: {
   open: boolean
   copyKind?: CloseTerminalDialogCopyKind
   allowDontAskAgain?: boolean
+  /** Names the workspace in a terminal agent's title. */
+  workspaceName?: string
+  /** Offered only where sleeping keeps the agent's session resumable. */
+  onSleepInstead?: () => void
   /** Changing queued subject clears the previous tab’s opt-out without reopening the dialog. */
   subjectKey?: string
   onCancel: () => void
@@ -61,10 +68,17 @@ export default function CloseTerminalDialog({
       }}
     >
       {/* Why above popovers: the Agent Hub panel can ask for this, and it must not hide it. */}
-      <DialogContent className="z-[65] max-w-sm" overlayClassName="z-[65]" showCloseButton={false}>
+      <DialogContent
+        size="confirm"
+        initialFocus="cancel"
+        className="z-[65]"
+        overlayClassName="z-[65]"
+      >
         <CloseTerminalDialogBody
           copyKind={copyKind}
           allowDontAskAgain={allowDontAskAgain}
+          workspaceName={workspaceName}
+          onSleepInstead={onSleepInstead}
           checkboxId={checkboxId}
           dontAskAgain={dontAskAgain}
           setDontAskAgain={setDontAskAgain}
@@ -80,6 +94,8 @@ export default function CloseTerminalDialog({
 function CloseTerminalDialogBody({
   copyKind,
   allowDontAskAgain,
+  workspaceName,
+  onSleepInstead,
   checkboxId,
   dontAskAgain,
   setDontAskAgain,
@@ -88,6 +104,8 @@ function CloseTerminalDialogBody({
 }: {
   copyKind: CloseTerminalDialogCopyKind
   allowDontAskAgain: boolean
+  workspaceName?: string
+  onSleepInstead?: () => void
   checkboxId: string
   dontAskAgain: boolean
   setDontAskAgain: (value: boolean) => void
@@ -96,75 +114,84 @@ function CloseTerminalDialogBody({
 }): React.JSX.Element {
   const t = useTranslate()
   const isAgent = copyKind !== 'command'
-  const isChat = copyKind === 'chat-agent'
+  const title =
+    copyKind === 'chat-agent'
+      ? t(
+          'components.terminal.pane.CloseTerminalDialog.stopChatAgentTitle',
+          'Stop the agent in this chat?'
+        )
+      : copyKind === 'agent'
+        ? workspaceName
+          ? t(
+              'components.terminal.pane.CloseTerminalDialog.stopAgentInWorkspaceTitle',
+              'Stop the agent in “{{name}}”?',
+              { name: workspaceName }
+            )
+          : t(
+              'auto.components.terminal.pane.CloseTerminalDialog.stop_agent_title',
+              'Stop this agent?'
+            )
+        : t(
+            'components.terminal.pane.CloseTerminalDialog.stopRunningCommandTitle',
+            'Stop the running command?'
+          )
+  const optOut = (
+    <div className="flex items-center gap-2">
+      <Checkbox
+        id={checkboxId}
+        checked={dontAskAgain}
+        onCheckedChange={(checked) => setDontAskAgain(checked === true)}
+      />
+      <Label htmlFor={checkboxId} variant="dialog-muted">
+        {t('auto.components.confirmation.dialog.92bac3217e', "Don't ask again")}
+      </Label>
+    </div>
+  )
   return (
     <>
       <DialogHeader>
-        <DialogTitle className="text-sm">
-          {isAgent
-            ? t(
-                'auto.components.terminal.pane.CloseTerminalDialog.stop_agent_title',
-                'Stop this agent?'
-              )
-            : t(
-                'auto.components.terminal.pane.CloseTerminalDialog.stop_command_title',
-                'Stop running command?'
-              )}
-        </DialogTitle>
-        <DialogDescription className="text-xs">
-          {isChat
-            ? t(
-                'auto.components.terminal.pane.CloseTerminalDialog.stop_chat_description',
-                "Closing this chat will stop the agent's current work."
-              )
-            : isAgent
-              ? t(
-                  'auto.components.terminal.pane.CloseTerminalDialog.stop_agent_description',
-                  "Closing this terminal will stop the agent's current work."
-                )
-              : t(
-                  'auto.components.terminal.pane.CloseTerminalDialog.stop_command_description',
-                  'Closing this terminal will stop the command running inside it.'
-                )}
-        </DialogDescription>
+        <DialogTitle className="break-words">{title}</DialogTitle>
+        {isAgent ? (
+          <DialogDescription>
+            {t(
+              'components.terminal.pane.CloseTerminalDialog.agentWorkStops',
+              'Its current work stops and won’t resume.'
+            )}
+          </DialogDescription>
+        ) : null}
       </DialogHeader>
-      {allowDontAskAgain ? (
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id={checkboxId}
-            checked={dontAskAgain}
-            onCheckedChange={(checked) => setDontAskAgain(checked === true)}
-          />
-          <Label htmlFor={checkboxId} className="text-xs font-normal text-muted-foreground">
-            {isChat
-              ? t('auto.components.confirmation.dialog.92bac3217e', "Don't ask again")
-              : t(
-                  'auto.components.terminal.pane.CloseTerminalDialog.dont_ask_again',
-                  "Don't ask again for running terminals"
-                )}
-          </Label>
-        </div>
-      ) : null}
-      <DialogFooter className="gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+      {onSleepInstead && allowDontAskAgain ? optOut : null}
+      <DialogFooter
+        start={
+          onSleepInstead ? (
+            <Button type="button" variant="ghost" size="sm" onClick={onSleepInstead}>
+              {t(
+                'components.terminal.pane.CloseTerminalDialog.sleepWorkspaceInstead',
+                'Sleep workspace instead'
+              )}
+            </Button>
+          ) : allowDontAskAgain ? (
+            optOut
+          ) : null
+        }
+      >
+        <DialogCancel
+          onClick={(event) => {
+            event.preventDefault()
+            onCancel()
+          }}
+        >
           {t('auto.components.terminal.pane.CloseTerminalDialog.1d1a7a9c1f', 'Cancel')}
-        </Button>
+        </DialogCancel>
         <Button
           type="button"
           variant="destructive"
           size="sm"
-          autoFocus
           onClick={() => onConfirm(allowDontAskAgain && dontAskAgain)}
         >
           {isAgent
-            ? t(
-                'auto.components.terminal.pane.CloseTerminalDialog.stop_agent_confirm',
-                'Stop Agent'
-              )
-            : t(
-                'auto.components.terminal.pane.CloseTerminalDialog.stop_command_confirm',
-                'Stop and Close'
-              )}
+            ? t('components.terminal.pane.CloseTerminalDialog.stopAgentSentence', 'Stop agent')
+            : t('components.terminal.pane.CloseTerminalDialog.stopAndClose', 'Stop and close')}
         </Button>
       </DialogFooter>
     </>

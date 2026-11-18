@@ -5,7 +5,7 @@ import { buildAgentStartupPlan } from '../../../../shared/agent-launch/startup/t
 import type { TerminalLayoutSnapshot } from '../../../../shared/workspace-layout/terminal-tab-types'
 import { makePaneKey, parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { toWebTerminalSurfaceTabId } from '../../../../shared/workspace-layout/terminal-surface-id'
-import { makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeWorktree } from './agent-hub-activity-test-fixtures'
 import { startAgentInAgentHubMirror } from './agent-hub-mirror-new-agent'
 import {
   openAgentHubMirror,

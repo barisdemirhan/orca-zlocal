@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import { describe, expect, it } from 'vitest'
 import {
   LEAF_ID,
@@ -6,7 +6,7 @@ import {
   makeTabWithIds,
   makeWorktreeWithId,
   PANE_KEY
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import { resolveAgentHubIdleAgent, type AgentHubIdleAgentSignals } from './agent-hub-idle-agent'
 
 const none: AgentHubIdleAgentSignals = {

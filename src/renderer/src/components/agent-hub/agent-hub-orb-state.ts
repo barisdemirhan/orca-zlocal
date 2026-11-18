@@ -12,7 +12,7 @@ import {
   pendingStructuredSessionPrompts,
   type StructuredPromptItem
 } from '../../../../shared/agent-session/view/structured-agent-session-message-projection'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubInboxRequest } from './agent-hub-requests-store'
 
 export const AGENT_HUB_ORB_DONE_MS = 6000

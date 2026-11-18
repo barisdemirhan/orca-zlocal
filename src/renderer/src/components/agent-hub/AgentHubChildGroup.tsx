@@ -1,7 +1,7 @@
 import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import type { AgentChildRowModel } from '../../../../shared/agent-status/presentation/agent-child-row-model'
-import { agentChildRowText } from '../agent-child-row-text'
+import { agentChildRowText } from '../agent/status/agent-child-row-text'
 import { HubChip } from './AgentHubInlineLabels'
 import { HubCollapse, HubFoldChevron } from './AgentHubFold'
 import { HubCounts, HubStateIndicator } from './AgentHubStateMarks'

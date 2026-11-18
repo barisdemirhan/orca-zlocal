@@ -13,14 +13,14 @@ import {
 } from '../../shared/agent-session/view/structured-agent-session-projection'
 
 // Preserve side-effect order: mocks, lifecycle, fixtures.
-await import('./orca-runtime-tests/runtime-test-module-registration.spec')
+await import('./construction/test-context/runtime-test-module-registration.spec')
 const { OrcaRuntimeService } = await import('./orca-runtime')
-await import('./orca-runtime-tests/orca-runtime-test-lifecycle.spec')
+await import('./construction/test-context/orca-runtime-test-lifecycle.spec')
 const {
   TEST_WORKTREE_ID,
   makeRuntimeStoreWithWorkspaceSession,
   makeWorkspaceSessionWithHeadlessTerminal
-} = await import('./orca-runtime-tests/orca-runtime-test-fixtures.spec')
+} = await import('./construction/test-context/orca-runtime-test-fixtures.spec')
 
 vi.mock('./rpc/methods/structured-sessions/creation/structured-agent-session-create', () => ({
   createStructuredAgentSessionForWorktree: async (args: { envelope: { sessionId: string } }) => ({

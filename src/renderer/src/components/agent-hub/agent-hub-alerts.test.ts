@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PANE_KEY, PANE_KEY_2 } from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY, PANE_KEY_2 } from './agent-hub-activity-test-fixtures'
 import {
   agentHubAlertBaseline,
   diffAgentHubAlerts,

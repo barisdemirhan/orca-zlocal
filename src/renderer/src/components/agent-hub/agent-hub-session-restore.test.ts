@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
@@ -19,11 +19,7 @@ vi.mock('@/store', async () => {
 })
 
 import type { TerminalLayoutSnapshot } from '../../../../shared/workspace-layout/terminal-tab-types'
-import {
-  makeRepo,
-  makeTabWithIds,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import {
   closeAgentHubCanvas,
   openAgentHubCanvas,

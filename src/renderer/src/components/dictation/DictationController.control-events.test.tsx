@@ -48,7 +48,7 @@ vi.mock('@/store', async () => {
   }))
   return { useAppStore: store }
 })
-vi.mock('@/hooks/use-audio-capture', () => ({
+vi.mock('@/components/dictation/use-audio-capture', () => ({
   useAudioCapture: () => ({
     start: mocks.start,
     stop: mocks.stop,

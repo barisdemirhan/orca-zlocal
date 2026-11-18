@@ -24,7 +24,7 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-vi.mock('@/hooks/use-now', () => ({ useNow: () => 0 }))
+vi.mock('@/lib/window-activity/use-now', () => ({ useNow: () => 0 }))
 vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () => ({
   getStructuredAgentSessionStatusFeed: () => ({
     activate: () => () => {},

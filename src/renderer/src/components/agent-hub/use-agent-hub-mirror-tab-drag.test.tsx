@@ -2,7 +2,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import type { DragEndEvent } from '@dnd-kit/core'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import type * as DragPassthrough from '../browser-pane/host-guest/drag/webview-drag-passthrough'
 import {

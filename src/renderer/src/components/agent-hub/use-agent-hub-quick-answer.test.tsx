@@ -1,18 +1,18 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 /** @vitest-environment happy-dom */
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { NativeChatInteractiveSend } from '../native-chat/session/terminal/send/use-native-chat-interactive-send'
-import { buildActivityEvents } from '../activity/activity-event-builder'
+import { buildActivityEvents } from '../activity/events/activity-event-builder'
 import {
   makeRepo,
   makeTabWithIds,
   makeThreads,
   makeWorktree,
   PANE_KEY
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import {
   AGENT_HUB_ANSWER_HOLD_MS,
   agentHubThreadCardKey,

@@ -1,4 +1,4 @@
-import type { TerminalParkingFoundation } from './use-terminal-parking-foundation'
+import type { TerminalParkingFoundation } from './terminal/workspace-mounting/use-terminal-parking-foundation'
 
 export function addControllerChangedWorktreesToDirty(
   dirty: Set<string>,

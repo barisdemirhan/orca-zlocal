@@ -8,7 +8,7 @@ import {
   getWorktreeExecutionHostId,
   getExecutionHostLabel
 } from '../../../../shared/execution-host/execution-host'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import {
   parseInteractivePrompt,
   type InteractivePromptCard

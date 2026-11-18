@@ -25,7 +25,7 @@ import {
 } from './agent-hub-request-test-fixtures'
 import { getAgentHubCommands } from './agent-hub-commands'
 import { agentHubThreadsFor } from './agent-hub-test-fixtures'
-import { PANE_KEY } from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY } from './agent-hub-activity-test-fixtures'
 import {
   showAgentHubOrbPanel,
   closeAgentHubOrbPanel,
@@ -47,7 +47,7 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-vi.mock('../activity/use-agent-pane-threads', () => ({
+vi.mock('../activity/threads/use-agent-pane-threads', () => ({
   useAgentPaneThreads: () => ({ allThreads: mocks.threads() })
 }))
 vi.mock('./agent-hub-orb-session', () => ({ useAgentHubOrb: mocks.orb }))

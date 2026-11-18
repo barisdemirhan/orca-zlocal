@@ -10,8 +10,8 @@ import { formatAgentTypeLabel } from '../../../../shared/agent-status/presentati
 import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { submitPromptToAgentPty } from '@/lib/agent-session/messaging/paste/agent-paste-draft'
 import { translate } from '@/i18n/i18n'
-import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import {
   NativeChatInteractiveCard,
   type NativeChatInteractiveCardControl

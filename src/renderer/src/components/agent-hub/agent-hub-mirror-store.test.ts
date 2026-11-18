@@ -3,7 +3,7 @@ import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import {
   keepAgentHubMirrorPlace,
   readAgentHubMirrorOrigin,

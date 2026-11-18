@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 // @vitest-environment happy-dom
 import { act, createRef } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -10,15 +10,15 @@ import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts
 import { getDefaultSettings } from '../../../../shared/orca-profiles/constants'
 import { parsePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type { NativeChatInteractiveSend } from '../native-chat/session/terminal/send/use-native-chat-interactive-send'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
-import { buildActivityEvents } from '../activity/activity-event-builder'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
+import { buildActivityEvents } from '../activity/events/activity-event-builder'
 import {
   makeRepo,
   makeTabWithIds,
   makeThreads,
   makeWorktree,
   PANE_KEY
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import {
   AGENT_HUB_CARD_KEY_GUARD_MS,
   AgentHubAttentionCard,

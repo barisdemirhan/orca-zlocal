@@ -19,27 +19,12 @@ import {
 import { AgentHubOrbComposerDictationOverlay } from '../../../agent-hub/AgentHubOrbComposerDictationOverlay'
 import { useAgentHubOrbVoiceContext } from '../../../agent-hub/agent-hub-orb-voice-context'
 import { agentHubOrbVoiceNotice } from '../../../agent-hub/agent-hub-orb-voice-state'
+import { imeComposedSegment } from '@/lib/text-input/ime/ime-composed-segment'
+import { acceptNativeChatPromptSuggestion } from './native-chat-prompt-suggestion-accept'
 
 import type { NativeChatComposerFieldProps } from './native-chat-composer-field-props'
 
 function noop(): void {}
-
-/** After a clear suppressed by IME, preserve only the composed segment; compare both ends because the caret need not be at the end. */
-function imeComposedSegment(base: string, settled: string): string {
-  const limit = Math.min(base.length, settled.length)
-  let prefix = 0
-  while (prefix < limit && base[prefix] === settled[prefix]) {
-    prefix += 1
-  }
-  let suffix = 0
-  while (
-    suffix < limit - prefix &&
-    base[base.length - 1 - suffix] === settled[settled.length - 1 - suffix]
-  ) {
-    suffix += 1
-  }
-  return settled.slice(prefix, settled.length - suffix)
-}
 
 export function NativeChatComposerField({
   editSession,
@@ -51,6 +36,7 @@ export function NativeChatComposerField({
   hasPty,
   canSend,
   unavailableHint,
+  promptSuggestion,
   autocomplete,
   mentionFiles,
   activeSuggestion,
@@ -132,8 +118,18 @@ export function NativeChatComposerField({
     onDraftChange(value, input)
   })
   const editorSelect = useLatestHandler(onTextareaSelect)
+  // An open picker takes Tab first, so the suggestion only shows and accepts while none is.
+  const suggestion = autocomplete.mode === 'none' ? promptSuggestion : undefined
   const editorKeyDownCapture = useLatestHandler((event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!imeEnterGesture.ownsKeyDown(event)) {
+    if (
+      !imeEnterGesture.ownsKeyDown(event) &&
+      !acceptNativeChatPromptSuggestion(
+        event,
+        suggestion,
+        textareaRef.current,
+        imeEnterGesture.isComposing
+      )
+    ) {
       onKeyDown(event)
     }
   })
@@ -310,6 +306,7 @@ export function NativeChatComposerField({
                               'Describe your goal, define measurable outcomes for best results'
                             )
                           : (unavailableHint ??
+                            suggestion ??
                             nativeChatComposerPlaceholder(hasPty, canSend, afterStop, t))
                 }
                 // Let layout handle wrapping and touch targets; scroll after eight lines (a launch prompt: one line growing to six) without JavaScript measurement.

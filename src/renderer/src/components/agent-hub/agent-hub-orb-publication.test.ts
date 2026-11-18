@@ -8,7 +8,7 @@ import type { RuntimeMobileSessionTabsResult } from '../../../../shared/remote-r
 import { findStructuredAgentSessionTab } from '@/lib/agent-session/structured-agent-session-tab-activation'
 import { resetLocalStructuredSessionVersionForTests } from '@/runtime/local-structured-session-tabs-sync/inventory-generation-fence'
 import { LOCAL_STRUCTURED_SESSION_OWNER } from '@/runtime/native-chat/local-sessions/local-structured-session-owner'
-import { applyWebSessionTabsSnapshot } from '@/runtime/web-session-tabs-sync/snapshot-api'
+import { applyWebSessionTabsSnapshot } from '@/runtime/web-session-tabs-sync/snapshots/snapshot-api'
 import { resetWebSessionTabsSyncTestState } from '@/runtime/web-session-tabs-sync/testing/web-session-tabs-sync.test-fixture'
 import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { openAgentHubOrb } from './agent-hub-orb-open'

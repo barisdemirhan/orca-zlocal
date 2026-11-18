@@ -4,14 +4,14 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
-import type { AgentDetectionTarget } from '@/hooks/useDetectedAgents'
+import type { AgentDetectionTarget } from '@/lib/agent-session/launch/inventory/useDetectedAgents'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { folderWorkspaceToWorktree } from '../../../../shared/folder-workspaces/folder-workspace-worktree'
 import type { FolderWorkspace } from '../../../../shared/folder-workspaces/folder-workspace-types'
 import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
 import { getDefaultSettings } from '../../../../shared/orca-profiles/constants'
 import { TooltipProvider } from '../ui/tooltip'
-import { makeRepo, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeWorktree } from './agent-hub-activity-test-fixtures'
 import { AgentHubMirrorNewAgent } from './AgentHubMirrorNewAgent'
 import { AgentHubNewAgentDialog } from './AgentHubNewAgentDialog'
 
@@ -34,11 +34,11 @@ vi.mock('@/store', async () => {
     }))
   }
 })
-vi.mock('@/hooks/useAgentDetectionTarget', () => ({
+vi.mock('@/lib/agent-session/launch/inventory/useAgentDetectionTarget', () => ({
   useAgentDetectionTargetForWorktree: (id: string | null) =>
     id?.startsWith('remote') ? { kind: 'runtime', environmentId: 'server' } : { kind: 'local' }
 }))
-vi.mock('@/hooks/useDetectedAgents', () => ({
+vi.mock('@/lib/agent-session/launch/inventory/useDetectedAgents', () => ({
   useDetectedAgents: (target: AgentDetectionTarget | undefined) => ({
     detectedIds:
       target === undefined ? null : target.kind === 'runtime' ? ['codex', 'gemini'] : ['claude']

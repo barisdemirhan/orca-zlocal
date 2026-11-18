@@ -1,6 +1,6 @@
 import { Undo2 } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { formatOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
+import { formatOptionalShortcutLabel } from '@/lib/keyboard/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { AgentHubShortcut } from './AgentHubShortcut'
 import { DockButton, DOCK_BUTTON } from './AgentHubDockParts'

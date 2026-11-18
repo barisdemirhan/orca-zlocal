@@ -13,13 +13,13 @@ import { AgentDashboardExperimentalSetting } from '../../dashboard/settings/Agen
 import { AgentHubExperimentalSetting } from '../../agent-hub/AgentHubExperimentalSetting'
 import { EphemeralVmsExperimentalSetting } from '../virtual-machines/recipes/EphemeralVmsExperimentalSetting'
 import { WslHostsExperimentalSetting } from '../wsl/hosts/WslHostsExperimentalSetting'
-import { wslHostsAvailable } from '../../sidebar/use-wsl-hosts-enabled'
+import { wslHostsAvailable } from '../../../runtime/hosts/wsl/use-wsl-hosts-enabled'
 import {
   MAX_AGENT_HIBERNATION_IDLE_MS,
   MIN_AGENT_HIBERNATION_IDLE_MS,
   getEffectiveAgentHibernationIdleMs
 } from '@/lib/agent-session/hibernation/agent-hibernation-planner'
-import { trackWorktreeCardStyleChanged } from '@/components/sidebar/worktree-card-style-telemetry'
+import { trackWorktreeCardStyleChanged } from '@/components/sidebar/workspace-card/template/worktree-card-style-telemetry'
 
 const MS_PER_MINUTE = 60 * 1000
 

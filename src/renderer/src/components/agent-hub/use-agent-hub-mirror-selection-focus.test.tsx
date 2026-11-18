@@ -2,7 +2,7 @@
 import { useRef } from 'react'
 import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selection-focus'
 import { requestAgentHubMirrorSelection } from './agent-hub-mirror-selection'
 

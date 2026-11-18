@@ -1,8 +1,8 @@
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNow } from '@/hooks/use-now'
+import { useNow } from '@/lib/window-activity/use-now'
 import { translate } from '@/i18n/i18n'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { useAgentHubMirrors } from './agent-hub-mirror-store'
 import {

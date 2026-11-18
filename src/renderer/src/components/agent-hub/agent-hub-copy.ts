@@ -1,10 +1,10 @@
 import { translate } from '@/i18n/i18n'
 import type { AgentHubTab } from './agent-hub-keys'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import {
   activityThreadStatusId,
   threadAgentStateLabel
-} from '../activity/activity-thread-presentation'
+} from '../activity/threads/activity-thread-presentation'
 import { agentHubIndicatorKind, agentHubIsApproval } from './agent-hub-lists'
 
 /** Said when the tray drops its oldest chip to make room for a new one. */

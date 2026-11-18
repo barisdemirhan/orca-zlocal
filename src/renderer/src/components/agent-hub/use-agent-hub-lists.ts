@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import {
   AGENT_HUB_APPROVAL_GRACE_MS,

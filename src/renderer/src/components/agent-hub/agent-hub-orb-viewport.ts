@@ -1,7 +1,7 @@
 import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
-} from '../sidebar/workspace-chrome-metrics'
+} from '../../app-shell/chrome/workspace-chrome-metrics'
 import type { AgentHubOrbBounds } from './agent-hub-orb-geometry'
 
 export function readAgentHubOrbBounds(): AgentHubOrbBounds {

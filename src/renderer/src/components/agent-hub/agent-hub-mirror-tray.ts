@@ -1,5 +1,5 @@
 import { agentHubMirrorWindowKind } from './agent-hub-mirror-window-kind'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { agentHubIndicatorKind, type AgentHubIndicatorKind } from './agent-hub-lists'
 import {
   agentHubMirrorWindowCap,

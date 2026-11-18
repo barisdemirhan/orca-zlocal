@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
-import {
-  makeRepo,
-  makeTabWithIds,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 
 const mocks = vi.hoisted(() => {
   const layouts: Record<string, unknown> = {}
@@ -42,8 +38,12 @@ vi.mock('../terminal-pane/layout/close/request-active-terminal-pane-close', () =
 vi.mock('@/runtime/hosted-terminals/actions/web-runtime-terminal-close', () => ({
   closeWebRuntimeTerminal: mocks.closeRemote
 }))
-vi.mock('../terminal/terminal-tab-actions', () => ({ closeTerminalTab: mocks.closeTerminalTab }))
-vi.mock('../terminal/pty-running-work-probe', () => ({ probePtyRunningWork: mocks.probe }))
+vi.mock('../terminal/tab-lifecycle/terminal-tab-actions', () => ({
+  closeTerminalTab: mocks.closeTerminalTab
+}))
+vi.mock('../terminal/tab-lifecycle/pty-running-work-probe', () => ({
+  probePtyRunningWork: mocks.probe
+}))
 vi.mock('../terminal-pane/layout/close/closed-terminal-leaf-notice', () => ({
   applyClosedTerminalLeafNotice: mocks.closeLeaf
 }))

@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { folderWorkspaceRepoId } from '../../../../shared/folder-workspaces/folder-workspace-worktree'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import type { Worktree } from '../../../../shared/worktree/types'
-import {
-  makeRepo,
-  makeTabWithIds,
-  makeWorktreeWithId
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeTabWithIds, makeWorktreeWithId } from './agent-hub-activity-test-fixtures'
 import {
   agentHubPickerProjectKey,
   agentHubPickerProjectKeys,

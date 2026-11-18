@@ -1,7 +1,7 @@
 import type { AgentHubMirrorOutcome, AgentHubRequest } from '../../../../shared/agent-hub-requests'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import {
   openAgentHubMirrorInLayout,
   rearrangeAgentHubMirrorsByDefault

@@ -15,7 +15,7 @@ import { resetSpeechModelUpdateCheckForTests } from './speech-model-update-check
 
 const startCapture = vi.fn(async () => ({}))
 
-vi.mock('@/hooks/use-audio-capture', () => ({
+vi.mock('@/components/dictation/use-audio-capture', () => ({
   useAudioCapture: () => ({
     start: startCapture,
     stop: vi.fn(),

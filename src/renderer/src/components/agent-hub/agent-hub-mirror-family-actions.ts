@@ -1,5 +1,5 @@
-import { activityThreadRowCopy } from '../activity/activity-thread-presentation'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
 import {
   findAgentHubMirrorMembership,

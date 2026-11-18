@@ -12,7 +12,7 @@ import {
 } from './agent-hub-mirror-store'
 import { openAgentHubCanvas, resetAgentHubCanvasForTest } from './agent-hub-canvas-store'
 import { readAgentHubMirrorFocus } from './agent-hub-mirror-focus'
-import { makeWorktree, makeTabWithIds } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeWorktree, makeTabWithIds } from './agent-hub-activity-test-fixtures'
 
 vi.mock('@/store', async () => {
   const { create } = await import('zustand')

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
 import { flyMirrorWindowToHub } from './mirror-window-flight'
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
+import { usePrefersReducedMotion } from '@/hooks/theme/usePrefersReducedMotion'
 
 export function useMirrorWindowDeparture(
   windowId: string,

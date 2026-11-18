@@ -20,7 +20,7 @@ import {
 } from './agent-hub-mirror-places'
 import type { AgentHubMirrorFocusState } from './agent-hub-mirror-focus'
 import { useMirrorWindowFocus } from './use-mirror-window-focus'
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion'
+import { usePrefersReducedMotion } from '@/hooks/theme/usePrefersReducedMotion'
 import { glideMirrorWindow } from './mirror-window-glide'
 import {
   claimAgentHubMirrorGesture,

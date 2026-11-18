@@ -5,7 +5,7 @@ import {
   makeWorktree,
   makeTabWithIds,
   PANE_KEY
-} from '../activity/ActivityPrototypePage-test-fixtures'
+} from './agent-hub-activity-test-fixtures'
 import { buildAgentHubTerminalTree } from './agent-hub-terminal-tree'
 import {
   agentHubSidebarPopoutTarget,

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { agentHubPromptText, agentHubStateSince } from './agent-hub-lists'
 
 /** How long a reopened card keeps showing an answer still on its way, before it can be retried. */

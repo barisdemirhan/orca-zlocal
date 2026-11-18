@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { mirrorWindowIdFor } from './agent-hub-mirror-test-fixtures'
@@ -14,11 +14,7 @@ vi.mock('@/store', async () => {
 
 import { useAppStore } from '@/store'
 import { getDefaultSettings } from '../../../../shared/orca-profiles/constants'
-import {
-  makeRepo,
-  makeTabWithIds,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeRepo, makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import {
   readAgentHubCanvasParked,
   rememberAgentHubCanvasParked,

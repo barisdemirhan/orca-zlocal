@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { useFloatingWorkspacePanel } from '../../app-shell/use-floating-workspace-panel'
+import { useFloatingWorkspacePanel } from '../floating-terminal/workspace/use-floating-workspace-panel'
 import { closeAgentHubOrbPanel, showAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
 vi.mock('@/store', async () => {

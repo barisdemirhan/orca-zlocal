@@ -1,5 +1,5 @@
 import { createContext, useMemo, type ReactNode } from 'react'
-import { useNow } from '@/hooks/use-now'
+import { useNow } from '@/lib/window-activity/use-now'
 import type { AgentJournalRenderItem } from '../../../../shared/agent-session/journal/agent-session-journal-types'
 import type { AgentSessionLatestTurn } from '../../../../shared/agent-session/agent-session-wire'
 import { agentHubInboxRequests, useAgentHubRequests } from './agent-hub-requests-store'

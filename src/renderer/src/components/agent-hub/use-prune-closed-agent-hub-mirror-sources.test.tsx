@@ -4,11 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { useAppStore } from '@/store'
 import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import type * as MirrorSource from './agent-hub-mirror-source'
-import {
-  PANE_KEY,
-  makeTabWithIds,
-  makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY, makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import {
   openAgentHubMirror,
   readAgentHubMirrors,

@@ -1,6 +1,6 @@
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
-import { activityThreadStatusId } from '../activity/activity-thread-presentation'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { activityThreadStatusId } from '../activity/threads/activity-thread-presentation'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { readApprovalTool } from './agent-hub-approval'
 
 export type AgentHubSection = 'needsYou' | 'working' | 'finished'

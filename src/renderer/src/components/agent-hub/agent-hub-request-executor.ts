@@ -6,7 +6,7 @@ import type {
 } from '../../../../shared/agent-hub-requests'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { openAgentHubCanvas, closeAgentHubCanvas } from './agent-hub-canvas-store'
 import {
   arrangeAgentHubFloatingWindowsByDefault,

@@ -8,6 +8,10 @@ export type RunningTerminalCloseConfirmRequest = {
   copyKind: CloseTerminalDialogCopyKind
   /** Whether the running-terminal opt-out may also accept this request. */
   allowSkipConfirm?: boolean
+  /** The tab's workspace, named in the title. */
+  worktreeId?: string
+  /** Sleeping this workspace keeps the busy agents resumable, so it is offered instead. */
+  canSleepInstead?: boolean
   onConfirm: () => void
   onCancel?: () => void
 }
@@ -18,7 +22,7 @@ export type RunningTerminalCloseConfirmState = {
   confirmRunningTerminalClose: () => void
   /** Accepts opt-out eligible requests, leaving explicit agent confirmations pending. */
   confirmAllRunningTerminalCloses: () => void
-  dismissRunningTerminalClose: () => void
+  dismissRunningTerminalClose: () => boolean
 }
 
 /** Folds a duplicate request for the same tab into the pending one instead of dropping it,
@@ -60,9 +64,9 @@ export const useRunningTerminalCloseConfirmStore = create<RunningTerminalCloseCo
   }
 
   const guardNextAction = (revealedNextRequest: boolean): void => {
-    if (revealedNextRequest) {
-      nextRequestActionAllowedAt = Date.now() + INTER_REQUEST_ACTION_GUARD_MS
-    }
+    nextRequestActionAllowedAt = revealedNextRequest
+      ? Date.now() + INTER_REQUEST_ACTION_GUARD_MS
+      : 0
   }
 
   return {
@@ -123,11 +127,12 @@ export const useRunningTerminalCloseConfirmStore = create<RunningTerminalCloseCo
     dismissRunningTerminalClose: () => {
       const request = get().runningTerminalCloseConfirm
       if (!request || Date.now() < nextRequestActionAllowedAt) {
-        return
+        return false
       }
       guardNextAction(advanceRequest())
       // Why: callers such as the tab-group model resume their own cleanup on cancel.
       request.onCancel?.()
+      return true
     }
   }
 })

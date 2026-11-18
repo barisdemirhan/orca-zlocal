@@ -1,4 +1,4 @@
-import { acceptedAgentStatuses } from '@/store/slices/agent-status/accepted-agent-statuses'
+import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import { describe, expect, it } from 'vitest'
 import {
   PANE_KEY,
@@ -8,8 +8,8 @@ import {
   makeTabWithIds,
   makeThreads,
   makeWorktree
-} from '../activity/ActivityPrototypePage-test-fixtures'
-import { buildChildAgentLineageTree } from '../activity/activity-thread-child-agent'
+} from './agent-hub-activity-test-fixtures'
+import { buildChildAgentLineageTree } from '../activity/threads/activity-thread-child-agent'
 import { buildAgentHubLineage } from './agent-hub-lineage'
 import { buildAgentHubLists } from './agent-hub-lists'
 import { agentHubMirrorFamily } from './agent-hub-mirror-family'
@@ -18,7 +18,7 @@ import {
   structuredAgentSessionPaneKey,
   structuredAgentSessionTabId
 } from '../../../../shared/agent-session/view/structured-agent-session-projection'
-import { buildActivityEvents } from '../activity/activity-event-builder'
+import { buildActivityEvents } from '../activity/events/activity-event-builder'
 
 describe('CLI-started agents in Hub', () => {
   it('folds the host-recorded public structured worker pane into its caller family', () => {

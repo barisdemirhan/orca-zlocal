@@ -8,7 +8,7 @@ import {
   useActivityTerminalPortals,
   findActivityTerminalPortal,
   type ActivityTerminalPortalTarget
-} from '../activity/activity-terminal-portal'
+} from '../activity/terminal-portal/activity-terminal-portal'
 import { isTerminalSourceVisible } from '../terminal-pane/terminal-source-visibility'
 
 Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true)

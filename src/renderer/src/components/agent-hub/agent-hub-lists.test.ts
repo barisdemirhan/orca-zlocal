@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PANE_KEY, PANE_KEY_2, PANE_KEY_3 } from '../activity/ActivityPrototypePage-test-fixtures'
+import { PANE_KEY, PANE_KEY_2, PANE_KEY_3 } from './agent-hub-activity-test-fixtures'
 import { agentHubCounts, buildAgentHubLists } from './agent-hub-lists'
 import { agentHubThreadsFor as threadsFor } from './agent-hub-test-fixtures'
 

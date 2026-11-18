@@ -6,7 +6,7 @@ import { requestFloatingWorkspaceBounds } from '../floating-terminal/floating-wo
 import {
   STATUS_BAR_RESERVE_HEIGHT,
   WORKSPACE_TOP_CHROME_HEIGHT
-} from '../sidebar/workspace-chrome-metrics'
+} from '../../app-shell/chrome/workspace-chrome-metrics'
 import {
   arrangeAgentHubFloatingWindows,
   type AgentHubFloatingLayout,

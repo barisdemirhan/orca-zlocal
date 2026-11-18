@@ -9,8 +9,8 @@ import {
   AGENT_STATUS_STALE_AFTER_MS,
   isAgentStatusFresh as isExplicitAgentStatusFresh
 } from '../../../../shared/agent-status/contracts/agent-status-freshness'
-import { buildChildAgentLineageTree } from '../activity/activity-thread-child-agent'
-import type { AgentPaneThread } from '../activity/activity-thread-types'
+import { buildChildAgentLineageTree } from '../activity/threads/activity-thread-child-agent'
+import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { agentHubSection, type AgentHubCounts, type AgentHubIndicatorKind } from './agent-hub-lists'
 
 /** What runs beneath one agent: worker panes it dispatched, and its in-process subagents. */

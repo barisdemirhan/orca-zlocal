@@ -2,20 +2,19 @@
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { AGENT_STATUS_STALE_AFTER_MS } from '../../../../shared/agent-status/contracts/agent-status-freshness'
-import {
-  makeRepo,
-  makeTab,
-  makeWorktree,
-  PANE_KEY
-} from '../activity/ActivityPrototypePage-test-fixtures'
-import { useAgentPaneThreads } from '../activity/use-agent-pane-threads'
-import { activityThreadStatusId } from '../activity/activity-thread-presentation'
+import { makeRepo, makeTab, makeWorktree, PANE_KEY } from './agent-hub-activity-test-fixtures'
+import { useAgentPaneThreads } from '../activity/threads/use-agent-pane-threads'
+import { activityThreadStatusId } from '../activity/threads/activity-thread-presentation'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubStateWord } from './agent-hub-copy'
 import { useAppStore } from '@/store'
-import { flushMicrotasks } from '@/store/slices/agent-status/agent-status-test-harness'
 import { makeUnifiedTab } from '@/store/slices/tabs/tab-group.test-fixture'
-import type { AgentStatusPayload } from '@/store/slices/agent-status/agent-status-contract'
+import type { AgentStatusPayload } from '@/store/slices/agent-status/contracts/agent-status-contract'
+
+// Flush freshness-scheduling microtasks before advancing fake timers or no timeout is registered.
+function flushMicrotasks(): Promise<void> {
+  return new Promise((resolve) => queueMicrotask(resolve))
+}
 
 vi.mock('@/store', async () => {
   const { createTestStore } = await import('@/store/testing/app-store-test-fixture')

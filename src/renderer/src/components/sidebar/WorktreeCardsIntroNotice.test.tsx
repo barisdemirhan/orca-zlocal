@@ -8,11 +8,11 @@ import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
 import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { getDefaultSettings } from '../../../../shared/orca-profiles/constants'
-import { trackWorktreeCardsIntroAction } from './worktree-card-style-telemetry'
-import { WorktreeCardsIntroNotice } from './WorktreeCardsIntroNotice'
+import { trackWorktreeCardsIntroAction } from './workspace-card/template/worktree-card-style-telemetry'
+import { WorktreeCardsIntroNotice } from './workspace-card/template/WorktreeCardsIntroNotice'
 
 vi.mock('sonner', () => ({ toast: Object.assign(vi.fn(), { error: vi.fn() }) }))
-vi.mock('./worktree-card-style-telemetry', () => ({
+vi.mock('./workspace-card/template/worktree-card-style-telemetry', () => ({
   trackWorktreeCardsIntroAction: vi.fn(),
   trackWorktreeCardStyleChanged: vi.fn()
 }))

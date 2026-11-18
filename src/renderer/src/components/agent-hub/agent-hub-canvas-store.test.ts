@@ -23,7 +23,7 @@ vi.mock('@/store', async () => {
 })
 
 import { useAppStore } from '@/store'
-import { makeTabWithIds, makeWorktree } from '../activity/ActivityPrototypePage-test-fixtures'
+import { makeTabWithIds, makeWorktree } from './agent-hub-activity-test-fixtures'
 import {
   closeAgentHubCanvas,
   isAgentHubCanvasOpen,

@@ -5,7 +5,7 @@ import { useAppStore } from '@/store/index'
 import {
   trackWorktreeCardsIntroAction,
   trackWorktreeCardStyleChanged
-} from './worktree-card-style-telemetry'
+} from './workspace-card/template/worktree-card-style-telemetry'
 
 // Why module scope: the note unmounts when the sidebar collapses or switches body, but its Keep
 // write keeps going; a remount must join it, not start a second one or unlock dismissal.

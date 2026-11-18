@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store'
 import { createWebRuntimeSessionBrowserTab } from '@/runtime/browser/creation/web-runtime-browser-creation'
 import type { BrowserClientHostedRemoteChoice } from '@/components/settings/browser/routing/browser-client-hosted-remote-copy'
-import { resolveBrowserReopenOnServerUrl } from './browser-reopen-on-server'
+import { resolveBrowserReopenOnServerUrl } from './navigate/reopen-on-server/browser-reopen-on-server'
 
 /**
  * Moves a remote-runtime page to the other channel. Placement is fixed per page, so this opens a
