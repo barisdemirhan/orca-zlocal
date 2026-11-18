@@ -24613,6 +24613,8 @@
       "sendToHub": "Send to the hub",
       "bringBack": "Bring back",
       "showInMirror": "Show in mirror",
+      "mirrorOpen": "Mirror is open",
+      "mirrorInDock": "Mirror is in the dock",
       "closeAgent": "Close agent",
       "closeShell": "Close terminal"
     },

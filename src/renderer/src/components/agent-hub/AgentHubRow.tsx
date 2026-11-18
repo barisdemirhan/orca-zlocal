@@ -1,6 +1,6 @@
 import { AgentHubPaneSleepAction } from './AgentHubPaneSleepAction'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
-import { ArrowUpRight, CheckCheck, Plus } from 'lucide-react'
+import { ArrowUpRight, CheckCheck, PanelBottom, PictureInPicture2, Plus } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import type { AgentType } from '../../../../shared/agent-status/contracts/agent-status-types'
@@ -8,6 +8,8 @@ import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import { HubRowAction, HubRowCloseAgent, HubRowMirrorActions } from './AgentHubRowActions'
 import { useAgentHubProgress } from './use-agent-hub-progress'
+import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
+import { useAgentHubMirrors } from './agent-hub-mirror-store'
 
 /** One agent or shell row: click opens the live mirror, ↵ jumps to the pane. */
 export function AgentHubRow({
@@ -59,6 +61,10 @@ export function AgentHubRow({
   sleeping?: boolean
 }): React.JSX.Element {
   const progress = useAgentHubProgress(mirrorTarget)
+  const presence = findAgentHubMirrorMembership(
+    useAgentHubMirrors(),
+    mirrorTarget ?? mirrorKey
+  )?.presence
   const current = useAppStore(
     (s) =>
       worktreeId !== undefined && s.activeView === 'terminal' && s.activeWorktreeId === worktreeId
@@ -77,9 +83,16 @@ export function AgentHubRow({
           ? translate('agentHub.row.currentWorkspace', 'In the workspace you have open')
           : undefined
       }
-      className="jump-palette-item group/row flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-2 py-2 transition-opacity hover:bg-foreground/[0.03] data-[current=true]:opacity-55 data-[indent=true]:ml-3.5 data-[current=true]:hover:opacity-100 data-[current=true]:data-[selected=true]:opacity-100"
+      className="jump-palette-item group/row relative flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-2 py-2 transition-opacity hover:bg-foreground/[0.03] data-[current=true]:opacity-55 data-[indent=true]:ml-3.5 data-[current=true]:hover:opacity-100 data-[current=true]:data-[selected=true]:opacity-100"
       onClick={onOpen}
     >
+      {presence ? (
+        <span
+          aria-hidden
+          data-presence={presence}
+          className="absolute inset-y-[7px] -left-[3px] w-[2.5px] rounded-full bg-[var(--terminal-pane-locate)] data-[presence=chip]:opacity-35"
+        />
+      ) : null}
       <span className="grid w-3 shrink-0 place-items-center">
         <HubStateIndicator kind={kind} />
       </span>
@@ -104,6 +117,23 @@ export function AgentHubRow({
         {chips}
         {!selectionMode && mirrorTarget ? (
           <AgentHubPaneSleepAction target={mirrorTarget} appearance="row" />
+        ) : null}
+        {presence ? (
+          <span
+            data-presence={presence}
+            title={
+              presence === 'chip'
+                ? translate('agentHub.row.mirrorInDock', 'Mirror is in the dock')
+                : translate('agentHub.row.mirrorOpen', 'Mirror is open')
+            }
+            className="text-[var(--terminal-pane-locate)] group-hover/row:hidden group-data-[selected=true]/row:hidden data-[presence=chip]:opacity-60"
+          >
+            {presence === 'chip' ? (
+              <PanelBottom className="size-3" />
+            ) : (
+              <PictureInPicture2 className="size-3" />
+            )}
+          </span>
         ) : null}
         {time ? (
           <span className="group-hover/row:hidden group-data-[selected=true]/row:hidden">

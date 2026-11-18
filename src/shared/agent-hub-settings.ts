@@ -119,7 +119,8 @@ export const DEFAULT_AGENT_HUB_DOCK_POSITION: AgentHubDockPosition = { edge: 'bo
 export const AGENT_HUB_FINISHED_CLEAR_MINUTES = [0, 15, 30, 60] as const
 
 /** Choices for how many mirror windows may be open at once. */
-export const AGENT_HUB_MIRROR_WINDOW_CAPS = [2, 4, 6, 8] as const
+export const AGENT_HUB_MIRROR_WINDOW_CAP_MIN = 1
+export const AGENT_HUB_MIRROR_WINDOW_CAP_MAX = 15
 export const DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP = 4
 
 /** Choices for how long the tray fans out on news; 0 leaves it piled. */
@@ -199,9 +200,10 @@ export function normalizeAgentHubFloatingLayout(value: unknown): AgentHubFloatin
 }
 
 export function normalizeAgentHubMirrorWindowCap(value: unknown): number {
-  return (
-    AGENT_HUB_MIRROR_WINDOW_CAPS.find((cap) => cap === value) ?? DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
-  )
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    return DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
+  }
+  return Math.min(AGENT_HUB_MIRROR_WINDOW_CAP_MAX, Math.max(AGENT_HUB_MIRROR_WINDOW_CAP_MIN, value))
 }
 
 export function normalizeAgentHubMicMode(value: unknown): AgentHubMicMode {

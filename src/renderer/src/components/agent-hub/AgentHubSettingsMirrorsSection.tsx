@@ -1,5 +1,6 @@
 import { translate } from '@/i18n/i18n'
 import {
+  NumberField,
   SettingsRow,
   SettingsSegmentedControl,
   SettingsSubsectionHeader,
@@ -7,8 +8,10 @@ import {
 } from '../settings/form-controls/SettingsFormControls'
 import type { AgentHubSettingsSectionProps } from './agent-hub-settings-section-props'
 import {
-  AGENT_HUB_MIRROR_WINDOW_CAPS,
-  AGENT_HUB_TRAY_PEEK_SECONDS
+  AGENT_HUB_MIRROR_WINDOW_CAP_MAX,
+  AGENT_HUB_MIRROR_WINDOW_CAP_MIN,
+  AGENT_HUB_TRAY_PEEK_SECONDS,
+  DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
 } from '../../../../shared/agent-hub-settings'
 import { AgentHubSettingsDimMode } from './AgentHubSettingsDimMode'
 
@@ -21,30 +24,21 @@ export function AgentHubSettingsMirrorsSection({
       <SettingsSubsectionHeader
         title={translate('auto.agentHub.settings.mirrors', 'Mirrors & canvas')}
       />
-      <SettingsRow
+      <NumberField
         label={translate(
           'auto.components.settings.ExperimentalPane.agentHub.mirrorCap',
           'Mirror windows open at once'
         )}
-        description={translate(
+        description={`${translate(
           'auto.components.settings.ExperimentalPane.agentHub.mirrorCapCopy',
           'Opening more than this parks the oldest one beside the hub.'
-        )}
-        control={
-          <SettingsSegmentedControl<number>
-            value={preferences.mirrorWindowCap}
-            size="sm"
-            onChange={(value) => updateSettings({ agentHubMirrorWindowCap: value })}
-            ariaLabel={translate(
-              'auto.components.settings.ExperimentalPane.agentHub.mirrorCap',
-              'Mirror windows open at once'
-            )}
-            options={AGENT_HUB_MIRROR_WINDOW_CAPS.map((cap) => ({
-              value: cap,
-              label: String(cap)
-            }))}
-          />
-        }
+        )} ${AGENT_HUB_MIRROR_WINDOW_CAP_MIN}–${AGENT_HUB_MIRROR_WINDOW_CAP_MAX}`}
+        value={preferences.mirrorWindowCap}
+        defaultValue={DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP}
+        min={AGENT_HUB_MIRROR_WINDOW_CAP_MIN}
+        max={AGENT_HUB_MIRROR_WINDOW_CAP_MAX}
+        integer
+        onChange={(value) => updateSettings({ agentHubMirrorWindowCap: value })}
       />
       <SettingsRow
         label={translate(
