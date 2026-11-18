@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ExecutionHostId } from '../../execution-host'
+import type { ExecutionHostId } from '../../execution-host/execution-host'
 import type { ProjectGroup } from '../../project/groups/project-group-types'
 import {
   getCrossHostProjectGroupMembers,

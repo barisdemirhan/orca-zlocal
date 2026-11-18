@@ -1,5 +1,8 @@
 import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
-import { getRepoExecutionHostId, type ExecutionHostId } from '../../../../shared/execution-host'
+import {
+  getRepoExecutionHostId,
+  type ExecutionHostId
+} from '../../../../shared/execution-host/execution-host'
 import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 import {
   getCrossHostProjectGroupMembers,
