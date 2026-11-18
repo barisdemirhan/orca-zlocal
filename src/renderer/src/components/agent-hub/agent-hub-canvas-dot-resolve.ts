@@ -1,6 +1,7 @@
-import type { AgentHubRect } from './agent-hub-floating-arrange'
+import type { AgentHubFloatingLayout, AgentHubRect } from './agent-hub-floating-arrange'
 import {
   CANVAS_DOT_PITCH,
+  arrangeWindowsInCanvasDots,
   MIN_HEIGHT,
   MIN_WIDTH,
   clamp,
@@ -185,7 +186,8 @@ function clampIntoArea(rect: AgentHubRect, area: AgentHubRect): AgentHubRect {
 export function settleCanvasDotWindows(
   windows: readonly CanvasDotWindow[],
   area: AgentHubRect,
-  fixed: readonly AgentHubRect[] = []
+  fixed: readonly AgentHubRect[] = [],
+  layout: AgentHubFloatingLayout = 'grid'
 ): Map<string, AgentHubRect> {
   const snapped = windows.map((w) => ({
     ...w,
@@ -237,7 +239,16 @@ export function settleCanvasDotWindows(
       }
       return out
     }
-    const packed = pack(false) ?? pack(true)
+    // Why the layout before the minimum: windows that no longer fit at their sizes share the
+    // whole area like Arrange does, instead of all shrinking into one corner.
+    const arranged = (): Map<string, AgentHubRect> | null => {
+      const cells = arrangeWindowsInCanvasDots(order.length, area, layout)
+      if (cells.some((cell) => base.some((o) => overlaps(cell, o)))) {
+        return null
+      }
+      return new Map(order.map((w, index) => [w.key, cells[index]!]))
+    }
+    const packed = pack(false) ?? arranged() ?? pack(true)
     packed?.forEach((box, key) => final.set(key, box))
   }
   return final

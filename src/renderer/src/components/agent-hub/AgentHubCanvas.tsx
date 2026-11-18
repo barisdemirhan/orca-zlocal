@@ -51,7 +51,7 @@ export function AgentHubCanvas({
       // Why preventDefault: a click on the canvas must not pull focus off the mirror typed in.
       onMouseDown={(event) => event.preventDefault()}
       // Why z-[43]: the dim's layer (unused here), below the mirrors (44) and the dock (47).
-      className="fixed top-0 right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_14%,transparent)_1px,transparent_1px)] duration-150 fade-in-0"
+      className="fixed top-0 right-0 z-[43] animate-in bg-background bg-[radial-gradient(circle,color-mix(in_srgb,var(--foreground)_18%,transparent)_1.4px,transparent_1.6px)] duration-150 fade-in-0"
     >
       {/* First, so the canvas's own controls stay lit and usable over it. */}
       <AgentHubCanvasFocusShade />

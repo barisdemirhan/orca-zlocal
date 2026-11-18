@@ -14,6 +14,8 @@ import {
 } from './agent-hub-mirror-geometry'
 import { isAgentHubMirrorPlaceFree, readAgentHubMirrorOrigin } from './agent-hub-mirror-places'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
+import { useAppStore } from '@/store'
+import { normalizeAgentHubFloatingLayout } from '../../../../shared/agent-hub-settings'
 
 const toRect = (g: AgentHubMirrorGeometry) => ({
   left: g.x,
@@ -89,10 +91,13 @@ export function planMirrorDropOnCanvas(
 }
 
 /**
- * The area changed (sidebar, dock, window): one pass over all open mirrors keeps them inside it,
- * on the dots and clear of each other. Returns the mirrors that move.
+ * The area or the open mirrors changed: one pass over all open mirrors keeps them inside it, on
+ * the dots and clear of each other. Mirrors that just opened (`fresh`) make room, not the ones
+ * already there. Returns the mirrors that move.
  */
-export function settleCanvasMirrors(): Map<string, AgentHubMirrorGeometry> {
+export function settleCanvasMirrors(
+  fresh: ReadonlySet<string> = new Set()
+): Map<string, AgentHubMirrorGeometry> {
   if (!isAgentHubCanvasOpen()) {
     return new Map()
   }
@@ -102,8 +107,18 @@ export function settleCanvasMirrors(): Map<string, AgentHubMirrorGeometry> {
       const own = toGeometry(w.rect)
       return { ...w, rect: toRect(clampAgentHubMirrorGeometry(own, viewport, own)), from: w.rect }
     })
-    .toSorted((a, b) => a.from.top - b.from.top || a.from.left - b.from.left)
-  const settled = settleCanvasDotWindows(windows, agentHubWorkArea(), floatingPanelBoxes())
+    .toSorted(
+      (a, b) =>
+        Number(fresh.has(a.key)) - Number(fresh.has(b.key)) ||
+        a.from.top - b.from.top ||
+        a.from.left - b.from.left
+    )
+  const settled = settleCanvasDotWindows(
+    windows,
+    agentHubWorkArea(),
+    floatingPanelBoxes(),
+    normalizeAgentHubFloatingLayout(useAppStore.getState().settings?.agentHubFloatingLayout)
+  )
   const moves = new Map<string, AgentHubMirrorGeometry>()
   for (const w of windows) {
     const to = settled.get(w.key)
