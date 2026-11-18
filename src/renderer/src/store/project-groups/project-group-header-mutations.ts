@@ -1,5 +1,8 @@
 import type { ProjectGroup } from '../../../../shared/project/groups/project-group-types'
-import { getRepoExecutionHostId, type ExecutionHostId } from '../../../../shared/execution-host'
+import {
+  getRepoExecutionHostId,
+  type ExecutionHostId
+} from '../../../../shared/execution-host/execution-host'
 import { getCrossHostProjectGroupMembers } from '../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
 import { getProjectGroupCatalogHostId } from './project-group-owner-routing'
 import type { DeleteProjectGroupWithContainedProjectsResult, RepoSlice } from '../repos/repo-state'

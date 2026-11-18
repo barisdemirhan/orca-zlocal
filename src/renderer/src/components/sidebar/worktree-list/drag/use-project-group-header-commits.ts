@@ -4,7 +4,7 @@ import { isSameRepoRow } from '@/store/repos/repo-host-identity'
 import { setProjectGroupHeaderTabOrder } from '@/store/project-groups/project-group-header-mutations'
 import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
 import type { Repo } from '../../../../../../shared/repository/repo-types'
-import type { ExecutionHostId } from '../../../../../../shared/execution-host'
+import type { ExecutionHostId } from '../../../../../../shared/execution-host/execution-host'
 
 export function useProjectGroupHeaderCommits(args: {
   projectGroups: readonly ProjectGroup[]

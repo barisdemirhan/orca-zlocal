@@ -5,7 +5,7 @@ import type { ProjectGroup } from '../../../../../../shared/project/groups/proje
 import {
   getRepoExecutionHostId,
   type ExecutionHostId
-} from '../../../../../../shared/execution-host'
+} from '../../../../../../shared/execution-host/execution-host'
 import type { WorktreeGroupBy } from '../../../../../../shared/sidebar-list/row-types'
 
 export function useProjectGroupHeaderDragLookups(args: {

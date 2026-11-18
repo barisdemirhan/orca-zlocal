@@ -1,4 +1,4 @@
-import { getRepoExecutionHostId, type ExecutionHostId } from '../../execution-host'
+import { getRepoExecutionHostId, type ExecutionHostId } from '../../execution-host/execution-host'
 import type { ProjectGroup } from '../../project/groups/project-group-types'
 import { getDistinctProjectGroups } from '../../project/groups/project-groups'
 import { compareCodePoints } from '../sorting/text-order'
