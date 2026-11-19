@@ -5,9 +5,9 @@ it for a useful result, a decision, a brief progress line, or mirrors of agents 
 Prefer your native question tool (for example, AskUserQuestion) when available; use
 `hub ask` when you have no native tool or are calling from a script.
 
-Run inside an Orca terminal. `ORCA` means the executable resolved in the discovery stub;
-usage lines below match its command specs. All commands accept `--terminal <handle>`
-to target a pane on the execution host; omitting it targets your own pane. Prefer `--json`.
+Run from an Orca terminal on the execution host or from the local Orb. `ORCA` means the
+executable resolved in the discovery stub. Where supported, `--terminal <handle>` selects
+a target pane on the execution host. Prefer `--json`.
 An SSH host needs a connected desktop with Hub requests enabled; headless alone is insufficient.
 Do not operate on unrelated panes unless the user asked. Peek, mirror, arrange, and canvas
 requests targeting another pane show a consent prompt unless it is your descendant or already
@@ -166,8 +166,9 @@ ORCA hub canvas close [--terminal <handle>] [--json]
 ORCA hub canvas close --json
 ```
 
-- A mirror is what the user sees as a floating Agent Hub card: a window with a tab strip
-  and a `+` button. "Add a tab to this card" means `hub mirror add`.
+- A mirror is a floating Agent Hub card with a tab strip and a `+` button. Use
+  `hub mirror add` when the agent and destination card have terminal handles on the same
+  execution host.
 - `open` opens a new card for the target. `add` adds the target as a tab in the card that
   shows your own terminal, or with `--into <handle>` in the card that shows that terminal.
   Without `--into` and outside any card it opens a new card. `--into` naming a terminal
@@ -183,6 +184,25 @@ ORCA hub canvas close --json
   default arrangement (`grid` if unset). Other names fail with `invalid_argument`.
 - `canvas open` requires the user's Agent Hub canvas setting enabled; otherwise it
   fails with `invalid_argument`. `canvas close` closes the canvas.
+
+### Add to an existing card
+
+1. Run `ORCA hub status --json` on the execution host. Pick `--into` from the intended
+   card's `result.cards[].tabs[].terminalHandle`. The list includes addressable terminal
+   panes on that host. A card can also show native Chat tabs, and a card with no
+   addressable terminal is omitted. Use `worktree ps` to locate the agent and
+   `terminal list --worktree <selector>` to confirm its current handle.
+2. With both handles on that host, run
+   `ORCA hub mirror add --terminal <agentHandle> --into <cardHandle> --json`.
+   After `added` or `already-there`, check that both handles appear in the same card.
+   If the host returns `Caller does not identify a pane on this host`, run from an
+   authorized Orca session on that host when available. `--environment` routes the
+   request and `--terminal` identifies the target. The caller still needs its own
+   valid identity on the execution host.
+3. If the host or a native Chat tab leaves no CLI route, use the destination card's
+   desktop `+` picker within the user's authorized UI scope. Select the existing agent
+   and verify both tabs in that card. If the agent's tab is gone, check its workspace and
+   saved session before reopening it. If the app explicitly denies consent, stop.
 
 Starting a helper with `terminal split` or `terminal create --command` from your terminal
 links it under you in Hub. Use its returned handle to add it to your mirror; your descendants
