@@ -20,6 +20,7 @@ import type {
 import type { ClaudeStructuredSessionEvent } from '../lifecycle/claude-structured-session-event'
 import { ClaudeBackgroundTaskTracker } from '../../background-tasks/claude-background-task-tracker'
 import { ClaudeChildWorkDecoder } from '../../child-work/claude-child-work-decoder'
+import { ClaudePluginSurfaces } from '../../plugin-surfaces/claude-plugin-surfaces'
 import { ClaudeSlashCommandCatalog } from '../../command-catalog/claude-slash-command-catalog'
 import type { ClaudeStructuredLaunch } from '../launch/claude-structured-launch-resolution'
 import type { ClaudeAcquisitionLaunch } from '../launch/claude-structured-acquisition-launch'
@@ -134,6 +135,7 @@ export function createClaudeSessionPublication(input: {
       childWork: new ClaudeChildWorkDecoder(input.translator?.taskInvocations),
       // An unread catalog is unavailable, not empty.
       commands: new ClaudeSlashCommandCatalog(),
+      pluginSurfaces: new ClaudePluginSurfaces(),
       dispatchSequence: 0,
       optionMutationSequence: 0,
       options: new Map(input.launch.savedOptions.options),

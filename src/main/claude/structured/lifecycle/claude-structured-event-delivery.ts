@@ -71,6 +71,9 @@ export function emitClaudeStructuredSessionEvent({
     session?.delivery.dispose()
     session?.childWork.clear()
     session?.backgroundTasks.clear()
+    if (session?.pluginSurfaces.clear()) {
+      session.events?.setPluginSurfaces?.({ statuses: [] })
+    }
   } else if (event.type === 'message') {
     session?.childWork.observe(event.message, session.translator?.childToolOwner)
     session?.backgroundTasks.observe(event.message, event.startsTurn === true)
@@ -80,6 +83,12 @@ export function emitClaudeStructuredSessionEvent({
   }
   if (event.type === 'message' && session?.commands.observe(event.message)) {
     session.events?.publish()
+  }
+  if (event.type === 'message') {
+    const surfaces = session?.pluginSurfaces.observe(event.message)
+    if (surfaces) {
+      session?.events?.setPluginSurfaces?.(surfaces)
+    }
   }
   session?.translator?.handle(event)
   if (session && event.type === 'message' && claudeAuthRetryStatus(event.message) !== null) {

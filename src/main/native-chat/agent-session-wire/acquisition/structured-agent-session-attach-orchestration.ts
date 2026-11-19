@@ -260,12 +260,18 @@ async function runAttachUnderAbort(
             failureTextContext: structuredAgentSessionFailureWordsContext(priorRecord)
           })
         }
+        if (owner === 'acquired') {
+          // A new process starts with no plugin status lines.
+          context.subscribers.pluginSurfaces.publish(sessionId, { statuses: [] })
+        }
         eventSink.bind({
           journal: attached.journal,
           fence,
           publish: (activity) => context.subscribers.publish(sessionId, attached.journal, activity),
           publishPromptSuggestion: (suggestion) =>
             context.subscribers.promptSuggestions.publish(sessionId, suggestion),
+          publishPluginSurfaces: (update) =>
+            context.subscribers.pluginSurfaces.publish(sessionId, update),
           liveTextReaders: () => context.subscribers.liveTextReaders(sessionId),
           publishLiveText: (read) => {
             if (context.sessions.get(sessionId)?.journal === attached.journal) {
