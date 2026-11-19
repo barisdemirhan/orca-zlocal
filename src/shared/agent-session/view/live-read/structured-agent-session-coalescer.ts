@@ -13,6 +13,8 @@ function bypassCoalescing(event: AgentSessionSubscribeEvent): boolean {
     // Deliver queue lists immediately or the queued response removes Sending before its replacement card arrives.
     event.queuedMessages !== undefined ||
     event.currentRequests !== undefined ||
+    // A toast fires once, so it must not wait behind or merge with another frame.
+    event.pluginToasts !== undefined ||
     event.batch.removedItemIds.length > 0 ||
     event.batch.items.some((item) => item.body.kind !== 'message' || item.body.role !== 'assistant')
   )
@@ -73,6 +75,9 @@ function mergeBatch(
               ? right.promptSuggestion
               : (left.promptSuggestion ?? null)
         }
+      : {}),
+    ...(right.pluginStatuses !== undefined || left.pluginStatuses !== undefined
+      ? { pluginStatuses: right.pluginStatuses ?? left.pluginStatuses }
       : {}),
     ...(latestTurn !== undefined ? { latestTurn } : {}),
     ...(actionablePromptIds !== undefined ? { actionablePromptIds } : {}),

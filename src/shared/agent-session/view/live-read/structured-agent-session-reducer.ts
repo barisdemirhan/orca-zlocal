@@ -1,3 +1,4 @@
+import { foldOlderStructuredAgentSessionPage } from './structured-agent-session-older-page-fold'
 import { trimStructuredAgentSessionHistory } from './structured-agent-session-history-retention'
 import type { AgentSessionCurrentRequestsMarker } from '../../requests/agent-session-current-requests-wire'
 import {
@@ -30,6 +31,11 @@ import type {
   AgentSessionQueuePause
 } from '../../requests/agent-session-queued-message-wire'
 import type { AgentSessionBackgroundTaskState } from '../../background-tasks/agent-session-background-task-wire'
+import {
+  pluginSurfacesAfterBatch,
+  pluginSurfacesRestated,
+  type AgentSessionPluginSurfaceState
+} from '../../plugin-surfaces/agent-session-plugin-surface-state'
 import type { AgentSessionRefusalReference } from '../../failures/agent-session-wire-refusals'
 import { backgroundTaskStatesEqual } from '../../background-tasks/agent-session-background-task-state-equality'
 import { admitAgentSessionBackgroundTaskState } from '../../background-tasks/agent-session-background-task-state-admission'
@@ -38,7 +44,6 @@ import {
   MAX_RETAINED_ITEMS,
   MAX_RETAINED_OWN_ITEMS,
   mergeSubmissions,
-  ownItemCount,
   trimRetainedItems
 } from '../structured-agent-session-item-retention'
 import { readAgentJournalTurn } from '../../lifecycle/records/agent-session-turn-record'
@@ -52,7 +57,6 @@ import {
 } from '../structured-agent-session-live-turn'
 import {
   foldStructuredAgentSubagentRoster,
-  foldStructuredAgentSubagentRosterPage,
   NO_STRUCTURED_AGENT_SUBAGENT_ROSTER,
   type StructuredAgentSubagentRoster
 } from '../structured-agent-session-subagent-roster'
@@ -88,6 +92,8 @@ export type StructuredAgentSessionState = AgentSessionCurrentRequestsState & {
   nextQueuedMessageId?: string | null
   commands?: AgentSessionSlashCommand[] | null
   activity?: AgentSessionTurnActivity | null
+  /** Plugin status lines and toasts; absent until a subscription frame carries either. */
+  plugins?: AgentSessionPluginSurfaceState
   /** Off the journal, so history pages and snapshots keep it; only a batch sets it. */
   promptSuggestion?: AgentSessionPromptSuggestion | null
   /** Absent until a frame from a host that stamps `hostNow` has been applied. */
@@ -168,6 +174,7 @@ export function reduceStructuredAgentSession(
       ...replacePage(action.page, action.page.fence ?? null, state.backgroundTasks, state.activity),
       ...currentRequestsState(state),
       promptSuggestion: state.promptSuggestion,
+      plugins: state.plugins,
       commands: state.commands,
       // Live subscription state stays authoritative over a possibly stale history answer.
       ...queuePublicationField(state, action.page),
@@ -175,26 +182,7 @@ export function reduceStructuredAgentSession(
     }
   }
   if (action.type === 'older-page') {
-    const requested = action.requestedCursor
-    if (state.epoch !== requested.epoch || action.page.epoch !== requested.epoch) {
-      return state
-    }
-    const head = state.items[0]
-    // Head trim overtook the requested anchor; merging would leave a hole. Caller must retry from the new head.
-    if (head && head.sequence > requested.sequence) {
-      return state
-    }
-    const items = mergeItems(state.items, action.page.items, action.page.removedItemIds)
-    return {
-      ...state,
-      items,
-      retainedOwnItemLimit: Math.max(state.retainedOwnItemLimit, ownItemCount(items)),
-      retainedItemCap: Math.max(state.retainedItemCap, items.length),
-      subagentRoster: foldStructuredAgentSubagentRosterPage(state.subagentRoster, action.page),
-      submissions: mergeSubmissions(state.submissions, action.page.submissions, items),
-      hasOlder: agentSessionHasOlderTranscript(items, action.page.hasOlder),
-      ...hostClockField(action.page.hostNow, receivedAt, state.hostClock)
-    }
+    return foldOlderStructuredAgentSessionPage(state, action, receivedAt)
   }
   const event = action.event
   if (event.type === 'end') {
@@ -213,6 +201,7 @@ export function reduceStructuredAgentSession(
       status: 'ready',
       commands: event.commands,
       promptSuggestion: state.promptSuggestion,
+      plugins: state.plugins,
       // A snapshot omits the list when unchanged since the last frame sent to this subscriber.
       ...queuePublicationField(event, event.page, state),
       ...hostClockField(event.hostNow, receivedAt, state.hostClock)
@@ -260,6 +249,7 @@ export function reduceStructuredAgentSession(
     activity?.turnId === state.activity?.turnId &&
     activity?.text === state.activity?.text &&
     promptSuggestion?.id === state.promptSuggestion?.id &&
+    pluginSurfacesRestated(event, state.plugins) &&
     state.status === 'ready' &&
     state.error === undefined &&
     requests.currentRequests === state.currentRequests &&
@@ -314,6 +304,7 @@ export function reduceStructuredAgentSession(
     backgroundTasks,
     ...(activity !== undefined ? { activity } : {}),
     ...(promptSuggestion !== undefined ? { promptSuggestion } : {}),
+    ...pluginSurfacesAfterBatch(state.plugins, event),
     ...(lostTurnRow ? { unloadedTurnRevisions: (state.unloadedTurnRevisions ?? 0) + 1 } : {}),
     ...hostClockField(event.hostNow, receivedAt, state.hostClock)
   }

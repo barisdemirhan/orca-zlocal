@@ -31,6 +31,12 @@ import type { AgentProviderSessionMetadata } from './lifecycle/agent-session-res
 import type { NativeChatSubagentEntry } from '../native-chat/native-chat-types'
 import type { AgentSessionStatusPermissionFields } from './options/permissions/agent-session-status-permission-fields'
 import type { StructuredAgentSessionProjectedStatus } from './view/structured-agent-session-projection'
+import type {
+  AgentSessionPluginStatus,
+  AgentSessionPluginSurfaceUpdate,
+  AgentSessionPluginToast
+} from './plugin-surfaces/agent-session-plugin-surface-wire'
+export type { AgentSessionPluginSurfaceUpdate }
 
 export type AgentSessionTurnActivity = { turnId: string; text: string }
 
@@ -172,6 +178,10 @@ export type AgentSessionSubscribeEvent =
       activity?: AgentSessionTurnActivity | null
       /** Sent only to subscribers that asked for suggestions; null clears, absent keeps. */
       promptSuggestion?: AgentSessionPromptSuggestion | null
+      /** Whole current list of plugin status lines; empty clears, absent keeps. Never sent to phones. */
+      pluginStatuses?: AgentSessionPluginStatus[]
+      /** One-shot plugin toasts for this frame only; never replayed to a later subscriber. */
+      pluginToasts?: AgentSessionPluginToast[]
       /** Rides every batch that carries rows, removals or submissions, so absent there means an
        *  older host; absent on one that carries none, which changes no turn. */
       latestTurn?: AgentSessionLatestTurn | null

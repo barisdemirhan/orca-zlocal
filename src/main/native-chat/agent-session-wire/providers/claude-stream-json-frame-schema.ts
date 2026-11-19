@@ -33,6 +33,8 @@ export const CLAUDE_STREAM_JSON_FRAME_KINDS = [
   'message:system:session_state_changed',
   'message:system:worker_shutting_down',
   'message:system:commands_changed',
+  'message:system:ui_status',
+  'message:system:ui_toast',
   'message:system:notification',
   'message:system:files_persisted',
   'message:tool_use_summary',

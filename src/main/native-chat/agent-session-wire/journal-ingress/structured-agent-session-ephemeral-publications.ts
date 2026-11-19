@@ -1,4 +1,5 @@
 import type {
+  AgentSessionPluginSurfaceUpdate,
   AgentSessionPromptSuggestion,
   AgentSessionTurnActivity
 } from '../../../../shared/agent-session/agent-session-wire'
@@ -10,6 +11,7 @@ export function structuredAgentSessionEphemeralPublications(
 ): {
   setActivity: (activity: AgentSessionTurnActivity | null) => void
   setPromptSuggestion: (suggestion: AgentSessionPromptSuggestion | null) => void
+  setPluginSurfaces: (update: AgentSessionPluginSurfaceUpdate) => void
 } {
   return {
     setActivity: (activity) => {
@@ -24,6 +26,14 @@ export function structuredAgentSessionEphemeralPublications(
         bytes: Buffer.byteLength(JSON.stringify(suggestion), 'utf8') + 64,
         publicationKey: 'prompt-suggestion',
         run: (bound) => bound.publishPromptSuggestion?.(suggestion)
+      })
+    },
+    setPluginSurfaces: (update) => {
+      queue.submit({
+        bytes: Buffer.byteLength(JSON.stringify(update), 'utf8') + 64,
+        // A key per toast: coalescing by one shared key would drop all but the newest.
+        publicationKey: update.toast ? `plugin-toast:${update.toast.id}` : 'plugin-statuses',
+        run: (bound) => bound.publishPluginSurfaces?.(update)
       })
     }
   }

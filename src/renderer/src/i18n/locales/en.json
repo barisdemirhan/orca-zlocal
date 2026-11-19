@@ -22077,6 +22077,9 @@
         "readFailed": "Unable to read this attachment on its host. Reconnect and try again. The file may have been removed or changed."
       },
       "settings": "Chat settings",
+      "pluginStatus": {
+        "label": "Plugin status"
+      },
       "composerWorkspace": {
         "copyFailed": "Failed to copy",
         "copyIdentity": "Copy {{value0}}",
