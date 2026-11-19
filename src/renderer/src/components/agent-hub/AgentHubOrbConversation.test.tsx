@@ -155,7 +155,7 @@ it('does not cancel a newer panel launch from an older conversation control', as
   const pending = useAgentHubOrbPanel.getState().launchRequest
   const sequence = useAgentHubOrbPanel.getState().launchSequence
   render(conversation())
-  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Mini window' })))
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Floating window' })))
   expect(useAgentHubOrbPanel.getState().launchRequest).toBe(pending)
   expect(useAgentHubOrbPanel.getState().launchSequence).toBe(sequence)
 })

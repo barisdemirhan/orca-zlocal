@@ -1,6 +1,23 @@
-import { ArrowLeft, History, Minimize2, Moon, Plus, Settings, X } from 'lucide-react'
+import {
+  AppWindow,
+  ArrowLeft,
+  ChevronDown,
+  History,
+  Minimize2,
+  Moon,
+  Plus,
+  Settings,
+  X
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useAgentHubOrbAwarenessStore } from './agent-hub-orb-awareness-store'
@@ -50,6 +67,7 @@ export function AgentHubOrbConversationHeader({
   onHistory,
   onSettings,
   onNew,
+  onMiniWindow,
   onMinimize,
   onSleep,
   onClose,
@@ -64,6 +82,7 @@ export function AgentHubOrbConversationHeader({
   onHistory: () => void
   onSettings: () => void
   onNew: () => void
+  onMiniWindow: () => void
   onMinimize: () => void
   onSleep: () => void
   onClose: () => void
@@ -73,6 +92,7 @@ export function AgentHubOrbConversationHeader({
   const historyLabel = translate('auto.agentHub.orb.pastConversations', 'Past conversations')
   const settingsLabel = translate('auto.agentHub.orb.settings', 'Orb settings')
   const newLabel = translate('auto.agentHub.orb.newConversation', 'New')
+  const sleepLabel = translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name })
   const deliveryUnverifiable = useAgentHubOrbAwarenessStore((s) => s.delivery === 'unverifiable')
   const deliveryLabel = translate(
     'agentHub.orb.deliveryUnverifiable',
@@ -89,9 +109,41 @@ export function AgentHubOrbConversationHeader({
           <ArrowLeft />
         </AgentHubOrbHeaderAction>
       ) : null}
-      <span className="text-sm font-semibold">
-        {history ? historyLabel : settingsView ? settingsLabel : name}
-      </span>
+      {chatVisible ? (
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={translate('agentHub.orb.menuNamed', '{{name}} menu', { name })}
+              className="-ml-1.5 gap-1 px-1.5 text-sm font-semibold"
+            >
+              {name}
+              <ChevronDown aria-hidden className="size-3.5 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem disabled={busy} onSelect={onHistory}>
+              <History />
+              {historyLabel}
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={busy} onSelect={onSettings}>
+              <Settings />
+              {settingsLabel}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled={busy} onSelect={onSleep}>
+              <Moon />
+              {sleepLabel}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <span className="text-sm font-semibold">
+          {history ? historyLabel : settingsView ? settingsLabel : name}
+        </span>
+      )}
       {chatVisible && deliveryUnverifiable ? (
         <AgentHubActionTooltip label={deliveryLabel}>
           <span
@@ -111,38 +163,26 @@ export function AgentHubOrbConversationHeader({
         <Button type="button" variant="outline" size="xs" disabled={busy} onClick={onNew}>
           {newLabel}
         </Button>
-      ) : !settingsView ? (
-        <AgentHubOrbHeaderAction label={historyLabel} disabled={busy} onClick={onHistory}>
-          <History />
-        </AgentHubOrbHeaderAction>
       ) : null}
       {chatVisible ? (
-        <AgentHubOrbHeaderAction label={newLabel} disabled={busy} onClick={onNew}>
-          <Plus />
-        </AgentHubOrbHeaderAction>
-      ) : null}
-      {!settingsView ? (
-        <AgentHubOrbHeaderAction label={settingsLabel} disabled={busy} onClick={onSettings}>
-          <Settings />
-        </AgentHubOrbHeaderAction>
-      ) : null}
-      {chatVisible ? (
-        <AgentHubOrbHeaderAction
-          label={translate('auto.agentHub.orb.minimize', 'Minimize Orb')}
-          actionId="agentHub.orb.toggleConversation"
-          onClick={onMinimize}
-        >
-          <Minimize2 />
-        </AgentHubOrbHeaderAction>
-      ) : null}
-      {chatVisible ? (
-        <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name })}
-          disabled={busy}
-          onClick={onSleep}
-        >
-          <Moon />
-        </AgentHubOrbHeaderAction>
+        <>
+          <AgentHubOrbHeaderAction label={newLabel} disabled={busy} onClick={onNew}>
+            <Plus />
+          </AgentHubOrbHeaderAction>
+          <AgentHubOrbHeaderAction
+            label={translate('agentHub.orb.miniWindow', 'Floating window')}
+            onClick={onMiniWindow}
+          >
+            <AppWindow />
+          </AgentHubOrbHeaderAction>
+          <AgentHubOrbHeaderAction
+            label={translate('auto.agentHub.orb.minimize', 'Minimize Orb')}
+            actionId="agentHub.orb.toggleConversation"
+            onClick={onMinimize}
+          >
+            <Minimize2 />
+          </AgentHubOrbHeaderAction>
+        </>
       ) : null}
       <AgentHubOrbHeaderAction
         label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name })}

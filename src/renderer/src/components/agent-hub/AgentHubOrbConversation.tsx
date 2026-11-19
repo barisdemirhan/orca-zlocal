@@ -107,19 +107,18 @@ export function AgentHubOrbConversation({
       void voice.stopLive()
       setSecondaryView(view)
     }
+    // History and settings open in the panel, so the floating window hands over to it too.
     useAgentHubOrbPanel.setState({
       chatVisible: view === 'chat',
-      ...(view === 'chat' ? { presentation: 'chat', compact: false } : {})
+      presentation: 'chat',
+      compact: false
     })
   }
-  const showConversation = (): void => {
+  const present = (presentation: 'chat' | 'mini' | 'orb'): void => {
     cancelAgentHubOrbLaunch(sessionId, tabId)
-    useAgentHubOrbPanel.setState({ presentation: 'chat', compact: false })
+    useAgentHubOrbPanel.setState({ presentation, compact: false })
   }
-  const showMiniWindow = (): void => {
-    cancelAgentHubOrbLaunch(sessionId, tabId)
-    useAgentHubOrbPanel.setState({ presentation: 'mini', compact: false })
-  }
+  const showMiniWindow = (): void => present('mini')
   const history = !chatVisible && secondaryView === 'history'
   const showSettings = !chatVisible && secondaryView === 'settings'
   const settings = useAppStore((s) => s.settings)
@@ -132,6 +131,7 @@ export function AgentHubOrbConversation({
     refresh,
     onOpened: () => setView('chat')
   })
+  const startNew = (): void => void reopen()
   const conversation = conversations.find((entry) => entry.sessionId === sessionId)
   const tabAgent = useAppStore(
     (s) =>
@@ -226,9 +226,8 @@ export function AgentHubOrbConversation({
           onBack={() => setView('chat')}
           onHistory={() => setView('history')}
           onSettings={() => setView('settings')}
-          onNew={() => {
-            void reopen()
-          }}
+          onNew={startNew}
+          onMiniWindow={showMiniWindow}
           onMinimize={() => useAgentHubOrbPanel.setState({ compact: true })}
           onSleep={sleep}
           onClose={closeAgentHubOrbPanel}
@@ -273,11 +272,10 @@ export function AgentHubOrbConversation({
           request={requestCard}
           requestVisible={hasRequest}
           memory={memoryCard}
-          onShowChat={showConversation}
-          onMinimize={() => {
-            cancelAgentHubOrbLaunch(sessionId, tabId)
-            useAgentHubOrbPanel.setState({ presentation: 'orb' })
-          }}
+          onShowChat={() => present('chat')}
+          onNew={startNew}
+          onHistory={() => setView('history')}
+          onMinimize={() => present('orb')}
           onSleep={sleep}
           onHide={closeAgentHubOrbPanel}
         >

@@ -23,6 +23,8 @@ vi.mock('@/runtime/native-chat/status/structured-agent-session-status-feed', () 
 
 const actions = {
   onShowChat: vi.fn(),
+  onNew: vi.fn(),
+  onHistory: vi.fn(),
   onMinimize: vi.fn(),
   onSleep: vi.fn(),
   onHide: vi.fn()
@@ -52,7 +54,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-it('names the agent and its approval mode and drags by the header, remembering where it lands', () => {
+it('names the agent and its approval mode and drags by the header, remembering where it lands', async () => {
   render(miniWindow())
   const mini = screen.getByRole('region', { name: 'Orb' })
   expect(mini.textContent).toContain('Codex · gpt-model')
@@ -73,7 +75,8 @@ it('names the agent and its approval mode and drags by the header, remembering w
   expect(mini.style.left).toBe('240px')
   expect(mini.style.top).toBe('140px')
   fireEvent.click(screen.getByRole('button', { name: 'Open full chat' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Put Orb to sleep' }))
+  fireEvent.keyDown(screen.getByRole('button', { name: 'More actions' }), { key: 'Enter' })
+  fireEvent.click(await screen.findByRole('menuitem', { name: 'Put Orb to sleep' }))
   expect(actions.onShowChat).toHaveBeenCalledOnce()
   expect(actions.onSleep).toHaveBeenCalledOnce()
 })

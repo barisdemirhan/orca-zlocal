@@ -54,7 +54,7 @@ export function AgentHubOrbHoverControls({
         </AgentHubOrbHeaderAction>
       ) : (
         <AgentHubOrbHeaderAction
-          label={translate('agentHub.orb.miniWindow', 'Mini window')}
+          label={translate('agentHub.orb.miniWindow', 'Floating window')}
           onClick={onMiniWindow}
         >
           <AppWindow />

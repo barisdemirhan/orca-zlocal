@@ -162,8 +162,13 @@ async function openFullChat(user?: ReturnType<typeof userEvent.setup>) {
     user
       ? user.click(screen.getByRole('button', { name }))
       : act(async () => fireEvent.click(screen.getByRole('button', { name })))
-  await click('Mini window')
+  await click('Floating window')
   await click('Open full chat')
+}
+
+async function pickOrbMenuItem(name: string) {
+  fireEvent.keyDown(screen.getByRole('button', { name: 'Orb menu' }), { key: 'Enter' })
+  fireEvent.click(await screen.findByRole('menuitem', { name }))
 }
 
 async function show(chat = true) {
@@ -390,12 +395,12 @@ it('keeps an Orb approval open on Escape and still closes from the surrounding p
 it('reopens from history with one resume call and creates New by closing then opening', async () => {
   await show()
   await screen.findByText('Codex · gpt-model')
-  fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
+  await pickOrbMenuItem('Past conversations')
   fireEvent.click(screen.getByRole('button', { name: /Old question/ }))
   await screen.findByText('Claude · Agent default')
   expect(mocks.open).toHaveBeenCalledWith({ resume: { sessionId: 'past' } })
   expect(mocks.close).not.toHaveBeenCalled()
-  fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
+  await pickOrbMenuItem('Past conversations')
   fireEvent.click(screen.getByRole('button', { name: 'New' }))
   await waitFor(() => expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('new'))
   expect(mocks.close).toHaveBeenCalledOnce()
@@ -476,7 +481,7 @@ it('edits the shared Orb settings without losing the retained draft or conversat
   if (!(draft instanceof HTMLInputElement)) {
     throw new Error('Expected retained chat draft')
   }
-  fireEvent.click(screen.getByRole('button', { name: 'Orb settings' }))
+  await pickOrbMenuItem('Orb settings')
   const settings = screen.getByRole('region', { name: 'Orb settings' })
   expect(useAgentHubOrbPanel.getState().destination?.contains(draft)).toBe(true)
   expect(useAgentHubOrbPanel.getState().chatVisible).toBe(false)
@@ -529,7 +534,7 @@ it('reopening leaves another pane recording and cancels only the Orb recording i
     act(() => useAppStore.setState({ dictationState: 'listening' }))
     await show()
     await screen.findByText('Codex · gpt-model')
-    fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
+    await pickOrbMenuItem('Past conversations')
     fireEvent.click(screen.getByRole('button', { name: /Old question/ }))
     await screen.findByText('Claude · Agent default')
     expect(actions).toEqual([])
@@ -543,7 +548,7 @@ it('reopening leaves another pane recording and cancels only the Orb recording i
     slot.append(composer)
     composer.focus()
     act(() => useAppStore.setState({ dictationState: 'listening' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
+    await pickOrbMenuItem('Past conversations')
     fireEvent.click(screen.getByRole('button', { name: 'New' }))
     await waitFor(() => expect(useAgentHubOrbPanel.getState().session?.sessionId).toBe('new'))
     expect(actions).toEqual(['cancel'])
@@ -558,7 +563,7 @@ it('reopening leaves another pane recording and cancels only the Orb recording i
 it('retries a failed New action without misreporting it as a history load failure', async () => {
   await show()
   await screen.findByText('Codex · gpt-model')
-  fireEvent.click(screen.getByRole('button', { name: 'Past conversations' }))
+  await pickOrbMenuItem('Past conversations')
   mocks.close.mockRejectedValueOnce({
     code: 'invalid_argument',
     message: 'Orb is still working. Wait for it to finish.'

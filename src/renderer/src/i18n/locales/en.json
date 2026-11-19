@@ -25105,7 +25105,7 @@
       "closeCaption": "Close",
       "requestTitle": "Orb is waiting for you",
       "answerLater": "Answer later",
-      "miniWindow": "Mini window",
+      "miniWindow": "Floating window",
       "pinToDock": "Pin beside the dock",
       "unpinFromDock": "Release from the dock",
       "openFullChat": "Open full chat",
@@ -25158,7 +25158,9 @@
         "answer": "Answer",
         "goToAgent": "Go to agent"
       },
-      "sleepFailed": "Could not put Orb to sleep. Try again."
+      "sleepFailed": "Could not put Orb to sleep. Try again.",
+      "menuNamed": "{{name}} menu",
+      "moreActions": "More actions"
     },
     "sleep": {
       "waking": "Waking…",

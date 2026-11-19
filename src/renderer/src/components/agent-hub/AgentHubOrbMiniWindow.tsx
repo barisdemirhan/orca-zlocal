@@ -1,7 +1,15 @@
 import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronLeft, Maximize2, Moon, X } from 'lucide-react'
+import { ChevronLeft, Ellipsis, History, Moon, PanelTop, Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
 import {
   NATIVE_CHAT_PERMISSION_MODE_ICONS,
@@ -27,6 +35,8 @@ export function AgentHubOrbMiniWindow({
   requestVisible,
   memory,
   onShowChat,
+  onNew,
+  onHistory,
   onMinimize,
   onSleep,
   onHide,
@@ -40,6 +50,8 @@ export function AgentHubOrbMiniWindow({
   requestVisible: boolean
   memory?: ReactNode
   onShowChat: () => void
+  onNew: () => void
+  onHistory: () => void
   onMinimize: () => void
   onSleep: () => void
   onHide: () => void
@@ -57,6 +69,7 @@ export function AgentHubOrbMiniWindow({
   const title = useAgentHubOrbName()
   const backLabel = translate('agentHub.orb.backToOrb', 'Back to Orb')
   const permissionLabel = permission ? nativeChatPermissionModeLabel(permission) : ''
+  const moreLabel = translate('agentHub.orb.moreActions', 'More actions')
   return createPortal(
     <>
       <section
@@ -98,15 +111,32 @@ export function AgentHubOrbMiniWindow({
             label={translate('agentHub.orb.openFullChat', 'Open full chat')}
             onClick={onShowChat}
           >
-            <Maximize2 />
+            <PanelTop />
           </AgentHubOrbHeaderAction>
-          <AgentHubOrbHeaderAction
-            label={translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name: title })}
-            disabled={busy}
-            onClick={onSleep}
-          >
-            <Moon />
-          </AgentHubOrbHeaderAction>
+          <DropdownMenu modal={false}>
+            <AgentHubActionTooltip label={moreLabel}>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={moreLabel}>
+                  <Ellipsis />
+                </Button>
+              </DropdownMenuTrigger>
+            </AgentHubActionTooltip>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled={busy} onSelect={onNew}>
+                <Plus />
+                {translate('auto.agentHub.orb.newConversation', 'New')}
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={busy} onSelect={onHistory}>
+                <History />
+                {translate('auto.agentHub.orb.pastConversations', 'Past conversations')}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={busy} onSelect={onSleep}>
+                <Moon />
+                {translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name: title })}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <AgentHubOrbHeaderAction
             label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name: title })}
             onClick={onHide}
