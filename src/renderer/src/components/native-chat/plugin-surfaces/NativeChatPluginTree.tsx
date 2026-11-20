@@ -1,155 +1,138 @@
-import type { CSSProperties } from 'react'
-import { Button } from '@/components/ui/button'
+import type { CSSProperties, ReactNode } from 'react'
 import { cn } from '@/lib/class-names'
 import type {
-  AgentSessionPluginJson,
   AgentSessionPluginNode,
   AgentSessionPluginUiPress
 } from '../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import { PluginBorderFrame } from './plugin-border-frame'
+import { readBorder } from './plugin-border-style'
+import { boxStyle } from './plugin-box-style'
+import { PluginButton } from './plugin-button'
+import { PLUGIN_CELL_FONT_CLASS, PLUGIN_CELL_ROOT_STYLE, pluginCellsX } from './plugin-cell-metrics'
+import { PluginCodeBlock } from './plugin-code-block'
+import { PluginLink, PluginMarkdown, PluginSvg } from './plugin-media-elements'
+import { readString } from './plugin-prop-values'
+import { readTextWrap, textStyle } from './plugin-text-style'
 
-type Props = Record<string, AgentSessionPluginJson>
 type PressTarget = Pick<AgentSessionPluginUiPress, 'component' | 'instanceId'>
+type TreeContext = { target: PressTarget; onPress: (press: AgentSessionPluginUiPress) => void }
 
-const COLOR_CLASSES: Record<string, string> = {
-  success: 'text-chat-diff-added',
-  green: 'text-chat-diff-added',
-  error: 'text-destructive',
-  red: 'text-destructive',
-  warning: 'text-chat-warning',
-  yellow: 'text-chat-warning',
-  dim: 'text-chat-foreground-faint',
-  gray: 'text-chat-foreground-faint',
-  grey: 'text-chat-foreground-faint'
-}
-
-const JUSTIFY: Record<string, CSSProperties['justifyContent']> = {
-  'flex-start': 'flex-start',
-  center: 'center',
-  'flex-end': 'flex-end',
-  'space-between': 'space-between',
-  'space-around': 'space-around',
-  'space-evenly': 'space-evenly'
-}
-
-const ALIGN: Record<string, CSSProperties['alignItems']> = {
-  'flex-start': 'flex-start',
-  center: 'center',
-  'flex-end': 'flex-end',
-  stretch: 'stretch'
-}
-
-// A terminal cell is about half a character wide.
-function cells(value: AgentSessionPluginJson | undefined): string | undefined {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
-    ? `${value * 0.5}ch`
-    : undefined
-}
-
-function boxStyle(props: Props): CSSProperties {
-  const paddingX = cells(props.paddingX ?? props.padding)
-  const paddingY = cells(props.paddingY ?? props.padding)
-  const gap = cells(props.gap)
-  return {
-    flexDirection: props.flexDirection === 'column' ? 'column' : 'row',
-    flexWrap: props.flexWrap === 'wrap' ? 'wrap' : undefined,
-    columnGap: cells(props.columnGap) ?? gap,
-    rowGap: cells(props.rowGap) ?? gap,
-    paddingInline: paddingX,
-    paddingBlock: paddingY,
-    justifyContent:
-      typeof props.justifyContent === 'string' ? JUSTIFY[props.justifyContent] : undefined,
-    alignItems: typeof props.alignItems === 'string' ? ALIGN[props.alignItems] : undefined
-  }
-}
-
-function textClasses(props: Props): string {
-  const color = typeof props.color === 'string' ? COLOR_CLASSES[props.color] : undefined
-  return cn(
-    props.bold === true || props.weight === 'bold' ? 'font-semibold' : undefined,
-    props.dimColor === true ? 'text-chat-foreground-faint' : color,
-    typeof props.wrap === 'string' && props.wrap.startsWith('truncate')
-      ? 'min-w-0 truncate whitespace-nowrap'
-      : 'whitespace-pre-wrap'
-  )
+function stringChildren(node: AgentSessionPluginNode): string | undefined {
+  const children = node.children ?? []
+  return children.every((child) => typeof child === 'string') ? children.join('') : undefined
 }
 
 function PluginChildren({
-  nodes,
-  target,
-  onPress
+  node,
+  context
 }: {
-  nodes: AgentSessionPluginNode['children']
-  target: PressTarget
-  onPress: (press: AgentSessionPluginUiPress) => void
+  node: AgentSessionPluginNode
+  context: TreeContext
 }): React.JSX.Element {
   return (
     <>
-      {nodes?.map((child, index) =>
+      {node.children?.map((child, index) =>
         typeof child === 'string' ? (
           child
         ) : (
-          <NativeChatPluginTree key={index} node={child} target={target} onPress={onPress} />
+          <PluginElement key={index} node={child} context={context} />
         )
       )}
     </>
   )
 }
 
-/** Draws what a mod rendered; engine nodes and unknown types draw nothing, and strings are always text. */
+function PluginElement({
+  node,
+  context
+}: {
+  node: AgentSessionPluginNode
+  context: TreeContext
+}): React.JSX.Element | null {
+  const props = node.props ?? {}
+  const children: ReactNode = <PluginChildren node={node} context={context} />
+  switch (node.type) {
+    case 'engine':
+      return null
+    case 'Box': {
+      const border = readBorder(props)
+      return (
+        <div className={cn(border && 'isolate')} style={boxStyle(props, border)}>
+          {border ? (
+            <PluginBorderFrame border={border} background={readString(props.backgroundColor)} />
+          ) : null}
+          {children}
+        </div>
+      )
+    }
+    case 'Text': {
+      const text = readTextWrap(props) === 'start' ? stringChildren(node) : undefined
+      const style: CSSProperties = textStyle(props)
+      return text !== undefined ? (
+        <span style={{ ...style, direction: 'rtl', textAlign: 'left' }}>
+          <bdi dir="ltr">{text}</bdi>
+        </span>
+      ) : (
+        <span style={style}>{children}</span>
+      )
+    }
+    case 'Button': {
+      const label = readString(props.label) ?? stringChildren(node) ?? ''
+      return (
+        <PluginButton
+          props={props}
+          press={node.press}
+          target={context.target}
+          onPress={context.onPress}
+          label={label}
+        >
+          {readString(props.label) ?? children}
+        </PluginButton>
+      )
+    }
+    case 'Link':
+      return (
+        <PluginLink props={props}>
+          {node.children?.length ? children : (readString(props.label) ?? readString(props.href))}
+        </PluginLink>
+      )
+    case 'Code':
+      return <PluginCodeBlock props={props} />
+    case 'Markdown':
+      return <PluginMarkdown props={props} />
+    case 'Svg':
+      return <PluginSvg props={props} />
+    default:
+      return node.children?.length ? <>{children}</> : null
+  }
+}
+
+/** Draws what a mod rendered the way the terminal lays it out: Ink flex semantics on a monospace cell grid. */
 export function NativeChatPluginTree({
   node,
   target,
-  onPress
+  onPress,
+  columns
 }: {
   node: AgentSessionPluginNode
   target: PressTarget
   onPress: (press: AgentSessionPluginUiPress) => void
+  /** Cells across the body the mod laid out for; the root is exactly this wide when given. */
+  columns?: number
 }): React.JSX.Element | null {
-  const props = node.props ?? {}
-  if (node.type === 'Box') {
-    return (
-      <div className="flex min-w-0" style={boxStyle(props)}>
-        <PluginChildren nodes={node.children} target={target} onPress={onPress} />
-      </div>
-    )
+  if (node.type === 'engine') {
+    return null
   }
-  if (node.type === 'Text') {
-    return (
-      <span className={textClasses(props)}>
-        <PluginChildren nodes={node.children} target={target} onPress={onPress} />
-      </span>
-    )
-  }
-  if (node.type === 'Button') {
-    const press = node.press
-    const label =
-      typeof props.label === 'string'
-        ? props.label
-        : (node.children ?? []).filter((child) => typeof child === 'string').join('')
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="xs"
-        aria-label={label || undefined}
-        disabled={!press}
-        className={cn(
-          'font-normal',
-          props.dimColor === true ? 'text-chat-foreground-faint' : undefined
-        )}
-        onClick={() =>
-          press &&
-          onPress({
-            ...target,
-            plugin: press.plugin,
-            handle: press.handle,
-            ...(typeof props.key === 'string' ? { key: props.key } : {})
-          })
-        }
-      >
-        {label || <PluginChildren nodes={node.children} target={target} onPress={onPress} />}
-      </Button>
-    )
-  }
-  return null
+  const style = {
+    ...PLUGIN_CELL_ROOT_STYLE,
+    width: columns === undefined ? undefined : pluginCellsX(columns)
+  } as CSSProperties
+  return (
+    <div
+      className={cn(PLUGIN_CELL_FONT_CLASS, 'flex min-w-0 flex-col text-chat-foreground')}
+      style={style}
+    >
+      <PluginElement node={node} context={{ target, onPress }} />
+    </div>
+  )
 }

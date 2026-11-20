@@ -77,6 +77,7 @@ export function emitClaudeStructuredSessionEvent({
     if (session?.pluginUi.clear()) {
       session.events?.setPluginSurfaces?.({ promptHint: null })
       session.events?.setPluginSurfaces?.({ pane: null })
+      session.events?.setPluginSurfaces?.({ band: null })
     }
   } else if (event.type === 'message') {
     session?.childWork.observe(event.message, session.translator?.childToolOwner)

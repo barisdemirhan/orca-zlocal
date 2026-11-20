@@ -26,39 +26,78 @@ function setup(handler: (body: Record<string, unknown>) => unknown) {
 const flush = () => new Promise((resolve) => setTimeout(resolve, 30))
 
 describe('ClaudePluginUiBridge', () => {
-  it('attaches, then renders the prompt hint and the shown pane', async () => {
+  it('attaches, then renders the prompt hint, the band and the shown pane', async () => {
     const { bridge, calls, published } = setup((body) =>
-      body.subtype === 'ui_attach'
-        ? { surfaces: [] }
-        : { tree: body.component === 'Pane' ? hint('pane') : hint('hint') }
+      body.subtype === 'ui_attach' ? { surfaces: [] } : { tree: hint(String(body.component)) }
     )
     bridge.start()
     await flush()
     bridge.observe({
       type: 'system',
       subtype: 'ui_panes',
-      panes: [{ id: 'deck', title: 'Deck', plugin: 'deck' }],
+      panes: [{ id: 'deck', title: 'Deck', plugin: 'deck', columns: 52, rows: 14 }],
       shown_id: 'deck'
     })
     await flush()
-    expect(calls[0]).toEqual({ subtype: 'ui_attach', surface: 'desktop', client_id: 'orca-s1' })
+    expect(calls[0]).toEqual({
+      subtype: 'ui_attach',
+      surface: 'desktop',
+      client_id: 'orca-s1',
+      viewport: { columns: 100, rows: 40, isFullscreen: true }
+    })
     expect(calls[1]).toMatchObject({
       subtype: 'ui_render',
       component: 'PromptHint',
       instance_id: 'prompt-hint',
-      props: {}
+      props: { isDraft: false, isWorking: false, hint: '' }
     })
-    expect(calls[2]).toMatchObject({ component: 'Pane', instance_id: 'deck' })
+    expect(calls[2]).toMatchObject({
+      component: 'AbovePrompt',
+      instance_id: 'above-prompt',
+      props: { bodyColumns: 95, maxRows: 20, hasSurvey: false }
+    })
+    expect(calls[3]).toMatchObject({
+      component: 'Pane',
+      instance_id: 'deck',
+      props: { bodyColumns: 96, placement: 'inline', scroll: { offset: 0, bodyRows: 12 } }
+    })
     expect(published).toEqual([
-      { promptHint: hint('hint') },
-      { pane: { id: 'deck', title: 'Deck', plugin: 'deck', tree: hint('pane') } }
+      { promptHint: hint('PromptHint') },
+      { band: hint('AbovePrompt') },
+      {
+        pane: {
+          id: 'deck',
+          title: 'Deck',
+          plugin: 'deck',
+          columns: 52,
+          rows: 14,
+          tree: hint('Pane')
+        }
+      }
     ])
+    await bridge.act({
+      kind: 'layout',
+      columns: 160,
+      rows: 50,
+      placement: 'dock',
+      paneColumns: 50,
+      bandColumns: 103,
+      isWorking: true,
+      isDraft: false
+    })
+    await flush()
+    expect(calls.find((call) => call.component === 'Pane' && call !== calls[3])).toMatchObject({
+      viewport: { columns: 160, rows: 50 },
+      props: { bodyColumns: 50, placement: 'dock', scroll: { bodyRows: 49 } }
+    })
+    await bridge.act({ kind: 'close', paneId: 'deck' })
+    expect(calls.at(-1)).toEqual({ subtype: 'ui_close', id: 'deck', client_id: 'orca-s1' })
     bridge.observe({ type: 'system', subtype: 'ui_panes', panes: [], shown_id: null })
     await flush()
     expect(published.at(-1)).toEqual({ pane: null })
   })
 
-  it('redraws once for a burst of invalidations', async () => {
+  it('redraws each mounted site once for a burst of invalidations', async () => {
     const { bridge, calls } = setup((body) =>
       body.subtype === 'ui_attach' ? { surfaces: [] } : { tree: hint('x') }
     )
@@ -69,7 +108,7 @@ describe('ClaudePluginUiBridge', () => {
       bridge.observe({ type: 'system', subtype: 'ui_invalidate' })
     }
     await flush()
-    expect(calls.length - before).toBe(1)
+    expect(calls.slice(before).map((call) => call.component)).toEqual(['PromptHint', 'AbovePrompt'])
   })
 
   it('applies the drawing a press returns and redraws when it is not handled', async () => {
@@ -84,7 +123,8 @@ describe('ClaudePluginUiBridge', () => {
     })
     bridge.start()
     await flush()
-    await bridge.press({
+    await bridge.act({
+      kind: 'press',
       component: 'PromptHint',
       instanceId: 'prompt-hint',
       plugin: 'deck',

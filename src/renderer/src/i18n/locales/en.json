@@ -22610,8 +22610,7 @@
         "label": "Plugin status"
       },
       "pluginPane": {
-        "collapse": "Collapse pane",
-        "expand": "Expand pane"
+        "close": "Close pane"
       },
       "composerWorkspace": {
         "copyFailed": "Failed to copy",

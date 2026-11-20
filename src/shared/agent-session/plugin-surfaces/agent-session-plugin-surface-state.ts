@@ -13,6 +13,7 @@ export type AgentSessionPluginSurfaceState = {
   toasts: AgentSessionPluginToast[]
   promptHint: AgentSessionPluginNode | null
   pane: AgentSessionPluginPane | null
+  band: AgentSessionPluginNode | null
 }
 
 type PluginSurfaceFrame = {
@@ -20,6 +21,7 @@ type PluginSurfaceFrame = {
   pluginToasts?: AgentSessionPluginToast[]
   pluginPromptHint?: AgentSessionPluginNode | null
   pluginPane?: AgentSessionPluginPane | null
+  pluginBand?: AgentSessionPluginNode | null
 }
 
 // Trees are capped by the host, so comparing their JSON stays cheap.
@@ -50,7 +52,8 @@ export function pluginSurfacesRestated(
       statusesEqual(frame.pluginStatuses, current?.statuses ?? [])) &&
     (frame.pluginPromptHint === undefined ||
       treesEqual(frame.pluginPromptHint, current?.promptHint)) &&
-    (frame.pluginPane === undefined || treesEqual(frame.pluginPane, current?.pane))
+    (frame.pluginPane === undefined || treesEqual(frame.pluginPane, current?.pane)) &&
+    (frame.pluginBand === undefined || treesEqual(frame.pluginBand, current?.band))
   )
 }
 
@@ -63,7 +66,8 @@ export function pluginSurfacesAfterBatch(
     frame.pluginStatuses === undefined &&
     frame.pluginToasts === undefined &&
     frame.pluginPromptHint === undefined &&
-    frame.pluginPane === undefined
+    frame.pluginPane === undefined &&
+    frame.pluginBand === undefined
   ) {
     return {}
   }
@@ -77,6 +81,7 @@ export function pluginSurfacesAfterBatch(
           ? (current?.promptHint ?? null)
           : frame.pluginPromptHint,
       pane: frame.pluginPane === undefined ? (current?.pane ?? null) : frame.pluginPane,
+      band: frame.pluginBand === undefined ? (current?.band ?? null) : frame.pluginBand,
       toasts: [
         ...held,
         ...(frame.pluginToasts ?? []).filter((toast) => !known.has(toast.id))

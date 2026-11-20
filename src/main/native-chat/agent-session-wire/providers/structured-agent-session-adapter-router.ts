@@ -110,8 +110,8 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
     }
   }
 
-  pressPluginUi: NonNullable<Adapter['pressPluginUi']> = async (id, press) =>
-    this.liveOwnerOrNull(id)?.pressPluginUi?.(id, press)
+  actOnPluginUi: NonNullable<Adapter['actOnPluginUi']> = async (id, action) =>
+    this.liveOwnerOrNull(id)?.actOnPluginUi?.(id, action)
 
   renameProviderSession: NonNullable<Adapter['renameProviderSession']> = (input) =>
     this.capabilityOwner(

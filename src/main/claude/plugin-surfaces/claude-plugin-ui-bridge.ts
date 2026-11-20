@@ -1,19 +1,27 @@
 import type {
-  AgentSessionPluginNode,
   AgentSessionPluginSurfaceUpdate,
-  AgentSessionPluginUiComponent,
+  AgentSessionPluginUiAction,
+  AgentSessionPluginUiLayout,
   AgentSessionPluginUiPress
 } from '../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import {
+  DEFAULT_PLUGIN_UI_LAYOUT,
+  isRecord,
+  pluginUiSiteProps,
+  pluginUiText as text,
+  pluginUiViewport,
+  readPluginPaneEntry,
+  type PluginPaneEntry,
+  type PluginUiInstance
+} from './claude-plugin-ui-render-site'
 import { pluginTreeDrawsContent, sanitizePluginTree } from './claude-plugin-ui-tree'
 
 const SURFACE = 'desktop'
 const PROMPT_HINT_INSTANCE = 'prompt-hint'
+const ABOVE_PROMPT_INSTANCE = 'above-prompt'
 const INVALIDATE_DEBOUNCE_MS = 100
 const MAX_PANES = 20
-const MAX_TEXT = 200
 
-type PluginUiInstance = { component: AgentSessionPluginUiComponent; instanceId: string }
-type PluginPaneEntry = { id: string; title: string; plugin: string }
 type PluginUiMode = 'idle' | 'attaching' | 'ready' | 'unsupported' | 'closed'
 
 export type ClaudePluginUiBridgeDeps = {
@@ -24,19 +32,12 @@ export type ClaudePluginUiBridgeDeps = {
   debounceMs?: number
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function text(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() !== '' ? value.trim().slice(0, MAX_TEXT) : null
-}
-
 /** Draws what mods render through Claude Code's internal `ui_*` protocol; one per process, silent on any failure. */
 export class ClaudePluginUiBridge {
   private mode: PluginUiMode = 'idle'
   private panes: PluginPaneEntry[] = []
   private shownPaneId: string | null = null
+  private layout: AgentSessionPluginUiLayout = DEFAULT_PLUGIN_UI_LAYOUT
   private readonly mounted = new Map<string, PluginUiInstance>()
   private readonly renderSequence = new Map<string, number>()
   private readonly published = new Map<string, string>()
@@ -74,7 +75,33 @@ export class ClaudePluginUiBridge {
     }
   }
 
-  async press(press: AgentSessionPluginUiPress): Promise<void> {
+  act(action: AgentSessionPluginUiAction): Promise<void> {
+    if (action.kind === 'press') {
+      return this.press(action)
+    }
+    if (action.kind === 'close') {
+      return this.close(action.paneId)
+    }
+    const { kind: _kind, ...layout } = action
+    if (JSON.stringify(layout) !== JSON.stringify(this.layout)) {
+      this.layout = layout
+      this.redrawAll()
+    }
+    return Promise.resolve()
+  }
+
+  private async close(paneId: string): Promise<void> {
+    if (this.mode !== 'ready' || !this.panes.some((pane) => pane.id === paneId)) {
+      return
+    }
+    try {
+      await this.send({ subtype: 'ui_close', id: paneId, client_id: this.clientId })
+    } catch {
+      // The pane stays until the next ui_panes says otherwise.
+    }
+  }
+
+  private async press(press: AgentSessionPluginUiPress): Promise<void> {
     const instance = this.mounted.get(press.instanceId)
     if (this.mode !== 'ready' || !instance || instance.component !== press.component) {
       return
@@ -127,7 +154,12 @@ export class ClaudePluginUiBridge {
       client_id: this.clientId,
       component: instance.component,
       instance_id: instance.instanceId,
-      props: {}
+      viewport: pluginUiViewport(this.layout),
+      props: pluginUiSiteProps(
+        instance,
+        this.layout,
+        this.panes.find((pane) => pane.id === instance.instanceId)
+      )
     }
   }
 
@@ -136,7 +168,8 @@ export class ClaudePluginUiBridge {
       const reply = await request({
         subtype: 'ui_attach',
         surface: SURFACE,
-        client_id: this.clientId
+        client_id: this.clientId,
+        viewport: pluginUiViewport(this.layout)
       })
       if (!isRecord(reply) || !Array.isArray(reply.surfaces)) {
         throw new Error('unknown ui_attach answer')
@@ -152,16 +185,15 @@ export class ClaudePluginUiBridge {
     }
     this.mode = 'ready'
     this.mount({ component: 'PromptHint', instanceId: PROMPT_HINT_INSTANCE })
+    this.mount({ component: 'AbovePrompt', instanceId: ABOVE_PROMPT_INSTANCE })
     this.syncShownPane()
   }
 
   private readPanes(message: Record<string, unknown>): void {
     const entries = Array.isArray(message.panes) ? message.panes : []
     this.panes = entries.slice(0, MAX_PANES).flatMap((entry) => {
-      const id = isRecord(entry) ? text(entry.id) : null
-      return isRecord(entry) && id
-        ? [{ id, title: text(entry.title) ?? id, plugin: text(entry.plugin) ?? id }]
-        : []
+      const pane = readPluginPaneEntry(entry)
+      return pane ? [pane] : []
     })
     this.shownPaneId = text(message.shown_id)
     if (this.mode === 'ready') {
@@ -222,16 +254,17 @@ export class ClaudePluginUiBridge {
       return
     }
     const tree = sanitizePluginTree(raw)
-    if (instance.component === 'PromptHint') {
-      this.publishPromptHint(tree && pluginTreeDrawsContent(tree) ? tree : null)
+    if (instance.component !== 'Pane') {
+      const drawn = tree && pluginTreeDrawsContent(tree) ? tree : null
+      this.publishChanged(
+        instance.component,
+        drawn,
+        instance.component === 'PromptHint' ? { promptHint: drawn } : { band: drawn }
+      )
       return
     }
     const pane = this.panes.find((entry) => entry.id === instance.instanceId)
     this.publishPane(tree && pane ? { ...pane, tree } : null)
-  }
-
-  private publishPromptHint(tree: AgentSessionPluginNode | null): void {
-    this.publishChanged('promptHint', tree, { promptHint: tree })
   }
 
   private publishPane(pane: AgentSessionPluginSurfaceUpdate['pane']): void {
@@ -270,6 +303,15 @@ export class ClaudePluginUiBridge {
       this.timer ??= setTimeout(() => this.flush(), this.deps.debounceMs ?? INVALIDATE_DEBOUNCE_MS)
       this.timer.unref?.()
     }
+  }
+
+  private redrawAll(): void {
+    if (this.mode !== 'ready') {
+      return
+    }
+    this.pendingAll = true
+    this.timer ??= setTimeout(() => this.flush(), this.deps.debounceMs ?? INVALIDATE_DEBOUNCE_MS)
+    this.timer.unref?.()
   }
 
   private flush(): void {

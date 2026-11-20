@@ -39,7 +39,9 @@ export function structuredAgentSessionEphemeralPublications(
             ? 'plugin-prompt-hint'
             : update.pane !== undefined
               ? 'plugin-pane'
-              : 'plugin-statuses',
+              : update.band !== undefined
+                ? 'plugin-band'
+                : 'plugin-statuses',
         run: (bound) => bound.publishPluginSurfaces?.(update)
       })
     }

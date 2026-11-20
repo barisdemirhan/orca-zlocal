@@ -266,7 +266,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
             <NativeChatSubagentSheetLayer {...subagents.layer}>
               {paneHeader}
               <NativeChatWorkerAutoCloseBanner pane={props} />
-              <NativeChatCrewFrame panel={null} plugins={controller} dockFitted>
+              <NativeChatCrewFrame panel={null} plugins={controller}>
                 <NativeChatContextClearFade
                   // A read failure stays in view: no divider may come to end the fade.
                   clearing={controller.contextClear.clearing && viewState.kind !== 'error'}

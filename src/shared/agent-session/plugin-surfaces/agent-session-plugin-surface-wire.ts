@@ -34,10 +34,27 @@ export type AgentSessionPluginPane = {
   title: string
   plugin: string
   tree: AgentSessionPluginNode
+  /** Cells across and rows the mod asked for; the chat docks the pane this wide. */
+  columns?: number
+  rows?: number
 }
 
 /** The render sites a press can name. */
-export type AgentSessionPluginUiComponent = 'PromptHint' | 'Pane'
+export type AgentSessionPluginUiComponent = 'PromptHint' | 'Pane' | 'AbovePrompt'
+
+/** Where the chat seats a mod pane: beside the transcript, or framed above the composer. */
+export type AgentSessionPluginPanePlacement = 'dock' | 'inline'
+
+/** The chat's size in monospace cells, which the mods lay their trees out in. */
+export type AgentSessionPluginUiLayout = {
+  columns: number
+  rows: number
+  placement: AgentSessionPluginPanePlacement
+  paneColumns: number
+  bandColumns: number
+  isWorking: boolean
+  isDraft: boolean
+}
 
 /** The plugin fields of a batch frame; never sent to phones. */
 export type AgentSessionPluginSurfaceFields = {
@@ -49,6 +66,8 @@ export type AgentSessionPluginSurfaceFields = {
   pluginPromptHint?: AgentSessionPluginNode | null
   /** The mod pane showing now; null clears, absent keeps. */
   pluginPane?: AgentSessionPluginPane | null
+  /** The rows mods stacked in the band above the composer; null clears, absent keeps. */
+  pluginBand?: AgentSessionPluginNode | null
 }
 
 /** A press on an element a mod drew: where it was drawn and the handle it carried. */
@@ -60,17 +79,25 @@ export type AgentSessionPluginUiPress = {
   key?: string
 }
 
+/** What a view of the chat does to the mods' surfaces: a press, its size, or closing a pane. */
+export type AgentSessionPluginUiAction =
+  | ({ kind: 'press' } & AgentSessionPluginUiPress)
+  | ({ kind: 'layout' } & AgentSessionPluginUiLayout)
+  | { kind: 'close'; paneId: string }
+
 /** What one provider frame changes: the whole status list, one toast, or a drawn tree (null clears it). */
 export type AgentSessionPluginSurfaceUpdate = {
   statuses?: AgentSessionPluginStatus[]
   toast?: AgentSessionPluginToast
   promptHint?: AgentSessionPluginNode | null
   pane?: AgentSessionPluginPane | null
+  band?: AgentSessionPluginNode | null
 }
 
 /** What a new process starts with: no status lines and nothing drawn. */
 export const AGENT_SESSION_PLUGIN_SURFACES_RESET: AgentSessionPluginSurfaceUpdate = {
   statuses: [],
   promptHint: null,
-  pane: null
+  pane: null,
+  band: null
 }

@@ -127,6 +127,9 @@ function mergeBatchHeader(left: Batch, right: Batch): Batch {
     ...(right.pluginPane !== undefined || left.pluginPane !== undefined
       ? { pluginPane: right.pluginPane !== undefined ? right.pluginPane : left.pluginPane }
       : {}),
+    ...(right.pluginBand !== undefined || left.pluginBand !== undefined
+      ? { pluginBand: right.pluginBand !== undefined ? right.pluginBand : left.pluginBand }
+      : {}),
     ...(latestTurn !== undefined ? { latestTurn } : {}),
     ...(actionablePromptIds !== undefined ? { actionablePromptIds } : {}),
     ...(working !== undefined ? { working } : {}),

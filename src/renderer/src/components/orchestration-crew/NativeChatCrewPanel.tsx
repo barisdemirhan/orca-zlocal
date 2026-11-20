@@ -6,9 +6,10 @@ import type { RefObject } from 'react'
 import type { NativeChatComposerHandle } from '../native-chat/composer/native-chat-composer-types'
 import { LazyOrchestrationCrewPanel } from './LazyOrchestrationCrewPanel'
 import { useOrchestrationPanelEnabled } from './use-orchestration-panel-enabled'
-import { NativeChatDockTranscript } from '../native-chat/pane/dock/NativeChatDock'
-import { NativeChatPluginPane } from '../native-chat/plugin-surfaces/NativeChatPluginPane'
-import type { NativeChatPluginSurfaces } from '../native-chat/session/structured/use-agent-session-plugin-surfaces'
+import {
+  NativeChatPluginFrame,
+  type NativeChatPluginFrameSurfaces
+} from '../native-chat/plugin-surfaces/NativeChatPluginFrame'
 import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 
 export function NativeChatCrewPanel({
@@ -54,32 +55,28 @@ export function NativeChatCrewPanel({
 export function NativeChatCrewFrame({
   panel,
   plugins,
-  dockFitted = false,
   children
 }: {
   /** The availability gate prevents unavailable panels from acquiring subscriptions. */
   panel: React.ReactNode
-  /** Surfaces mods drew for this chat; its pane sits beside the transcript when the chat is wide. */
-  plugins?: Pick<NativeChatPluginSurfaces, 'pluginPane' | 'pressPluginUi'>
-  /** Above a fitted dock the frame keeps the transcript's floor of room. */
-  dockFitted?: boolean
+  /** Surfaces mods drew for this chat, seated around the transcript as the terminal seats them. */
+  plugins?: NativeChatPluginFrameSurfaces
   children: React.ReactNode
 }): React.JSX.Element {
   const enabled = useOrchestrationPanelEnabled()
   // Keep transcript layout independent of panel availability.
-  const frame = (
-    <div className="@container flex min-h-0 flex-1 flex-col @2xl:flex-row">
-      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
-        {enabled ? (
-          // Clips the panel to the transcript even when it is shorter than the panel's header.
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">{panel}</div>
-        ) : null}
-        {children}
-      </div>
-      {plugins?.pluginPane && plugins.pressPluginUi ? (
-        <NativeChatPluginPane pane={plugins.pluginPane} onPress={plugins.pressPluginUi} />
+  const transcript = (
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+      {enabled ? (
+        // Clips the panel to the transcript even when it is shorter than the panel's header.
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">{panel}</div>
       ) : null}
+      {children}
     </div>
   )
-  return dockFitted ? <NativeChatDockTranscript>{frame}</NativeChatDockTranscript> : frame
+  return (
+    <div className="@container flex min-h-0 flex-1 flex-col">
+      {plugins ? <NativeChatPluginFrame plugins={plugins} transcript={transcript} /> : transcript}
+    </div>
+  )
 }

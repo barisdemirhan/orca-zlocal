@@ -22,6 +22,7 @@ type PluginSurfaceFields = {
   pluginToasts?: AgentSessionPluginToast[]
   pluginPromptHint?: AgentSessionPluginNode | null
   pluginPane?: AgentSessionPluginPane | null
+  pluginBand?: AgentSessionPluginNode | null
 }
 
 /** Status lines and drawn trees are restated to a late subscriber; toasts reach only subscribers attached now. Phones get none. */
@@ -29,22 +30,25 @@ export class AgentSessionPluginSurfaceDelivery {
   private readonly statusesBySession = new Map<string, AgentSessionPluginStatus[]>()
   private readonly promptHintBySession = new Map<string, AgentSessionPluginNode>()
   private readonly paneBySession = new Map<string, AgentSessionPluginPane>()
+  private readonly bandBySession = new Map<string, AgentSessionPluginNode>()
 
   constructor(private readonly port: PluginSurfaceDeliveryPort) {}
 
   publish(sessionId: string, update: AgentSessionPluginSurfaceUpdate): void {
-    const { statuses, toast, promptHint, pane } = update
+    const { statuses, toast, promptHint, pane, band } = update
     if (statuses) {
       rememberLatestPerSession(this.statusesBySession, sessionId, statuses.length ? statuses : null)
     }
     rememberLatestPerSession(this.promptHintBySession, sessionId, promptHint)
     rememberLatestPerSession(this.paneBySession, sessionId, pane)
+    rememberLatestPerSession(this.bandBySession, sessionId, band)
     for (const subscriber of this.port.subscribers(sessionId)) {
       this.send(subscriber, {
         ...(statuses ? { pluginStatuses: statuses } : {}),
         ...(toast ? { pluginToasts: [toast] } : {}),
         ...(promptHint !== undefined ? { pluginPromptHint: promptHint } : {}),
-        ...(pane !== undefined ? { pluginPane: pane } : {})
+        ...(pane !== undefined ? { pluginPane: pane } : {}),
+        ...(band !== undefined ? { pluginBand: band } : {})
       })
     }
   }
@@ -66,11 +70,13 @@ export class AgentSessionPluginSurfaceDelivery {
     const statuses = this.statusesBySession.get(sessionId)
     const promptHint = this.promptHintBySession.get(sessionId)
     const pane = this.paneBySession.get(sessionId)
-    if (statuses || promptHint || pane) {
+    const band = this.bandBySession.get(sessionId)
+    if (statuses || promptHint || pane || band) {
       this.send(subscriber, {
         ...(statuses ? { pluginStatuses: statuses } : {}),
         ...(promptHint ? { pluginPromptHint: promptHint } : {}),
-        ...(pane ? { pluginPane: pane } : {})
+        ...(pane ? { pluginPane: pane } : {}),
+        ...(band ? { pluginBand: band } : {})
       })
     }
   }
