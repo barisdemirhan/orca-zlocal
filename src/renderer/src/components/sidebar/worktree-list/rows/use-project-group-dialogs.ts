@@ -4,7 +4,12 @@ import { useAppStore } from '@/store'
 import { projectRemovalTargets } from '../../workspace-actions/deletion/removal-unsaved-files'
 import { confirmUnsavedDiscard } from '@/store/slices/worktrees/teardown/removed-workspace-unsaved-files'
 import { translate } from '@/i18n/i18n'
-import { selectProjectGroupRemovalTargets } from '@/store/project-groups/project-group-removal-targets'
+import { selectProjectGroupHeaderRemovalTargets } from '@/store/project-groups/project-group-removal-targets'
+import {
+  deleteProjectGroupHeader,
+  renameProjectGroupHeader
+} from '@/store/project-groups/project-group-header-mutations'
+import type { DeleteProjectGroupWithContainedProjectsResult } from '@/store/repos/repo-state'
 import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
 import type { Repo } from '../../../../../../shared/repository/repo-types'
 import {
@@ -77,6 +82,31 @@ function reportProjectGroupDeleteFailures(result: {
   }
 }
 
+function reportProjectGroupHeaderDeleteFailures(
+  results: readonly DeleteProjectGroupWithContainedProjectsResult[]
+): void {
+  const failedCount = results.filter(({ status }) => status === 'group-delete-failed').length
+  if (failedCount > 0 && failedCount < results.length) {
+    toast.error(
+      translate(
+        'auto.components.sidebar.WorktreeList.groupDeletePartial',
+        'Could not delete the group on every computer'
+      ),
+      {
+        description: translate(
+          'auto.components.sidebar.WorktreeList.groupDeletePartialDesc',
+          'The group is still on a computer Orca could not reach. Delete it again after reconnecting.'
+        )
+      }
+    )
+    results
+      .filter(({ status }) => status !== 'group-delete-failed')
+      .forEach(reportProjectGroupDeleteFailures)
+    return
+  }
+  results.forEach(reportProjectGroupDeleteFailures)
+}
+
 export function useProjectGroupDialogs(args: {
   repos: readonly Repo[]
   repoMap: Map<string, Repo>
@@ -85,10 +115,6 @@ export function useProjectGroupDialogs(args: {
   const { repos, repoMap, projectGroups } = args
   const moveProjectToGroup = useAppStore((s) => s.moveProjectToGroup)
   const createProjectGroup = useAppStore((s) => s.createProjectGroup)
-  const updateProjectGroup = useAppStore((s) => s.updateProjectGroup)
-  const deleteProjectGroupWithContainedProjects = useAppStore(
-    (s) => s.deleteProjectGroupWithContainedProjects
-  )
   const refreshingGroupIds = useRef(new Set<string>())
   const [nameDialog, setNameDialog] = useState<ProjectGroupNameDialogState | null>(null)
   const [deleteDialog, setDeleteDialog] = useState<ProjectGroupDeleteDialogState | null>(null)
@@ -172,11 +198,11 @@ export function useProjectGroupDialogs(args: {
         }
         return
       }
-      const renamed = await updateProjectGroup(
-        nameDialog.groupId,
-        { name },
-        { hostId: nameDialog.hostId }
-      )
+      const renamed = await renameProjectGroupHeader(useAppStore.getState(), {
+        groupId: nameDialog.groupId,
+        name,
+        hostId: nameDialog.hostId
+      })
       if (!renamed) {
         toast.error(
           translate(
@@ -193,14 +219,14 @@ export function useProjectGroupDialogs(args: {
         )
       }
     },
-    [createProjectGroup, moveProjectToGroup, nameDialog, updateProjectGroup]
+    [createProjectGroup, moveProjectToGroup, nameDialog]
   )
 
   const deleteTargets = useMemo(() => {
     if (!deleteDialog) {
       return null
     }
-    return selectProjectGroupRemovalTargets(
+    return selectProjectGroupHeaderRemovalTargets(
       projectGroups,
       repos,
       deleteDialog.groupId,
@@ -246,8 +272,8 @@ export function useProjectGroupDialogs(args: {
     }
     const confirmedDiscards = confirmUnsavedDiscard(useAppStore.getState, deleteUnsavedTargets)
     try {
-      reportProjectGroupDeleteFailures(
-        await deleteProjectGroupWithContainedProjects(deleteDialog.groupId, {
+      reportProjectGroupHeaderDeleteFailures(
+        await deleteProjectGroupHeader(useAppStore.getState(), deleteDialog.groupId, {
           removeContainedProjects,
           hostId: deleteDialog.hostId,
           confirmedDiscards
@@ -257,12 +283,7 @@ export function useProjectGroupDialogs(args: {
       // Why: deleting contained projects can unmount this dialog before its close handler runs, so the parent owns cleanup.
       setDeleteDialog(null)
     }
-  }, [
-    deleteProjectGroupWithContainedProjects,
-    removeContainedProjects,
-    deleteDialog,
-    deleteUnsavedTargets
-  ])
+  }, [removeContainedProjects, deleteDialog, deleteUnsavedTargets])
 
   return {
     nameDialog,

@@ -246,7 +246,11 @@ export type RepoSlice = {
     mode: 'group' | 'separate'
   }) => Promise<ProjectGroupImportResult | null>
   /** `hostId` is the host of the project that seeds the group. */
-  createProjectGroup: (name: string, hostId: ExecutionHostId) => Promise<ProjectGroup | null>
+  createProjectGroup: (
+    name: string,
+    hostId: ExecutionHostId,
+    options?: { parentGroupId?: string | null }
+  ) => Promise<ProjectGroup | null>
   createFolderWorkspace: (
     args: FolderWorkspaceCreateInput,
     options: FolderWorkspacePathStatusRouteOptions & { signal?: AbortSignal }
@@ -287,6 +291,7 @@ export type RepoSlice = {
     options: DeleteProjectGroupWithContainedProjectsOptions
   ) => Promise<DeleteProjectGroupWithContainedProjectsResult>
   // The row itself, not its id: twins share an id, and a paired server's twins share a host too.
+  // groupId may name a header's group on another host; the project joins the one on its own host.
   moveProjectToGroup: (
     project: RepoHostTarget,
     groupId: string | null,

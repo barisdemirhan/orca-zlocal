@@ -6,6 +6,10 @@ import {
   getWorkspaceStatus,
   getWorkspaceStatusGroupKey
 } from '../../workspace/status/workspace-statuses'
+import {
+  getCrossHostProjectGroupMerge,
+  resolveDisplayProjectGroupId
+} from './cross-host-project-group-merge'
 import { ALL_GROUP_KEY, getProjectGroupHeaderKey } from './group-keys'
 import { getPRLaneKey } from '../../workspace-view/workspace-pr-groups'
 import { buildProjectGroupingIndex, getProjectGroupingForRepo } from './project-section-grouping'
@@ -62,9 +66,12 @@ export function getGroupKeysForWorktree(
   }
   const repo = repoMap.get(worktree.repoId)
   const groupIds: string[] = []
-  const groupsById = new Map(projectGroups.map((group) => [group.id, group]))
+  const { displayGroups } = getCrossHostProjectGroupMerge(projectGroups)
+  const groupsById = new Map(displayGroups.map((group) => [group.id, group]))
   const visited = new Set<string>()
-  let currentGroupId = repo?.projectGroupId ?? null
+  let currentGroupId = repo?.projectGroupId
+    ? resolveDisplayProjectGroupId(projectGroups, repo.projectGroupId)
+    : null
   while (currentGroupId && !visited.has(currentGroupId)) {
     const group = groupsById.get(currentGroupId)
     if (!group) {
