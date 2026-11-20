@@ -51,7 +51,13 @@ describe('Claude init journal boundary', () => {
     const quota = "You've hit your weekly limit · resets Oct 17 at 8am (Europe/Istanbul)"
     handle({ type: 'result', subtype: 'success', is_error: true, result: quota })
     expect(items).toContainEqual(
-      expect.objectContaining({ kind: 'status', tone: 'error', text: quota })
+      expect.objectContaining({
+        kind: 'status',
+        failure: expect.objectContaining({
+          kind: 'usageLimitReached',
+          detail: expect.objectContaining({ text: quota })
+        })
+      })
     )
   })
 })

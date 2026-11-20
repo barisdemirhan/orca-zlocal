@@ -214,6 +214,7 @@ vi.mock('../runtime/orca-runtime', () => ({
       return 'headless-runtime'
     }
     rehydrateClientHostedBrowserPages() {}
+    restorePaneSpawnLineage() {}
     beginStructuredAgentSessionStartupOpen() {}
     startPullRequestWatches() {}
     getEmulatorBridge() {
