@@ -38,7 +38,7 @@ export function resolveTabInsertion(
   return {
     groupId: overData.groupId,
     visibleTabId: overData.visibleTabId,
-    side: tabInsertionSide(center.x, event.over.rect)
+    side: overData.fixedFirst ? 'right' : tabInsertionSide(center.x, event.over.rect)
   }
 }
 

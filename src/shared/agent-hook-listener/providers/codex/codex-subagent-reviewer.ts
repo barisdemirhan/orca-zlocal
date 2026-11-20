@@ -1,13 +1,17 @@
-import { extname, isAbsolute } from 'node:path'
 import { closeSync, openSync, readSync } from 'node:fs'
 
+import { readJsonlCursor } from './codex-rollout-jsonl-cursor'
 import {
-  readJsonlCursor,
   record,
   TRANSCRIPT_READ_MAX_BYTES,
   type JsonlCursor,
   type JsonRecord
-} from './codex-rollout-jsonl-cursor'
+} from './codex-rollout-jsonl-format'
+import {
+  markReviewerEvidenceDeferred,
+  rolloutCursorReadDeferred
+} from './codex-rollout-prefetch-scope'
+import { normalizedTranscriptPath } from './codex-rollout-paths'
 import { isCodexStatusTranscriptLine } from './codex-status-transcript-line'
 import type { CodexSubagentTranscriptState } from './codex-subagent-transcript'
 
@@ -27,15 +31,6 @@ export type CodexApprovalsReviewer = 'user' | 'auto_review'
 /** MCP actions can override the turn reviewer without changing its saved settings. */
 export function codexApprovalUsesTurnReviewer(toolName: string | undefined): boolean {
   return toolName !== undefined && TURN_REVIEWED_TOOLS.has(toolName)
-}
-
-export function normalizeCodexTranscriptPath(
-  transcriptPath: string | undefined
-): string | undefined {
-  const normalizedPath = transcriptPath?.trim()
-  return normalizedPath && isAbsolute(normalizedPath) && extname(normalizedPath) === '.jsonl'
-    ? normalizedPath
-    : undefined
 }
 
 /** Latest reviewer evidence from turn or thread-settings records. */
@@ -158,7 +153,7 @@ export function codexTurnApprovalsAreAutoReviewed(
   state: CodexSubagentTranscriptState | undefined,
   transcriptPath?: string
 ): boolean {
-  const normalizedPath = normalizeCodexTranscriptPath(transcriptPath)
+  const normalizedPath = normalizedTranscriptPath(transcriptPath)
   if (!state || !normalizedPath) {
     return false
   }
@@ -174,7 +169,7 @@ export function reconcileCodexSubagentReviewer(
   state: CodexSubagentTranscriptState,
   transcriptPath: string | undefined
 ): void {
-  const normalizedPath = normalizeCodexTranscriptPath(transcriptPath)
+  const normalizedPath = normalizedTranscriptPath(transcriptPath)
   if (!normalizedPath) {
     return
   }
@@ -191,6 +186,10 @@ export function reconcileCodexSubagentReviewer(
     state.reviewerCursorsByPath.set(normalizedPath, cursor)
   }
   const previousOffset = cursor.offset
+  if (rolloutCursorReadDeferred(cursor)) {
+    markReviewerEvidenceDeferred()
+    return
+  }
   const records = readJsonlCursor(cursor, isCodexStatusTranscriptLine)
   if (records === undefined) {
     state.reviewerCursorsByPath.delete(normalizedPath)

@@ -13,6 +13,7 @@ import { getWorktreeHostIdentity } from '../../../../../../shared/worktree/host-
 import { folderWorkspaceKey } from '../../../../../../shared/workspace/identity/workspace-scope'
 import type { WorktreeGroupBy } from '../../../../../../shared/sidebar-list/row-types'
 import { getKnownSidebarWorktreeById } from './folder-reveal'
+import { readSidebarRevealTarget } from '../../sidebar-reveal-target-state'
 
 function workspacePassesFilters(
   worktree: Worktree,
@@ -128,6 +129,11 @@ export function useSidebarRevealRequests(args: {
         ? explicitTarget.executionHostId
         : currentSidebarExecutionHostId
       if (!targetId) {
+        return
+      }
+      // Bots rows, and what no section lists, are not this list's to reveal: no filter
+      // dialog, no filter or group change, no pending reveal that could never land.
+      if (readSidebarRevealTarget().section !== 'projects') {
         return
       }
       const activeWorktree = getKnownSidebarWorktreeById(

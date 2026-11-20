@@ -12,7 +12,7 @@ import type {
 } from '../../../shared/agent-hub-requests'
 import type { AgentStatusIpcPayload } from '../../../shared/agent-status/contracts/agent-status-ipc-payload'
 import { parseAskFromStatus } from '../../../shared/native-chat/input/native-chat-ask'
-import { CONNECTOR_AGENTS } from '../../external-conversations/connector-agents'
+import { HUB_ANSWER_AGENTS } from './agent-hub-connector-agents'
 import { AgentHubError } from './agent-hub-error'
 import type { AgentHubPendingRequests } from './agent-hub-pending-requests'
 
@@ -77,7 +77,7 @@ export function promptCard(
   // Still show what is asked, read-only, so the person can answer it in Orca.
   const ask = parseAskFromStatus(row.interactivePrompt, row.toolName)
   const first = ask?.questions[0]
-  const hooksOff = !answerable && CONNECTOR_AGENTS.some((candidate) => candidate === agent)
+  const hooksOff = !answerable && HUB_ANSWER_AGENTS.some((candidate) => candidate === agent)
   return {
     ...common,
     kind: 'unsupported',

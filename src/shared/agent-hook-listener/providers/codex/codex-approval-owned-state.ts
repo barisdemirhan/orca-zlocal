@@ -2,6 +2,7 @@ import {
   codexApprovalUsesTurnReviewer,
   codexTurnApprovalsAreAutoReviewed
 } from './codex-subagent-reviewer'
+import { reviewerEvidenceDeferred } from './codex-rollout-prefetch-scope'
 import type { HookListenerState } from '../../listener-state'
 
 /**
@@ -23,10 +24,12 @@ export function resolveCodexApprovalOwnedState(
   stateName: 'working' | 'waiting' | 'done',
   toolName: string | undefined
 ): 'working' | 'waiting' | 'done' {
+  // Unread rollout bytes may hold a newer reviewer; show the prompt rather than risk hiding a human's approval.
   if (
     stateName !== 'waiting' ||
     eventName !== 'PermissionRequest' ||
-    !codexApprovalUsesTurnReviewer(toolName)
+    !codexApprovalUsesTurnReviewer(toolName) ||
+    reviewerEvidenceDeferred()
   ) {
     return stateName
   }

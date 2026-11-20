@@ -87,10 +87,11 @@ export function parseArgs(
     }
 
     const flag = assignment
-    if (
-      BOOLEAN_FLAGS.has(flag) &&
-      !specForPathPrefix(specs, commandPath)?.valueFlags?.includes(flag)
-    ) {
+    const spec = specForPathPrefix(specs, commandPath)
+    const isBoolean = spec?.valueFlags?.includes(flag)
+      ? false
+      : BOOLEAN_FLAGS.has(flag) || spec?.booleanFlags?.includes(flag) === true
+    if (isBoolean) {
       flagEntries.push([flag, true])
       continue
     }

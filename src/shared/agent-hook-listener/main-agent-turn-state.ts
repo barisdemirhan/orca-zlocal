@@ -25,6 +25,8 @@ export type ClaudeLeadTurnState = {
   }
   /** End time of the main agent turn closed while background inventory kept the pane `working`. Repeated on the later all-clear `done`. */
   turnCompletedAt?: number
+  /** That end time, held because the turn's late prompt event has not said whether a task wakeup started it. */
+  unclassifiedTurnCompletedAt?: number
   /** Claude hook model. Later events that omit it keep the last reported value. */
   model?: string
   /** Restore the lead state displaced by a child wait; inventing working cannot later fold back to done. */

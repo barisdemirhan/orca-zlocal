@@ -1,4 +1,5 @@
 import type { TerminalSuspensionRequest } from '../daemon-terminal-suspension-protocol'
+import type { HostedProviderRequest } from './daemon-provider-process-protocol'
 import type { TerminalStartFailure } from '../../../shared/terminal/pty/lifecycle/terminal-start-failure'
 import type {
   AsyncIoHealthRequest,
@@ -176,10 +177,11 @@ export type TerminalBufferActionRequest = {
   }
 }
 
-// Viewers live above the daemon on orcad; gated by focusLossReportSupport (v56, some v55).
-export type ReportFocusLostRequest = {
+// Viewers live above the daemon on orcad; focus loss is gated by focusLossReportSupport (v56, some
+// v55), a repaint request by REPAINT_REQUEST_PROTOCOL_VERSION.
+export type SessionNoticeRequest = {
   id: string
-  type: 'reportFocusLost'
+  type: 'reportFocusLost' | 'requestRepaint'
   payload: {
     sessionId: string
   }
@@ -241,6 +243,7 @@ export type TakePendingOutputResult = {
 }
 
 export type DaemonRequest =
+  | HostedProviderRequest
   | CreateOrAttachRequest
   | HistorySeedProtocol.TerminalHistorySeedTransferRequest
   | CancelCreateOrAttachRequest
@@ -261,7 +264,7 @@ export type DaemonRequest =
   | ConfirmForegroundProcessRequest
   | ConfirmShellForegroundRequest
   | TerminalBufferActionRequest
-  | ReportFocusLostRequest
+  | SessionNoticeRequest
   | ShutdownRequest
   | PingRequest
   | SystemResolverHealthRequest

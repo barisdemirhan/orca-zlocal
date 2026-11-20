@@ -3,11 +3,8 @@ import type { AgentHubGate } from '../../../shared/agent-hub-requests'
 import type { AgentQuestionAnsweredInferenceRequest } from '../../../shared/agent-status/lifecycle/agent-question-answered-intent'
 import type { AgentStatusIpcPayload } from '../../../shared/agent-status/contracts/agent-status-ipc-payload'
 import { hookRowAgentPhase } from '../../../shared/agent-status/lifecycle/agent-transitions'
-import {
-  fakeTerminal,
-  PANE,
-  WORKTREE
-} from '../../external-conversations/external-conversation.test-fixture'
+import { PANE, WORKTREE } from '../../external-conversations/external-conversation.test-fixture'
+import { fakeTerminal } from './agent-hub-questions.test-fixture'
 import { AgentHubLedger } from './agent-hub-ledger'
 import { AgentHubQuestions } from './agent-hub-questions'
 

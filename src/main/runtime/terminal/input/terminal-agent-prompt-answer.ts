@@ -1,9 +1,7 @@
 // Answers are fenced to the prompt and process so late keys cannot reach a replacement shell.
 import { createHash } from 'node:crypto'
-import {
-  readAgentPromptAnswers,
-  type PendingPrompt
-} from '../../../../shared/agent-status/contracts/agent-pending-prompt'
+import type { PendingPrompt } from '../../../../shared/agent-status/contracts/agent-pending-prompt'
+import { readAgentPromptAnswers } from './terminal-agent-prompt-keys'
 import type { AgentStatusIpcPayload } from '../../../../shared/agent-status/contracts/agent-status-ipc-payload'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import { writeFencedAgentKeys } from './terminal-agent-fenced-keys'

@@ -60,7 +60,6 @@ export function createWebAppApi(): Partial<PreloadApi> {
       getMacCapturedDigitRowChords: () => Promise.resolve([]),
       getKeyboardLayoutSnapshot: () => Promise.resolve(null),
       onKeyboardLayoutChanged: () => () => undefined,
-      setUnreadDockBadgeCount: () => Promise.resolve(),
       getFloatingTerminalCwd: () => Promise.resolve(''),
       getFloatingMarkdownDirectory: () => Promise.resolve(''),
       getAgentHubOrbDirectory: () => Promise.resolve(''),

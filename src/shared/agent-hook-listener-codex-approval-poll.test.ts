@@ -8,7 +8,10 @@ import {
   createHookListenerState,
   type HookListenerState
 } from './agent-hook-listener/listener-state'
-import { pollCodexTranscriptStatus } from './agent-hook-listener/providers/codex/codex-transcript-poll'
+import {
+  pollCodexTranscriptStatus,
+  readCodexTranscriptPoll
+} from './agent-hook-listener/providers/codex/codex-transcript-poll'
 import { reconcileRemoteCodexState } from './agent-hook-listener/providers/codex/codex-state'
 import {
   shouldPollHookTranscript,
@@ -72,8 +75,19 @@ describe('Codex approval ownership learned after its hook', () => {
     })
   }
 
-  function poll(original: AgentHookEventPayload): AgentHookEventPayload {
-    const polled = pollCodexTranscriptStatus(state, original, { paneKey: PANE_KEY }, 'production')
+  async function pollWith(
+    original: AgentHookEventPayload
+  ): Promise<AgentHookEventPayload | undefined> {
+    const reads = await readCodexTranscriptPoll(state, PANE_KEY)
+    try {
+      return pollCodexTranscriptStatus(state, original, { paneKey: PANE_KEY }, 'production', reads)
+    } finally {
+      reads.batch.release()
+    }
+  }
+
+  async function poll(original: AgentHookEventPayload): Promise<AgentHookEventPayload> {
+    const polled = await pollWith(original)
     if (!polled) {
       throw new Error('Expected the Codex transcript poll to retain the pane')
     }
@@ -81,10 +95,8 @@ describe('Codex approval ownership learned after its hook', () => {
   }
 
   // A child with no parent rollout and nothing owed ends its poll; the last status stays published.
-  function pollOrKeep(original: AgentHookEventPayload): AgentHookEventPayload {
-    return (
-      pollCodexTranscriptStatus(state, original, { paneKey: PANE_KEY }, 'production') ?? original
-    )
+  async function pollOrKeep(original: AgentHookEventPayload): Promise<AgentHookEventPayload> {
+    return (await pollWith(original)) ?? original
   }
 
   it.each([
@@ -96,14 +108,14 @@ describe('Codex approval ownership learned after its hook', () => {
     ['unknown_approval_tool', undefined, true]
   ] as const)(
     'preserves per-tool approval ownership for %s, agent=%s, reviewer known=%s',
-    (toolName, agentId, knownReviewer) => {
+    async (toolName, agentId, knownReviewer) => {
       const path = rollout(knownReviewer ? 'auto_review' : undefined)
       const original = permission(path, agentId, toolName)
       expect(original.payload.state).toBe('waiting')
       if (!knownReviewer) {
         setReviewer(path, 'auto_review')
       }
-      const polled = pollOrKeep(original)
+      const polled = await pollOrKeep(original)
       expect(polled.payload.state).toBe('waiting')
       expect(polled.payload.interactivePrompt).toBe(original.payload.interactivePrompt)
       if (agentId) {
@@ -119,7 +131,7 @@ describe('Codex approval ownership learned after its hook', () => {
 
   it.each([undefined, 'child-only'])(
     'publishes a working approval after its own reviewer becomes automatic, agent=%s',
-    (agentId) => {
+    async (agentId) => {
       const path = rollout()
       const original = permission(path, agentId)
       expect(original.payload.state).toBe('waiting')
@@ -129,7 +141,7 @@ describe('Codex approval ownership learned after its hook', () => {
       expect(shouldPollHookTranscript(state, 'codex', original)).toBe(true)
 
       setReviewer(path, 'auto_review')
-      const polled = poll(original)
+      const polled = await poll(original)
       expect(polled.payload.state).toBe('working')
       expect(polled.payload.interactivePrompt).toBeUndefined()
       if (agentId) {
@@ -143,7 +155,7 @@ describe('Codex approval ownership learned after its hook', () => {
       expect(update).toBeDefined()
       expect(update?.hookEventName).toBeUndefined()
       expect(update?.hasExplicitPrompt).toBeUndefined()
-      expect(transcriptPollUpdate('codex', polled, pollOrKeep(polled))).toBeUndefined()
+      expect(transcriptPollUpdate('codex', polled, await pollOrKeep(polled))).toBeUndefined()
     }
   )
 
@@ -156,7 +168,7 @@ describe('Codex approval ownership learned after its hook', () => {
     ['unreadable', 'child-only']
   ] as const)(
     'keeps the human approval when later reviewer evidence is %s, agent=%s',
-    (reviewer, agentId) => {
+    async (reviewer, agentId) => {
       const path = rollout()
       const original = permission(path, agentId)
       if (reviewer === 'unreadable') {
@@ -165,7 +177,7 @@ describe('Codex approval ownership learned after its hook', () => {
         setReviewer(path, reviewer)
       }
 
-      const polled = poll(original)
+      const polled = await poll(original)
       expect(polled.payload.state).toBe('waiting')
       expect(polled.payload.interactivePrompt).toBe(original.payload.interactivePrompt)
       expect(transcriptPollUpdate('codex', original, polled)).toBeUndefined()
@@ -174,7 +186,7 @@ describe('Codex approval ownership learned after its hook', () => {
 
   it.each([undefined, 'child'])(
     'keeps a newer human question when automatic ownership arrives for the previous approval, agent=%s',
-    (agentId) => {
+    async (agentId) => {
       if (agentId) {
         post({ hook_event_name: 'SessionStart', transcript_path: rollout() })
       }
@@ -189,7 +201,7 @@ describe('Codex approval ownership learned after its hook', () => {
       })
       setReviewer(path, 'auto_review')
 
-      const polled = agentId ? pollOrKeep(original) : poll(original)
+      const polled = agentId ? await pollOrKeep(original) : await poll(original)
       expect(polled.payload.state).toBe('waiting')
       expect(polled.payload.interactivePrompt).toBe(original.payload.interactivePrompt)
       if (agentId) {
@@ -199,14 +211,14 @@ describe('Codex approval ownership learned after its hook', () => {
     }
   )
 
-  it('resolves only the child approval and preserves the manual parent approval', () => {
+  it('resolves only the child approval and preserves the manual parent approval', async () => {
     const parentPath = rollout('user')
     const parent = permission(parentPath)
     const childPath = rollout()
     const original = permission(childPath, 'child')
     setReviewer(childPath, 'auto_review')
 
-    const polled = poll(original)
+    const polled = await poll(original)
     expect(polled.payload.state).toBe('waiting')
     expect(polled.payload.mainAgent?.state).toBe('waiting')
     expect(polled.payload.interactivePrompt).toBe(parent.payload.interactivePrompt)
@@ -216,14 +228,14 @@ describe('Codex approval ownership learned after its hook', () => {
     expect(transcriptPollUpdate('codex', original, polled)).toBeDefined()
   })
 
-  it('does not use the parent reviewer to hide a manual child approval', () => {
+  it('does not use the parent reviewer to hide a manual child approval', async () => {
     const parentPath = rollout('auto_review')
     permission(parentPath)
     const childPath = rollout('user')
     const original = permission(childPath, 'child')
     setReviewer(parentPath, 'auto_review')
 
-    const polled = poll(original)
+    const polled = await poll(original)
     expect(polled.payload.state).toBe('waiting')
     expect(polled.payload.subagents).toEqual([
       expect.objectContaining({ id: 'child', state: 'waiting' })
@@ -231,7 +243,7 @@ describe('Codex approval ownership learned after its hook', () => {
     expect(transcriptPollUpdate('codex', original, polled)).toBeUndefined()
   })
 
-  it('publishes a newly resolved parent through the relay after a child hook became current', () => {
+  it('publishes a newly resolved parent through the relay after a child hook became current', async () => {
     const parentPath = rollout()
     const parent = permission(parentPath)
     const childPath = rollout('user')
@@ -255,7 +267,7 @@ describe('Codex approval ownership learned after its hook', () => {
     )
     setReviewer(parentPath, 'auto_review')
 
-    const update = transcriptPollUpdate('codex', original, poll(original))
+    const update = transcriptPollUpdate('codex', original, await poll(original))
     expect(update).toBeDefined()
     if (!update) {
       return
@@ -274,7 +286,7 @@ describe('Codex approval ownership learned after its hook', () => {
     expect(relayed.subagents).toEqual([expect.objectContaining({ id: 'child', state: 'waiting' })])
   })
 
-  it('does not apply an old session reviewer to the replacement session approval', () => {
+  it('does not apply an old session reviewer to the replacement session approval', async () => {
     const oldPath = rollout()
     permission(oldPath)
     const currentPath = rollout()
@@ -286,7 +298,7 @@ describe('Codex approval ownership learned after its hook', () => {
     const original = permission(currentPath)
     setReviewer(oldPath, 'auto_review')
 
-    const polled = poll(original)
+    const polled = await poll(original)
     expect(polled.payload.state).toBe('waiting')
     expect(polled.payload.interactivePrompt).toBe(original.payload.interactivePrompt)
     expect(transcriptPollUpdate('codex', original, polled)).toBeUndefined()

@@ -80,6 +80,7 @@ describe('worker-start spawn lineage', () => {
         },
         requestedWorktree: `id:${TEST_WORKTREE_ID}`,
         creationTarget: undefined,
+        orchestrationRunId: 'run_lineage',
         resolvedWorktree: { id: TEST_WORKTREE_ID, repoId: 'repo-1' },
         mode: {
           mode: 'structured',

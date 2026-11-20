@@ -50,6 +50,8 @@ export type RuntimeApi = {
       method: string
       params?: unknown
       envelope?: RuntimeOrchestrationEnvelope
+      /** An orchestration mutation's contract and idempotency key, as the CLI sends them. */
+      orchestration?: { contractVersion: number; requestId: string }
     }) => Promise<RuntimeRpcResponse<unknown>>
     subscribe: (
       args: { method: string; params?: unknown },
@@ -99,6 +101,9 @@ export type RuntimeApi = {
       callback: (event: ClientHostedBrowserRowsEvent) => void
     ) => () => void
     onSidebarInputsChanged: (callback: (event: SidebarInputsChangedEvent) => void) => () => void
+    onOrchestrationSessionWorkersChanged?: (
+      callback: (event: { sessionId: string }) => void
+    ) => () => void
   }
   runtimeEnvironments: {
     desktopCreatedChatIds?: () => Promise<string[]>

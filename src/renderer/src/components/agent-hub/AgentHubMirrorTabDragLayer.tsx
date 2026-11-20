@@ -73,6 +73,7 @@ export function AgentHubMirrorTabDragLayer({
     <MirrorTabDragContext.Provider value={value}>
       <TabDragProvider
         isTabDragActive={drag.active !== null}
+        activeDragVisibleTabId={null}
         isTabDragActiveRef={drag.isTabDragActiveRef}
       >
         <DndContext

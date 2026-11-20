@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { useTabStripDragScrollHandlers } from '../tab-bar/strip/tab-strip-drag-scroll'
-import { bindTabStripWheelScroll } from '../tab-bar/strip/tab-strip-overflow-navigation'
+import { bindTabStripWheelScroll } from '../tab-bar/strip/tab-strip-wheel-scroll'
 
 export function useMirrorTabStripScroll(ref: RefObject<HTMLDivElement | null>, count: number) {
   const [canScroll, setCanScroll] = useState({ start: false, end: false })

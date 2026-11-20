@@ -2,10 +2,7 @@ import { AgentHookServerStatusHookLifecycle } from './server-status-hook-lifecyc
 
 export abstract class AgentHookServerRuntimeStateReset extends AgentHookServerStatusHookLifecycle {
   protected resetHookRuntimeState(): void {
-    for (const timer of this.assistantMessageRetryTimers.values()) {
-      clearTimeout(timer)
-    }
-    this.assistantMessageRetryTimers.clear()
+    this.clearAllAssistantMessageRetries()
     this.hookSilenceRechecks.clear()
     this.programStatusFacetRepublishes.clear()
     this.clearAllTranscriptPolls()

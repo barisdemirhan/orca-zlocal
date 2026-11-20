@@ -3,7 +3,10 @@ import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { userNamedFileAccess } from '@/lib/files/access/local-file-access'
 import { readRuntimeFileContent } from '@/runtime/files/reads/runtime-file-read-client'
-import type { RuntimeReadableFileContent } from '@/runtime/files/runtime-file-client-types'
+import type {
+  RuntimeFileReadArgs,
+  RuntimeReadableFileContent
+} from '@/runtime/files/runtime-file-client-types'
 import { ImageViewer, MarkdownPreview, MediaViewer } from '../editor/editor-lazy-views'
 import { absolutePathToFileUri } from '../editor/markdown/link-routing/markdown-internal-links'
 import { buildImageDataUri } from '../../../../shared/file-preview/image-data-uri'
@@ -91,21 +94,24 @@ export function AgentHubPeekFile({
   })
   const { filePath, connectionId } = content
   const key = `${peekReadRuntimeEnvironmentId(content.readContext) ?? ''}\u0000${content.readContext?.worktreeId ?? ''}\u0000${connectionId ?? ''}\u0000${filePath}`
-  useEffect(() => {
-    let live = true
-    void readRuntimeFileContent(
+  const readArgs = useMemo(
+    (): RuntimeFileReadArgs =>
       content.readContext ?? {
         target: { kind: 'local' },
         filePath,
         ...(connectionId ? { connectionId } : { access: userNamedFileAccess() })
-      }
-    )
+      },
+    [filePath, connectionId, content.readContext]
+  )
+  useEffect(() => {
+    let live = true
+    void readRuntimeFileContent(readArgs)
       .then((file) => live && setLoad({ key, state: { status: 'ready', file } }))
       .catch(() => live && setLoad({ key, state: { status: 'failed' } }))
     return () => {
       live = false
     }
-  }, [key, filePath, connectionId, content.readContext])
+  }, [key, readArgs])
 
   const state: LoadState = load.key === key ? load.state : { status: 'loading' }
   const readyFile = state.status === 'ready' ? state.file : null
@@ -215,7 +221,8 @@ export function AgentHubPeekFile({
           src={file.mediaUrl}
           mimeType={file.mimeType ?? ''}
           filePath={content.filePath}
-          canOpenLocally={!connectionId && !peekReadRuntimeEnvironmentId(content.readContext)}
+          source={readArgs}
+          playbackCacheKey={`agent-hub-peek:${key}`}
         />
       ) : (
         <ImageViewer content={file.content} filePath={content.filePath} mimeType={file.mimeType} />

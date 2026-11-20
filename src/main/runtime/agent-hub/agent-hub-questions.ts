@@ -4,12 +4,14 @@ import type { AgentHubGate } from '../../../shared/agent-hub-requests'
 import type { AgentQuestionAnsweredInferenceRequest } from '../../../shared/agent-status/lifecycle/agent-question-answered-intent'
 import type { AgentStatusHooksSettings } from '../../../shared/agent-hook-listener/configuration/agent-status-hooks-setting'
 import type { AgentStatusIpcPayload } from '../../../shared/agent-status/contracts/agent-status-ipc-payload'
-import type { ConnectorAgent } from '../../../shared/connectors/external-conversation-link'
+import { admitHubAnswerAgent, type HubAnswerAgent } from './agent-hub-connector-agents'
 import { hookRowAgentPhase } from '../../../shared/agent-status/lifecycle/agent-transitions'
 import type { AgentPaneWorkspace } from '../../agent-hooks/observations/agent-transition-detector'
-import { admitConnectorAgent } from '../../external-conversations/connector-agents'
-import type { PromptTerminal } from '../../external-conversations/external-conversation-prompts'
-import { createLaunchedAgentWriteGuard } from '../terminal/wait/launched-agent-write-guard'
+import type { TerminalAgentPromptAnswerRuntime } from '../terminal/input/terminal-agent-prompt-answer'
+import {
+  createLaunchedAgentWriteGuard,
+  type LaunchedAgentWriteGuardRuntime
+} from '../terminal/wait/launched-agent-write-guard'
 import {
   TerminalAgentPromptAnswers,
   type PromptAnswerOutcome
@@ -18,6 +20,8 @@ import { watchAnswerEvidence } from './agent-hub-answer-evidence'
 import { AgentHubAnswerReceipts, remember } from './agent-hub-answer-receipts'
 import type { AgentHubLedger } from './agent-hub-ledger'
 import { gateCard, promptCard, requestCard, settleHubAsk } from './agent-hub-question-cards'
+
+export type HubQuestionTerminal = TerminalAgentPromptAnswerRuntime & LaunchedAgentWriteGuardRuntime
 
 export type AgentHubQuestionsDeps = {
   readHookRow: (paneKey: string) => AgentStatusIpcPayload | null
@@ -37,7 +41,7 @@ type PaneQuestion = {
   prompt: PendingPrompt | null
   paneKey: string
   /** Set only for an agent whose hooks and answer keys are known. */
-  writer: ConnectorAgent | null
+  writer: HubAnswerAgent | null
 }
 type Binding = { paneKey: string; ptyId: string; processIncarnation: string } | 'hub-ask'
 
@@ -52,7 +56,7 @@ export class AgentHubQuestions {
     this.answers = new TerminalAgentPromptAnswers(deps.readHookRow)
   }
 
-  list(terminal: PromptTerminal): AgentHubQuestion[] {
+  list(terminal: HubQuestionTerminal): AgentHubQuestion[] {
     const panes = this.deps
       .panesNeedingYou()
       .flatMap(({ paneKey, workspace }) => this.readPane(terminal, paneKey, workspace) ?? [])
@@ -68,7 +72,7 @@ export class AgentHubQuestions {
   }
 
   answer(
-    terminal: PromptTerminal,
+    terminal: HubQuestionTerminal,
     questionId: string,
     optionIds: string[],
     verifyMs: number,
@@ -80,7 +84,7 @@ export class AgentHubQuestions {
   }
 
   private async answerOnce(
-    terminal: PromptTerminal,
+    terminal: HubQuestionTerminal,
     questionId: string,
     optionIds: string[],
     verifyMs: number,
@@ -103,7 +107,7 @@ export class AgentHubQuestions {
   }
 
   private async answerPane(
-    terminal: PromptTerminal,
+    terminal: HubQuestionTerminal,
     pane: PaneQuestion,
     optionIds: string[],
     verifyMs: number,
@@ -191,7 +195,7 @@ export class AgentHubQuestions {
     }
   }
 
-  private findPane(terminal: PromptTerminal, questionId: string): PaneQuestion | null {
+  private findPane(terminal: HubQuestionTerminal, questionId: string): PaneQuestion | null {
     for (const { paneKey, workspace } of this.deps.panesNeedingYou()) {
       const pane = this.readPane(terminal, paneKey, workspace)
       if (pane?.question.questionId === questionId) {
@@ -202,7 +206,7 @@ export class AgentHubQuestions {
   }
 
   private whyGone(
-    terminal: PromptTerminal,
+    terminal: HubQuestionTerminal,
     questionId: string
   ):
     | 'question_not_found'
@@ -235,7 +239,7 @@ export class AgentHubQuestions {
   }
 
   private readPane(
-    terminal: PromptTerminal,
+    terminal: HubQuestionTerminal,
     paneKey: string,
     workspace: AgentPaneWorkspace
   ): PaneQuestion | null {
@@ -272,7 +276,7 @@ export class AgentHubQuestions {
         writer: null
       }
     }
-    const writer = admitConnectorAgent(this.deps.readSettings(), agent) ? agent : null
+    const writer = admitHubAnswerAgent(this.deps.readSettings(), agent) ? agent : null
     const answerable = writer !== null
     const prompt = this.answers.pending(terminal, { paneKey, agent, answerable })
     if (!prompt) {

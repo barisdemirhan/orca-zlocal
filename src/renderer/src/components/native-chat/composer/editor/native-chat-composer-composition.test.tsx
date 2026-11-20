@@ -17,8 +17,10 @@ vi.mock('../pickers/NativeChatAutocompleteMenus', () => ({
   NativeChatPickerMenu: () => null
 }))
 
-import { NativeChatComposerField } from './NativeChatComposerField'
-import type { NativeChatComposerFieldProps } from './native-chat-composer-field-props'
+import {
+  NativeChatComposerField,
+  type NativeChatComposerFieldProps
+} from './NativeChatComposerField'
 import { useImeEnterGestureOwnership } from '@/lib/text-input/ime/ime-composition-keyboard-event'
 import { TooltipProvider } from '@/components/ui/tooltip'
 

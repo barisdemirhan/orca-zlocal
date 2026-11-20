@@ -1,5 +1,6 @@
 import { parseDaemonLaunchNoteChange } from '../protocol/daemon-launch-note-protocol'
 import { handleDaemonTerminalKill } from './daemon-terminal-kill'
+import { sendDaemonExitEvent } from './daemon-exit-event'
 import { handleDaemonFencedTermination } from './daemon-fenced-termination'
 import { performance } from 'node:perf_hooks'
 import { setPtyOwnerHostColors } from '../../../shared/terminal/pty/ingress/pty-owner-color-query-colors'
@@ -42,6 +43,9 @@ export class DaemonRequestRouter {
   async route(clientId: string, request: DaemonRequest): Promise<unknown> {
     const client = this.options.connections.get(clientId)
     switch (request.type) {
+      case 'probeProviderCwd':
+      case 'spawnProvider':
+        throw new Error('Provider requests are answered before routing')
       case 'startHistorySeedTransfer': {
         if (!client?.authenticatedPairEstablished || client.streamSocket === null) {
           throw new Error('Daemon client connection is incomplete; reconnect')
@@ -133,6 +137,7 @@ export class DaemonRequestRouter {
             ? { expectedIncarnationId: request.payload.expectedIncarnationId }
             : {}),
           ...(request.payload.steadyState === true ? { steadyState: true } : {}),
+          ...(request.payload.jobMembershipOnly === true ? { jobMembershipOnly: true } : {}),
           ...(request.payload.ignoreDetached === true ? { ignoreDetached: true } : {})
         }
         return Object.keys(options).length > 0
@@ -163,7 +168,8 @@ export class DaemonRequestRouter {
         this.options.host.resetInputModes(request.payload.sessionId)
         return {}
       case 'reportFocusLost':
-        this.options.host.reportFocusLost(request.payload.sessionId)
+      case 'requestRepaint':
+        this.options.host[request.type](request.payload.sessionId)
         return {}
       case 'listSessions':
         return { sessions: this.options.host.listSessions() }
@@ -202,7 +208,7 @@ export class DaemonRequestRouter {
     } catch (error) {
       this.options.attachments.clearInput(sessionId)
       if (error instanceof SessionNotFoundError) {
-        this.sendExitEvent(client, sessionId, -1)
+        sendDaemonExitEvent(this.options.streamDataBatcher, client, sessionId, -1)
       }
       throw error
     }
@@ -219,7 +225,7 @@ export class DaemonRequestRouter {
       this.options.host.resize(sessionId, cols, rows)
     } catch (error) {
       if (error instanceof SessionNotFoundError) {
-        this.sendExitEvent(client, sessionId, -1)
+        sendDaemonExitEvent(this.options.streamDataBatcher, client, sessionId, -1)
       }
       throw error
     }
@@ -258,11 +264,7 @@ export class DaemonRequestRouter {
     return { snapshot }
   }
 
-  private async shutdown(
-    clientId: string,
-    requestId: string,
-    killSessions: boolean
-  ): Promise<Record<string, never>> {
+  private async shutdown(clientId: string, requestId: string, killSessions: boolean) {
     this.options.log.log('shutdown', {
       reason: 'rpc',
       killSessions: killSessions === true
@@ -289,22 +291,5 @@ export class DaemonRequestRouter {
       this.options.lifecycle.finishRpcShutdownWithoutReply(serverClose)
     }
     return {}
-  }
-
-  private sendExitEvent(
-    client: ConnectedDaemonClient | undefined,
-    sessionId: string,
-    code: number
-  ): void {
-    if (!client?.streamSocket) {
-      return
-    }
-    this.options.streamDataBatcher.enqueueControlEvent(client.clientId, sessionId, {
-      type: 'event',
-      event: 'exit',
-      sessionId,
-      payload: { code }
-    })
-    this.options.streamDataBatcher.flush(client.clientId)
   }
 }

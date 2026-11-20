@@ -1,13 +1,6 @@
 import type { ClaudeHumanPromptContext } from './providers/claude/claude-human-notifications'
+import type { HookListenerState } from './listener-state'
 import { deletePaneScopedCacheEntry, movePaneScopedMapEntries } from './pane-scoped-cache-entries'
-
-export type HermesPaneTurn = {
-  ended: boolean
-  /** `delegate_task` children run their own turns, under their own session ids, inside the parent's. */
-  childSessionIds: Set<string>
-  /** The pane's own session, which its children's hooks must not replace. */
-  sessionId: string
-}
 
 export type GrokActiveTurn = {
   promptId?: string
@@ -20,6 +13,10 @@ export type GeminiPendingPermission = { sessionId?: string; toolCallId?: string;
 export type HumanTurnMaps = {
   claudeHumanPromptContextByPaneKey: Map<string, ClaudeHumanPromptContext>
   geminiPermissionByPaneKey: Map<string, GeminiPendingPermission>
+}
+
+export function createHumanTurnMaps(): HumanTurnMaps {
+  return { claudeHumanPromptContextByPaneKey: new Map(), geminiPermissionByPaneKey: new Map() }
 }
 
 export function forgetHumanTurns(state: HumanTurnMaps, paneKey: string): void {
@@ -35,4 +32,16 @@ export function moveHumanTurns(state: HumanTurnMaps, fromPaneKey: string, toPane
 export function clearHumanTurns(state: HumanTurnMaps): void {
   state.claudeHumanPromptContextByPaneKey.clear()
   state.geminiPermissionByPaneKey.clear()
+}
+
+export function clearPaneTurnCacheState(state: HookListenerState, paneKey: string): void {
+  state.lastPromptByPaneKey.delete(paneKey)
+  state.lastToolByPaneKey.delete(paneKey)
+  state.antigravityCompletedTranscriptByPaneKey.delete(paneKey)
+  state.antigravityChildWorkByPaneKey.delete(paneKey)
+  state.jcodeTurnPromptByPaneKey.delete(paneKey)
+  state.ampCompletedCacheKeys.delete(paneKey)
+  state.grokActiveTurnByPaneKey.delete(paneKey)
+  state.grokMainAgentStatusByPaneKey.delete(paneKey)
+  state.grokBackgroundTasksByPaneKey.delete(paneKey)
 }

@@ -11,6 +11,7 @@ export function NativeChatStructuredQuestionCard({
   questions,
   onAnswer,
   onCancel,
+  onCollapse,
   isSubmitting,
   shouldFocus,
   answerInputRef,
@@ -19,6 +20,7 @@ export function NativeChatStructuredQuestionCard({
   questions: readonly AgentJournalQuestion[]
   onAnswer: (response: AgentSessionPromptResponse) => void
   onCancel: () => void
+  onCollapse?: () => void
   isSubmitting?: boolean
   shouldFocus?: boolean
   answerInputRef?: RefObject<HTMLTextAreaElement | null>
@@ -41,6 +43,7 @@ export function NativeChatStructuredQuestionCard({
         }
       }}
       onCancel={onCancel}
+      onCollapse={onCollapse}
       isSubmitting={isSubmitting}
       shouldFocus={shouldFocus}
       answerInputRef={answerInputRef}

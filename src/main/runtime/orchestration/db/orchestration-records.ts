@@ -324,20 +324,13 @@ export type DispatchContextRow = {
   follow_up_of_dispatch_id: string | null
   /** When its worker reported with coordinator mail unread, until that mail continues it. */
   follow_up_mail_at: string | null
+  /** 'connector' when started in a turn its creator chat's connector conversation woke. */
+  creator_turn_source: 'connector' | null
+  /** What its creator started it for, opaque here (bot items: `bot-item:<uid>`); retries inherit it. */
+  origin_ref: string | null
 }
 
-export type DecisionGateRow = {
-  id: string
-  run_id: string
-  task_id: string
-  question: string
-  options: string
-  status: GateStatus
-  resolution: string | null
-  resolved_by: 'user' | 'coordinator' | null
-  created_at: string
-  resolved_at: string | null
-}
+export type { DecisionGateRow } from './decision-gates/decision-gate-row'
 
 export type CoordinatorRun = {
   id: string

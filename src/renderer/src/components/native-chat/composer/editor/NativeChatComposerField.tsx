@@ -7,10 +7,11 @@ import { cn } from '@/lib/class-names'
 import { NativeChatMentionMenu, NativeChatPickerMenu } from '../pickers/NativeChatAutocompleteMenus'
 import { NativeChatComposerActions } from '../controls/NativeChatComposerActions'
 import { NativeChatComposerNotices } from '../controls/NativeChatComposerNotices'
-import { nativeChatComposerPlaceholder } from '../controls/native-chat-composer-placeholder'
 import { NativeChatImageAttachmentPreview } from '../../attachments/chips/NativeChatImageAttachmentPreview'
-import { useTranslate } from '@/i18n/use-translate'
 import { useNativeChatComposerDraftUnsaved } from '../../drafts/use-native-chat-draft-unsaved'
+import { useNativeChatComposerGlow } from '../../native-chat-composer-glow'
+import { nativeChatComposerPlaceholder } from '../controls/native-chat-composer-placeholder'
+import { useTranslate } from '@/i18n/use-translate'
 import { useLatestHandler } from '@/lib/use-latest-handler'
 import {
   AgentHubOrbComposerContext,
@@ -19,12 +20,13 @@ import {
 import { AgentHubOrbComposerDictationOverlay } from '../../../agent-hub/AgentHubOrbComposerDictationOverlay'
 import { useAgentHubOrbVoiceContext } from '../../../agent-hub/agent-hub-orb-voice-context'
 import { agentHubOrbVoiceNotice } from '../../../agent-hub/agent-hub-orb-voice-state'
+import type { NativeChatComposerFieldProps } from '../../native-chat-composer-field-props'
 import { imeComposedSegment } from '@/lib/text-input/ime/ime-composed-segment'
 import { acceptNativeChatPromptSuggestion } from './native-chat-prompt-suggestion-accept'
 
-import type { NativeChatComposerFieldProps } from './native-chat-composer-field-props'
-
 function noop(): void {}
+
+export type { NativeChatComposerFieldProps } from '../../native-chat-composer-field-props'
 
 export function NativeChatComposerField({
   editSession,
@@ -35,7 +37,8 @@ export function NativeChatComposerField({
   disabled,
   hasPty,
   canSend,
-  unavailableHint,
+  placeholderHint,
+  idleHint,
   promptSuggestion,
   autocomplete,
   mentionFiles,
@@ -90,6 +93,7 @@ export function NativeChatComposerField({
   const voiceHoldsInput = voice.controller !== null && !voice.snapshot.textMode
   const t = useTranslate()
   const draftNotSaved = useNativeChatComposerDraftUnsaved(draftScopeKey)
+  const glowing = useNativeChatComposerGlow(draftScopeKey)
   const optionCount =
     autocomplete.mode === 'slash'
       ? autocomplete.items.length
@@ -133,7 +137,6 @@ export function NativeChatComposerField({
       onKeyDown(event)
     }
   })
-  const editorKeyUp = useLatestHandler(imeEnterGesture.onKeyUp)
   const editorBlur = useLatestHandler(() => {
     const compositionWasActive = imeEnterGesture.isComposing()
     imeEnterGesture.reset()
@@ -151,9 +154,9 @@ export function NativeChatComposerField({
     compositionBaseRef.current = textareaRef.current!.value
     imeEnterGesture.setComposing(true)
   })
-  const editorCompositionEnd = useLatestHandler((event: React.CompositionEvent<HTMLDivElement>) => {
+  const editorCompositionEnd = useLatestHandler(() => {
     const compositionWasActive = imeEnterGesture.isComposing()
-    imeEnterGesture.setComposing(false, event.data)
+    imeEnterGesture.setComposing(false)
     if (compositionWasActive) {
       settleImeValue(textareaRef.current!)
     }
@@ -249,7 +252,8 @@ export function NativeChatComposerField({
                 ? 'border-foreground/10 bg-background dark:bg-foreground/[0.04]'
                 : 'border-chat-composer-border bg-chat-composer-surface',
               // Contain caret-blink repaint to the composer; keep 4px slack around overhanging attachment buttons, while menus use portals.
-              '[contain:paint]'
+              '[contain:paint]',
+              glowing && 'native-chat-composer-glow'
             )}
           >
             <div
@@ -280,7 +284,6 @@ export function NativeChatComposerField({
                 disabled={disabled}
                 onChange={editorChange}
                 onKeyDownCapture={editorKeyDownCapture}
-                onKeyUp={editorKeyUp}
                 onBlur={editorBlur}
                 onCompositionStart={editorCompositionStart}
                 onCompositionEnd={editorCompositionEnd}
@@ -305,8 +308,9 @@ export function NativeChatComposerField({
                               'components.native-chat.goal.placeholder',
                               'Describe your goal, define measurable outcomes for best results'
                             )
-                          : (unavailableHint ??
+                          : (placeholderHint ??
                             suggestion ??
+                            idleHint ??
                             nativeChatComposerPlaceholder(hasPty, canSend, afterStop, t))
                 }
                 // Let layout handle wrapping and touch targets; scroll after eight lines (a launch prompt: one line growing to six) without JavaScript measurement.

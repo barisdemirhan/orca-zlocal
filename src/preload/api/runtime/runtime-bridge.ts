@@ -28,6 +28,7 @@ export const runtimeApi = {
     method: string
     params?: unknown
     envelope?: RuntimeOrchestrationEnvelope
+    orchestration?: { contractVersion: number; requestId: string }
   }): Promise<RuntimeRpcResponse<unknown>> => ipcRenderer.invoke('runtime:call', args),
   subscribe: async (
     args: { method: string; params?: unknown },
@@ -159,5 +160,13 @@ export const runtimeApi = {
       callback(data)
     ipcRenderer.on('runtime:sidebarInputsChanged', listener)
     return () => ipcRenderer.removeListener('runtime:sidebarInputsChanged', listener)
+  },
+  onOrchestrationSessionWorkersChanged: (
+    callback: (event: { sessionId: string }) => void
+  ): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: { sessionId: string }) =>
+      callback(data)
+    ipcRenderer.on('runtime:orchestrationSessionWorkersChanged', listener)
+    return () => ipcRenderer.removeListener('runtime:orchestrationSessionWorkersChanged', listener)
   }
 } satisfies PreloadApi['runtime']

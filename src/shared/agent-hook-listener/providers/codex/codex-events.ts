@@ -24,9 +24,9 @@ import {
 import {
   codexApprovalUsesTurnReviewer,
   codexTurnApprovalsAreAutoReviewed,
-  normalizeCodexTranscriptPath,
   reconcileCodexSubagentReviewer
 } from './codex-subagent-reviewer'
+import { normalizedTranscriptPath } from './codex-rollout-paths'
 import { readFirstString } from '../../interactive-tool'
 import type { HookListenerState } from '../../listener-state'
 import { resolvePrompt, resolveToolState } from '../../prompt-fields'
@@ -250,7 +250,7 @@ export function normalizeCodexEvent(
     )
   }
 
-  const approvalPath = normalizeCodexTranscriptPath(transcriptPath)
+  const approvalPath = normalizedTranscriptPath(transcriptPath)
   if (
     eventName === 'PermissionRequest' &&
     ownedState === 'waiting' &&

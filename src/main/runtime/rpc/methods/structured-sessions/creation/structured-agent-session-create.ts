@@ -1,3 +1,4 @@
+import { computeAgentSessionPayloadFingerprint } from '../../../../../../shared/agent-session/lifecycle/operations/agent-session-mutation-envelope'
 import type { StructuredSessionSurface } from '../../../../agent-session/lifecycle/structured-agent-session-close'
 import { structuredAgentSessionTabId } from '../../../../../../shared/agent-session/view/structured-agent-session-projection'
 import { seededPermissionMode } from '../../../../../../shared/native-chat/input/session-options/native-chat-session-option-defaults'
@@ -10,7 +11,6 @@ import {
   agentSessionRefusalError,
   AgentSessionRefusalError
 } from '../../../../../../shared/agent-session/failures/agent-session-wire-refusals'
-import { computeAgentSessionPayloadFingerprint } from '../../../../../../shared/agent-session/lifecycle/operations/agent-session-mutation-envelope'
 import type {
   AgentSessionAttachResult,
   AgentSessionMutationEnvelope,
@@ -37,33 +37,8 @@ import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../../shared/workspace-la
 import { structuredAgentSessionClosedBeforeCreate } from './structured-agent-session-close-before-create'
 import type { ChatTabPlacement } from '../../../../session-tabs/chat/agent-session-tab-layout'
 
-/** New creates keep the immutable client intent in the ledger; legacy creates keep attach identity. */
-export function structuredAgentSessionCreateIntentFingerprint(params: {
-  envelope: AgentSessionMutationEnvelope
-  worktree: string
-  agent: string
-  forkFrom?: { sessionId: string; throughItemId: string }
-  resumeFrom?: StructuredAgentSessionResumeSource
-  tabId?: string
-  firstMessage?: StructuredAgentSessionFirstMessage
-  optionsMode?: 'replace-model-selection'
-  options?: Readonly<Record<string, string>>
-}): string {
-  return computeAgentSessionPayloadFingerprint({
-    method: 'agentSession.create',
-    sessionId: params.envelope.sessionId,
-    fields: {
-      worktree: params.worktree,
-      agent: params.agent,
-      resumeFrom: params.resumeFrom,
-      forkFrom: params.forkFrom,
-      tabId: params.tabId,
-      firstMessage: params.firstMessage,
-      optionsMode: params.optionsMode,
-      options: params.options
-    }
-  })
-}
+export { structuredAgentSessionCreateIntentFingerprint } from './structured-agent-session-create-intent'
+import { structuredAgentSessionCreateIntentFingerprint } from './structured-agent-session-create-intent'
 
 /** Run throwing pre-commit work inside resolveUncommittedStructuredCreate so clients receive a no-effects refusal. */
 export async function prepareStructuredAgentSessionCreateForWorktree(args: {
@@ -86,6 +61,8 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
   tabId?: string
   firstMessage?: StructuredAgentSessionFirstMessage
   atRest?: boolean
+  beforeFirstMessage?: () => void | Promise<void>
+  beforeDelivery?: () => boolean
 }): Promise<CreateTypes.PreparedStructuredAgentSessionCreate> {
   const fork = args.forkFrom
   if (fork && (args.resumeFrom || args.options || args.optionsMode || args.atRest !== true)) {
@@ -167,7 +144,15 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
       agent: resolved.agent,
       envelope: { ...args.envelope, payloadFingerprint: hostFingerprint }
     },
-    ...(atRest ? { atRest: args.firstMessage ? { firstMessage: args.firstMessage } : {} } : {}),
+    ...(atRest
+      ? {
+          atRest: {
+            firstMessage: args.firstMessage,
+            beforeFirstMessage: args.beforeFirstMessage,
+            beforeDelivery: args.beforeDelivery
+          }
+        }
+      : {}),
     tab: { workspaceId: resolved.location.workspaceId, agent: resolved.agent }
   }
 }
@@ -288,8 +273,12 @@ export async function createStructuredAgentSessionForWorktree(args: {
   tabId?: string
   /** Create without starting the agent; its first message starts it. */
   atRest?: true
+  /** False publishes no tab; use `createBackgroundStructuredAgentSession`, which also keeps a restart from restoring one. */
+  publishTab?: false
   firstMessage?: StructuredAgentSessionFirstMessage
   signal?: AbortSignal
+  beforeFirstMessage?: () => void | Promise<void>
+  beforeDelivery?: () => boolean
 }): Promise<AgentSessionMutationResult<AgentSessionAttachResult>> {
   // An at-rest create's ledger row is keyed by its intent, as a client's create is.
   const envelope = args.atRest
@@ -309,7 +298,7 @@ export async function createStructuredAgentSessionForWorktree(args: {
   return commitStructuredAgentSessionCreate({
     runtime: args.runtime,
     caller: args.caller,
-    prepared,
+    prepared: args.publishTab === false ? { ...prepared, tab: null } : prepared,
     activate: args.activate
   })
 }

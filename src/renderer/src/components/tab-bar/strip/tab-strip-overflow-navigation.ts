@@ -4,7 +4,6 @@ import {
   EMPTY_TAB_STRIP_OVERFLOW_STATE,
   computeTabStripOverflowState,
   sameTabStripOverflowState,
-  scrollStripSidewaysOnWheel,
   type TabStripOverflowState
 } from './tab-strip-scroll-metrics'
 import { isTabStripPointerGestureActive } from './tab-strip-pointer-gesture'
@@ -25,19 +24,17 @@ import {
 } from './tab-strip-slot-geometry'
 import { motionSafeScrollBehavior } from '@/hooks/theme/usePrefersReducedMotion'
 import { useTabDragActive } from '../../tab-group/drag/tab-drag-context'
+import {
+  notifyTabStripListeners,
+  revealFirstUnmountedTabStripSlot,
+  useNotifyTabStripScrollAfterCommit,
+  useTabStripCommitStartScroll,
+  useTabStripListenerSubscribe
+} from './tab-strip-window'
+import { bindTabStripWheelScroll } from './tab-strip-wheel-scroll'
 
 const TAB_STRIP_SCROLL_FRACTION = 0.75
 const TAB_STRIP_MIN_SCROLL_STEP_PX = 120
-
-export function bindTabStripWheelScroll(el: HTMLElement, onScroll: () => void): () => void {
-  const onWheel = (event: WheelEvent): void => {
-    if (scrollStripSidewaysOnWheel(el, event)) {
-      onScroll()
-    }
-  }
-  el.addEventListener('wheel', onWheel, { passive: false })
-  return () => el.removeEventListener('wheel', onWheel)
-}
 
 export function scrollTabStripByStep(
   el: HTMLElement,
@@ -63,12 +60,15 @@ export function useTabStripOverflowNavigation({
   activeVisibleTabId,
   activeDockSlotId,
   layoutKey,
+  slotIds,
   worktreeId
 }: {
   activeVisibleTabId: string | null
   /** The slot drawn active; a client-hosted row can take it without `activeVisibleTabId` changing. */
   activeDockSlotId: string | null
   layoutKey: string
+  /** Every slot in strip order, mounted or not: a windowed strip's DOM holds only part of it. */
+  slotIds: readonly string[]
   worktreeId: string
 }): {
   tabStripRef: RefObject<HTMLDivElement | null>
@@ -79,11 +79,15 @@ export function useTabStripOverflowNavigation({
 } {
   const isTabDragActive = useTabDragActive()
   const tabStripRef = useRef<HTMLDivElement>(null)
+  // Why first: this hook's effects below are the ones that scroll the strip.
+  const commitStartScrollRef = useTabStripCommitStartScroll(tabStripRef)
   const stripResizeListenersRef = useRef<Set<() => void>>(new Set())
+  const subscribeToStripResize = useTabStripListenerSubscribe(stripResizeListenersRef)
   const prevStripRef = useRef<{ worktreeId: string; tabIds: ReadonlySet<string> } | null>(null)
   const stickToEndRef = useRef(false)
   const tabClosedThisCommitRef = useRef(false)
   const activeTabIdRef = useRef<string | null>(null)
+  const slotIdsRef = useRef<readonly string[]>(slotIds)
   const hoverDeferredRevealIdsRef = useRef<Set<string>>(new Set())
   const scrollAnchorRef = useRef<{
     activeTabId: string | null
@@ -154,9 +158,7 @@ export function useTabStripOverflowNavigation({
         el.scrollLeft = Math.max(0, el.scrollWidth - el.clientWidth)
       }
       recordScrollAnchor()
-      for (const listener of stripResizeListenersRef.current) {
-        listener()
-      }
+      notifyTabStripListeners(stripResizeListenersRef)
     }
 
     const disconnectResizeObservers = bindTabStripContentResizeObservers(el, handleStripResize)
@@ -183,13 +185,16 @@ export function useTabStripOverflowNavigation({
       }
       const knownIds = new Set([...readTabStripSlotIds(el)].filter((id) => !deferred.has(id)))
       const offscreenOpened = findOffscreenOpenedTabStripSlot(el, knownIds)
-      if (!offscreenOpened) {
+      if (offscreenOpened) {
+        revealTabStripSlot(el, offscreenOpened)
+      } else if (!revealFirstUnmountedTabStripSlot(el, slotIdsRef.current, deferred)) {
         return
       }
-      revealTabStripSlot(el, offscreenOpened)
       stickToEndRef.current = isTabStripScrolledToEnd(el)
       updateTabStripOverflowState()
       recordScrollAnchor()
+      // Why: this scroll happens outside a commit, so the commit-end notify can't see it.
+      notifyTabStripListeners(stripResizeListenersRef)
     }
     el.addEventListener('pointerleave', onPointerLeave)
     return () => el.removeEventListener('pointerleave', onPointerLeave)
@@ -199,6 +204,9 @@ export function useTabStripOverflowNavigation({
   useLayoutEffect(() => {
     activeTabIdRef.current = activeVisibleTabId
   }, [activeVisibleTabId])
+  useLayoutEffect(() => {
+    slotIdsRef.current = slotIds
+  }, [slotIds])
 
   useLayoutEffect(() => {
     const strip = tabStripRef.current
@@ -207,7 +215,8 @@ export function useTabStripOverflowNavigation({
       return
     }
     const prev = prevStripRef.current
-    const tabIds = readTabStripSlotIds(strip)
+    // Why logical ids: scrolling a windowed strip mounts and unmounts slots without opening or closing tabs.
+    const tabIds: ReadonlySet<string> = new Set(slotIdsRef.current)
     prevStripRef.current = { worktreeId, tabIds }
     if (!prev || prev.worktreeId !== worktreeId) {
       hoverDeferredRevealIdsRef.current = new Set()
@@ -247,6 +256,9 @@ export function useTabStripOverflowNavigation({
           const offscreenOpened = findOffscreenOpenedTabStripSlot(strip, prev.tabIds)
           if (offscreenOpened) {
             revealTabStripSlot(strip, offscreenOpened)
+          } else {
+            const opened = [...tabIds].filter((id) => !prev.tabIds.has(id))
+            revealFirstUnmountedTabStripSlot(strip, slotIdsRef.current, opened)
           }
         }
         stickToEndRef.current = isTabStripScrolledToEnd(strip)
@@ -302,14 +314,8 @@ export function useTabStripOverflowNavigation({
   useLayoutEffect(() => {
     tabClosedThisCommitRef.current = false
   })
-
-  // Why share these observers: each one watches every tab, so a second set doubles that work.
-  const subscribeToStripResize = useCallback((listener: () => void): (() => void) => {
-    stripResizeListenersRef.current.add(listener)
-    return () => {
-      stripResizeListenersRef.current.delete(listener)
-    }
-  }, [])
+  // Why last: it must follow every effect above that scrolls the strip.
+  useNotifyTabStripScrollAfterCommit(tabStripRef, stripResizeListenersRef, commitStartScrollRef)
 
   return {
     tabStripRef,

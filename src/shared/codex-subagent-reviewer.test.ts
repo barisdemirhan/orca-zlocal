@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, expect, it, vi } from 'vitest'
 import { resolveCodexApprovalsReviewer } from './agent-hook-listener/providers/codex/codex-subagent-reviewer'
-import type { JsonlCursor } from './agent-hook-listener/providers/codex/codex-rollout-jsonl-cursor'
+import type { JsonlCursor } from './agent-hook-listener/providers/codex/codex-rollout-jsonl-format'
 
 const readLengths = vi.hoisted(() => new Array<number>())
 vi.mock('node:fs', async (importOriginal) => {
