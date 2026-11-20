@@ -14,7 +14,11 @@ import type {
   AgentSessionPromptSuggestion,
   AgentSessionSlashCommand
 } from '../../../../../../shared/agent-session/agent-session-wire'
-import type { AgentSessionPluginStatus } from '../../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import type {
+  AgentSessionPluginNode,
+  AgentSessionPluginStatus,
+  AgentSessionPluginUiPress
+} from '../../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type { StructuredAgentContextUsage } from '../../../../../../shared/agent-session/conversation-context/structured-agent-session-context-usage'
 import type { NativeChatComposerErrorDetail } from '../controls/native-chat-composer-error-detail'
 import type { NativeChatSideChat } from '../../messages/actions/use-native-chat-side-chat'
@@ -46,6 +50,9 @@ export type NativeChatStructuredComposerTransport = {
   sessionCommands?: readonly AgentSessionSlashCommand[]
   /** One status line per plugin, shown under the composer footer. */
   pluginStatuses?: readonly AgentSessionPluginStatus[]
+  /** What a mod drew beside the status lines, and where its presses go. */
+  pluginPromptHint?: AgentSessionPluginNode
+  pressPluginUi?: (press: AgentSessionPluginUiPress) => void
   /** Request command refresh; updated choices arrive through sessionCommands. */
   refreshCommands?: () => void
   setCommandsMenuOpen?: (open: boolean) => void

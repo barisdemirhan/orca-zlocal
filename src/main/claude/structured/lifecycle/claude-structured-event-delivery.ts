@@ -74,6 +74,10 @@ export function emitClaudeStructuredSessionEvent({
     if (session?.pluginSurfaces.clear()) {
       session.events?.setPluginSurfaces?.({ statuses: [] })
     }
+    if (session?.pluginUi.clear()) {
+      session.events?.setPluginSurfaces?.({ promptHint: null })
+      session.events?.setPluginSurfaces?.({ pane: null })
+    }
   } else if (event.type === 'message') {
     session?.childWork.observe(event.message, session.translator?.childToolOwner)
     session?.backgroundTasks.observe(event.message, event.startsTurn === true)
@@ -89,6 +93,7 @@ export function emitClaudeStructuredSessionEvent({
     if (surfaces) {
       session?.events?.setPluginSurfaces?.(surfaces)
     }
+    session?.pluginUi.observe(event.message)
   }
   session?.translator?.handle(event)
   if (session && event.type === 'message' && claudeAuthRetryStatus(event.message) !== null) {

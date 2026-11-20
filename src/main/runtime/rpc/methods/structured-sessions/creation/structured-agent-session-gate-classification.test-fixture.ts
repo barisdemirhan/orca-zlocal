@@ -105,6 +105,10 @@ export const WORK_METHODS = [
   { method: 'agentSession.hold', params: { sessionId: SESSION, holderId: 'surface-1' } },
   { method: 'agentSession.reveal', params: { sessionId: SESSION } },
   { method: 'agentSession.regenerateName', params: { sessionId: SESSION } },
+  {
+    method: 'agentSession.pluginUiPress',
+    params: { sessionId: SESSION, component: 'Pane', instanceId: 'deck', plugin: 'deck', handle: 1 }
+  },
   { method: 'agentSession.rename', params: { sessionId: SESSION, name: 'Release notes' } },
   { method: 'agentSession.subscribeStatus', params: null }
 ] as const

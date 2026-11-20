@@ -32,7 +32,14 @@ export function structuredAgentSessionEphemeralPublications(
       queue.submit({
         bytes: Buffer.byteLength(JSON.stringify(update), 'utf8') + 64,
         // A key per toast: coalescing by one shared key would drop all but the newest.
-        publicationKey: update.toast ? `plugin-toast:${update.toast.id}` : 'plugin-statuses',
+        // Each other update carries one field, so its key keeps that field's newest value only.
+        publicationKey: update.toast
+          ? `plugin-toast:${update.toast.id}`
+          : update.promptHint !== undefined
+            ? 'plugin-prompt-hint'
+            : update.pane !== undefined
+              ? 'plugin-pane'
+              : 'plugin-statuses',
         run: (bound) => bound.publishPluginSurfaces?.(update)
       })
     }

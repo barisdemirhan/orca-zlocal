@@ -57,7 +57,7 @@ import { cancelStructuredPrompt } from './session/structured/writes/native-chat-
 import { useNativeChatBotHome } from './NativeChatBotHomeScope'
 import { useStructuredAgentSessionHostExecution } from '@/components/native-chat/session/status/structured-agent-session-status-hooks'
 import { useNativeChatPaneFork } from '@/components/native-chat/messages/actions/use-native-chat-fork'
-import { NativeChatDock, NativeChatDockTranscript } from './pane/dock/NativeChatDock'
+import { NativeChatDock } from './pane/dock/NativeChatDock'
 import { useAppStore } from '@/store/index'
 import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import { useNativeChatStructuredComposerTransport } from '@/components/native-chat/composer/submit/use-native-chat-structured-composer-transport'
@@ -75,6 +75,7 @@ import { useNativeChatHostSendGate } from '@/components/native-chat/host-access/
 import { useStructuredAgentSessionStartFailureFacts } from '@/components/native-chat/messages/notices/use-structured-agent-session-start-failure-facts'
 import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-session/requests/prompts/agent-session-approval-subject'
 import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
+import { NativeChatCrewFrame } from '../orchestration-crew/NativeChatCrewPanel'
 import type { NativeChatComposerHandle } from './composer/native-chat-composer-types'
 import {
   NativeChatWorkerApprovalTimeline,
@@ -182,13 +183,12 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   // An owned prompt keeps its card; otherwise a missing program leaves the composer disabled.
   const installLayout = viewState.kind === 'empty' ? 'hero' : 'strip'
   const install = useNativeChatInstallSlot(props, agentLabel, installLayout)
-  const canMention = composerShown && install.unavailableHint === undefined
   const crew = useNativeChatCrewSource({
     target: props.target,
     sessionId: props.sessionId,
     isVisible: props.isVisible,
     composerRef,
-    canMention
+    canMention: composerShown && install.unavailableHint === undefined
   })
   const cancelPrompt = () => cancelStructuredPrompt(controller, prompt)
   const surface = useNativeChatSurface({
@@ -266,7 +266,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
             <NativeChatSubagentSheetLayer {...subagents.layer}>
               {paneHeader}
               <NativeChatWorkerAutoCloseBanner pane={props} />
-              <NativeChatDockTranscript>
+              <NativeChatCrewFrame panel={null} plugins={controller} dockFitted>
                 <NativeChatContextClearFade
                   // A read failure stays in view: no divider may come to end the fade.
                   clearing={controller.contextClear.clearing && viewState.kind !== 'error'}
@@ -335,7 +335,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                     </NativeChatRowActionsProvider>
                   )}
                 </NativeChatContextClearFade>
-              </NativeChatDockTranscript>
+              </NativeChatCrewFrame>
               <NativeChatDock
                 shown={!readFailure?.final}
                 keepFloatingTerminalTriggerClear={props.isVisible}

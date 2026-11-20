@@ -21,6 +21,7 @@ import type { ClaudeStructuredSessionEvent } from '../lifecycle/claude-structure
 import { ClaudeBackgroundTaskTracker } from '../../background-tasks/claude-background-task-tracker'
 import { ClaudeChildWorkDecoder } from '../../child-work/claude-child-work-decoder'
 import { ClaudePluginSurfaces } from '../../plugin-surfaces/claude-plugin-surfaces'
+import { ClaudePluginUiBridge } from '../../plugin-surfaces/claude-plugin-ui-bridge'
 import { ClaudeSlashCommandCatalog } from '../../command-catalog/claude-slash-command-catalog'
 import type { ClaudeStructuredLaunch } from '../launch/claude-structured-launch-resolution'
 import type { ClaudeAcquisitionLaunch } from '../launch/claude-structured-acquisition-launch'
@@ -136,6 +137,13 @@ export function createClaudeSessionPublication(input: {
       // An unread catalog is unavailable, not empty.
       commands: new ClaudeSlashCommandCatalog(),
       pluginSurfaces: new ClaudePluginSurfaces(),
+      pluginUi: new ClaudePluginUiBridge({
+        request: input.connection.uiRequest
+          ? (body) => input.connection.uiRequest?.(body) ?? Promise.reject(new Error('no request'))
+          : undefined,
+        clientId: `orca-${input.request.identity.sessionId}`,
+        publish: (update) => input.request.events?.setPluginSurfaces?.(update)
+      }),
       dispatchSequence: 0,
       optionMutationSequence: 0,
       options: new Map(input.launch.savedOptions.options),

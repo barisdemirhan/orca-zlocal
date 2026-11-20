@@ -1,4 +1,6 @@
 import type {
+  AgentSessionPluginNode,
+  AgentSessionPluginPane,
   AgentSessionPluginStatus,
   AgentSessionPluginToast
 } from './agent-session-plugin-surface-wire'
@@ -9,11 +11,20 @@ const RETAINED_PLUGIN_TOASTS = 8
 export type AgentSessionPluginSurfaceState = {
   statuses: AgentSessionPluginStatus[]
   toasts: AgentSessionPluginToast[]
+  promptHint: AgentSessionPluginNode | null
+  pane: AgentSessionPluginPane | null
 }
 
 type PluginSurfaceFrame = {
   pluginStatuses?: AgentSessionPluginStatus[]
   pluginToasts?: AgentSessionPluginToast[]
+  pluginPromptHint?: AgentSessionPluginNode | null
+  pluginPane?: AgentSessionPluginPane | null
+}
+
+// Trees are capped by the host, so comparing their JSON stays cheap.
+function treesEqual(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null)
 }
 
 function statusesEqual(
@@ -36,7 +47,10 @@ export function pluginSurfacesRestated(
   return (
     frame.pluginToasts === undefined &&
     (frame.pluginStatuses === undefined ||
-      statusesEqual(frame.pluginStatuses, current?.statuses ?? []))
+      statusesEqual(frame.pluginStatuses, current?.statuses ?? [])) &&
+    (frame.pluginPromptHint === undefined ||
+      treesEqual(frame.pluginPromptHint, current?.promptHint)) &&
+    (frame.pluginPane === undefined || treesEqual(frame.pluginPane, current?.pane))
   )
 }
 
@@ -45,7 +59,12 @@ export function pluginSurfacesAfterBatch(
   current: AgentSessionPluginSurfaceState | undefined,
   frame: PluginSurfaceFrame
 ): { plugins?: AgentSessionPluginSurfaceState } {
-  if (frame.pluginStatuses === undefined && frame.pluginToasts === undefined) {
+  if (
+    frame.pluginStatuses === undefined &&
+    frame.pluginToasts === undefined &&
+    frame.pluginPromptHint === undefined &&
+    frame.pluginPane === undefined
+  ) {
     return {}
   }
   const held = current?.toasts ?? []
@@ -53,6 +72,11 @@ export function pluginSurfacesAfterBatch(
   return {
     plugins: {
       statuses: frame.pluginStatuses ?? current?.statuses ?? [],
+      promptHint:
+        frame.pluginPromptHint === undefined
+          ? (current?.promptHint ?? null)
+          : frame.pluginPromptHint,
+      pane: frame.pluginPane === undefined ? (current?.pane ?? null) : frame.pluginPane,
       toasts: [
         ...held,
         ...(frame.pluginToasts ?? []).filter((toast) => !known.has(toast.id))
