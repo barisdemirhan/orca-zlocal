@@ -19,7 +19,6 @@ import { StructuredAgentSessionBackgroundTaskChannel as BackgroundTasks } from '
 import { StructuredAgentSessionClientDelivery } from '../publication/subscribers/structured-agent-session-client-delivery'
 import { createStructuredAgentSessionPublicationWiring } from './structured-agent-session-publication-wiring'
 import * as resume from '../recovery/structured-agent-session-restart-resume-host'
-import type { StructuredAgentSessionRestartResume } from '../recovery/structured-agent-session-restart-resume-contract'
 import { structuredAgentSessionRestartResumeSurfaces } from '../recovery/structured-agent-session-restart-resume-wiring'
 import * as conversation from '../delivery/structured-agent-session-host-delivery'
 import { wireStructuredAgentSessionQueuedMessages as wireQueuedMessages } from '../delivery/structured-agent-session-queued-wiring'
@@ -27,6 +26,7 @@ import * as sessionLogger from './structured-agent-session-logger'
 import { createStructuredAgentSessionWorkspaceSleeper } from '../termination/structured-agent-session-workspace-sleep'
 
 export class StructuredAgentSessionHost {
+  readonly voice = mutationWiring.createHostVoice(() => this.mutationContext())
   private readonly conversationCommands = new CommandController(() => this.mutationContext(), this)
   private readonly sessions = createStructuredAgentSessionPublicationWiring({
     client: () => this.clientDelivery,
@@ -60,7 +60,7 @@ export class StructuredAgentSessionHost {
   private readonly conversationDelivery: conversation.StructuredAgentSessionConversationDelivery
   private readonly eventRecovery: EventRecovery
   private readonly backgroundTasks: BackgroundTasks
-  readonly restartResume: StructuredAgentSessionRestartResume
+  readonly restartResume: ReturnType<typeof resume.createStructuredAgentSessionRestartResume>
 
   readonly usageLimitContinue: ReturnType<typeof usageLimit.start>
 

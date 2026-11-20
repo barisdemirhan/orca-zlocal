@@ -50,6 +50,12 @@ export type RequestActiveTerminalPaneSplitDetail = {
 /** Unlike a split request, a close always names its tab: an untargeted close must not reach every mounted pane. */
 export type RequestActiveTerminalPaneCloseDetail = {
   tabId: string
+  /** Closes this split instead of the active one; unknown to the mounted pane, it stays unhandled. */
+  leafId?: string
+  /** False skips the running-process prompt (the caller already asked). Default true. */
+  confirm?: boolean
+  /** Set by the mounted pane that took the request. */
+  handled?: boolean
 }
 
 export type CloseTerminalPaneDetail = {
@@ -73,12 +79,21 @@ export type SetTerminalPaneTitleDetail = {
 
 export type BackgroundMountTerminalWorktreeDetail = {
   worktreeId: string
-  /** Target background mounts to exact tabs to avoid connecting every saved pane; omitted IDs preserve legacy whole-worktree mount, lifted by real activation. */
+  /** When set, only these terminal tabs mount for the background worktree.
+   *  Why: a worktree-wide background mount instantiates a TerminalPane (and
+   *  its PTY connect work) for every saved tab; wake/resume flows know exactly
+   *  which tabs they need. Omitted → whole-worktree mount (legacy dispatch
+   *  sites); a real activation always lifts the restriction. */
   tabIds?: readonly string[]
 }
 
 export type WakeHibernatedAgentsWorktreeDetail = {
   worktreeId: string
-  /** Collect provider-session claims from panes consuming/latching wake so generic resume cannot launch those sessions twice. */
+  /** Omitted by a workspace wake; present when only one pane was selected. */
+  paneKey?: string
+  /** Mutable collector: mounted panes that consume (or latch) the in-place
+   *  hibernation wake add their provider-session claim keys here so the
+   *  dispatcher's follow-up generic resume skips those sessions instead of
+   *  launching them a second time. */
   wokenClaimKeys?: Set<string>
 }

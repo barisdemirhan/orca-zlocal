@@ -127,6 +127,8 @@ export function initializeMainProcessRuntime(): OrcaRuntimeService {
     applySessionSearchSettings: applySessionSearchSettingsChange,
     skillTransactionRecovery: state.skillTransactionRecovery
   })
+  // Hands the hook server the persisted "started by" links now that it is wired.
+  runtime.restorePaneSpawnLineage()
   // Both desktop and headless serve own a host-local search service.
   const sessionSearch = installChildSessionSearchService({
     dataRoot: getCanonicalUserDataPath(),

@@ -1,11 +1,16 @@
-import { ImeTextarea } from '@/lib/text-input/ime/ime-text-field'
-import { useRef, useState, type RefObject } from 'react'
-import { Check, Pencil } from 'lucide-react'
+import {
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+  type RefObject
+} from 'react'
 import { cn } from '@/lib/class-names'
 import { translate } from '@/i18n/i18n'
 import { useTranslate } from '@/i18n/use-translate'
 import { NativeChatQuestionCardHeader } from './NativeChatQuestionCardHeader'
-import { NativeChatQuestionOption } from './NativeChatQuestionOption'
+import { NativeChatQuestionTypedAnswerRow } from './NativeChatQuestionTypedAnswerRow'
 import { NativeChatQuestionConfirmButton } from './NativeChatQuestionConfirmButton'
 import {
   NativeChatQuestionSteps,
@@ -16,6 +21,7 @@ import {
 } from './NativeChatQuestionCardParts'
 import type { AskAnswerSelection } from '../../../../../shared/native-chat/input/questions/native-chat-ask-answer'
 import type { AskPrompt } from '../../../../../shared/native-chat/input/questions/native-chat-ask-types'
+import { NativeChatQuestionOptionRow } from '../NativeChatQuestionOptionRow'
 import { useNativeChatPromptCardFocus } from './use-native-chat-prompt-card-focus'
 import { useNativeChatQuestionAutoAdvance } from './use-native-chat-question-auto-advance'
 import { useNativeChatQuestionKeys } from './use-native-chat-question-keys'
@@ -28,6 +34,11 @@ import {
   askTypedText,
   toggleAskOption
 } from '../../../../../shared/native-chat/input/questions/native-chat-ask-card-rules'
+
+export type NativeChatQuestionCardControl = {
+  /** Number-key answer: picks an option; a single-select pick also advances or submits. */
+  chooseOption: (optionIndex: number) => boolean
+}
 
 export type NativeChatQuestionCardProps = {
   prompt: AskPrompt
@@ -50,11 +61,19 @@ export type NativeChatQuestionCardProps = {
   /** Another surface's own look for the card (an item page's open question). */
   look?: NativeChatQuestionCardLook
   draft?: NativeChatQuestionCardDraft
+  /** The multiline free-text field, for hosts whose answerAccessory targets it. */
+  answerTextareaRef?: RefObject<HTMLTextAreaElement | null>
+  /** Rendered inside the free-text row, after the field (e.g. a dictation mic). */
+  answerAccessory?: ReactNode
+  /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
+  layout?: 'composer' | 'embedded'
+  /** Show a trailing "(Recommended)" in an option label as a badge instead. */
+  highlightRecommended?: boolean
+  controlRef?: Ref<NativeChatQuestionCardControl>
 }
 
 // Reserve a non-option index so single-select holds either an option or typed text.
 const TYPED_ANSWER = -1
-const LINE_BREAKS = /[\r\n\u2028\u2029]/g
 
 const CONFIRM_LABEL = {
   submit: () => translate('components.native-chat.question.send', 'Submit'),
@@ -75,7 +94,12 @@ export function NativeChatQuestionCard({
   shouldFocus = false,
   answerInputRef,
   look,
-  draft
+  draft,
+  answerTextareaRef,
+  answerAccessory,
+  layout = 'composer',
+  highlightRecommended = false,
+  controlRef
 }: NativeChatQuestionCardProps): React.JSX.Element {
   const t = useTranslate()
   const cardRef = useRef<HTMLDivElement>(null)
@@ -211,6 +235,24 @@ export function NativeChatQuestionCard({
     }
   }
 
+  useImperativeHandle(controlRef, () => ({
+    chooseOption: (optionIndex: number): boolean => {
+      if (isSubmitting || !q.options[optionIndex]) {
+        return false
+      }
+      if (q.multiSelect) {
+        pickOption(optionIndex)
+        return true
+      }
+      // A hub number key answers at once, without the click's beat to take it back.
+      autoAdvance.cancel()
+      const next = selections.map((choices, qi) => (qi === index ? [optionIndex] : choices))
+      setSelections(next)
+      advanceOrSubmit(next, otherText)
+      return true
+    }
+  }))
+
   const confirm = (fromKeyboard = false): void => {
     autoAdvance.cancel()
     const action = askConfirmAction({ isLast, anyAnswered, fromKeyboard })
@@ -252,6 +294,7 @@ export function NativeChatQuestionCard({
         onCollapse()
       }
     : undefined
+  const expandedAnswer = layout === 'embedded' && freeTextInput?.multiline
   const stepsInSurface = look?.stepsInSurface === true
   const steps = (className?: string): React.JSX.Element => (
     <NativeChatQuestionSteps
@@ -275,15 +318,19 @@ export function NativeChatQuestionCard({
       tabIndex={-1}
       // Capped against the chat pane (not the window) so the words that led to the question stay in view.
       className={cn(
-        'flex max-h-[max(14rem,min(32rem,50%))] min-h-0 shrink-0 flex-col bg-chat-pane focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        'flex max-h-[max(14rem,min(32rem,50%))] min-h-0 shrink-0 flex-col bg-chat-pane data-[layout=embedded]:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
         look?.frameClassName
       )}
+      data-layout={layout}
       aria-busy={isSubmitting}
       onKeyDown={(event) =>
         foldNativeChatQuestionOnEscape(event, isSubmitting ? undefined : collapse)
       }
     >
-      <div className="mx-auto flex min-h-0 w-full max-w-(--chat-content-max-width) flex-col px-3 pt-2 pb-4 sm:px-4">
+      <div
+        className="mx-auto flex min-h-0 w-full max-w-(--chat-content-max-width) flex-col px-3 pt-2 pb-4 sm:px-4 data-[layout=embedded]:max-w-none data-[layout=embedded]:p-0 data-[layout=embedded]:sm:p-0"
+        data-layout={layout}
+      >
         {total > 1 && !stepsInSurface ? steps() : null}
 
         {/* One 14px gutter (px-3.5) for the question, option tiles and footer, so their edges line up.
@@ -318,11 +365,12 @@ export function NativeChatQuestionCard({
             {/* Option rings are inset, so the scroll clip cannot cut them. */}
             <div className="flex flex-col gap-1.5 px-3.5 pb-3">
               {q.options.map((opt, i) => (
-                <NativeChatQuestionOption
+                <NativeChatQuestionOptionRow
                   key={`${i}:${opt.label}`}
                   badge={String(i + 1)}
                   initialFocus={i === 0}
                   label={opt.label}
+                  highlightRecommended={highlightRecommended}
                   description={opt.description}
                   preview={opt.preview}
                   selected={(selections[index] ?? []).includes(i)}
@@ -336,85 +384,27 @@ export function NativeChatQuestionCard({
           <div
             className={cn(
               'flex shrink-0 gap-2.5 px-3.5 pb-3.5',
-              freeTextInput?.multiline ? 'items-end' : 'items-center'
+              freeTextInput?.multiline ? 'items-end' : 'items-center',
+              expandedAnswer && 'flex-wrap justify-end'
             )}
           >
             {questionAllowsOther ? (
-              <div
-                className={cn(
-                  'flex min-h-9 min-w-0 flex-1 gap-3 rounded-[10px] border border-question-option-border px-2.5 py-1.5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-chat-focus-ring',
-                  freeTextInput?.multiline ? 'items-start' : 'items-center'
-                )}
-              >
-                <span
-                  className={cn(
-                    'flex size-5.5 shrink-0 items-center justify-center rounded-md border',
-                    currentTypedAnswerChosen
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'border-question-option-border text-muted-foreground'
-                  )}
-                >
-                  {currentTypedAnswerChosen ? (
-                    <Check className="size-3.5" strokeWidth={3} />
-                  ) : (
-                    <Pencil className="size-3.5" />
-                  )}
-                </span>
-                {/* Deliver free text verbatim as a tool result; composer slash commands and autocomplete do not apply. */}
-                {freeTextInput?.multiline ? (
-                  // The box draws the field's edge, so the bare field (not the bordered Textarea primitive) sits inside it.
-                  <ImeTextarea
-                    data-native-chat-answer-field
-                    data-native-chat-prompt-card-focus-target={fieldTakesFocus}
-                    disabled={isSubmitting}
-                    value={otherText[index]}
-                    onChange={(e) => setOther(index, e.target.value)}
-                    onClick={autoAdvance.cancel}
-                    placeholder={answerPlaceholder}
-                    className="scrollbar-sleek max-h-[12lh] min-h-16 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent [field-sizing:content] text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-default disabled:opacity-50"
-                  />
-                ) : (
-                  <ImeTextarea
-                    ref={answerInputRef}
-                    rows={1}
-                    data-native-chat-answer-field
-                    data-native-chat-prompt-card-focus-target={fieldTakesFocus}
-                    disabled={isSubmitting}
-                    value={otherText[index]}
-                    // Enter submits, so a line break becomes a space; edit in place so a mid-draft paste keeps the caret.
-                    onChange={(e) => {
-                      const field = e.target
-                      const oneLine = field.value.replace(LINE_BREAKS, ' ')
-                      if (oneLine !== field.value) {
-                        const { selectionStart, selectionEnd } = field
-                        field.value = oneLine
-                        field.setSelectionRange(selectionStart, selectionEnd)
-                      }
-                      setOther(index, oneLine)
-                    }}
-                    // Select typed text on click; tabbing toward Submit must not replace a picked option.
-                    onClick={() => {
-                      autoAdvance.cancel()
-                      if ((otherText[index] ?? '').trim().length > 0) {
-                        chooseTypedAnswer(index)
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        confirm(true)
-                      }
-                    }}
-                    placeholder={answerPlaceholder}
-                    className={cn(
-                      'scrollbar-sleek max-h-[6lh] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-sm outline-none [field-sizing:content] placeholder:text-muted-foreground disabled:cursor-default disabled:opacity-50',
-                      currentTypedAnswerChosen || !otherText[index]
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
-                    )}
-                  />
-                )}
-              </div>
+              <NativeChatQuestionTypedAnswerRow
+                multiline={freeTextInput?.multiline === true}
+                expanded={expandedAnswer === true}
+                chosen={currentTypedAnswerChosen}
+                disabled={isSubmitting}
+                value={otherText[index]}
+                placeholder={answerPlaceholder}
+                multilineRef={answerTextareaRef}
+                singleLineRef={answerInputRef}
+                focusTarget={fieldTakesFocus}
+                accessory={answerAccessory}
+                onChange={(value) => setOther(index, value)}
+                onFieldClick={autoAdvance.cancel}
+                onSelectTyped={() => chooseTypedAnswer(index)}
+                onEnter={() => confirm(true)}
+              />
             ) : (
               <span className="flex-1" />
             )}

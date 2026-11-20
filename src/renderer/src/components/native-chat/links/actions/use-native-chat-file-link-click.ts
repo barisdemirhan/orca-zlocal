@@ -1,8 +1,11 @@
-import { useCallback, type RefObject } from 'react'
+import { useCallback, useContext, type RefObject } from 'react'
 import type { CommentMarkdownLinkClickHandler } from '@/components/comment-markdown/comment-markdown-element-renderers'
 import type { LinkActionRequest } from '@/components/link-actions/link-action-request'
 import { openDetectedFilePath } from '@/components/terminal-pane/links/files/terminal-file-open-routing'
-import { isTerminalLinkActionActivation } from '@/components/terminal-pane/links/gestures/terminal-link-activation'
+import {
+  isTerminalLinkActionActivation,
+  isTerminalLinkDirectActivation
+} from '@/components/terminal-pane/links/gestures/terminal-link-activation'
 import { useAppStore } from '../../../../store/index'
 import { routeNativeChatHref } from '../../../../../../shared/native-chat/file-access/native-chat-href-routing'
 import { resolveNativeChatFileLink } from './native-chat-file-link'
@@ -11,8 +14,11 @@ import { nativeChatPlainLinkClickBehavior } from './native-chat-link-click-behav
 import { showFileLinkUnresolvedToast } from './native-chat-file-link-toasts'
 import {
   nativeChatFileLinkActions,
-  nativeChatFileOpenDeps
+  nativeChatFileOpenDeps,
+  nativeChatFilePeekSource
 } from './native-chat-link-target-actions'
+import { NativeChatPresentationContext } from '../../native-chat-presentation-context'
+import { peekTerminalFileFromMirror } from '../../../agent-hub/agent-hub-peek-routing'
 
 /** Honor terminal link-click settings: plain-click popover, modifier opens in Orca, Shift uses the default app. */
 export function useNativeChatFileLinkClick(
@@ -20,6 +26,7 @@ export function useNativeChatFileLinkClick(
   request?: (request: LinkActionRequest) => void,
   rootRef?: RefObject<HTMLElement | null>
 ): CommentMarkdownLinkClickHandler | undefined {
+  const orb = useContext(NativeChatPresentationContext) === 'orb'
   const openFileLink = useCallback<CommentMarkdownLinkClickHandler>(
     (event, href) => {
       if (!context) {
@@ -43,7 +50,15 @@ export function useNativeChatFileLinkClick(
         showFileLinkUnresolvedToast(route.pathText)
         return
       }
+      const peekSource = nativeChatFilePeekSource(target, context, event.nativeEvent, orb)
       if (behavior === 'open' || !request) {
+        if (
+          isTerminalLinkDirectActivation(event) &&
+          !event.shiftKey &&
+          peekTerminalFileFromMirror(target.absolutePath, peekSource)
+        ) {
+          return
+        }
         openDetectedFilePath(target.absolutePath, target.line, target.column, {
           ...nativeChatFileOpenDeps(target, context),
           openWithSystemDefault: event.shiftKey
@@ -58,10 +73,10 @@ export function useNativeChatFileLinkClick(
         anchorY: keyboardAnchor?.bottom ?? event.clientY,
         restoreFocus: () =>
           (anchor.isConnected ? anchor : rootRef?.current)?.focus({ preventScroll: true }),
-        ...nativeChatFileLinkActions(target, context)
+        ...nativeChatFileLinkActions(target, context, peekSource)
       })
     },
-    [context, request, rootRef]
+    [context, request, rootRef, orb]
   )
   return context ? openFileLink : undefined
 }

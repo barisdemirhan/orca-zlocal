@@ -19,6 +19,7 @@ export type CloseTerminalDialogCopyKind = 'command' | 'agent' | 'chat-agent'
 export default function CloseTerminalDialog({
   open,
   copyKind = 'command',
+  allowDontAskAgain = true,
   subjectKey,
   workspaceName,
   onSleepInstead,
@@ -27,6 +28,7 @@ export default function CloseTerminalDialog({
 }: {
   open: boolean
   copyKind?: CloseTerminalDialogCopyKind
+  allowDontAskAgain?: boolean
   /** Names the workspace in a terminal agent's title. */
   workspaceName?: string
   /** Offered only where sleeping keeps the agent's session resumable. */
@@ -74,9 +76,17 @@ export default function CloseTerminalDialog({
         }
       }}
     >
-      <DialogContent size="confirm" initialFocus="cancel" onOpenAutoFocus={captureReturnFocus}>
+      {/* Why above popovers: the Agent Hub panel can ask for this, and it must not hide it. */}
+      <DialogContent
+        size="confirm"
+        initialFocus="cancel"
+        onOpenAutoFocus={captureReturnFocus}
+        className="z-[65]"
+        overlayClassName="z-[65]"
+      >
         <CloseTerminalDialogBody
           copyKind={copyKind}
+          allowDontAskAgain={allowDontAskAgain}
           workspaceName={workspaceName}
           onSleepInstead={
             onSleepInstead
@@ -103,6 +113,7 @@ export default function CloseTerminalDialog({
 // Keep translation and element construction behind the dialog portal's mount boundary.
 function CloseTerminalDialogBody({
   copyKind,
+  allowDontAskAgain,
   workspaceName,
   onSleepInstead,
   checkboxId,
@@ -112,6 +123,7 @@ function CloseTerminalDialogBody({
   onConfirm
 }: {
   copyKind: CloseTerminalDialogCopyKind
+  allowDontAskAgain: boolean
   workspaceName?: string
   onSleepInstead?: () => void
   checkboxId: string
@@ -168,7 +180,7 @@ function CloseTerminalDialogBody({
           </DialogDescription>
         ) : null}
       </DialogHeader>
-      {onSleepInstead ? optOut : null}
+      {onSleepInstead && allowDontAskAgain ? optOut : null}
       <DialogFooter
         start={
           onSleepInstead ? (
@@ -178,9 +190,9 @@ function CloseTerminalDialogBody({
                 'Sleep workspace instead'
               )}
             </Button>
-          ) : (
+          ) : allowDontAskAgain ? (
             optOut
-          )
+          ) : null
         }
       >
         <DialogCancel
@@ -195,7 +207,7 @@ function CloseTerminalDialogBody({
           type="button"
           variant="destructive"
           size="sm"
-          onClick={() => onConfirm(dontAskAgain)}
+          onClick={() => onConfirm(allowDontAskAgain && dontAskAgain)}
         >
           {isAgent
             ? t('components.terminal.pane.CloseTerminalDialog.stopAgentSentence', 'Stop agent')

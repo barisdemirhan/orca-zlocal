@@ -1,4 +1,4 @@
-import { OrcaRuntimeWithAgentTransitions } from '../../construction/orca-runtime-agent-transitions'
+import { OrcaRuntimeWithAgentHubQuestions } from '../../orca-runtime-agent-hub-questions'
 import type { PtyLivenessVerdict } from '../../../../shared/terminal/pty/lifecycle/pty-liveness-verdict'
 import type {
   WorkspaceActivityFactsSnapshot,
@@ -11,10 +11,10 @@ import {
   type WorkspaceSurfaceActivity
 } from './workspace-activity-facts-producer'
 
-type Runtime = OrcaRuntimeWithAgentTransitions
+type Runtime = OrcaRuntimeWithAgentHubQuestions
 
 /** Refresh from coalesced session publications, graph attribution changes and PTY exits/verdicts/inventory sweeps that have no following publication. */
-export abstract class OrcaRuntimeWithWorkspaceActivityFacts extends OrcaRuntimeWithAgentTransitions {
+export abstract class OrcaRuntimeWithWorkspaceActivityFacts extends OrcaRuntimeWithAgentHubQuestions {
   readonly sidebarClock = new SidebarClock()
   readonly workspaceActivityFacts = new WorkspaceActivityFactsProducer({
     readSurfaces: (worktreeId) => this.readWorkspaceSurfaceActivity(worktreeId),

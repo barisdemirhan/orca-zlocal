@@ -53,6 +53,12 @@ export function preserveRuntimeAuthoredWorkspaceSessionFields(
 ): WorkspaceSessionState {
   let result = next
   if (
+    next.terminalSpawnedByPaneKey === undefined &&
+    prior?.terminalSpawnedByPaneKey !== undefined
+  ) {
+    result = { ...result, terminalSpawnedByPaneKey: prior.terminalSpawnedByPaneKey }
+  }
+  if (
     next.clientHostedBrowserPagesByWorktree === undefined &&
     prior?.clientHostedBrowserPagesByWorktree !== undefined
   ) {

@@ -14,7 +14,8 @@ export function AiVaultSessionSurfaceSwitchMenuItems({
   chatPending,
   onResumeInNewChat,
   onResumeInNewCli,
-  cliPending = false
+  cliPending = false,
+  cliBlockedReason
 }: {
   action: 'resume' | 'switch'
   menuKind: 'dropdown' | 'context'
@@ -23,6 +24,8 @@ export function AiVaultSessionSurfaceSwitchMenuItems({
   onResumeInNewChat?: (event: Event) => void
   onResumeInNewCli?: (event: Event) => void
   cliPending?: boolean
+  /** Why the terminal action is unavailable right now; its tooltip says so. */
+  cliBlockedReason?: string
 }): React.JSX.Element {
   const t = useTranslate()
   const Item = menuKind === 'context' ? ContextMenuItem : DropdownMenuItem
@@ -49,7 +52,11 @@ export function AiVaultSessionSurfaceSwitchMenuItems({
       {onResumeInNewCli ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Item onSelect={onResumeInNewCli} disabled={cliPending} aria-busy={cliPending}>
+            <Item
+              onSelect={onResumeInNewCli}
+              disabled={cliPending || cliBlockedReason !== undefined}
+              aria-busy={cliPending}
+            >
               {cliPending ? (
                 <LoadingSpinner className="size-3.5" />
               ) : (
@@ -67,7 +74,7 @@ export function AiVaultSessionSurfaceSwitchMenuItems({
             </Item>
           </TooltipTrigger>
           <TooltipContent side={tooltipSide} sideOffset={8}>
-            <ResumeInNewCliTooltipText />
+            {cliBlockedReason ?? <ResumeInNewCliTooltipText />}
           </TooltipContent>
         </Tooltip>
       ) : null}

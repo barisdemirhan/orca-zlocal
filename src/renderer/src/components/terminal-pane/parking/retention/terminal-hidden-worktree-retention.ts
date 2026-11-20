@@ -117,7 +117,10 @@ export type TerminalWorktreeRetentionCandidate = {
   isVisible: boolean
   shouldMeasureHiddenWorktree: boolean
   hasActivityTerminalPortal: boolean
-  /** Measure preserves TTL/rank age; cool-down prevents force-park immediately after its lease ends. */
+  hasMountRetentionLease?: boolean
+  /** Post-measure cool-down (see TerminalWorktreeColdParkCandidate): force-park
+   *  must not re-engage right after a measure window ends, but hiddenSince —
+   *  and with it the TTL/ranking clock — stays untouched. */
   parkCooldownUntilMs?: number | null
   /** Ordinary cold parking can evict this worktree (park-eligible AND watcher-coverable) — the warm cap bounds it already. */
   ordinaryParkingCovers: boolean
@@ -145,6 +148,7 @@ export function selectRetentionForceParkedTerminalWorktrees(
       worktree.isVisible ||
       worktree.shouldMeasureHiddenWorktree ||
       worktree.hasActivityTerminalPortal ||
+      worktree.hasMountRetentionLease ||
       worktree.ordinaryParkingCovers ||
       worktree.hasPendingSpawnWork ||
       (worktree.parkCooldownUntilMs != null && args.nowMs < worktree.parkCooldownUntilMs) ||

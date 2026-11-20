@@ -15,7 +15,7 @@ import type {
 } from '../../../../../shared/agent-session/agent-session-wire'
 import type { AgentSessionTurnCompletionEvent } from '../../../../../shared/agent-session/view/agent-session-turn-completion-wire'
 
-async function subscribeStructuredAgentSessionMethod<TEvent>(
+export async function subscribeStructuredAgentSessionMethod<TEvent>(
   target: RuntimeClientTarget,
   method: string,
   params: unknown,

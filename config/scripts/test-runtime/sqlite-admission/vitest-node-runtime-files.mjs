@@ -109,12 +109,17 @@ const NODE_RUNTIME_INCLUDE = [
   'src/shared/remote-runtime/remote-runtime-client.test.ts',
   'src/shared/remote-runtime/remote-runtime-connect-bound.test.ts',
   'src/shared/remote-runtime/requests/remote-runtime-subscription-connect-bound.test.ts',
+  // Buffer surrogate encoding follows the Node runtime used by Electron main.
+  'src/main/native-chat/agent-session-wire/agent-session-delta-coalescer-overflow-prefix.test.ts',
+  // Binary fingerprint invalidation uses Node filesystem timestamp precision.
+  'src/main/codex/codex-hook-hash-lookup.test.ts',
   'src/main/codex/configuration/shared-server/codex-shared-server-probe.test.ts',
   'src/main/opencode/model-launch/opencode-launch-model-context-supervision.test.ts',
   'src/main/hermes/hermes-config-remote-adapter.test.ts',
   'src/main/ipc/profiles/orca-profiles-switch-persistence.test.ts',
   'src/shared/remote-runtime/control/remote-runtime-shared-control-connection.test.ts',
   'src/main/runtime/mobile-cloud-relay/control-channel/relay-control-client.test.ts',
+  'src/main/runtime/agent-hub/agent-hub-paired-consumer.test.ts',
   'src/main/ipc/filesystem/watchers/filesystem-watcher-ignore-real.test.ts',
   'config/scripts/desktop-distribution/runtime-verification/process-host-dev-rebuild.test.ts',
   'config/scripts/test-runtime/node-worker/vitest-node-runtime-pool.test.ts',

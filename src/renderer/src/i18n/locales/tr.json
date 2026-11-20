@@ -289,6 +289,24 @@
       "remaining": "{{profile}} profilinden bazı Google çerezleri kaldırılamadı. Yeniden deneyin.",
       "unverified": "{{profile}} profilinin Google çerezleri denetlenemedi. Yeniden deneyin."
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "Parola kaydetme önerisi",
+        "updateTitle": "Parola güncellensin mi?",
+        "saveTitle": "Parola kaydedilsin mi?",
+        "username": "Kullanıcı adı",
+        "password": "Parola",
+        "never": "Bu site için asla",
+        "notNow": "Şimdi değil",
+        "update": "Güncelle",
+        "save": "Kaydet"
+      },
+      "fill": {
+        "noUsername": "(kullanıcı adı yok)",
+        "title": "Kaydedilmiş girişler",
+        "otherLogins": "Bu sitedeki diğer girişler"
+      }
+    },
     "loadFailure": {
       "connectionNotSecure": "Bağlantı güvenli değil",
       "cantReachHost": "{{value0}} adresine ulaşılamıyor",
@@ -504,24 +522,6 @@
         "imported_one": "{{domains}} için {{count}} çerez içe aktarıldı. Kullanmak için sayfayı yeniden yükleyin.",
         "imported_other": "{{domains}} için {{count}} çerez içe aktarıldı. Kullanmak için sayfayı yeniden yükleyin.",
         "failed": "Çerezler içe aktarılamadı: {{reason}}"
-      }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "Parola kaydetme önerisi",
-        "updateTitle": "Parola güncellensin mi?",
-        "saveTitle": "Parola kaydedilsin mi?",
-        "username": "Kullanıcı adı",
-        "password": "Parola",
-        "never": "Bu site için asla",
-        "notNow": "Şimdi değil",
-        "update": "Güncelle",
-        "save": "Kaydet"
-      },
-      "fill": {
-        "noUsername": "(kullanıcı adı yok)",
-        "title": "Kaydedilmiş girişler",
-        "otherLogins": "Bu sitedeki diğer girişler"
       }
     }
   },
@@ -7538,21 +7538,6 @@
         "FontAutocomplete": {
           "installedFontsUnavailable": "Yüklü yazı tipleri listelenemedi. Kullanmak için yüklü bir yazı tipinin adını yazın."
         },
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Yerel Main'i Güncel Tut"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "Hesap konumu kaydedilemedi. Tekrar deneyin.",
           "dbb9626ed1": "İptal",
@@ -7899,9 +7884,6 @@
           "79209b37b9": "Çerez içe aktarma uygun değilse Computer Use, yerel uygulamaları kontrol edebilir ve uygun olduğunda mevcut oturum açılmış tarayıcı oturumlarını kullanabilir. Orca Computer Use becerisini yükleyin; macOS ayrıca gizlilik izinleri gerektirir.",
           "333984cf90": "Mevcut bir tarayıcı oturumunu kullan",
           "9895ed44de": "Computer Use'u Aç"
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Ajan Tarayıcı Kullanımını Etkinleştir"
         },
         "BrowserUseExamples": {
           "1199258ace": "Kopyala",
@@ -8896,9 +8878,6 @@
           "14f1eb99d0": "PR Oluştur açıldığında ayrıntıları üret",
           "d32b87e754": "Mevcutsa inceleme şablonunu kullan",
           "981eae7e14": "Varsayılan olarak taslak"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "Kaynak Kontrolü AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "Bir bağlantıyı iptal etmek, açtığı terminallerde oluşturulan bağlantıları da iptal eder. Bu bilgisayarda SSH ya da bir bağlantı üzerinden terminali olan herkes yine yeniden eşleştirme yapabilir.",
@@ -13590,6 +13569,27 @@
           "ligaturesOn": "Açık",
           "fontSmoothingGrayscale": "Gri tonlama",
           "fontSmoothingNative": "Yerel"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "Kaynak Kontrolü AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Yerel Main'i Güncel Tut"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Ajan Tarayıcı Kullanımını Etkinleştir"
         }
       },
       "right": {

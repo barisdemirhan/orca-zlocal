@@ -161,6 +161,7 @@ export abstract class OrcaRuntimeWithBuildHeadlessMobileSessionBrowserTabs exten
     if (refusal) {
       throw refusal
     }
+    this.pruneTerminalSpawnLineage(target)
     return ptyIdsToKill
   }
 

@@ -1,9 +1,57 @@
 import type { KeybindingDefinition } from './types'
 import { platformBindings } from './definitions-support'
+import { KEYBINDING_DEFINITION_AGENT_HUB_PANEL } from './definitions-agent-hub-panel'
 
 const WINDOWS_LINUX_TOGGLE_BINDINGS = ['Mod+Shift+F11', 'Mod+Shift+J']
 
 export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
+  {
+    id: 'agentHub.orb.toggleLive',
+    title: 'Toggle Orb Live voice',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'live', 'voice'],
+    // Unbound: once the Orb is open, its own chord (agentHub.toggleOrb) toggles Live.
+    defaultBindings: platformBindings([]),
+    allowInTerminal: true
+  },
+  {
+    id: 'agentHub.orb.toggleMicrophone',
+    title: 'Mute or unmute Orb microphone',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'microphone', 'mute'],
+    // Alt+Shift+D splits the terminal down outside the Mac.
+    defaultBindings: {
+      darwin: ['Alt+Shift+D'],
+      linux: ['Alt+Shift+U'],
+      win32: ['Alt+Shift+U']
+    },
+    allowInTerminal: true
+  },
+  {
+    id: 'agentHub.orb.toggleConversation',
+    title: 'Show Orb conversation or minimize Orb',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'conversation', 'chat', 'minimize'],
+    // Alt+Shift+W is the suggested next-waiting chord outside the Mac.
+    defaultBindings: {
+      darwin: ['Alt+Shift+W'],
+      linux: ['Alt+Shift+K'],
+      win32: ['Alt+Shift+K']
+    },
+    allowInTerminal: true
+  },
+  {
+    id: 'agentHub.orb.toggleSpeaker',
+    title: 'Mute or unmute Orb speaker',
+    group: 'Agent Hub',
+    scope: 'global',
+    searchKeywords: ['orb', 'speaker', 'mute'],
+    defaultBindings: platformBindings(['Alt+Shift+S']),
+    allowInTerminal: true
+  },
   {
     id: 'terminal.expandPane',
     title: 'Expand / collapse pane',
@@ -79,6 +127,7 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     // Why: ship unbound like the sleeping toggle, so no existing chord is claimed on any platform.
     defaultBindings: platformBindings([])
   },
+  ...KEYBINDING_DEFINITION_AGENT_HUB_PANEL,
   {
     id: 'terminal.clearPaneTitle',
     title: 'Clear Pane Title',

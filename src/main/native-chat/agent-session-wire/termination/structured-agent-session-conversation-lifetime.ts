@@ -86,8 +86,6 @@ export function createStructuredAgentSessionConversationLifetime(
     const record = deps().store.getConversation(sessionId)
     return record !== null && deps().hasOpenDispatch?.(record) === true
   }
-  const providerHoldsDispatch = (sessionId: string): boolean =>
-    deps().adapter.holdsDispatch?.(sessionId) === true
 
   const holdStopClose = async <T>(
     sessionId: string,
@@ -193,7 +191,8 @@ export function createStructuredAgentSessionConversationLifetime(
       replacedRuntime: (sessionId) => deps().store.replacedRuntime(sessionId)
     },
     hasOpenDispatch,
-    providerHoldsDispatch,
+    providerHoldsDispatch: (sessionId) => deps().adapter.holdsDispatch?.(sessionId) === true,
+    providerHoldsVoice: (sessionId) => deps().adapter.voice?.holds(sessionId) === true,
     confirmIdle: (sessionId) => deps().adapter.confirmIdle?.(sessionId),
     // Host eviction is reportable interruption, not personal cancellation.
     stopAgent: (sessionId) => stopAgent(sessionId, { cause: 'evict', resting: true }),

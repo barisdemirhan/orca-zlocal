@@ -21,7 +21,7 @@ import {
 
 import { isCodexStatusTranscriptLine } from './codex-status-transcript-line'
 
-import { readApprovalsReviewer } from './codex-subagent-reviewer'
+import { resolveCodexApprovalsReviewer } from './codex-subagent-reviewer'
 import type { CodexApprovalsReviewer } from './codex-subagent-reviewer'
 
 import { codexSubagentPathLabel } from './codex-agent-path'
@@ -54,8 +54,12 @@ export type CodexSubagentTranscriptState = {
   reviewerCursorsByPath: Map<string, JsonlCursor>
   /** Reviewer ownership discovered from child rollouts, keyed by their bounded cursor paths. */
   reviewersByPath: Map<string, CodexApprovalsReviewer>
+  /** Active approval rollout per owner; undefined identifies the root agent. */
+  pendingApprovalPathsByAgentId: Map<string | undefined, string>
   /** Who resolves this turn's approvals in the parent rollout. */
   approvalsReviewer?: CodexApprovalsReviewer
+  /** Parent cursor offset after the last applied read; reviewer lookback measures skipped bytes from it. */
+  parentReviewerOffset?: number
 }
 
 function readActivity(recordValue: JsonRecord):
@@ -101,7 +105,8 @@ export function createCodexSubagentTranscriptState(): CodexSubagentTranscriptSta
     turnEnds: new Map(),
     subagents: new Map(),
     reviewerCursorsByPath: new Map(),
-    reviewersByPath: new Map()
+    reviewersByPath: new Map(),
+    pendingApprovalPathsByAgentId: new Map()
   }
 }
 
@@ -140,6 +145,8 @@ function beginCodexTranscriptReconcile(
   state.subagents.clear()
   state.reviewerCursorsByPath.clear()
   state.reviewersByPath.clear()
+  state.pendingApprovalPathsByAgentId.clear()
+  state.parentReviewerOffset = undefined
   // Why: a different rollout is a different session, so its predecessor's reviewer is void.
   state.approvalsReviewer = undefined
   return { path: normalizedPath, changed: true }
@@ -150,15 +157,21 @@ export function applyCodexParentTranscript(
   roster: CodexSubagentRoster,
   parentRecords: JsonRecord[] | undefined
 ): boolean {
-  const changed =
+  let changed =
     Boolean(parentRecords?.length) ||
     (parentRecords === undefined && state.approvalsReviewer !== undefined)
   reconcileCodexTranscriptTurn(state.rootTurn, parentRecords ?? [])
   // A stale reviewer must never turn an unreadable rollout into a hidden prompt.
-  state.approvalsReviewer =
-    parentRecords === undefined
-      ? undefined
-      : (readApprovalsReviewer(parentRecords) ?? state.approvalsReviewer)
+  const previousReviewer = state.approvalsReviewer
+  const previousOffset = state.parentReviewerOffset ?? 0
+  state.parentReviewerOffset = state.parent.offset
+  state.approvalsReviewer = resolveCodexApprovalsReviewer(
+    state.parent,
+    previousOffset,
+    parentRecords,
+    state.approvalsReviewer
+  )
+  changed ||= state.approvalsReviewer !== previousReviewer
   // Hook-only and restored children may predate the bounded parent transcript read.
   for (const [id, child] of roster) {
     if (!state.subagents.has(id)) {

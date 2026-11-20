@@ -14,6 +14,7 @@ import { createFloatingWorkspaceTourInteractionSnapshot } from '@/components/flo
 import { persistFloatingTerminalPanelOpen } from '../state/floating-terminal-panel-view-state'
 import { useAppStore } from '../../../store/index'
 import { selectFloatingVisibleTabCount } from '../../../store/workspaces/floating/floating-workspace-panel-selector'
+import { useAgentHubOrbPanel } from '../../agent-hub/agent-hub-orb-panel-store'
 
 export type FloatingWorkspacePanelState = ReturnType<typeof useFloatingWorkspacePanel>
 
@@ -35,8 +36,9 @@ export function useFloatingWorkspacePanel() {
   )
   const statusBarVisible = useAppStore((s) => s.statusBarVisible)
   const visibleTabCount = useAppStore(selectFloatingVisibleTabCount)
+  const orbPanelOpen = useAgentHubOrbPanel((s) => s.session !== null)
 
-  // Return focus to the prior surface when hotkey-minimizing the overlay.
+  // Why: floating workspace is a transient overlay; hotkey minimize returns focus to the surface the user came from.
   const returnFocusRef = useRef<HTMLElement | null>(null)
   const returnFocusFrameRef = useRef<number | null>(null)
 
@@ -123,7 +125,7 @@ export function useFloatingWorkspacePanel() {
     }
   }, [settingsHydrated, enabled, setOpenWithFocus])
 
-  const shouldMountPanel = enabled && (open || visibleTabCount > 0)
+  const shouldMountPanel = (enabled && (open || visibleTabCount > 0)) || orbPanelOpen
   const showToggleButton = enabled && (triggerLocation === 'floating-button' || !statusBarVisible)
   // Stable identity lets memoized root surfaces skip the App render each workspace switch causes.
   return useMemo(

@@ -38,6 +38,7 @@ import {
   isSupportedWindowsShellOverride,
   listSupportedWindowsShellOverrides
 } from '../../shared/shell/launch/windows-terminal-shell'
+import { getCallerTerminalHandle } from '../caller-terminal-handle'
 import '../../shared/remote-runtime/protocol/protocol-version'
 import {
   TERMINAL_CREATE_SHELL_SELECTION_RUNTIME_CAPABILITY,
@@ -201,6 +202,7 @@ export const TERMINAL_HANDLERS: Record<string, CommandHandler> = {
       }
     }
     const result = await client.call<{ terminal: RuntimeTerminalCreate }>('terminal.create', {
+      ...(getCallerTerminalHandle() ? { callerTerminalHandle: getCallerTerminalHandle() } : {}),
       worktree: await getBrowserWorktreeSelector(flags, cwd, client),
       command,
       ...(shell !== undefined ? { shell } : {}),
@@ -248,6 +250,7 @@ export const TERMINAL_HANDLERS: Record<string, CommandHandler> = {
       }
     }
     const result = await client.call<{ split: RuntimeTerminalSplit }>('terminal.split', {
+      ...(getCallerTerminalHandle() ? { callerTerminalHandle: getCallerTerminalHandle() } : {}),
       terminal: await getTerminalHandle(flags, cwd, client),
       direction: directionFlag,
       command: getOptionalStringFlag(flags, 'command'),

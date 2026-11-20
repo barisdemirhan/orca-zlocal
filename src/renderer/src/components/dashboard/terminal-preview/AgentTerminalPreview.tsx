@@ -1,3 +1,11 @@
+import {
+  usePreviewPresentation,
+  createPreviewActivation,
+  focusPreviewAfterReplay,
+  observePreviewBox,
+  usePreviewAppearance,
+  type AgentTerminalPreviewProps
+} from './preview-presentation'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { composeActiveTerminalTheme } from '@/components/terminal-pane/appearance/terminal-appearance'
@@ -6,11 +14,9 @@ import { TerminalKittyKeyboardModeTracker } from '../../../../../shared/terminal
 import { replayPreviewConnectionSnapshot } from './transport/preview-terminal-snapshot-replay'
 import { useEffectiveMacOptionAsAlt } from '@/lib/keyboard-layout/use-effective-mac-option-as-alt'
 import {
-  buildPreviewAppearanceOptions,
   buildPreviewTerminalOptions,
   previewAdvertisesKittyKeyboard
 } from '../../standalone-terminal/rendering/preview-terminal-options'
-import { syncPreviewTerminalLigatures } from '../../standalone-terminal/rendering/preview-terminal-ligatures'
 import { terminalPreviewUnavailableMessage } from './terminal-preview-unavailable-message'
 import { resolveEffectiveTerminalAppearance } from '@/lib/terminal/appearance/terminal-theme'
 import { cn } from '@/lib/class-names'
@@ -28,7 +34,6 @@ import { installDashboardPreviewLinkInteraction } from './links/dashboard-previe
 import { useTranslate } from '@/i18n/use-translate'
 import type { PreviewTerminalLinkHandler } from '../../standalone-terminal/rendering/preview-terminal-links'
 import type { ITheme, Terminal } from '@xterm/xterm'
-import type { DashboardCardTerminalInput } from '../../../../../shared/agent-status/presentation/dashboard-snapshot'
 import type { TerminalPreviewDataPayload } from '../../../../../shared/terminal/replay/terminal-preview'
 import type { DashboardPreviewLinkSource } from './links/dashboard-preview-http-actions'
 
@@ -47,22 +52,20 @@ function clamp(value: number, min: number, max: number): number {
 export function AgentTerminalPreview({
   ptyId,
   terminalInput = null,
+  visible = true,
+  focusOnActivate,
   className,
   onRequestClose,
   linkSource,
   onBrowserForeground
-}: {
-  ptyId: string
-  /** Host-input facts relayed with the card; null routes bytes by client OS. */
-  terminalInput?: DashboardCardTerminalInput | null
-  className?: string
-  onRequestClose?: () => void
+}: AgentTerminalPreviewProps & {
   linkSource?: DashboardPreviewLinkSource
   onBrowserForeground?: () => void
 }): React.JSX.Element {
   const t = useTranslate()
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
+  const { presentationRef, activateRef } = usePreviewPresentation(visible, focusOnActivate)
   const [linkRequest, setLinkRequest] = useState<LinkActionRequest | null>(null)
   const linkSourceRef = useRef(linkSource)
   const browserForegroundRef = useRef(onBrowserForeground)
@@ -152,20 +155,10 @@ export function AgentTerminalPreview({
     const gridClaim = createPreviewGridClaim({
       ptyId,
       container,
-      getTerminal: () => terminal
+      getTerminal: () => terminal,
+      isVisible: () => presentationRef.current.visible
     })
-    // Box growth/shrink (window resize) changes the reachable grid.
-    const boxResizeObserver =
-      typeof ResizeObserver === 'undefined'
-        ? null
-        : new ResizeObserver(() => {
-            boxFit.schedule()
-            gridClaim.schedule()
-          })
-    if (container.parentElement) {
-      boxResizeObserver?.observe(container.parentElement)
-    }
-    boxResizeObserver?.observe(container)
+    const boxResizeObserver = observePreviewBox(container, boxFit, gridClaim)
 
     const writeReplayed = (chunk: string, onDone?: () => void, live = false): void => {
       standalone?.write(chunk, {
@@ -214,8 +207,10 @@ export function AgentTerminalPreview({
           }),
           kittyKeyboardModes,
           sessionKey: ptyId,
+          // Why: a parked preview must not type into the pty its visible owner drives.
           sendInput: (data) =>
-            linkInteraction ? linkInteraction.sendInput(data) : sendInput(data),
+            presentationRef.current.visible &&
+            (linkInteraction ? linkInteraction.sendInput(data) : sendInput(data)),
           ...(linkSourceRef.current ? { linkHandlers } : {}),
           answersQueries: false,
           getSettings: () => settingsRef.current,
@@ -268,7 +263,7 @@ export function AgentTerminalPreview({
       }
       boxFit.schedule()
       gridClaim.schedule()
-      terminal.focus()
+      focusPreviewAfterReplay(presentationRef.current, terminal, replaceExisting)
     }
 
     const releaseTerminal = (): void => {
@@ -321,10 +316,18 @@ export function AgentTerminalPreview({
       writeLive(payload)
     })
 
+    activateRef.current = createPreviewActivation(
+      presentationRef,
+      () => terminal,
+      boxFit,
+      gridClaim
+    )
+
     void setup()
 
     return () => {
       disposed = true
+      activateRef.current = null
       boxFit.dispose()
       if (retryTimer) {
         clearTimeout(retryTimer)
@@ -335,6 +338,8 @@ export function AgentTerminalPreview({
     }
   }, [
     ptyId,
+    activateRef,
+    presentationRef,
     terminalTheme,
     terminalMode,
     terminalMinimumContrastRatio,
@@ -346,18 +351,7 @@ export function AgentTerminalPreview({
     settings?.terminalLigatures
   ])
 
-  // Apply appearance and OS Option-as-Alt changes without reconnecting the PTY or repainting its snapshot.
-  useEffect(() => {
-    const terminal = terminalRef.current
-    if (!terminal) {
-      return
-    }
-    Object.assign(
-      terminal.options,
-      buildPreviewAppearanceOptions(settings, macOptionAsAlt === 'true')
-    )
-    syncPreviewTerminalLigatures(terminal, settings)
-  }, [settings, terminalFontReady, macOptionAsAlt])
+  usePreviewAppearance(terminalRef, settings, macOptionAsAlt === 'true', terminalFontReady)
 
   return (
     // Fix the box to the viewport so snapshot geometry cannot resize the dialog; fit/clip the true PTY frame at its cursor end.

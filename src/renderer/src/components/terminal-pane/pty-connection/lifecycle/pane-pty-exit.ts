@@ -166,7 +166,7 @@ export function bindPanePtyExit(session: ConnectPanePtySession): void {
         if (session.deps.isVisibleRef.current || pendingWakeMatches) {
           // Consume wake after exit if reveal/mobile activation already raced arming; a second user event must not be required.
           queueMicrotask(() => {
-            session.consumeHibernatedAgentWake()
+            session.consumeHibernatedAgentWake(undefined, pendingWakeMatches)
           })
         }
       } else if (session.pendingHibernatedWakeTarget?.ptyId === ptyId) {

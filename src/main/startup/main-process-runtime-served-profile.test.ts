@@ -26,6 +26,7 @@ vi.mock('../runtime/orca-runtime', () => ({
     }
     attachAgentStatusStore() {}
     rehydrateClientHostedBrowserPages() {}
+    restorePaneSpawnLineage() {}
     recordHookStatusResume() {}
     forgetHookStatusResume() {}
     setRecipeWorkspaceRemoval() {}

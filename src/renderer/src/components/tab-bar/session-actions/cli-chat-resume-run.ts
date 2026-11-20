@@ -1,4 +1,8 @@
 import { captureStructuredLaunchSurfaceAddress } from '@/lib/agent-session/launch/structured-agent-session-launch-surface'
+import {
+  agentHubMirrorChatPlacement,
+  moveAgentHubMirrorToChat
+} from '../../agent-hub/agent-hub-mirror-chat-continuation'
 import { closeCliChatResumeTerminal } from './cli-chat-resume-close-terminal'
 import {
   admitCliChatResumeClose,
@@ -203,6 +207,8 @@ export async function runCliChatResume(
             },
             // The chat takes the terminal's place, shown before the terminal goes.
             afterTabId: source.tabId,
+            // In a mirror that place is the mirror, so the workspace keeps what it shows.
+            ...agentHubMirrorChatPlacement(source.workspaceId, source.tabId),
             // Asked before the close, leaving out the panes it stops.
             resumeWritersChecked: true,
             onTabOpenSettled: (tabId) => {
@@ -236,6 +242,7 @@ export async function runCliChatResume(
       if (!isCurrent()) {
         return
       }
+      const openedChatTabId = chatTabId
       closed = await closeCliChatResumeTerminal(
         source,
         isCurrent,
@@ -245,6 +252,7 @@ export async function runCliChatResume(
           closing: () => {
             closing = true
             stopSource()
+            moveAgentHubMirrorToChat(source.workspaceId, source.tabId, openedChatTabId)
           },
           refused: () => {
             // A newer continuation of this terminal tab answers the merged confirmation itself.

@@ -30,6 +30,7 @@ export const AGENT_SESSION_WRITE_NOTICE_COPY = {
   notDoneCommand: "The command didn't run.",
   notDoneGoalChangeIncomplete: "Couldn't finish changing the goal. Check the chat.",
   notDoneQueuedEdit: "Your edit wasn't saved.",
+  notDoneVoice: 'Live voice could not start.',
   restartFailed: "The agent couldn't restart.",
   capacity:
     'Orca on the computer running this chat has hit a request limit. Update Orca there, then try again.',

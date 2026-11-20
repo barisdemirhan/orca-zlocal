@@ -3,7 +3,7 @@ import { isPassiveTerminalInputReport } from '../../input/terminal-passive-input
 import { installTerminalImeCompositionRoute } from '../../input/ime/terminal-ime-composition-route'
 import { useAppStore } from '@/store/index'
 import { isTerminalQueryReply } from '../../../../../../shared/terminal/protocol/queries/terminal-query-reply'
-import { isPtyLocked } from '@/lib/pane-manager/mobile-driver-state'
+import { dropProtectedPtyInput } from '../pty-input-protection'
 import { isPaneReplaying } from '../../snapshots/replay-guard'
 import {
   isXtermMouseReport,
@@ -47,9 +47,8 @@ export function installPtyInputForward(session: ConnectPanePtySession): void {
       session.clearPendingTerminalInputIntent()
       return
     }
-    // Mobile driver lock withholds desktop input until explicit Take back restores input and dimensions.
-    if (currentPtyId && isPtyLocked(currentPtyId)) {
-      session.clearPendingTerminalInputIntent()
+    // Mobile ownership and Orb protection block input; protocol replies passed above.
+    if (dropProtectedPtyInput(session, currentPtyId)) {
       return
     }
     if (

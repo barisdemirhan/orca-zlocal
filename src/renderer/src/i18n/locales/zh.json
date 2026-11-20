@@ -7766,9 +7766,6 @@
           "333984cf90": "使用现有的浏览器会话",
           "9895ed44de": "开放计算机使用"
         },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "启用智能体浏览器使用"
-        },
         "BrowserUseExamples": {
           "1199258ace": "复制",
           "1188e56af4": "复制示例提示",
@@ -8010,6 +8007,59 @@
             "ariaLabel": "卡片样式",
             "classic": "经典",
             "experimental": "实验性"
+          },
+          "agentHub": {
+            "title": "Agent Hub",
+            "description": "所有智能体和终端集中一处：回答问题、审批命令，并跳转到任意窗格。",
+            "copy": "添加一个 Dock（或状态栏项），列出需要你处理、正在工作或刚完成的智能体，以及所有已打开的终端。无需离开当前工作区即可回答、审批或打开实时镜像。",
+            "toggleLabel": "切换 Agent Hub",
+            "clearNever": "从不",
+            "clearHour": "1 小时",
+            "clearMinutes": "{{value0}} 分钟",
+            "placement": "Hub 显示为",
+            "placementCopy": "可拖到状态栏或窗口边缘的 Dock，或状态栏中的一项。",
+            "dock": "Dock",
+            "statusBar": "状态栏",
+            "autoHide": "没有活动智能体时隐藏 Dock",
+            "autoHideCopy": "智能体开始工作、提问或完成时会立即重新显示。",
+            "alerts": "提醒",
+            "alertsCopy": "Hub 旁的气泡，点击可打开智能体卡片。你正在查看的窗格不会显示。",
+            "alertNeedsInput": "智能体提问或需要审批时",
+            "alertFinished": "智能体完成时",
+            "sound": "播放声音",
+            "soundCopy": "使用“通知”中的声音和音量（系统为短提示音）；若 Orca 自身的通知已播放声音，则保持静音。",
+            "mutedUntil": "提醒已静音至 {{value0}}",
+            "unmute": "重新开启",
+            "popover": "弹出框",
+            "defaultTab": "默认打开",
+            "defaultTabCopy": "无人等待时的默认页；有智能体在等待时始终打开收件箱。",
+            "showShells": "在“所有终端”中列出普通 shell",
+            "clearFinished": "完成的智能体从收件箱清除的时间",
+            "clearFinishedCopy": "它们在“智能体”视图中保持未读；选择“从不”则在你阅读前一直保留在 Hub 中。",
+            "shortcutTaken": "{{value0}} 已被 {{value1}} 使用。请在“键盘快捷键”中选择其他按键。",
+            "shortcuts": "快捷键",
+            "shortcutsUnset": "未设置。建议：{{value0}}（打开 Hub、跳到下一个等待中的智能体、将镜像发送到 Hub、排列镜像）。",
+            "shortcutsSet": "打开 Hub：{{value0}} · 下一个等待中的智能体：{{value1}} · 镜像发送到 Hub：{{value2}} · 排列镜像：{{value3}}",
+            "useSuggested": "使用这些",
+            "editShortcuts": "编辑",
+            "dockSize": "Dock 大小",
+            "shortcutNotSet": "未设置",
+            "trayPeek": "有新动态时展开收起镜像的时长",
+            "trayPeekCopy": "当收起的镜像提问或完成时，Hub 旁的叠放区会展开这段时间，然后再次收起。",
+            "never": "从不",
+            "seconds": "{{value0}} 秒",
+            "tabAutoPopout": "在终端标签页上显示弹出按钮",
+            "tabAutoPopoutCopy": "直接从标签页将终端在镜像中打开。",
+            "mirrorCap": "同时打开的镜像窗口数",
+            "mirrorCapCopy": "超过此数量时，最早的镜像会收起到 Hub 旁。",
+            "canvas": "启用镜像画布",
+            "canvasCopy": "通过按钮或快捷键打开画布来布置镜像。弹出会保留当前视图。离开画布时其镜像会被收起，返回后恢复。",
+            "restoreOnLaunch": "启动时恢复镜像和画布",
+            "restoreOnLaunchCopy": "重启 Orca 后，镜像、托盘和画布会恢复到离开时的样子。终端已关闭的镜像将被略过。",
+            "focusedPaneOutline": "为聚焦的终端添加轮廓",
+            "focusedPaneOutlineCopy": "在接收键盘输入的窗格上显示一圈细蓝框（工作区和镜像中均有）：即输入和听写的去向。",
+            "paneQuickReply": "在终端中快速回复",
+            "paneQuickReplyCopy": "当终端智能体提问或需要审批时，带有选项的卡片会在窗格一角弹出。按 Esc 关闭；仍可在终端中直接作答。"
           }
         },
         "FloatingWorkspacePane": {
@@ -8755,9 +8805,6 @@
           "d32b87e754": "可用时使用评审模板",
           "981eae7e14": "默认草稿"
         },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "源代码控制 AI"
-        },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "撤销链接也会撤销在它打开的终端中创建的链接。任何能在这台电脑上使用终端的人（通过 SSH 或链接）仍可重新配对。",
           "6f6d5188ed": "撤销 {{value0}}",
@@ -9438,7 +9485,6 @@
         "VoicePane": {
           "68de13f72c": "删除模型失败",
           "cfde55c7b0": "下载模型失败",
-          "ba4a900d1d": "听写模式",
           "62d2a84d31": "无法清除 OpenAI API 密钥",
           "37aba8bb63": "OpenAI API 密钥已清除",
           "8572bbb537": "无法保存 OpenAI API 密钥",
@@ -9455,7 +9501,8 @@
           "openAiKeyName": "您的 OpenAI 转录密钥",
           "dictationModeAuto": "自动",
           "speechGpuLabel": "使用 GPU",
-          "c5ea32143e": "语音模型"
+          "c5ea32143e": "语音模型",
+          "ba4a900d1d": "听写模式"
         },
         "WorktreeSymlinksSection": {
           "1c1e35b219": "删除 {{value0}}",
@@ -10175,6 +10222,21 @@
             "worktreeCardStyle": {
               "title": "卡片样式",
               "description": "选择侧边栏中工作区卡片的样式"
+            },
+            "agentHub": {
+              "title": "Agent Hub",
+              "description": "所有智能体和终端集中一处：回答问题、审批命令，并跳转到任意窗格。",
+              "agents": "智能体",
+              "inbox": "收件箱",
+              "statusBar": "状态栏",
+              "terminals": "终端",
+              "questions": "问题",
+              "alerts": "提醒",
+              "sound": "声音",
+              "notifications": "通知",
+              "dock": "Dock",
+              "notch": "刘海",
+              "mute": "静音"
             }
           }
         },
@@ -11379,21 +11441,6 @@
         "agent-generated-tab-title-copy": {
           "19ad21615a": "自动生成标签页标题",
           "b036c7a409": "根据第一个已知代理提示词生成简短稳定的标签页名称，手动重命名始终优先"
-        },
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "保持本地 main 最新"
-                    }
-                  }
-                }
-              }
-            }
-          }
         },
         "WarpThemeImportModal": {
           "title": "从 Warp 导入",
@@ -13625,6 +13672,27 @@
           "cancel": "取消",
           "confirm": "移除",
           "unknownHost": "未知主机"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "源代码控制 AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "保持本地 main 最新"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "启用智能体浏览器使用"
         }
       },
       "right": {
@@ -19414,6 +19482,128 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "镜像与画布",
+        "voice": "语音",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Dock、提醒、镜像、语音和 Orb 偏好设置。",
+        "open": "打开 Agent Hub 设置"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "切换 Agent Hub Orb",
+        "talkShortcut": "对话快捷键",
+        "notSet": "未设置",
+        "agent": "智能体",
+        "model": "模型",
+        "agentDefault": "智能体默认值",
+        "approvals": "审批",
+        "placement": "位置",
+        "freeWarning": "Orb 执行命令时不会询问。请谨慎使用。",
+        "ask": "询问",
+        "free": "自由执行",
+        "workingFolder": "工作文件夹",
+        "hidden": "隐藏",
+        "speakReplies": "朗读回复",
+        "comingLater": "稍后推出",
+        "pastConversations": "历史对话",
+        "backToConversation": "返回对话",
+        "newConversation": "新建",
+        "searchConversations": "搜索对话",
+        "allAgents": "所有智能体",
+        "today": "今天",
+        "yesterday": "昨天",
+        "noConversations": "未找到对话",
+        "historyFailed": "无法加载对话。请重试。",
+        "disabled": "启用代理控制以与 Orb 对话",
+        "openFailed": "无法打开 Orb，请重试。",
+        "working": "处理中",
+        "open": "打开",
+        "openDenyKeys": "打开 ↵ / 拒绝 esc",
+        "toSend": "发送",
+        "approvalKeys": "允许 ↵ / 拒绝 esc",
+        "piRequiresFree": "Pi 需要“自由执行”模式。如需在执行命令前询问，请选择其他代理。",
+        "settings": "Orb 设置",
+        "size": "Orb 大小",
+        "sizePixels": "{{value0}} 像素",
+        "endLiveVoice": "结束实时语音",
+        "startLiveVoice": "开始实时语音",
+        "showConversation": "显示对话",
+        "unmuteMicrophone": "取消麦克风静音",
+        "muteMicrophone": "麦克风静音",
+        "finishDictation": "完成并发送听写",
+        "cancelDictation": "取消听写",
+        "stopSpeaking": "停止朗读",
+        "expand": "展开 Orb",
+        "minimize": "最小化 Orb",
+        "voiceUnavailable": "此主机不支持实时语音。",
+        "requestNoLongerAvailable": "此请求已在别处回复，或已不可用。",
+        "requestDenied": "请求已拒绝",
+        "requestExpired": "请求已过期",
+        "answerReceived": "已收到回答",
+        "awayAnswerReceived": "已按你的离开设置回答",
+        "requestClosed": "请求已关闭",
+        "dismissRequestOutcome": "关闭请求结果",
+        "speakingMuted": "正在朗读。麦克风已静音；实时语音保持连接。",
+        "speaking": "正在朗读",
+        "needsAnswer": "等待你的回答",
+        "voiceFailed": "无法连接实时语音。",
+        "codexVoiceUnsupported": "此版本的 Codex 不支持实时语音。",
+        "codexVoiceUsageLimit": "已达到账号用量上限，Codex 实时语音不可用。",
+        "codexVoiceAccessDenied": "Codex 拒绝了实时语音。请检查当前账号和工作区访问权限。",
+        "codexVoiceConnectionFailed": "无法连接 Codex 实时语音。请在连接关闭后重试。",
+        "voiceConnectFailed": "无法连接实时语音。请重试。",
+        "voiceStopping": "正在结束实时语音…",
+        "voiceConnecting": "正在连接实时语音…",
+        "muted": "麦克风已静音；实时语音保持连接。",
+        "listening": "正在聆听",
+        "done": "已完成",
+        "ready": "就绪",
+        "dismissReceipt": "关闭",
+        "connectionWarning": "1 条连接警告",
+        "connectionWarnings": "{{value0}} 条连接警告",
+        "floating": "浮动",
+        "hideConnectionWarnings": "隐藏",
+        "readyPrompt": "已就绪。输入文字，或按下球体开始说话。",
+        "showConnectionWarnings": "显示"
+      },
+      "alerts": {
+        "info": "智能体分享信息时",
+        "mute": "静音提醒",
+        "duration": "选择时长…",
+        "muteHour": "1 小时",
+        "muteTwoHours": "2 小时",
+        "muteTomorrow": "直到明天 09:00"
+      },
+      "voice": {
+        "dictateImprove": "听写并优化"
+      },
+      "search": {
+        "mirror": "镜像",
+        "canvas": "画布",
+        "dim": "调暗",
+        "quickreply": "快速回复",
+        "outline": "轮廓",
+        "tray": "托盘",
+        "popout": "弹出",
+        "microphone": "麦克风",
+        "shortcut": "快捷键",
+        "restore": "恢复",
+        "shells": "shell",
+        "orb": "Orb",
+        "voice": "语音"
+      },
+      "mirror": {
+        "newAgentNotAdded": "无法添加到此镜像。请从工作区标签页打开。",
+        "newAgentStartedInWorkspace": "{{agent}} 已在 {{workspace}} 中启动。"
+      }
+    },
+    "agentHubPeekOutsideWorkspace": "Agent Peek 文件必须位于目标工作区内。",
     "startup": {
       "webHostUnreachable": {
         "title": "无法连接到你的 Orca 主机",
@@ -19488,6 +19678,19 @@
         "modelUnavailable": "{{agent}} 无法使用 {{detail}}。请选择其他模型并重新发送",
         "modelUnavailableUpdate": "{{agent}} 无法使用 {{detail}}。请将 {{agent}} 更新到 {{minimumVersion}} 或更高版本，以便重启后继续使用；或者选择其他模型并重新发送。",
         "modelNotSelected": "{{agent}} 没有选择模型。请检查模型选择和 {{agent}} 登录状态，然后重新发送。",
+        "providerUnavailable": "{{agent}} 因服务繁忙而无法回复。请选择其他模型，或稍等片刻后重新发送。",
+        "providerSafetyStopped": "{{agent}} 在安全检查后停止了此次回复。请检查您的请求后重新发送。",
+        "providerResponseFailed": "{{agent}} 未能完成此回复。打开详情了解更多信息。",
+        "selectedModel": "所选模型",
+        "forkOriginalMissing": "{{agent}} 在原始聊天中找不到此回复，请打开原始聊天并从那里创建分支",
+        "forkOriginalUnavailable": "{{agent}} 无法在原始聊天中从此回复创建分支，请打开原始聊天并从那里创建分支",
+        "forkOriginalMissingNamed": "{{agent}} 在“{{detail}}”中找不到此回复，请打开该聊天并从那里创建分支",
+        "forkOriginalUnavailableNamed": "{{agent}} 无法在“{{detail}}”中从此回复创建分支，请打开该聊天并从那里创建分支",
+        "forkOriginalLatestOnly": "{{agent}} 只能从原始聊天中的最新回复创建分支，请打开该聊天，待最新回复完成后再从它创建分支",
+        "forkOriginalLatestOnlyNamed": "{{agent}} 只能从“{{detail}}”中的最新回复创建分支，请打开该聊天，待最新回复完成后再从它创建分支",
+        "antigravitySystemNotSignedIn": "Antigravity 尚未登录，请在运行此聊天的计算机上运行 `agy` 进行登录，然后重新发送消息",
+        "claudeEffortInvalid": "Claude 推理强度无效，请选择 low、medium、high、xhigh 或 max，然后重新发送",
+        "unconfirmed": "无法确认是否已发送，也没有重新发送",
         "providerRejected": "{{agent}} 未接受此消息",
         "providerRejectedQuoted": "{{agent}} 未接受此消息：{{detail}}",
         "attachmentEmpty": "此消息中的一张图片为空，因此消息未发送",
@@ -19865,6 +20068,121 @@
         "toggleDetails": "切换回合详情"
       },
       "jumpToLatest": "跳到最新消息",
+      "newRowsAnnouncement": "你离开期间有新消息",
+      "newRowsMarker": "新消息",
+      "editDeliveryNotice": "编辑",
+      "signIn": {
+        "title": "登录 {{agent}} 即可开始聊天"
+      },
+      "explicitChatWslAddHost": "从 Windows 打开的 WSL 文件夹中无法使用聊天，请将该发行版添加为 WSL 主机（添加项目 → 添加远程主机 → 添加 WSL 发行版）后在那里聊天，或在终端中打开智能体",
+      "githubPeek": {
+        "updated": "更新于 {{time}}",
+        "oneComment": "1 条评论",
+        "comments": "{{count}} 条评论",
+        "unavailable": "预览不可用",
+        "retry": "重试"
+      },
+      "webPeek": {
+        "unavailable": "此页面没有预览"
+      },
+      "creationChatNotOpened": "你的工作树已就绪，但聊天未能打开，请重试以打开聊天并带上你的消息",
+      "usage": {
+        "description": "显示此聊天所用 Codex 账户的用量",
+        "loading": "正在加载 Codex 用量…",
+        "failed": "无法加载 Codex 用量，请重试",
+        "codexVersion": "此 Codex 版本不报告用量，请更新 Codex",
+        "apiKeyAuth": "使用 API 密钥时无法查看 Codex 用量，请使用 ChatGPT 账户登录 Codex 以查看用量",
+        "title": "Codex 用量",
+        "account": "此聊天使用的账户",
+        "retry": "重试",
+        "resetFailed": "无法重置 Codex 限额，请重试",
+        "confirmReset": "这会为 {{account}} 使用一次 Codex 速率限制重置额度，并立即重置所有符合条件的用量窗口",
+        "sharedAccount": "当前共享账户",
+        "outcome": {
+          "reset": "Codex 限额已重置",
+          "nothingToReset": "目前没有需要重置的内容",
+          "noCredit": "此账户已没有剩余的 Codex 重置额度",
+          "alreadyRedeemed": "该重置额度已被使用"
+        }
+      },
+      "mcp": {
+        "title": "MCP 服务器",
+        "close": "关闭",
+        "loading": "正在加载…",
+        "notRunning": "发送下一条消息时连接",
+        "unsupported": "请更新此聊天所在主机上的 Orca，以便在这里管理它们",
+        "readFailed": "无法加载",
+        "retry": "重试",
+        "empty": "此聊天未设置任何服务器",
+        "cancel": "取消",
+        "reconnect": "重新连接",
+        "toggle": "使用 {{name}}",
+        "actionFailed": "无法完成此操作，请重试",
+        "summary": {
+          "connected": "{{count}} 个已连接",
+          "needsAuth_other": "{{count}} 个需要登录",
+          "failed": "{{count}} 个失败",
+          "signingIn": "正在登录 {{name}}"
+        },
+        "source": {
+          "project": "项目",
+          "local": "本地",
+          "user": "用户",
+          "plugin": "插件",
+          "session": "会话"
+        },
+        "status": {
+          "connected": "已连接",
+          "tools_other": "{{count}} 个工具",
+          "pending": "正在连接…",
+          "needsAuth": "需要登录",
+          "failed": "失败",
+          "failedReason": "失败：{{error}}",
+          "disabled": "已禁用",
+          "needsAuthAfterSend": "需要登录，发送一条消息即可在这里登录"
+        },
+        "signIn": {
+          "action": "登录",
+          "waiting": "正在等待登录…",
+          "waitingBrowser": "正在等待浏览器…",
+          "remote": "登录后，浏览器会跳转到一个无法加载的页面，请复制该页面的地址并粘贴到这里",
+          "external": "请在打开的页面上完成登录",
+          "done": "完成",
+          "finish": "完成登录",
+          "openAgain": "重新打开",
+          "addressLabel": "登录页面地址",
+          "unfinished": "尚未完成登录，请在打开的页面上完成，然后点击“完成”",
+          "pastePlaceholder": "http://localhost:…"
+        }
+      },
+      "ciResultLine": {
+        "failingLead": "CI 失败于",
+        "greenLead": "CI 通过于",
+        "at": "的提交",
+        "hide": "不再显示 CI 结果行",
+        "hidden": "Orca 将不再显示 CI 结果行"
+      },
+      "sideChat": {
+        "description": "在此聊天旁的分支中顺便提个问题",
+        "argumentHint": "<问题>",
+        "notReady": "支线聊天尚未就绪，请稍后重试",
+        "replyRunning": "此回复完成后可用",
+        "noReply": "收到第一条回复后可用",
+        "textOnly": "支线聊天只接受文本，请移除附件，然后重新发送",
+        "questionNotSent": "{{agent}} 未收到你的问题",
+        "questionNotSentDetail": "你的问题仍在此聊天中，请再次发送 /btw 重试",
+        "questionUnconfirmed": "{{agent}} 无法确认支线聊天是否已收到你的问题",
+        "questionUnconfirmedDetail": "请先查看支线聊天再重新提问，你的问题仍在此聊天中"
+      },
+      "urlRequest": {
+        "title": "请求登录",
+        "open": "打开登录页面",
+        "decline": "拒绝",
+        "opened": "已在浏览器中打开登录页面",
+        "openAgain": "重新打开",
+        "finished": "登录已完成",
+        "finishedWith": "登录已完成 · {{message}}"
+      },
       "find": {
         "label": "在聊天中查找",
         "noResults": "没有结果",
@@ -19926,6 +20244,7 @@
         "next": "下一步",
         "skip": "跳过",
         "sending": "正在发送…",
+        "recommended": "推荐",
         "terminalRequired": "在终端中回答这个 OMP 问题",
         "openTerminal": "在终端中回答"
       },
@@ -20042,6 +20361,7 @@
         "orcaStopCrash": "此回复进行期间，{{machine}} 上的 Orca 意外停止",
         "orcaStopRemote": "此回复进行期间，{{machine}} 上的 Orca 已停止",
         "orcaStopCanContinue": "你可以在此对话中继续",
+        "mcpStartupDetails": "MCP 连接详情",
         "orcaStopUnnamedServer": "远程服务器",
         "restartContinued": "重启后 Orca 已让此智能体继续，你自己的提示词没有重新发送",
         "restartContinueRefused": "重启后 Orca 无法继续此聊天，请发送一条消息来继续",
@@ -20304,6 +20624,7 @@
       },
       "visualUnavailable": "可视化不可用",
       "visualLoading": "正在加载可视化",
+      "spokenMessage": "语音消息",
       "visualOpenInNewTab": "在新标签页中打开",
       "resumeCommand": {
         "description": "打开代理会话历史",
@@ -20527,122 +20848,7 @@
         "many_other": "已创建 {{count}} 个拉取请求"
       },
       "splitRight": "向右拆分",
-      "splitDown": "向下拆分",
-      "newRowsAnnouncement": "你离开期间有新消息",
-      "newRowsMarker": "新消息",
-      "editDeliveryNotice": "编辑",
-      "signIn": {
-        "title": "登录 {{agent}} 即可开始聊天"
-      },
-      "explicitChatWslAddHost": "从 Windows 打开的 WSL 文件夹中无法使用聊天，请将该发行版添加为 WSL 主机（添加项目 → 添加远程主机 → 添加 WSL 发行版）后在那里聊天，或在终端中打开智能体",
-      "githubPeek": {
-        "updated": "更新于 {{time}}",
-        "oneComment": "1 条评论",
-        "comments": "{{count}} 条评论",
-        "unavailable": "预览不可用",
-        "retry": "重试"
-      },
-      "webPeek": {
-        "unavailable": "此页面没有预览"
-      },
-      "creationChatNotOpened": "你的工作树已就绪，但聊天未能打开，请重试以打开聊天并带上你的消息",
-      "usage": {
-        "description": "显示此聊天所用 Codex 账户的用量",
-        "loading": "正在加载 Codex 用量…",
-        "failed": "无法加载 Codex 用量，请重试",
-        "codexVersion": "此 Codex 版本不报告用量，请更新 Codex",
-        "apiKeyAuth": "使用 API 密钥时无法查看 Codex 用量，请使用 ChatGPT 账户登录 Codex 以查看用量",
-        "title": "Codex 用量",
-        "account": "此聊天使用的账户",
-        "retry": "重试",
-        "resetFailed": "无法重置 Codex 限额，请重试",
-        "confirmReset": "这会为 {{account}} 使用一次 Codex 速率限制重置额度，并立即重置所有符合条件的用量窗口",
-        "sharedAccount": "当前共享账户",
-        "outcome": {
-          "reset": "Codex 限额已重置",
-          "nothingToReset": "目前没有需要重置的内容",
-          "noCredit": "此账户已没有剩余的 Codex 重置额度",
-          "alreadyRedeemed": "该重置额度已被使用"
-        }
-      },
-      "mcp": {
-        "title": "MCP 服务器",
-        "close": "关闭",
-        "loading": "正在加载…",
-        "notRunning": "发送下一条消息时连接",
-        "unsupported": "请更新此聊天所在主机上的 Orca，以便在这里管理它们",
-        "readFailed": "无法加载",
-        "retry": "重试",
-        "empty": "此聊天未设置任何服务器",
-        "cancel": "取消",
-        "reconnect": "重新连接",
-        "toggle": "使用 {{name}}",
-        "actionFailed": "无法完成此操作，请重试",
-        "summary": {
-          "connected": "{{count}} 个已连接",
-          "needsAuth_other": "{{count}} 个需要登录",
-          "failed": "{{count}} 个失败",
-          "signingIn": "正在登录 {{name}}"
-        },
-        "source": {
-          "project": "项目",
-          "local": "本地",
-          "user": "用户",
-          "plugin": "插件",
-          "session": "会话"
-        },
-        "status": {
-          "connected": "已连接",
-          "tools_other": "{{count}} 个工具",
-          "pending": "正在连接…",
-          "needsAuth": "需要登录",
-          "failed": "失败",
-          "failedReason": "失败：{{error}}",
-          "disabled": "已禁用",
-          "needsAuthAfterSend": "需要登录，发送一条消息即可在这里登录"
-        },
-        "signIn": {
-          "action": "登录",
-          "waiting": "正在等待登录…",
-          "waitingBrowser": "正在等待浏览器…",
-          "remote": "登录后，浏览器会跳转到一个无法加载的页面，请复制该页面的地址并粘贴到这里",
-          "external": "请在打开的页面上完成登录",
-          "done": "完成",
-          "finish": "完成登录",
-          "openAgain": "重新打开",
-          "addressLabel": "登录页面地址",
-          "unfinished": "尚未完成登录，请在打开的页面上完成，然后点击“完成”",
-          "pastePlaceholder": "http://localhost:…"
-        }
-      },
-      "ciResultLine": {
-        "failingLead": "CI 失败于",
-        "greenLead": "CI 通过于",
-        "at": "的提交",
-        "hide": "不再显示 CI 结果行",
-        "hidden": "Orca 将不再显示 CI 结果行"
-      },
-      "sideChat": {
-        "description": "在此聊天旁的分支中顺便提个问题",
-        "argumentHint": "<问题>",
-        "notReady": "支线聊天尚未就绪，请稍后重试",
-        "replyRunning": "此回复完成后可用",
-        "noReply": "收到第一条回复后可用",
-        "textOnly": "支线聊天只接受文本，请移除附件，然后重新发送",
-        "questionNotSent": "{{agent}} 未收到你的问题",
-        "questionNotSentDetail": "你的问题仍在此聊天中，请再次发送 /btw 重试",
-        "questionUnconfirmed": "{{agent}} 无法确认支线聊天是否已收到你的问题",
-        "questionUnconfirmedDetail": "请先查看支线聊天再重新提问，你的问题仍在此聊天中"
-      },
-      "urlRequest": {
-        "title": "请求登录",
-        "open": "打开登录页面",
-        "decline": "拒绝",
-        "opened": "已在浏览器中打开登录页面",
-        "openAgain": "重新打开",
-        "finished": "登录已完成",
-        "finishedWith": "登录已完成 · {{message}}"
-      }
+      "splitDown": "向下拆分"
     },
     "tab": {
       "bar": {
@@ -20983,7 +21189,15 @@
       "modeLatestStatus": "最新状态（推荐）",
       "modeFullTranscript": "完整记录",
       "modeFullCost": "速度较慢，并会消耗更多套餐额度或 API 额度。",
-      "startSessionSentence": "开始会话"
+      "startSessionSentence": "开始会话",
+      "openIn": "打开位置",
+      "placementTab": "新标签页",
+      "placementPane": "新窗格",
+      "placementJump": "跳转过去",
+      "placementTabDescription": "将其添加为此镜像的标签页，并让你留在此处。",
+      "placementPaneDescription": "在其工作区中于此窗格旁拆分，并为新窗格添加一个镜像标签页。",
+      "placementJumpDescription": "打开新标签页，并将工作区切换到该标签页。",
+      "mirrorNotAdded": "新会话已在工作区中打开；镜像无法将其添加为标签页。"
     },
     "terminalPane": {
       "TerminalContextMenu": {
@@ -21183,6 +21397,23 @@
         "scrollToLatestOnSendTitle": "发送时滚动到最新消息",
         "scrollToLatestOnSendCopy": "向上滚动时发送消息会跳到最新消息并跟随回复。关闭后将保持当前位置。",
         "scrollToLatestOnSendSearchPosition": "位置",
+        "markNewMessagesTitle": "返回聊天时标记新消息",
+        "markNewMessagesCopy": "返回聊天时，在你离开期间收到的内容上方显示“新消息”分隔线；如果你之前在看最新消息，会滚动到该处。",
+        "markNewMessagesSearchUnread": "未读",
+        "linkPreviewsToggleLabel": "切换链接预览",
+        "linkPreviewsTitle": "链接预览",
+        "linkPreviewsCopy": "将鼠标悬停在网页链接上会显示预览卡片，Orca 会抓取该页面来生成卡片，因此该网站能看到这次请求",
+        "linkPreviewsSearchUnfurl": "链接展开",
+        "linkPreviewsSearchHover": "悬停卡片",
+        "openedPullRequestsSearchPr": "PR",
+        "ciResultLinesTitle": "CI 结果提示",
+        "ciResultLinesCopy": "当智能体创建或推送过的拉取请求上的 CI 运行完成时，在聊天中显示一行提示",
+        "ciResultLinesSearchChecks": "检查",
+        "ciResultLinesSearchPr": "PR",
+        "promptSuggestionsTitle": "建议的提示词",
+        "promptSuggestionsCopy": "Claude 回复后，它对你下一条消息的猜测会显示在空的消息框中。按 Tab 即可使用。每次猜测都是一次额外请求，会计入你的 Claude 用量。",
+        "promptSuggestionsSearchNext": "下一条提示词",
+        "promptSuggestionsSearchGhost": "幽灵文本",
         "followUpBehaviorCopy": "智能体工作时发送的消息会作为卡片等待，直到本轮结束，而不是进入当前轮次。Cmd/Ctrl+Enter 对单条消息执行相反操作；输入框为空时，该快捷键会将第一张等待中的卡片引入当前轮次。带图片的消息也会作为卡片等待。",
         "inlineVisualsTitle": "内嵌可视化",
         "inlineVisualsCopy": "允许代理在回复中展示图表、示意图和原型图，适用于新开始的聊天",
@@ -21213,24 +21444,7 @@
         "turnDiffsTitle": "每轮更改",
         "turnDiffsCopy": "在回复下方显示每轮更改的文件及其行数。",
         "turnDiffsSearchChangedFiles": "已更改文件",
-        "turnDiffsSearchEdits": "编辑",
-        "markNewMessagesTitle": "返回聊天时标记新消息",
-        "markNewMessagesCopy": "返回聊天时，在你离开期间收到的内容上方显示“新消息”分隔线；如果你之前在看最新消息，会滚动到该处。",
-        "markNewMessagesSearchUnread": "未读",
-        "linkPreviewsToggleLabel": "切换链接预览",
-        "linkPreviewsTitle": "链接预览",
-        "linkPreviewsCopy": "将鼠标悬停在网页链接上会显示预览卡片，Orca 会抓取该页面来生成卡片，因此该网站能看到这次请求",
-        "linkPreviewsSearchUnfurl": "链接展开",
-        "linkPreviewsSearchHover": "悬停卡片",
-        "openedPullRequestsSearchPr": "PR",
-        "ciResultLinesTitle": "CI 结果提示",
-        "ciResultLinesCopy": "当智能体创建或推送过的拉取请求上的 CI 运行完成时，在聊天中显示一行提示",
-        "ciResultLinesSearchChecks": "检查",
-        "ciResultLinesSearchPr": "PR",
-        "promptSuggestionsTitle": "建议的提示词",
-        "promptSuggestionsCopy": "Claude 回复后，它对你下一条消息的猜测会显示在空的消息框中。按 Tab 即可使用。每次猜测都是一次额外请求，会计入你的 Claude 用量。",
-        "promptSuggestionsSearchNext": "下一条提示词",
-        "promptSuggestionsSearchGhost": "幽灵文本"
+        "turnDiffsSearchEdits": "编辑"
       },
       "voice": {
         "dictationLanguage": {
@@ -23810,6 +24024,439 @@
   },
   "projectField": {
     "updateFailed": "无法更新项目字段"
+  },
+  "agentHub": {
+    "attention": {
+      "answerInTerminal": "请在对应终端中回答：弹出终端或在 Orca 中打开。"
+    },
+    "row": {
+      "jump": "跳转到此终端",
+      "popOut": "弹出窗口",
+      "markRead": "标为已读",
+      "currentWorkspace": "位于当前打开的工作区",
+      "sendToHub": "移至 Agent Hub",
+      "bringBack": "恢复显示",
+      "showInMirror": "在镜像窗口中显示",
+      "closeAgent": "关闭智能体",
+      "closeShell": "关闭终端"
+    },
+    "mirror": {
+      "newAgent": "新建智能体",
+      "project": "项目",
+      "workspace": "工作区",
+      "chooseProject": "选择项目",
+      "chooseWorkspace": "选择工作区",
+      "newAgentDescription": "选择一个现有工作区和要启动的智能体。",
+      "agentLabel": "智能体",
+      "openAgentSettings": "打开智能体设置",
+      "configureAgents": "配置智能体",
+      "noAgents": "没有可用的智能体",
+      "searchWorkspaces": "搜索工作区",
+      "noWorkspaces": "没有匹配的工作区。",
+      "startAgent": "启动智能体",
+      "agent": "智能体",
+      "addAgentInWorkspace": "在 {{workspace}} 中添加智能体",
+      "newAgentInWorkspace": "在 {{workspace}} 中新建 {{agent}} 智能体",
+      "newAgentFailed": "无法启动 {{agent}}。",
+      "newAgentUnavailable": "新终端不可用。",
+      "backHome": "返回 {{value0}}",
+      "returnAgain": "再次点击以返回 {{value0}}",
+      "close": "关闭镜像窗口",
+      "noTerminal": "此窗格当前没有运行中的终端。",
+      "connecting": "正在连接终端…",
+      "restore": "恢复 {{value0}}",
+      "minimize": "最小化",
+      "inWorkspace": "此窗格已显示在当前工作区中，因此会保留在那里。切换到其他标签页或工作区后，它会回到此窗口。",
+      "inWorkspaceTitle": "你正在此工作区中",
+      "renameHint": "双击重命名",
+      "rename": "重命名终端",
+      "workerCount": "{{value0}} 个工作代理",
+      "family": "调度代理和工作代理",
+      "workers": "工作代理",
+      "trayLess": "收起",
+      "trayMore": "+{{value0}}",
+      "dockAll": "将所有镜像窗口移至 Agent Hub",
+      "jumpHint": "跳转到工作区中的此终端",
+      "jump": "跳转",
+      "hideWorkers": "隐藏工作代理栏",
+      "showWorkers": "显示工作代理栏",
+      "cancelDictation": "取消听写",
+      "cancelDictationHint": "取消听写并丢弃尚未插入的文本",
+      "endFocus": "将此镜像窗口放回原位",
+      "focus": "聚焦此镜像窗口",
+      "showInSidebar": "在侧边栏中显示",
+      "returnToWorkspace": "返回工作区",
+      "tabCount": "{{value0}} 个标签页",
+      "tabCount_one": "{{value0}} 个标签页",
+      "tabCount_other": "{{value0}} 个标签页",
+      "addHint": "向此镜像窗口添加终端",
+      "pickerSections": "终端列表",
+      "available": "可用终端",
+      "noneAvailable": "没有可添加的终端",
+      "closeTab": "关闭标签页",
+      "closeTabNamed": "关闭镜像标签页 {{value0}}",
+      "terminals": "镜像终端",
+      "add": "添加终端",
+      "tabLimit": "一个镜像窗口最多可容纳 10 个终端。",
+      "addUnavailable": "此终端已无法添加。",
+      "alreadyOwned": "此终端已弹出。",
+      "trayFull": "为腾出空间，已关闭最早最小化的镜像窗口。其终端仍保留在各自工作区中。",
+      "dropUnavailable": "无法拖放到此处",
+      "openInNew": "在新镜像窗口中打开",
+      "moveToMirror": "移至镜像窗口",
+      "moveUnavailable": "此终端已无法移动。",
+      "tabLabel": "{{value0}}，{{value1}}",
+      "dictationStopKey": "以停止",
+      "projectFilter": {
+        "label": "项目",
+        "remove": "从筛选中移除 {{value0}}",
+        "add": "项目",
+        "all": "所有项目",
+        "search": "搜索项目…",
+        "noMatch": "没有匹配的项目。",
+        "clear": "清除筛选",
+        "empty": "这些项目中没有其他可添加的内容",
+        "showAllProjects": "显示所有项目",
+        "outside": "筛选之外还有 {{value0}} 项",
+        "showAll": "全部显示"
+      }
+    },
+    "title": "智能体",
+    "tab": {
+      "inbox": "收件箱",
+      "running": "运行中",
+      "all": "所有终端",
+      "agents": "智能体",
+      "shownInMirror": "已显示在镜像窗口中",
+      "bringBack": "恢复显示"
+    },
+    "inbox": {
+      "previous": "上一个",
+      "next": "下一个",
+      "needsYou": "需要你处理",
+      "emptyTitle": "没有智能体在等待你的回应",
+      "markAllRead": "全部标为已读",
+      "finished": "已完成",
+      "emptyHint": "{{value0}} 个正在工作 · 有提问时会通知你",
+      "oneAgent": "1 个智能体",
+      "agents": "{{value0}} 个智能体",
+      "hidden": "已隐藏 {{value0}} 个 · 显示"
+    },
+    "running": {
+      "empty": "当前没有智能体在工作",
+      "working": "工作中",
+      "longestFirst": "运行时间最长的优先",
+      "popOutAll": "全部弹出"
+    },
+    "footer": {
+      "move": "移动",
+      "popOut": "弹出窗口",
+      "answer": "回答",
+      "tabs": "标签页",
+      "jump": "跳转",
+      "close": "关闭"
+    },
+    "toast": {
+      "nobodyWaiting": "没有智能体在等待你的回应"
+    },
+    "trigger": {
+      "needsYouOne": "1 个需要你处理",
+      "needsYouOther": "{{value0}} 个需要你处理"
+    },
+    "terminals": {
+      "searchPlaceholder": "按终端、项目、分组或智能体筛选",
+      "searchLabel": "筛选终端",
+      "noMatch": "没有与“{{value0}}”匹配的终端",
+      "empty": "没有打开的终端",
+      "shell": "Shell",
+      "ungrouped": "未分组",
+      "unknownProject": "未知",
+      "termCount": "{{value0}} 个终端",
+      "noMatchHint": "试试项目、分组、分支或智能体名称",
+      "sortManualHint": "按你在侧边栏中排列的顺序显示工作区。",
+      "sortLabel": "排序：{{value0}}",
+      "sortBy": "排序方式"
+    },
+    "card": {
+      "recommended": "推荐",
+      "dictate": "听写",
+      "send": "发送",
+      "wantsToRun": "请求运行",
+      "allowOnce": "是，运行一次",
+      "alwaysAllow": "始终允许",
+      "denyInstead": "否，告诉 {{value0}} 应该改做什么",
+      "needsApproval": "需要批准",
+      "asking": "正在提问",
+      "replyTo": "回复 @{{value0}}…",
+      "instead": "说明应该改做什么…",
+      "jump": "跳转到终端",
+      "insteadOrDeny": "说明应该改做什么，或按 Enter 直接拒绝…",
+      "pastedImage": "图片 {{value0}}",
+      "removeImage": "移除 {{value0}}",
+      "hide": "隐藏直到再次提问"
+    },
+    "close": "关闭 (esc)",
+    "state": {
+      "idle": "空闲",
+      "working": "工作中",
+      "done": "已完成"
+    },
+    "alert": {
+      "asking": "正在提问",
+      "needsApproval": "需要批准",
+      "finished": "已完成",
+      "more": "Agent Hub 中还有 {{value0}} 个",
+      "dismiss": "忽略"
+    },
+    "dock": {
+      "nextWaiting": "跳转到下一个等待中的智能体",
+      "edgeBottom": "状态栏上方",
+      "edgeLeft": "左侧边缘",
+      "edgeRight": "右侧边缘",
+      "more": "更多",
+      "unmute": "重新开启提醒",
+      "mute": "将提醒静音 2 小时",
+      "position": "位置",
+      "useStatusBar": "改为在状态栏中显示",
+      "settings": "Agent Hub 设置…",
+      "edgeTop": "标题栏下方",
+      "waiting": "等待你的回应",
+      "finished": "已完成",
+      "sizeSmall": "小",
+      "sizeMedium": "中",
+      "sizeLarge": "大",
+      "size": "大小",
+      "dockMirrors": "将镜像窗口移至 Agent Hub",
+      "restoreMirrors": "恢复镜像窗口",
+      "openCanvas": "打开画布",
+      "arrange": "排列镜像窗口"
+    },
+    "children": {
+      "agentOne": "1 个智能体",
+      "agentMany": "{{value0}} 个智能体",
+      "subagentOne": "1 个子智能体",
+      "subagentMany": "{{value0}} 个子智能体"
+    },
+    "statusBarMenuItem": "Agent Hub",
+    "dim": {
+      "modeOff": "不变暗",
+      "modeOn": "使浮动窗口后方变暗",
+      "modeUntilClick": "使后方变暗，直到点击后方区域",
+      "modeMinimizeOnClick": "使后方变暗，点击后方区域时最小化",
+      "title": "使浮动窗口后方变暗"
+    },
+    "count": {
+      "nested": "其下还有 {{value0}} 个"
+    },
+    "hover": {
+      "openTabHere": "在此打开为标签页",
+      "state": "状态",
+      "where": "位置",
+      "popout": "独立窗口"
+    },
+    "arrange": {
+      "title": "排列浮动窗口",
+      "grid": "网格",
+      "columns": "并排",
+      "rows": "纵向堆叠"
+    },
+    "tabToggle": {
+      "on": "离开此标签页时自动弹出（点击停用）",
+      "off": "离开标签页时弹出此终端"
+    },
+    "canvas": {
+      "emptyTitle": "画布上没有镜像窗口",
+      "emptyHint": "从 Agent Hub 弹出终端，或恢复已收起的镜像窗口，即可在此显示。",
+      "leave": "离开画布",
+      "showSidebar": "显示侧边栏"
+    },
+    "mic": {
+      "voiceOptions": "右键点击查看语音选项。",
+      "start": "听写到此终端",
+      "starting": "正在启动麦克风… 点击停止。",
+      "stop": "停止听写",
+      "finishing": "正在完成听写…",
+      "elsewhereNamed": "正在“{{name}}”中听写。",
+      "elsewhereTerminal": "正在另一个终端中听写。",
+      "elsewhere": "正在 Orca 的其他位置听写。",
+      "onlyOne": "一次只能进行一项听写。",
+      "disabled": "语音听写已关闭。",
+      "noModel": "尚未选择并下载语音模型。",
+      "unsupported": "无法从此窗口向浮动工作区终端输入听写文本。",
+      "enable": "语音听写",
+      "model": "语音模型",
+      "noModels": "没有已下载的模型",
+      "moreModels": "在设置中查看更多…",
+      "settings": "语音设置…",
+      "startWithImproveHint": "听写到此终端。按住 Shift 点击可听写并优化。",
+      "dictateAndImprove": "听写并优化",
+      "dictate": "听写",
+      "mode": "麦克风操作",
+      "modeCopy": "点击镜像窗口的麦克风以启动此模式。按住 Shift 点击可启动另一种可用模式。",
+      "startImproveHint": "在此终端中听写并优化。按住 Shift 点击可仅听写。",
+      "improve": "听写并优化",
+      "improveWithAgent": "使用智能体优化",
+      "improveSettings": "转写优化设置",
+      "modeSwitchCopy": "开启后，镜像窗口的麦克风会听写并优化；按住 Shift 点击则执行相反操作。",
+      "improveRequired": "需要开启转写优化功能。",
+      "listeningTab": "正在此终端中听写",
+      "answering": "问题卡片已打开：请用其输入框中的麦克风口述你的回答。"
+    },
+    "shortcut": {
+      "doubleTapHint": "也可以录制双击修饰键的操作。",
+      "suggestions": "未设置快捷键的建议：{{bindings}}",
+      "conflict": "{{binding}} 与 {{owners}} 冲突。",
+      "parseError": "无法解析快捷键。",
+      "saveError": "无法保存快捷键。"
+    },
+    "shortcuts": {
+      "title": "键盘快捷键",
+      "toggle": "打开或关闭 Agent Hub",
+      "nextWaiting": "跳转到下一个等待中的智能体",
+      "dockMirrors": "收起或恢复镜像窗口",
+      "popOut": "弹出当前智能体",
+      "jumpToMirror": "跳转到当前镜像窗口的工作区",
+      "arrangeMirrors": "排列镜像窗口",
+      "toggleCanvas": "打开或离开画布",
+      "focusMirror": "聚焦或取消聚焦画布上的当前镜像窗口",
+      "hub": "Agent Hub",
+      "mirrors": "镜像窗口",
+      "canvas": "画布",
+      "dictation": "听写",
+      "notSet": "未设置",
+      "setAction": "设置 {{action}} 的快捷键",
+      "set": "设置快捷键",
+      "edit": "编辑快捷键",
+      "editDescription": "更改 Hub、Orb、镜像和听写的快捷键。"
+    },
+    "windowFilter": {
+      "label": "按窗口筛选",
+      "labelActive": "筛选：{{value0}}",
+      "title": "显示",
+      "any": "全部",
+      "open": "已在窗口中打开",
+      "emptyOpen": "没有在窗口中打开的终端",
+      "minimized": "已最小化",
+      "emptyMinimized": "没有最小化的终端",
+      "none": "不在窗口中",
+      "emptyNone": "所有终端都在窗口中"
+    },
+    "dictation": {
+      "here": "正在此处听写"
+    },
+    "quick": {
+      "answerWith": "回答：{{value0}}",
+      "more": "按 ↵ 查看全部 {{value0}} 项",
+      "deny": "否",
+      "title": "快速回复",
+      "close": "关闭并在终端中回答 (esc)",
+      "recommended": "推荐",
+      "ownWords": "输入你的回答…",
+      "escHint": "终端",
+      "reopen": "显示快速回复卡片",
+      "send": "发送",
+      "sending": "正在发送…"
+    },
+    "settings": {
+      "agentControl": "允许智能体控制 Agent Hub",
+      "agentControlCopy": "智能体可以向你展示内容、提问并管理其镜像窗口。"
+    },
+    "requests": {
+      "decisionGate": "决策关卡",
+      "gateUpdateRequired": "请更新此主机以回答决策关卡。",
+      "pairedPeekUnavailable": "Peek 暂时无法打开此配对主机上的 URL 或文件。",
+      "peekUnavailable": "当前视图中无法使用 Peek。",
+      "peekUnsupported": "无法在所属主机的 Peek 中打开此 URL 或文件。",
+      "peekUnsupportedFile": "Peek 无法显示此文件类型。请在工作区或默认应用中打开。",
+      "targetUnavailable": "此终端在所属主机上已不可用。",
+      "mirrorAddFailed": "无法将终端添加到调用方的镜像窗口（{{reason}}）。",
+      "mirrorOpenFailed": "无法打开镜像窗口（{{reason}}）。",
+      "mirrorUnavailable": "此终端没有镜像窗口。",
+      "invalidLayout": "请选择网格、列或行布局。",
+      "canvasDisabled": "请在设置中启用 Agent Hub 画布后再打开。",
+      "presenceUnavailable": "无法获取桌面在线状态。",
+      "disconnected": "此主机已断开连接。",
+      "unavailable": "此请求已不可用。",
+      "sendFailed": "无法发送你的回答。请重试。",
+      "sending": "正在发送…",
+      "answeredElsewhere": "已在其他位置回答",
+      "asks": "@{{agent}} 提问",
+      "wantsTo": "@{{agent}} 请求{{action}}",
+      "allowOnce": "允许一次",
+      "allowSession": "在此会话中允许",
+      "deny": "拒绝",
+      "awayAnswer": "你离开时，@{{agent}} 选择了 {{answer}}",
+      "openMirror": "打开 {{title}} 的镜像窗口",
+      "minimizeMirror": "最小化 {{title}} 的镜像窗口",
+      "restoreMirror": "恢复 {{title}} 的镜像窗口",
+      "closeMirror": "关闭 {{title}} 的镜像窗口",
+      "peekLink": "在 Peek 中查看 {{link}}",
+      "arrangeMirrors": "排列镜像窗口",
+      "openCanvas": "打开画布",
+      "closeCanvas": "关闭画布"
+    },
+    "answerQueue": {
+      "answeredElsewhere": "已在别处回答",
+      "automatically": "自动",
+      "caughtUp": "全部处理完毕",
+      "exit": "退出",
+      "includeApprovals": "包含审批",
+      "isAsking": "正在提问",
+      "later": "稍后",
+      "laterHint": "稍后",
+      "onlyShortcut": "仅通过快捷键",
+      "openShortcut": "打开 Agent Hub 回答队列",
+      "openTerminal": "在终端中打开",
+      "openWhen": "收到问题时打开",
+      "pick": "选择",
+      "send": "发送",
+      "title": "回答队列",
+      "unverifiable": "无法验证主机连接。请重新连接后发送回答。",
+      "waiting": "{{count}} 个等待中"
+    },
+    "peek": {
+      "kindWeb": "网页",
+      "kindImage": "图片",
+      "kindPdf": "PDF",
+      "kindMarkdown": "Markdown",
+      "kindCsv": "表格",
+      "kindMermaid": "图表",
+      "kindNotebook": "笔记本",
+      "kindText": "代码 / 文本",
+      "kindMedia": "媒体",
+      "source": "来自 {{value0}}",
+      "showSource": "将此镜像窗口置于前方",
+      "openInTab": "在标签页中打开",
+      "openInEditor": "在编辑器中打开",
+      "openInBrowser": "在浏览器中打开",
+      "openWithApp": "使用默认应用打开",
+      "back": "上一个预览",
+      "close": "关闭 (esc)",
+      "chips": "此消息中的链接",
+      "chipLabel": "在 Peek 中查看 {{value0}}",
+      "unreadable": "无法在此显示此文件。",
+      "action": "Peek",
+      "exitFullScreen": "退出全屏",
+      "fullScreen": "全屏",
+      "hostAddress": "此地址仅在所属主机上可用。正在工作区浏览器中打开。",
+      "workspaceFallback": "此处无法显示预览。正在工作区中打开。",
+      "unavailable": "无法打开此链接。"
+    },
+    "orb": {
+      "defaultAction": "打开Orb的模式",
+      "defaultActionHint": "用于Orb按钮和快捷键。",
+      "alternateAction": "{{modifier}}+点击操作",
+      "alternateActionHint": "打开此模式，不更改默认操作。",
+      "liveAction": "实时",
+      "textAction": "文字",
+      "microphoneBusy": "麦克风正被另一个录音使用。",
+      "modifierClickHint": "{{modifier}}+点击 · {{action}}",
+      "modelsLoading": "正在加载可用模型…",
+      "modelsUnavailable": "无法加载可用模型。请打开模型菜单重试。",
+      "modelUnavailable": "不可用",
+      "settingsApply": "Orb 空闲时，更改代理、模型或审批设置会开始新对话。过去的对话会保留其代理和模型。",
+      "liveHoldsInput": "实时语音已开启。停止后即可输入。"
+    }
   },
   "workspaceDeletion": {
     "preferenceSaveFailed": "无法保存删除偏好",

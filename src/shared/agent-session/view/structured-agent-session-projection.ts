@@ -7,13 +7,12 @@ import {
 } from '../../agent-status/contracts/agent-status-field-normalization'
 import {
   AGENT_JOURNAL_MESSAGE_SEND_MODES,
-  AGENT_JOURNAL_MESSAGE_STATES,
-  type AgentJournalMessageItem,
   type AgentJournalMessageSendMode,
   type AgentJournalRenderItem,
   type AgentJournalSubmission
 } from '../journal/agent-session-journal-types'
 import type { AgentTurnOutcome } from '../../agent-status/lifecycle/agent-turn-outcome'
+import { structuredMessageLifecycle } from '../../structured-agent-session-message-lifecycle'
 import type { AgentSessionAwaitedQuestion } from '../agent-session-wire'
 import { agentJournalLinkageFields } from '../journal/agent-session-journal-producer'
 import { itemBlocks } from './structured-agent-session-item-blocks'
@@ -57,20 +56,6 @@ function isAgentJournalMessageSendMode(value: string): value is AgentJournalMess
   return AGENT_JOURNAL_MESSAGE_SEND_MODES.some((mode) => mode === value)
 }
 
-/** A state this build cannot name reads as completed: a newer host's row is never live here. */
-function messageLifecycle(
-  body: AgentJournalMessageItem
-): Pick<NativeChatMessage, 'state' | 'completedAt'> {
-  const state: string | undefined = body.state
-  if (state === undefined) {
-    return {}
-  }
-  return {
-    state: AGENT_JOURNAL_MESSAGE_STATES.find((known) => known === state) ?? 'completed',
-    ...(body.completedAt !== undefined ? { completedAt: body.completedAt } : {})
-  }
-}
-
 const projectedItems = new WeakMap<AgentJournalRenderItem, NativeChatMessage | null>()
 
 /** Render all producers and retain linkage for child sections; current-status readers separately scope to the root agent. */
@@ -97,8 +82,9 @@ export function projectStructuredItemToNativeChat(
   // Reducer updates replace journal items, so unchanged rows keep their render caches.
   const projected = itemBlocks(item)
   const sentAs = item.body.kind === 'message' ? item.body.sentAs : undefined
-  const lifecycle = item.body.kind === 'message' ? messageLifecycle(item.body) : {}
+  const lifecycle = item.body.kind === 'message' ? structuredMessageLifecycle(item.body) : {}
   const command = item.body.kind === 'message' ? item.body.command : undefined
+  const spoken = item.body.kind === 'message' ? item.body.spoken : undefined
   const message: NativeChatMessage | null = projected
     ? {
         ...agentJournalItemRowOrigin(item),
@@ -109,6 +95,7 @@ export function projectStructuredItemToNativeChat(
         ...(sentAs !== undefined && isAgentJournalMessageSendMode(sentAs) ? { sentAs } : {}),
         ...lifecycle,
         ...(command ? { command } : {}),
+        ...(spoken ? { spoken } : {}),
         ...nativeChatMessageSenderFields(item.body, projected.role),
         ...(projected.drawnMarkdown !== undefined
           ? { drawnMarkdown: projected.drawnMarkdown }

@@ -17,6 +17,7 @@ import {
   NativeChatCodeBlock,
   NativeChatPlainCodeBlock
 } from '../../markdown/code/NativeChatCodeBlock'
+import { NativeChatSpokenLabel } from '../../NativeChatSpokenLabel'
 import { NativeChatAgentControls } from '../actions/NativeChatAgentControls'
 import { NativeChatImageAttachments } from '../../media/images/NativeChatImageAttachments'
 import { NativeChatForkAction } from '../actions/NativeChatForkAction'
@@ -101,6 +102,7 @@ export function NativeChatAssistantMessageRow({
         isSystem && 'text-xs text-chat-foreground-faint'
       )}
     >
+      <NativeChatSpokenLabel message={message} />
       <NativeChatImageAttachments
         blocks={prose}
         runtimeContext={runtimeContext}

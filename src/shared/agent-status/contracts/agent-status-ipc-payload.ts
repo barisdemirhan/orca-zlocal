@@ -86,6 +86,7 @@ export type AgentStatusIpcPayload = ParsedAgentStatusPayload & {
   /** How the host identified that end; absent from old hosts (legacy). */
   turnEndDisposition?: TurnEndDisposition
   orchestration?: AgentStatusOrchestrationContext
+  spawnedBy?: { paneKey: string }
   providerSession?: AgentProviderSessionMetadata
   /** A tmux or shared server, not this pane, runs this conversation: never the pane's resume. */
   executionHost?: 'shared'

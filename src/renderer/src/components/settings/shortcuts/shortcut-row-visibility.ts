@@ -17,6 +17,25 @@ import {
 } from './ShortcutFilterRail'
 import type { Translate } from '../../../i18n/use-translate'
 
+const AGENT_HUB_ACTION_IDS: ReadonlySet<KeybindingActionId> = new Set([
+  'agentHub.toggleOrb',
+  'agentHub.orb.toggleLive',
+  'agentHub.orb.toggleMicrophone',
+  'agentHub.orb.toggleSpeaker',
+  'agentHub.orb.toggleConversation',
+  'agentHub.toggle',
+  'agentHub.openAnswerQueue',
+  'agentHub.nextWaiting',
+  'agentHub.dockMirrors',
+  'agentHub.toggleCanvas',
+  'agentHub.arrangeMirrors',
+  'agentHub.focusMirror',
+  'agentHub.popOut',
+  'agentHub.jumpToMirror',
+  'agentHub.nextMirrorTab',
+  'agentHub.previousMirrorTab'
+])
+
 export function buildShortcutRowVisibility(
   options: {
     groups: ShortcutGroup[]
@@ -27,6 +46,8 @@ export function buildShortcutRowVisibility(
     managedBrowserCreationEnabled: boolean
     mobileEmulatorCreationEnabled: boolean
     agentDashboardEnabled: boolean
+    agentHubEnabled: boolean
+    agentHubCanvasEnabled: boolean
     settingsSearchQuery: string
     shortcutQuery: string
     shortcutFilter: ShortcutFilter
@@ -46,8 +67,10 @@ export function buildShortcutRowVisibility(
           (options.managedBrowserCreationEnabled ||
             (item.id !== 'tab.newBrowser' && item.id !== 'tab.newBrowserSplitRight')) &&
           (options.mobileEmulatorCreationEnabled || item.id !== 'tab.newSimulator') &&
-          // Binding an experimental action while disabled would silently do nothing.
-          (options.agentDashboardEnabled || item.id !== 'dashboard.toggle')
+          // Why: the toggle is inert while the experiment is off, so binding it here would silently do nothing.
+          (options.agentDashboardEnabled || item.id !== 'dashboard.toggle') &&
+          (options.agentHubCanvasEnabled || item.id !== 'agentHub.toggleCanvas') &&
+          (options.agentHubEnabled || !AGENT_HUB_ACTION_IDS.has(item.id))
       )
       .map((item) => {
         const effective = getEffectiveKeybindingsForDefinition(

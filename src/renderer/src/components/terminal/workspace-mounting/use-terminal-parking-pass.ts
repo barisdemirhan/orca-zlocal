@@ -1,5 +1,6 @@
 import { MountedTerminalWorktrees } from './split-group-mount'
 import { useEffect, useRef } from 'react'
+import { useTerminalMountRetentionLeases } from '../../terminal-pane/terminal-mount-retention-leases'
 import { useTerminalParkingWorkspaceChanges } from '../../terminal-pane/parking/use-terminal-parking-workspace-changes'
 import { invalidateTerminalParkingInputs } from '../../terminal-pane/parking/terminal-parking-input-events'
 import { useAppStore } from '../../../store/index'
@@ -18,9 +19,11 @@ import { recordTerminalWorktreeParkingDebugVerdicts } from '../../terminal-pane/
 import { getTerminalWorktreeColdParkRecheckDelayMs } from '../../terminal-pane/parking/retention/terminal-cold-park-recheck-deadlines'
 import { haveSameIdSet } from '../workbench/terminal-workspace-model'
 import { collectTerminalParkingPassCandidates } from './terminal-parking-pass-candidates'
+import { addControllerChangedWorktreesToDirty } from '../../terminal-parking-controller-changes'
 import type { TerminalParkingFoundation } from './use-terminal-parking-foundation'
 
 export function useTerminalParkingPass(controller: TerminalParkingFoundation): void {
+  const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activeView,
     activityTerminalPortals,
@@ -51,6 +54,7 @@ export function useTerminalParkingPass(controller: TerminalParkingFoundation): v
   const previousController = useRef<TerminalParkingFoundation | null>(null)
   const forcedParking = useRef<ReadonlySet<string>>(new Set())
   const exemptionByWorktree = useRef(new Map<string, ReadonlySet<string>>())
+  const previousLeases = useRef(mountRetentionLeases)
   useEffect(() => {
     const previous = previousController.current
     previousController.current = controller
@@ -60,45 +64,14 @@ export function useTerminalParkingPass(controller: TerminalParkingFoundation): v
         dirty.add(id)
       }
     }
+    if (previousLeases.current !== mountRetentionLeases) {
+      for (const lease of [...previousLeases.current, ...mountRetentionLeases]) {
+        dirty.add(lease.worktreeId)
+      }
+      previousLeases.current = mountRetentionLeases
+    }
     if (previous) {
-      if (
-        previous.activeView !== activeView ||
-        previous.renderedActiveWorktreeId !== renderedActiveWorktreeId
-      ) {
-        if (previous.renderedActiveWorktreeId) {
-          dirty.add(previous.renderedActiveWorktreeId)
-        }
-        if (renderedActiveWorktreeId) {
-          dirty.add(renderedActiveWorktreeId)
-        }
-      }
-      if (previous.activityTerminalPortals !== activityTerminalPortals) {
-        for (const portal of [...previous.activityTerminalPortals, ...activityTerminalPortals]) {
-          dirty.add(portal.worktreeId)
-        }
-      }
-      if (previous.workspaceSurfaceIds !== workspaceSurfaceIds) {
-        const currentIds = controller.workspaceSurfaceIdSet
-        const previousIds = previous.workspaceSurfaceIdSet
-        for (const id of previous.workspaceSurfaceIds) {
-          if (!currentIds.has(id)) {
-            dirty.add(id)
-          }
-        }
-        for (const id of workspaceSurfaceIds) {
-          if (!previousIds.has(id)) {
-            dirty.add(id)
-          }
-        }
-      }
-      if (
-        previous.terminalParkingEnabled !== terminalParkingEnabled ||
-        previous.terminalRetentionBudgetEnabled !== terminalRetentionBudgetEnabled
-      ) {
-        for (const id of controller.mountedWorktreeIdsRef.current) {
-          dirty.add(id)
-        }
-      }
+      addControllerChangedWorktreesToDirty(dirty, previous, controller)
     }
     if (dirty.size === 0) {
       return
@@ -285,6 +258,7 @@ export function useTerminalParkingPass(controller: TerminalParkingFoundation): v
     takeChangedWorkspaces,
     activeView,
     activityTerminalPortals,
+    mountRetentionLeases,
     backgroundMountRevision,
     parkedCaptureDoneRef,
     pendingStartupByTabId,

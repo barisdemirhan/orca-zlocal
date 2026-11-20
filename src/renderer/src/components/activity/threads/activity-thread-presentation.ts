@@ -158,8 +158,14 @@ export function statusPreviewForEntry(
 /** Keep grouping, labels and clear-completed on one verdict classifier. */
 export function activityThreadStatusId(thread: AgentPaneThread): ActivityThreadStatusId {
   // Why: a failed main agent outranks the subagent work still holding its row live.
-  if (thread.currentAgentEntry && agentVerdictDisplayMark(thread.currentAgentEntry) === 'failed') {
+  const currentEntry = thread.currentAgentEntry ?? thread.paneEntry
+  if (currentEntry && agentVerdictDisplayMark(currentEntry) === 'failed') {
     return 'failed'
+  }
+  // Missing fresh evidence cannot turn unfinished work into a previous completed turn.
+  // Waiting and blocked stay as they are: an unanswered prompt sends no further updates.
+  if (!thread.currentAgentState && thread.paneEntry?.state === 'working') {
+    return 'unverifiable'
   }
   const state = threadCurrentState(thread) ?? 'done'
   const verdictEntry = threadVerdictEntry(thread)

@@ -1,3 +1,5 @@
+import { AgentHubPaneSleepOverlay } from '../../../agent-hub/AgentHubPaneSleepOverlay'
+import { useAgentHubPaneTarget } from '../../../agent-hub/agent-hub-pane-sleep'
 import { createPortal } from 'react-dom'
 import { makePaneKey } from '../../../../../../shared/workspace-layout/stable-pane-id'
 import type { ManagedPane } from '@/lib/pane-manager/pane-manager-types'
@@ -7,13 +9,24 @@ import type { TerminalPaneController } from '../../controller/use-terminal-pane-
 
 function SleepingPanePortal({
   pane,
-  tabId
+  tabId,
+  worktreeId
 }: {
   pane: ManagedPane
   tabId: string
+  worktreeId: string
 }): React.JSX.Element | null {
-  const deferral = usePaneSpawnDeferral(makePaneKey(tabId, pane.leafId))
-  if (!deferral || deferral.resuming) {
+  const paneKey = makePaneKey(tabId, pane.leafId)
+  const target = useAgentHubPaneTarget(worktreeId, tabId, paneKey)
+  const deferral = usePaneSpawnDeferral(paneKey)
+  if (target && (!deferral || deferral.manual)) {
+    return createPortal(
+      <AgentHubPaneSleepOverlay target={target} />,
+      pane.container,
+      `manual-sleeping-pane-${pane.id}`
+    )
+  }
+  if (!deferral || deferral.manual || deferral.resuming) {
     return null
   }
   return createPortal(
@@ -32,11 +45,11 @@ export function TerminalPaneSleepingPortals({
 }: {
   controller: TerminalPaneController
 }): React.JSX.Element {
-  const { managedPanes, tabId } = controller
+  const { managedPanes, tabId, worktreeId } = controller
   return (
     <>
       {managedPanes.map((pane) => (
-        <SleepingPanePortal key={pane.id} pane={pane} tabId={tabId} />
+        <SleepingPanePortal key={pane.id} pane={pane} tabId={tabId} worktreeId={worktreeId} />
       ))}
     </>
   )

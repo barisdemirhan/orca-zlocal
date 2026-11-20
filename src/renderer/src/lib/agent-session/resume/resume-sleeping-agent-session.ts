@@ -246,6 +246,12 @@ export function resumeSleepingAgentSessionsForWorktree(
 
   let launched = 0
   for (const record of worktreeRecords) {
+    if (
+      (options?.paneKeys && !options.paneKeys.has(record.paneKey)) ||
+      (record.wakeOnRequestOnly && !options?.paneKeys?.has(record.paneKey))
+    ) {
+      continue
+    }
     const currentState = useAppStore.getState()
     if (currentState.sleepingAgentSessionsByPaneKey[record.paneKey] !== record) {
       continue

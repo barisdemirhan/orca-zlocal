@@ -20,11 +20,7 @@ import type { StructuredAgentSessionDeliveryLoopDeps } from './structured-agent-
 import { structuredAgentSessionCommandRunning } from '../operations/structured-agent-session-command-turn'
 import type { StructuredAgentSessionStartClaim } from '../startup/structured-agent-session-agent-start'
 import type { StructuredAgentSessionStartReadiness } from '../startup/structured-agent-session-start-readiness'
-import type {
-  StructuredAgentSessionHostDeps,
-  StructuredAgentSessionHostSession,
-  StructuredAgentSessionProviderChildIdentity
-} from '../host/structured-agent-session-host-types'
+import type * as HostTypes from '../host/structured-agent-session-host-types'
 import { structuredAgentSessionConversationFence } from '../host/structured-agent-session-provider-child'
 import { readStructuredAgentSessionFailureWordsContext } from '../operations/structured-agent-session-send-preparation'
 import { settleInterruptedStructuredAgentSessionCommands } from '../rewind/structured-rewind-recovery'
@@ -47,7 +43,7 @@ export type StructuredAgentSessionConversationDelivery = {
   open: (
     sessionId: string,
     options?: StructuredAgentSessionConversationOpenOptions
-  ) => Promise<StructuredAgentSessionHostSession | null>
+  ) => Promise<HostTypes.StructuredAgentSessionHostSession | null>
   /** Queue commit wakes under serialization so they cannot race a loop’s stopping decision. */
   afterCommit: (sessionId: string, journal: AgentSessionJournal) => void
   /** Settle edges affect status/steer holds without rows or renewed idle activity. */
@@ -60,9 +56,9 @@ export type StructuredAgentSessionConversationDelivery = {
 }
 
 export function createStructuredAgentSessionConversationDelivery(input: {
-  deps: StructuredAgentSessionHostDeps
+  deps: HostTypes.StructuredAgentSessionHostDeps
   acquireAborts: Pick<StructuredAgentSessionAcquireAborts, 'begin'>
-  sessions: Map<string, StructuredAgentSessionHostSession>
+  sessions: Map<string, HostTypes.StructuredAgentSessionHostSession>
   serialize: <T>(sessionId: string, task: () => Promise<T>) => Promise<T>
   trackStart: <T>(start: Promise<T>) => Promise<T>
   startProviderChild: (
@@ -73,7 +69,7 @@ export function createStructuredAgentSessionConversationDelivery(input: {
   startFlights?: StructuredAgentSessionDeliveryLoopDeps['startFlights']
   readiness: (
     sessionId: string,
-    child: StructuredAgentSessionProviderChildIdentity
+    child: HostTypes.StructuredAgentSessionProviderChildIdentity
   ) => StructuredAgentSessionStartReadiness | null
   /** Stops a child the chat outgrew, so the start after it reads a new login, account or permission
    *  mode. */
@@ -104,7 +100,8 @@ export function createStructuredAgentSessionConversationDelivery(input: {
     },
     providerHoldsDispatch: () =>
       deps.adapter.holdsDispatch?.(sessionId) === true ||
-      [...(sessions.get(sessionId)?.child?.heldSends?.() ?? [])].some((id) => id !== continuingId)
+      [...(sessions.get(sessionId)?.child?.heldSends?.() ?? [])].some((id) => id !== continuingId),
+    providerHoldsVoice: () => deps.adapter.voice?.holds(sessionId) === true
   })
   const owesWork = async (sessionId: string, id: string): Promise<boolean> =>
     sessions.has(sessionId) &&

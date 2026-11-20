@@ -90,11 +90,15 @@ export function createCodexAppServerRecordDispatcher(input: {
       const timedOutMethod = timedOutMethods.get(message.id)
       timedOutMethods.delete(message.id)
       const error = isProviderRecord(message.error) ? message.error.message : undefined
+      const privateSignalling =
+        timedOutMethod?.startsWith('thread/realtime/') === true ||
+        (typeof error === 'string' &&
+          /(?:^|\r?\n)(?:v=0|m=audio|a=(?:candidate|ice-|fingerprint))/.test(error))
       console.warn(
         timedOutMethod
           ? `[codex-app-server] late reply to ${timedOutMethod} after timeout (id ${message.id})`
           : `[codex-app-server] reply with no waiting request (id ${message.id})`,
-        ...(typeof error === 'string' ? [error] : [])
+        ...(typeof error === 'string' && !privateSignalling ? [error] : [])
       )
       return
     }

@@ -42,6 +42,7 @@ async function planClaudeUsageFile(
   const validProjection =
     previous &&
     Array.isArray(previous.sessions) &&
+    previous.sessions.every((session) => typeof session.modelIsSidechain === 'boolean') &&
     Array.isArray(previous.dailyAggregates) &&
     Array.isArray(previous.ownedDedupeKeys) &&
     typeof previous.hasDeferredClaims === 'boolean' &&

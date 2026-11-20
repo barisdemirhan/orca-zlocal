@@ -289,6 +289,24 @@
       "remaining": "Einige Google-Cookies konnten nicht aus {{profile}} entfernt werden. Erneut versuchen.",
       "unverified": "Google-Cookies von {{profile}} konnten nicht geprüft werden. Erneut versuchen."
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "Aufforderung zum Speichern des Passworts",
+        "updateTitle": "Passwort aktualisieren?",
+        "saveTitle": "Passwort speichern?",
+        "username": "Benutzername",
+        "password": "Passwort",
+        "never": "Nie für diese Website",
+        "notNow": "Jetzt nicht",
+        "update": "Aktualisieren",
+        "save": "Speichern"
+      },
+      "fill": {
+        "noUsername": "(kein Benutzername)",
+        "title": "Gespeicherte Anmeldungen",
+        "otherLogins": "Weitere Anmeldungen auf dieser Website"
+      }
+    },
     "loadFailure": {
       "connectionNotSecure": "Die Verbindung ist nicht sicher",
       "cantReachHost": "{{value0}} ist nicht erreichbar",
@@ -504,24 +522,6 @@
         "imported_one": "{{count}} Cookie für {{domains}} importiert. Zur Verwendung die Seite neu laden.",
         "imported_other": "{{count}} Cookies für {{domains}} importiert. Zur Verwendung die Seite neu laden.",
         "failed": "Cookie-Import fehlgeschlagen: {{reason}}"
-      }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "Aufforderung zum Speichern des Passworts",
-        "updateTitle": "Passwort aktualisieren?",
-        "saveTitle": "Passwort speichern?",
-        "username": "Benutzername",
-        "password": "Passwort",
-        "never": "Nie für diese Website",
-        "notNow": "Jetzt nicht",
-        "update": "Aktualisieren",
-        "save": "Speichern"
-      },
-      "fill": {
-        "noUsername": "(kein Benutzername)",
-        "title": "Gespeicherte Anmeldungen",
-        "otherLogins": "Weitere Anmeldungen auf dieser Website"
       }
     }
   },
@@ -7428,21 +7428,6 @@
         }
       },
       "settings": {
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Lokalen main-Branch aktuell halten"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "Der Speicherort der Konten konnte nicht gespeichert werden. Versuche es erneut.",
           "dbb9626ed1": "Abbrechen",
@@ -7789,9 +7774,6 @@
           "79209b37b9": "Falls der Cookie-Import nicht geeignet ist, kann Computer Use lokale Apps steuern und gegebenenfalls bestehende angemeldete Browser-Sitzungen nutzen. Den Orca Computer Use-Skill installieren; unter macOS sind zusätzlich Datenschutzberechtigungen erforderlich.",
           "333984cf90": "Bestehende Browser-Sitzung verwenden",
           "9895ed44de": "Computer Use öffnen"
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Browser-Nutzung durch Agenten aktivieren"
         },
         "BrowserUseExamples": {
           "1199258ace": "Kopieren",
@@ -8784,9 +8766,6 @@
           "14f1eb99d0": "Details beim Öffnen von „PR erstellen“ generieren",
           "d32b87e754": "Review-Vorlage verwenden, falls verfügbar",
           "981eae7e14": "Standardmäßig als Entwurf erstellen"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "KI für die Quellcodeverwaltung"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "Wenn du einen Link widerrufst, werden auch Links widerrufen, die in von ihm geöffneten Terminals erstellt wurden. Wer auf diesem Computer ein Terminal nutzen kann, per SSH oder über einen Link, kann sich weiterhin erneut koppeln.",
@@ -13441,6 +13420,27 @@
           "shownPluginCount_one": "{{count}} passendes Plugin angezeigt, einschließlich dieses Plugins",
           "shownPluginCount_other": "{{count}} passende Plugins angezeigt, einschließlich dieses Plugins",
           "samePublisher": "Weitere unter {{value0}} aufgeführte Plugins"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "KI für die Quellcodeverwaltung"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Lokalen main-Branch aktuell halten"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Browser-Nutzung durch Agenten aktivieren"
         }
       },
       "right": {

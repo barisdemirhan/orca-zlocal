@@ -10,18 +10,16 @@ import type {
   AgentHookAuthorityEvidence,
   AgentHookProviderSessionIdentity,
   AgentHookStatusChangeEntry,
-  AgentHookStatusFreshnessObservation,
-  EnrichedAgentHookEventPayload,
-  StatusDropListener
+  EnrichedAgentHookEventPayload
 } from './server-types'
 import { toAgentStatusIpcPayload } from './server-status-identity'
 import { combinedAgentStatusEntries } from './combined-agent-status-entries'
 import { PaneTimers } from './program-status/pane-timers'
 import { ProgramStatusFacetStore } from './program-status/facet-store'
-import { AgentHookServerAgentIdentities } from './server-agent-identities'
+import { AgentHookServerListenerSubscriptions } from './server-listener-subscriptions'
 import { publishedOrcaSessionId } from '../identity/pane-agent-identities'
 
-export abstract class AgentHookServerListeners extends AgentHookServerAgentIdentities {
+export abstract class AgentHookServerListeners extends AgentHookServerListenerSubscriptions {
   protected statusChangeNotificationVersion = 0
   protected cliWriterExecutionMatches: CliWriterExecutionMatches | null = null
 
@@ -34,6 +32,28 @@ export abstract class AgentHookServerListeners extends AgentHookServerAgentIdent
   /** Coalesce facet-only ticks that arrive at PTY chunk rate. */
   protected readonly programStatusFacetRepublishes = new PaneTimers()
 
+  private readonly paneSpawnedBy = new Map<string, { paneKey: string }>()
+
+  setPaneSpawnedBy(paneKey: string, spawnedBy: { paneKey: string } | undefined): void {
+    if (spawnedBy) {
+      this.paneSpawnedBy.set(paneKey, spawnedBy)
+    } else {
+      this.paneSpawnedBy.delete(paneKey)
+    }
+    for (const entry of this.combinedStatusEntries()) {
+      if (entry.paneKey === paneKey) {
+        this.emitEnrichedStatus(entry)
+      }
+    }
+    this.notifyStatusChangeListeners()
+  }
+
+  private withSpawnedBy<T extends { paneKey: string }>(
+    entry: T
+  ): T & { spawnedBy?: { paneKey: string } } {
+    return { ...entry, spawnedBy: this.paneSpawnedBy.get(entry.paneKey) }
+  }
+
   setStartupPromptClaimListener(
     listener: (body: unknown) => boolean | 'pending',
     clear: () => void
@@ -43,7 +63,7 @@ export abstract class AgentHookServerListeners extends AgentHookServerAgentIdent
   }
 
   protected emitEnrichedStatus(row: EnrichedAgentHookEventPayload): void {
-    const enriched = this.programStatusFacets.stitch(row)
+    const enriched = this.withSpawnedBy(this.programStatusFacets.stitch(row))
     this.onAgentStatus?.(enriched)
     for (const listener of this.enrichedStatusListeners) {
       try {
@@ -103,7 +123,7 @@ export abstract class AgentHookServerListeners extends AgentHookServerAgentIdent
     // One failing replay subscriber must not starve other panes.
     for (const payload of this.combinedStatusEntries()) {
       try {
-        listener({ ...payload, isReplay: true })
+        listener(this.withSpawnedBy({ ...payload, isReplay: true }))
       } catch (err) {
         console.error('[agent-hooks] replay listener threw', err)
       }
@@ -117,68 +137,6 @@ export abstract class AgentHookServerListeners extends AgentHookServerAgentIdent
     this.onClaudeStatusLine = listener
   }
 
-  subscribeStatusChanges(listener: (statuses: AgentHookStatusChangeEntry[]) => void): () => void {
-    this.statusChangeListeners.add(listener)
-    return () => {
-      this.statusChangeListeners.delete(listener)
-    }
-  }
-
-  /** Accepted duplicate evidence renews leases without becoming a semantic row mutation. */
-  subscribeStatusFreshness(
-    listener: (status: AgentHookStatusFreshnessObservation) => void
-  ): () => void {
-    this.statusFreshnessListeners.add(listener)
-    return () => {
-      this.statusFreshnessListeners.delete(listener)
-    }
-  }
-
-  protected emitStatusFreshnessObservation(status: AgentHookStatusFreshnessObservation): void {
-    for (const listener of this.statusFreshnessListeners) {
-      try {
-        listener(status)
-      } catch (err) {
-        console.error('[agent-hooks] status-freshness listener threw', err)
-      }
-    }
-  }
-
-  subscribeProviderSessionChanges(
-    listener: (providerSessions: AgentHookProviderSessionIdentity[]) => void
-  ): () => void {
-    this.providerSessionChangeListeners.add(listener)
-    return () => {
-      this.providerSessionChangeListeners.delete(listener)
-    }
-  }
-
-  /** Include user-dismissed rows, which bypass pane-clear events but must still retire pane-owned UI. */
-  subscribeStatusDrop(listener: StatusDropListener): () => void {
-    this.statusDropListeners.add(listener)
-    return () => {
-      this.statusDropListeners.delete(listener)
-    }
-  }
-
-  protected emitStatusDropped(paneKey: string): void {
-    for (const listener of this.statusDropListeners) {
-      try {
-        listener(paneKey)
-      } catch (err) {
-        console.error('[agent-hooks] status-drop listener threw', err)
-      }
-    }
-  }
-
-  /** Enriched changes only; no replay. */
-  subscribeEnrichedStatus(listener: (payload: EnrichedAgentHookEventPayload) => void): () => void {
-    this.enrichedStatusListeners.add(listener)
-    return () => {
-      this.enrichedStatusListeners.delete(listener)
-    }
-  }
-
   /** Replay is durable evidence from a prior runtime, not a live observation. */
   protected withdrawReplayObservation(paneKey: string): void {
     if (this.runtimeObservedStatusPaneKeys.delete(paneKey)) {
@@ -190,28 +148,10 @@ export abstract class AgentHookServerListeners extends AgentHookServerAgentIdent
     this.onPaneStatusCleared = listener
   }
 
-  /** Survives window teardown and works under headless serve, unlike the window's single listener slot. */
-  subscribePaneStatusClear(listener: (clear: AgentStatusClearIpcPayload) => void): () => void {
-    this.paneStatusClearListeners.add(listener)
-    return () => {
-      this.paneStatusClearListeners.delete(listener)
-    }
-  }
-
-  protected emitPaneStatusCleared(clear: AgentStatusClearIpcPayload): void {
-    this.onPaneStatusCleared?.(clear)
-    for (const listener of this.paneStatusClearListeners) {
-      // One throwing subscriber must not interrupt teardown for the others.
-      try {
-        listener(clear)
-      } catch (err) {
-        console.error('[agent-hooks] pane-status-clear listener threw', err)
-      }
-    }
-  }
-
   getStatusSnapshot(): AgentStatusIpcPayload[] {
-    return this.combinedStatusEntries().map(toAgentStatusIpcPayload)
+    return this.combinedStatusEntries().map((entry) =>
+      this.withSpawnedBy(toAgentStatusIpcPayload(entry))
+    )
   }
 
   /** Include metadata-only provider identities. */
@@ -245,7 +185,7 @@ export abstract class AgentHookServerListeners extends AgentHookServerAgentIdent
     if (legacy) {
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Main admits enriched legacy rows; the shared view declares their base event type.
       const row = legacy as EnrichedAgentHookEventPayload
-      return [toAgentStatusIpcPayload(this.programStatusFacets.stitch(row))]
+      return [this.withSpawnedBy(toAgentStatusIpcPayload(this.programStatusFacets.stitch(row)))]
     }
     const rows: AgentStatusIpcPayload[] = []
     for (const [subjectKey, subject] of this.canonicalSubjectsByPane.get(paneKey) ?? []) {
@@ -255,7 +195,9 @@ export abstract class AgentHookServerListeners extends AgentHookServerAgentIdent
         : this.agentIdentities.canonicalIdentity(subjectKey)
       if (status) {
         const orcaSessionId = publishedOrcaSessionId(identity)
-        rows.push(orcaSessionId !== undefined ? { ...status, orcaSessionId } : status)
+        rows.push(
+          this.withSpawnedBy(orcaSessionId !== undefined ? { ...status, orcaSessionId } : status)
+        )
       }
     }
     return rows

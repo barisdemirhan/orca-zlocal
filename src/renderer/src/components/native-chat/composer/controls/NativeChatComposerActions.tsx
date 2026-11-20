@@ -24,6 +24,9 @@ import { NativeChatComposerPrimaryButton } from './NativeChatComposerPrimaryButt
 import { NativeChatAttachButton } from './NativeChatAttachButton'
 import { NativeChatDictationButton } from './NativeChatDictationButton'
 import { NativeChatContextUsageRing } from '../../usage/NativeChatContextUsageRing'
+import { AgentHubOrbComposerContext } from '../../../agent-hub/agent-hub-orb-composer'
+import { AgentHubOrbComposerMic } from '../../../agent-hub/AgentHubOrbComposerMic'
+import { AgentHubOrbComposerOrb } from '../../../agent-hub/AgentHubOrbComposerOrb'
 import type { NativeChatContextUsageSummary } from '../../../../../../shared/native-chat/native-chat-context-usage-summary'
 import type { NativeChatOptionPickerRequest } from '../../session/options/controls/native-chat-option-picker-request'
 import type { NativeChatSteerChordPreview } from '../../../../../../shared/native-chat/input/composer/use-native-chat-steer-chord-preview'
@@ -65,6 +68,8 @@ export type NativeChatComposerActionsProps = {
   contextUsage?: NativeChatContextUsageSummary | null
   /** The chat's agent, whose permission modes the picker describes. */
   agent?: string
+  hasContent?: boolean
+  interactionDisabled?: boolean
   /** A launch prompt: Attach and dictation are its only controls; launching is the panel's. */
   launchPrompt?: boolean
 }
@@ -98,10 +103,13 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
   contextUsage,
   focusComposer,
   agent,
+  hasContent = true,
+  interactionDisabled = false,
   launchPrompt = false
 }: NativeChatComposerActionsProps): React.JSX.Element {
   const t = useTranslate()
   useUiLanguageRevision()
+  const orbTabId = useContext(AgentHubOrbComposerContext)
   const roomReplies = useContext(NativeChatRoomContext)?.replies
   const mode = useNativeChatPlanMode({
     surface: sessionOptionsSurface,
@@ -175,7 +183,9 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
   )
 
   const attach = <NativeChatAttachButton disabled={attachDisabled} onAttach={onAttach} />
-  const dictation = (
+  const dictation = orbTabId ? (
+    <AgentHubOrbComposerMic disabled={dictationDisabled} />
+  ) : (
     <NativeChatDictationButton
       disabled={dictationDisabled}
       isDictating={isDictating}
@@ -202,6 +212,7 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
       priority: 5,
       content: (
         <NativeChatComposerPermissionPicker
+          disabled={interactionDisabled}
           surface={sessionOptionsSurface}
           snapshot={sessionOptionsSnapshot}
           {...(agent ? { agent } : {})}
@@ -243,6 +254,7 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
       id: 'model',
       content: (
         <NativeChatSessionOptionPickers
+          disabled={interactionDisabled}
           surface={sessionOptionsSurface}
           snapshot={sessionOptionsSnapshot}
           isWorking={isWorking}
@@ -256,11 +268,17 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
           {
             id: 'context',
             priority: 0,
-            content: <NativeChatContextUsageRing usage={contextUsage} />
+            content: (
+              <NativeChatContextUsageRing
+                key={interactionDisabled ? 'dictation' : 'composer'}
+                usage={contextUsage}
+              />
+            )
           }
         ]
       : []),
     { id: 'dictation', priority: 2, content: dictation },
+    ...(orbTabId ? [{ id: 'orb', content: <AgentHubOrbComposerOrb /> }] : []),
     ...(draftNotSaved
       ? [{ id: 'draft', priority: 1, content: <NativeChatComposerDraftNotSavedIcon shown /> }]
       : []),
@@ -278,41 +296,54 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
         ]
       : [])
   ]
+  const primary =
+    steerPreview && !editSession && (steerPreview === 'steer-queued' || !sendDisabled) ? (
+      <NativeChatComposerPrimaryButton
+        data-native-chat-steer-preview={steerPreview}
+        aria-label={steerPreviewLabel}
+        onClick={(event) => {
+          // As Send: the action can change between a double-click's presses (Steer, then Steer queued).
+          if (event.detail <= 1) {
+            onSteerPreview?.()
+          }
+        }}
+      >
+        {steerPreview === 'queue' ? (
+          <ListEnd className="size-4" />
+        ) : (
+          <CornerDownRight className="size-4" />
+        )}
+      </NativeChatComposerPrimaryButton>
+    ) : sendHint ? (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {/* A disabled button gets no pointer events, so the wrapper carries the hover. */}
+          <span className="inline-flex">{sendButton}</span>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={4}>
+          {sendHint}
+        </TooltipContent>
+      </Tooltip>
+    ) : (
+      sendButton
+    )
   return (
     <NativeChatComposerToolbar
       left={left}
       focusComposer={focusComposer}
       right={right}
       primary={
-        steerPreview && !editSession && (steerPreview === 'steer-queued' || !sendDisabled) ? (
-          <NativeChatComposerPrimaryButton
-            data-native-chat-steer-preview={steerPreview}
-            aria-label={steerPreviewLabel}
-            onClick={(event) => {
-              // As Send: the action can change between a double-click's presses (Steer, then Steer queued).
-              if (event.detail <= 1) {
-                onSteerPreview?.()
-              }
-            }}
+        orbTabId ? (
+          <span
+            className="agent-hub-orb-send-slot"
+            data-visible={hasContent || isWorking}
+            aria-hidden={!hasContent && !isWorking}
+            inert={!hasContent && !isWorking}
           >
-            {steerPreview === 'queue' ? (
-              <ListEnd className="size-4" />
-            ) : (
-              <CornerDownRight className="size-4" />
-            )}
-          </NativeChatComposerPrimaryButton>
-        ) : sendHint ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {/* A disabled button gets no pointer events, so the wrapper carries the hover. */}
-              <span className="inline-flex">{sendButton}</span>
-            </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={4}>
-              {sendHint}
-            </TooltipContent>
-          </Tooltip>
+            {primary}
+          </span>
         ) : (
-          sendButton
+          primary
         )
       }
     />

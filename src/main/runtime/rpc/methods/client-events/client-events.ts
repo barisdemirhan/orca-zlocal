@@ -1,3 +1,4 @@
+import { AGENT_HUB_GATES_CAPABILITY } from '../../../../../shared/agent-hub-capabilities'
 import {
   getRegisteredSshState,
   listRegisteredSshTargets
@@ -10,6 +11,7 @@ import {
 } from '../../../../../shared/rpc-contract/client-ui/client-events-params'
 import { BROWSER_CLIENT_HOST_REQUEST_CAPABILITY } from '../../../../../shared/browser/client-hosting/browser-client-host-request-protocol'
 import { getBrowserHostRequestRegistry } from '../../../browser-host/leases/browser-host-request-registry'
+import { agentHubDesktopId } from '../agent-hub-caller'
 import {
   STRUCTURED_CHAT_START_TELEMETRY_CLIENT_CAPABILITY,
   STRUCTURED_CHAT_PROMPT_TELEMETRY_CLIENT_CAPABILITY
@@ -25,17 +27,29 @@ export const CLIENT_EVENT_METHODS = [
     permission: 'workspace',
     params: ClientEventsSubscribeParams,
     handler: async (params, ctx, emit) => {
-      const { runtime, connectionId, clientKind, pairedDeviceId, clientCapabilities } = ctx
+      const { runtime, connectionId, clientKind, pairedDeviceId, clientCapabilities, signal } = ctx
+      const desktop = params?.agentHub === false ? null : agentHubDesktopId(ctx)
+      const gates = Boolean(desktop && clientCapabilities?.includes(AGENT_HUB_GATES_CAPABILITY))
       await new Promise<void>((resolve) => {
+        const unregisterDesktop = desktop ? runtime.agentHub.registerDesktop(desktop) : () => {}
         // Mobile discards terminalSideEffects; filter per-OSC batch frames before they cross the relay.
         const unsubscribe = runtime.onClientEvent(
           (event) => {
+            if (
+              event.type === 'agentHub' &&
+              (!desktop ||
+                (!gates &&
+                  (event.event.kind === 'gate' ||
+                    (event.event.kind === 'closed' && event.event.gateId))))
+            ) {
+              return
+            }
             emit(event)
           },
           { consumesTerminalSideEffects: clientKind !== 'mobile' }
         )
         const unregisterHostVolunteer =
-          params.browserHostRequests === true &&
+          params?.browserHostRequests === true &&
           clientKind === 'runtime' &&
           pairedDeviceId &&
           clientCapabilities?.includes(BROWSER_CLIENT_HOST_REQUEST_CAPABILITY)
@@ -62,17 +76,27 @@ export const CLIENT_EVENT_METHODS = [
 
         const seq = ++clientEventSubscriptionSeq
         const subscriptionId = `runtime-client-events-${connectionId ?? 'inproc'}-${seq}`
-        runtime.registerSubscriptionCleanup(
-          subscriptionId,
-          () => {
-            unsubscribe()
-            unregisterHostVolunteer?.()
-            unsubscribeTelemetry?.()
-            emit({ type: 'end' })
-            resolve()
-          },
-          connectionId
-        )
+        let cleaned = false
+        const cleanup = (): void => {
+          if (cleaned) {
+            return
+          }
+          cleaned = true
+          signal?.removeEventListener('abort', onAbort)
+          unsubscribe()
+          unregisterDesktop()
+          unregisterHostVolunteer?.()
+          unsubscribeTelemetry?.()
+          emit({ type: 'end' })
+          resolve()
+        }
+        const onAbort = (): void => runtime.cleanupSubscription(subscriptionId)
+        runtime.registerSubscriptionCleanup(subscriptionId, cleanup, connectionId)
+        signal?.addEventListener('abort', onAbort, { once: true })
+        if (signal?.aborted) {
+          onAbort()
+          return
+        }
 
         // Listen before snapshotting to close the subscribe race and replay sleep state missed during disconnect.
         for (const event of runtime.getTerminalSleepClientEventSnapshot?.() ?? []) {
@@ -88,13 +112,18 @@ export const CLIENT_EVENT_METHODS = [
         })
         const settings = runtime.getClientSettings()
         // Listen before snapshotting to close reload gaps without exposing HUB-private target configuration.
+        const snapshot = desktop ? runtime.agentHub.snapshot() : null
+        if (snapshot && gates) {
+          snapshot.requests.push(...(runtime.getAgentHubGateSnapshot?.() ?? []))
+        }
         emit({
           type: 'ready',
           subscriptionId,
           snapshot: {
             sshStates,
             nativeChatQueueFollowUps: settings.nativeChatQueueFollowUps,
-            nativeChatCiResultLines: settings.nativeChatCiResultLines
+            nativeChatCiResultLines: settings.nativeChatCiResultLines,
+            ...(snapshot ? { agentHub: snapshot } : {})
           }
         })
       })
@@ -113,4 +142,4 @@ export const CLIENT_EVENT_METHODS = [
       return { unsubscribed: true }
     }
   })
-]
+] as const

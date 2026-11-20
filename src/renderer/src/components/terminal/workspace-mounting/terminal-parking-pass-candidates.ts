@@ -1,3 +1,4 @@
+import { hasTerminalMountRetentionLease } from '../../terminal-pane/terminal-mount-retention-leases'
 import {
   TERMINAL_WORKTREE_COLD_PARK_DELAY_MS,
   TERMINAL_WORKTREE_HOT_RETAIN_MS,
@@ -124,6 +125,7 @@ export function collectTerminalParkingPassCandidates(
       isVisible,
       shouldMeasureHiddenWorktree,
       hasActivityTerminalPortal,
+      hasMountRetentionLease: hasTerminalMountRetentionLease(worktreeId),
       hiddenSinceMs: terminalWorktreeHiddenSinceRef.current.get(worktreeId) ?? null,
       parkCooldownUntilMs: terminalWorktreeParkCooldownUntilRef.current.get(worktreeId) ?? null
     }
@@ -146,6 +148,7 @@ export function collectTerminalParkingPassCandidates(
       isVisible,
       shouldMeasureHiddenWorktree,
       hasActivityTerminalPortal,
+      hasMountRetentionLease: candidate.hasMountRetentionLease,
       hiddenSinceMs: candidate.hiddenSinceMs,
       parkCooldownUntilMs: candidate.parkCooldownUntilMs,
       ordinaryParkingCovers: covered && canPark(null),
@@ -174,6 +177,7 @@ export function collectTerminalParkingPassCandidates(
       previousBudget.isVisible !== budgetRow.isVisible ||
       previousBudget.shouldMeasureHiddenWorktree !== budgetRow.shouldMeasureHiddenWorktree ||
       previousBudget.hasActivityTerminalPortal !== budgetRow.hasActivityTerminalPortal ||
+      previousBudget.hasMountRetentionLease !== budgetRow.hasMountRetentionLease ||
       previousBudget.parkCooldownUntilMs !== budgetRow.parkCooldownUntilMs ||
       previousBudget.ordinaryParkingCovers !== budgetRow.ordinaryParkingCovers ||
       previousBudget.hasPendingSpawnWork !== budgetRow.hasPendingSpawnWork ||

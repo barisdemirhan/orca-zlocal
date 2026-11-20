@@ -25,6 +25,7 @@ import { useSortableTabDrag } from './use-sortable-tab-drag'
 import { useTranslate } from '@/i18n/use-translate'
 import { TAB_LABEL_WIDTH_CLASSES } from '../strip/tab-width-rules'
 import { useTabStripSlotProps } from '../strip/use-tab-strip-slot-props'
+import { AgentHubTabPopout } from '../../agent-hub/AgentHubTabPopout'
 import { useTabStripPointerActivation } from '../strip/tab-strip-pointer-activation'
 import { useTabContextMenuOpening } from '../strip/tab-context-menu-opening'
 import { TerminalTabLeadingIcon } from './TerminalTabLeadingIcon'
@@ -286,6 +287,9 @@ export default function SortableTab({
           <Minimize2 className="w-3 h-3" />
         </button>
       )}
+      {!isEditing && (canSplitTerminal || nativeChat) && (
+        <AgentHubTabPopout tabId={tab.id} worktreeId={tab.worktreeId} />
+      )}
       {!isEditing && canClose && (
         <SortableTabCloseButton
           tabTitle={fork?.markedTitle ?? tabTitle}
@@ -305,6 +309,13 @@ export default function SortableTab({
           onContextMenu={(event) => {
             // The hover card is portalled: React still routes its events through this slot.
             if (event.target instanceof Node && event.currentTarget.contains(event.target)) {
+              if (
+                event.target instanceof Element &&
+                event.target.closest('[data-agent-hub-tab-popout]')
+              ) {
+                event.preventDefault()
+                return
+              }
               window.dispatchEvent(new Event(CLOSE_ALL_CONTEXT_MENUS_EVENT))
               handleMenuOpenChange(true)
             }

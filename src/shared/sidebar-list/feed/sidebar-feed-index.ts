@@ -130,8 +130,11 @@ export type SidebarFeedIndex = {
   lineageParentIdentities: SidebarLineageParentIdentities | undefined
 }
 
-/** Prefer the row host’s registration; missing same-ID registrations use repoMap fallback like the window. */
-function repoOfWorktree(
+/**
+ * Its own host's registration when the catalog has one. A host that lists a same-id copy without
+ * its own registration still reads as that repo's, as the window reads it.
+ */
+export function repoOfWorktree(
   repoMap: ReadonlyMap<string, Repo>,
   reposByKey: ReadonlyMap<HostScopedRepoKey, Repo>,
   worktree: Pick<Worktree, 'repoId' | 'hostId'>

@@ -259,7 +259,7 @@ export function projectRuntimeMobileSessionTabs(
         retainedAgentStatus,
         getHookRowsForPane
       )
-    const { projectedTurnCompletedAt, ...clientAgentStatus } = frameAgentStatus(
+    const { projectedTurnCompletedAt, agentStatus: framedAgentStatus } = frameAgentStatus(
       projectedAgentStatus.agentStatus,
       snapshot.worktree,
       terminalPty
@@ -272,6 +272,9 @@ export function projectRuntimeMobileSessionTabs(
       typeof rawTurnCompletedAt === 'number' && Number.isFinite(rawTurnCompletedAt)
         ? rawTurnCompletedAt
         : undefined
+    const clientAgentStatus = framedAgentStatus
+      ? { agentStatus: { ...framedAgentStatus, spawnedBy: host.getSpawnedBy?.(paneKey) } }
+      : {}
     tabs.push({
       type: 'terminal',
       id: tab.id,

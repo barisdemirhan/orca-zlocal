@@ -76,8 +76,12 @@ export function classifyRuntimeLongPoll(request: RpcRequest): RuntimeLongPollCla
   ) {
     return 'wait'
   }
-  // Ask blocks by default up to 600s; keepalive avoids idle timeout and disconnect abort releases the waiter.
-  if (request.method === 'orchestration.ask') {
+  // Why: orchestration.ask blocks unconditionally (default 600 s) holding the
+  // RPC open until a reply lands or the deadline passes, so it needs the same
+  // keepalive as check --wait or the 30 s socket idle timer tears it down. It
+  // also relies on the abort signal (only wired for long-polls) to release the
+  // waiter when the asking client disconnects.
+  if (request.method === 'orchestration.ask' || request.method === 'agentHub.ask') {
     return 'ask'
   }
   if (request.method === 'orchestration.check') {

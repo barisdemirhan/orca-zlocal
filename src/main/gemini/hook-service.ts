@@ -34,9 +34,14 @@ import {
 } from '../agent-hooks/installation/scripts/hook-stdin-contract'
 import { posixCurlCommand } from '../agent-hooks/installation/scripts/hook-post-command'
 
-// Gemini has no permission-prompt hook, so approvals cannot produce an Orca waiting state.
 // Gemini uses BeforeTool; remove stale Claude-style PreToolUse registrations below.
-const GEMINI_EVENTS = ['BeforeAgent', 'AfterAgent', 'AfterTool', 'BeforeTool'] as const
+const GEMINI_EVENTS = [
+  'BeforeAgent',
+  'AfterAgent',
+  'AfterTool',
+  'BeforeTool',
+  'Notification'
+] as const
 
 function getConfigPath(): string {
   return join(homedir(), '.gemini', 'settings.json')

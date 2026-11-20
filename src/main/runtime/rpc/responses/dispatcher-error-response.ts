@@ -10,6 +10,8 @@ import {
 } from '../core'
 
 import { computerUseErrorRecoveryData } from '../../../../shared/computer/computer-use-error-recovery'
+import { AgentHubError } from '../../agent-hub/agent-hub-error'
+import { OrchestrationError } from '../../orchestration/orchestration-error'
 import { errorResponse, mapEmulatorError, mapRuntimeError } from './rpc-response'
 import { PluginHookDeniedError } from '../../../plugins/hooks/plugin-hook-dispatch'
 
@@ -34,6 +36,12 @@ export function mapDispatcherError(
   meta: RpcEnvelopeMeta,
   error: unknown
 ): RpcResponse {
+  if (
+    error instanceof AgentHubError ||
+    (error instanceof OrchestrationError && request.method.startsWith('orchestration.gate'))
+  ) {
+    return errorResponse(request.id, meta, error.code, error.message, error.data)
+  }
   if (request.method === 'git.checkout' && error instanceof BranchSwitchLandedWithWarningError) {
     return errorResponse(request.id, meta, 'runtime_error', error.message, {
       outcome: 'landed-with-warning'

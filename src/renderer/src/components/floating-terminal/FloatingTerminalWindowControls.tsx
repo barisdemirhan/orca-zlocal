@@ -16,8 +16,11 @@ import {
 } from '../../../../shared/agent-launch/catalog/tui-agent-selection'
 import { useTranslate } from '@/i18n/use-translate'
 import { useOptionalShortcutLabel } from '@/lib/keyboard/useShortcutLabel'
+import { AgentHubDimToggle } from '../agent-hub/AgentHubDimToggle'
 
 type FloatingTerminalWindowControlsProps = {
+  /** The panel stays mounted while closed; false then. */
+  open?: boolean
   maximized: boolean
   onToggleMaximized: () => void
   onMinimize: () => void
@@ -31,6 +34,7 @@ function withShortcutHint(label: string, shortcutLabel: string | null): string {
 }
 
 export function FloatingTerminalWindowControls({
+  open = true,
   maximized,
   onToggleMaximized,
   onMinimize
@@ -85,6 +89,7 @@ export function FloatingTerminalWindowControls({
 
   return (
     <div className="flex items-center gap-1 px-2" data-floating-terminal-no-drag>
+      <AgentHubDimToggle appearance="panel" showing={open} />
       {defaultAgent ? (
         <Tooltip>
           <TooltipTrigger asChild>

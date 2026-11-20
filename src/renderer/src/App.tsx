@@ -14,6 +14,7 @@ import RunningTerminalCloseDialog from './components/terminal-pane/layout/close/
 import WorktreeBaseFallbackDialog from './components/sidebar/workspace-creation/base-ref-update/WorktreeBaseFallbackDialog'
 import ClaudeAccountSwitchDialog from './components/provider-accounts/claude/ClaudeAccountSwitchDialog'
 import { AppBackgroundServices } from './app-shell/AppBackgroundServices'
+import { AgentHubRootSurfaces } from './app-shell/AgentHubRootSurfaces'
 import { AppRootSurfaces } from './app-shell/AppRootSurfaces'
 import { AppWorkspaceShell } from './app-shell/AppWorkspaceShell'
 import { WindowControls } from './app-shell/chrome/WindowControls'
@@ -108,6 +109,7 @@ function App(): React.JSX.Element {
             <AppBackgroundServices />
             <SpaceWindowStatePublisher />
             <AppWorkspaceShell layout={layout} floatingWorkspace={floatingWorkspace} />
+            <AgentHubRootSurfaces />
             <AppRootSurfaces
               floatingWorkspace={floatingWorkspace}
               onboardingGate={onboardingGate}

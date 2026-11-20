@@ -7,6 +7,10 @@ import type { TerminalViewAttributes } from '../../../../shared/terminal/protoco
 import type { PtySpawnOutcome } from '../../../ipc/pty/spawn/spawn-outcome'
 import type { RuntimePaneCreateClaim } from '../../../ipc/pty/pane/spawn-reservation'
 import type { PaneSpawnOperation } from '../../../ipc/pty/pane/pane-spawn-operation'
+import type {
+  TerminalSuspensionOptions,
+  TerminalSuspensionResult
+} from '../../../../shared/terminal-suspension'
 import type { TerminalWorkspaceLaunchScope } from '../../orchestration/terminal-authority/structured-sessions/runtime-legacy-worker-terminal-recovery-types'
 import type { AgentLaunchRuntime } from '../../../../shared/agent-launch/startup/agent-launch-runtime'
 import type {
@@ -40,6 +44,10 @@ export type PtyInventoryRefreshOptions = {
 }
 
 export type RuntimePtyController = {
+  terminalSuspension?(
+    id: string,
+    options: TerminalSuspensionOptions
+  ): Promise<TerminalSuspensionResult>
   claimStablePaneCreate?(args: {
     worktreeId: string
     connectionId: string | null

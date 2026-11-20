@@ -181,6 +181,7 @@ export type TerminalActions = {
       leafId: string
       ptyId: string
       expectedRuntimePtyId?: string
+      manual?: boolean
     }
   ) => Promise<void>
   suppressPtyExit: (ptyId: string) => void

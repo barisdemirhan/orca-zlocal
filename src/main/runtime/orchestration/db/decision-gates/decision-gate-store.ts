@@ -93,6 +93,9 @@ export function createGate(
       | DecisionGateRow
       | undefined
     this.db.exec('RELEASE create_gate')
+    if (created) {
+      this.onDecisionGateChanged?.(created)
+    }
     return created as DecisionGateRow
   } catch (error) {
     this.db.exec('ROLLBACK TO create_gate')
@@ -104,7 +107,8 @@ export function createGate(
 export function resolveGate(
   this: OrchestrationDb,
   gateId: string,
-  resolution: string
+  resolution: string,
+  resolvedBy: 'user' | 'coordinator' = 'coordinator'
 ): DecisionGateRow | undefined {
   const gate = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
     | DecisionGateRow
@@ -115,16 +119,26 @@ export function resolveGate(
 
   this.db.exec('SAVEPOINT resolve_gate')
   try {
-    this.db
+    const updated = this.db
       .prepare(
-        "UPDATE decision_gates SET status = 'resolved', resolution = ?, resolved_at = datetime('now') WHERE id = ?"
+        "UPDATE decision_gates SET status = 'resolved', resolution = ?, resolved_by = ?, resolved_at = datetime('now') WHERE id = ? AND status = 'pending'"
       )
-      .run(resolution, gateId)
+      .run(resolution, resolvedBy, gateId)
+    if (updated.changes === 0) {
+      throw new OrchestrationError(
+        'already_resolved',
+        'This decision gate was already answered or timed out.',
+        { gateId }
+      )
+    }
     this.updateTaskStatus(gate.task_id, 'ready')
     const resolved = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
       | DecisionGateRow
       | undefined
     this.db.exec('RELEASE resolve_gate')
+    if (resolved) {
+      this.onDecisionGateChanged?.(resolved)
+    }
     return resolved
   } catch (error) {
     this.db.exec('ROLLBACK TO resolve_gate')
@@ -134,15 +148,17 @@ export function resolveGate(
 }
 
 export function timeoutGate(this: OrchestrationDb, gateId: string): DecisionGateRow | undefined {
-  this.db
+  const updated = this.db
     .prepare(
       // A late timeout must not overwrite an already resolved gate.
       "UPDATE decision_gates SET status = 'timeout', resolved_at = datetime('now') WHERE id = ? AND status = 'pending'"
     )
     .run(gateId)
-  return this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
-    | DecisionGateRow
-    | undefined
+  const gate = this.getGate(gateId)
+  if (updated.changes > 0 && gate) {
+    this.onDecisionGateChanged?.(gate)
+  }
+  return gate
 }
 
 export function listGates(

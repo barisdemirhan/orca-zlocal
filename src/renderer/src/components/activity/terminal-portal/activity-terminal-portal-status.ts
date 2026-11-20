@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { parsePaneKey } from '../../../../../shared/workspace-layout/stable-pane-id'
+import { useActivityTerminalPortals } from './activity-terminal-portal'
 import {
   ACTIVITY_PORTAL_READINESS_BURST_WINDOW_MS,
   createActivityPortalReadinessLatch,
@@ -93,6 +94,17 @@ export function useActivityTerminalPortalStatus(
   paneKey: string | null,
   forceUnavailable = false
 ): ActivityTerminalPortalReadiness['status'] {
+  const portals = useActivityTerminalPortals(true)
+  const requested = portals.find((portal) => portal.target === target && portal.paneKey === paneKey)
+  const borrowedByHub =
+    requested?.owner !== 'agent-hub' &&
+    requested !== undefined &&
+    portals.some(
+      (portal) =>
+        portal.owner === 'agent-hub' &&
+        portal.worktreeId === requested.worktreeId &&
+        portal.tabId === requested.tabId
+    )
   const [readiness, setReadiness] = useState<ActivityTerminalPortalReadiness>({
     target: null,
     paneKey: null,
@@ -147,7 +159,7 @@ export function useActivityTerminalPortalStatus(
       scheduleReadiness('loading')
       return disposeFrame
     }
-    if (forceUnavailable) {
+    if (forceUnavailable || borrowedByHub) {
       scheduleReadiness('unavailable')
       return disposeFrame
     }
@@ -197,7 +209,7 @@ export function useActivityTerminalPortalStatus(
       disposeFrame()
       observer.disconnect()
     }
-  }, [target, paneKey, forceUnavailable])
+  }, [target, paneKey, forceUnavailable, borrowedByHub])
 
   return readiness.target === target && readiness.paneKey === paneKey ? readiness.status : 'loading'
 }

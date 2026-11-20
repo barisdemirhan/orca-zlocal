@@ -427,6 +427,30 @@ describe('restart reconciliation', () => {
       unreconciled: false
     })
   })
+
+  it.each(['client-1', 'paired:işçi'])(
+    'carries the operation ledger for %s across a restart so a retry is still a replay',
+    async (callerKey) => {
+      const operation = { callerKey, operationId: operationId(), fingerprint: 'fp-1' }
+      const first = await open()
+      await first.reserveOwner(reserveRequest({ operation }))
+      await first.recordOperationOutcome({
+        callerKey: operation.callerKey,
+        operationId: operation.operationId,
+        outcome: { status: 'succeeded', sessionId: 'session-alpha' }
+      })
+      const row = first.getOperationRow(callerKey, operation.operationId)
+      expect(row).toMatchObject({ outcome: { status: 'succeeded' } })
+
+      await closeTestAgentSessionDatabase(directory)
+      const reopened = await open()
+      expect(reopened.listOperationRows()).toHaveLength(1)
+      expect(reopened.getOperationRow(callerKey, operation.operationId)).toEqual(row)
+      const replayed = await reopened.reserveOwner(reserveRequest({ operation }))
+      expect(replayed.disposition).toBe('replayed')
+      expect(replayed.record.sessionId).toBe('session-alpha')
+    }
+  )
 })
 
 describe('host and workspace isolation', () => {

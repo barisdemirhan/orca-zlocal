@@ -16,6 +16,7 @@ export function TabAgentSurfaceChoiceRow({
   disabled,
   terminalPending,
   runLaunch,
+  keepOpenOnSelect = false,
   children
 }: {
   row: NewTabAgentMenuRow
@@ -24,6 +25,7 @@ export function TabAgentSurfaceChoiceRow({
   disabled: boolean
   terminalPending?: boolean
   runLaunch: (row: NewTabAgentMenuRow) => boolean | void | Promise<boolean>
+  keepOpenOnSelect?: boolean
   children: React.ReactNode
 }): React.JSX.Element {
   const t = useTranslate()
@@ -60,6 +62,11 @@ export function TabAgentSurfaceChoiceRow({
           target instanceof Node && otherButton.current?.contains(target) ? other : row
         )
         if (result === false) {
+          event.preventDefault()
+        }
+      }}
+      onSelect={(event) => {
+        if (keepOpenOnSelect) {
           event.preventDefault()
         }
       }}

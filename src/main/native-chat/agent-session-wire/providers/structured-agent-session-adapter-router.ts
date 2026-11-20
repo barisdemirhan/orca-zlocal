@@ -3,6 +3,7 @@ import type { AgentChatPermissionChoice } from '../../../../shared/agent-launch/
 import type { AgentSessionJournalIdentity } from '../../../../shared/agent-session/journal/agent-session-journal-identity'
 import type { AgentSessionExecutionLocation } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { StructuredAgentSessionAdapter as Adapter } from './structured-agent-session-adapter'
+import { routeStructuredAgentSessionVoice } from '../structured-agent-session-voice-adapter'
 import type { StructuredAgentSessionAcquisitionReceipt } from '../startup/structured-agent-session-startup-attempt-contract'
 import type {
   StructuredAgentRegistration,
@@ -163,6 +164,10 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
 
   heldSends = (sessionId: string): ReadonlySet<string> | undefined =>
     this.liveOwnerOrNull(sessionId)?.heldSends?.(sessionId)
+
+  readonly voice = routeStructuredAgentSessionVoice(this.owner.bind(this), (id) =>
+    this.liveOwnerOrNull(id)
+  )
 
   holdsLiveProviderProcess = (sessionId: string, acquisitionGeneration: string): boolean =>
     this.liveOwnerOrNull(sessionId)?.holdsLiveProviderProcess?.(sessionId, acquisitionGeneration) ??

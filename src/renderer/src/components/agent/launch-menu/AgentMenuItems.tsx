@@ -45,9 +45,6 @@ import { chatUnavailableLabel, rowTitle, rowLabel, rowId } from './agent-menu-ro
 
 export type QuickLaunchAgentMenuItemsProps = {
   worktreeId: string
-  groupId: string
-  /** Reuse the tab bar’s focus handoff after creating a terminal tab. */
-  onFocusTerminal: (tabId: string) => void
   /** Forward the initial prompt; delivery policy determines submission versus a user-confirmed draft. */
   prompt?: string
   /** Use non-default modes for generated context that must not become shell syntax. */
@@ -60,7 +57,15 @@ export type QuickLaunchAgentMenuItemsProps = {
   onPromptHandedOff?: (delivered: Promise<unknown>) => void
   /** Nothing to send: e.g. every note is already on its way, so no agent is started. */
   disabled?: boolean
-}
+} & (
+  | { onLaunch: (agent: TuiAgent) => void; groupId?: never; onFocusTerminal?: never }
+  | {
+      onLaunch?: never
+      groupId: string
+      /** Reuse the tab bar’s focus handoff after creating a terminal tab. */
+      onFocusTerminal: (tabId: string) => void
+    }
+)
 
 const PLACEHOLDER_WIDTHS = ['w-3/5', 'w-1/2', 'w-2/3', 'w-2/5', 'w-3/4', 'w-1/3', 'w-4/5', 'w-1/4']
 
@@ -77,6 +82,7 @@ export function useTabAgentMenuLaunch({
   launchSource,
   onPromptDelivered,
   onPromptHandedOff,
+  onLaunch,
   disabled,
   onFocusHostTerminal,
   onFocusChat
@@ -96,6 +102,10 @@ export function useTabAgentMenuLaunch({
         return false
       }
       const { agent } = row
+      if (onLaunch) {
+        onLaunch(agent)
+        return true
+      }
       const entry = getCatalogEntry(agent)
       const label = entry?.label ?? agent
       const result = launchAgentInNewTabWithOutcome({
@@ -156,7 +166,7 @@ export function useTabAgentMenuLaunch({
       } else if (result.surface.kind !== 'local-terminal') {
         onFocusHostTerminal?.()
       } else {
-        onFocusTerminal(result.surface.tabId)
+        onFocusTerminal?.(result.surface.tabId)
       }
       // A setup submission waits for actual prompt ownership, not just surface dispatch.
       return !draft?.prompt || agentLaunchPromptOwnership(result.promptDeliveryResult)
@@ -170,6 +180,7 @@ export function useTabAgentMenuLaunch({
       launchSource,
       onPromptDelivered,
       onPromptHandedOff,
+      onLaunch,
       disabled,
       onFocusHostTerminal,
       onFocusChat
@@ -184,7 +195,15 @@ function QuickLaunchAgentMenuItemsInner(props: QuickLaunchAgentMenuItemsProps): 
   const detectionTarget = useAgentDetectionTargetForWorktree(props.worktreeId)
   const model = useNewTabAgentMenuRows(props.worktreeId, true, detectionTarget)
   const runLaunch = useTabAgentMenuLaunch(props)
-  return <ProjectedAgentMenuItems {...props} model={model} runLaunch={runLaunch} />
+  return (
+    <ProjectedAgentMenuItems
+      disabled={props.disabled}
+      model={model}
+      runLaunch={runLaunch}
+      // Why: a caller-owned launch shows its pending state in the open menu.
+      keepOpenOnSelect={props.onLaunch !== undefined}
+    />
+  )
 }
 
 export function ProjectedAgentMenuItems({
@@ -193,7 +212,8 @@ export function ProjectedAgentMenuItems({
   runLaunch,
   pickerInventory,
   onSelectPickerAgent,
-  hidePickerSearch
+  hidePickerSearch,
+  keepOpenOnSelect = false
 }: {
   disabled?: boolean
   model: NewTabAgentMenuModel
@@ -201,6 +221,7 @@ export function ProjectedAgentMenuItems({
   pickerInventory?: AgentPickerInventorySource
   onSelectPickerAgent?: (agent: AgentPickerEntry['agent']) => void
   hidePickerSearch?: boolean
+  keepOpenOnSelect?: boolean
 }): React.JSX.Element {
   const t = useTranslate()
   const desktopDefaultAgent = useAppStateValue((s) => s.settings?.defaultTuiAgent)
@@ -310,6 +331,7 @@ export function ProjectedAgentMenuItems({
                   terminalPending={model.terminalPending}
                   disabled={disabled}
                   runLaunch={runLaunch}
+                  keepOpenOnSelect={keepOpenOnSelect}
                 >
                   {rowContent}
                 </TabAgentSurfaceChoiceRow>
@@ -319,7 +341,8 @@ export function ProjectedAgentMenuItems({
                   disabled={disabled || !!pendingReason}
                   aria-description={pendingReason}
                   onSelect={(event) => {
-                    if (runLaunch(row) === false) {
+                    const launched = runLaunch(row)
+                    if (keepOpenOnSelect || launched === false) {
                       event.preventDefault()
                     }
                   }}

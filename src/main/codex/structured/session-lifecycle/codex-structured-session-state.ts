@@ -31,6 +31,8 @@ import type { StructuredAgentSessionProviderOpen } from '../../../native-chat/ag
 import type { NativeChatVisualsLaunch } from '../../../native-chat/conversation-files/native-chat-visuals-delivery'
 import type { AgentChatPermissionChoice } from '../../../../shared/agent-launch/permissions/agent-chat-permission-mode'
 import type { CodexSandboxPolicy } from '../launch/codex-structured-sandbox-policy'
+import type { AgentSessionVoiceEvent } from '../../../../shared/agent-session-voice'
+import type { CodexStructuredRealtime } from '../../codex-structured-realtime'
 import type { StructuredAgentSessionEventSink } from '../../../native-chat/agent-session-wire/journal-ingress/structured-agent-session-event-sink'
 
 export type CodexStructuredLaunch = CodexBotLaunchOptions & {
@@ -62,6 +64,13 @@ export const CODEX_RECEIPT_TIMED_METHODS: ReadonlySet<string> = new Set([
 ])
 
 export type CodexStructuredSessionEvent =
+  | {
+      type: 'voice'
+      sessionId: string
+      fence: number
+      acquisitionGeneration: string
+      event: AgentSessionVoiceEvent
+    }
   | {
       type: 'notification'
       sessionId: string
@@ -142,6 +151,9 @@ export type CodexSession = Pick<CodexBotLaunchOptions, 'readOnly'> & {
   fence: number
   acquisitionGeneration: string
   threadId: string
+  realtime?: CodexStructuredRealtime
+  realtimeTimelineReady?: boolean
+  realtimeTimelineUnsupported?: boolean
   historyMode?: 'legacy' | 'paginated'
   /** Provider facts from this acquisition, not another copy of the chat's selected mode. */
   permissions?: {

@@ -8689,9 +8689,6 @@
           "77410e0566": "Política de privacidade",
           "8bfdd23a88": "Ajude-nos a descobrir o que construir a seguir. O Orca envia contagens anônimas de quais recursos você usa e onde as coisas quebram."
         },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "IA de Controle de Versão"
-        },
         "ephemeralVms": {
           "search": {
             "description": "Saiba como receitas pertencentes ao repositório dão a cada espaço de trabalho seu próprio ambiente descartável sob demanda.",
@@ -8983,24 +8980,6 @@
         "TerminalRenderingSection": {
           "fffab5890b": "Exibe imagens diretamente no terminal usando os protocolos gráficos SIXEL, iTerm2 (IIP) e Kitty.",
           "08db7947d8": "Imagens Inline"
-        },
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Manter a Main Local Atualizada"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Ativar Uso do Navegador por Agente"
         },
         "YamlThemeImportButton": {
           "label": "Importar de YAML"
@@ -10077,6 +10056,27 @@
             "buckets": "grupos de modelos Gemini",
             "optional": "omitido quando um marcador dentro do grupo está vazio"
           }
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "IA de Controle de Versão"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Manter a Main Local Atualizada"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Ativar Uso do Navegador por Agente"
         }
       },
       "right": {

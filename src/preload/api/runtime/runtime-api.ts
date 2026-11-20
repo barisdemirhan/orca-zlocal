@@ -16,7 +16,10 @@ import type {
   RuntimeStatus,
   RuntimeTerminalDriverState
 } from '../../../shared/remote-runtime/session-graph/runtime-session-contracts'
-import type { RuntimeRpcResponse } from '../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
+import type {
+  RuntimeOrchestrationEnvelope,
+  RuntimeRpcResponse
+} from '../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
 import type { ClientHostedBrowserRowsEvent } from '../../../shared/browser/client-hosting/client-hosted-browser-rows'
 import type { SidebarInputsChangedEvent } from '../../../shared/sidebar-list/feed/sidebar-inputs-feed-contract'
 import type {
@@ -26,7 +29,7 @@ import type {
 import type { VerifyAndAddRuntimeEnvironmentResult } from '../../../shared/remote-runtime/pairing/remote-pairing-verification'
 import type {
   BrowserClientHostPlacementPreparationRequest,
-  BrowserPageCreationPlacement
+  BrowserClientHostPlacementPreparation
 } from '../../../shared/browser/client-hosting/browser-client-host-placement'
 import type { RemoteRuntimeSharedConnectionDiagnostics } from '../../../shared/remote-runtime/control/remote-runtime-shared-control-types'
 import type { WslOrcadAccountNotAppliedEvent } from '../../../shared/remote-runtime/wsl-hosts/wsl-orcad-account-notice'
@@ -46,6 +49,7 @@ export type RuntimeApi = {
     call: (args: {
       method: string
       params?: unknown
+      envelope?: RuntimeOrchestrationEnvelope
       /** An orchestration mutation's contract and idempotency key, as the CLI sends them. */
       orchestration?: { contractVersion: number; requestId: string }
     }) => Promise<RuntimeRpcResponse<unknown>>
@@ -151,10 +155,11 @@ export type RuntimeApi = {
     ) => () => void
     prepareBrowserClientHostPlacement: (
       args: BrowserClientHostPlacementPreparationRequest
-    ) => Promise<BrowserPageCreationPlacement>
+    ) => Promise<BrowserClientHostPlacementPreparation>
     // Resume/online events advance only pending shared-control reconnect timers.
     retryConnectionsNow?: () => Promise<void>
     call: (args: {
+      envelope?: RuntimeOrchestrationEnvelope
       selector: string
       method: string
       params?: unknown

@@ -41,6 +41,24 @@
       "remaining": "Certains cookies Google n’ont pas pu être supprimés de {{profile}}. Réessayez.",
       "unverified": "Impossible de vérifier les cookies Google de {{profile}}. Réessayez."
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "Proposition d’enregistrer le mot de passe",
+        "updateTitle": "Mettre à jour le mot de passe ?",
+        "saveTitle": "Enregistrer le mot de passe ?",
+        "username": "Nom d’utilisateur",
+        "password": "Mot de passe",
+        "never": "Jamais pour ce site",
+        "notNow": "Pas maintenant",
+        "update": "Mettre à jour",
+        "save": "Enregistrer"
+      },
+      "fill": {
+        "noUsername": "(sans nom d’utilisateur)",
+        "title": "Identifiants enregistrés",
+        "otherLogins": "Autres identifiants sur ce site"
+      }
+    },
     "newTab": {
       "emptyHint": "Recherchez ou saisissez une adresse ci-dessus. Les sites que vous visitez, les serveurs de développement exécutés dans cet espace de travail, ainsi que sa PR et son ticket s’afficheront ici.",
       "openServerFailed": "Impossible d’ouvrir {{address}}",
@@ -259,24 +277,6 @@
         "imported_other": "{{count}} cookies importés pour {{domains}}. Rechargez la page pour les utiliser.",
         "imported_many": "{{count}} cookies importés pour {{domains}}. Rechargez la page pour les utiliser.",
         "failed": "Impossible d'importer les cookies : {{reason}}"
-      }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "Proposition d’enregistrer le mot de passe",
-        "updateTitle": "Mettre à jour le mot de passe ?",
-        "saveTitle": "Enregistrer le mot de passe ?",
-        "username": "Nom d’utilisateur",
-        "password": "Mot de passe",
-        "never": "Jamais pour ce site",
-        "notNow": "Pas maintenant",
-        "update": "Mettre à jour",
-        "save": "Enregistrer"
-      },
-      "fill": {
-        "noUsername": "(sans nom d’utilisateur)",
-        "title": "Identifiants enregistrés",
-        "otherLogins": "Autres identifiants sur ce site"
       }
     }
   },
@@ -7318,21 +7318,6 @@
         }
       },
       "settings": {
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Garder la branche main locale à jour"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "Impossible d’enregistrer l’emplacement des comptes. Réessayez.",
           "dbb9626ed1": "Annuler",
@@ -7680,9 +7665,6 @@
           "333984cf90": "Utiliser une session de navigateur existante",
           "9895ed44de": "Ouvrir Computer Use"
         },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Activer Agent Browser Use"
-        },
         "BrowserUseExamples": {
           "1199258ace": "Copier",
           "1188e56af4": "Copier l'exemple de prompt",
@@ -7920,6 +7902,59 @@
           },
           "worktreeCardStyle": {
             "title": "Style des cartes"
+          },
+          "agentHub": {
+            "title": "Agent Hub",
+            "description": "Un seul endroit pour chaque agent et terminal : répondez aux questions, approuvez les commandes et accédez à n’importe quel volet.",
+            "copy": "Ajoute un dock (ou un élément dans la barre d’état) listant les agents qui ont besoin de vous, qui travaillent ou qui viennent de terminer, ainsi que tous les terminaux ouverts. Répondez, approuvez ou ouvrez un miroir en direct sans quitter votre espace de travail actuel.",
+            "toggleLabel": "Activer ou désactiver Agent Hub",
+            "clearNever": "Jamais",
+            "clearHour": "1 h",
+            "clearMinutes": "{{value0}} min",
+            "placement": "Afficher le hub comme",
+            "placementCopy": "Un dock que vous pouvez faire glisser vers la barre d’état ou un bord de la fenêtre, ou un élément dans la barre d’état.",
+            "dock": "Dock",
+            "statusBar": "Barre d’état",
+            "autoHide": "Masquer le dock tant qu’aucun agent n’est actif",
+            "autoHideCopy": "Il réapparaît dès qu’un agent se met au travail, pose une question ou termine.",
+            "alerts": "Alertes",
+            "alertsCopy": "Une bulle à côté du hub qui ouvre la carte de l’agent. Ignorée pour le volet que vous regardez.",
+            "alertNeedsInput": "Lorsqu’un agent pose une question ou demande une approbation",
+            "alertFinished": "Lorsqu’un agent termine",
+            "sound": "Jouer un son",
+            "soundCopy": "Utilise le son et le volume de Notifications (un court carillon pour Système) et reste silencieux quand la notification d’Orca en joue déjà un.",
+            "mutedUntil": "Alertes coupées jusqu’à {{value0}}",
+            "unmute": "Réactiver",
+            "popover": "Popover",
+            "defaultTab": "Ouvrir sur",
+            "defaultTabCopy": "Quand personne n’attend ; un agent en attente ouvre toujours la Boîte de réception.",
+            "showShells": "Lister les shells simples dans Tous les terminaux",
+            "clearFinished": "Retirer les agents terminés de la Boîte de réception après",
+            "clearFinishedCopy": "Ils restent non lus dans la vue Agents ; Jamais les garde dans le hub jusqu’à lecture.",
+            "shortcutTaken": "{{value0}} est déjà utilisé par {{value1}}. Choisissez d’autres touches dans Raccourcis clavier.",
+            "shortcuts": "Raccourcis",
+            "shortcutsUnset": "Non défini. Suggestion : {{value0}} (ouvrir le hub, passer à l’agent en attente suivant, envoyer les miroirs au hub, organiser les miroirs).",
+            "shortcutsSet": "Ouvrir le hub : {{value0}} · Agent en attente suivant : {{value1}} · Miroirs vers le hub : {{value2}} · Organiser les miroirs : {{value3}}",
+            "useSuggested": "Utiliser ceux-ci",
+            "editShortcuts": "Modifier",
+            "dockSize": "Taille du dock",
+            "shortcutNotSet": "non défini",
+            "trayPeek": "Déployer les miroirs rangés en cas de nouveauté pendant",
+            "trayPeekCopy": "Quand un miroir rangé pose une question ou termine, la pile à côté du hub s’ouvre pendant cette durée, puis se replie.",
+            "never": "Jamais",
+            "seconds": "{{value0}} s",
+            "tabAutoPopout": "Afficher un bouton de détachement sur les onglets de terminal",
+            "tabAutoPopoutCopy": "Ouvrez un terminal dans un miroir directement depuis son onglet.",
+            "mirrorCap": "Fenêtres de miroir ouvertes simultanément",
+            "mirrorCapCopy": "Si vous en ouvrez davantage, le plus ancien est rangé à côté du hub.",
+            "canvas": "Activer le canevas des miroirs",
+            "canvasCopy": "Ouvrez le canevas avec son bouton ou son raccourci pour disposer vos miroirs. Détacher conserve votre vue actuelle. En quittant le canevas, ses miroirs sont rangés ; ils reviennent à votre retour.",
+            "restoreOnLaunch": "Restaurer les miroirs et le canevas au lancement",
+            "restoreOnLaunchCopy": "Les miroirs, le plateau et le canevas reviennent tels que vous les avez laissés au redémarrage d’Orca. Un miroir dont le terminal a été fermé est ignoré.",
+            "focusedPaneOutline": "Entourer le terminal actif",
+            "focusedPaneOutlineCopy": "Un fin cadre bleu sur le volet qui reçoit le clavier, dans l’espace de travail et dans les miroirs : là où vont la saisie et la dictée.",
+            "paneQuickReply": "Réponse rapide dans le terminal",
+            "paneQuickReplyCopy": "Quand un agent de terminal pose une question ou demande une approbation, une carte avec ses options s’ouvre sur le coin du volet. Esc la ferme ; le terminal accepte toujours la réponse."
           }
         },
         "FloatingWorkspacePane": {
@@ -8675,9 +8710,6 @@
           "14f1eb99d0": "Générer les détails à l'ouverture de Create PR",
           "d32b87e754": "Utiliser le template de review quand disponible",
           "981eae7e14": "Brouillon par défaut"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "IA du contrôle de code source"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "Révoquer un lien révoque aussi les liens créés dans les terminaux qu'il a ouverts. Toute personne ayant un terminal sur cet ordinateur, via SSH ou un lien, peut toujours s'associer de nouveau.",
@@ -10078,6 +10110,21 @@
               "inWindow": "dans la fenêtre",
               "worktrees": "arbres de travail",
               "eaf17a7214": "Tableau de bord des agents"
+            },
+            "agentHub": {
+              "title": "Agent Hub",
+              "description": "Un seul endroit pour chaque agent et terminal : répondez aux questions, approuvez les commandes et accédez à n’importe quel volet.",
+              "agents": "agents",
+              "inbox": "boîte de réception",
+              "statusBar": "barre d’état",
+              "terminals": "terminaux",
+              "questions": "questions",
+              "alerts": "alertes",
+              "sound": "son",
+              "notifications": "notifications",
+              "dock": "dock",
+              "notch": "encoche",
+              "mute": "couper le son"
             }
           }
         },
@@ -12357,24 +12404,24 @@
         "bitbucket": {
           "credentials": {
             "dialog": {
+              "connectFailed": "Échec de la connexion",
               "title": "Connecter Bitbucket",
               "authModeLabel": "Méthode d'authentification Bitbucket",
               "modeBasic": "E-mail & token API",
               "modeToken": "Token d'accès",
               "accessToken": "Token d'accès",
+              "accessTokenPlaceholder": "Token d'accès de dépôt, projet ou espace de travail",
+              "emailPlaceholder": "you@example.com",
               "apiToken": "Token API",
+              "apiTokenPlaceholder": "Token API Atlassian",
+              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0",
               "scopeUser": "Afficher le nom de votre compte",
               "scopeRepository": "Lire les statuts de build",
               "scopeReadPullRequest": "Lire les pull requests",
               "scopeWritePullRequest": "Créer des pull requests",
               "scopesWriteNote": "Pour une utilisation en lecture seule, omettez la portée d'écriture. L'écriture n'inclut pas la lecture ; sélectionnez chaque portée séparément.",
               "cancel": "Annuler",
-              "connect": "Se connecter",
-              "accessTokenPlaceholder": "Token d'accès de dépôt, projet ou espace de travail",
-              "apiTokenPlaceholder": "Token API Atlassian",
-              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0",
-              "connectFailed": "Échec de la connexion",
-              "emailPlaceholder": "you@example.com"
+              "connect": "Se connecter"
             }
           },
           "integration": {
@@ -13241,10 +13288,10 @@
           "manualDelete": "Supprimez le fichier de verrou indiqué dans Détails une fois certain qu’aucune autre machine ne l’utilise.",
           "action": "Récupérer le serveur…",
           "written": "Écrit",
-          "close": "Fermer",
-          "reclaimedNotStarted": "Le verrou a été supprimé, mais le serveur d’Orca n’a pas démarré.",
           "manualDeleteCommand": "Supprimez le verrou manuellement sur l’hôte :",
-          "manualDeleteWarning": "Ne faites cela que si aucune autre machine partageant ce dossier personnel n’exécute Orca pour ce profil."
+          "manualDeleteWarning": "Ne faites cela que si aucune autre machine partageant ce dossier personnel n’exécute Orca pour ce profil.",
+          "close": "Fermer",
+          "reclaimedNotStarted": "Le verrou a été supprimé, mais le serveur d’Orca n’a pas démarré."
         },
         "claudeSubagentNavigation": {
           "title": "Navigation entre sous-agents Claude",
@@ -13350,6 +13397,27 @@
           "shownPluginCount_other": "{{count}} plugins correspondants affichés, dont celui-ci",
           "samePublisher": "Autres éléments répertoriés sous {{value0}}",
           "shownPluginCount_many": "{{count}} plugins correspondants affichés, dont celui-ci"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "IA du contrôle de code source"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Garder la branche main locale à jour"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Activer Agent Browser Use"
         }
       },
       "right": {
@@ -17017,8 +17085,8 @@
             "uiErrorDescription": "Envoyez un rapport de diagnostic respectueux de la vie privée pour nous aider à comprendre la partie de l'interface qui a échoué.",
             "reportNotesPlaceholder": "Facultatif : que s'est-il passé ?",
             "uiErrorNotesPlaceholder": "Facultatif : que faisiez-vous avant cette erreur d'interface ?",
-            "renderError": "Erreur de rendu React",
-            "renderErrorIn": "Erreur de rendu React dans {{surface}}"
+            "renderErrorIn": "Erreur de rendu React dans {{surface}}",
+            "renderError": "Erreur de rendu React"
           }
         }
       },
@@ -19097,6 +19165,128 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "Miroirs et canevas",
+        "voice": "Voix",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Préférences du dock, des alertes, des miroirs, de la voix et de l’Orb.",
+        "open": "Ouvrir les paramètres d’Agent Hub"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Afficher ou masquer l’Orb d’Agent Hub",
+        "talkShortcut": "Raccourci de conversation",
+        "notSet": "Non défini",
+        "agent": "Agent",
+        "model": "Modèle",
+        "agentDefault": "Valeur par défaut de l’agent",
+        "approvals": "Approbations",
+        "placement": "Emplacement",
+        "freeWarning": "L’Orb exécute des commandes sans demander. Utilisez-le avec prudence.",
+        "ask": "Demander",
+        "free": "Agir librement",
+        "workingFolder": "Dossier de travail",
+        "hidden": "Masqué",
+        "speakReplies": "Lire les réponses",
+        "comingLater": "Disponible ultérieurement",
+        "pastConversations": "Conversations précédentes",
+        "backToConversation": "Retour à la conversation",
+        "newConversation": "Nouvelle",
+        "searchConversations": "Rechercher des conversations",
+        "allAgents": "Tous les agents",
+        "today": "Aujourd’hui",
+        "yesterday": "Hier",
+        "noConversations": "Aucune conversation trouvée",
+        "historyFailed": "Impossible de charger les conversations. Réessayez.",
+        "disabled": "Activez le contrôle des agents pour parler à Orb",
+        "openFailed": "Impossible d’ouvrir Orb. Réessayez.",
+        "working": "En cours",
+        "open": "Ouvrir",
+        "openDenyKeys": "Ouvrir ↵ / Refuser esc",
+        "toSend": "pour envoyer",
+        "approvalKeys": "Autoriser ↵ / Refuser esc",
+        "piRequiresFree": "Pi nécessite Agir librement. Choisissez un autre agent pour demander une autorisation avant d’exécuter des commandes.",
+        "settings": "Paramètres d’Orb",
+        "size": "Taille d’Orb",
+        "sizePixels": "{{value0}} pixels",
+        "endLiveVoice": "Terminer la voix en direct",
+        "startLiveVoice": "Démarrer la voix en direct",
+        "showConversation": "Afficher la conversation",
+        "unmuteMicrophone": "Réactiver le microphone",
+        "muteMicrophone": "Couper le microphone",
+        "finishDictation": "Terminer et envoyer la dictée",
+        "cancelDictation": "Annuler la dictée",
+        "stopSpeaking": "Arrêter la lecture",
+        "expand": "Développer Orb",
+        "minimize": "Réduire Orb",
+        "voiceUnavailable": "La voix en direct n’est pas disponible sur cet hôte.",
+        "requestNoLongerAvailable": "Cette demande a reçu une réponse ailleurs ou n’est plus disponible.",
+        "requestDenied": "Demande refusée",
+        "requestExpired": "Demande expirée",
+        "answerReceived": "Réponse reçue",
+        "awayAnswerReceived": "Répondu selon vos réglages d’absence",
+        "requestClosed": "Demande fermée",
+        "dismissRequestOutcome": "Ignorer le résultat de la demande",
+        "speakingMuted": "Lecture en cours. Microphone coupé ; la voix en direct reste connectée.",
+        "speaking": "Lecture en cours",
+        "needsAnswer": "En attente de votre réponse",
+        "voiceFailed": "Impossible de connecter la voix en direct.",
+        "codexVoiceUnsupported": "Cette version de Codex ne prend pas en charge la voix en direct.",
+        "codexVoiceUsageLimit": "La voix en direct de Codex est indisponible : la limite d’utilisation du compte est atteinte.",
+        "codexVoiceAccessDenied": "Codex a refusé la voix en direct. Vérifiez le compte actuel et l’accès à l’espace de travail.",
+        "codexVoiceConnectionFailed": "La voix en direct de Codex n’a pas pu se connecter. Réessayez une fois la connexion fermée.",
+        "voiceConnectFailed": "Impossible de connecter la voix en direct. Réessayez.",
+        "voiceStopping": "Arrêt de la voix en direct…",
+        "voiceConnecting": "Connexion de la voix en direct…",
+        "muted": "Microphone coupé ; la voix en direct reste connectée.",
+        "listening": "Écoute en cours",
+        "done": "Terminé",
+        "ready": "Prêt",
+        "dismissReceipt": "Ignorer",
+        "connectionWarning": "1 avertissement de connexion",
+        "connectionWarnings": "{{value0}} avertissements de connexion",
+        "floating": "Flottant",
+        "hideConnectionWarnings": "Masquer",
+        "readyPrompt": "Prêt. Écrivez ou appuyez sur la sphère pour parler.",
+        "showConnectionWarnings": "Afficher"
+      },
+      "alerts": {
+        "info": "Lorsqu’un agent partage des informations",
+        "mute": "Couper les alertes",
+        "duration": "Choisir la durée…",
+        "muteHour": "1 h",
+        "muteTwoHours": "2 h",
+        "muteTomorrow": "Jusqu’à demain à 09:00"
+      },
+      "voice": {
+        "dictateImprove": "Dicter et améliorer"
+      },
+      "search": {
+        "mirror": "miroir",
+        "canvas": "canevas",
+        "dim": "assombrir",
+        "quickreply": "réponse rapide",
+        "outline": "contour",
+        "tray": "plateau",
+        "popout": "détacher",
+        "microphone": "microphone",
+        "shortcut": "raccourci",
+        "restore": "restaurer",
+        "shells": "shells",
+        "orb": "Orb",
+        "voice": "voix"
+      },
+      "mirror": {
+        "newAgentNotAdded": "Impossible de l’ajouter à ce miroir. Ouvrez-le depuis les onglets de l’espace de travail.",
+        "newAgentStartedInWorkspace": "{{agent}} a démarré dans {{workspace}}."
+      }
+    },
+    "agentHubPeekOutsideWorkspace": "Les fichiers Agent Peek doivent se trouver dans l’espace de travail cible.",
     "startup": {
       "webHostUnreachable": {
         "title": "Impossible de joindre votre hôte Orca",
@@ -19641,6 +19831,7 @@
         "next": "Suivant",
         "skip": "Ignorer",
         "sending": "Envoi…",
+        "recommended": "Recommandé",
         "terminalRequired": "Répondez à cette question OMP dans le terminal.",
         "openTerminal": "Répondre dans le terminal"
       },
@@ -19714,6 +19905,7 @@
         "orcaStopCrash": "Orca sur {{machine}} s'est arrêté de manière inattendue pendant que cette réponse était en cours.",
         "orcaStopRemote": "Orca sur {{machine}} s'est arrêté pendant que cette réponse était en cours.",
         "orcaStopCanContinue": "Vous pouvez continuer dans cette conversation.",
+        "mcpStartupDetails": "Détails de la connexion MCP",
         "orcaStopUnnamedServer": "le serveur distant",
         "permissionDenied": "{{agent}} a refusé la permission. Voir les détails.",
         "safetyReviewApproved": "{{agent}} a approuvé cette action. Voir les détails.",
@@ -19985,21 +20177,22 @@
         "unavailable": "Attendez que le chat finisse de se connecter.",
         "pending": "Attendez que la conversation revienne au message antérieur.",
         "title": "Revenir ici ?",
+        "confirmation": "Abandonner ce message et tout ce qui suit ? Le message revient dans le composer pour que vous puissiez le modifier et le renvoyer. Les modifications de fichiers sur le disque sont conservées.",
         "confirm": "Revenir",
         "cancel": "Annuler",
-        "action": "Revenir ici",
-        "confirmation": "Abandonner ce message et tout ce qui suit ? Le message revient dans le composer pour que vous puissiez le modifier et le renvoyer. Les modifications de fichiers sur le disque sont conservées."
+        "action": "Revenir ici"
       },
       "visualUnavailable": "Visualisation indisponible",
       "visualLoading": "Chargement de la visualisation",
+      "spokenMessage": "Message parlé",
       "visualOpenInNewTab": "Ouvrir dans un nouvel onglet",
       "resumeCommand": {
         "description": "Ouvrir l'historique des sessions d'agent",
         "argumentHint": "[recherche]",
         "workspaceUnavailable": "L'espace de travail de ce chat n'est pas encore chargé. Réessayez /resume dans un instant.",
-        "replace": "Remplacer",
+        "replaceTitle": "Remplacer ce chat ?",
         "replaceDescription": "Reprendre « {{title}} » ici arrêtera ce que {{agent}} fait dans ce chat.",
-        "replaceTitle": "Remplacer ce chat ?"
+        "replace": "Remplacer"
       },
       "claudeSignIn": {
         "signingIn": "Connexion…"
@@ -20550,7 +20743,15 @@
       "modeLatestStatus": "Dernier état (recommandé)",
       "modeFullTranscript": "Transcription complète",
       "modeFullCost": "Plus lent, et consomme davantage de votre forfait ou de vos crédits API.",
-      "startSessionSentence": "Démarrer la session"
+      "startSessionSentence": "Démarrer la session",
+      "openIn": "Ouvrir dans",
+      "placementTab": "Nouvel onglet",
+      "placementPane": "Nouveau volet",
+      "placementJump": "Y accéder",
+      "placementTabDescription": "L’ajoute comme onglet de ce miroir et vous laisse ici.",
+      "placementPaneDescription": "Se place en division à côté de ce volet dans son espace de travail et ajoute un onglet de miroir pour le nouveau.",
+      "placementJumpDescription": "Ouvre un nouvel onglet et y bascule l’espace de travail.",
+      "mirrorNotAdded": "La nouvelle session s’est ouverte dans l’espace de travail ; le miroir n’a pas pu l’ajouter comme onglet."
     },
     "status": {
       "bar": {
@@ -22640,6 +22841,439 @@
   },
   "projectField": {
     "updateFailed": "Échec de la mise à jour du champ du projet"
+  },
+  "agentHub": {
+    "attention": {
+      "answerInTerminal": "Répondez dans son terminal : détachez-le ou ouvrez-le dans Orca."
+    },
+    "row": {
+      "jump": "Aller à ce terminal",
+      "popOut": "Détacher",
+      "markRead": "Marquer comme lu",
+      "currentWorkspace": "Dans l’espace de travail ouvert",
+      "sendToHub": "Envoyer vers Agent Hub",
+      "bringBack": "Ramener",
+      "showInMirror": "Afficher dans le miroir",
+      "closeAgent": "Fermer l’agent",
+      "closeShell": "Fermer le terminal"
+    },
+    "mirror": {
+      "newAgent": "Nouvel agent",
+      "project": "Projet",
+      "workspace": "Espace de travail",
+      "chooseProject": "Choisir un projet",
+      "chooseWorkspace": "Choisir un espace de travail",
+      "newAgentDescription": "Choisissez un espace de travail existant et un agent à démarrer.",
+      "agentLabel": "Agent",
+      "openAgentSettings": "Ouvrir les réglages des agents",
+      "configureAgents": "Configurer les agents",
+      "noAgents": "Aucun agent disponible",
+      "searchWorkspaces": "Rechercher des espaces de travail",
+      "noWorkspaces": "Aucun espace de travail correspondant.",
+      "startAgent": "Démarrer l’agent",
+      "agent": "agent",
+      "addAgentInWorkspace": "Ajouter un agent dans {{workspace}}",
+      "newAgentInWorkspace": "Nouvel agent {{agent}} dans {{workspace}}",
+      "newAgentFailed": "Impossible de démarrer {{agent}}.",
+      "newAgentUnavailable": "Le nouveau terminal est indisponible.",
+      "backHome": "Revenir à {{value0}}",
+      "returnAgain": "Cliquez à nouveau pour revenir à {{value0}}",
+      "close": "Fermer le miroir",
+      "noTerminal": "Ce volet n’a aucun terminal actif pour le moment.",
+      "connecting": "Connexion au terminal…",
+      "restore": "Restaurer {{value0}}",
+      "minimize": "Réduire",
+      "inWorkspace": "Ce volet reste dans votre espace de travail actuel, où il est visible. Il revient dans cette fenêtre quand vous changez d’onglet ou d’espace de travail.",
+      "inWorkspaceTitle": "Vous êtes dans cet espace de travail",
+      "renameHint": "Double-cliquez pour renommer",
+      "rename": "Renommer le terminal",
+      "workerCount": "{{value0}} agents exécutants",
+      "family": "Coordinateur et agents exécutants",
+      "workers": "Agents exécutants",
+      "trayLess": "Afficher moins",
+      "trayMore": "+{{value0}}",
+      "dockAll": "Envoyer tous les miroirs vers Agent Hub",
+      "jumpHint": "Aller à ce terminal dans son espace de travail",
+      "jump": "Aller",
+      "hideWorkers": "Masquer la barre des agents exécutants",
+      "showWorkers": "Afficher la barre des agents exécutants",
+      "cancelDictation": "Annuler la dictée",
+      "cancelDictationHint": "Annuler la dictée et supprimer le texte pas encore inséré",
+      "endFocus": "Remettre ce miroir à sa place",
+      "focus": "Mettre ce miroir au premier plan",
+      "showInSidebar": "Afficher dans la barre latérale",
+      "returnToWorkspace": "Revenir à l’espace de travail",
+      "tabCount": "{{value0}} onglets",
+      "tabCount_one": "{{value0}} onglet",
+      "tabCount_other": "{{value0}} onglets",
+      "addHint": "Ajouter un terminal à ce miroir",
+      "pickerSections": "Listes de terminaux",
+      "available": "Terminaux disponibles",
+      "noneAvailable": "Aucun terminal disponible à ajouter",
+      "closeTab": "Fermer l’onglet",
+      "closeTabNamed": "Fermer l’onglet miroir {{value0}}",
+      "terminals": "Terminaux du miroir",
+      "add": "Ajouter un terminal",
+      "tabLimit": "Un miroir peut contenir jusqu’à 10 terminaux.",
+      "addUnavailable": "Ce terminal ne peut plus être ajouté.",
+      "alreadyOwned": "Ce terminal est déjà détaché.",
+      "trayFull": "Le plus ancien miroir réduit a été fermé pour libérer de la place. Ses terminaux restent dans leurs espaces de travail.",
+      "dropUnavailable": "Impossible de déposer ici",
+      "openInNew": "Ouvrir dans un nouveau miroir",
+      "moveToMirror": "Déplacer vers le miroir",
+      "moveUnavailable": "Ce terminal ne peut plus être déplacé.",
+      "tabLabel": "{{value0}}, {{value1}}",
+      "dictationStopKey": "pour arrêter",
+      "projectFilter": {
+        "label": "Projets",
+        "remove": "Retirer {{value0}} du filtre",
+        "add": "Projet",
+        "all": "Tous les projets",
+        "search": "Rechercher des projets…",
+        "noMatch": "Aucun projet ne correspond.",
+        "clear": "Effacer le filtre",
+        "empty": "Rien d’autre à ajouter dans ces projets",
+        "showAllProjects": "Afficher tous les projets",
+        "outside": "{{value0}} de plus hors du filtre",
+        "showAll": "Tout afficher"
+      }
+    },
+    "title": "Agents",
+    "tab": {
+      "inbox": "Boîte de réception",
+      "running": "En cours",
+      "all": "Tous les terminaux",
+      "agents": "Agents",
+      "shownInMirror": "Affiché dans un miroir",
+      "bringBack": "Ramener"
+    },
+    "inbox": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "needsYou": "Votre attention est requise",
+      "emptyTitle": "Personne n’attend votre réponse",
+      "markAllRead": "Tout marquer comme lu",
+      "finished": "Terminé",
+      "emptyHint": "{{value0}} en cours · vous serez averti si un agent pose une question",
+      "oneAgent": "1 agent",
+      "agents": "{{value0}} agents",
+      "hidden": "{{value0}} masqués · Afficher"
+    },
+    "running": {
+      "empty": "Aucun agent ne travaille pour le moment",
+      "working": "En cours",
+      "longestFirst": "les plus longs d’abord",
+      "popOutAll": "Tout détacher"
+    },
+    "footer": {
+      "move": "Déplacer",
+      "popOut": "Détacher",
+      "answer": "Répondre",
+      "tabs": "Onglets",
+      "jump": "aller",
+      "close": "fermer"
+    },
+    "toast": {
+      "nobodyWaiting": "Personne n’attend votre réponse"
+    },
+    "trigger": {
+      "needsYouOne": "1 attend votre réponse",
+      "needsYouOther": "{{value0}} attendent votre réponse"
+    },
+    "terminals": {
+      "searchPlaceholder": "Filtrer par terminal, projet, groupe ou agent",
+      "searchLabel": "Filtrer les terminaux",
+      "noMatch": "Aucun terminal ne correspond à « {{value0}} »",
+      "empty": "Aucun terminal ouvert",
+      "shell": "Shell",
+      "ungrouped": "Sans groupe",
+      "unknownProject": "Inconnu",
+      "termCount": "{{value0}} terminaux",
+      "noMatchHint": "Essayez un nom de projet, de groupe, de branche ou d’agent",
+      "sortManualHint": "Espaces de travail dans l’ordre choisi dans la barre latérale.",
+      "sortLabel": "Tri : {{value0}}",
+      "sortBy": "Trier par"
+    },
+    "card": {
+      "recommended": "Recommandé",
+      "dictate": "Dicter",
+      "send": "Envoyer",
+      "wantsToRun": "veut exécuter",
+      "allowOnce": "Oui, exécuter une fois",
+      "alwaysAllow": "Toujours autoriser",
+      "denyInstead": "Non, indiquer à {{value0}} quoi faire à la place",
+      "needsApproval": "demande une autorisation",
+      "asking": "pose une question",
+      "replyTo": "Répondre à @{{value0}}…",
+      "instead": "Indiquer quoi faire à la place…",
+      "jump": "Aller au terminal",
+      "insteadOrDeny": "Indiquez quoi faire à la place, ou appuyez sur Enter pour refuser…",
+      "pastedImage": "Image {{value0}}",
+      "removeImage": "Retirer {{value0}}",
+      "hide": "Masquer jusqu’à la prochaine question"
+    },
+    "close": "Fermer (esc)",
+    "state": {
+      "idle": "inactif",
+      "working": "en cours",
+      "done": "terminé"
+    },
+    "alert": {
+      "asking": "pose une question",
+      "needsApproval": "demande une autorisation",
+      "finished": "terminé",
+      "more": "+{{value0}} dans Agent Hub",
+      "dismiss": "Ignorer"
+    },
+    "dock": {
+      "nextWaiting": "Aller au prochain agent en attente",
+      "edgeBottom": "Au-dessus de la barre d’état",
+      "edgeLeft": "Bord gauche",
+      "edgeRight": "Bord droit",
+      "more": "Plus",
+      "unmute": "Réactiver les alertes",
+      "mute": "Couper les alertes pendant 2 heures",
+      "position": "Position",
+      "useStatusBar": "Afficher dans la barre d’état",
+      "settings": "Paramètres d’Agent Hub…",
+      "edgeTop": "Sous la barre de titre",
+      "waiting": "Attend votre réponse",
+      "finished": "Terminé",
+      "sizeSmall": "Petit",
+      "sizeMedium": "Moyen",
+      "sizeLarge": "Grand",
+      "size": "Taille",
+      "dockMirrors": "Envoyer les miroirs vers Agent Hub",
+      "restoreMirrors": "Ramener les miroirs",
+      "openCanvas": "Ouvrir le canevas",
+      "arrange": "Disposer les miroirs"
+    },
+    "children": {
+      "agentOne": "1 agent",
+      "agentMany": "{{value0}} agents",
+      "subagentOne": "1 sous-agent",
+      "subagentMany": "{{value0}} sous-agents"
+    },
+    "statusBarMenuItem": "Agent Hub",
+    "dim": {
+      "modeOff": "Ne pas assombrir",
+      "modeOn": "Assombrir derrière les fenêtres flottantes",
+      "modeUntilClick": "Assombrir jusqu’au clic à l’arrière-plan",
+      "modeMinimizeOnClick": "Assombrir et réduire au clic à l’arrière-plan",
+      "title": "Assombrir derrière les fenêtres flottantes"
+    },
+    "count": {
+      "nested": "{{value0}} autres sous ces agents"
+    },
+    "hover": {
+      "openTabHere": "Ouvrir ici dans un onglet",
+      "state": "État",
+      "where": "Emplacement",
+      "popout": "Fenêtre dédiée"
+    },
+    "arrange": {
+      "title": "Disposer les fenêtres flottantes",
+      "grid": "En grille",
+      "columns": "Côte à côte",
+      "rows": "Empilées"
+    },
+    "tabToggle": {
+      "on": "Se détache quand vous quittez cet onglet (cliquez pour désactiver)",
+      "off": "Détacher ce terminal quand vous quittez l’onglet"
+    },
+    "canvas": {
+      "emptyTitle": "Aucun miroir sur le canevas",
+      "emptyHint": "Détachez un terminal depuis Agent Hub ou ramenez un miroir réduit pour l’ouvrir ici.",
+      "leave": "Quitter le canevas",
+      "showSidebar": "Afficher la barre latérale"
+    },
+    "mic": {
+      "voiceOptions": "Clic droit pour les options vocales.",
+      "start": "Dicter dans ce terminal",
+      "starting": "Démarrage du microphone… Cliquez pour arrêter.",
+      "stop": "Arrêter la dictée",
+      "finishing": "Finalisation de la dictée…",
+      "elsewhereNamed": "La dictée est en cours dans « {{name}} ».",
+      "elsewhereTerminal": "La dictée est en cours dans un autre terminal.",
+      "elsewhere": "La dictée est en cours ailleurs dans Orca.",
+      "onlyOne": "Une seule dictée peut être active à la fois.",
+      "disabled": "La dictée vocale est désactivée.",
+      "noModel": "Aucun modèle vocal n’est sélectionné et téléchargé.",
+      "unsupported": "La dictée ne peut pas saisir du texte dans un terminal d’espace de travail flottant depuis cette fenêtre.",
+      "enable": "Dictée vocale",
+      "model": "Modèle vocal",
+      "noModels": "Aucun modèle téléchargé",
+      "moreModels": "Plus dans les paramètres…",
+      "settings": "Paramètres vocaux…",
+      "startWithImproveHint": "Dicter dans ce terminal. Maj-clic pour dicter et améliorer.",
+      "dictateAndImprove": "Dicter et améliorer",
+      "dictate": "Dicter",
+      "mode": "Action du microphone",
+      "modeCopy": "Cliquez sur le microphone d’un miroir pour lancer ce mode. Maj-clic lance l’autre mode s’il est disponible.",
+      "startImproveHint": "Dicter et améliorer dans ce terminal. Maj-clic pour dicter uniquement.",
+      "improve": "Dicter et améliorer",
+      "improveWithAgent": "Améliorer avec un agent",
+      "improveSettings": "Paramètres d’amélioration des transcriptions",
+      "modeSwitchCopy": "Quand cette option est active, le microphone du miroir dicte et améliore ; Maj-clic fait l’inverse.",
+      "improveRequired": "Nécessite la fonction d’amélioration des transcriptions.",
+      "listeningTab": "Dictée dans ce terminal",
+      "answering": "La carte de question est ouverte : dictez votre réponse avec le micro de son champ."
+    },
+    "shortcut": {
+      "doubleTapHint": "Vous pouvez aussi enregistrer un double appui sur une touche de modification.",
+      "suggestions": "Suggestions pour les raccourcis manquants : {{bindings}}",
+      "conflict": "{{binding}} est en conflit avec {{owners}}.",
+      "parseError": "Impossible de lire le raccourci.",
+      "saveError": "Impossible d’enregistrer le raccourci."
+    },
+    "shortcuts": {
+      "title": "Raccourcis clavier",
+      "toggle": "Ouvrir ou fermer Agent Hub",
+      "nextWaiting": "Aller au prochain agent en attente",
+      "dockMirrors": "Réduire ou restaurer les miroirs",
+      "popOut": "Détacher l’agent actif",
+      "jumpToMirror": "Aller à l’espace de travail du miroir actif",
+      "arrangeMirrors": "Disposer les miroirs",
+      "toggleCanvas": "Ouvrir ou quitter le canevas",
+      "focusMirror": "Activer ou quitter le focus du miroir actif sur le canevas",
+      "hub": "Agent Hub",
+      "mirrors": "Miroirs",
+      "canvas": "Canevas",
+      "dictation": "Dictée",
+      "notSet": "Non défini",
+      "setAction": "Définir le raccourci pour {{action}}",
+      "set": "Définir le raccourci",
+      "edit": "Modifier les raccourcis",
+      "editDescription": "Modifiez les raccourcis du Hub, d’Orb, des miroirs et de la dictée."
+    },
+    "windowFilter": {
+      "label": "Filtrer par fenêtre",
+      "labelActive": "Filtre : {{value0}}",
+      "title": "Afficher",
+      "any": "Tout",
+      "open": "Ouvert dans une fenêtre",
+      "emptyOpen": "Aucun terminal ouvert dans une fenêtre",
+      "minimized": "Réduit",
+      "emptyMinimized": "Aucun terminal réduit",
+      "none": "Sans fenêtre",
+      "emptyNone": "Chaque terminal est dans une fenêtre"
+    },
+    "dictation": {
+      "here": "Dictée ici"
+    },
+    "quick": {
+      "answerWith": "Réponse : {{value0}}",
+      "more": "↵ pour les {{value0}} options",
+      "deny": "Non",
+      "title": "Réponse rapide",
+      "close": "Fermer et répondre dans le terminal (esc)",
+      "recommended": "Recommandé",
+      "ownWords": "Votre propre réponse…",
+      "escHint": "terminal",
+      "reopen": "Afficher la carte de réponse rapide",
+      "send": "Envoyer",
+      "sending": "Envoi…"
+    },
+    "settings": {
+      "agentControl": "Autoriser les agents à contrôler Agent Hub",
+      "agentControlCopy": "Les agents peuvent afficher du contenu, poser des questions et gérer leurs miroirs."
+    },
+    "requests": {
+      "decisionGate": "Point de décision",
+      "gateUpdateRequired": "Mettez à jour cet hôte pour répondre aux points de décision.",
+      "pairedPeekUnavailable": "Peek ne peut pas encore ouvrir les URL ou les fichiers de cet hôte associé.",
+      "peekUnavailable": "Peek est indisponible dans la vue actuelle.",
+      "peekUnsupported": "Peek ne peut pas ouvrir cette URL ou ce fichier sur son hôte.",
+      "peekUnsupportedFile": "Ce type de fichier ne peut pas être affiché dans Peek. Ouvrez-le dans l’espace de travail ou l’application par défaut.",
+      "targetUnavailable": "Ce terminal n’est plus disponible sur son hôte.",
+      "mirrorAddFailed": "Impossible d’ajouter le terminal au miroir du demandeur ({{reason}}).",
+      "mirrorOpenFailed": "Impossible d’ouvrir le miroir ({{reason}}).",
+      "mirrorUnavailable": "Ce terminal n’a pas de miroir.",
+      "invalidLayout": "Choisissez une grille, des colonnes ou des lignes.",
+      "canvasDisabled": "Activez le canevas d’Agent Hub dans les paramètres pour l’ouvrir.",
+      "presenceUnavailable": "La présence sur le bureau est indisponible.",
+      "disconnected": "Cet hôte est déconnecté.",
+      "unavailable": "Cette demande n’est plus disponible.",
+      "sendFailed": "Impossible d’envoyer votre réponse. Réessayez.",
+      "sending": "Envoi…",
+      "answeredElsewhere": "Réponse donnée ailleurs",
+      "asks": "@{{agent}} demande",
+      "wantsTo": "@{{agent}} veut {{action}}",
+      "allowOnce": "Autoriser une fois",
+      "allowSession": "Autoriser pour cette session",
+      "deny": "Refuser",
+      "awayAnswer": "@{{agent}} a choisi {{answer}} en votre absence",
+      "openMirror": "ouvrir le miroir de {{title}}",
+      "minimizeMirror": "réduire le miroir de {{title}}",
+      "restoreMirror": "restaurer le miroir de {{title}}",
+      "closeMirror": "fermer le miroir de {{title}}",
+      "peekLink": "voir {{link}} dans Peek",
+      "arrangeMirrors": "disposer les miroirs",
+      "openCanvas": "ouvrir le canevas",
+      "closeCanvas": "fermer le canevas"
+    },
+    "answerQueue": {
+      "answeredElsewhere": "Répondu ailleurs",
+      "automatically": "Automatiquement",
+      "caughtUp": "Tout est à jour",
+      "exit": "Quitter",
+      "includeApprovals": "Inclure les approbations",
+      "isAsking": "demande",
+      "later": "Plus tard",
+      "laterHint": "plus tard",
+      "onlyShortcut": "Uniquement via le raccourci",
+      "openShortcut": "Ouvrir la file de réponses d’Agent Hub",
+      "openTerminal": "Ouvrir dans le terminal",
+      "openWhen": "Ouvrir à l’arrivée d’une question",
+      "pick": "choisir",
+      "send": "envoyer",
+      "title": "File de réponses",
+      "unverifiable": "La connexion à l’hôte est invérifiable. Reconnectez-vous pour envoyer votre réponse.",
+      "waiting": "{{count}} en attente"
+    },
+    "peek": {
+      "kindWeb": "Web",
+      "kindImage": "Image",
+      "kindPdf": "PDF",
+      "kindMarkdown": "Markdown",
+      "kindCsv": "Tableau",
+      "kindMermaid": "Diagramme",
+      "kindNotebook": "Notebook",
+      "kindText": "Code / texte",
+      "kindMedia": "Média",
+      "source": "De {{value0}}",
+      "showSource": "Mettre ce miroir au premier plan",
+      "openInTab": "Ouvrir dans un onglet",
+      "openInEditor": "Ouvrir dans l’éditeur",
+      "openInBrowser": "Ouvrir dans le navigateur",
+      "openWithApp": "Ouvrir avec l’application par défaut",
+      "back": "Aperçu précédent",
+      "close": "Fermer (esc)",
+      "chips": "Liens dans ce message",
+      "chipLabel": "Voir {{value0}} dans Peek",
+      "unreadable": "Impossible d’afficher ce fichier ici.",
+      "action": "Peek",
+      "exitFullScreen": "Quitter le plein écran",
+      "fullScreen": "Plein écran",
+      "hostAddress": "Cette adresse est uniquement disponible sur son hôte. Ouverture dans le navigateur de l’espace de travail.",
+      "workspaceFallback": "Cet aperçu n’est pas disponible ici. Ouverture dans l’espace de travail.",
+      "unavailable": "Impossible d’ouvrir ce lien."
+    },
+    "orb": {
+      "defaultAction": "Ouvrir Orb en mode",
+      "defaultActionHint": "Utilisé par le bouton Orb et le raccourci.",
+      "alternateAction": "Action de {{modifier}}+clic",
+      "alternateActionHint": "Ouvre ce mode sans changer l’action par défaut.",
+      "liveAction": "En direct",
+      "textAction": "Texte",
+      "microphoneBusy": "Le microphone est déjà utilisé par un autre enregistrement.",
+      "modifierClickHint": "{{modifier}}+clic · {{action}}",
+      "modelsLoading": "Chargement des modèles disponibles…",
+      "modelsUnavailable": "Impossible de charger les modèles disponibles. Ouvrez le menu des modèles pour réessayer.",
+      "modelUnavailable": "Indisponible",
+      "settingsApply": "Les changements d’agent, de modèle et d’approbation démarrent une nouvelle conversation quand Orb est inactif. Les conversations passées gardent leur agent et leur modèle.",
+      "liveHoldsInput": "La voix en direct est active. Arrêtez-la pour écrire."
+    }
   },
   "workspaceDeletion": {
     "preferenceSaveFailed": "Impossible d'enregistrer la préférence de suppression",

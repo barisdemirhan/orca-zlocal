@@ -3,6 +3,7 @@ import type { SpawnDeferralReason } from '../../../../../../shared/terminal/pty/
 
 export type PaneSpawnDeferral = {
   reason: SpawnDeferralReason
+  manual?: boolean
   resume: () => void
   /** The retry is in flight; the pane still owns the session but shows no overlay. */
   resuming?: true
@@ -73,7 +74,7 @@ export function isPaneResumingInPlace(paneKey: string): boolean {
   return [...(inPlaceResumesByPaneKey.get(paneKey) ?? [])].some((isLive) => isLive())
 }
 
-function subscribe(listener: () => void): () => void {
+export function subscribePaneSpawnDeferrals(listener: () => void): () => void {
   listeners.add(listener)
   return () => {
     listeners.delete(listener)
@@ -81,5 +82,5 @@ function subscribe(listener: () => void): () => void {
 }
 
 export function usePaneSpawnDeferral(paneKey: string): PaneSpawnDeferral | undefined {
-  return useSyncExternalStore(subscribe, () => deferralsByPaneKey.get(paneKey))
+  return useSyncExternalStore(subscribePaneSpawnDeferrals, () => deferralsByPaneKey.get(paneKey))
 }

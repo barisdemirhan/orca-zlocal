@@ -6,7 +6,7 @@ import {
   normalizeAgentStatusPayload,
   type ParsedAgentStatusPayload
 } from '../../../agent-status/contracts/agent-status-types'
-
+import { isAskUserQuestionTool } from '../../../agent-status/lifecycle/agent-question-answered-intent'
 import {
   mainAgentTurnInterrupted,
   type AgentLeadStatusResolution
@@ -22,14 +22,17 @@ import {
   reconcileCodexSubagentTranscript
 } from './codex-subagent-transcript'
 import {
+  codexApprovalUsesTurnReviewer,
   codexTurnApprovalsAreAutoReviewed,
   reconcileCodexSubagentReviewer
 } from './codex-subagent-reviewer'
+import { normalizedTranscriptPath } from './codex-rollout-paths'
 import { readFirstString } from '../../interactive-tool'
 import type { HookListenerState } from '../../listener-state'
 import { resolvePrompt, resolveToolState } from '../../prompt-fields'
 import { extractToolFields, isNewTurnEvent } from '../../provider-event-routing'
 import { readString } from '../../tool-input-preview'
+import { resolveCodexApprovalOwnedState } from './codex-approval-owned-state'
 import { applyCodexSessionStart } from './codex-session-start'
 import {
   codexHookEventState,
@@ -42,7 +45,6 @@ import {
   setCodexMainAgentTurnState
 } from './codex-state'
 import { pendingCodexAsyncQuestion, trackCodexAsyncQuestions } from './codex-async-questions'
-import { reviewerEvidenceDeferred } from './codex-rollout-prefetch-scope'
 
 export function buildCodexStatusPayload(
   state: HookListenerState,
@@ -52,8 +54,21 @@ export function buildCodexStatusPayload(
   hookPayload: Record<string, unknown>,
   options: AgentLeadStatusResolution & { updateLead: boolean; sessionBoundary?: true }
 ): ParsedAgentStatusPayload | null {
+  const toolFields = extractToolFields('codex', eventName, hookPayload)
+  if (
+    eventName === 'PermissionRequest' &&
+    codexApprovalUsesTurnReviewer(toolFields.toolName) &&
+    !isAskUserQuestionTool(toolFields.toolName) &&
+    codexTurnApprovalsAreAutoReviewed(
+      state.codexSubagentTranscriptByPaneKey.get(paneKey),
+      readFirstString(hookPayload, ['transcript_path', 'transcriptPath'])
+    )
+  ) {
+    // Review-owned approvals must not leave a human reply card in the shared tool snapshot.
+    toolFields.interactivePrompt = undefined
+  }
   const snapshot = options.updateLead
-    ? resolveToolState(state, paneKey, extractToolFields('codex', eventName, hookPayload), {
+    ? resolveToolState(state, paneKey, toolFields, {
         resetOnNewTurn: isNewTurnEvent('codex', eventName)
       })
     : (state.lastToolByPaneKey.get(paneKey) ?? {})
@@ -109,6 +124,7 @@ export function normalizeCodexSubagentLifecycleEvent(
     return null
   }
   const roster = getOrCreateCodexSubagentRoster(state, paneKey)
+  state.codexSubagentTranscriptByPaneKey.get(paneKey)?.pendingApprovalPathsByAgentId.delete(agentId)
   if (eventName === 'SubagentStart') {
     upsertCodexSubagent(
       roster,
@@ -142,26 +158,6 @@ export function normalizeCodexSubagentLifecycleEvent(
   return buildCodexChildDrivenStatusPayload(state, eventName, paneKey, hookPayload)
 }
 
-/** Codex PermissionRequest precedes reviewer/user decisions; suppress reviewer-owned waiting (STA-7698). request_user_input still blocks a human on PreToolUse (#9861). */
-function resolveCodexApprovalOwnedState(
-  state: HookListenerState,
-  eventName: unknown,
-  paneKey: string,
-  transcriptPath: string | undefined,
-  stateName: 'working' | 'waiting' | 'done'
-): 'working' | 'waiting' | 'done' {
-  // Unread rollout bytes may hold a newer reviewer; show the prompt rather than risk hiding a human's approval.
-  if (stateName !== 'waiting' || eventName !== 'PermissionRequest' || reviewerEvidenceDeferred()) {
-    return stateName
-  }
-  return codexTurnApprovalsAreAutoReviewed(
-    state.codexSubagentTranscriptByPaneKey.get(paneKey),
-    transcriptPath
-  )
-    ? 'working'
-    : stateName
-}
-
 export function normalizeCodexEvent(
   state: HookListenerState,
   eventName: unknown,
@@ -188,16 +184,15 @@ export function normalizeCodexEvent(
     eventName === 'SessionStart' && originalEventName === 'UserPromptSubmit'
       ? originalEventName
       : eventName
-  const stateName = codexHookEventState(
-    activityEventName,
-    readString(hookPayload, 'tool_name') ?? readString(hookPayload, 'name')
-  )
+  const toolName = readString(hookPayload, 'tool_name') ?? readString(hookPayload, 'name')
+  const stateName = codexHookEventState(activityEventName, toolName)
   if (!stateName) {
     return null
   }
 
   const agentId = readString(hookPayload, 'agent_id')
   const transcriptPath = readFirstString(hookPayload, ['transcript_path', 'transcriptPath'])
+  state.codexSubagentTranscriptByPaneKey.get(paneKey)?.pendingApprovalPathsByAgentId.delete(agentId)
   if (eventName === 'SessionStart' && !agentId) {
     // New processes must not retain children whose Stop hooks were lost.
     state.codexSubagentRosterByPaneKey.delete(paneKey)
@@ -228,22 +223,23 @@ export function normalizeCodexEvent(
       transcript.rootTurn.interrupted = false
     }
   }
+  // Classify with reviewer evidence just read from this turn's rollout, never a prior event.
+  const ownedState = resolveCodexApprovalOwnedState(
+    state,
+    eventName,
+    paneKey,
+    transcriptPath,
+    stateName,
+    toolName
+  )
   if (agentId) {
-    // Why: reconcile the child rollout reviewer before classifying its approval, including after relay restart.
-    const childState = resolveCodexApprovalOwnedState(
-      state,
-      eventName,
-      paneKey,
-      transcriptPath,
-      stateName
-    )
     upsertCodexSubagent(
       getOrCreateCodexSubagentRoster(state, paneKey),
       agentId,
       {
         agentType: readString(hookPayload, 'agent_type'),
         model: readString(hookPayload, 'model'),
-        state: childState === 'waiting' ? 'waiting' : 'working'
+        state: ownedState === 'waiting' ? 'waiting' : 'working'
       },
       Date.now()
     )
@@ -252,6 +248,22 @@ export function normalizeCodexEvent(
       agentId,
       transcriptPath
     )
+  }
+
+  const approvalPath = normalizedTranscriptPath(transcriptPath)
+  if (
+    eventName === 'PermissionRequest' &&
+    ownedState === 'waiting' &&
+    approvalPath &&
+    codexApprovalUsesTurnReviewer(toolName) &&
+    (!agentId || state.codexSubagentRosterByPaneKey.get(paneKey)?.has(agentId))
+  ) {
+    getOrCreateCodexSubagentTranscriptState(state, paneKey).pendingApprovalPathsByAgentId.set(
+      agentId,
+      approvalPath
+    )
+  }
+  if (agentId) {
     return buildCodexChildDrivenStatusPayload(state, eventName, paneKey, hookPayload)
   }
 
@@ -259,14 +271,6 @@ export function normalizeCodexEvent(
     // Clear the existing roster so missing child Stops cannot reseed stale children from the previous row (CLI0.144).
     getOrCreateCodexSubagentRoster(state, paneKey).clear()
   }
-  // Classify with reviewer evidence just read from this turn's rollout, never a prior event.
-  const ownedState = resolveCodexApprovalOwnedState(
-    state,
-    eventName,
-    paneKey,
-    transcriptPath,
-    stateName
-  )
   // An open async question needs the user even while Codex keeps working.
   const leadState =
     trackCodexAsyncQuestions(state, paneKey, eventName, hookPayload) && ownedState === 'working'

@@ -167,6 +167,7 @@ export function registerRuntimeClientIpcBridge(
     if (event.type === 'sidebarInputsChanged') {
       return
     }
+    // Agent Hub requests have their own consumer (agent-hub-client); this bridge only navigates.
     if (event.type !== 'activateWorktree') {
       return
     }

@@ -32,6 +32,7 @@ import { runWithActiveRpcCaller } from './callers/active-call'
 import { admitRpcRequest } from './dispatch/rpc-request-admission-prologue'
 import { resolveOrcadFeatureRequirement, rpcMethodFeatureWait } from './startup/orcad-readiness'
 import { routeRemoteOwnedCall } from '../orchestration/federation/remote-owned/remote-owned-route'
+import { invokeWithOrbProtection } from './orb-operation-invocation'
 
 export type DispatcherOptions = {
   runtime: OrcaRuntimeService
@@ -274,7 +275,7 @@ export class RpcDispatcher {
       return runWithActiveRpcCaller(
         context.caller,
         () =>
-          method.handler(effectiveParams, {
+          invokeWithOrbProtection(request, effectiveParams, method.handler, {
             ...context,
             authenticatedCallerFingerprint:
               mutation?.identity.callerFingerprint ?? callerFingerprint,

@@ -73,12 +73,15 @@ export function createTerminalPaneHibernationActions(
         worktreeId,
         {
           paneKeys,
-          captureMode: 'completed-agent-hibernation'
+          captureMode: opts.manual ? 'manual-worktree-sleep' : 'completed-agent-hibernation'
         }
       )
       if (!sleepingAgentSessionRecords[opts.paneKey]) {
         // Killing without a persisted resume record would strand the pane.
         throw new Error('agent_hibernation_capture_missing')
+      }
+      if (opts.manual) {
+        sleepingAgentSessionRecords[opts.paneKey].wakeOnRequestOnly = true
       }
       const capture = shutdownBufferCaptures.get(opts.tabId)
       if (capture) {

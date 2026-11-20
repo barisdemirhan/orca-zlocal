@@ -15,6 +15,7 @@ import type { FileLinkHost, FileLinkTarget } from './terminal-file-link-target'
 import { createTerminalPathExistenceBatch } from './terminal-path-existence-batch'
 import { runtimeTargetEnvironmentId } from '@/runtime/rpc/targets/runtime-client-target'
 import { getRuntimeEnvironmentRevision } from '@/runtime/rpc/environment-revisions/runtime-environment-revision'
+import { peekTerminalFileFromMirror } from '@/components/agent-hub/agent-hub-peek-routing'
 import type { FileOpenFailure } from './terminal-file-open-failure'
 import type { IBufferLine } from '@xterm/xterm'
 
@@ -31,6 +32,8 @@ type FileLinkHitTestDeps = {
   sourceTabId?: string | null
   /** Tells the user why a click opened nothing; skipped once a later click supersedes it. */
   onOpenFailure?: (absolutePath: string, failure: FileOpenFailure) => void
+  /** The click, so a link in an Agent Hub mirror can open in Peek instead. */
+  event?: MouseEvent
 }
 
 type ClickedFileLink = FileLinkTarget & {
@@ -102,11 +105,41 @@ export function openFilePathLinkAtBufferPosition(
       onOpenFailure && (verified || link.isKnownWorktreeRoot || /[\\/]/.test(link.pathText))
     const reportedPath =
       verified || link.isKnownWorktreeRoot || !shown ? link.absolutePath : shown.absolutePath
-    openDetectedFilePath(link.absolutePath, link.line, link.column, {
+    const openDeps = {
       ...deps,
       openWithSystemDefault: deps.openWithSystemDefault === true,
-      onOpenFailure: reportsFailure ? (failure) => onOpenFailure(reportedPath, failure) : undefined
-    })
+      onOpenFailure: reportsFailure
+        ? (failure: FileOpenFailure) => onOpenFailure(reportedPath, failure)
+        : undefined
+    }
+    if (
+      deps.event &&
+      !openDeps.openWithSystemDefault &&
+      peekTerminalFileFromMirror(link.absolutePath, {
+        worktreeId: deps.worktreeId,
+        onPairedRuntime: Boolean(deps.runtimeEnvironmentId),
+        ...(deps.runtimeEnvironmentId
+          ? {
+              sourceOwner: {
+                kind: 'runtime' as const,
+                runtimeEnvironmentId: deps.runtimeEnvironmentId
+              }
+            }
+          : {}),
+        worktreePath: deps.worktreePath,
+        event: deps.event,
+        openInWorkspace: () =>
+          openDetectedFilePath(link.absolutePath, link.line, link.column, openDeps),
+        openExternally: () =>
+          openDetectedFilePath(link.absolutePath, link.line, link.column, {
+            ...openDeps,
+            openWithSystemDefault: true
+          })
+      })
+    ) {
+      return
+    }
+    openDetectedFilePath(link.absolutePath, link.line, link.column, openDeps)
   }
   // Never stat external shares unprompted; open the path as written and let the host resolve it.
   const settled = (link: ClickedFileLink): boolean =>

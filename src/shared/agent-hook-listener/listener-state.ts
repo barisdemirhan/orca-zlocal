@@ -15,6 +15,9 @@ import type { ClaudeToolRequest } from './claude-tool-request-identity'
 import type { CodexSubagentRoster } from './providers/codex/codex-subagent-roster'
 import type { CodexSubagentTranscriptState } from './providers/codex/codex-subagent-transcript'
 import type { CodexAsyncQuestions } from './providers/codex/codex-async-questions'
+import * as humanTurns from './provider-pane-turn-state'
+
+export { clearPaneTurnCacheState } from './provider-pane-turn-state'
 import type { MusePaneState } from './providers/muse/muse-pane-state'
 import type { AgentHookEventPayload, AntigravityChildWork, ToolSnapshot } from './listener-event'
 import {
@@ -35,7 +38,7 @@ import type { HermesPaneTurn } from './providers/hermes/hermes-pane-turn'
 import type { ClaudePromptTurns } from './providers/claude/lifecycle/claude-prompt-turn-order'
 
 /** Per-listener-instance caches needing per-PTY teardown; Orca's main process and the relay each get their own, never shared. */
-export type HookListenerState = {
+export type HookListenerState = humanTurns.HumanTurnMaps & {
   warnedVersions: Set<string>
   warnedEnvs: Set<string>
   lastPromptByPaneKey: Map<string, string>
@@ -88,7 +91,7 @@ export type HookListenerState = {
   /** A rollout-less Codex start held until its prompt shows a new conversation or the hidden title thread. */
   codexHeldEphemeralStartByPaneKey: Map<string, string>
   /** Newest Grok turn per pane, used to reject end reports that arrive after a replacement prompt. */
-  grokActiveTurnByPaneKey: Map<string, GrokActiveTurn>
+  grokActiveTurnByPaneKey: Map<string, humanTurns.GrokActiveTurn>
   /** The Grok main agent's own state as last published, so its clock keeps continuity across events. */
   grokMainAgentStatusByPaneKey: Map<string, AgentMainAgentStatus>
   /** Grok background shells and subagents still running, by Grok's task id; a cancel report omits them. */
@@ -103,11 +106,6 @@ export type HookListenerState = {
   hermesTurnByPaneKey: Map<string, HermesPaneTurn>
   /** DSH child sessions named by SubagentStart; the bridge stamps their hooks with their own session_id. */
   dshChildSessionIdsByPaneKey: Map<string, Set<string>>
-}
-
-export type GrokActiveTurn = {
-  promptId?: string
-  sessionId?: string
 }
 
 const legacyStatusAdapterByState = new WeakMap<HookListenerState, AgentStatusLegacyAdapter>()
@@ -146,6 +144,7 @@ export function createHookListenerState(
     claudeConsumedCompactPromptIdByPaneKey: new Map(),
     claudePromptTurnsByPaneKey: new Map(),
     claudeSessionOwnerByPaneKey: new Map(),
+    ...humanTurns.createHumanTurnMaps(),
     hookRootAttempts: new Map(),
     codexSubagentRosterByPaneKey: new Map(),
     codexSubagentTranscriptByPaneKey: new Map(),
@@ -226,6 +225,7 @@ export function clearPaneProcessCacheState(state: HookListenerState, paneKey: st
   state.claudeActiveSessionCronPaneKeys.delete(paneKey)
   state.claudeLaunchedBackgroundTasksByPaneKey.delete(paneKey)
   state.claudeSessionOwnerByPaneKey.delete(paneKey)
+  humanTurns.forgetHumanTurns(state, paneKey)
   state.codexSubagentRosterByPaneKey.delete(paneKey)
   state.codexSubagentTranscriptByPaneKey.delete(paneKey)
   state.codexLeadStateByPaneKey.delete(paneKey)
@@ -284,6 +284,7 @@ export function movePaneCacheState(
   movePaneScopedSetEntries(state.claudeActiveSessionCronPaneKeys, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeLaunchedBackgroundTasksByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.claudeSessionOwnerByPaneKey, fromPaneKey, toPaneKey)
+  humanTurns.moveHumanTurns(state, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexSubagentRosterByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexSubagentTranscriptByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.codexLeadStateByPaneKey, fromPaneKey, toPaneKey)
@@ -298,18 +299,6 @@ export function movePaneCacheState(
   movePaneScopedMapEntries(state.lastLaunchTokenByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.hermesTurnByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.dshChildSessionIdsByPaneKey, fromPaneKey, toPaneKey)
-}
-
-export function clearPaneTurnCacheState(state: HookListenerState, paneKey: string): void {
-  state.lastPromptByPaneKey.delete(paneKey)
-  state.lastToolByPaneKey.delete(paneKey)
-  state.antigravityCompletedTranscriptByPaneKey.delete(paneKey)
-  state.antigravityChildWorkByPaneKey.delete(paneKey)
-  state.jcodeTurnPromptByPaneKey.delete(paneKey)
-  state.ampCompletedCacheKeys.delete(paneKey)
-  state.grokActiveTurnByPaneKey.delete(paneKey)
-  state.grokMainAgentStatusByPaneKey.delete(paneKey)
-  state.grokBackgroundTasksByPaneKey.delete(paneKey)
 }
 
 export function clearAllListenerCaches(state: HookListenerState): void {
@@ -333,6 +322,7 @@ export function clearAllListenerCaches(state: HookListenerState): void {
   state.claudeActiveSessionCronPaneKeys.clear()
   state.claudeLaunchedBackgroundTasksByPaneKey.clear()
   state.claudeSessionOwnerByPaneKey.clear()
+  humanTurns.clearHumanTurns(state)
   state.codexSubagentRosterByPaneKey.clear()
   state.codexSubagentTranscriptByPaneKey.clear()
   state.codexLeadStateByPaneKey.clear()

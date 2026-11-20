@@ -29,6 +29,8 @@ import {
 } from './dictation-toasts'
 import { useHoldDictationGesture } from './use-hold-dictation-gesture'
 import { publishDictationMeter } from './dictation-meter-store'
+import { useDictationTerminalMountLease } from './use-dictation-terminal-mount-lease'
+import { useDictationCancelCapability } from './use-dictation-cancel-capability'
 import { useDictationSilenceStop } from './use-dictation-silence-stop'
 import { stopAfterSilenceSeconds } from '../../../../shared/speech/dictation/dictation-silence-stop'
 import { useDictationSpeechEvents } from './use-dictation-speech-events'
@@ -62,6 +64,8 @@ export function DictationController() {
   } = useAudioCapture(publishDictationMeter)
 
   const sessionRef = useRef<DictationSession>(initialDictationSession)
+  const insertionTargetRef = useDictationTerminalMountLease(dictationState)
+  useDictationCancelCapability()
   // Inserts the current session's finals where dictation started.
   const deliverRef = useRef<((text: string) => void) | null>(null)
   const [stoppedSessions] = useState(createDictationStoppedSessions)
@@ -228,6 +232,7 @@ export function DictationController() {
     }
     const isCurrent = (): boolean => sessionRef.current.run === run
     const insertionTarget = captureInsertionTarget()
+    insertionTargetRef.current = insertionTarget
     const deliver = createDictationTranscriptDelivery(shouldHoldForCleanup())
     deliverRef.current = (text) => deliver(text, insertionTarget)
     const context = captureDictationContext()
@@ -328,6 +333,7 @@ export function DictationController() {
   }, [
     settings,
     dispatch,
+    insertionTargetRef,
     startCapture,
     flushBufferedAudio,
     discardBufferedAudio,

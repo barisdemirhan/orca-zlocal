@@ -58,6 +58,7 @@ export function remapHostAgentStatus(
     launchAgent: retainedSurface?.launchAgent ?? surface.launchAgent,
     hookAgent: surface.agentStatus.agentType
   })
+  const spawnedParent = parsePaneKey(surface.agentStatus.spawnedBy?.paneKey ?? '')
   const entry = normalizeCompatibleAgentStatusEntryForOwner(
     surface.agentStatus,
     ownerRecord?.agent,
@@ -68,6 +69,11 @@ export function remapHostAgentStatus(
     worktreeId: entry.worktreeId || frameWorktreeId,
     paneKey,
     tabId: toWebTerminalSurfaceTabId(surface.parentTabId),
+    spawnedBy: spawnedParent
+      ? {
+          paneKey: makePaneKey(toWebTerminalSurfaceTabId(spawnedParent.tabId), spawnedParent.leafId)
+        }
+      : undefined,
     ...(surface.launchAttested !== undefined ? { launchAttested: surface.launchAttested } : {})
   }
 }

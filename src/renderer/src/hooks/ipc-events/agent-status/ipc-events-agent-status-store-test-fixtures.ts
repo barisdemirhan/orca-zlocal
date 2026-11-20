@@ -42,6 +42,7 @@ export type AgentStatusSetData = {
   launchToken?: string
   providerSession?: { key: 'session_id'; id: string }
   providerSessionOnly?: boolean
+  spawnedBy?: { paneKey: string }
   orchestration?: {
     taskId?: string
     dispatchId?: string

@@ -24,6 +24,11 @@ import {
 import '@/store/slices/editor/tabs/editor-open-target-group'
 import { canOpenLinkInSourceGroup } from '@/lib/links/placement/link-open-intent'
 import { isPairedWebClientWindow } from '@/app-shell/chrome/desktop-window-chrome'
+import {
+  agentHubPeekFileAction,
+  peekTerminalFileFromMirror,
+  type AgentHubPeekLinkSource
+} from '@/components/agent-hub/agent-hub-peek-routing'
 import type { FileOpenFailure } from './terminal-file-open-failure'
 import type { LinkActionRequest } from '@/components/link-actions/link-action-request'
 import type { HttpLinkSourceOwner } from '@/lib/browser/navigation/http-link-routing'
@@ -59,15 +64,46 @@ export function handleTerminalFileLink(
   actionContext?: TerminalLinkActionContext | null,
   actionDestination?: string
 ): boolean {
+  const peekSource: AgentHubPeekLinkSource = {
+    worktreeId: deps.worktreeId,
+    onPairedRuntime: Boolean(deps.runtimeEnvironmentId),
+    ...(deps.runtimeEnvironmentId
+      ? {
+          sourceOwner: { kind: 'runtime' as const, runtimeEnvironmentId: deps.runtimeEnvironmentId }
+        }
+      : {}),
+    worktreePath: deps.worktreePath,
+    line,
+    column,
+    event,
+    openInWorkspace: () => openDetectedFilePath(filePath, line, column, deps),
+    openExternally: () =>
+      openDetectedFilePath(filePath, line, column, { ...deps, openWithSystemDefault: true })
+  }
   if (isTerminalLinkDirectActivation(event)) {
     event?.preventDefault?.()
+    const mappedPath = mapTerminalFilePath(
+      filePath,
+      deps.worktreePath,
+      terminalLinkWslDistro(deps.wslDistro, deps.runtimeEnvironmentId)
+    )
+    if (!event?.shiftKey && peekTerminalFileFromMirror(mappedPath, peekSource)) {
+      return true
+    }
     openDetectedFilePath(filePath, line, column, {
       ...deps,
       openWithSystemDefault: Boolean(event?.shiftKey)
     })
     return true
   }
-  const actions = buildFileLinkActions(filePath, line, column, deps, actionContext?.sourceOwner)
+  const actions = buildFileLinkActions(
+    filePath,
+    line,
+    column,
+    deps,
+    actionContext?.sourceOwner,
+    peekSource
+  )
   return requestTerminalLinkAction(event, actionContext, {
     ...actions,
     destination: actionDestination ?? actions.destination,
@@ -75,13 +111,17 @@ export function handleTerminalFileLink(
   })
 }
 
-/** The file-link popover's rows (open in Orca, default app, reveal), shared by terminal and chat. */
+/**
+ * The file-link popover's rows (open in Orca, default app, reveal), shared by terminal and chat;
+ * a terminal link also offers Peek.
+ */
 export function buildFileLinkActions(
   filePath: string,
   line: number | null,
   column: number | null,
   deps: TerminalFileLinkActionDeps,
   sourceOwner: HttpLinkSourceOwner | undefined,
+  peekSource?: AgentHubPeekLinkSource,
   t: Translate = translate,
   options?: { directoryHint?: boolean }
 ): FileLinkActions {
@@ -194,7 +234,11 @@ export function buildFileLinkActions(
             })
         }
       : null
-  const secondaryActions = [downloadRow, openInGroupRow, revealRow].filter((row) => row !== null)
+  const peekRow =
+    worktreeRoot || !peekSource ? null : agentHubPeekFileAction(mappedPath, peekSource)
+  const secondaryActions = [peekRow, downloadRow, openInGroupRow, revealRow].filter(
+    (row) => row !== null
+  )
   const rows =
     !worktreeRoot && canOpenWithSystemDefault && isHtmlFilePath(mappedPath)
       ? buildHttpLinkActions(
@@ -206,6 +250,7 @@ export function buildFileLinkActions(
         )
       : {
           primary: {
+            shortcut: peekRow?.shortcut === 'primary' ? null : ('primary' as const),
             label: worktreeRoot
               ? t(
                   'auto.components.terminal.pane.TerminalLinkActionPopover.switchWorkspace',

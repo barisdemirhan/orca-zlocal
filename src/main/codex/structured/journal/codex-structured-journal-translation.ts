@@ -9,10 +9,7 @@ import {
   type CodexJournalTranslatorDeps
 } from './codex-structured-journal-contracts'
 import { settleCodexJournalSession } from './codex-structured-journal-settlement'
-import {
-  restoreCodexHistoryItem,
-  restoreCodexJournalThread
-} from './codex-structured-journal-translation-restore'
+import { restoreCodexJournalThread } from './codex-structured-journal-translation-restore'
 import { CodexJournalTurnBoundaries } from './codex-structured-journal-translation-turn-boundaries'
 import { createCodexJournalTranslatorWriters } from './codex-structured-journal-translation-writers'
 import { publishCodexTurnLifecycle } from './codex-structured-journal-translation-turns'
@@ -24,6 +21,8 @@ import {
   readCodexBackgroundTaskFrame
 } from '../background-work/codex-background-task-frames'
 import type { CodexStructuredSessionEvent } from '../session-lifecycle/codex-structured-session-state'
+import { translateCodexRealtimeJournalEvent } from '../../codex-structured-realtime-transcript'
+import { createCodexJournalHistoryRestorer } from '../../codex-structured-journal-timeline'
 
 export function createCodexJournalTranslator(
   deps: CodexJournalTranslatorDeps
@@ -35,8 +34,8 @@ export function createCodexJournalTranslator(
 export function createCodexHistoryTranslator(
   deps: CodexJournalTranslatorDeps
 ): CodexHistoryTranslator {
-  const { restoreThread, dispose } = createCodexTranslation(deps)
-  return { restoreThread, dispose }
+  const { restoreThread, restoreTimeline, dispose } = createCodexTranslation(deps)
+  return { restoreThread, restoreTimeline, dispose }
 }
 
 function createCodexTranslation(
@@ -102,7 +101,14 @@ function createCodexTranslation(
     return admission
   }
 
+  const history = createCodexJournalHistoryRestorer({
+    deps,
+    items,
+    compactions,
+    executions
+  })
   return {
+    restoreTimeline: history.restoreTimeline,
     restoreThread: (threadId, thread) => {
       if (threadId === (deps.primaryThreadId?.() ?? null)) {
         readActivity = createCodexProviderActivityReader()
@@ -112,13 +118,7 @@ function createCodexTranslation(
         thread,
         currentTurnIds: activeTurns.byThread,
         ordinals: items.ordinals,
-        handleItem: (event) =>
-          restoreCodexHistoryItem(event, {
-            primaryThreadId: deps.primaryThreadId?.() ?? null,
-            compactions,
-            items,
-            executions
-          }),
+        handleItem: history.restoreItem,
         ...(deps.sessionId !== undefined
           ? {
               restoreTurnLifecycle: (turnLifecycle) =>
@@ -135,6 +135,13 @@ function createCodexTranslation(
       })
     },
     handle: (event) => {
+      if (event.type === 'voice') {
+        return CODEX_JOURNAL_ADMITTED
+      }
+      const realtime = translateCodexRealtimeJournalEvent(deps, event)
+      if (realtime) {
+        return realtime
+      }
       const primaryThreadId = deps.primaryThreadId?.() ?? null
       if (event.type === 'notification' && primaryThreadId !== null) {
         // Register execution first so rows from this frame carry the child's run.

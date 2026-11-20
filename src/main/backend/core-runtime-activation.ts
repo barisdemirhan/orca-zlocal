@@ -197,6 +197,8 @@ export async function activateBackendRuntime(
   profileShutdown.paneGrids = runtime
   profileShutdown.paintLedger = runtime
   runtime.beginStructuredAgentSessionStartupOpen(chatJournal.maintenanceAfter, chatJournal.open)
+  // Hands the hook server the persisted "started by" links now that it is wired.
+  runtime.restorePaneSpawnLineage()
 
   const { installFirstWorkRenameHookSubscription } =
     await import('../agent-hooks/first-work/first-work-rename-hook-subscription')

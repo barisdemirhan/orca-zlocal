@@ -1,4 +1,71 @@
 {
+  "agentHub": {
+    "alert": {
+      "more": "+{{value0}} more in the hub"
+    },
+    "close": "Close (esc)",
+    "dock": {
+      "mute": "Mute alerts for 2 hours"
+    },
+    "footer": {
+      "answer": "Answer",
+      "move": "Move",
+      "popOut": "Pop out",
+      "tabs": "Tabs"
+    },
+    "mic": {
+      "dictate": "Dictate",
+      "dictateAndImprove": "Dictate and improve",
+      "improve": "Dictate and improve",
+      "mode": "Microphone action",
+      "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available."
+    },
+    "mirror": {
+      "newAgentInWorkspace": "New {{agent}} agent in {{workspace}}",
+      "tabCount_one": "{{value0}} tab",
+      "tabCount_other": "{{value0}} tabs",
+      "workerCount": "{{value0}} workers"
+    },
+    "peek": {
+      "showSource": "Bring this mirror to the front"
+    },
+    "quick": {
+      "answerWith": "Answer: {{value0}}",
+      "escHint": "terminal",
+      "recommended": "Recommended"
+    },
+    "requests": {
+      "pairedPeekUnavailable": "Peek cannot open URLs or files from this paired host yet."
+    },
+    "row": {
+      "sendToHub": "Send to the hub"
+    },
+    "shortcuts": {
+      "arrangeMirrors": "Arrange mirrors",
+      "canvas": "Canvas",
+      "dictation": "Dictation",
+      "dockMirrors": "Park or restore mirrors",
+      "focusMirror": "Focus or unfocus the active canvas mirror",
+      "hub": "Hub",
+      "jumpToMirror": "Jump to the active mirror’s workspace",
+      "mirrors": "Mirrors",
+      "nextWaiting": "Jump to the next waiting agent",
+      "notSet": "Not set",
+      "popOut": "Pop out the active agent",
+      "set": "Set shortcut",
+      "setAction": "Set shortcut for {{action}}",
+      "toggle": "Open or close the hub",
+      "toggleCanvas": "Open or leave the canvas"
+    },
+    "tabToggle": {
+      "off": "Pop this terminal out when you leave the tab",
+      "on": "Pops out when you leave this tab (click to stop)"
+    },
+    "terminals": {
+      "searchPlaceholder": "Filter by terminal, project, group, or agent",
+      "shell": "Shell"
+    }
+  },
   "accounts": {
     "claude": {
       "switchSessions": {
@@ -61,6 +128,24 @@
     }
   },
   "auto": {
+    "agentHub": {
+      "orb": {
+        "answerReceived": "Answer received",
+        "ask": "Ask",
+        "awayAnswerReceived": "Answered by your away settings",
+        "comingLater": "Coming later",
+        "dismissReceipt": "Dismiss",
+        "dismissRequestOutcome": "Dismiss request outcome",
+        "free": "Act freely",
+        "requestClosed": "Request closed",
+        "requestDenied": "Request denied",
+        "requestExpired": "Request expired",
+        "requestNoLongerAvailable": "This request was answered elsewhere or is no longer available.",
+        "speakReplies": "Speak replies",
+        "stopSpeaking": "Stop speaking",
+        "talkShortcut": "Talk shortcut"
+      }
+    },
     "components": {
       "GitHubItemDialog": {
         "filesViewed_one": "{{viewed}} / {{count}} file viewed",
@@ -666,6 +751,24 @@
           "0c9a33f468": "Capture app windows so agents can inspect visual state.",
           "4d03dec2d0": "Read app interface trees and perform requested actions.",
           "6b5a2cd3a5": "Accessibility"
+        },
+        "ExperimentalPane": {
+          "0277901cf7": "Adds an Agents entry to the left sidebar with a threaded worktree feed for completed agents, blocking questions, unread state, and worktree creation events. Experimental — the event model and UI may change.",
+          "24416f42cd": "Shared paths on worktrees",
+          "9762364929": "Uses APFS clone-copy on macOS when possible, otherwise symlinks configured folders or files into created worktrees.",
+          "a05bcdaf57": "Agents View",
+          "agentHub": {
+            "editShortcuts": "Edit",
+            "shortcutNotSet": "not set",
+            "shortcutTaken": "{{value0}} is already used by {{value1}}. Pick other keys in Keyboard Shortcuts.",
+            "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}} · Arrange the mirrors: {{value3}}",
+            "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub, arrange the mirrors)."
+          },
+          "f63ea281e3": "Threaded left-sidebar feed for agent completions and blocking states.",
+          "fb82ea1d7a": "Automatically materialize configured files or folders into newly created worktrees.",
+          "newWorktreeCardStyle": {
+            "copy": "Preview updated worktree-card layout, metadata placement, card-display menu options, and status presentation."
+          }
         },
         "McpConfigSection": {
           "detectedServers_one": "{{detected}} detected · {{count}} server",
@@ -1782,6 +1885,9 @@
       "waitingForServer": "Reloads when the server starts"
     }
   },
+  "common": {
+    "open": "Open"
+  },
   "browserExtensions": {
     "permission": {
       "manyOtherSites_one": "Read and change your data on {{hosts}} and {{count}} other site",
@@ -2552,6 +2658,7 @@
         "notDoneStop": "The agent wasn't stopped.",
         "notDoneStopTask": "The background task wasn't stopped.",
         "notDoneStopTasks": "The background tasks weren't stopped.",
+        "notDoneVoice": "Live voice could not start.",
         "openCurrentConversation": "Open the current conversation to continue.",
         "optionRejected": "The agent didn't accept this setting.",
         "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",

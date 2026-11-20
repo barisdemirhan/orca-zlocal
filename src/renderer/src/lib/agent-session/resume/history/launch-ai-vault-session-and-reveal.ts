@@ -10,9 +10,11 @@ import { agentLabel } from '../../../../../../shared/ai-vault/session-display/ai
 /** Resolves to the new terminal tab's id when this client created it, else null. */
 export async function launchAiVaultSessionAndReveal(
   args: Parameters<typeof launchAiVaultSessionInNewTab>[0],
-  describeFailure: (message: string) => string = (message) => message
+  describeFailure: (message: string) => string = (message) => message,
+  /** Shows the tab somewhere that is already on screen; false falls back to its workspace. */
+  showInPlace?: (tabId: string) => Promise<boolean>
 ): Promise<string | null> {
-  const launch = launchAiVaultSessionInNewTab(args)
+  const launch = launchAiVaultSessionInNewTab(showInPlace ? { ...args, activate: false } : args)
   if (launch.tabId === null) {
     const outcome = await launch.runtimeLaunch
     if (outcome.status === 'failed') {
@@ -26,6 +28,16 @@ export async function launchAiVaultSessionAndReveal(
       )
       return null
     }
+  }
+  if (showInPlace) {
+    const tabId = launch.tabId === null ? await launch.runtimeTabId : launch.tabId
+    if (tabId && (await showInPlace(tabId))) {
+      return tabId
+    }
+    if (tabId) {
+      useAppStore.getState().setActiveTab(tabId)
+    }
+    useAppStore.getState().setActiveTabType('terminal', args.worktreeId)
   }
   if (useAppStore.getState().activeWorktreeId !== args.worktreeId) {
     activateAiVaultResumeWorkspace(args.worktreeId)

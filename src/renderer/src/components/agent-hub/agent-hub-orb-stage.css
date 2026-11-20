@@ -1,0 +1,310 @@
+.agent-hub-orb-stage {
+  position: fixed;
+  z-index: 47;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 12px 12px;
+  user-select: none;
+}
+
+/* Why: the floating sphere has no card; only its pieces take pointer events so empty corners stay clickable. */
+.agent-hub-orb-stage[data-embedded='false'] {
+  pointer-events: none;
+  color: var(--popover-foreground);
+}
+/* Why: Radix's positioning wrapper still hit-tests while the panel is hidden, and over the sphere it reads as an outside click. */
+[data-radix-popper-content-wrapper]:has(> [data-agent-hub-orb-only]) {
+  pointer-events: none;
+}
+/* Why: the art's margin around the sphere is empty, and beside the dock it would swallow clicks on the dock's buttons. */
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-art-sphere,
+.agent-hub-orb-stage[data-embedded='false'] [data-agent-hub-orb-controls],
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-request-host {
+  pointer-events: auto;
+}
+
+.agent-hub-orb-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--orb-diameter) + 82px);
+  height: calc(var(--orb-diameter) + 52px);
+  touch-action: none;
+  cursor: grab;
+}
+.agent-hub-orb-art:active {
+  cursor: grabbing;
+}
+.agent-hub-orb-art-sphere {
+  width: var(--orb-diameter);
+  height: var(--orb-diameter);
+}
+/* Why: the grip's box starts at the sphere's centre; only the arc's stroke takes the pointer, so the sphere stays clickable. */
+.agent-hub-orb-resize {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  pointer-events: none;
+}
+.agent-hub-orb-resize-grip {
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: none;
+  outline: none;
+}
+.agent-hub-orb-resize-grip svg {
+  overflow: visible;
+}
+.agent-hub-orb-resize-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14px;
+  pointer-events: stroke;
+  cursor: nwse-resize;
+}
+.agent-hub-orb-resize-arc {
+  fill: none;
+  stroke: var(--muted-foreground);
+  stroke-width: 2px;
+  stroke-linecap: round;
+  pointer-events: none;
+  transition:
+    stroke 160ms ease,
+    stroke-width 160ms ease;
+}
+.agent-hub-orb-resize-grip:hover .agent-hub-orb-resize-arc,
+.agent-hub-orb-resize-grip:focus-visible .agent-hub-orb-resize-arc {
+  stroke: var(--foreground);
+  stroke-width: 4px;
+}
+/* Why: the handle shows on hover or focus, so keyboard users reach it. */
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-resize {
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 220ms ease,
+    transform 280ms ease;
+}
+.agent-hub-orb-stage[data-embedded='false']:hover .agent-hub-orb-resize,
+.agent-hub-orb-stage[data-embedded='false']:focus-within .agent-hub-orb-resize {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Why a reserved slot: the box appears and disappears under the sphere without moving it. */
+.agent-hub-orb-quick-slot {
+  display: flex;
+  justify-content: center;
+  flex: none;
+  width: 100%;
+  height: 36px;
+  /* Why: the canvas is bigger than the visible sphere; pull the box up so it sits about 12px under the sphere. */
+  margin-top: calc(-14px - var(--orb-diameter) * 0.225);
+  margin-bottom: 8px;
+}
+.agent-hub-orb-stage[data-embedded='false'] .agent-hub-orb-quick-slot {
+  pointer-events: none;
+}
+.agent-hub-orb-quick {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 292px;
+  max-width: calc(100vw - 32px);
+  height: 36px;
+  padding: 0 4px 0 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--popover) 88%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-floating);
+  color: var(--popover-foreground);
+  pointer-events: auto;
+  transition:
+    opacity 180ms ease,
+    transform 220ms ease,
+    visibility 0s linear 0s;
+}
+/* Why: a closed box shows with the pill and lingers as long; visibility alone blocks the pointer, so one crossing the gap still lands. */
+.agent-hub-orb-quick[data-open='false'] {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+  visibility: hidden;
+  transition-delay: 300ms, 300ms, 520ms;
+}
+.agent-hub-orb-stage:has(.agent-hub-orb-art:hover) .agent-hub-orb-quick[data-open='false'],
+.agent-hub-orb-quick[data-open='false']:hover,
+.agent-hub-orb-quick[data-open='false']:focus-within {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  transition-delay: 0s;
+}
+.agent-hub-orb-request-host {
+  z-index: 48;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  user-select: text;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--shadow-floating);
+}
+.agent-hub-orb-stage[data-embedded='true'] {
+  position: relative;
+  z-index: auto;
+  display: grid;
+  grid-template-columns: var(--orb-diameter) minmax(0, max-content);
+  justify-content: center;
+  min-height: 0;
+  padding: 8px 12px 10px;
+  gap: 8px 10px;
+}
+.agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-art {
+  width: var(--orb-diameter);
+  height: var(--orb-diameter);
+  cursor: default;
+}
+.agent-hub-orb-stage[data-embedded='true'] .agent-hub-orb-request-host {
+  grid-column: 1 / -1;
+  width: 100%;
+  box-shadow: none;
+}
+
+/* Why: the request card is the one surface; the host's own border and background would nest a box in a box. */
+.agent-hub-orb-request-host [data-native-chat-approval-card],
+.agent-hub-orb-request-host [data-agent-hub-request-card] {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.agent-hub-orb-stage[hidden],
+.agent-hub-orb-request-host[hidden] {
+  display: none;
+}
+
+.agent-hub-orb-hover-controls {
+  --pill-x: -50%;
+  --pill-y: -100%;
+  --pill-rest: 4px;
+  position: absolute;
+  z-index: 2;
+  /* Why: the canvas sits 26px into the art and the visible sphere starts 0.18 x diameter into it; 6px gap. */
+  top: calc(26px + var(--orb-diameter) * 0.18 - 6px);
+  left: 50%;
+  transform: translate(var(--pill-x), calc(var(--pill-y) + var(--pill-rest)));
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--popover) 82%, transparent);
+  backdrop-filter: blur(12px);
+  color: var(--popover-foreground);
+  opacity: 0;
+  pointer-events: none;
+  /* Why: the pill lingers 300ms so a pointer that slips off on its way up does not lose it. */
+  transition:
+    opacity 220ms ease 300ms,
+    transform 280ms ease 300ms;
+}
+/* Why: against the top edge the pill sits under the visible sphere, or under the writing box that shows with it. */
+.agent-hub-orb-stage[data-pill='below'] .agent-hub-orb-hover-controls {
+  --pill-y: 0%;
+  --pill-rest: -4px;
+  top: calc(26px + var(--orb-diameter) * 0.82 + 6px);
+}
+.agent-hub-orb-stage[data-pill='below']:not([data-quick='beside']):has(.agent-hub-orb-quick)
+  .agent-hub-orb-hover-controls {
+  top: calc(80px + var(--orb-diameter) * 0.775);
+}
+.agent-hub-orb-art:hover .agent-hub-orb-hover-controls,
+.agent-hub-orb-art:focus-within .agent-hub-orb-hover-controls,
+.agent-hub-orb-stage:has(.agent-hub-orb-quick:hover) .agent-hub-orb-hover-controls {
+  --pill-rest: 0px;
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0ms;
+}
+
+/* Why: beside a bottom or side dock the writing box opens above the sphere, mirroring its usual gap below. */
+.agent-hub-orb-stage[data-pinned='up'] {
+  flex-direction: column-reverse;
+}
+.agent-hub-orb-stage[data-pinned='up'] .agent-hub-orb-quick-slot {
+  margin-top: 8px;
+  margin-bottom: calc(-14px - var(--orb-diameter) * 0.225);
+}
+.agent-hub-orb-stage[data-pinned='up']:not([data-quick='beside']):has(.agent-hub-orb-quick)
+  .agent-hub-orb-hover-controls {
+  top: calc(var(--orb-diameter) * 0.225 - 28px);
+}
+/* Why: beside a top or bottom dock the pill leans away from the dock so it clears the agent cards over it. */
+.agent-hub-orb-stage[data-away='left'] .agent-hub-orb-hover-controls {
+  --pill-x: 0%;
+  left: auto;
+  right: calc(50% - var(--orb-diameter) * 0.275);
+}
+.agent-hub-orb-stage[data-away='right'] .agent-hub-orb-hover-controls {
+  --pill-x: 0%;
+  left: calc(50% - var(--orb-diameter) * 0.275);
+}
+/* Why: the writing box joins the dock's row on the sphere's far side, centred on the sphere, 10px off it like the dock. */
+.agent-hub-orb-stage[data-quick='beside'] .agent-hub-orb-quick-slot {
+  position: absolute;
+  width: auto;
+  margin: 0;
+}
+.agent-hub-orb-stage[data-pinned='up'][data-quick='beside'] .agent-hub-orb-quick-slot {
+  bottom: calc(12px + var(--orb-diameter) / 2 + 8px);
+}
+.agent-hub-orb-stage[data-pinned='down'][data-quick='beside'] .agent-hub-orb-quick-slot {
+  top: calc(var(--orb-diameter) / 2 + 8px);
+}
+.agent-hub-orb-stage[data-away='left'][data-quick='beside'] .agent-hub-orb-quick-slot {
+  right: calc(50% + var(--orb-diameter) * 0.32 + 10px);
+}
+.agent-hub-orb-stage[data-away='right'][data-quick='beside'] .agent-hub-orb-quick-slot {
+  left: calc(50% + var(--orb-diameter) * 0.32 + 10px);
+}
+/* Why: the pinned spot's outline while a drag is near the dock; it brightens where a release pins. */
+.agent-hub-orb-dock-drop {
+  position: fixed;
+  z-index: -1;
+  width: 58px;
+  height: 58px;
+  border: 1.5px dashed color-mix(in srgb, var(--foreground) 35%, transparent);
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+.agent-hub-orb-dock-drop[data-armed='true'] {
+  border-color: color-mix(in srgb, var(--foreground) 70%, transparent);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-hub-orb-stage .agent-hub-orb-resize,
+  .agent-hub-orb-stage .agent-hub-orb-hover-controls,
+  .agent-hub-orb-stage .agent-hub-orb-quick {
+    transition: none;
+  }
+}
+
+/* Why: inside the mini window the request host is a strip under the header, not a floating card. */
+.agent-hub-orb-mini-window .agent-hub-orb-request-host {
+  flex: none;
+  max-height: 220px;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: var(--card);
+  box-shadow: none;
+}

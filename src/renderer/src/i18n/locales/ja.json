@@ -7733,9 +7733,6 @@
           "333984cf90": "既存のブラウザセッションを使用する",
           "9895ed44de": "コンピュータ操作を開く"
         },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Agent ブラウザの使用を有効にする"
-        },
         "BrowserUseExamples": {
           "1199258ace": "コピー",
           "1188e56af4": "プロンプトの例をコピーする",
@@ -7973,6 +7970,59 @@
           },
           "worktreeCardStyle": {
             "title": "カードのスタイル"
+          },
+          "agentHub": {
+            "title": "Agent Hub",
+            "description": "すべての Agent とターミナルを一か所に集約。質問への回答、コマンドの承認、任意のペインへの移動ができます。",
+            "copy": "対応が必要な Agent、作業中の Agent、完了したばかりの Agent と、開いているすべてのターミナルを一覧するドック(またはステータスバー項目)を追加します。現在のワークスペースを離れずに、回答、承認、ライブミラーの表示ができます。",
+            "toggleLabel": "Agent Hub を切り替える",
+            "clearNever": "しない",
+            "clearHour": "1 時間",
+            "clearMinutes": "{{value0}} 分",
+            "placement": "ハブの表示形式",
+            "placementCopy": "ステータスバーやウィンドウの端にドラッグできるドック、またはステータスバー内の項目。",
+            "dock": "ドック",
+            "statusBar": "ステータスバー",
+            "autoHide": "アクティブな Agent がいない間はドックを隠す",
+            "autoHideCopy": "Agent が作業を始める、質問する、または完了するとすぐに再表示されます。",
+            "alerts": "通知",
+            "alertsCopy": "ハブの横に表示され、Agent のカードを開く吹き出し。表示中のペインでは表示されません。",
+            "alertNeedsInput": "Agent が質問する、または承認が必要なとき",
+            "alertFinished": "Agent が完了したとき",
+            "sound": "音を鳴らす",
+            "soundCopy": "通知のサウンドと音量を使用します(システムの場合は短いチャイム)。Orca 自身の通知がすでに音を鳴らす場合は鳴りません。",
+            "mutedUntil": "{{value0}} まで通知をミュート中",
+            "unmute": "再開する",
+            "popover": "ポップオーバー",
+            "defaultTab": "最初に開く画面",
+            "defaultTabCopy": "待機中の Agent がいない場合の画面です。待機中の Agent がいるときは常に受信トレイが開きます。",
+            "showShells": "通常のシェルを「すべてのターミナル」に表示する",
+            "clearFinished": "完了した Agent を受信トレイから削除するまでの時間",
+            "clearFinishedCopy": "Agent ビューでは未読のまま残ります。「しない」にすると、読むまでハブに残ります。",
+            "shortcutTaken": "{{value0}} はすでに {{value1}} で使用されています。キーボードショートカットで別のキーを選んでください。",
+            "shortcuts": "ショートカット",
+            "shortcutsUnset": "未設定。推奨: {{value0}}(ハブを開く、次の待機中 Agent へ移動、ミラーをハブに送る、ミラーを整列)。",
+            "shortcutsSet": "ハブを開く: {{value0}} · 次の待機中 Agent: {{value1}} · ミラーをハブへ: {{value2}} · ミラーを整列: {{value3}}",
+            "useSuggested": "これらを使う",
+            "editShortcuts": "編集",
+            "dockSize": "ドックのサイズ",
+            "shortcutNotSet": "未設定",
+            "trayPeek": "待機中のミラーを新着時に展開する時間",
+            "trayPeekCopy": "待機中のミラーが質問または完了すると、ハブの横のスタックがこの時間だけ開き、再び閉じます。",
+            "never": "しない",
+            "seconds": "{{value0}} 秒",
+            "tabAutoPopout": "ターミナルタブにポップアウトボタンを表示する",
+            "tabAutoPopoutCopy": "タブから直接、ターミナルをミラーで開きます。",
+            "mirrorCap": "同時に開くミラーウィンドウ数",
+            "mirrorCapCopy": "これを超えて開くと、最も古いものがハブの横に退避されます。",
+            "canvas": "ミラーキャンバスを有効にする",
+            "canvasCopy": "ボタンまたはショートカットでキャンバスを開き、ミラーを配置します。ポップアウトは現在のビューを維持します。キャンバスを離れるとミラーは退避され、戻ると復元されます。",
+            "restoreOnLaunch": "起動時にミラーとキャンバスを復元する",
+            "restoreOnLaunchCopy": "Orca を再起動すると、ミラー、トレイ、キャンバスが前回の状態で戻ります。ターミナルが閉じられたミラーは除外されます。",
+            "focusedPaneOutline": "フォーカス中のターミナルを枠で囲む",
+            "focusedPaneOutlineCopy": "キーボード入力を受けるペインに細い青の枠を表示します(ワークスペースとミラーの両方)。入力とディクテーションの送り先を示します。",
+            "paneQuickReply": "ターミナルでのクイック返信",
+            "paneQuickReplyCopy": "ターミナルの Agent が質問する、または承認が必要なとき、選択肢のカードがペインの隅に開きます。Esc で閉じます。回答はターミナルでも入力できます。"
           }
         },
         "FloatingWorkspacePane": {
@@ -8744,9 +8794,6 @@
           "14f1eb99d0": "「PR の作成」を開くときに詳細を生成する",
           "d32b87e754": "利用可能な場合はレビューテンプレートを使用する",
           "981eae7e14": "デフォルトでドラフト"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "ソース管理 AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "リンクを取り消すと、そのリンクが開いたターミナルで作成されたリンクも取り消されます。このコンピューターでターミナルを使える人（SSH またはリンク経由）は、引き続き再ペアリングできます。",
@@ -10161,6 +10208,21 @@
               "inWindow": "窓内",
               "worktrees": "ワークツリー",
               "eaf17a7214": "Agent ダッシュボード"
+            },
+            "agentHub": {
+              "title": "Agent Hub",
+              "description": "すべての Agent とターミナルを一か所に集約。質問への回答、コマンドの承認、任意のペインへの移動ができます。",
+              "agents": "Agent",
+              "inbox": "受信トレイ",
+              "statusBar": "ステータスバー",
+              "terminals": "ターミナル",
+              "questions": "質問",
+              "alerts": "通知",
+              "sound": "サウンド",
+              "notifications": "通知",
+              "dock": "ドック",
+              "notch": "ノッチ",
+              "mute": "ミュート"
             }
           }
         },
@@ -11365,21 +11427,6 @@
         "agent-generated-tab-title-copy": {
           "19ad21615a": "タブタイトルを自動生成",
           "b036c7a409": "最初に判明した Agent のプロンプトから、短く安定したタブ名を生成します。手動での名前変更が常に優先されます。"
-        },
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "ローカル main を最新の状態に保つ"
-                    }
-                  }
-                }
-              }
-            }
-          }
         },
         "cli": {
           "source": {
@@ -13572,6 +13619,27 @@
           "shownPluginCount_one": "これを含む {{count}} 件の一致するプラグインを表示",
           "shownPluginCount_other": "これを含む {{count}} 件の一致するプラグインを表示",
           "samePublisher": "{{value0}} として掲載された他のプラグイン"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "ソース管理 AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "ローカル main を最新の状態に保つ"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Agent ブラウザの使用を有効にする"
         }
       },
       "right": {
@@ -19314,6 +19382,128 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "ドック",
+        "mirrors": "ミラーとキャンバス",
+        "voice": "音声",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "ドック、通知、ミラー、音声、Orb の設定。",
+        "open": "Agent Hub 設定を開く"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Agent Hub Orb を切り替える",
+        "talkShortcut": "会話ショートカット",
+        "notSet": "未設定",
+        "agent": "Agent",
+        "model": "モデル",
+        "agentDefault": "Agent の既定",
+        "approvals": "承認",
+        "placement": "配置",
+        "freeWarning": "Orb は確認せずにコマンドを実行します。慎重に使用してください。",
+        "ask": "確認する",
+        "free": "自由に実行",
+        "workingFolder": "作業フォルダー",
+        "hidden": "非表示",
+        "speakReplies": "応答を読み上げる",
+        "comingLater": "後日対応予定",
+        "pastConversations": "過去の会話",
+        "backToConversation": "会話に戻る",
+        "newConversation": "新規",
+        "searchConversations": "会話を検索",
+        "allAgents": "すべてのAgent",
+        "today": "今日",
+        "yesterday": "昨日",
+        "noConversations": "会話が見つかりません",
+        "historyFailed": "会話を読み込めませんでした。もう一度お試しください。",
+        "disabled": "Orb と話すには Agent の操作を有効にしてください",
+        "openFailed": "Orb を開けませんでした。もう一度お試しください。",
+        "working": "作業中",
+        "open": "開く",
+        "openDenyKeys": "開く ↵ / 拒否 esc",
+        "toSend": "で送信",
+        "approvalKeys": "許可 ↵ / 拒否 esc",
+        "piRequiresFree": "Pi は「自由に実行」が必要です。コマンド実行前に確認するには別の Agent を選んでください。",
+        "settings": "Orb 設定",
+        "size": "Orb のサイズ",
+        "sizePixels": "{{value0}} ピクセル",
+        "endLiveVoice": "ライブ音声を終了",
+        "startLiveVoice": "ライブ音声を開始",
+        "showConversation": "会話を表示",
+        "unmuteMicrophone": "マイクのミュートを解除",
+        "muteMicrophone": "マイクをミュート",
+        "finishDictation": "ディクテーションを終了して送信",
+        "cancelDictation": "ディクテーションをキャンセル",
+        "stopSpeaking": "読み上げを停止",
+        "expand": "Orb を展開",
+        "minimize": "Orb を最小化",
+        "voiceUnavailable": "このホストではライブ音声を利用できません。",
+        "requestNoLongerAvailable": "このリクエストは別の場所で回答済みか、すでに利用できません。",
+        "requestDenied": "リクエストを拒否しました",
+        "requestExpired": "リクエストの期限切れ",
+        "answerReceived": "回答を受信しました",
+        "awayAnswerReceived": "不在時の設定により回答されました",
+        "requestClosed": "リクエストを閉じました",
+        "dismissRequestOutcome": "リクエスト結果を閉じる",
+        "speakingMuted": "読み上げ中。マイクはミュート中です。ライブ音声は接続されたままです。",
+        "speaking": "読み上げ中",
+        "needsAnswer": "回答を待っています",
+        "voiceFailed": "ライブ音声に接続できませんでした。",
+        "codexVoiceUnsupported": "このバージョンの Codex はライブ音声に対応していません。",
+        "codexVoiceUsageLimit": "アカウントの使用上限に達したため、Codex のライブ音声は利用できません。",
+        "codexVoiceAccessDenied": "Codex がライブ音声を拒否しました。現在のアカウントとワークスペースへのアクセス権を確認してください。",
+        "codexVoiceConnectionFailed": "Codex のライブ音声に接続できませんでした。接続が閉じられてからもう一度お試しください。",
+        "voiceConnectFailed": "ライブ音声に接続できませんでした。もう一度お試しください。",
+        "voiceStopping": "ライブ音声を終了しています…",
+        "voiceConnecting": "ライブ音声に接続しています…",
+        "muted": "マイクはミュート中です。ライブ音声は接続されたままです。",
+        "listening": "聞き取り中",
+        "done": "完了",
+        "ready": "準備完了",
+        "dismissReceipt": "閉じる",
+        "connectionWarning": "接続の警告 1 件",
+        "connectionWarnings": "接続の警告 {{value0}} 件",
+        "floating": "フローティング",
+        "hideConnectionWarnings": "非表示",
+        "readyPrompt": "準備完了。入力するか、球体を押して話してください。",
+        "showConnectionWarnings": "表示"
+      },
+      "alerts": {
+        "info": "Agent が情報を共有したとき",
+        "mute": "通知をミュート",
+        "duration": "期間を選択…",
+        "muteHour": "1 時間",
+        "muteTwoHours": "2 時間",
+        "muteTomorrow": "明日の 09:00 まで"
+      },
+      "voice": {
+        "dictateImprove": "音声入力して改善"
+      },
+      "search": {
+        "mirror": "ミラー",
+        "canvas": "キャンバス",
+        "dim": "暗くする",
+        "quickreply": "クイック返信",
+        "outline": "輪郭",
+        "tray": "トレイ",
+        "popout": "ポップアウト",
+        "microphone": "マイク",
+        "shortcut": "ショートカット",
+        "restore": "復元",
+        "shells": "シェル",
+        "orb": "Orb",
+        "voice": "音声"
+      },
+      "mirror": {
+        "newAgentNotAdded": "このミラーに追加できませんでした。ワークスペースのタブから開いてください。",
+        "newAgentStartedInWorkspace": "{{agent}} を {{workspace}} で開始しました。"
+      }
+    },
+    "agentHubPeekOutsideWorkspace": "Agent Peek のファイルは対象ワークスペース内にある必要があります。",
     "startup": {
       "webHostUnreachable": {
         "title": "Orca ホストに接続できませんでした",
@@ -19945,6 +20135,7 @@
         "next": "次へ",
         "skip": "スキップ",
         "sending": "送信中…",
+        "recommended": "推奨",
         "terminalRequired": "ターミナルでこの OMP の質問に答えてください。",
         "openTerminal": "ターミナルで回答する"
       },
@@ -20057,6 +20248,7 @@
         "orcaStopCrash": "この応答の途中で、{{machine}} の Orca が予期せず停止しました。",
         "orcaStopRemote": "この応答の途中で、{{machine}} の Orca が停止しました。",
         "orcaStopCanContinue": "この会話で続行できます。",
+        "mcpStartupDetails": "MCP 接続の詳細",
         "orcaStopUnnamedServer": "リモートサーバー",
         "permissionDenied": "{{agent}} が権限を拒否しました。詳細を表示。",
         "safetyReviewApproved": "{{agent}} がこの操作を承認しました。詳細を表示。",
@@ -20298,6 +20490,7 @@
       },
       "visualUnavailable": "ビジュアライゼーションを利用できません",
       "visualLoading": "ビジュアライゼーションを読み込み中",
+      "spokenMessage": "音声メッセージ",
       "visualOpenInNewTab": "新しいタブで開く",
       "resumeCommand": {
         "description": "Agent セッション履歴を開く",
@@ -20917,7 +21110,15 @@
       "modeLatestStatus": "最新の状況（推奨）",
       "modeFullTranscript": "完全なトランスクリプト",
       "modeFullCost": "時間がかかり、プランや API クレジットを多く消費します。",
-      "startSessionSentence": "セッションを開始"
+      "startSessionSentence": "セッションを開始",
+      "openIn": "開く場所",
+      "placementTab": "新規タブ",
+      "placementPane": "新規ペイン",
+      "placementJump": "移動する",
+      "placementTabDescription": "このミラーのタブとして追加し、この場所に留まります。",
+      "placementPaneDescription": "ワークスペース内でこのペインの横に分割し、新しいペイン用のミラータブを追加します。",
+      "placementJumpDescription": "新しいタブを開き、ワークスペースをそのタブに切り替えます。",
+      "mirrorNotAdded": "新しいセッションはワークスペースで開きましたが、ミラーにタブとして追加できませんでした。"
     },
     "terminalPane": {
       "TerminalContextMenu": {
@@ -21714,6 +21915,37 @@
       "unverified": "{{profile}} の Google Cookie を確認できませんでした。もう一度お試しください。",
       "fe3f6e1721": "Google Cookie"
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "パスワード保存の確認",
+        "updateTitle": "パスワードを更新しますか？",
+        "saveTitle": "パスワードを保存しますか？",
+        "username": "ユーザー名",
+        "password": "パスワード",
+        "never": "このサイトでは保存しない",
+        "notNow": "今はしない",
+        "update": "更新",
+        "save": "保存",
+        "saveChip": "パスワードを保存",
+        "updateChip": "パスワードを更新"
+      },
+      "fill": {
+        "noUsername": "（ユーザー名なし）",
+        "title": "保存済みのログイン情報",
+        "otherLogins": "このサイトの他のログイン情報"
+      }
+    },
+    "toolbar": {
+      "annotate": "注釈",
+      "grab": "取得",
+      "draw": "描き込み",
+      "copyAllNotes": "すべてのメモをコピー",
+      "clearNotes": "メモをクリア",
+      "resetZoom": "ズームをリセット",
+      "resetViewport": "ビューポートのサイズをリセット",
+      "findOnPage": "ページ内を検索",
+      "profile": "プロファイル"
+    },
     "loadFailure": {
       "connectionNotSecure": "接続は安全ではありません",
       "cantReachHost": "{{value0}} に接続できません",
@@ -21927,37 +22159,6 @@
         "imported_other": "{{domains}} 用に Cookie を {{count}} 個インポートしました。使用するにはページを再読み込みしてください。",
         "failed": "Cookie をインポートできませんでした: {{reason}}"
       }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "パスワード保存の確認",
-        "updateTitle": "パスワードを更新しますか？",
-        "saveTitle": "パスワードを保存しますか？",
-        "username": "ユーザー名",
-        "password": "パスワード",
-        "never": "このサイトでは保存しない",
-        "notNow": "今はしない",
-        "update": "更新",
-        "save": "保存",
-        "saveChip": "パスワードを保存",
-        "updateChip": "パスワードを更新"
-      },
-      "fill": {
-        "noUsername": "（ユーザー名なし）",
-        "title": "保存済みのログイン情報",
-        "otherLogins": "このサイトの他のログイン情報"
-      }
-    },
-    "toolbar": {
-      "annotate": "注釈",
-      "grab": "取得",
-      "draw": "描き込み",
-      "copyAllNotes": "すべてのメモをコピー",
-      "clearNotes": "メモをクリア",
-      "resetZoom": "ズームをリセット",
-      "resetViewport": "ビューポートのサイズをリセット",
-      "findOnPage": "ページ内を検索",
-      "profile": "プロファイル"
     }
   },
   "runtimeRpc": {
@@ -23378,6 +23579,439 @@
   },
   "projectField": {
     "updateFailed": "プロジェクトフィールドを更新できませんでした"
+  },
+  "agentHub": {
+    "attention": {
+      "answerInTerminal": "このターミナルで回答してください。別ウィンドウか Orca で開けます。"
+    },
+    "row": {
+      "jump": "このターミナルへ移動",
+      "popOut": "別ウィンドウで開く",
+      "markRead": "既読にする",
+      "currentWorkspace": "現在のワークスペース内",
+      "sendToHub": "Agent Hub に移す",
+      "bringBack": "戻す",
+      "showInMirror": "ミラーで表示",
+      "closeAgent": "Agent を閉じる",
+      "closeShell": "ターミナルを閉じる"
+    },
+    "mirror": {
+      "newAgent": "新規 Agent",
+      "project": "プロジェクト",
+      "workspace": "ワークスペース",
+      "chooseProject": "プロジェクトを選択",
+      "chooseWorkspace": "ワークスペースを選択",
+      "newAgentDescription": "既存のワークスペースと起動する Agent を選択します。",
+      "agentLabel": "Agent",
+      "openAgentSettings": "Agent 設定を開く",
+      "configureAgents": "Agent を設定",
+      "noAgents": "利用できる Agent がありません",
+      "searchWorkspaces": "ワークスペースを検索",
+      "noWorkspaces": "一致するワークスペースがありません。",
+      "startAgent": "Agent を起動",
+      "agent": "Agent",
+      "addAgentInWorkspace": "{{workspace}} に Agent を追加",
+      "newAgentInWorkspace": "{{workspace}} の新規 {{agent}} Agent",
+      "newAgentFailed": "{{agent}} を起動できませんでした。",
+      "newAgentUnavailable": "新しいターミナルを利用できません。",
+      "backHome": "{{value0}} に戻る",
+      "returnAgain": "もう一度クリックして {{value0}} に戻る",
+      "close": "ミラーを閉じる",
+      "noTerminal": "このペインには現在稼働中のターミナルがありません。",
+      "connecting": "ターミナルに接続中…",
+      "restore": "{{value0}} を復元",
+      "minimize": "最小化",
+      "inWorkspace": "このペインは現在のワークスペースに表示されているため、そのまま残ります。別のタブやワークスペースに切り替えると、このウィンドウに戻ります。",
+      "inWorkspaceTitle": "このワークスペースを表示中",
+      "renameHint": "ダブルクリックで名前を変更",
+      "rename": "ターミナル名を変更",
+      "workerCount": "{{value0}} ワーカー",
+      "family": "ディスパッチャーとワーカー",
+      "workers": "ワーカー",
+      "trayLess": "表示を減らす",
+      "trayMore": "+{{value0}}",
+      "dockAll": "すべてのミラーを Agent Hub に移す",
+      "jumpHint": "ワークスペース内のこのターミナルへ移動",
+      "jump": "移動",
+      "hideWorkers": "ワーカーバーを隠す",
+      "showWorkers": "ワーカーバーを表示",
+      "cancelDictation": "ディクテーションをキャンセル",
+      "cancelDictationHint": "ディクテーションをキャンセルし、未入力のテキストを破棄",
+      "endFocus": "このミラーを元の位置に戻す",
+      "focus": "このミラーにフォーカス",
+      "showInSidebar": "サイドバーに表示",
+      "returnToWorkspace": "ワークスペースに戻る",
+      "tabCount": "{{value0}} タブ",
+      "tabCount_one": "{{value0}} タブ",
+      "tabCount_other": "{{value0}} タブ",
+      "addHint": "このミラーにターミナルを追加",
+      "pickerSections": "ターミナル一覧",
+      "available": "追加できるターミナル",
+      "noneAvailable": "追加できるターミナルはありません",
+      "closeTab": "タブを閉じる",
+      "closeTabNamed": "ミラーのタブ {{value0}} を閉じる",
+      "terminals": "ミラーのターミナル",
+      "add": "ターミナルを追加",
+      "tabLimit": "ミラーには最大 10 個のターミナルを追加できます。",
+      "addUnavailable": "このターミナルはもう追加できません。",
+      "alreadyOwned": "このターミナルはすでに別ウィンドウにあります。",
+      "trayFull": "空きを作るため、最も古い最小化ミラーを閉じました。ターミナルは元のワークスペースに残っています。",
+      "dropUnavailable": "ここにはドロップできません",
+      "openInNew": "新しいミラーで開く",
+      "moveToMirror": "ミラーに移す",
+      "moveUnavailable": "このターミナルはもう移動できません。",
+      "tabLabel": "{{value0}}、{{value1}}",
+      "dictationStopKey": "で停止",
+      "projectFilter": {
+        "label": "プロジェクト",
+        "remove": "{{value0}} をフィルターから外す",
+        "add": "プロジェクト",
+        "all": "すべてのプロジェクト",
+        "search": "プロジェクトを検索…",
+        "noMatch": "一致するプロジェクトはありません。",
+        "clear": "フィルターをクリア",
+        "empty": "これらのプロジェクトに追加できるものはありません",
+        "showAllProjects": "すべてのプロジェクトを表示",
+        "outside": "フィルター外にあと {{value0}} 件",
+        "showAll": "すべて表示"
+      }
+    },
+    "title": "Agent",
+    "tab": {
+      "inbox": "受信トレイ",
+      "running": "実行中",
+      "all": "すべてのターミナル",
+      "agents": "Agent",
+      "shownInMirror": "ミラーに表示中",
+      "bringBack": "戻す"
+    },
+    "inbox": {
+      "previous": "前へ",
+      "next": "次へ",
+      "needsYou": "対応が必要",
+      "emptyTitle": "回答待ちのエージェントはいません",
+      "markAllRead": "すべて既読にする",
+      "finished": "完了",
+      "emptyHint": "{{value0}} 実行中 · 質問があれば通知します",
+      "oneAgent": "1 Agent",
+      "agents": "{{value0}} Agent",
+      "hidden": "{{value0}} 件非表示 · 表示"
+    },
+    "running": {
+      "empty": "現在作業中の Agent はいません",
+      "working": "作業中",
+      "longestFirst": "経過時間が長い順",
+      "popOutAll": "すべて別ウィンドウで開く"
+    },
+    "footer": {
+      "move": "移動",
+      "popOut": "別ウィンドウで開く",
+      "answer": "回答",
+      "tabs": "タブ",
+      "jump": "移動",
+      "close": "閉じる"
+    },
+    "toast": {
+      "nobodyWaiting": "回答待ちのエージェントはいません"
+    },
+    "trigger": {
+      "needsYouOne": "1 件の対応が必要",
+      "needsYouOther": "{{value0}} 件の対応が必要"
+    },
+    "terminals": {
+      "searchPlaceholder": "ターミナル、プロジェクト、グループ、Agent で絞り込み",
+      "searchLabel": "ターミナルを絞り込む",
+      "noMatch": "「{{value0}}」に一致するターミナルはありません",
+      "empty": "開いているターミナルはありません",
+      "shell": "シェル",
+      "ungrouped": "グループなし",
+      "unknownProject": "不明",
+      "termCount": "{{value0}} ターミナル",
+      "noMatchHint": "プロジェクト、グループ、ブランチ、Agent の名前で検索",
+      "sortManualHint": "サイドバーで並べた順にワークスペースを表示します。",
+      "sortLabel": "並び順: {{value0}}",
+      "sortBy": "並び替え"
+    },
+    "card": {
+      "recommended": "推奨",
+      "dictate": "ディクテーション",
+      "send": "送信",
+      "wantsToRun": "実行を希望",
+      "allowOnce": "はい、今回だけ実行",
+      "alwaysAllow": "常に許可",
+      "denyInstead": "いいえ、代わりの手順を {{value0}} に伝える",
+      "needsApproval": "承認が必要",
+      "asking": "質問中",
+      "replyTo": "@{{value0}} に回答…",
+      "instead": "代わりの手順を伝える…",
+      "jump": "ターミナルへ移動",
+      "insteadOrDeny": "代わりの手順を入力するか、Enter で拒否…",
+      "pastedImage": "画像 {{value0}}",
+      "removeImage": "{{value0}} を削除",
+      "hide": "次の質問まで隠す"
+    },
+    "close": "閉じる (esc)",
+    "state": {
+      "idle": "待機中",
+      "working": "作業中",
+      "done": "完了"
+    },
+    "alert": {
+      "asking": "質問しています",
+      "needsApproval": "承認が必要",
+      "finished": "完了",
+      "more": "Agent Hub にさらに {{value0}} 件",
+      "dismiss": "閉じる"
+    },
+    "dock": {
+      "nextWaiting": "次の回答待ち Agent へ移動",
+      "edgeBottom": "ステータスバーの上",
+      "edgeLeft": "左端",
+      "edgeRight": "右端",
+      "more": "その他",
+      "unmute": "通知を再開",
+      "mute": "通知を 2 時間ミュート",
+      "position": "位置",
+      "useStatusBar": "ステータスバーに表示",
+      "settings": "Agent Hub の設定…",
+      "edgeTop": "タイトルバーの下",
+      "waiting": "回答待ち",
+      "finished": "完了",
+      "sizeSmall": "小",
+      "sizeMedium": "中",
+      "sizeLarge": "大",
+      "size": "サイズ",
+      "dockMirrors": "ミラーを Agent Hub に移す",
+      "restoreMirrors": "ミラーを戻す",
+      "openCanvas": "キャンバスを開く",
+      "arrange": "ミラーを整列"
+    },
+    "children": {
+      "agentOne": "1 Agent",
+      "agentMany": "{{value0}} Agent",
+      "subagentOne": "1 サブ Agent",
+      "subagentMany": "{{value0}} サブ Agent"
+    },
+    "statusBarMenuItem": "Agent Hub",
+    "dim": {
+      "modeOff": "暗くしない",
+      "modeOn": "フローティングウィンドウの背後を暗くする",
+      "modeUntilClick": "背後をクリックするまで暗くする",
+      "modeMinimizeOnClick": "背後を暗くし、クリックで最小化",
+      "title": "フローティングウィンドウの背後を暗くする"
+    },
+    "count": {
+      "nested": "配下にさらに {{value0}} 件"
+    },
+    "hover": {
+      "openTabHere": "ここでタブとして開く",
+      "state": "状態",
+      "where": "場所",
+      "popout": "専用ウィンドウ"
+    },
+    "arrange": {
+      "title": "フローティングウィンドウを整列",
+      "grid": "グリッド",
+      "columns": "横並び",
+      "rows": "縦並び"
+    },
+    "tabToggle": {
+      "on": "このタブを離れると別ウィンドウで開きます（クリックで停止）",
+      "off": "タブを離れたらこのターミナルを別ウィンドウで開く"
+    },
+    "canvas": {
+      "emptyTitle": "キャンバスにミラーはありません",
+      "emptyHint": "Agent Hub からターミナルを別ウィンドウで開くか、最小化したミラーを戻すと、ここに表示されます。",
+      "leave": "キャンバスを離れる",
+      "showSidebar": "サイドバーを表示"
+    },
+    "mic": {
+      "voiceOptions": "右クリックで音声オプション。",
+      "start": "このターミナルにディクテーション",
+      "starting": "マイクを起動中… クリックで停止。",
+      "stop": "ディクテーションを停止",
+      "finishing": "ディクテーションを終了中…",
+      "elsewhereNamed": "「{{name}}」でディクテーション中です。",
+      "elsewhereTerminal": "別のターミナルでディクテーション中です。",
+      "elsewhere": "Orca の別の場所でディクテーション中です。",
+      "onlyOne": "同時に実行できるのは 1 件だけです。",
+      "disabled": "ディクテーションは無効です。",
+      "noModel": "選択・ダウンロード済みの音声モデルがありません。",
+      "unsupported": "このウィンドウからフローティングワークスペースのターミナルにはディクテーションできません。",
+      "enable": "ディクテーション",
+      "model": "音声モデル",
+      "noModels": "ダウンロード済みのモデルはありません",
+      "moreModels": "設定でさらに表示…",
+      "settings": "音声設定…",
+      "startWithImproveHint": "このターミナルにディクテーション。Shift を押しながらクリックすると、入力して改善します。",
+      "dictateAndImprove": "ディクテーションして改善",
+      "dictate": "ディクテーション",
+      "mode": "マイクの動作",
+      "modeCopy": "ミラーのマイクをクリックすると、このモードで開始します。Shift を押しながらクリックすると、利用可能なもう一方のモードで開始します。",
+      "startImproveHint": "このターミナルにディクテーションして改善。Shift を押しながらクリックすると、入力のみ行います。",
+      "improve": "ディクテーションして改善",
+      "improveWithAgent": "Agent で改善",
+      "improveSettings": "文字起こし改善の設定",
+      "modeSwitchCopy": "有効時はミラーのマイクがディクテーションして改善します。Shift を押しながらクリックすると、逆の動作になります。",
+      "improveRequired": "文字起こしの改善機能が必要です。",
+      "listeningTab": "このターミナルでディクテーション中",
+      "answering": "質問カードが開いています。フィールド内のマイクで回答を音声入力してください。"
+    },
+    "shortcut": {
+      "doubleTapHint": "修飾キーのダブルタップも登録できます。",
+      "suggestions": "未設定のショートカット候補: {{bindings}}",
+      "conflict": "{{binding}} は {{owners}} と競合しています。",
+      "parseError": "ショートカットを解析できません。",
+      "saveError": "ショートカットを保存できませんでした。"
+    },
+    "shortcuts": {
+      "title": "キーボードショートカット",
+      "toggle": "Agent Hub を開く／閉じる",
+      "nextWaiting": "次の回答待ち Agent へ移動",
+      "dockMirrors": "ミラーを最小化／復元",
+      "popOut": "アクティブな Agent を別ウィンドウで開く",
+      "jumpToMirror": "アクティブなミラーのワークスペースへ移動",
+      "arrangeMirrors": "ミラーを整列",
+      "toggleCanvas": "キャンバスを開く／離れる",
+      "focusMirror": "キャンバス上のアクティブなミラーをフォーカス／解除",
+      "hub": "Agent Hub",
+      "mirrors": "ミラー",
+      "canvas": "キャンバス",
+      "dictation": "ディクテーション",
+      "notSet": "未設定",
+      "setAction": "{{action}} のショートカットを設定",
+      "set": "ショートカットを設定",
+      "edit": "ショートカットを編集",
+      "editDescription": "Hub、Orb、ミラー、音声入力のショートカットを変更します。"
+    },
+    "windowFilter": {
+      "label": "ウィンドウで絞り込み",
+      "labelActive": "フィルター: {{value0}}",
+      "title": "表示",
+      "any": "すべて",
+      "open": "ウィンドウに表示中",
+      "emptyOpen": "ウィンドウに表示中のターミナルはありません",
+      "minimized": "最小化",
+      "emptyMinimized": "最小化されたターミナルはありません",
+      "none": "ウィンドウなし",
+      "emptyNone": "すべてのターミナルがウィンドウにあります"
+    },
+    "dictation": {
+      "here": "ここにディクテーション中"
+    },
+    "quick": {
+      "answerWith": "回答: {{value0}}",
+      "more": "↵ ですべての {{value0}} 件を表示",
+      "deny": "いいえ",
+      "title": "クイック返信",
+      "close": "閉じてターミナルで回答 (esc)",
+      "recommended": "推奨",
+      "ownWords": "自分の言葉で回答…",
+      "escHint": "ターミナル",
+      "reopen": "クイック返信カードを表示",
+      "send": "送信",
+      "sending": "送信中…"
+    },
+    "settings": {
+      "agentControl": "Agent による Agent Hub の操作を許可",
+      "agentControlCopy": "Agent が内容の表示、質問、ミラーの管理を行えます。"
+    },
+    "requests": {
+      "decisionGate": "判断待ち",
+      "gateUpdateRequired": "判断待ちに回答するには、このホストを更新してください。",
+      "pairedPeekUnavailable": "Peek はこのペアリング済みホストの URL やファイルをまだ開けません。",
+      "peekUnavailable": "現在のビューでは Peek を利用できません。",
+      "peekUnsupported": "この URL やファイルは、そのホストの Peek では開けません。",
+      "peekUnsupportedFile": "このファイル形式は Peek で表示できません。ワークスペースまたは既定のアプリで開いてください。",
+      "targetUnavailable": "このターミナルは所属ホストで利用できなくなりました。",
+      "mirrorAddFailed": "呼び出し元のミラーにターミナルを追加できませんでした（{{reason}}）。",
+      "mirrorOpenFailed": "ミラーを開けませんでした（{{reason}}）。",
+      "mirrorUnavailable": "このターミナルにはミラーがありません。",
+      "invalidLayout": "グリッド、列、行の配置を選んでください。",
+      "canvasDisabled": "設定で Agent Hub のキャンバスを有効にすると開けます。",
+      "presenceUnavailable": "デスクトップでの在席状況を確認できません。",
+      "disconnected": "このホストは切断されています。",
+      "unavailable": "このリクエストは利用できなくなりました。",
+      "sendFailed": "回答を送信できませんでした。もう一度お試しください。",
+      "sending": "送信中…",
+      "answeredElsewhere": "別の場所で回答済み",
+      "asks": "@{{agent}} からの質問",
+      "wantsTo": "@{{agent}} のリクエスト: {{action}}",
+      "allowOnce": "今回だけ許可",
+      "allowSession": "このセッション中は許可",
+      "deny": "拒否",
+      "awayAnswer": "不在中に @{{agent}} が {{answer}} を選びました",
+      "openMirror": "{{title}} のミラーを開く",
+      "minimizeMirror": "{{title}} のミラーを最小化",
+      "restoreMirror": "{{title}} のミラーを復元",
+      "closeMirror": "{{title}} のミラーを閉じる",
+      "peekLink": "{{link}} を Peek で表示",
+      "arrangeMirrors": "ミラーを整列",
+      "openCanvas": "キャンバスを開く",
+      "closeCanvas": "キャンバスを閉じる"
+    },
+    "answerQueue": {
+      "answeredElsewhere": "別の場所で回答済み",
+      "automatically": "自動",
+      "caughtUp": "すべて対応済み",
+      "exit": "終了",
+      "includeApprovals": "承認を含める",
+      "isAsking": "が質問しています",
+      "later": "後で",
+      "laterHint": "後で",
+      "onlyShortcut": "ショートカットのみ",
+      "openShortcut": "Agent Hub の回答キューを開く",
+      "openTerminal": "ターミナルで開く",
+      "openWhen": "質問が届いたら開く",
+      "pick": "選択",
+      "send": "送信",
+      "title": "回答キュー",
+      "unverifiable": "ホストへの接続を確認できません。再接続して回答を送信してください。",
+      "waiting": "{{count}} 件待機中"
+    },
+    "peek": {
+      "kindWeb": "Web",
+      "kindImage": "画像",
+      "kindPdf": "PDF",
+      "kindMarkdown": "Markdown",
+      "kindCsv": "表",
+      "kindMermaid": "図",
+      "kindNotebook": "ノートブック",
+      "kindText": "コード / テキスト",
+      "kindMedia": "メディア",
+      "source": "{{value0}} から",
+      "showSource": "このミラーを前面に表示",
+      "openInTab": "タブで開く",
+      "openInEditor": "エディターで開く",
+      "openInBrowser": "ブラウザーで開く",
+      "openWithApp": "デフォルトのアプリで開く",
+      "back": "前のプレビュー",
+      "close": "閉じる (esc)",
+      "chips": "このメッセージ内のリンク",
+      "chipLabel": "{{value0}} を Peek で表示",
+      "unreadable": "このファイルをここに表示できませんでした。",
+      "action": "Peek",
+      "exitFullScreen": "全画面表示を終了",
+      "fullScreen": "全画面表示",
+      "hostAddress": "このアドレスはホストでのみ利用できます。ワークスペースのブラウザーで開きます。",
+      "workspaceFallback": "ここではプレビューを表示できません。ワークスペースで開きます。",
+      "unavailable": "このリンクを開けませんでした。"
+    },
+    "orb": {
+      "defaultAction": "Orbを開くモード",
+      "defaultActionHint": "Orbボタンとショートカットで使用します。",
+      "alternateAction": "{{modifier}}+クリックの動作",
+      "alternateActionHint": "既定の動作を変えずにこのモードを開きます。",
+      "liveAction": "ライブ",
+      "textAction": "テキスト",
+      "microphoneBusy": "マイクは別の録音で使用中です。",
+      "modifierClickHint": "{{modifier}}+クリック · {{action}}",
+      "modelsLoading": "利用可能なモデルを読み込み中…",
+      "modelsUnavailable": "利用可能なモデルを読み込めませんでした。モデルメニューを開いて再試行してください。",
+      "modelUnavailable": "利用不可",
+      "settingsApply": "Orb がアイドル状態のとき、Agent ・モデル・承認の変更で新規会話が始まります。過去の会話はその Agent とモデルを保持します。",
+      "liveHoldsInput": "ライブ音声がオンです。入力するには停止してください。"
+    }
   },
   "workspaceDeletion": {
     "preferenceSaveFailed": "削除の設定を保存できませんでした",

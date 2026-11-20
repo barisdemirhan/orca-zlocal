@@ -73,6 +73,27 @@ describe('pruneClosedBackgroundMountTabs', () => {
     expect(mounted.has('wt-1')).toBe(false)
   })
 
+  it('keeps a mount alive for a standalone chat that tabsByWorktree does not list', () => {
+    const restrictions = new Map<string, ReadonlySet<string>>([['wt-1', new Set(['chat-1'])]])
+    const mounted = new Set(['wt-1'])
+    const chat = { id: 'chat-1', contentType: 'agent-session', agentSessionAgent: 'claude' }
+
+    expect(
+      pruneClosedBackgroundMountTabs(restrictions, mounted, { 'wt-1': [] }, undefined, {
+        'wt-1': [chat]
+      })
+    ).toBe(false)
+    expect(restrictions.get('wt-1')).toEqual(new Set(['chat-1']))
+    expect(mounted.has('wt-1')).toBe(true)
+
+    expect(
+      pruneClosedBackgroundMountTabs(restrictions, mounted, { 'wt-1': [] }, undefined, {
+        'wt-1': []
+      })
+    ).toBe(true)
+    expect(mounted.has('wt-1')).toBe(false)
+  })
+
   it('leaves unrestricted user-visited and whole-worktree mounts alone', () => {
     const restrictions = new Map<string, ReadonlySet<string>>()
     const mounted = new Set(['wt-visited', 'wt-whole'])

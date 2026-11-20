@@ -1,6 +1,11 @@
-import { useRef, useCallback } from 'react'
-import { openMicrophoneCaptureStream } from '@/components/dictation/microphone-devices'
+import { useRef, useCallback, useEffect, useState } from 'react'
+import { MicrophoneCaptureSession } from '@/components/dictation/microphone-capture-session'
 import captureWorkletUrl from '@/components/dictation/dictation-capture-worklet?worker&url'
+import type {
+  StartAudioCaptureOptions,
+  StartAudioCaptureResult
+} from '../../hooks/audio-capture-types'
+export type { StartAudioCaptureResult } from '../../hooks/audio-capture-types'
 import {
   DICTATION_CAPTURE_WORKLET_NAME,
   type DictationCaptureWorkletMessage,
@@ -17,23 +22,9 @@ type BufferedAudioChunk = {
   sessionId: string
 }
 
-type StartAudioCaptureOptions = {
-  bufferAudio?: boolean
-  sessionId?: string
-  /** null/undefined = system default input device */
-  microphoneDeviceId?: string | null
-  /** Cached label, used to re-resolve a device whose id was re-salted */
-  microphoneDeviceLabel?: string | null
-  /** Fires when the live input device disappears mid-capture */
-  onCaptureLost?: () => void
-  /** Fires when the host's session accepts no more audio (cloud upload cap) */
-  onAudioLimitReached?: () => void
+type CaptureStartOptions = StartAudioCaptureOptions & {
   /** Sees every 16 kHz frame as it's captured, before any buffering */
   onFrame?: (samples: Float32Array) => void
-}
-
-export type StartAudioCaptureResult = {
-  fellBackToDefaultMicrophone: boolean
 }
 
 // Holds everything said while the model loads, for as long as the host waits for it to load.
@@ -47,6 +38,7 @@ const CAPTURE_WORKLET_OPTIONS: DictationCaptureWorkletOptions = {
 
 export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
   const streamRef = useRef<MediaStream | null>(null)
+  const [captureSession] = useState(() => new MicrophoneCaptureSession())
   const contextRef = useRef<AudioContext | null>(null)
   const processorRef = useRef<AudioWorkletNode | null>(null)
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null)
@@ -76,9 +68,9 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
     }
     contextRef.current = null
 
-    streamRef.current?.getTracks().forEach((track) => track.stop())
+    void captureSession.stop()
     streamRef.current = null
-  }, [])
+  }, [captureSession])
 
   const resetBufferedAudio = useCallback(() => {
     bufferedAudioGenerationRef.current += 1
@@ -130,9 +122,7 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
   )
 
   const start = useCallback(
-    async (
-      options: StartAudioCaptureOptions = {}
-    ): Promise<StartAudioCaptureResult | undefined> => {
+    async (options: CaptureStartOptions = {}): Promise<StartAudioCaptureResult | undefined> => {
       if (isCapturingRef.current) {
         return
       }
@@ -145,18 +135,14 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
       capturedChunkCountRef.current = 0
       resetMeter()
 
-      const { stream, fellBackToDefaultMicrophone } = await openMicrophoneCaptureStream({
-        preferredDeviceId: options.microphoneDeviceId,
-        preferredDeviceLabel: options.microphoneDeviceLabel,
-        getUserMedia: (constraints) => navigator.mediaDevices.getUserMedia(constraints),
-        enumerateDevices: navigator.mediaDevices?.enumerateDevices
-          ? () => navigator.mediaDevices.enumerateDevices()
-          : undefined
+      const capture = await captureSession.open({
+        deviceId: options.microphoneDeviceId,
+        label: options.microphoneDeviceLabel
       })
-      if (startRequestRef.current !== startRequest) {
-        stream.getTracks().forEach((track) => track.stop())
+      if (!capture) {
         return
       }
+      const { stream, fellBackToDefaultMicrophone } = capture
       streamRef.current = stream
 
       let context: AudioContext | null = null
@@ -182,7 +168,7 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
           if (streamRef.current === stream) {
             streamRef.current = null
           }
-          stream.getTracks().forEach((track) => track.stop())
+          await captureSession.stop(stream)
           return
         }
 
@@ -248,7 +234,7 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
         if (context && context.state !== 'closed') {
           void context.close()
         }
-        stream.getTracks().forEach((track) => track.stop())
+        await captureSession.stop(stream)
         if (streamRef.current === stream) {
           streamRef.current = null
         }
@@ -262,7 +248,14 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
         throw err
       }
     },
-    [cleanupCaptureResources, deliverFrame, measureLevel, resetBufferedAudio, resetMeter]
+    [
+      captureSession,
+      cleanupCaptureResources,
+      deliverFrame,
+      measureLevel,
+      resetBufferedAudio,
+      resetMeter
+    ]
   )
 
   const flushBufferedAudio = useCallback(async () => {
@@ -307,6 +300,16 @@ export function useAudioCapture(publishMeter?: DictationMeterPublisher) {
       resetMeter()
     },
     [cleanupCaptureResources, resetBufferedAudio, resetMeter]
+  )
+
+  useEffect(
+    () => () => {
+      startRequestRef.current += 1
+      isCapturingRef.current = false
+      cleanupCaptureResources()
+      resetBufferedAudio()
+    },
+    [cleanupCaptureResources, resetBufferedAudio]
   )
 
   const finish = useAudioCaptureStopTail(isCapturingRef, startRequestRef, stop)

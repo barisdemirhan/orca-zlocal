@@ -21,6 +21,7 @@ import { explainOlderRuntimeRunRequired } from '../recovery/older-runtime-run-bi
 import { withResolvedNextCommands } from '../recovery/orchestration-mutation-recovery'
 import { readTextOrFileFlag } from '../../arguments/command-body-input'
 import { refuseAgentServerRoute } from '../identity/agent-server-route'
+import { getCallerTerminalHandle } from '../../caller-terminal-handle'
 
 export const ORCHESTRATION_WORKER_LAUNCH_HANDLER: Record<string, CommandHandler> = {
   'orchestration worker-start': async (ctx) => {
@@ -85,6 +86,7 @@ export const ORCHESTRATION_WORKER_LAUNCH_HANDLER: Record<string, CommandHandler>
       timeoutMs: getOptionalPositiveIntegerValueFlag(flags, 'timeout-ms'),
       run: getOptionalStringFlag(flags, 'run'),
       from: await resolveCoordinatorTerminalHandle(flags, cwd, client),
+      callerTerminalHandle: getCallerTerminalHandle(),
       devMode: isDevCliInvocation()
     }).catch(async (error: unknown) => {
       throw await explainOlderRuntimeRunRequired(client, error)

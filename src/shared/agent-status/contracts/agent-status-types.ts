@@ -114,6 +114,8 @@ export type AgentStatusEntry = {
   sessionBoundary?: boolean
   /** Dispatch hierarchy belongs to panes, not worktrees: workers can share the coordinator's worktree. */
   orchestration?: AgentStatusOrchestrationContext
+  /** Host-owned pane creator, independent of orchestration dispatch membership. */
+  spawnedBy?: { paneKey: string }
   /** Live in-process subagents/teammates of this pane's session. Absent when
    *  none are tracked; the sidebar derives indented child rows from it. */
   subagents?: AgentSubagentSnapshot[]

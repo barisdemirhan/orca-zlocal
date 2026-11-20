@@ -20,6 +20,10 @@ import {
 import { resolveNativeChatCliForkIdentity } from './tab-session-history-switch'
 import type { NativeChatCliForkIdentity } from './tab-session-history-switch'
 import { translate } from '@/i18n/i18n'
+import {
+  agentHubMirrorChatPlacement,
+  moveAgentHubMirrorToTerminal
+} from '../../agent-hub/agent-hub-mirror-chat-continuation'
 import { openDesktopStructuredSession } from '@/lib/agent-session/open/activate-ai-vault-structured-session'
 import { moveStructuredAgentLaunchDraft } from '@/lib/agent-session/launch/structured-agent-session-launch-draft'
 import { structuredAgentSessionDraftScopeKey } from '@/components/native-chat/drafts/native-chat-draft-scope'
@@ -133,6 +137,8 @@ export async function runNativeChatCliFork(args: {
   tab: { id: string; worktreeId: string }
   agent: AiVaultAgent
   onComplete?: () => void
+  /** Asked from a mirror, whatever the workspace shows: the terminal takes the chat's place there. */
+  fromMirror?: boolean
 }): Promise<void> {
   const { subject, tab } = args
   const key = keyFor({ ...subject, executionHostScope: subject.request.executionHostScope })
@@ -224,9 +230,16 @@ export async function runNativeChatCliFork(args: {
       return
     }
     stop()
+    const inPlace =
+      subject.workspaceId === tab.worktreeId &&
+      (args.fromMirror === true ||
+        agentHubMirrorChatPlacement(tab.worktreeId, tab.id).activate === false)
     const terminalTabId = await launchAiVaultSessionAndReveal(
       { agent: target.agent, worktreeId: subject.workspaceId, ...startup },
-      describeAiVaultCliForkFailure
+      describeAiVaultCliForkFailure,
+      inPlace
+        ? (terminalTabId) => moveAgentHubMirrorToTerminal(tab.worktreeId, tab.id, terminalTabId)
+        : undefined
     )
     if (terminalTabId) {
       rememberForkOrigin(terminalTabId, {

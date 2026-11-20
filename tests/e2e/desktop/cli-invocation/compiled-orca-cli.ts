@@ -18,13 +18,15 @@ export type OrcaCliResult = {
 export async function runCompiledOrcaCli(
   userDataDir: string,
   args: string[],
-  timeoutMs = 120_000
+  timeoutMs = 120_000,
+  callerEnv: Partial<NodeJS.ProcessEnv> = {}
 ): Promise<OrcaCliResult> {
   const result = await runProcess({
     program: process.execPath,
     args: [path.join(process.cwd(), 'out', 'cli', 'index.js'), ...args],
     env: {
       ...process.env,
+      ...callerEnv,
       ORCA_USER_DATA_PATH: userDataDir,
       ORCA_DEV_CLI_INVOCATION: '1'
     },

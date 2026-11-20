@@ -11,6 +11,16 @@ import {
 } from '../../agent-session/capabilities/agent-session-runtime-capabilities'
 import { AI_VAULT_RUNTIME_CAPABILITIES } from '../../ai-vault/contracts/ai-vault-runtime-capabilities'
 import {
+  AGENT_HUB_REQUESTS_CAPABILITY,
+  AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY
+} from '../../agent-hub-capabilities'
+import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../agent-session-voice'
+export { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../agent-session-voice'
+export {
+  AGENT_HUB_REQUESTS_CAPABILITY,
+  AGENT_HUB_GATES_CAPABILITY
+} from '../../agent-hub-capabilities'
+import {
   AUTOMATION_RUNTIME_CAPABILITIES,
   AUTOMATION_RUNTIME_CLIENT_CAPABILITIES
 } from '../../automations/automation-runtime-capabilities'
@@ -77,6 +87,9 @@ export const RUNTIME_CAPABILITIES = /* @__PURE__ */ (() =>
     ...EMULATOR_RUNTIME_CAPABILITIES,
     SAVED_RESUME_ORIGIN_RUNTIME_CAPABILITY,
     ...HOST_RUNTIME_CAPABILITIES,
+    AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY,
+    AGENT_HUB_REQUESTS_CAPABILITY,
+    AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY,
     ...DEVICE_KEY_RUNTIME_CAPABILITIES,
     E2EE_V2_TOKEN_CAPABILITIES_RUNTIME_CAPABILITY,
     ...PAIRING_TICKET_EXCHANGE_RUNTIME_CAPABILITIES,

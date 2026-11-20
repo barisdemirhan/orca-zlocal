@@ -20,7 +20,13 @@ import type {
   AgentJournalResolution,
   AgentJournalRenderItem
 } from './agent-session-journal-types'
-import { AGENT_JOURNAL_PROMPT_INTENTS } from './agent-session-journal-types'
+import {
+  ApprovalMatchedAskRule,
+  FreeTextInput,
+  PromptOption,
+  Question,
+  Resolution
+} from './agent-session-journal-prompt-schema'
 
 const ToolMetadata = {
   mcpIdentity: z.object({ server: z.string(), tool: z.string() }).optional(),
@@ -95,63 +101,19 @@ const Block = openDiscriminatedUnion(
   ])
 )
 
-const PromptOption = z.object({
-  id: z.string(),
-  label: z.string(),
-  description: z.string().optional(),
-  preview: z.string().optional(),
-  intent: z.enum(AGENT_JOURNAL_PROMPT_INTENTS).optional()
-})
-
-const FreeTextInput = z.object({
-  allowEmpty: z.boolean().optional(),
-  multiline: z.boolean().optional(),
-  initialValue: z.string().optional(),
-  placeholder: z.string().optional()
-})
-
-const Question = z.object({
-  id: z.string(),
-  question: z.string(),
-  header: z.string().optional(),
-  multiSelect: z.boolean(),
-  options: z.array(PromptOption),
-  freeTextQuestionId: z.string().optional(),
-  freeTextInput: FreeTextInput.optional()
-})
-
-const Resolution = z.object({
-  state: z.string().min(1),
-  selectedOptionId: z.string().nullable(),
-  answers: z
-    .array(
-      z.object({
-        questionId: z.string(),
-        optionIds: z.array(z.string()),
-        other: z.string().optional()
-      })
-    )
-    .optional(),
-  resolvedBy: z.string().nullable(),
-  resolvedByDevice: z
-    .discriminatedUnion('kind', [
-      z.object({ kind: z.literal('current') }),
-      z.object({ kind: z.literal('named'), name: z.string() })
-    ])
-    .optional(),
-  resolvedAt: z.number().nullable()
-})
-
-const ApprovalMatchedAskRule = z.object({
-  source: z.string(),
-  toolName: z.string(),
-  ruleContent: z.string().optional()
-})
-
 const MessageBody = z.object({
   kind: z.literal('message'),
   role: z.string().min(1),
   blocks: z.array(Block),
+  spoken: z
+    .object({
+      // Provider metadata stays open so a newer writer cannot make this message unreadable.
+      provider: z.string().min(1),
+      threadId: z.string().min(1),
+      realtimeSessionId: z.string().min(1),
+      itemId: z.string().min(1)
+    })
+    .optional(),
   // Open like roles: a send mode a newer build writes must not turn the row malformed.
   sentAs: z.string().min(1).optional(),
   command: z

@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import { AgentHubSettingsPane } from '../../agent-hub/AgentHubSettingsPane'
 import { AdvancedPane } from '../advanced/AdvancedPane'
 import { ExperimentalPane } from '../advanced/ExperimentalPane'
 import { PluginsSettingsSection } from '../../plugins/list/PluginsSettingsSection'
@@ -102,4 +103,28 @@ export function renderPluginsSettingsSection(
       updateSettings={model.updateSettingsOrThrow}
     />
   ) : null
+}
+
+export function renderAgentHubSettingsSection(
+  context: SettingsRenderContext
+): React.JSX.Element | null {
+  const { model, navigation, view } = context
+  if (model.settings.experimentalAgentHub !== true) {
+    return null
+  }
+  return (
+    <SettingsSection
+      id="agentHub"
+      title={translate('auto.agentHub.settings.title', 'Agent Hub')}
+      description={translate(
+        'auto.agentHub.settings.description',
+        'Dock, alerts, mirrors, voice and Orb preferences.'
+      )}
+      searchEntries={navigation.getSectionSearchEntries('agentHub')}
+    >
+      {view.isSectionMounted('agentHub') ? (
+        <AgentHubSettingsPane settings={model.settings} updateSettings={model.updateSettings} />
+      ) : null}
+    </SettingsSection>
+  )
 }

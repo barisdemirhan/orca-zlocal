@@ -8,10 +8,18 @@ export function TabSessionSurfaceSwitchMenuItems(props: {
   nativeChat?: NativeChatTabSession
   leadingSeparator: boolean
   onComplete?: () => void
+  fromMirror?: boolean
+  chatBlockedReason?: string
 }): React.JSX.Element | null {
+  const { chatBlockedReason, fromMirror, ...shared } = props
   return props.nativeChat ? (
-    <NativeChatCliForkMenuItems {...props} nativeChat={props.nativeChat} />
+    <NativeChatCliForkMenuItems
+      {...shared}
+      nativeChat={props.nativeChat}
+      fromMirror={fromMirror}
+      blockedReason={chatBlockedReason}
+    />
   ) : (
-    <CliChatResumeMenuItems {...props} />
+    <CliChatResumeMenuItems {...shared} />
   )
 }

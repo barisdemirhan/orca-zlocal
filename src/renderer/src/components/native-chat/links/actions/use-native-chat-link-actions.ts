@@ -1,4 +1,4 @@
-import { useCallback, useState, type RefObject } from 'react'
+import { useCallback, useContext, useState, type RefObject } from 'react'
 import {
   closeLinkActionRequest,
   type LinkActionRequest
@@ -8,7 +8,8 @@ import { routeNativeChatHref } from '../../../../../../shared/native-chat/file-a
 import { useAppStore } from '../../../../store/index'
 import type { NativeChatFileLinkContext } from './native-chat-file-link-context'
 import { resolveNativeChatHttpLinkRouting } from './native-chat-link-target-actions'
-import { handleNativeChatWebLink } from './native-chat-web-link-actions'
+import { handleNativeChatWebLink, nativeChatWebPeekSource } from './native-chat-web-link-actions'
+import { NativeChatPresentationContext } from '../../native-chat-presentation-context'
 import { nativeChatPlainLinkClickBehavior } from './native-chat-link-click-behavior'
 import { useNativeChatFileLinkClick } from './use-native-chat-file-link-click'
 
@@ -57,6 +58,7 @@ export function useNativeChatLinkClick(
   request: (request: LinkActionRequest) => void,
   rootRef: RefObject<HTMLElement | null>
 ): CommentMarkdownLinkClickHandler | undefined {
+  const orb = useContext(NativeChatPresentationContext) === 'orb'
   const openFileLink = useNativeChatFileLinkClick(context, request, rootRef)
   const onLinkClick = useCallback<CommentMarkdownLinkClickHandler>(
     (event, href) => {
@@ -75,10 +77,21 @@ export function useNativeChatLinkClick(
       const state = useAppStore.getState()
       const plainClickBehavior = nativeChatPlainLinkClickBehavior(state.settings)
       const anchor = event.currentTarget
+      const routing = resolveNativeChatHttpLinkRouting(state, context.worktreeId, route.url)
       handleNativeChatWebLink(event, route.url, {
         worktreeId: context.worktreeId,
         sourceTabId: context.sourceTabId,
-        ...resolveNativeChatHttpLinkRouting(state, context.worktreeId, route.url),
+        ...routing,
+        peekSource: nativeChatWebPeekSource(
+          route.url,
+          {
+            worktreeId: context.worktreeId,
+            sourceTabId: context.sourceTabId,
+            sourceOwner: routing.sourceOwner
+          },
+          event.nativeEvent,
+          orb
+        ),
         actionsEnabled: plainClickBehavior === 'actions',
         plainClickBehavior,
         restoreFocus: () =>
@@ -86,7 +99,7 @@ export function useNativeChatLinkClick(
         request
       })
     },
-    [context, openFileLink, request, rootRef]
+    [context, openFileLink, request, rootRef, orb]
   )
 
   return context ? onLinkClick : undefined

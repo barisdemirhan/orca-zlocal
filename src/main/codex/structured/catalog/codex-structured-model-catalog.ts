@@ -222,7 +222,11 @@ export function composeCodexSessionOptionCatalog(
         : null
     ).map((entry) => ({ ...entry })),
     input.current.model,
-    (row) => row
+    (row) => ({
+      ...row,
+      description:
+        'This model is not in this account’s model list. Choose another model to continue.'
+    })
   )
   const model = input.current.model
   const reportedTier = input.reportedServiceTierKnown

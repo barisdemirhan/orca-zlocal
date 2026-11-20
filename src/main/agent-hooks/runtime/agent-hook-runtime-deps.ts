@@ -12,6 +12,7 @@ export function agentHookRuntimeDeps(
 ) {
   return {
     // OSC-derived PTY status feeds the store read by worktree.ps and mobile projections.
+    onPaneSpawnedByChanged: (paneKey, spawnedBy) => server.setPaneSpawnedBy(paneKey, spawnedBy),
     onTerminalAgentStatus: (event) => server.ingestTerminalStatus(event),
     onTerminalProgramStatusFacet: (event) => server.ingestProgramStatusFacet(event),
     onClaudeTerminalEvidence: (paneKey, evidence) =>

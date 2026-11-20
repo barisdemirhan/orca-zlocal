@@ -4,7 +4,6 @@ import {
   EMPTY_TAB_STRIP_OVERFLOW_STATE,
   computeTabStripOverflowState,
   sameTabStripOverflowState,
-  scrollStripSidewaysOnWheel,
   type TabStripOverflowState
 } from './tab-strip-scroll-metrics'
 import { isTabStripPointerGestureActive } from './tab-strip-pointer-gesture'
@@ -32,6 +31,7 @@ import {
   useTabStripCommitStartScroll,
   useTabStripListenerSubscribe
 } from './tab-strip-window'
+import { bindTabStripWheelScroll } from './tab-strip-wheel-scroll'
 
 const TAB_STRIP_SCROLL_FRACTION = 0.75
 const TAB_STRIP_MIN_SCROLL_STEP_PX = 120
@@ -134,13 +134,7 @@ export function useTabStripOverflowNavigation({
     if (!el) {
       return
     }
-    const onWheel = (e: WheelEvent): void => {
-      if (scrollStripSidewaysOnWheel(el, e)) {
-        updateTabStripOverflowState()
-      }
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
+    return bindTabStripWheelScroll(el, updateTabStripOverflowState)
   }, [updateTabStripOverflowState])
 
   useEffect(() => {

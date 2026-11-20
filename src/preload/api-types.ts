@@ -18,6 +18,7 @@ import type {
   RateLimitsApi
 } from './api/agent-usage/agent-usage-api'
 import type { AiVaultApi } from './api/ai-vault/ai-vault-api'
+import type { AgentHubOrbApi } from '../shared/agent-hub-orb'
 import type { AppApi, E2EApi, PlatformApi } from './api/app-api'
 import type { AutomationsApi } from './api/automations/automation-api'
 import type { BrowserApi } from './api/browser/browser-api'
@@ -91,6 +92,7 @@ import type {
   SparsePresetsApi,
   WorktreeApi
 } from './api/workspaces/worktree-api'
+import type { HostNamesApi } from './api/host-names-api'
 
 // Flattens contracts that share one PreloadApi key: an intersection is not type-identical to the flat shape.
 type Merged<T> = { [K in keyof T]: T[K] }
@@ -130,6 +132,7 @@ export type PreloadApi = {
   settings: SettingsApi
   agentAwake: AgentAwakeApi
   localhostWorktreeLabels: LocalhostWorktreeLabelsApi
+  hostNames: HostNamesApi
   keybindings: KeybindingsApi
   codexAccounts: CodexAccountsApi
   claudeAccounts: ClaudeAccountsApi
@@ -173,6 +176,7 @@ export type PreloadApi = {
   git: Merged<GitInspectionApi & GitOperationApi>
   ui: Merged<UiCommandEventApi & UiWindowApi & BotLinkEventApi>
   runtime: RuntimeApi['runtime']
+  agentHub: { orb: AgentHubOrbApi }
   runtimeEnvironments: RuntimeApi['runtimeEnvironments']
   rateLimits: RateLimitsApi
   opencodeGoCredentials: {

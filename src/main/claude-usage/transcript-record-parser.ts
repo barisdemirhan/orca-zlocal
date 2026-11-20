@@ -56,6 +56,7 @@ export function stripClaudeSourceMetadata(
     sessionId: turn.sessionId,
     timestamp: turn.timestamp,
     model: turn.model,
+    ...(turn.isSidechain !== undefined ? { isSidechain: turn.isSidechain } : {}),
     cwd: turn.cwd,
     gitBranch: turn.gitBranch,
     inputTokens: turn.inputTokens,
@@ -143,6 +144,7 @@ function parseClaudeUsageSourceRecord(
     sessionId,
     timestamp: parsed.timestamp,
     model: parsed.message?.model ?? null,
+    ...(parsed.isSidechain !== undefined ? { isSidechain: parsed.isSidechain } : {}),
     cwd: parsed.cwd ?? null,
     gitBranch: parsed.gitBranch ?? null,
     // Forks rewrite sessionId; message IDs and UUID fallbacks preserve ownership across files.

@@ -1,5 +1,6 @@
 import { isRemoteRuntimePtyId } from '../../../../shared/remote-runtime/remote-runtime-pty-id'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host/execution-host'
+import { readOrbOperations } from '../../../runtime/agent-hub/agent-hub-orb-operations'
 import type { IPtyProvider } from '../../../providers/pty/provider-contract'
 import { LocalPtyProvider } from '../../../providers/local-pty/local-pty-provider'
 import { ptyOwnership } from '../provider/ownership-state'
@@ -44,6 +45,12 @@ export function writePtyFromRuntimeController(
   inputKind: TerminalInputKind,
   options?: { waitForSettlement: true }
 ): boolean | WriteSettlement | Promise<WriteSettlement> {
+  if (deps.runtime && inputKind !== 'query-reply') {
+    const protection = readOrbOperations(deps.runtime)
+    if (protection && !protection.canWrite({ kind: 'terminal', ptyId, terminalHandle: ptyId })) {
+      return options?.waitForSettlement ? writeRefused('provider_refused_write') : false
+    }
+  }
   const observeAcceptedInput = (): void => {
     if (isDrivingInputKind(inputKind) && ptyOwnership.get(ptyId) === LOCAL_EXECUTION_HOST_ID) {
       deps.runtime?.observeClaudeTerminalEvidence?.(ptyId, { kind: 'input', data })
@@ -242,52 +249,6 @@ export async function resetInputModesFromRuntimeController(
   } catch {
     /* best effort: an older daemon or relay rejects the request */
   }
-}
-
-const settledLocalPtyProviderStartups = new WeakSet<Promise<void>>()
-const watchedLocalPtyProviderStartups = new WeakSet<Promise<void>>()
-
-function readReadyPtyProvider(
-  deps: PtyRuntimeControllerDeps,
-  ptyId: string,
-  read: (provider: IPtyProvider) => boolean | null
-): boolean | null {
-  try {
-    // A local provider cannot prove remote-host absence.
-    if (isRemoteRuntimePtyId(ptyId)) {
-      return null
-    }
-    const startupPromise = deps.getLocalPtyProviderStartupPromise(resolvePtyExecutionHost(ptyId))
-    if (startupPromise && !settledLocalPtyProviderStartups.has(startupPromise)) {
-      // Sync probes cannot await daemon handoff; report unknown until it settles (docs/reference/ssh-execution-boundary.md).
-      if (!watchedLocalPtyProviderStartups.has(startupPromise)) {
-        watchedLocalPtyProviderStartups.add(startupPromise)
-        const markSettled = (): void => {
-          settledLocalPtyProviderStartups.add(startupPromise)
-        }
-        startupPromise.then(markSettled, markSettled)
-      }
-      return null
-    }
-    return read(getProviderForPty(ptyId))
-  } catch {
-    return null
-  }
-}
-
-export function hasPtyFromRuntimeController(deps: PtyRuntimeControllerDeps, ptyId: string) {
-  return readReadyPtyProvider(deps, ptyId, (provider) => provider.hasPty?.(ptyId) ?? null)
-}
-
-export function getPtyAvailabilityFromRuntimeController(
-  deps: PtyRuntimeControllerDeps,
-  ptyId: string
-): boolean | null {
-  return readReadyPtyProvider(
-    deps,
-    ptyId,
-    (provider) => provider.getPtyAvailability?.(ptyId) ?? null
-  )
 }
 
 export function resizePtyFromRuntimeController(ptyId: string, cols: number, rows: number): boolean {

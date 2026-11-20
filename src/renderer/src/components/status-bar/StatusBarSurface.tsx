@@ -1,4 +1,5 @@
 import { PanelsTopLeft, RefreshCw } from 'lucide-react'
+import { useAppStore } from '@/store'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { lazyWithRetry } from '@/app-shell/startup/lazy-with-retry'
@@ -57,6 +58,11 @@ const PortsStatusSegment = lazyWithRetry(() =>
     default: module.PortsStatusSegment
   }))
 )
+const AgentHubRoot = lazyWithRetry(() =>
+  import('../agent-hub/AgentHubRoot').then((module) => ({
+    default: module.AgentHubRoot
+  }))
+)
 const SshStatusSegment = lazyWithRetry(() =>
   import('./host-connections/SshStatusSegment').then((module) => ({
     default: module.SshStatusSegment
@@ -74,6 +80,7 @@ export function StatusBarSurface({
   // Memoized labels still need to follow language changes.
   useTranslation()
   const controller = useStatusBarController(floatingTerminalOpen)
+  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   if (!controller) {
     return null
   }
@@ -336,6 +343,9 @@ export function StatusBarSurface({
           <UpdateStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
           {showGitBlame ? <GitBlameStatusSegment iconOnly={segmentsIconOnly} /> : null}
           <React.Suspense fallback={null}>
+            {agentHubEnabled && !isPairedWebClientWindow() ? (
+              <AgentHubRoot iconOnly={segmentsIconOnly} />
+            ) : null}
             {petEnabled ? <PetStatusSegment /> : null}
             {showResourceUsage ? (
               <ResourceUsageStatusSegment compact={compact} iconOnly={segmentsIconOnly} />

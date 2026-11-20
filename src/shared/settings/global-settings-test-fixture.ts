@@ -4,6 +4,7 @@ import type { GlobalSettings } from './global-settings-types'
 import { getDefaultVoiceSettings } from '../orca-profiles/constants'
 import { getDefaultNotificationSettings } from '../notifications/notification-settings-defaults'
 import { buildDefaultSettings } from './default-global-settings'
+import { AGENT_HUB_DEFAULT_SETTINGS } from '../agent-hub-default-settings'
 
 // Use buildDefaultSettings so adding a setting does not require duplicating it in every test fixture.
 export function createGlobalSettingsFixture(
@@ -24,6 +25,7 @@ export function createGlobalSettingsFixture(
       notifications: getDefaultNotificationSettings(),
       voice: getDefaultVoiceSettings()
     }),
+    ...AGENT_HUB_DEFAULT_SETTINGS,
     ...overrides
   }
 }

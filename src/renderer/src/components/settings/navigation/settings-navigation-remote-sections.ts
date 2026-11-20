@@ -1,3 +1,4 @@
+import { getAgentHubSearchEntry } from '@/components/agent-hub/agent-hub-search-entry'
 import { projectGroupHookOwner } from '../../../../../shared/workspace-setup/hooks/workspace-hook-owner'
 import { getRepositoryGitHooksSearchEntries } from '@/components/settings/repository/hooks/repository-git-hooks-search-entries'
 import { getAdvancedPaneSearchEntries } from '@/components/settings/advanced/advanced-search'
@@ -17,6 +18,7 @@ import type { SettingsNavSection } from '@/components/settings/navigation/settin
 import { getRepoKindLabel } from '../../../../../shared/repository/repo-kind'
 import type { Repo } from '../../../../../shared/repository/repo-types'
 import {
+  Bot,
   Blocks,
   Bug,
   Cable,
@@ -30,7 +32,7 @@ import {
 import type { SettingsNavigationBuildOptions } from './settings-navigation-build-options'
 
 export function buildRemoteSettingsSections(
-  { isMac, isWebClient, isDev }: SettingsNavigationBuildOptions,
+  { isMac, isWebClient, isDev, agentHubEnabled }: SettingsNavigationBuildOptions,
   runtimeEnvironmentsSearchEntry: SettingsNavSection['searchEntries'][number],
   t: Translate = translate
 ): SettingsNavSection[] {
@@ -117,6 +119,21 @@ export function buildRemoteSettingsSections(
             searchEntries: getDevToolsPaneSearchEntries(t),
             group: 'advanced',
             badge: t('auto.hooks.useSettingsNavigationMetadata.devBadge', 'Dev')
+          }
+        ]
+      : []),
+    ...(agentHubEnabled
+      ? [
+          {
+            id: 'agentHub',
+            title: translate('auto.agentHub.settings.title', 'Agent Hub'),
+            description: translate(
+              'auto.agentHub.settings.description',
+              'Dock, alerts, mirrors, voice and Orb preferences.'
+            ),
+            icon: Bot,
+            searchEntries: [getAgentHubSearchEntry()],
+            group: 'experimental'
           }
         ]
       : []),

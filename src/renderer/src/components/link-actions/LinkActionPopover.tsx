@@ -28,10 +28,11 @@ function ActionRow({
   onRun: () => void
 }): React.JSX.Element {
   const isMac = navigator.userAgent.includes('Mac')
+  const actionShortcut = action.shortcut === undefined ? shortcut : action.shortcut
   const keys =
-    shortcut === 'alternate'
-      ? ['⇧', isMac ? '⌘' : 'Ctrl', 'Click']
-      : shortcut === 'primary'
+    actionShortcut === 'alternate'
+      ? [isMac ? '⇧' : 'Shift', isMac ? '⌘' : 'Ctrl', 'Click']
+      : actionShortcut === 'primary'
         ? [isMac ? '⌘' : 'Ctrl', 'Click']
         : null
 
@@ -43,6 +44,7 @@ function ActionRow({
     >
       {action.external === true ? <ExternalLink className="size-3.5" /> : null}
       {action.external === false ? <Globe className="size-3.5" /> : null}
+      {action.icon ? <action.icon className="size-3.5" /> : null}
       <span className="min-w-0 flex-1 truncate text-left" title={action.label}>
         {action.label}
       </span>

@@ -11,6 +11,9 @@ import {
 } from '../inventory/host-chat-program-acquisition'
 import { agentChoicePending } from '../inventory/host-chat-program'
 import { worktreeLaunchWorkspace } from '../routing/agent-launch-route-input'
+import { addLaunchedSessionToAgentHubMirror } from '@/components/agent-hub/agent-hub-mirror-continuation'
+import type { AgentSessionContinuationPlacement } from '@/lib/agent-session-continuation-placement'
+import type { AgentSessionContinuationMirrorSource } from '@/lib/agent-session/context/agent-session-continuation'
 import { isTuiAgentEnabled } from '../../../../../../shared/agent-launch/catalog/tui-agent-selection'
 import type { LaunchSource } from '../../../../../../shared/telemetry/schemas/telemetry-property-schemas'
 import type { TuiAgent } from '../../../../../../shared/agent-launch/catalog/tui-agent'
@@ -34,6 +37,8 @@ type LaunchAgentSessionContinuationArgs = {
   launchChoice?: AgentLaunchChoice
   launchSource: LaunchSource
   signal?: AbortSignal
+  /** Started from a mirror pane; omitted keeps the legacy jump to a new tab in the group. */
+  mirror?: AgentSessionContinuationMirrorSource & { placement: AgentSessionContinuationPlacement }
   sessionOptions?: Readonly<Record<string, string>>
   chatSessionOptions?: Readonly<Record<string, string>>
   agentArgs?: string | null
@@ -106,12 +111,18 @@ export async function launchAgentSessionContinuation({
   launchChoice,
   launchSource,
   signal,
+  mirror,
   sessionOptions,
   chatSessionOptions,
   agentArgs
 }: LaunchAgentSessionContinuationArgs): Promise<boolean> {
   const label = getAgentLabel(agent)
-  // Blind PTY writes do not prove prompt delivery; claiming success can hide a lost handoff (#22479).
+  // Why: a mirror shows one pane, so the new session joins it as a mirror tab and the user stays
+  // put; "jump" leaves the mirror for the workspace as before.
+  const mirrorWindowId = mirror && mirror.placement !== 'jump' ? mirror.windowId : null
+  // Why: the paste helper writes blind when the agent's composer was never observed, so a
+  // written prompt is not a delivered one. Claiming success there is how the whole handoff
+  // could vanish silently (#22479).
   let deliveryUnconfirmed = false
   const delivery = {
     agent,
@@ -120,6 +131,7 @@ export async function launchAgentSessionContinuation({
     ...(chatSessionOptions !== undefined ? { chatSessionOptions: { ...chatSessionOptions } } : {}),
     ...(agentArgs !== undefined ? { agentArgs } : {}),
     ...(groupId ? { groupId } : {}),
+    ...(mirrorWindowId ? { activate: false, keepTabType: true } : {}),
     prompt,
     promptDelivery: agent === 'claude' ? ('draft' as const) : ('submit-after-ready' as const),
     launchSource,
@@ -174,8 +186,22 @@ export async function launchAgentSessionContinuation({
   const workspace = state.getKnownWorktreeById(worktreeId, executionHostId)
   const workspaceName =
     (workspace && resolveWorktreeDisplayName(workspace)) || initialCwd || worktreeId
-  const result = launchAgentInNewTabWithOutcome({ ...delivery, agentSessionLaunchPlan: plan })
+  // Why: the split opens only once the agent is confirmed, so a cancelled pick leaves no empty pane.
+  const splitGroupId =
+    mirror?.placement === 'pane' && groupId
+      ? (useAppStore.getState().createEmptySplitGroup(worktreeId, groupId, 'right', {
+          activate: false
+        }) ?? null)
+      : null
+  const result = launchAgentInNewTabWithOutcome({
+    ...delivery,
+    ...(splitGroupId ? { groupId: splitGroupId } : {}),
+    agentSessionLaunchPlan: plan
+  })
   if (!result || 'refused' in result) {
+    if (splitGroupId) {
+      useAppStore.getState().closeEmptyGroup(worktreeId, splitGroupId)
+    }
     return false
   }
   // A launch still waiting on its host has opened nothing yet: the handoff counts once a chat or
@@ -183,7 +209,27 @@ export async function launchAgentSessionContinuation({
   if (result.surface.kind === 'host-published' && result.structuredSettlement) {
     const settled = await result.structuredSettlement
     if (settled.kind === 'cancelled' || settled.kind === 'failed') {
+      if (splitGroupId) {
+        useAppStore.getState().closeEmptyGroup(worktreeId, splitGroupId)
+      }
       return false
+    }
+  }
+  if (mirror && mirrorWindowId && result.surface.kind === 'local-terminal') {
+    const mirrored = addLaunchedSessionToAgentHubMirror({
+      windowId: mirrorWindowId,
+      worktreeId,
+      sourceTabId: mirror.tabId,
+      newTabId: result.surface.tabId,
+      agent
+    })
+    if (mirrored.status !== 'changed') {
+      toast.info(
+        translate(
+          'components.agentSessionContinuation.mirrorNotAdded',
+          'The new session opened in the workspace; the mirror could not add it as a tab.'
+        )
+      )
     }
   }
 

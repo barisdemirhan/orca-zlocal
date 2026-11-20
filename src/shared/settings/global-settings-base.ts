@@ -7,6 +7,7 @@ import type { BrowserLinkOpeningSettings } from '../browser/navigation/browser-l
 import type { BrowserPasswordsGlobalSettings } from '../browser/passwords/browser-passwords-types'
 import type { BrowserMemorySaverGlobalSettings } from '../browser/guest-lifecycle/browser-memory-saver'
 import type { ClaudeAccountSwitchSettings } from '../agent-accounts/claude/claude-account-switch-settings'
+import type { AgentHubSettings } from '../agent-hub-settings'
 import type { NativeChatGlobalSettings } from '../native-chat/settings/native-chat-appearance-settings'
 import type { NativeChatIdleStopSettings } from '../native-chat/settings/native-chat-idle-stop'
 import type { EditorTypographySettings } from '../editor/appearance/editor-typography-settings-types'
@@ -49,6 +50,7 @@ export type GlobalSettingsBase = AntigravityChatAuthSettings &
   PluginFileTypeSuggestionSettings &
   PluginUpdatePolicySettings &
   PluginSystemSettings &
+  AgentHubSettings &
   TerminalScrollSettings &
   TerminalColorOverrideGlobalSettings &
   WindowMaterialSettings &

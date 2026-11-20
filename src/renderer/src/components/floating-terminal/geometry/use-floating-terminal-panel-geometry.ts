@@ -10,6 +10,8 @@ import {
   type FloatingTerminalPanelCommittedBounds
 } from './floating-terminal-panel-bounds'
 import { areFloatingTerminalPanelCommittedBoundsEqual } from './floating-terminal-panel-initial-bounds'
+import { snapFloatingBoundsToCanvas } from '../../agent-hub/agent-hub-canvas-dot-snap'
+import { useFloatingWorkspacePlaceRequests } from '../floating-workspace-place-request'
 import type { FloatingTerminalPanelLocalState } from '../state/use-floating-terminal-panel-local-state'
 import type { FloatingTerminalPanelStoreState } from '../state/use-floating-terminal-panel-store-state'
 
@@ -63,7 +65,8 @@ export function useFloatingTerminalPanelGeometry({
       if (!nextBounds) {
         return
       }
-      const clampedBounds = clampFloatingTerminalBounds(nextBounds)
+      // Why: on the Agent Hub canvas a dropped panel lands on the dots.
+      const clampedBounds = snapFloatingBoundsToCanvas(clampFloatingTerminalBounds(nextBounds))
       stagedBoundsRef.current = null
       setBounds(clampedBounds)
       const anchoredBounds = anchorFloatingTerminalPanelBounds(clampedBounds)
@@ -94,6 +97,13 @@ export function useFloatingTerminalPanelGeometry({
   useLayoutEffect(() => {
     reconcileBounds()
   }, [reconcileBounds])
+
+  // Why: Agent Hub's "arrange floating windows" places this panel alongside its mirrors.
+  useFloatingWorkspacePlaceRequests((nextBounds) => {
+    if (!maximized) {
+      commitUserBounds(nextBounds)
+    }
+  })
 
   useEffect(() => {
     const handleResize = (): void => reconcileBounds()

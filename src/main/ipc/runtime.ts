@@ -7,7 +7,10 @@ import type {
   RuntimeSyncWindowGraphResult,
   RuntimeTerminalDriverState
 } from '../../shared/remote-runtime/session-graph/runtime-session-contracts'
-import type { RuntimeRpcResponse } from '../../shared/remote-runtime/rpc/runtime-rpc-envelope'
+import type {
+  RuntimeOrchestrationEnvelope,
+  RuntimeRpcResponse
+} from '../../shared/remote-runtime/rpc/runtime-rpc-envelope'
 import type { ClientHostedBrowserRowsEvent } from '../../shared/browser/client-hosting/client-hosted-browser-rows'
 import { TERMINAL_FIT_RESTORE_DEADLINE_MS } from '../../shared/terminal/viewport/terminal-fit-restore-deadline'
 import { DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES } from './runtime-client/desktop-renderer-runtime-capabilities'
@@ -18,6 +21,33 @@ import { ALL_RPC_METHODS } from '../runtime/rpc/methods/rpc-method-registry'
 import { DesktopRuntimeSenderLifecycle } from './runtime-client/desktop-runtime-sender-lifecycle'
 import { toWorkspaceLifecycleResult } from '../ephemeral-vm/workspace-lifecycle-result'
 import { publishMobileProjectSections } from '../runtime/sidebar-inputs/catalog/mobile-project-sections-snapshot'
+import {
+  AGENT_HUB_REQUESTS_CAPABILITY,
+  AGENT_HUB_GATES_CAPABILITY
+} from '../../shared/agent-hub-capabilities'
+import { isTrustedUIRenderer } from './ui'
+
+function rendererCapabilities(
+  runtime: OrcaRuntimeService,
+  sender: Electron.WebContents,
+  args: { method: string; params?: unknown }
+): readonly string[] {
+  const consumingHub =
+    args.method === 'agentHub.respond' ||
+    args.method === 'orchestration.gateResolveByUser' ||
+    (args.method === 'runtime.clientEvents.subscribe' &&
+      typeof args.params === 'object' &&
+      args.params !== null &&
+      'agentHub' in args.params &&
+      args.params.agentHub === true)
+  return consumingHub && isTrustedUIRenderer(sender) && runtime.isAgentHubEnabled()
+    ? [
+        ...DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES,
+        AGENT_HUB_REQUESTS_CAPABILITY,
+        AGENT_HUB_GATES_CAPABILITY
+      ]
+    : DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES
+}
 
 function boundTerminalFitRestore(pending: Promise<boolean>): Promise<boolean> {
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -104,6 +134,7 @@ export function registerRuntimeHandlers(runtime: OrcaRuntimeService): void {
       args: {
         method: string
         params?: unknown
+        envelope?: RuntimeOrchestrationEnvelope
         orchestration?: { contractVersion: number; requestId: string }
       }
     ): Promise<RuntimeRpcResponse<unknown>> => {
@@ -112,6 +143,7 @@ export function registerRuntimeHandlers(runtime: OrcaRuntimeService): void {
       }
       return new RpcDispatcher({ runtime, methods: ALL_RPC_METHODS }).dispatch(
         {
+          ...args.envelope,
           id: 'desktop-ipc',
           authToken: 'desktop-ipc',
           // The renderer ships with this main process, so it always speaks the current contract.
@@ -130,7 +162,7 @@ export function registerRuntimeHandlers(runtime: OrcaRuntimeService): void {
           caller: DESKTOP_RPC_CALLER,
           clientKind: 'runtime',
           connectionId: desktopSenders.connectionIdFor(event.sender),
-          clientCapabilities: DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES
+          clientCapabilities: rendererCapabilities(runtime, event.sender, args)
         }
       )
     }
@@ -171,7 +203,7 @@ export function registerRuntimeHandlers(runtime: OrcaRuntimeService): void {
           caller: DESKTOP_RPC_CALLER,
           clientKind: 'runtime',
           connectionId,
-          clientCapabilities: DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES
+          clientCapabilities: rendererCapabilities(runtime, event.sender, args)
         }
       )
       return { subscribed: true }

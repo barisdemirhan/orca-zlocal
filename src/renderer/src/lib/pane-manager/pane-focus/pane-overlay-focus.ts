@@ -3,12 +3,12 @@ import { isDocumentBodyOrNull } from '@/components/terminal-pane/input/ime/termi
 import { getOverlayFocusOwners } from '../../overlay-interaction/overlay-focus-ownership'
 import type { ManagedPane } from '../pane-manager-types'
 
-type OverlayFocusablePane = {
+export type OverlayFocusPane = {
   container: ManagedPane['container']
   terminal: Pick<ManagedPane['terminal'], 'focus'>
 }
 
-export function focusPanePreservingOverlays(pane: OverlayFocusablePane): void {
+export function focusPanePreservingOverlays(pane: OverlayFocusPane): void {
   if (
     typeof document !== 'undefined' &&
     (document.activeElement?.matches('[data-worktree-sidebar][data-keyboard-navigation]') ||
@@ -23,7 +23,7 @@ export function focusPanePreservingOverlays(pane: OverlayFocusablePane): void {
 }
 
 /** Refocus only when focus fell to <body>, so an intentionally focused control keeps it. */
-export function focusPaneIfFocusUnclaimed(pane: OverlayFocusablePane | null): void {
+export function focusPaneIfFocusUnclaimed(pane: OverlayFocusPane | null): void {
   if (
     pane &&
     typeof document !== 'undefined' &&

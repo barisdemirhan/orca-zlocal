@@ -103,6 +103,9 @@
   --color-agent-question: var(--agent-question);
   --color-agent-working: var(--agent-working);
   --color-agent-question-text: var(--agent-question-text);
+  --color-agent-orb-listening: var(--agent-orb-listening);
+  --color-agent-orb-working: var(--agent-orb-working);
+  --color-agent-orb-attention: var(--agent-orb-attention);
   --color-item-ask-open: var(--item-ask-open);
   --color-item-ask-open-text: var(--item-ask-open-text);
   --color-question-card-border: var(--question-card-border);
@@ -284,6 +287,9 @@
   --agent-question: var(--color-orange-600);
   /* The working-state yellow every agent working/monitoring glyph paints. */
   --agent-working: var(--color-yellow-500);
+  --agent-orb-listening: var(--color-blue-600);
+  --agent-orb-working: var(--color-indigo-600);
+  --agent-orb-attention: var(--color-sky-600);
   /* Legible weight for text/glyphs on a tinted --agent-question surface. */
   --agent-question-text: var(--color-orange-700);
   /* An item's open ask, waiting on the owner: its rim, tint and flag. Amber means only that. */
@@ -414,6 +420,9 @@
   --terminal-pane-locate: var(--color-blue-400);
   --ai-action-accent: var(--color-violet-400);
   --agent-question: var(--color-orange-500);
+  --agent-orb-listening: var(--color-blue-400);
+  --agent-orb-working: var(--color-indigo-400);
+  --agent-orb-attention: var(--color-sky-300);
   --agent-question-text: var(--color-orange-300);
   --item-ask-open-text: var(--color-amber-400);
   --question-card-border-mix: 16%;

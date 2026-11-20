@@ -5,6 +5,7 @@ import { translateSearchKeyword } from '../search/settings-search-keywords'
 import { getNewWorktreeCardStyleSearchEntry } from './new-worktree-card-style-search-entry'
 import { getEphemeralVmsSearchEntry } from '../virtual-machines/recipes/ephemeral-vms-search'
 import { getWslHostsExperimentalSearchEntry } from '../wsl/hosts/wsl-hosts-experimental-search'
+import { getAgentHubSearchEntry } from '../../agent-hub/agent-hub-search-entry'
 
 export const getExperimentalSearchEntry = createLocalizedCatalog(
   () =>
@@ -183,7 +184,8 @@ export const getExperimentalSearchEntry = createLocalizedCatalog(
         ]
       },
       newWorktreeCardStyle: getNewWorktreeCardStyleSearchEntry(),
-      ephemeralVms: getEphemeralVmsSearchEntry()
+      ephemeralVms: getEphemeralVmsSearchEntry(),
+      agentHub: getAgentHubSearchEntry()
     }) satisfies Record<string, SettingsSearchEntry>
 )
 

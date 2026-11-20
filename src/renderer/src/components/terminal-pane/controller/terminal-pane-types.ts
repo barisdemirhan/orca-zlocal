@@ -18,6 +18,8 @@ export type TerminalPaneProps = {
   isolatedPaneKey?: string | null
   // Why: one-off command terminals keep split shortcuts but hide the prominent header button.
   showSplitButton?: boolean
+  // Why: an Agent Hub mirror is a single-pane view, so splitting from its header is hidden.
+  hostedInMirror?: boolean
   onPtyExit: (ptyId: string, exitCode?: number) => void
   /** Closing the tab's last pane closes the tab; the caller names who asked. */
   onCloseTab: (reason: TerminalTabCloseIntent) => void

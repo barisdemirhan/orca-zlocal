@@ -38,6 +38,7 @@ import {
   readMobileSessionWorkspaceSources
 } from './mobile-session-dirty-workspaces'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../shared/workspace-layout/layout-owner-switch'
+import { AGENT_HUB_PEEK_WORKTREE_ID } from '../../../../shared/agent-hub-peek-workspace'
 import type { AppState } from '@/store/types'
 import type { RuntimeMobileSessionTabsSnapshot } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
 import type { RuntimeMobileSessionSnapshotTab } from '../../../../shared/remote-runtime/session-graph/runtime-mobile-session-tab-contracts'
@@ -73,6 +74,8 @@ export function buildMobileSessionTabSnapshots(
     ...state.openFiles.map((file) => file.worktreeId)
   ])
   const snapshots: RuntimeMobileSessionTabsSnapshot[] = []
+  // WHY: Peek is a private viewport, not an execution workspace that peers can select.
+  worktreeIds.delete(AGENT_HUB_PEEK_WORKTREE_ID)
   const sources = { state, publication: publicationInputs, ambiguousTerminalTabIds }
   const dirtyWorkspaces = collectDirtyMobileSessionWorkspaces(
     graphState.mobileSessionPublicationSources,

@@ -45,6 +45,7 @@ export type StructuredAgentSessionCreateIntentInput = {
   forkFrom?: { sessionId: string; throughItemId: string }
   resumeFrom?: StructuredAgentSessionResumeSource
   structuredAgentCliSourceEvidence?: StructuredAgentCliSourceEvidence
+  hostLaunchDirectory?: string
 }
 
 export function resolveCommittedStructuredAgentSessionAdoptionIntent(input: {

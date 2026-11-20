@@ -2,10 +2,14 @@ export const CLI_GLOBAL_VALUE_FLAGS: readonly string[] = ['pairing-code', 'envir
 export const CLI_GLOBAL_FLAGS: readonly string[] = ['help', 'json', ...CLI_GLOBAL_VALUE_FLAGS]
 
 export const CLI_BOOLEAN_FLAGS = new Set([
+  'clear',
+  'multi',
+  'sound',
   'accept-changed-state',
   'activate',
   'agent-wait',
   'all',
+  'all-hosts',
   'allow-failed-archive-hook',
   'allow-public',
   'allow-system-shortcut',

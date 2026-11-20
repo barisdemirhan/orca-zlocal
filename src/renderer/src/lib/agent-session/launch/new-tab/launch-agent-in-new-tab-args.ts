@@ -54,6 +54,8 @@ export type LaunchAgentInNewTabArgs = LaunchAgentInNewTabRequest & {
   onPromptDeliveryUnconfirmed?: () => void
   /** Keep terminal launches in a floating workspace from taking global selection. */
   activate?: boolean
+  /** Leave the worktree's visible tab type alone (a launch that must not change the current view). */
+  keepTabType?: boolean
   /** The launch seeds a workspace being opened, so its PTY spawn must not reshuffle Recent. */
   pendingActivationSpawn?: boolean
   /** Lets a workspace reveal itself before the selected surface opens. */

@@ -31,7 +31,10 @@ export type ActivityTabHostIndex = Map<string, Map<string, ExecutionHostId | nul
 const agentSessionTerminalTabs = new WeakMap<Tab, { name: string | null; tab: TerminalTab }>()
 const attributedTabContexts = new WeakMap<AgentStatusEntry, ActivityTabContext | null>()
 
-function terminalTabFromAgentSessionTab(tab: Tab, names: StructuredChatTabNames): TerminalTab {
+export function terminalTabFromAgentSessionTab(
+  tab: Tab,
+  names: StructuredChatTabNames
+): TerminalTab {
   // The chat's name lives on its host, so a rename changes it without changing the tab.
   const name = projectedStructuredChatTabSavedName(tab, names)
   const cached = agentSessionTerminalTabs.get(tab)

@@ -149,14 +149,20 @@
   opacity: 0.4 !important;
 }
 
-.pane-focus-rim-flash::before {
+/* Two rims over the pane: the locate flash (::before) and Agent Hub's "Outline the focused
+   terminal" (::after, so the flash still plays over it). */
+.pane-focus-rim-flash::before,
+:root[data-agent-hub-focused-pane-outline] .pane:focus-within::after {
   content: '';
   position: absolute;
   inset: 1px;
   z-index: 30;
   pointer-events: none;
-  border: 1.5px solid color-mix(in srgb, var(--terminal-pane-locate) 68%, transparent);
   border-radius: 2px;
+}
+
+.pane-focus-rim-flash::before {
+  border: 1.5px solid color-mix(in srgb, var(--terminal-pane-locate) 68%, transparent);
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--terminal-pane-locate) 34%, transparent),
     0 0 18px color-mix(in srgb, var(--terminal-pane-locate) 36%, transparent);
@@ -177,6 +183,20 @@
   box-shadow:
     inset 0 0 0 1.5px color-mix(in srgb, var(--terminal-pane-locate) 64%, transparent),
     inset 0 0 0 3px color-mix(in srgb, var(--terminal-pane-locate) 18%, transparent);
+}
+
+:root[data-agent-hub-focused-pane-outline] .pane:focus-within::after {
+  border: 1.5px solid color-mix(in srgb, var(--terminal-pane-locate) 55%, transparent);
+}
+
+/* The title bars live in an overlay layer after the pane surface, not inside it: colour the
+   active pane's title while a pane of its tab has the keyboard. */
+:root[data-agent-hub-focused-pane-outline]
+  [data-terminal-tab-id]:has(.pane:focus-within)
+  ~ .pane-title-overlay-layer
+  .pane-title-bar[data-active-pane]
+  .pane-title-text {
+  color: var(--terminal-pane-locate);
 }
 
 @keyframes pane-focus-rim-flash {

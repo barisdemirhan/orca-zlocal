@@ -34,6 +34,8 @@ export type NativeChatApprovalCardProps = {
   /** The option being sent, while `isSubmitting`: its button shows that it is working. */
   submittingOption?: string
   shouldFocus?: boolean
+  /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
+  layout?: 'composer' | 'embedded'
   /** Shown when the card has no options: only the terminal can answer it. */
   onOpenTerminal?: () => void
   /** A worker's prompt shown in its coordinator's chat: names the worker under the title. */
@@ -55,6 +57,7 @@ export function NativeChatApprovalCard({
   isSubmitting = false,
   submittingOption,
   shouldFocus = false,
+  layout = 'composer',
   onOpenTerminal,
   worker,
   countdown,
@@ -120,7 +123,13 @@ export function NativeChatApprovalCard({
 
   return (
     <SecuritySurface>
-      <div className={stacked ? 'bg-chat-pane' : 'min-h-0 shrink overflow-hidden bg-chat-pane'}>
+      <div
+        className={cn(
+          stacked ? 'bg-chat-pane' : 'min-h-0 shrink overflow-hidden bg-chat-pane',
+          'data-[layout=embedded]:bg-transparent'
+        )}
+        data-layout={layout}
+      >
         <div
           className={cn(
             'flex w-full px-3 pt-2 pb-1 sm:px-4',
@@ -128,14 +137,17 @@ export function NativeChatApprovalCard({
             quiet
               ? 'scrollbar-sleek overflow-hidden [scrollbar-gutter:stable_both-edges]'
               : 'mx-auto max-w-(--chat-content-max-width)',
-            !stacked && 'h-full min-h-0 max-h-full'
+            !stacked && 'h-full min-h-0 max-h-full',
+            'data-[layout=embedded]:max-w-none data-[layout=embedded]:p-0 data-[layout=embedded]:sm:p-0 data-[layout=embedded]:[scrollbar-gutter:auto]'
           )}
+          data-layout={layout}
         >
           {/* Quiet: laid out as the transcript column is, so the card's edges meet its rows' icon and time. */}
           <div
             className={cn(
               'flex w-full',
               quiet && 'mx-auto max-w-(--chat-content-max-width) px-[5px]',
+              layout === 'embedded' && 'max-w-none px-0',
               !stacked && 'h-full min-h-0 max-h-full'
             )}
           >

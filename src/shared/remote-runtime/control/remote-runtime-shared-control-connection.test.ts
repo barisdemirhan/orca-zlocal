@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getRemoteRuntimeRequestAdmissionEvidence } from '../requests/remote-runtime-prepared-request-admission'
+import { remoteRuntimeClientCapabilities } from '../remote-runtime-client-capabilities'
 import { RemoteRuntimeSharedControlConnection } from './remote-runtime-shared-control-connection'
 import {
   closeSharedControlTestServers,
@@ -9,6 +10,41 @@ import {
 afterEach(closeSharedControlTestServers)
 
 describe('RemoteRuntimeSharedControlConnection', () => {
+  it('retains live capability updates on reconnect and withdraws them from the next handshake', async () => {
+    const server = await createServer()
+    const connection = new RemoteRuntimeSharedControlConnection(server.pairing)
+    const capabilities = [...remoteRuntimeClientCapabilities(), 'agent-hub.requests.v1']
+    try {
+      const update = await connection.request(
+        'runtime.clientCapabilities.update',
+        { clientCapabilities: capabilities },
+        1000
+      )
+      expect(update.ok).toBe(true)
+      server.closeClients()
+      connection.reconnectNow()
+      await vi.waitFor(() => expect(server.auths).toHaveLength(2), { timeout: 3_000 })
+      await connection.request('status.get', undefined, 1000)
+      expect(server.auths.at(-1)).toMatchObject({
+        clientCapabilities: expect.arrayContaining(['agent-hub.requests.v1'])
+      })
+      await connection.request(
+        'runtime.clientCapabilities.update',
+        { clientCapabilities: remoteRuntimeClientCapabilities() },
+        1000
+      )
+      server.closeClients()
+      await vi.waitFor(() => expect(server.auths).toHaveLength(3), { timeout: 3_000 })
+      await connection.request('status.get', undefined, 1000)
+      expect(server.auths.at(-1)).toMatchObject({
+        clientCapabilities: expect.not.arrayContaining(['agent-hub.requests.v1'])
+      })
+      expect(server.connectionCount()).toBe(3)
+    } finally {
+      connection.close()
+    }
+  })
+
   it('keeps a waiting request alive when a reachability probe replaces its pre-ready socket', async () => {
     const server = await createServer({ suppressReadyFrameCount: 1 })
     const connection = new RemoteRuntimeSharedControlConnection(server.pairing)

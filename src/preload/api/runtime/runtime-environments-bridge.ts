@@ -5,7 +5,10 @@ import {
 } from '../../../shared/remote-runtime/host-status/runtime-host-status'
 import type { VerifyAndAddRuntimeEnvironmentResult } from '../../../shared/remote-runtime/pairing/remote-pairing-verification'
 import type { RuntimeStatus } from '../../../shared/remote-runtime/session-graph/runtime-session-contracts'
-import type { RuntimeRpcResponse } from '../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
+import type {
+  RuntimeOrchestrationEnvelope,
+  RuntimeRpcResponse
+} from '../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
 import type {
   PublicKnownRuntimeEnvironment,
   RuntimeEnvironmentRemoval
@@ -116,6 +119,7 @@ export const runtimeEnvironmentsApi = {
   retryConnectionsNow: (): Promise<void> =>
     ipcRenderer.invoke('runtimeEnvironments:retryConnectionsNow'),
   call: (args: {
+    envelope?: RuntimeOrchestrationEnvelope
     selector: string
     method: string
     params?: unknown

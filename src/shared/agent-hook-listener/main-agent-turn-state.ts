@@ -6,15 +6,24 @@ export type ClaudeLeadTurnState = {
   state: AgentStatusState
   /** A known background task opened this foreground finishing turn. */
   taskWakeupTurn?: true
-  /** Done-turn verdict from provider, inferred cancellation or persisted seed; the fold reads cancellation as interrupted. */
+  /** The recorded verdict on the turn this record closed (the provider's, or a `cancellation`
+   *  Orca inferred from the interrupt keystroke, or whatever a persisted row it was seeded from
+   *  held); only meaningful while `state` is done. `cancellation` is what the fold reads as an
+   *  interrupt. */
   outcome?: AgentTurnOutcome
   /** When `state` first appeared; the main agent's own clock, distinct from the gated row's. */
   stateStartedAt: number
-  /** Only the waiting child's next activity may clear its card; sibling churn cannot. */
+  /** Subagent that induced the wait; only its next tool activity may clear it, so other children's churn can't dismiss a pending human-input card. */
   waitingAgentId?: string
   /** Tool call that owns the wait; late completions from parallel sibling tools must not dismiss its card. */
   waitingToolUseId?: string
-  /** End time retained while background work holds working, then repeated on all-clear done. */
+  waitingHumanPrompt?: {
+    kind: 'permission_prompt' | 'elicitation_dialog'
+    sessionId?: string
+    serverName?: string
+    elicitationId?: string
+  }
+  /** End time of the main agent turn closed while background inventory kept the pane `working`. Repeated on the later all-clear `done`. */
   turnCompletedAt?: number
   /** That end time, held because the turn's late prompt event has not said whether a task wakeup started it. */
   unclassifiedTurnCompletedAt?: number

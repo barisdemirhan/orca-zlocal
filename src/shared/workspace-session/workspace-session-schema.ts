@@ -25,6 +25,7 @@ import { workspaceSessionCloseIntentFieldSchemas } from './workspace-session-clo
 import { persistedClientHostedBrowserPageSchema } from './client-hosted-browser-page-record'
 import { persistedOpenFileSchema } from './workspace-session-editor-schema'
 import { sleepingAgentSessionsByPaneKeySchema } from './workspace-session-sleeping-agents'
+import { workspaceSessionPaneIdentityFields } from '../workspace-session-pane-identity-schema'
 import {
   tabContentTypeSchema,
   workspaceVisibleTabTypeSchema
@@ -246,13 +247,10 @@ export const workspaceSessionStateSchema: z.ZodType<WorkspaceSessionState> = z.o
     'defaultTerminalTabsAppliedByWorktreeId',
     salvagingRecord(worktreeIdSchema, z.literal(true))
   ),
+  ...workspaceSessionPaneIdentityFields,
   sleepingAgentSessionsByPaneKey: salvagedOptional(
     'sleepingAgentSessionsByPaneKey',
     sleepingAgentSessionsByPaneKeySchema
-  ),
-  terminalPtyIncarnationsByPaneKey: salvagedOptional(
-    'terminalPtyIncarnationsByPaneKey',
-    salvagingRecord(z.string(), z.string().min(1).max(128))
   ),
   terminalTopologyRevisionByRepoId: salvagedOptional(
     'terminalTopologyRevisionByRepoId',

@@ -31,6 +31,7 @@ export type TerminalWorktreeColdParkCandidate = {
   isVisible: boolean
   shouldMeasureHiddenWorktree: boolean
   hasActivityTerminalPortal: boolean
+  hasMountRetentionLease?: boolean
   hiddenSinceMs: number | null
   /** Measure preserves hiddenSince for TTL/rank; cool-down prevents immediate re-park after the lease ends. */
   parkCooldownUntilMs?: number | null
@@ -39,6 +40,7 @@ export type TerminalWorktreeColdParkCandidate = {
 export type TerminalTabColdParkCandidate = ColdParkableTerminalTab & {
   isVisible: boolean
   hasActivityTerminalPortal: boolean
+  hasMountRetentionLease?: boolean
   hiddenSinceMs: number | null
   /** Higher means activated more recently; breaks same-pass hidden-time ties. */
   lastActivatedSeq?: number
@@ -108,6 +110,7 @@ export function canParkTerminalWorktreeRenderers(args: {
   isVisible: boolean
   shouldMeasureHiddenWorktree: boolean
   hasActivityTerminalPortal: boolean
+  hasMountRetentionLease?: boolean
   hiddenSinceMs: number | null
   parkCooldownUntilMs?: number | null
   nowMs: number
@@ -119,6 +122,7 @@ export function canParkTerminalWorktreeRenderers(args: {
     args.isVisible ||
     args.shouldMeasureHiddenWorktree ||
     args.hasActivityTerminalPortal ||
+    args.hasMountRetentionLease ||
     args.hiddenSinceMs === null ||
     (args.parkCooldownUntilMs != null && args.nowMs < args.parkCooldownUntilMs)
   ) {
@@ -157,6 +161,7 @@ export function canParkTerminalTabRenderer(args: {
     !args.parkingEnabled ||
     tab.isVisible ||
     tab.hasActivityTerminalPortal ||
+    tab.hasMountRetentionLease ||
     tab.hiddenSinceMs === null ||
     (args.parkCooldownUntilMs != null && args.nowMs < args.parkCooldownUntilMs)
   ) {

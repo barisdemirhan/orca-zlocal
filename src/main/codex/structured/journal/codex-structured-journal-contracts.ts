@@ -11,6 +11,7 @@ import type { CodexSubagentExecutions } from '../background-work/codex-subagent-
 import type { CodexThreadItem } from '../items/codex-thread-item-identity'
 import type { CodexHelperName } from '../items/codex-collab-agent-item-translation'
 import type { StructuredAgentSessionCommandRun } from '../../../native-chat/agent-session-wire/providers/structured-agent-session-adapter'
+import type { CodexTimelineEntry } from '../../codex-structured-realtime-timeline'
 
 export type CodexActiveJournalItem = {
   threadId: string
@@ -56,6 +57,11 @@ export type CodexJournalTranslatorDeps = {
 
 export type CodexJournalTranslator = {
   handle: (event: CodexStructuredSessionEvent) => CodexJournalTranslationAdmission
+  restoreTimeline?: (
+    threadId: string,
+    entries: readonly CodexTimelineEntry[],
+    realtimeOnly?: boolean
+  ) => CodexJournalTranslationAdmission
   /** The next primary turn carries this command and determines its end. */
   beginCommand: (command: StructuredAgentSessionCommandRun) => void
   /** The command was never taken. */
@@ -72,6 +78,11 @@ export type CodexHistoryTranslator = {
   restoreThread: (
     threadId: string,
     thread: Record<string, unknown>
+  ) => CodexJournalTranslationAdmission
+  restoreTimeline?: (
+    threadId: string,
+    entries: readonly CodexTimelineEntry[],
+    realtimeOnly?: boolean
   ) => CodexJournalTranslationAdmission
   dispose: () => void
 }

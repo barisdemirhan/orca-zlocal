@@ -17,13 +17,15 @@ export function NativeChatStructuredPromptCard({
   promptResponse,
   onCancel,
   shouldFocus,
-  answerInputRef
+  answerInputRef,
+  multiline = false
 }: {
   prompt: PromptItem | null
   promptResponse: PromptResponse
   onCancel: () => void
   shouldFocus: boolean
   answerInputRef: RefObject<HTMLTextAreaElement | null>
+  multiline?: boolean
 }): React.JSX.Element | null {
   const [collapsed, setCollapsed] = useState(false)
   if (prompt?.body.kind === 'approval') {
@@ -44,6 +46,7 @@ export function NativeChatStructuredPromptCard({
       <>
         <div hidden={collapsed} inert={collapsed} className="contents">
           <NativeChatStructuredQuestionCard
+            multiline={multiline}
             questions={questions}
             onAnswer={(response) => void promptResponse.respond(prompt, response)}
             isSubmitting={promptResponse.holds(prompt)}

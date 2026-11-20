@@ -1,19 +1,25 @@
 import { NativeChatPromptEditor } from './NativeChatPromptEditor'
 import { notifyNativeChatComposerState } from '../focus/native-chat-composer-mount'
 import type { NativeChatComposerInput } from './native-chat-composer-input'
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { cn } from '@/lib/class-names'
 import { NativeChatMentionMenu, NativeChatPickerMenu } from '../pickers/NativeChatAutocompleteMenus'
 import { NativeChatComposerActions } from '../controls/NativeChatComposerActions'
 import { NativeChatComposerNotices } from '../controls/NativeChatComposerNotices'
 import { NativeChatImageAttachmentPreview } from '../../attachments/chips/NativeChatImageAttachmentPreview'
-
 import { useNativeChatComposerDraftUnsaved } from '../../drafts/use-native-chat-draft-unsaved'
 import { useNativeChatComposerGlow } from '../../native-chat-composer-glow'
 import { nativeChatComposerPlaceholder } from '../controls/native-chat-composer-placeholder'
 import { useTranslate } from '@/i18n/use-translate'
 import { useLatestHandler } from '@/lib/use-latest-handler'
+import {
+  AgentHubOrbComposerContext,
+  useAgentHubOrbComposerDictation
+} from '../../../agent-hub/agent-hub-orb-composer'
+import { AgentHubOrbComposerDictationOverlay } from '../../../agent-hub/AgentHubOrbComposerDictationOverlay'
+import { useAgentHubOrbVoiceContext } from '../../../agent-hub/agent-hub-orb-voice-context'
+import { agentHubOrbVoiceNotice } from '../../../agent-hub/agent-hub-orb-voice-state'
 import type { NativeChatComposerFieldProps } from '../../native-chat-composer-field-props'
 import { imeComposedSegment } from '@/lib/text-input/ime/ime-composed-segment'
 import { acceptNativeChatPromptSuggestion } from './native-chat-prompt-suggestion-accept'
@@ -80,6 +86,11 @@ export function NativeChatComposerField({
   launchPrompt,
   workspaceFooter
 }: NativeChatComposerFieldProps): React.JSX.Element {
+  const orbTabId = useContext(AgentHubOrbComposerContext)
+  const { phase: dictationPhase } = useAgentHubOrbComposerDictation()
+  const dictationLocked = dictationPhase !== null
+  const voice = useAgentHubOrbVoiceContext()
+  const voiceHoldsInput = voice.controller !== null && !voice.snapshot.textMode
   const t = useTranslate()
   const draftNotSaved = useNativeChatComposerDraftUnsaved(draftScopeKey)
   const glowing = useNativeChatComposerGlow(draftScopeKey)
@@ -188,12 +199,13 @@ export function NativeChatComposerField({
     <div
       data-composer-field={launch ? undefined : ''}
       className={launch ? undefined : '@container/composer-field shrink-0 bg-chat-pane'}
+      data-agent-hub-orb-live-input={voiceHoldsInput || undefined}
     >
       <div className={launch ? undefined : 'native-chat-composer-gutter pt-2 pb-4'}>
         <div
           className={cn('relative w-full', !launch && 'mx-auto max-w-(--chat-content-max-width)')}
         >
-          {autocomplete.mode === 'slash' ? (
+          {!dictationLocked && autocomplete.mode === 'slash' ? (
             <NativeChatPickerMenu
               autocomplete={autocomplete}
               activeIndex={activeSuggestion}
@@ -202,7 +214,7 @@ export function NativeChatComposerField({
               onRetry={onRetrySkills}
             />
           ) : null}
-          {autocomplete.mode === 'mention' ? (
+          {!dictationLocked && autocomplete.mode === 'mention' ? (
             <NativeChatMentionMenu
               mention={mentionFiles}
               activeIndex={activeSuggestion}
@@ -225,11 +237,17 @@ export function NativeChatComposerField({
             )}
             className="mb-1.5"
           />
+          {orbTabId && agentHubOrbVoiceNotice(voice.snapshot) ? (
+            <p role="status" className="mb-1.5 text-xs text-chat-foreground-faint">
+              {agentHubOrbVoiceNotice(voice.snapshot)}
+            </p>
+          ) : null}
           <div
             className={cn(
               // Use a constant container border so focus changes cannot flash it.
               'group/composer rounded-xl border p-1.5 shadow-xs',
               !launch && 'native-chat-composer-card',
+              orbTabId && 'relative',
               launch
                 ? 'border-foreground/10 bg-background dark:bg-foreground/[0.04]'
                 : 'border-chat-composer-border bg-chat-composer-surface',
@@ -238,111 +256,122 @@ export function NativeChatComposerField({
               glowing && 'native-chat-composer-glow'
             )}
           >
-            {imageAttachments.length > 0 ? (
-              <div className="mb-2 flex flex-wrap gap-2 px-1 pt-1.5">
-                {imageAttachments.map((attachment, index) => (
-                  <NativeChatImageAttachmentPreview
-                    key={attachment.id}
-                    attachment={attachment}
-                    hostEnvironmentId={attachmentEnvironmentId}
-                    number={numberImages ? index + 1 : undefined}
-                    onRemove={onRemoveImageAttachment}
-                  />
-                ))}
-              </div>
-            ) : null}
-            <NativeChatPromptEditor
-              key={draftScopeKey}
-              scopeKey={draftScopeKey}
-              positionTarget={positionTarget}
-              imageRow={imageRow}
-              inputRef={textareaRef}
-              isComposing={imeEnterGesture.isComposing}
-              initialValue={draft}
-              disabled={disabled}
-              onChange={editorChange}
-              onKeyDownCapture={editorKeyDownCapture}
-              onBlur={editorBlur}
-              onCompositionStart={editorCompositionStart}
-              onCompositionEnd={editorCompositionEnd}
-              onPasteCapture={editorPaste}
-              onSelect={editorSelect}
-              aria-expanded={autocomplete.mode !== 'none'}
-              aria-controls={autocomplete.mode !== 'none' ? pickerListboxId : undefined}
-              aria-activedescendant={
-                optionCount > 0
-                  ? `${pickerListboxId}-option-${Math.min(activeSuggestion, optionCount - 1)}`
-                  : undefined
-              }
-              placeholder={
-                launchPrompt
-                  ? launchPrompt.placeholder
-                  : editSession
-                    ? t('components.native-chat.queuedMessages.editMessage', 'Edit message')
-                    : goalMode?.active
-                      ? t(
-                          'components.native-chat.goal.placeholder',
-                          'Describe your goal, define measurable outcomes for best results'
-                        )
-                      : (placeholderHint ??
-                        suggestion ??
-                        idleHint ??
-                        nativeChatComposerPlaceholder(hasPty, canSend, afterStop, t))
-              }
-              // Let layout handle wrapping and touch targets; scroll after eight lines (a launch prompt: one line growing to six) without JavaScript measurement.
-              // An empty launch prompt also grows to fit a wrapping placeholder: a paragraph-wide float that keeps its height, with a zero-width margin box so the caret line stays put.
-              className={cn(
-                'w-full bg-transparent px-2 py-1 text-sm outline-none',
-                launch
-                  ? 'min-h-7 max-h-[calc(6lh+0.5rem)] text-foreground placeholder:text-muted-foreground [&_p.is-editor-empty:only-child]:before:!h-auto [&_p.is-editor-empty:only-child]:before:w-full [&_p.is-editor-empty:only-child]:before:mr-[-100%]'
-                  : 'min-h-12 max-h-[calc(8lh+0.5rem)] text-chat-foreground-strong placeholder:text-chat-foreground-faint pointer-coarse:min-h-14',
-                'overflow-y-auto scrollbar-sleek',
-                // Why: the editor is a contenteditable, which `:disabled` never matches.
-                '[&[contenteditable=false]]:cursor-not-allowed [&[contenteditable=false]]:opacity-50'
-              )}
-            />
             <div
-              className={cn(
-                'flex flex-wrap items-center gap-2 pt-0.5',
-                // An empty launch prompt is one line; its controls appear once it has focus, content or live dictation.
-                launch &&
-                  !isDictating &&
-                  draft === '' &&
-                  imageAttachments.length === 0 &&
-                  'hidden group-focus-within/composer:flex'
-              )}
+              inert={dictationLocked}
+              data-native-chat-dictation-lock={dictationLocked || undefined}
             >
-              <NativeChatComposerActions
-                editSession={editSession}
-                attachDisabled={attachDisabled}
-                dictationDisabled={dictationDisabled}
-                sendDisabled={sendButtonDisabled}
-                sendBlockedReason={sendBlockedReason}
-                draftNotSaved={draftNotSaved}
-                isWorking={isWorking}
-                hasDraft={hasDraft}
-                alternateSend={alternateSend}
-                isStopping={isStopping}
-                isDictating={isDictating}
-                isDictationHoldMode={isDictationHoldMode}
-                onAttach={attach}
-                onDictationToggle={dictationToggle}
-                onDictationHoldStart={dictationHoldStart}
-                onDictationHoldEnd={dictationHoldEnd}
-                onSend={send}
-                steerPreview={steerPreview}
-                onSteerPreview={runSteerPreview}
-                onStop={onStop ? stop : undefined}
-                sessionOptionsSurface={sessionOptionsSurface}
-                sessionOptionsSnapshot={sessionOptionsSnapshot}
-                contextUsage={contextUsage}
-                sessionOptionsPickerRequest={sessionOptionsPickerRequest}
-                focusComposer={focusComposer}
-                onExitGoalMode={goalMode?.active ? exitGoalMode : undefined}
-                launchPrompt={launch}
-                {...(agent ? { agent } : {})}
+              {imageAttachments.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-2 px-1 pt-1.5">
+                  {imageAttachments.map((attachment, index) => (
+                    <NativeChatImageAttachmentPreview
+                      key={attachment.id}
+                      attachment={attachment}
+                      hostEnvironmentId={attachmentEnvironmentId}
+                      number={numberImages ? index + 1 : undefined}
+                      onRemove={onRemoveImageAttachment}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              <NativeChatPromptEditor
+                key={draftScopeKey}
+                scopeKey={draftScopeKey}
+                positionTarget={positionTarget}
+                imageRow={imageRow}
+                inputRef={textareaRef}
+                isComposing={imeEnterGesture.isComposing}
+                initialValue={draft}
+                disabled={disabled}
+                onChange={editorChange}
+                onKeyDownCapture={editorKeyDownCapture}
+                onBlur={editorBlur}
+                onCompositionStart={editorCompositionStart}
+                onCompositionEnd={editorCompositionEnd}
+                onPasteCapture={editorPaste}
+                onSelect={editorSelect}
+                aria-expanded={autocomplete.mode !== 'none'}
+                aria-controls={autocomplete.mode !== 'none' ? pickerListboxId : undefined}
+                aria-activedescendant={
+                  optionCount > 0
+                    ? `${pickerListboxId}-option-${Math.min(activeSuggestion, optionCount - 1)}`
+                    : undefined
+                }
+                placeholder={
+                  voiceHoldsInput
+                    ? t('agentHub.orb.liveHoldsInput', 'Live voice is on. Stop it to type.')
+                    : launchPrompt
+                      ? launchPrompt.placeholder
+                      : editSession
+                        ? t('components.native-chat.queuedMessages.editMessage', 'Edit message')
+                        : goalMode?.active
+                          ? t(
+                              'components.native-chat.goal.placeholder',
+                              'Describe your goal, define measurable outcomes for best results'
+                            )
+                          : (placeholderHint ??
+                            suggestion ??
+                            idleHint ??
+                            nativeChatComposerPlaceholder(hasPty, canSend, afterStop, t))
+                }
+                // Let layout handle wrapping and touch targets; scroll after eight lines (a launch prompt: one line growing to six) without JavaScript measurement.
+                // An empty launch prompt also grows to fit a wrapping placeholder: a paragraph-wide float that keeps its height, with a zero-width margin box so the caret line stays put.
+                className={cn(
+                  'w-full bg-transparent px-2 py-1 text-sm outline-none',
+                  launch
+                    ? 'min-h-7 max-h-[calc(6lh+0.5rem)] text-foreground placeholder:text-muted-foreground [&_p.is-editor-empty:only-child]:before:!h-auto [&_p.is-editor-empty:only-child]:before:w-full [&_p.is-editor-empty:only-child]:before:mr-[-100%]'
+                    : 'min-h-12 max-h-[calc(8lh+0.5rem)] text-chat-foreground-strong placeholder:text-chat-foreground-faint pointer-coarse:min-h-14',
+                  'overflow-y-auto scrollbar-sleek',
+                  // Why: the editor is a contenteditable, which `:disabled` never matches.
+                  '[&[contenteditable=false]]:cursor-not-allowed [&[contenteditable=false]]:opacity-50',
+                  'in-data-[agent-hub-orb-live-input]:cursor-not-allowed in-data-[agent-hub-orb-live-input]:opacity-50'
+                )}
               />
+              <div
+                className={cn(
+                  'flex flex-wrap items-center gap-2 pt-0.5',
+                  // An empty launch prompt is one line; its controls appear once it has focus, content or live dictation.
+                  launch &&
+                    !isDictating &&
+                    draft === '' &&
+                    imageAttachments.length === 0 &&
+                    'hidden group-focus-within/composer:flex'
+                )}
+              >
+                <NativeChatComposerActions
+                  editSession={editSession}
+                  hasContent={draft.trim().length > 0 || imageAttachments.length > 0}
+                  attachDisabled={attachDisabled}
+                  dictationDisabled={dictationDisabled}
+                  sendDisabled={sendButtonDisabled}
+                  sendBlockedReason={sendBlockedReason}
+                  draftNotSaved={draftNotSaved}
+                  isWorking={isWorking}
+                  hasDraft={hasDraft}
+                  alternateSend={alternateSend}
+                  isStopping={isStopping}
+                  isDictating={isDictating}
+                  isDictationHoldMode={isDictationHoldMode}
+                  onAttach={attach}
+                  onDictationToggle={dictationToggle}
+                  onDictationHoldStart={dictationHoldStart}
+                  onDictationHoldEnd={dictationHoldEnd}
+                  onSend={send}
+                  steerPreview={steerPreview}
+                  onSteerPreview={runSteerPreview}
+                  onStop={onStop ? stop : undefined}
+                  sessionOptionsSurface={sessionOptionsSurface}
+                  sessionOptionsSnapshot={sessionOptionsSnapshot}
+                  contextUsage={contextUsage}
+                  sessionOptionsPickerRequest={sessionOptionsPickerRequest}
+                  focusComposer={focusComposer}
+                  interactionDisabled={dictationLocked}
+                  onExitGoalMode={goalMode?.active ? exitGoalMode : undefined}
+                  launchPrompt={launch}
+                  {...(agent ? { agent } : {})}
+                />
+              </div>
             </div>
+            {orbTabId ? <AgentHubOrbComposerDictationOverlay /> : null}
           </div>
           {workspaceFooter}
         </div>

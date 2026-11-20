@@ -21,6 +21,7 @@ import {
 } from '../pane-authority/agent-status-pane-key-tab-binding'
 import { mergeCurrentOrchestrationContext } from '../orchestration/agent-status-orchestration-context'
 import { deriveAgentStatusLiveFacts } from './agent-status-live-facts'
+import { hostKeepsProviderSession } from '../agent-status-host-provider-session'
 import {
   localAgentConversationAcceptance,
   conversationSessionStartedAt
@@ -110,13 +111,17 @@ export function buildAgentStatusLiveEntry(
     runtimeMergedOrchestration ??
     (payload.state === 'done' ? existing?.orchestration : undefined)
   const conversation = localAgentConversationAcceptance(args, identity.agentType)
-  const predecessorEligible = canReuseStatusProviderSession(existing, {
-    agentType: identity.agentType,
-    state: payload.state
-  })
-  const existingProviderSession = predecessorEligible ? existing.providerSession : undefined
+  const hostKeepsCheckpoint = hostKeepsProviderSession(args, existing, identity.agentType)
+  const predecessorEligible =
+    hostKeepsCheckpoint ||
+    canReuseStatusProviderSession(existing, {
+      agentType: identity.agentType,
+      state: payload.state
+    })
+  const existingProviderSession = predecessorEligible ? existing?.providerSession : undefined
   const providerSession =
-    metadata?.providerSession ?? (!conversation.reset ? existingProviderSession : undefined)
+    metadata?.providerSession ??
+    (!conversation.reset || hostKeepsCheckpoint ? existingProviderSession : undefined)
   const providerSessionChanged =
     Boolean(metadata?.providerSession && existingProviderSession) &&
     !agentProviderSessionsEqual(
@@ -156,6 +161,7 @@ export function buildAgentStatusLiveEntry(
   const mainAgent = resolveAgentStatusLiveEntryMainAgent(existing, payload, identity.agentType)
   const programStatus =
     payload.programStatus === undefined ? existing?.programStatus : payload.programStatus
+  const modelSource = identity.inheritedFromActivePane ? existing : payload
   // Only the host names conversations. Its row naming the conversation is authoritative, a missing
   // stamp included (a settled miss clears a pending null); an ID-less local update keeps the
   // id only for the very same agent, owner and provider key (locator included).
@@ -187,8 +193,11 @@ export function buildAgentStatusLiveEntry(
     ...turnEnd,
     agentType: identity.agentType,
     model:
-      payload.model ?? (existing?.agentType === identity.agentType ? existing.model : undefined),
-    ...(payload.modelSwitchCommand ? { modelSwitchCommand: payload.modelSwitchCommand } : {}),
+      modelSource?.model ??
+      (existing?.agentType === identity.agentType ? existing.model : undefined),
+    ...(modelSource?.modelSwitchCommand
+      ? { modelSwitchCommand: modelSource.modelSwitchCommand }
+      : {}),
     paneKey,
     terminalHandle: statusTerminalHandle,
     worktreeId:
@@ -213,6 +222,7 @@ export function buildAgentStatusLiveEntry(
     lastAssistantMessageIsToolOutput: payload.lastAssistantMessageIsToolOutput,
     ...(lastCompletedAssistantMessage ? { lastCompletedAssistantMessage } : {}),
     orchestration,
+    spawnedBy: Object.hasOwn(payload, 'spawnedBy') ? payload.spawnedBy : existing?.spawnedBy,
     ...(payload.subagentObservation ? { subagentObservation: payload.subagentObservation } : {}),
     ...liveEntryChildFields(existing, payload),
     ...(mainAgent ? { mainAgent } : {}),

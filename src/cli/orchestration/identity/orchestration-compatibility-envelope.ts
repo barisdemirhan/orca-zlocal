@@ -40,6 +40,7 @@ const SESSION_EVIDENCE_METHODS: ReadonlySet<string> = new Set([
   ...BOT_ITEM_WRITE_METHOD_NAMES,
   ...CONNECTOR_POST_METHOD_NAMES
 ])
+const SESSION_WRITE_METHODS: ReadonlySet<string> = new Set(['terminal.send', 'agentSession.send'])
 
 function namesChatCaller(method: string): boolean {
   return SESSION_EVIDENCE_METHODS.has(method) || method.startsWith('browser.')
@@ -72,6 +73,16 @@ export class OrchestrationRequestEvidence {
       return {
         ...base,
         compatibilityInvocationId: request.requestId ?? base.compatibilityInvocationId
+      }
+    }
+    // A write into another session names the chat it came from.
+    if (
+      SESSION_WRITE_METHODS.has(method) &&
+      this.orchestration.orchestrationCompatibilityEvidence?.agentSessionId
+    ) {
+      return {
+        ...this.orchestration,
+        compatibilityInvocationId: request.requestId ?? this.orchestration.compatibilityInvocationId
       }
     }
     return namesChatCaller(method) && !request.remote && this.chatCaller

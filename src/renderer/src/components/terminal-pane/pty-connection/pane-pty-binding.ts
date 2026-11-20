@@ -20,9 +20,19 @@ export type PanePtyBinding = IDisposable & {
   syncProcessTracking: () => void
   noteVisibilityResume: () => void
   reassertPtySizeAfterWindowWake: () => void
-  /** Mobile wake resumes hidden panes without reveal’s size/process reads; return the provider-session claim for started or latched wakes to prevent generic duplicate resume. */
-  wakeHibernatedAgentIfArmed: (claimedProviderSessions?: Set<string>) => string | null
-  /** Focus changes resample active-leaf identity because a live agent with stale shell state may emit no correcting command boundary. */
+  /** Navigation-free hibernation wake: fires the armed cold-restore --resume
+   *  without the size-reassert/foreground-sample side effects of a real reveal.
+   *  Used by the mobile wake fanout so a hidden hibernated pane resumes with no
+   *  desktop hidden→visible transition. Returns the sleeping record's provider
+   *  session claim key when this pane started (or latched) the in-place wake,
+   *  so the follow-up generic resume never launches the same session twice. */
+  wakeHibernatedAgentIfArmed: (
+    claimedProviderSessions?: Set<string>,
+    targetPaneKey?: string
+  ) => string | null
+  /** Re-sample process identity when the pane gains intra-tab focus: the tab
+   *  icon follows the active leaf, and a shell-marked entry on a still-running
+   *  agent pane has no OSC boundary left to correct it. */
   sampleForegroundAgentOnFocus: () => void
   /** Pane focus or tab activity changed; remote panes retune the host's output cadence. */
   syncOutputCadence: () => void
@@ -31,7 +41,10 @@ export type PanePtyBinding = IDisposable & {
   /** Refresh interactive redraw scheduling after captured shortcut input. */
   markShortcutTerminalInputSent: () => void
   reconcileIfSessionMissing: (hasPty: HasPty, livenessRequestedAt?: number) => void
-  /** Fresh-spawned, never-typed PTYs qualify for newborn failure diagnostics; read at unmount so parked owners retain a value without holding the session. */
+  /** This session fresh-spawned the PTY (onPtySpawn fired for it) and never
+   *  sent terminal input — the sole-newborn diagnostic case pty-exit-hibernate
+   *  preserves on exit. Read at unmount so the parked sidecar can carry the
+   *  fact as a plain value instead of a session reference. */
   isUntouchedFreshSpawnPty: (ptyId: string) => boolean
 }
 
@@ -114,7 +127,10 @@ export function createPanePtyBinding(session: ConnectPanePtySession): PanePtyBin
       session.ptySizeReassertion.request({ fit: false })
     },
     // Why: mobile wake reaches this pane while it's hidden on the desktop, so consume only the armed hibernation wake — no size/foreground reads.
-    wakeHibernatedAgentIfArmed(claimedProviderSessions) {
+    wakeHibernatedAgentIfArmed(claimedProviderSessions, targetPaneKey) {
+      if (targetPaneKey && targetPaneKey !== session.cacheKey) {
+        return null
+      }
       if (session.hibernatedWakeInFlightClaimKey) {
         if (claimedProviderSessions?.has(session.hibernatedWakeInFlightClaimKey)) {
           return null
@@ -122,7 +138,7 @@ export function createPanePtyBinding(session: ConnectPanePtySession): PanePtyBin
         claimedProviderSessions?.add(session.hibernatedWakeInFlightClaimKey)
         return session.hibernatedWakeInFlightClaimKey
       }
-      const consumedClaimKey = session.consumeHibernatedAgentWake(claimedProviderSessions)
+      const consumedClaimKey = session.consumeHibernatedAgentWake(claimedProviderSessions, true)
       if (consumedClaimKey) {
         return consumedClaimKey
       }

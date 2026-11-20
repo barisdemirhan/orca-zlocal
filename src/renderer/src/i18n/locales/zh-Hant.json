@@ -263,6 +263,24 @@
       "remaining": "無法從「{{profile}}」中移除部分 Google Cookie，請再試一次。",
       "unverified": "無法檢查「{{profile}}」的 Google Cookie，請再試一次。"
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "儲存密碼提示",
+        "updateTitle": "更新密碼？",
+        "saveTitle": "儲存密碼？",
+        "username": "使用者名稱",
+        "password": "密碼",
+        "never": "永不儲存此網站的密碼",
+        "notNow": "暫時不要",
+        "update": "更新",
+        "save": "儲存"
+      },
+      "fill": {
+        "noUsername": "（沒有使用者名稱）",
+        "title": "已儲存的登入資料",
+        "otherLogins": "此網站的其他登入資料"
+      }
+    },
     "loadFailure": {
       "connectionNotSecure": "連線不安全",
       "cantReachHost": "無法存取 {{value0}}",
@@ -475,24 +493,6 @@
         "importedMore_other": "已為 {{domains}} 及其他 {{more}} 個網域匯入 {{count}} 個 Cookie。請重新載入頁面以使用這些 Cookie。",
         "imported_other": "已為 {{domains}} 匯入 {{count}} 個 Cookie。請重新載入頁面以使用這些 Cookie。",
         "failed": "Cookie 匯入失敗：{{reason}}"
-      }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "儲存密碼提示",
-        "updateTitle": "更新密碼？",
-        "saveTitle": "儲存密碼？",
-        "username": "使用者名稱",
-        "password": "密碼",
-        "never": "永不儲存此網站的密碼",
-        "notNow": "暫時不要",
-        "update": "更新",
-        "save": "儲存"
-      },
-      "fill": {
-        "noUsername": "（沒有使用者名稱）",
-        "title": "已儲存的登入資料",
-        "otherLogins": "此網站的其他登入資料"
       }
     }
   },
@@ -7252,21 +7252,6 @@
         }
       },
       "settings": {
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "保持本機 main 最新"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "無法儲存帳戶位置。請再試一次。",
           "dbb9626ed1": "取消",
@@ -7613,9 +7598,6 @@
           "79209b37b9": "如果 cookie 匯入不合適，「電腦使用」可以控制本機應用程式，並可視情況使用瀏覽器現有的已登入工作階段。安裝 Orca Computer Use 技能； macOS 還需要隱私權限。",
           "333984cf90": "使用現有的瀏覽器工作階段",
           "9895ed44de": "開啟電腦使用"
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "啟用代理程式使用瀏覽器"
         },
         "BrowserUseExamples": {
           "1199258ace": "複製",
@@ -8608,9 +8590,6 @@
           "14f1eb99d0": "開啟「建立 PR」時產生詳細資訊",
           "d32b87e754": "可用時使用審查範本",
           "981eae7e14": "預設草稿"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "原始碼控制 AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "撤銷連結也會撤銷在它開啟的終端機中建立的連結。任何能在這台電腦上使用終端機的人（透過 SSH 或連結）仍可再次配對。",
@@ -13265,6 +13244,27 @@
           "shownPluginCount_one": "顯示 {{count}} 個符合的外掛，包括此外掛",
           "shownPluginCount_other": "顯示 {{count}} 個符合的外掛，包括此外掛",
           "samePublisher": "更多列為 {{value0}} 的外掛"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "原始碼控制 AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "保持本機 main 最新"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "啟用代理程式使用瀏覽器"
         }
       },
       "right": {

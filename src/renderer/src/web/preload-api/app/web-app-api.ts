@@ -1,8 +1,16 @@
 import type { PreloadApi } from '../../../../../preload/api-types'
+import type { AgentHubOrbIdentityFiles } from '../../../../../shared/agent-hub-orb-identity'
 import { sanitizeWebRuntimeWorkspaceSession } from '../workspaces/web-workspace-session'
 import { sessionStorageKeyForHost } from '../workspaces/web-workspace-session-api'
 import { mergeWebUIState, readLocalWebUIState } from '../preferences/web-ui-state'
 import { UI_STORAGE_KEY, writeJson } from '../web-storage'
+
+const EMPTY_ORB_IDENTITY: AgentHubOrbIdentityFiles = {
+  soul: '',
+  user: '',
+  memory: [],
+  truncated: false
+}
 
 export function createWebAppApi(): Partial<PreloadApi> {
   return {
@@ -54,6 +62,12 @@ export function createWebAppApi(): Partial<PreloadApi> {
       onKeyboardLayoutChanged: () => () => undefined,
       getFloatingTerminalCwd: () => Promise.resolve(''),
       getFloatingMarkdownDirectory: () => Promise.resolve(''),
+      getAgentHubOrbDirectory: () => Promise.resolve(''),
+      readAgentHubOrbIdentity: () => Promise.resolve(EMPTY_ORB_IDENTITY),
+      writeAgentHubOrbSoul: () => Promise.resolve(EMPTY_ORB_IDENTITY),
+      writeAgentHubOrbUser: () => Promise.resolve(EMPTY_ORB_IDENTITY),
+      forgetAgentHubOrbMemory: () => Promise.resolve(EMPTY_ORB_IDENTITY),
+      refreshAgentHubOrbInstructions: () => Promise.resolve({ truncated: false }),
       pickFloatingMarkdownDocument: () => Promise.resolve(null),
       pickFloatingWorkspaceDirectory: () => Promise.resolve(null),
       // Browser fallback has no app-owned userData dir; reject so the sentinel can't claim sensitive evidence was persisted.

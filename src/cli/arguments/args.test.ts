@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
+import { COMMAND_SPECS } from '../specs'
 import { normalizeCommandPositionals, parseArgs } from './args'
 
 describe('parseArgs', () => {
+  it('reads the Hub wait duration without changing orchestration’s boolean wait', () => {
+    const hub = parseArgs(['hub', 'ask', 'Go?', '--wait', '2s'], undefined, COMMAND_SPECS)
+    expect(hub.commandPath).toEqual(['hub', 'ask', 'Go?'])
+    expect(hub.flags.get('wait')).toBe('2s')
+    const orchestration = parseArgs(['orchestration', 'check', '--wait'], undefined, COMMAND_SPECS)
+    expect(orchestration.commandPath).toEqual(['orchestration', 'check'])
+    expect(orchestration.flags.get('wait')).toBe(true)
+  })
   it('preserves a selector value that is also a registered command', () => {
     const parsed = parseArgs(
       ['--environment', 'status', 'worktree', 'list'],

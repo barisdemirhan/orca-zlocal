@@ -5,6 +5,14 @@ import { TerminalHost } from '../terminal-host'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 
 const killWithDescendantSweepMock = vi.hoisted(() => vi.fn())
+const suspensionMock = vi.hoisted(() =>
+  vi.fn(async (_pid: number, _current: () => boolean, suspended?: boolean) =>
+    suspended ? ('suspended' as const) : ('awake' as const)
+  )
+)
+vi.mock('../../pty-subprocess/posix-suspension', () => ({
+  changePosixPtySuspension: suspensionMock
+}))
 vi.mock('../../../pty/process-retirement/pty-descendant-termination', () => ({
   killWithDescendantSweep: killWithDescendantSweepMock
 }))
@@ -86,6 +94,42 @@ describe('TerminalHost', () => {
     if (platformDescriptor) {
       Object.defineProperty(process, 'platform', platformDescriptor)
     }
+  })
+
+  it('suspends only the exact incarnation and retains the same session for wake', async () => {
+    const opened = await host.createOrAttach({
+      sessionId: 'suspended',
+      cols: 80,
+      rows: 24,
+      streamClient: { onData: vi.fn(), onExit: vi.fn() }
+    })
+    suspensionMock.mockClear()
+    const read = await host.terminalSuspension('suspended', {})
+    expect(read).toMatchObject({ state: 'awake', incarnationId: expect.any(String) })
+    expect(
+      await host.terminalSuspension('suspended', {
+        suspended: true,
+        expectedIncarnationId: 'stale'
+      })
+    ).toEqual({ state: 'unverifiable' })
+    expect(suspensionMock).toHaveBeenCalledTimes(1)
+    expect(
+      await host.terminalSuspension('suspended', {
+        suspended: true,
+        expectedIncarnationId: read.incarnationId
+      })
+    ).toMatchObject({ state: 'suspended' })
+    expect(
+      await host.terminalSuspension('suspended', {
+        suspended: false,
+        expectedIncarnationId: read.incarnationId
+      })
+    ).toMatchObject({ state: 'awake' })
+    expect(lastSubprocess.kill).not.toHaveBeenCalled()
+    expect(lastSubprocess.forceKill).not.toHaveBeenCalled()
+    expect(host.listSessions().find((session) => session.sessionId === 'suspended')?.pid).toBe(
+      opened.pid
+    )
   })
 
   describe('createOrAttach', () => {

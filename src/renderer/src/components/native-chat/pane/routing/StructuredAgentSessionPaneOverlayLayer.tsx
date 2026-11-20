@@ -1,4 +1,5 @@
 import { Activity, memo, useCallback, useMemo, useState } from 'react'
+import { AgentHubOrbSessionOperationGuard } from '../../../agent-hub/AgentHubOrbOperationOverlay'
 import { useShallow } from 'zustand/react/shallow'
 import type { Tab, TabGroup } from '../../../../../../shared/workspace-layout/tab-groups/tab-types'
 import { useAppStore } from '@/store'
@@ -15,6 +16,15 @@ import { NativeChatComposerEditorOwner } from '../../composer/editor/native-chat
 import { NativeChatHostOutageOwner } from '../../host-access/native-chat-host-outage-owner'
 import { NativeChatPaneLifetime } from '../ownership/native-chat-pane-lifetime'
 import { isStructuredTab } from '../../../../../../shared/agent-session/view/structured-agent-session-tab'
+import { useAgentHubChatDestination } from '../../../agent-hub/agent-hub-chat-destinations'
+import { useAgentHubOrbPanel } from '../../../agent-hub/agent-hub-orb-panel-store'
+import { AgentHubOrbComposerContext } from '../../../agent-hub/agent-hub-orb-composer'
+import { NativeChatPresentationContext } from '../../native-chat-presentation-context'
+import {
+  AgentHubOrbVoiceContext,
+  useRegisteredAgentHubOrbVoice
+} from '../../../agent-hub/agent-hub-orb-voice-context'
+import { structuredAgentSessionHostKey } from '@/runtime/native-chat/host-capabilities/structured-agent-session-host-capability'
 
 type StructuredAgentSessionTab = Tab & {
   contentType: 'agent-session'
@@ -45,7 +55,21 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
   // Resolve from the tab’s recorded host because workspace ids can collide across hosts.
   const owner = useAppStore((state) => structuredAgentSessionOwnerForTab(state, tab))
   const target = useMemo(() => structuredAgentSessionTargetForHost(owner), [owner])
-  const effectsConnected = isActive || preparingHandoff
+  const voice = useRegisteredAgentHubOrbVoice(
+    tab.id,
+    tab.entityId,
+    target ? structuredAgentSessionHostKey(target) : ''
+  )
+  const orbDestination = useAgentHubOrbPanel((s) =>
+    s.session?.tabId === tab.id ? s.destination : null
+  )
+  const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
+  const mirror = useAgentHubChatDestination(tab.id)
+  const destination = orbDestination ?? mirror?.element ?? null
+  const visible = orbDestination ? chatVisible : mirror ? mirror.visible : isActive
+  const focused = orbDestination ? chatVisible : mirror ? mirror.focused : isFocusedGroup
+  // A hub mirror or the Orb shows the chat elsewhere, so it stays connected while the tab is hidden.
+  const effectsConnected = visible || preparingHandoff
   const backdropActive = useWindowBackdropActive()
   if (!target) {
     return null
@@ -58,22 +82,35 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
       dimmed={hasSplitGroups && !isFocusedGroup && !backdropActive}
       data-structured-agent-session-overlay-tab-id={tab.id}
       onFocusOwningGroup={onFocusOwningGroup}
+      retainContent
+      destination={destination}
     >
       <NativeChatPaneLifetime key={`${owner}:${tab.entityId}`} isVisible={effectsConnected}>
         <NativeChatHostOutageOwner target={target}>
           <NativeChatComposerEditorOwner>
-            <ActivityPortalContainer visible={isActive}>
+            <ActivityPortalContainer visible={visible}>
               <Activity mode={effectsConnected ? 'visible' : 'hidden'}>
-                <NativeChatView
-                  mode="structured"
-                  tabId={tab.id}
-                  groupId={groupId}
-                  sessionId={tab.entityId}
-                  agent={tab.agentSessionAgent}
-                  isVisible={isActive}
-                  isFocusedGroup={isFocusedGroup}
-                  target={target}
-                />
+                <AgentHubOrbComposerContext value={orbDestination ? tab.id : null}>
+                  <NativeChatPresentationContext value={orbDestination ? 'orb' : 'chat'}>
+                    <AgentHubOrbVoiceContext value={voice}>
+                      <AgentHubOrbSessionOperationGuard
+                        host={target.kind === 'environment' ? target.environmentId : 'local'}
+                        sessionId={tab.entityId}
+                      >
+                        <NativeChatView
+                          mode="structured"
+                          tabId={tab.id}
+                          groupId={destination ? undefined : groupId}
+                          sessionId={tab.entityId}
+                          agent={tab.agentSessionAgent}
+                          isVisible={visible}
+                          isFocusedGroup={focused}
+                          target={target}
+                        />
+                      </AgentHubOrbSessionOperationGuard>
+                    </AgentHubOrbVoiceContext>
+                  </NativeChatPresentationContext>
+                </AgentHubOrbComposerContext>
               </Activity>
             </ActivityPortalContainer>
           </NativeChatComposerEditorOwner>

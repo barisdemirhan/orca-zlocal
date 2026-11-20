@@ -87,6 +87,7 @@ export function ClientHostedBrowserPageToolbar({
             <RemoteRuntimeEgressIndicator
               runtimeEnvironmentId={runtimeEnvironmentId}
               presentation="client-hosted"
+              page={{ id: browserTab.id, worktreeId, url: browserTab.url }}
             />
           }
           trailing={

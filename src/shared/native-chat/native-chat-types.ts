@@ -236,9 +236,18 @@ export type NativeChatBlock =
   | NativeChatSubagentBlock
   | NativeChatBackgroundTaskBlock
 
-/** Structured rows preserve journal producer linkage; terminal-backed rows omit it. */
+export type NativeChatSpokenProvenance = {
+  provider: string
+  threadId: string
+  realtimeSessionId: string
+  itemId: string
+}
+
+/** A transcript row. Structured rows carry the journal row's producer linkage, so
+ *  "who said this" survives the projection; terminal-backed rows carry none. */
 export type NativeChatMessage = AgentJournalProducerLinkage & {
-  /** Stable dedup/list identity across re-reads and appends. */
+  /** Stable across re-reads/appends so the assembler and the renderer list can
+   *  dedup and key by it. */
   id: string
   role: NativeChatRole
   blocks: NativeChatBlock[]
@@ -273,6 +282,8 @@ export type NativeChatMessage = AgentJournalProducerLinkage & {
   command?: { name: string }
   /** On a user-role message another agent sent through Orca: who, as the journal recorded it. */
   from?: AgentMessageSource
+  /** Present only for a provider's committed spoken transcript. */
+  spoken?: NativeChatSpokenProvenance
   /** On a user-role message Orca delivered from a connector: who asked and where, for its tag. */
   asker?: ConnectorMessageAsker
   /** On a person's message typed by someone other than the host's owner, on their paired computer. */
@@ -316,13 +327,17 @@ export type NativeChatMessage = AgentJournalProducerLinkage & {
   unsent?: true
   /** This client's send, made while the chat read Stopping, that the host has not recorded yet. */
   sentWhileStopping?: true
-  /** Unrecorded client send awaiting explicit Retry; host holds nothing, so it cannot wait behind a turn. */
+  /** This client's send the host has not recorded, which only the user's Retry sends again: the
+   *  host holds nothing for it, so it never waits behind a turn. */
   awaitsRetry?: true
-  /** Withdrawn sends have no rail tick because the host conversation outline excludes them. */
+  /** A send a Stop took back (its submission withdrawn): no rail tick, as the conversation
+   *  outline the host serves leaves it out. */
   stoppedBeforeStart?: true
-  /** Structured journal ordering outranks timestamps; terminal transcripts omit it and worker reads strip it. */
+  /** Set only by the structured projection, on rows the journal holds, and ranks
+   *  them ahead of time. Terminal-backed messages never carry it, and worker reads strip it. */
   journalPosition?: AgentJournalPosition
-  /** Newest absorbed tool row’s position; the folded row still sorts by its own position. */
+  /** Set only by the tool fold, on a row that absorbed later tool rows: the newest
+   *  absorbed row's journal position. The row still sorts by its own. */
   foldedJournalPosition?: AgentJournalPosition
   /** Private presentation row; raw host messages never publish this fold-only marker. */
   unpairedToolResults?: true

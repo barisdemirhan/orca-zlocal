@@ -123,7 +123,12 @@ export function useSidebarRevealRequests(args: {
         })
         return
       }
-      if (!currentSidebarWorktreeId) {
+      const explicitTarget = detail?.target?.type === 'workspace' ? detail.target : null
+      const targetId = explicitTarget?.worktreeId ?? currentSidebarWorktreeId
+      const targetHost = explicitTarget
+        ? explicitTarget.executionHostId
+        : currentSidebarExecutionHostId
+      if (!targetId) {
         return
       }
       // Bots rows, and what no section lists, are not this list's to reveal: no filter
@@ -132,11 +137,11 @@ export function useSidebarRevealRequests(args: {
         return
       }
       const activeWorktree = getKnownSidebarWorktreeById(
-        currentSidebarWorktreeId,
+        targetId,
         worktreeMap,
         folderWorkspaces,
         worktrees,
-        currentSidebarExecutionHostId
+        targetHost
       )
       if (!activeWorktree || activeWorktree.isArchived) {
         return
@@ -169,8 +174,16 @@ export function useSidebarRevealRequests(args: {
         // A workspace switch while the dialog is open must not clear filters for a stale target.
         if (
           !confirmed ||
-          latest.currentSidebarWorktreeId !== currentSidebarWorktreeId ||
-          latest.currentSidebarExecutionHostId !== currentSidebarExecutionHostId
+          (!explicitTarget &&
+            (latest.currentSidebarWorktreeId !== currentSidebarWorktreeId ||
+              latest.currentSidebarExecutionHostId !== currentSidebarExecutionHostId)) ||
+          !getKnownSidebarWorktreeById(
+            targetId,
+            latest.worktreeMap,
+            latest.folderWorkspaces,
+            latest.worktrees,
+            targetHost
+          )
         ) {
           return
         }
@@ -185,11 +198,11 @@ export function useSidebarRevealRequests(args: {
           revealWorkspaceFilters(activeWorktree)
         }
       }
-      revealWorktreeInSidebar(currentSidebarWorktreeId, {
+      revealWorktreeInSidebar(targetId, {
         behavior: 'smooth',
         highlight: true,
         beginRename: (detail as { beginRename?: boolean } | undefined)?.beginRename === true,
-        executionHostId: currentSidebarExecutionHostId ?? undefined
+        executionHostId: targetHost ?? undefined
       })
     },
     [

@@ -1,3 +1,4 @@
+import * as hubCommands from '@/components/agent-hub/agent-hub-command-handlers'
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
@@ -203,6 +204,14 @@ export function useGlobalKeybindings(args: {
       const matchAppShortcut = (actionId: KeybindingActionId): boolean =>
         matchShortcut(actionId) && !targetYields(actionId)
 
+      if (
+        hubCommands.runAgentHubOrbVoiceChord(input, targetYields(), matchShortcut, () =>
+          createAppCommandHandlers(state, input, context)
+        )
+      ) {
+        return
+      }
+
       // Reviewed plugin chords beat built-in defaults; in a terminal they follow the terminal shortcut policy like built-ins.
       if (!targetYields()) {
         const pluginCommand = findPluginCommandForKeybinding(
@@ -238,7 +247,7 @@ export function useGlobalKeybindings(args: {
       ) {
         return
       }
-      for (const actionId of PLUGIN_COMMAND_ALIAS_ACTION_IDS) {
+      for (const actionId of hubCommands.withAgentHubActionIds(PLUGIN_COMMAND_ALIAS_ACTION_IDS)) {
         if (matchAppShortcut(actionId) && handlers.get(actionId)?.()) {
           return
         }

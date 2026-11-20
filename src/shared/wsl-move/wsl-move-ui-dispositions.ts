@@ -226,6 +226,8 @@ export const SETTINGS_KEYS_NAMING_A_PATH = {
   workspaceDir: 'Desktop default for new workspaces; the host has its own.',
   floatingTerminalCwd: 'The floating terminal stays a desktop terminal; D4 rewrites a UNC cwd.',
   floatingTerminalTrustedCwds: 'Same as floatingTerminalCwd.',
+  agentHubOrbCwd:
+    'The Orb is a desktop chat in the floating workspace; same as floatingTerminalCwd.',
   devPluginPaths: 'Desktop plugin paths.',
   agentStateRulesPath: 'Desktop file.',
   androidSdkPath: 'Desktop SDK.',

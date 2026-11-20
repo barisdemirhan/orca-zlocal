@@ -37,6 +37,7 @@ import { starNagApi } from './api/onboarding/star-nag-bridge'
 import { diagnosticsApi } from './api/diagnostics/diagnostics-bridge'
 import { settingsApi } from './api/preferences/settings-bridge'
 import { agentAwakeApi } from './api/agent-status/agent-awake-bridge'
+import { hostNamesApi } from './api/host-names-bridge'
 import { localhostWorktreeLabelsApi } from './api/workspaces/localhost-worktree-labels-bridge'
 import { keybindingsApi } from './api/preferences/keybindings-bridge'
 import { codexAccountsApi } from './api/agent-accounts/codex-accounts-bridge'
@@ -82,6 +83,7 @@ import { museUsageApi } from './api/agent-usage/muse-usage-bridge'
 import { aiVaultApi } from './api/ai-vault/ai-vault-bridge'
 import { nativeChatApi } from './api/native-chat/native-chat-bridge'
 import { runtimeApi } from './api/runtime/runtime-bridge'
+import { createAgentHubOrbApi } from '../shared/agent-hub-orb-client'
 import { runtimeEnvironmentsApi } from './api/runtime/runtime-environments-bridge'
 import { rateLimitsApi } from './api/agent-usage/rate-limits-bridge'
 import { opencodeGoCredentialsApi } from './api/agent-accounts/opencode-go-credentials-bridge'
@@ -152,6 +154,7 @@ const api = {
   settings: settingsApi,
   agentAwake: agentAwakeApi,
   localhostWorktreeLabels: localhostWorktreeLabelsApi,
+  hostNames: hostNamesApi,
   keybindings: keybindingsApi,
   codexAccounts: codexAccountsApi,
   claudeAccounts: claudeAccountsApi,
@@ -196,6 +199,7 @@ const api = {
   aiVault: aiVaultApi,
   nativeChat: nativeChatApi,
   runtime: runtimeApi,
+  agentHub: { orb: createAgentHubOrbApi(runtimeApi.call) },
   runtimeEnvironments: runtimeEnvironmentsApi,
   rateLimits: rateLimitsApi,
   opencodeGoCredentials: opencodeGoCredentialsApi,

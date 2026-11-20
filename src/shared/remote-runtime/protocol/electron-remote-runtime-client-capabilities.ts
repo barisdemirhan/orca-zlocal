@@ -20,10 +20,13 @@ import {
   BROWSER_CLIENT_HOST_RUNTIME_CAPABILITY,
   BROWSER_CLIENT_PAGE_METADATA_RUNTIME_CAPABILITY
 } from '../../browser/runtime/browser-runtime-capabilities'
+import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../agent-session-voice'
 
 // Electron clients can decode client-hosted page placement; becoming a page
 // host still requires the separate authenticated browser-client lease.
 export const ELECTRON_REMOTE_RUNTIME_CLIENT_CAPABILITIES = [
+  AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY,
+  // Agent Hub adds its capability on the live connection only while its renderer consumer is subscribed.
   GIT_GRAPH_TAB_CAPABILITY,
   GIT_REVERT_CONFLICT_CLIENT_CAPABILITY,
   STRUCTURED_CHAT_START_TELEMETRY_CLIENT_CAPABILITY,

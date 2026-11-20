@@ -135,7 +135,9 @@ export function createStructuredAgentSessionConversationReads(context: () => Rea
         return reads.flatMap((read) => (read ? [read] : []))
       },
       sessionLocation: (id: string): AgentSessionExecutionLocation | null =>
-        context().deps.store.getConversation(id)?.location ?? null
+        context().deps.store.getConversation(id)?.location ?? null,
+      /** Opens the chat's journal at rest without starting its agent. */
+      journal: async (id: string) => (await journalOf(id)).reads
     },
     regenerateConversationName: (sessionId: string): boolean =>
       context().deps.conversationNaming?.regenerate(sessionId) ?? false,

@@ -17,8 +17,13 @@ import type { AgentSessionQuestionAnswer } from '../requests/prompts/agent-sessi
 import type { AgentJournalTurnOutcome } from '../../agent-status/lifecycle/agent-turn-outcome'
 import type { NativeChatToolMetadata } from '../../native-chat/tools/native-chat-tool-identity'
 import type { AgentSessionContextUsage } from '../conversation-context/agent-session-context-usage'
-import type { NativeChatBlock, NativeChatRole } from '../../native-chat/native-chat-types'
+import type {
+  NativeChatBlock,
+  NativeChatRole,
+  NativeChatSpokenProvenance
+} from '../../native-chat/native-chat-types'
 import type { AgentMessageSource } from './agent-session-message-source'
+import type { AgentJournalThreadGoalState } from '../../agent-session-journal-thread-goal'
 import type { AgentSessionExecutionOptions } from '../options/protocol/agent-session-execution-options'
 import type { AgentJournalOrcaCardItem } from '../../agent-journal-orca-card-items'
 export type {
@@ -27,10 +32,13 @@ export type {
 } from '../../agent-journal-orca-card-items'
 
 /** Bump only alongside a read-time upcaster in `journal-row-schema.ts`. */
-/** v3 introduced turn items; other rows stay v2. The first v3 row stops older hosts writing (read-only on released builds, failed load here) rather than allowing truncation. */
+/** v3 introduced the `turn` item. A row without one is still written at v2 so
+ *  an older host keeps reading it; the first v3 row stops that host writing the chat
+ *  (a released one keeps it read-only, this build fails its load) instead of truncating. */
 export const AGENT_SESSION_JOURNAL_SCHEMA_VERSION = 4
 export const AGENT_SESSION_JOURNAL_TURN_ITEM_SCHEMA_VERSION = 3
-/** v4 queue rows make older builds keep the chat read-only; other rows retain their own version. */
+/** v4 introduced the `queue` row: an older build keeps a chat holding one read-only rather than
+ *  meeting a kind it does not know. Every other row keeps its own version. */
 export const AGENT_SESSION_JOURNAL_QUEUE_SCHEMA_VERSION = 4
 const AGENT_SESSION_JOURNAL_PRE_TURN_SCHEMA_VERSION = 2
 
@@ -72,6 +80,8 @@ export type AgentJournalMessageItem = {
   kind: 'message'
   role: NativeChatRole
   blocks: NativeChatBlock[]
+  /** Native canonical transcript provenance; never inferred from text or replayed as input. */
+  spoken?: NativeChatSpokenProvenance
   /** Absent ⇒ an ordinary turn input. `goal` ⇒ the text was set as the thread
    *  goal's objective, and the provider pursues it without a turn of its own. */
   sentAs?: AgentJournalMessageSendMode
@@ -158,6 +168,8 @@ export type AgentJournalPromptOption = {
   id: string
   label: string
   description?: string
+  /** Provider-declared permission scope; absent or newer values never enable an approval shortcut. */
+  permissionKind?: string
   /** A block the user compares before choosing (a mockup or snippet), shown as plain monospace text. */
   preview?: string
   /** Approvals only; absent when the option neither grants nor refuses this one call (a stop). */
@@ -251,34 +263,12 @@ export type AgentJournalTurnLifecycle = {
   providerTurnId?: string
 }
 
-/** Provider thread-goal lifecycle. Open like other persisted vocabularies: a
- *  status a newer provider reports must not turn a row malformed. */
-export const AGENT_JOURNAL_THREAD_GOAL_STATUSES = [
-  'active',
-  'paused',
-  'blocked',
-  'usageLimited',
-  'budgetLimited',
-  'complete'
-] as const
-export type AgentJournalThreadGoalStatus = (typeof AGENT_JOURNAL_THREAD_GOAL_STATUSES)[number]
-
-/** The provider's goal as last journaled. Timestamps are epoch ms on the
- *  provider's clock; counters are as of `updatedAt`. */
-export type AgentJournalThreadGoal = {
-  objective: string
-  status: AgentJournalThreadGoalStatus
-  tokenBudget: number | null
-  tokensUsed: number
-  timeUsedSeconds: number
-  createdAt: number
-  updatedAt: number
-}
-
-/** A goal transition in typed form, so readers never parse a bounded frame head. */
-export type AgentJournalThreadGoalState =
-  | { state: 'set'; goal: AgentJournalThreadGoal }
-  | { state: 'cleared' }
+export {
+  AGENT_JOURNAL_THREAD_GOAL_STATUSES,
+  type AgentJournalThreadGoal,
+  type AgentJournalThreadGoalState,
+  type AgentJournalThreadGoalStatus
+} from '../../agent-session-journal-thread-goal'
 
 type AgentJournalStatusItemFields = {
   kind: 'status'

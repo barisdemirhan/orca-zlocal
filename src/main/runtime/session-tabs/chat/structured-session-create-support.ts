@@ -44,12 +44,13 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
   async getStructuredAgentSessionCreateSupport(
     worktreeSelector: string,
     agent: StructuredAgentId,
-    options?: { requireInstalledChatProgram?: boolean }
+    options?: { requireInstalledChatProgram?: boolean; cwd?: string }
   ): Promise<StructuredAgentCreateSupportReply> {
     const support = await resolveHostStructuredAgentCreateSupport({
       agent,
       worktreeSelector,
-      location: await this.resolveStructuredAgentSessionLocation(worktreeSelector),
+      location: await this.resolveStructuredAgentSessionLocation(worktreeSelector, options?.cwd),
+      hostLaunchDirectory: options?.cwd,
       runtime: this
     })
     if (
@@ -108,7 +109,8 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
           )
         : undefined)
     const hostLaunchDirectory = isFloatingWorkspaceSelector(input.worktree)
-      ? (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path
+      ? (input.hostLaunchDirectory ??
+        (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path)
       : undefined
     if (input.forkFrom) {
       const resolved = await resolveStructuredAgentSessionForkIntent({
@@ -169,7 +171,8 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
       permissionMode?: string
     ) => AgentSessionAccountHome | Promise<AgentSessionAccountHome>
   ): Promise<AgentSessionAttachParams> {
-    const support = await this.getStructuredAgentSessionCreateSupport(input.worktree, input.agent)
+    const { worktree, agent, hostLaunchDirectory: cwd } = input
+    const support = await this.getStructuredAgentSessionCreateSupport(worktree, agent, { cwd })
     // Adopting a conversation reads the agent's own transcript, so only an agent registered with an
     // importer adopts.
     const transcriptImport = structuredAgentRuntimeMetadata(input.agent)?.transcriptImport
@@ -188,7 +191,7 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
       },
       input.agent
     )
-    const location = await this.resolveStructuredAgentSessionLocation(input.worktree)
+    const location = await this.resolveStructuredAgentSessionLocation(input.worktree, cwd)
     const definition = this.requireRegisteredStructuredAgent(input.agent)
     const host = getStructuredAgentSessionHost()
     const committedReplay = resolveCommittedStructuredAgentSessionAdoptionIntent({

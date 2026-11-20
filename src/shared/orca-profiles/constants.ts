@@ -27,6 +27,7 @@ import { DEFAULT_USAGE_PERCENTAGE_DISPLAY } from '../agent-usage/display/usage-p
 import { DEFAULT_STATUS_BAR_USAGE_MODE } from '../status-bar/status-bar-usage-mode'
 import { DEFAULT_STATUS_BAR_USAGE_FORMAT } from '../status-bar/status-bar-usage-format'
 import { buildDefaultSettings } from '../settings/default-global-settings'
+import { AGENT_HUB_DEFAULT_SETTINGS } from '../agent-hub-default-settings'
 import { DEFAULT_BROWSER_PAGE_ZOOM_LEVEL } from '../browser/site-settings/browser-page-zoom'
 import { getDefaultNotificationSettings } from '../notifications/notification-settings-defaults'
 import { getDefaultOnboardingState } from '../onboarding/onboarding-defaults'
@@ -47,7 +48,7 @@ export function getDefaultWorkspaceDir(homeDir: string): string {
 }
 
 export function getDefaultSettings(homedir: string): GlobalSettings {
-  return buildDefaultSettings({
+  const defaults = buildDefaultSettings({
     workspaceDir: getDefaultWorkspaceDir(homedir),
     appFontFamily: DEFAULT_APP_FONT_FAMILY,
     editorAutoSaveDelayMs: DEFAULT_EDITOR_AUTO_SAVE_DELAY_MS,
@@ -65,6 +66,7 @@ export function getDefaultSettings(homedir: string): GlobalSettings {
 
     voice: getDefaultVoiceSettings()
   })
+  return { ...defaults, ...AGENT_HUB_DEFAULT_SETTINGS }
 }
 
 export function getDefaultVoiceSettings(): VoiceSettings {

@@ -57,6 +57,7 @@ export function agentStatusEntryEqual(
     a.paneKey === b.paneKey &&
     a.worktreeId === b.worktreeId &&
     a.tabId === b.tabId &&
+    a.spawnedBy?.paneKey === b.spawnedBy?.paneKey &&
     a.terminalTitle === b.terminalTitle &&
     a.toolName === b.toolName &&
     a.toolInput === b.toolInput &&

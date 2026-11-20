@@ -1,6 +1,9 @@
 import { STATUS_METHODS } from './host-management/status'
 import { DESKTOP_WINDOW_METHODS } from './host-management/desktop-window'
 import { SIDEBAR_INPUT_METHODS } from './sidebar-inputs/sidebar-inputs'
+import { AGENT_HUB_METHODS } from './agent-hub'
+import { AGENT_HUB_ORB_METHODS } from './agent-hub-orb'
+import { AGENT_HUB_ORB_MEMORY_METHODS } from './agent-hub-orb-memory'
 import { ORCAD_TERMINAL_CENSUS_METHODS } from './orcad/orcad-terminal-census'
 import { ORCAD_MIGRATION_METHODS } from './orcad/orcad-migration'
 import { SESSION_TERMINAL_SCROLLBACK_METHODS } from './terminal/session-terminal-scrollback'
@@ -124,6 +127,9 @@ import { ORCA_SIDEBAR_INPUTS_IS_MAIN } from '../../../../shared/sidebar-list/fee
 
 // Keep registration order and the full RPC/security surface visible in one manifest.
 const CORE_RPC_METHODS = [
+  ...AGENT_HUB_METHODS,
+  ...AGENT_HUB_ORB_METHODS,
+  ...AGENT_HUB_ORB_MEMORY_METHODS,
   ...STATUS_METHODS,
   ...DESKTOP_WINDOW_METHODS,
   ...ORCAD_TERMINAL_CENSUS_METHODS,

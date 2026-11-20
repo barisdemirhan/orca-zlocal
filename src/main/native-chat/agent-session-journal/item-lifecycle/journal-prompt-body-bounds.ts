@@ -133,6 +133,9 @@ function boundPromptOptions(
   return options.slice(0, MAX_JOURNAL_PROMPT_OPTIONS).map((option) => ({
     id: boundPromptIdentifier(option.id),
     label: boundInlineText(option.label, JOURNAL_PROMPT_OPTION_LIMITS).text,
+    ...(option.permissionKind === undefined
+      ? {}
+      : { permissionKind: boundPromptIdentifier(option.permissionKind) }),
     ...(option.description === undefined
       ? {}
       : { description: boundInlineText(option.description, JOURNAL_PROMPT_OPTION_LIMITS).text }),

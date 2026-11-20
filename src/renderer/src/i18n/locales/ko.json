@@ -7121,9 +7121,6 @@
           "333984cf90": "기존 브라우저 세션 사용",
           "9895ed44de": "컴퓨터 사용 열기"
         },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "에이전트 브라우저 사용 활성화"
-        },
         "BrowserUseExamples": {
           "1199258ace": "복사",
           "1188e56af4": "예시 프롬프트 복사",
@@ -7361,6 +7358,59 @@
           },
           "worktreeCardStyle": {
             "title": "카드 스타일"
+          },
+          "agentHub": {
+            "title": "Agent Hub",
+            "description": "모든 에이전트와 터미널을 한곳에서: 질문에 답하고, 명령을 승인하고, 어떤 창으로든 이동하세요.",
+            "copy": "도움이 필요한, 작업 중인, 방금 끝난 에이전트와 열려 있는 모든 터미널을 보여 주는 독(또는 상태 표시줄 항목)을 추가합니다. 현재 워크스페이스를 벗어나지 않고 답변, 승인 또는 라이브 미러 열기를 할 수 있습니다.",
+            "toggleLabel": "Agent Hub 전환",
+            "clearNever": "안 함",
+            "clearHour": "1시간",
+            "clearMinutes": "{{value0}}분",
+            "placement": "허브 표시 방식",
+            "placementCopy": "상태 표시줄이나 창 가장자리로 끌어 놓을 수 있는 독, 또는 상태 표시줄의 항목입니다.",
+            "dock": "독",
+            "statusBar": "상태 표시줄",
+            "autoHide": "활성 에이전트가 없는 동안 독 숨기기",
+            "autoHideCopy": "에이전트가 작업을 시작하거나, 질문하거나, 끝나면 바로 다시 나타납니다.",
+            "alerts": "알림",
+            "alertsCopy": "허브 옆에 표시되어 에이전트 카드를 여는 말풍선입니다. 보고 있는 창에는 표시되지 않습니다.",
+            "alertNeedsInput": "에이전트가 질문하거나 승인이 필요할 때",
+            "alertFinished": "에이전트가 끝났을 때",
+            "sound": "소리 재생",
+            "soundCopy": "알림의 소리와 볼륨을 사용하며(시스템은 짧은 알림음), Orca 자체 알림이 이미 소리를 재생하면 소리를 내지 않습니다.",
+            "mutedUntil": "{{value0}}까지 알림 음소거됨",
+            "unmute": "다시 켜기",
+            "popover": "팝오버",
+            "defaultTab": "시작 화면",
+            "defaultTabCopy": "대기 중인 에이전트가 없을 때의 화면입니다. 대기 중인 에이전트가 있으면 항상 받은 편지함이 열립니다.",
+            "showShells": "일반 셸을 모든 터미널에 표시",
+            "clearFinished": "완료된 에이전트를 받은 편지함에서 지우기까지",
+            "clearFinishedCopy": "에이전트 보기에서는 읽지 않은 상태로 남습니다. 안 함을 선택하면 읽을 때까지 허브에 유지됩니다.",
+            "shortcutTaken": "{{value0}}은(는) 이미 {{value1}}에서 사용 중입니다. 키보드 단축키에서 다른 키를 선택하세요.",
+            "shortcuts": "단축키",
+            "shortcutsUnset": "설정되지 않음. 추천: {{value0}} (허브 열기, 다음 대기 중 에이전트로 이동, 미러를 허브로 보내기, 미러 정렬).",
+            "shortcutsSet": "허브 열기: {{value0}} · 다음 대기 중 에이전트: {{value1}} · 미러를 허브로: {{value2}} · 미러 정렬: {{value3}}",
+            "useSuggested": "이 키 사용",
+            "editShortcuts": "편집",
+            "dockSize": "독 크기",
+            "shortcutNotSet": "설정되지 않음",
+            "trayPeek": "보관된 미러를 새 소식이 있을 때 펼치는 시간",
+            "trayPeekCopy": "보관된 미러가 질문하거나 끝나면 허브 옆의 더미가 이 시간 동안 열렸다가 다시 접힙니다.",
+            "never": "안 함",
+            "seconds": "{{value0}}초",
+            "tabAutoPopout": "터미널 탭에 팝아웃 버튼 표시",
+            "tabAutoPopoutCopy": "탭에서 바로 터미널을 미러로 엽니다.",
+            "mirrorCap": "동시에 열리는 미러 창 수",
+            "mirrorCapCopy": "이 수를 넘겨 열면 가장 오래된 미러가 허브 옆에 보관됩니다.",
+            "canvas": "미러 캔버스 사용",
+            "canvasCopy": "버튼이나 단축키로 캔버스를 열어 미러를 배치하세요. 팝아웃은 현재 보기를 유지합니다. 캔버스를 나가면 미러가 보관되고, 돌아오면 복원됩니다.",
+            "restoreOnLaunch": "실행 시 미러와 캔버스 복원",
+            "restoreOnLaunchCopy": "Orca를 다시 시작하면 미러, 트레이, 캔버스가 마지막 상태 그대로 돌아옵니다. 터미널이 닫힌 미러는 제외됩니다.",
+            "focusedPaneOutline": "포커스된 터미널에 윤곽선 표시",
+            "focusedPaneOutlineCopy": "키보드 입력을 받는 창에 얇은 파란 테두리를 표시합니다(워크스페이스와 미러 모두). 입력과 받아쓰기가 전달되는 위치입니다.",
+            "paneQuickReply": "터미널에서 빠른 답변",
+            "paneQuickReplyCopy": "터미널 에이전트가 질문하거나 승인이 필요하면 선택지가 담긴 카드가 창 모서리 위에 열립니다. Esc로 닫으며, 답변은 터미널에서도 입력할 수 있습니다."
           }
         },
         "FloatingWorkspacePane": {
@@ -8072,9 +8122,6 @@
           "14f1eb99d0": "PR 생성을 열 때 세부정보 생성",
           "d32b87e754": "가능한 경우 리뷰 템플릿 사용",
           "981eae7e14": "기본적으로 초안"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "소스 제어 AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "링크를 취소하면 그 링크가 연 터미널에서 만든 링크도 취소됩니다. SSH나 링크를 통해 이 컴퓨터의 터미널을 쓸 수 있는 사람은 여전히 다시 페어링할 수 있습니다.",
@@ -9471,6 +9518,21 @@
               "inWindow": "창 내부",
               "worktrees": "작업 트리",
               "eaf17a7214": "에이전트 대시보드"
+            },
+            "agentHub": {
+              "title": "Agent Hub",
+              "description": "모든 에이전트와 터미널을 한곳에서: 질문에 답하고, 명령을 승인하고, 어떤 창으로든 이동하세요.",
+              "agents": "에이전트",
+              "inbox": "받은 편지함",
+              "statusBar": "상태 표시줄",
+              "terminals": "터미널",
+              "questions": "질문",
+              "alerts": "알림",
+              "sound": "소리",
+              "notifications": "알림",
+              "dock": "독",
+              "notch": "노치",
+              "mute": "음소거"
             }
           }
         },
@@ -10662,21 +10724,6 @@
           "19ad21615a": "탭 제목 자동 생성",
           "b036c7a409": "첫 번째 agent 프롬프트에서 짧고 안정적인 탭 이름을 만듭니다. 수동으로 변경한 이름이 항상 우선합니다."
         },
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "로컬 main을 최신 상태로 유지"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "WarpThemeImportModal": {
           "title": "Warp에서 가져오기",
           "description": "Warp 테마를 Orca 터미널 테마로 가져옵니다.",
@@ -11838,24 +11885,24 @@
         "bitbucket": {
           "credentials": {
             "dialog": {
+              "connectFailed": "연결 실패",
               "title": "Bitbucket 연결",
               "authModeLabel": "Bitbucket 인증 방법",
               "modeBasic": "이메일 및 API 토큰",
               "modeToken": "액세스 토큰",
               "accessToken": "액세스 토큰",
+              "accessTokenPlaceholder": "저장소, 프로젝트 또는 워크스페이스 액세스 토큰",
+              "emailPlaceholder": "you@example.com",
               "apiToken": "API 토큰",
+              "apiTokenPlaceholder": "Atlassian API 토큰",
+              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0",
               "scopeUser": "계정 이름 표시",
               "scopeRepository": "빌드 상태 읽기",
               "scopeReadPullRequest": "PR 읽기",
               "scopeWritePullRequest": "PR 생성",
               "scopesWriteNote": "읽기 전용으로 사용하려면 쓰기 범위를 생략하세요. 쓰기에는 읽기가 포함되지 않으므로 각 범위를 따로 선택하세요.",
               "cancel": "취소",
-              "connect": "연결",
-              "accessTokenPlaceholder": "저장소, 프로젝트 또는 워크스페이스 액세스 토큰",
-              "apiTokenPlaceholder": "Atlassian API 토큰",
-              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0",
-              "connectFailed": "연결 실패",
-              "emailPlaceholder": "you@example.com"
+              "connect": "연결"
             }
           },
           "integration": {
@@ -12687,10 +12734,10 @@
           "manualDelete": "다른 머신에서 사용하지 않는 것이 확실하면 세부 정보에 표시된 잠금 파일을 삭제하세요.",
           "action": "서버 복구…",
           "written": "기록됨",
-          "close": "닫기",
-          "reclaimedNotStarted": "잠금이 해제되었지만 Orca 서버가 시작되지 않았습니다.",
           "manualDeleteCommand": "호스트에서 잠금을 직접 삭제하세요:",
-          "manualDeleteWarning": "이 홈 폴더를 공유하는 다른 머신에서 이 프로필로 Orca를 실행하고 있지 않은 경우에만 이 작업을 하세요."
+          "manualDeleteWarning": "이 홈 폴더를 공유하는 다른 머신에서 이 프로필로 Orca를 실행하고 있지 않은 경우에만 이 작업을 하세요.",
+          "close": "닫기",
+          "reclaimedNotStarted": "잠금이 해제되었지만 Orca 서버가 시작되지 않았습니다."
         },
         "claudeSubagentNavigation": {
           "title": "Claude 하위 에이전트 탐색",
@@ -12795,6 +12842,27 @@
           "shownPluginCount_one": "이 플러그인을 포함해 일치하는 플러그인 {{count}}개 표시 중",
           "shownPluginCount_other": "이 플러그인을 포함해 일치하는 플러그인 {{count}}개 표시 중",
           "samePublisher": "{{value0}}(으)로 등록된 다른 플러그인"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "소스 제어 AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "로컬 main을 최신 상태로 유지"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "에이전트 브라우저 사용 활성화"
         }
       },
       "right": {
@@ -16341,8 +16409,8 @@
             "uiErrorDescription": "개인정보를 보호하는 진단 보고서를 보내 실패한 UI 영역을 파악하는 데 도움을 주세요.",
             "reportNotesPlaceholder": "선택 사항: 무슨 일이 있었나요?",
             "uiErrorNotesPlaceholder": "선택 사항: 이 UI 오류가 발생하기 전에 무엇을 하고 있었나요?",
-            "renderError": "React 렌더링 오류",
-            "renderErrorIn": "{{surface}}에서 React 렌더링 오류"
+            "renderErrorIn": "{{surface}}에서 React 렌더링 오류",
+            "renderError": "React 렌더링 오류"
           }
         }
       },
@@ -18351,6 +18419,128 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "독",
+        "mirrors": "미러 및 캔버스",
+        "voice": "음성",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "독, 알림, 미러, 음성 및 Orb 환경설정.",
+        "open": "Agent Hub 설정 열기"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Agent Hub Orb 전환",
+        "talkShortcut": "대화 단축키",
+        "notSet": "설정되지 않음",
+        "agent": "에이전트",
+        "model": "모델",
+        "agentDefault": "에이전트 기본값",
+        "approvals": "승인",
+        "placement": "위치",
+        "freeWarning": "Orb가 확인 없이 명령을 실행합니다. 주의해서 사용하세요.",
+        "ask": "확인 요청",
+        "free": "자유롭게 실행",
+        "workingFolder": "작업 폴더",
+        "hidden": "숨김",
+        "speakReplies": "응답 읽어주기",
+        "comingLater": "추후 제공",
+        "pastConversations": "지난 대화",
+        "backToConversation": "대화로 돌아가기",
+        "newConversation": "새 대화",
+        "searchConversations": "대화 검색",
+        "allAgents": "모든 에이전트",
+        "today": "오늘",
+        "yesterday": "어제",
+        "noConversations": "대화를 찾을 수 없습니다",
+        "historyFailed": "대화를 불러오지 못했습니다. 다시 시도하세요.",
+        "disabled": "Orb와 대화하려면 에이전트 제어를 켜세요",
+        "openFailed": "Orb를 열 수 없습니다. 다시 시도하세요.",
+        "working": "작업 중",
+        "open": "열기",
+        "openDenyKeys": "열기 ↵ / 거부 esc",
+        "toSend": "눌러 보내기",
+        "approvalKeys": "허용 ↵ / 거부 esc",
+        "piRequiresFree": "Pi는 자유롭게 실행 모드가 필요합니다. 명령 실행 전에 확인하려면 다른 에이전트를 선택하세요.",
+        "settings": "Orb 설정",
+        "size": "Orb 크기",
+        "sizePixels": "{{value0}}픽셀",
+        "endLiveVoice": "라이브 음성 종료",
+        "startLiveVoice": "라이브 음성 시작",
+        "showConversation": "대화 표시",
+        "unmuteMicrophone": "마이크 음소거 해제",
+        "muteMicrophone": "마이크 음소거",
+        "finishDictation": "받아쓰기 완료 후 전송",
+        "cancelDictation": "받아쓰기 취소",
+        "stopSpeaking": "말하기 중지",
+        "expand": "Orb 확장",
+        "minimize": "Orb 최소화",
+        "voiceUnavailable": "이 호스트에서는 라이브 음성을 사용할 수 없습니다.",
+        "requestNoLongerAvailable": "이 요청은 다른 곳에서 응답되었거나 더 이상 사용할 수 없습니다.",
+        "requestDenied": "요청 거부됨",
+        "requestExpired": "요청 만료됨",
+        "answerReceived": "답변 수신됨",
+        "awayAnswerReceived": "부재 설정에 따라 응답됨",
+        "requestClosed": "요청 닫힘",
+        "dismissRequestOutcome": "요청 결과 닫기",
+        "speakingMuted": "말하는 중. 마이크가 음소거되었으며 라이브 음성은 연결된 상태입니다.",
+        "speaking": "말하는 중",
+        "needsAnswer": "답변을 기다리는 중",
+        "voiceFailed": "라이브 음성에 연결하지 못했습니다.",
+        "codexVoiceUnsupported": "이 Codex 버전은 라이브 음성을 지원하지 않습니다.",
+        "codexVoiceUsageLimit": "계정 사용량 한도에 도달하여 Codex 라이브 음성을 사용할 수 없습니다.",
+        "codexVoiceAccessDenied": "Codex가 라이브 음성을 거부했습니다. 현재 계정과 워크스페이스 접근 권한을 확인하세요.",
+        "codexVoiceConnectionFailed": "Codex 라이브 음성에 연결하지 못했습니다. 연결이 종료된 후 다시 시도하세요.",
+        "voiceConnectFailed": "라이브 음성에 연결하지 못했습니다. 다시 시도하세요.",
+        "voiceStopping": "라이브 음성을 종료하는 중…",
+        "voiceConnecting": "라이브 음성에 연결하는 중…",
+        "muted": "마이크가 음소거되었으며 라이브 음성은 연결된 상태입니다.",
+        "listening": "듣는 중",
+        "done": "완료됨",
+        "ready": "준비됨",
+        "dismissReceipt": "닫기",
+        "connectionWarning": "연결 경고 1개",
+        "connectionWarnings": "연결 경고 {{value0}}개",
+        "floating": "플로팅",
+        "hideConnectionWarnings": "숨기기",
+        "readyPrompt": "준비되었습니다. 입력하거나 구를 눌러 말하세요.",
+        "showConnectionWarnings": "표시"
+      },
+      "alerts": {
+        "info": "에이전트가 정보를 공유할 때",
+        "mute": "알림 음소거",
+        "duration": "기간 선택…",
+        "muteHour": "1시간",
+        "muteTwoHours": "2시간",
+        "muteTomorrow": "내일 09:00까지"
+      },
+      "voice": {
+        "dictateImprove": "받아쓰기 및 개선"
+      },
+      "search": {
+        "mirror": "미러",
+        "canvas": "캔버스",
+        "dim": "어둡게",
+        "quickreply": "빠른 답장",
+        "outline": "윤곽선",
+        "tray": "트레이",
+        "popout": "팝아웃",
+        "microphone": "마이크",
+        "shortcut": "단축키",
+        "restore": "복원",
+        "shells": "셸",
+        "orb": "Orb",
+        "voice": "음성"
+      },
+      "mirror": {
+        "newAgentNotAdded": "이 미러에 추가할 수 없습니다. 워크스페이스 탭에서 여세요.",
+        "newAgentStartedInWorkspace": "{{agent}}이(가) {{workspace}}에서 시작되었습니다."
+      }
+    },
+    "agentHubPeekOutsideWorkspace": "Agent Peek 파일은 대상 워크스페이스 안에 있어야 합니다.",
     "startup": {
       "webHostUnreachable": {
         "title": "Orca 호스트에 연결할 수 없습니다",
@@ -18902,6 +19092,7 @@
         "next": "다음",
         "skip": "건너뛰기",
         "sending": "전송 중…",
+        "recommended": "권장",
         "terminalRequired": "터미널에서 이 OMP 질문에 대답하세요.",
         "openTerminal": "터미널에서 응답"
       },
@@ -18971,6 +19162,7 @@
         "orcaStopCrash": "이 응답이 진행되는 동안 {{machine}}의 Orca가 예기치 않게 중지되었습니다.",
         "orcaStopRemote": "이 응답이 진행되는 동안 {{machine}}의 Orca가 중지되었습니다.",
         "orcaStopCanContinue": "이 대화에서 계속할 수 있습니다.",
+        "mcpStartupDetails": "MCP 연결 세부 정보",
         "orcaStopUnnamedServer": "원격 서버",
         "permissionDenied": "{{agent}}이(가) 권한을 거부했습니다. 세부 정보 보기.",
         "safetyReviewApproved": "{{agent}}이(가) 이 작업을 승인했습니다. 세부 정보 보기.",
@@ -19197,21 +19389,22 @@
         "unavailable": "채팅 연결이 완료될 때까지 기다리세요.",
         "pending": "대화가 이전 메시지로 돌아갈 때까지 기다리세요.",
         "title": "여기로 되감을까요?",
+        "confirmation": "이 메시지와 그 이후의 모든 내용을 버릴까요? 메시지가 입력창으로 돌아와 편집하고 다시 보낼 수 있습니다. 디스크의 파일 변경 사항은 유지됩니다.",
         "confirm": "되감기",
         "cancel": "취소",
-        "action": "여기로 되감기",
-        "confirmation": "이 메시지와 그 이후의 모든 내용을 버릴까요? 메시지가 입력창으로 돌아와 편집하고 다시 보낼 수 있습니다. 디스크의 파일 변경 사항은 유지됩니다."
+        "action": "여기로 되감기"
       },
       "visualUnavailable": "시각화를 사용할 수 없습니다",
       "visualLoading": "시각화 로드 중",
+      "spokenMessage": "음성 메시지",
       "visualOpenInNewTab": "새 탭에서 열기",
       "resumeCommand": {
         "description": "Agent 세션 기록 열기",
         "argumentHint": "[검색]",
         "workspaceUnavailable": "이 채팅의 워크스페이스가 아직 로드되지 않았습니다. 잠시 후 /resume을 다시 실행하세요.",
-        "replace": "바꾸기",
+        "replaceTitle": "이 채팅을 바꿀까요?",
         "replaceDescription": "여기서 “{{title}}”을(를) 재개하면 이 채팅에서 {{agent}}이(가) 하고 있는 작업이 중지됩니다.",
-        "replaceTitle": "이 채팅을 바꿀까요?"
+        "replace": "바꾸기"
       },
       "claudeSignIn": {
         "signingIn": "로그인 중…"
@@ -19747,7 +19940,15 @@
       "modeLatestStatus": "최신 상태(권장)",
       "modeFullTranscript": "전체 기록",
       "modeFullCost": "더 느리고 요금제나 API 크레딧을 더 많이 사용합니다.",
-      "startSessionSentence": "세션 시작"
+      "startSessionSentence": "세션 시작",
+      "openIn": "열 위치",
+      "placementTab": "새 탭",
+      "placementPane": "새 창",
+      "placementJump": "이동하기",
+      "placementTabDescription": "이 미러의 탭으로 추가하고 현재 위치를 유지합니다.",
+      "placementPaneDescription": "워크스페이스에서 이 창 옆으로 분할하고 새 창용 미러 탭을 추가합니다.",
+      "placementJumpDescription": "새 탭을 열고 워크스페이스를 그 탭으로 전환합니다.",
+      "mirrorNotAdded": "새 세션이 워크스페이스에서 열렸지만 미러에 탭으로 추가하지 못했습니다."
     },
     "terminalPane": {
       "TerminalContextMenu": {
@@ -20342,6 +20543,24 @@
       "remaining": "{{profile}}에서 일부 Google 쿠키를 제거하지 못했습니다. 다시 시도하세요.",
       "unverified": "{{profile}}의 Google 쿠키를 확인할 수 없습니다. 다시 시도하세요."
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "비밀번호 저장 안내",
+        "updateTitle": "비밀번호를 업데이트할까요?",
+        "saveTitle": "비밀번호를 저장할까요?",
+        "username": "사용자 이름",
+        "password": "비밀번호",
+        "never": "이 사이트에서는 저장 안 함",
+        "notNow": "나중에",
+        "update": "업데이트",
+        "save": "저장"
+      },
+      "fill": {
+        "noUsername": "(사용자 이름 없음)",
+        "title": "저장된 로그인 정보",
+        "otherLogins": "이 사이트의 다른 로그인 정보"
+      }
+    },
     "loadFailure": {
       "connectionNotSecure": "연결이 안전하지 않습니다",
       "cantReachHost": "{{value0}}에 연결할 수 없습니다",
@@ -20554,24 +20773,6 @@
         "importedMore_other": "{{domains}} 외 {{more}}개 도메인의 쿠키 {{count}}개를 가져왔습니다. 사용하려면 페이지를 새로고침하세요.",
         "imported_other": "{{domains}}의 쿠키 {{count}}개를 가져왔습니다. 사용하려면 페이지를 새로고침하세요.",
         "failed": "쿠키를 가져오지 못했습니다: {{reason}}"
-      }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "비밀번호 저장 안내",
-        "updateTitle": "비밀번호를 업데이트할까요?",
-        "saveTitle": "비밀번호를 저장할까요?",
-        "username": "사용자 이름",
-        "password": "비밀번호",
-        "never": "이 사이트에서는 저장 안 함",
-        "notNow": "나중에",
-        "update": "업데이트",
-        "save": "저장"
-      },
-      "fill": {
-        "noUsername": "(사용자 이름 없음)",
-        "title": "저장된 로그인 정보",
-        "otherLogins": "이 사이트의 다른 로그인 정보"
       }
     }
   },
@@ -21889,6 +22090,439 @@
   },
   "projectField": {
     "updateFailed": "프로젝트 필드를 업데이트하지 못했습니다"
+  },
+  "agentHub": {
+    "attention": {
+      "answerInTerminal": "해당 터미널에서 답하세요. 별도 창이나 Orca에서 열 수 있습니다."
+    },
+    "row": {
+      "jump": "이 터미널로 이동",
+      "popOut": "별도 창으로 열기",
+      "markRead": "읽음으로 표시",
+      "currentWorkspace": "현재 열린 작업 공간에 있음",
+      "sendToHub": "Agent Hub로 보내기",
+      "bringBack": "다시 가져오기",
+      "showInMirror": "미러에 표시",
+      "closeAgent": "에이전트 닫기",
+      "closeShell": "터미널 닫기"
+    },
+    "mirror": {
+      "newAgent": "새 에이전트",
+      "project": "프로젝트",
+      "workspace": "워크스페이스",
+      "chooseProject": "프로젝트 선택",
+      "chooseWorkspace": "워크스페이스 선택",
+      "newAgentDescription": "기존 워크스페이스와 시작할 에이전트를 선택하세요.",
+      "agentLabel": "에이전트",
+      "openAgentSettings": "에이전트 설정 열기",
+      "configureAgents": "에이전트 구성",
+      "noAgents": "사용 가능한 에이전트 없음",
+      "searchWorkspaces": "워크스페이스 검색",
+      "noWorkspaces": "일치하는 워크스페이스가 없습니다.",
+      "startAgent": "에이전트 시작",
+      "agent": "에이전트",
+      "addAgentInWorkspace": "{{workspace}}에 에이전트 추가",
+      "newAgentInWorkspace": "{{workspace}}의 새 {{agent}} 에이전트",
+      "newAgentFailed": "{{agent}}을(를) 시작할 수 없습니다.",
+      "newAgentUnavailable": "새 터미널을 사용할 수 없습니다.",
+      "backHome": "{{value0}}(으)로 돌아가기",
+      "returnAgain": "다시 클릭하면 {{value0}}(으)로 돌아갑니다",
+      "close": "미러 닫기",
+      "noTerminal": "이 패널에는 현재 실행 중인 터미널이 없습니다.",
+      "connecting": "터미널에 연결 중…",
+      "restore": "{{value0}} 복원",
+      "minimize": "최소화",
+      "inWorkspace": "이 패널은 현재 작업 공간에 표시되어 있어 그 자리에 유지됩니다. 다른 탭이나 작업 공간으로 전환하면 이 창으로 돌아옵니다.",
+      "inWorkspaceTitle": "이 작업 공간을 보고 있습니다",
+      "renameHint": "두 번 클릭하여 이름 변경",
+      "rename": "터미널 이름 변경",
+      "workerCount": "워커 {{value0}}개",
+      "family": "디스패처와 워커",
+      "workers": "워커",
+      "trayLess": "간략히 보기",
+      "trayMore": "+{{value0}}",
+      "dockAll": "모든 미러를 Agent Hub로 보내기",
+      "jumpHint": "작업 공간에서 이 터미널로 이동",
+      "jump": "이동",
+      "hideWorkers": "워커 표시줄 숨기기",
+      "showWorkers": "워커 표시줄 표시",
+      "cancelDictation": "받아쓰기 취소",
+      "cancelDictationHint": "받아쓰기를 취소하고 아직 입력되지 않은 텍스트 버리기",
+      "endFocus": "이 미러를 원래 위치로 돌려놓기",
+      "focus": "이 미러에 집중하기",
+      "showInSidebar": "사이드바에 표시",
+      "returnToWorkspace": "작업 공간으로 돌아가기",
+      "tabCount": "탭 {{value0}}개",
+      "tabCount_one": "탭 {{value0}}개",
+      "tabCount_other": "탭 {{value0}}개",
+      "addHint": "이 미러에 터미널 추가",
+      "pickerSections": "터미널 목록",
+      "available": "추가 가능한 터미널",
+      "noneAvailable": "추가할 수 있는 터미널이 없습니다",
+      "closeTab": "탭 닫기",
+      "closeTabNamed": "미러 탭 {{value0}} 닫기",
+      "terminals": "미러 터미널",
+      "add": "터미널 추가",
+      "tabLimit": "미러에는 터미널을 최대 10개까지 넣을 수 있습니다.",
+      "addUnavailable": "이 터미널은 더 이상 추가할 수 없습니다.",
+      "alreadyOwned": "이 터미널은 이미 별도 창에 열려 있습니다.",
+      "trayFull": "공간을 확보하려고 가장 오래된 최소화 미러를 닫았습니다. 터미널은 각 작업 공간에 그대로 있습니다.",
+      "dropUnavailable": "여기에 놓을 수 없습니다",
+      "openInNew": "새 미러에서 열기",
+      "moveToMirror": "미러로 이동",
+      "moveUnavailable": "이 터미널은 더 이상 이동할 수 없습니다.",
+      "tabLabel": "{{value0}}, {{value1}}",
+      "dictationStopKey": "눌러 중지",
+      "projectFilter": {
+        "label": "프로젝트",
+        "remove": "필터에서 {{value0}} 제거",
+        "add": "프로젝트",
+        "all": "모든 프로젝트",
+        "search": "프로젝트 검색…",
+        "noMatch": "일치하는 프로젝트가 없습니다.",
+        "clear": "필터 지우기",
+        "empty": "이 프로젝트에는 더 추가할 항목이 없습니다",
+        "showAllProjects": "모든 프로젝트 표시",
+        "outside": "필터 밖에 {{value0}}개 더",
+        "showAll": "모두 표시"
+      }
+    },
+    "title": "에이전트",
+    "tab": {
+      "inbox": "받은 편지함",
+      "running": "실행 중",
+      "all": "모든 터미널",
+      "agents": "에이전트",
+      "shownInMirror": "미러에 표시됨",
+      "bringBack": "다시 가져오기"
+    },
+    "inbox": {
+      "previous": "이전",
+      "next": "다음",
+      "needsYou": "응답 필요",
+      "emptyTitle": "응답을 기다리는 에이전트가 없습니다",
+      "markAllRead": "모두 읽음으로 표시",
+      "finished": "완료",
+      "emptyHint": "{{value0}}개 작업 중 · 질문이 오면 알려드립니다",
+      "oneAgent": "에이전트 1개",
+      "agents": "에이전트 {{value0}}개",
+      "hidden": "{{value0}}개 숨김 · 표시"
+    },
+    "running": {
+      "empty": "현재 작업 중인 에이전트가 없습니다",
+      "working": "작업 중",
+      "longestFirst": "오래 실행된 순",
+      "popOutAll": "모두 별도 창으로 열기"
+    },
+    "footer": {
+      "move": "이동",
+      "popOut": "별도 창으로 열기",
+      "answer": "답변",
+      "tabs": "탭",
+      "jump": "이동",
+      "close": "닫기"
+    },
+    "toast": {
+      "nobodyWaiting": "응답을 기다리는 에이전트가 없습니다"
+    },
+    "trigger": {
+      "needsYouOne": "1개 응답 필요",
+      "needsYouOther": "{{value0}}개 응답 필요"
+    },
+    "terminals": {
+      "searchPlaceholder": "터미널, 프로젝트, 그룹, 에이전트로 필터링",
+      "searchLabel": "터미널 필터링",
+      "noMatch": "“{{value0}}”와 일치하는 터미널이 없습니다",
+      "empty": "열린 터미널이 없습니다",
+      "shell": "셸",
+      "ungrouped": "그룹 없음",
+      "unknownProject": "알 수 없음",
+      "termCount": "터미널 {{value0}}개",
+      "noMatchHint": "프로젝트, 그룹, 브랜치 또는 에이전트 이름으로 검색해 보세요",
+      "sortManualHint": "사이드바에서 정렬한 순서대로 작업 공간을 표시합니다.",
+      "sortLabel": "정렬: {{value0}}",
+      "sortBy": "정렬 기준"
+    },
+    "card": {
+      "recommended": "권장",
+      "dictate": "받아쓰기",
+      "send": "보내기",
+      "wantsToRun": "실행 요청",
+      "allowOnce": "예, 한 번 실행",
+      "alwaysAllow": "항상 허용",
+      "denyInstead": "아니요, {{value0}}에게 대신 할 일을 알려주기",
+      "needsApproval": "승인 필요",
+      "asking": "질문 중",
+      "replyTo": "@{{value0}}에게 답변…",
+      "instead": "대신 할 일을 알려주세요…",
+      "jump": "터미널로 이동",
+      "insteadOrDeny": "대신 할 일을 입력하거나 Enter를 눌러 거부하세요…",
+      "pastedImage": "이미지 {{value0}}",
+      "removeImage": "{{value0}} 제거",
+      "hide": "다시 질문할 때까지 숨기기"
+    },
+    "close": "닫기 (esc)",
+    "state": {
+      "idle": "대기 중",
+      "working": "작업 중",
+      "done": "완료"
+    },
+    "alert": {
+      "asking": "질문 중",
+      "needsApproval": "승인 필요",
+      "finished": "완료",
+      "more": "Agent Hub에 {{value0}}개 더 있음",
+      "dismiss": "닫기"
+    },
+    "dock": {
+      "nextWaiting": "다음 응답 대기 에이전트로 이동",
+      "edgeBottom": "상태 표시줄 위",
+      "edgeLeft": "왼쪽 가장자리",
+      "edgeRight": "오른쪽 가장자리",
+      "more": "더 보기",
+      "unmute": "알림 다시 켜기",
+      "mute": "2시간 동안 알림 끄기",
+      "position": "위치",
+      "useStatusBar": "상태 표시줄에 표시",
+      "settings": "Agent Hub 설정…",
+      "edgeTop": "제목 표시줄 아래",
+      "waiting": "응답 대기 중",
+      "finished": "완료",
+      "sizeSmall": "작게",
+      "sizeMedium": "중간",
+      "sizeLarge": "크게",
+      "size": "크기",
+      "dockMirrors": "미러를 Agent Hub로 보내기",
+      "restoreMirrors": "미러 다시 가져오기",
+      "openCanvas": "캔버스 열기",
+      "arrange": "미러 정렬"
+    },
+    "children": {
+      "agentOne": "에이전트 1개",
+      "agentMany": "에이전트 {{value0}}개",
+      "subagentOne": "하위 에이전트 1개",
+      "subagentMany": "하위 에이전트 {{value0}}개"
+    },
+    "statusBarMenuItem": "Agent Hub",
+    "dim": {
+      "modeOff": "어둡게 하지 않기",
+      "modeOn": "플로팅 창 뒤를 어둡게 하기",
+      "modeUntilClick": "뒤쪽을 클릭할 때까지 어둡게 하기",
+      "modeMinimizeOnClick": "뒤를 어둡게 하고 뒤쪽을 클릭하면 최소화",
+      "title": "플로팅 창 뒤를 어둡게 하기"
+    },
+    "count": {
+      "nested": "하위에 {{value0}}개 더 있음"
+    },
+    "hover": {
+      "openTabHere": "여기에 탭으로 열기",
+      "state": "상태",
+      "where": "위치",
+      "popout": "별도 창"
+    },
+    "arrange": {
+      "title": "플로팅 창 정렬",
+      "grid": "격자",
+      "columns": "나란히",
+      "rows": "세로로 쌓기"
+    },
+    "tabToggle": {
+      "on": "이 탭을 떠나면 별도 창으로 열립니다 (클릭하여 중지)",
+      "off": "탭을 떠나면 이 터미널을 별도 창으로 열기"
+    },
+    "canvas": {
+      "emptyTitle": "캔버스에 미러가 없습니다",
+      "emptyHint": "Agent Hub에서 터미널을 별도 창으로 열거나 최소화한 미러를 다시 가져오면 여기에 표시됩니다.",
+      "leave": "캔버스 나가기",
+      "showSidebar": "사이드바 표시"
+    },
+    "mic": {
+      "voiceOptions": "마우스 오른쪽 버튼으로 음성 옵션 열기.",
+      "start": "이 터미널에 받아쓰기",
+      "starting": "마이크 시작 중… 클릭하여 중지하세요.",
+      "stop": "받아쓰기 중지",
+      "finishing": "받아쓰기 마무리 중…",
+      "elsewhereNamed": "“{{name}}”에서 받아쓰기가 진행 중입니다.",
+      "elsewhereTerminal": "다른 터미널에서 받아쓰기가 진행 중입니다.",
+      "elsewhere": "Orca의 다른 곳에서 받아쓰기가 진행 중입니다.",
+      "onlyOne": "한 번에 하나만 실행할 수 있습니다.",
+      "disabled": "음성 받아쓰기가 꺼져 있습니다.",
+      "noModel": "선택하고 다운로드한 음성 모델이 없습니다.",
+      "unsupported": "이 창에서는 플로팅 작업 공간의 터미널에 받아쓸 수 없습니다.",
+      "enable": "음성 받아쓰기",
+      "model": "음성 모델",
+      "noModels": "다운로드한 모델이 없습니다",
+      "moreModels": "설정에서 더 보기…",
+      "settings": "음성 설정…",
+      "startWithImproveHint": "이 터미널에 받아쓰기. Shift를 누른 채 클릭하면 받아쓰고 다듬습니다.",
+      "dictateAndImprove": "받아쓰고 다듬기",
+      "dictate": "받아쓰기",
+      "mode": "마이크 동작",
+      "modeCopy": "미러의 마이크를 클릭하면 이 모드가 시작됩니다. Shift를 누른 채 클릭하면 사용 가능한 다른 모드가 시작됩니다.",
+      "startImproveHint": "이 터미널에 받아쓰고 다듬기. Shift를 누른 채 클릭하면 받아쓰기만 합니다.",
+      "improve": "받아쓰고 다듬기",
+      "improveWithAgent": "에이전트로 다듬기",
+      "improveSettings": "받아쓰기 다듬기 설정",
+      "modeSwitchCopy": "켜면 미러 마이크가 받아쓰고 다듬습니다. Shift를 누른 채 클릭하면 반대로 동작합니다.",
+      "improveRequired": "받아쓰기 다듬기 기능이 필요합니다.",
+      "listeningTab": "이 터미널에서 받아쓰기 중",
+      "answering": "질문 카드가 열려 있습니다. 입력란의 마이크로 답변을 받아쓰기하세요."
+    },
+    "shortcut": {
+      "doubleTapHint": "보조 키를 두 번 누르는 동작도 등록할 수 있습니다.",
+      "suggestions": "미설정 단축키 제안: {{bindings}}",
+      "conflict": "{{binding}}이(가) {{owners}}와 충돌합니다.",
+      "parseError": "단축키를 해석할 수 없습니다.",
+      "saveError": "단축키를 저장할 수 없습니다."
+    },
+    "shortcuts": {
+      "title": "키보드 단축키",
+      "toggle": "Agent Hub 열기 또는 닫기",
+      "nextWaiting": "다음 응답 대기 에이전트로 이동",
+      "dockMirrors": "미러 최소화 또는 복원",
+      "popOut": "활성 에이전트를 별도 창으로 열기",
+      "jumpToMirror": "활성 미러의 작업 공간으로 이동",
+      "arrangeMirrors": "미러 정렬",
+      "toggleCanvas": "캔버스 열기 또는 나가기",
+      "focusMirror": "캔버스의 활성 미러 집중 모드 켜기 또는 끄기",
+      "hub": "Agent Hub",
+      "mirrors": "미러",
+      "canvas": "캔버스",
+      "dictation": "받아쓰기",
+      "notSet": "미설정",
+      "setAction": "{{action}} 단축키 설정",
+      "set": "단축키 설정",
+      "edit": "단축키 편집",
+      "editDescription": "Hub, Orb, 미러, 받아쓰기 단축키를 변경합니다."
+    },
+    "windowFilter": {
+      "label": "창별 필터링",
+      "labelActive": "필터: {{value0}}",
+      "title": "표시",
+      "any": "모두",
+      "open": "창에 열림",
+      "emptyOpen": "창에 열린 터미널이 없습니다",
+      "minimized": "최소화됨",
+      "emptyMinimized": "최소화된 터미널이 없습니다",
+      "none": "창에 없음",
+      "emptyNone": "모든 터미널이 창에 있습니다"
+    },
+    "dictation": {
+      "here": "여기에 받아쓰기 중"
+    },
+    "quick": {
+      "answerWith": "답변: {{value0}}",
+      "more": "↵ 눌러 {{value0}}개 모두 보기",
+      "deny": "아니요",
+      "title": "빠른 답변",
+      "close": "닫고 터미널에서 답변 (esc)",
+      "recommended": "권장",
+      "ownWords": "직접 답변 입력…",
+      "escHint": "터미널",
+      "reopen": "빠른 답변 카드 표시",
+      "send": "보내기",
+      "sending": "보내는 중…"
+    },
+    "settings": {
+      "agentControl": "에이전트의 Agent Hub 제어 허용",
+      "agentControlCopy": "에이전트가 콘텐츠를 보여주고 질문하며 미러를 관리할 수 있습니다."
+    },
+    "requests": {
+      "decisionGate": "결정 대기",
+      "gateUpdateRequired": "결정 대기에 응답하려면 이 호스트를 업데이트하세요.",
+      "pairedPeekUnavailable": "Peek은 아직 이 페어링된 호스트의 URL이나 파일을 열 수 없습니다.",
+      "peekUnavailable": "현재 보기에서 Peek을 사용할 수 없습니다.",
+      "peekUnsupported": "해당 호스트의 Peek에서 이 URL이나 파일을 열 수 없습니다.",
+      "peekUnsupportedFile": "이 파일 형식은 Peek에서 표시할 수 없습니다. 작업 공간 또는 기본 앱에서 여세요.",
+      "targetUnavailable": "이 터미널은 해당 호스트에서 더 이상 사용할 수 없습니다.",
+      "mirrorAddFailed": "요청자의 미러에 터미널을 추가할 수 없습니다 ({{reason}}).",
+      "mirrorOpenFailed": "미러를 열 수 없습니다 ({{reason}}).",
+      "mirrorUnavailable": "이 터미널에는 미러가 없습니다.",
+      "invalidLayout": "격자, 열 또는 행 레이아웃을 선택하세요.",
+      "canvasDisabled": "설정에서 Agent Hub 캔버스를 활성화하면 열 수 있습니다.",
+      "presenceUnavailable": "데스크톱 사용 여부를 확인할 수 없습니다.",
+      "disconnected": "이 호스트의 연결이 끊어졌습니다.",
+      "unavailable": "이 요청은 더 이상 사용할 수 없습니다.",
+      "sendFailed": "답변을 보낼 수 없습니다. 다시 시도하세요.",
+      "sending": "보내는 중…",
+      "answeredElsewhere": "다른 곳에서 답변함",
+      "asks": "@{{agent}}의 질문",
+      "wantsTo": "@{{agent}} 요청: {{action}}",
+      "allowOnce": "한 번 허용",
+      "allowSession": "이 세션 동안 허용",
+      "deny": "거부",
+      "awayAnswer": "부재 중 @{{agent}}이(가) {{answer}}을(를) 선택했습니다",
+      "openMirror": "{{title}}의 미러 열기",
+      "minimizeMirror": "{{title}}의 미러 최소화",
+      "restoreMirror": "{{title}}의 미러 복원",
+      "closeMirror": "{{title}}의 미러 닫기",
+      "peekLink": "Peek에서 {{link}} 보기",
+      "arrangeMirrors": "미러 정렬",
+      "openCanvas": "캔버스 열기",
+      "closeCanvas": "캔버스 닫기"
+    },
+    "answerQueue": {
+      "answeredElsewhere": "다른 곳에서 답변됨",
+      "automatically": "자동",
+      "caughtUp": "모두 처리됨",
+      "exit": "나가기",
+      "includeApprovals": "승인 포함",
+      "isAsking": "님이 질문 중",
+      "later": "나중에",
+      "laterHint": "나중에",
+      "onlyShortcut": "단축키로만",
+      "openShortcut": "Agent Hub 답변 대기열 열기",
+      "openTerminal": "터미널에서 열기",
+      "openWhen": "질문이 도착하면 열기",
+      "pick": "선택",
+      "send": "보내기",
+      "title": "답변 대기열",
+      "unverifiable": "호스트 연결을 확인할 수 없습니다. 다시 연결한 후 답변을 보내세요.",
+      "waiting": "{{count}}개 대기 중"
+    },
+    "peek": {
+      "kindWeb": "웹",
+      "kindImage": "이미지",
+      "kindPdf": "PDF",
+      "kindMarkdown": "Markdown",
+      "kindCsv": "표",
+      "kindMermaid": "다이어그램",
+      "kindNotebook": "노트북",
+      "kindText": "코드 / 텍스트",
+      "kindMedia": "미디어",
+      "source": "{{value0}}에서",
+      "showSource": "이 미러를 맨 앞으로 가져오기",
+      "openInTab": "탭에서 열기",
+      "openInEditor": "편집기에서 열기",
+      "openInBrowser": "브라우저에서 열기",
+      "openWithApp": "기본 앱으로 열기",
+      "back": "이전 미리 보기",
+      "close": "닫기 (esc)",
+      "chips": "이 메시지의 링크",
+      "chipLabel": "Peek에서 {{value0}} 보기",
+      "unreadable": "이 파일을 여기에서 표시할 수 없습니다.",
+      "action": "Peek",
+      "exitFullScreen": "전체 화면 종료",
+      "fullScreen": "전체 화면",
+      "hostAddress": "이 주소는 해당 호스트에서만 사용할 수 있습니다. 작업 공간 브라우저에서 엽니다.",
+      "workspaceFallback": "여기서는 미리 보기를 표시할 수 없습니다. 작업 공간에서 엽니다.",
+      "unavailable": "이 링크를 열 수 없습니다."
+    },
+    "orb": {
+      "defaultAction": "Orb 열기 모드",
+      "defaultActionHint": "Orb 버튼과 단축키에 사용합니다.",
+      "alternateAction": "{{modifier}}+클릭 동작",
+      "alternateActionHint": "기본 동작을 바꾸지 않고 이 모드를 엽니다.",
+      "liveAction": "라이브",
+      "textAction": "텍스트",
+      "microphoneBusy": "다른 녹음에서 마이크를 사용 중입니다.",
+      "modifierClickHint": "{{modifier}}+클릭 · {{action}}",
+      "modelsLoading": "사용 가능한 모델을 불러오는 중…",
+      "modelsUnavailable": "사용 가능한 모델을 불러오지 못했습니다. 모델 메뉴를 열어 다시 시도하세요.",
+      "modelUnavailable": "사용 불가",
+      "settingsApply": "Orb가 유휴 상태일 때 에이전트, 모델, 승인 변경은 새 대화를 시작합니다. 이전 대화는 해당 에이전트와 모델을 유지합니다.",
+      "liveHoldsInput": "라이브 음성이 켜져 있습니다. 입력하려면 중지하세요."
+    }
   },
   "workspaceDeletion": {
     "preferenceSaveFailed": "삭제 환경설정을 저장하지 못했습니다",

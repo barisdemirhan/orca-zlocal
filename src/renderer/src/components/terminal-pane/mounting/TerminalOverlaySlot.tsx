@@ -47,6 +47,10 @@ export const TerminalOverlaySlot = memo(function TerminalOverlaySlot({
   consumeSuppressedPtyExit,
   captureEmptiedReaction
 }: TerminalOverlaySlotProps): React.JSX.Element {
+  // Why read once: switching host type remounts the pane and loses its TUI state.
+  const [stableHosting] = useState(
+    () => useAppStore.getState().settings?.experimentalAgentHub === true
+  )
   const [shouldMeasureHiddenStartup, setShouldMeasureHiddenStartup] = useState(
     () => useAppStore.getState().pendingStartupByTabId[terminalTabId] !== undefined
   )
@@ -62,13 +66,20 @@ export const TerminalOverlaySlot = memo(function TerminalOverlaySlot({
       tabId={terminalTabId}
       worktreeId={worktreeId}
       cwd={startupCwd ?? worktreePath}
-      isActive={isActive || activityTerminalPortal?.active === true}
-      // Retain TerminalPane outside reparented group subtrees to preserve TUI state; visibility still throttles hidden rendering.
+      isActive={
+        stableHosting && activityTerminalPortal
+          ? activityTerminalPortal.active
+          : isActive || activityTerminalPortal?.active === true
+      }
+      // Why: split-group changes reparent TabGroupPanel subtrees. Keeping the
+      // TerminalPane mounted here preserves alt-screen TUI state while this
+      // flag still lets hidden tabs throttle rendering.
       isVisible={isVisible || activityTerminalPortal !== null}
       isWorktreeActive={isWorktreeActive || activityTerminalPortal !== null}
       isolatedPaneKey={activityTerminalPortal?.paneKey ?? null}
       measureWhileHidden={prewarm !== null}
       warmRendererWhileHidden={prewarm === 'warm'}
+      hostedInMirror={stableHosting && activityTerminalPortal?.owner === 'agent-hub'}
       onPtyExit={(ptyId, exitCode) => {
         if (consumeSuppressedPtyExit(ptyId)) {
           return
@@ -95,7 +106,7 @@ export const TerminalOverlaySlot = memo(function TerminalOverlaySlot({
     />
   )
 
-  if (activityTerminalPortal) {
+  if (!stableHosting && activityTerminalPortal) {
     return createPortal(
       terminalPane,
       activityTerminalPortal.target,
@@ -112,6 +123,9 @@ export const TerminalOverlaySlot = memo(function TerminalOverlaySlot({
       dimmed={dimmed}
       data-terminal-overlay-tab-id={terminalTabId}
       onFocusOwningGroup={onFocusOwningGroup}
+      retainContent={stableHosting}
+      restoreFocusOnMove={activityTerminalPortal ? activityTerminalPortal.active : isActive}
+      destination={activityTerminalPortal?.target}
     >
       {terminalPane}
     </RetainedPaneHost>

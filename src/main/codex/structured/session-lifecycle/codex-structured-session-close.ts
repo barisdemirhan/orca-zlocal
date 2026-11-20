@@ -32,6 +32,7 @@ export function handleCodexSessionExit(input: {
     return false
   }
   session.exitObservedAt ??= Date.now()
+  session.realtime?.ended()
   // Release waits even if terminal journal rows are refused.
   session.turnOpenWaits.releaseAll()
   const event: StructuredAgentSessionEndedEvent = {

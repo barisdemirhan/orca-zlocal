@@ -2,10 +2,11 @@
 name: orca-cli
 description: >-
   Operate Orca-managed worktrees, folder contexts, terminals, repos, automations, worktree
-  comments, and Orca's embedded browser through the `orca` CLI. Use when the user says
-  "$orca-cli", "Orca worktree", "child worktree", "spawn codex/claude in a worktree",
+  comments, Agent Hub, and Orca's embedded browser through the `orca` CLI. Use when the user
+  says "$orca-cli", "Orca worktree", "child worktree", "spawn codex/claude in a worktree",
   "read/wait/send Orca terminal", "handoff" / "handover" / "give this to another agent",
-  "ask/tell/message another agent" (including an agent on a paired Orca server), or
+  "ask/tell/message another agent" (including an agent on a paired Orca server),
+  "orca hub", "Agent Hub card" / "floating card" / "mirror" (open one, add a tab to it), or
   "Orca browser". Also use for opening, testing, screenshotting, or checking how a local or
   external web page renders while working in Orca, unless the user or project names another
   browser tool; plain HTTP or API calls (curl, fetch) do not need it. Prefer it over raw git
@@ -311,6 +312,35 @@ Terminal rules:
 - For long output, use cursor reads. After a limited tail preview, page from `oldestCursor`; after a cursor read, continue with `nextCursor` while `limited` is true and `nextCursor !== latestCursor`.
 - `--direction vertical` splits left/right. `--direction horizontal` splits top/bottom.
 
+## Agent Hub
+
+Agent Hub is the user's view of agents, questions, progress, and terminal mirrors. Use
+`hub` to show a result, ask a decision, or manage mirrors of agents you started. Prefer
+your native question tool when available. Before blocking, check `ORCA hub presence --json`.
+
+**A floating Agent Hub card is a mirror.** The window with a tab strip, a `+` button and
+a terminal title (for example "Terminal 1") shows real Orca terminals. When the user asks
+for a tab "in this card", "next to this pane" or "in the floating window", create the
+terminal, then add it to the card; never say no command exists:
+
+```text
+ORCA terminal create --command "<command>" --json
+ORCA hub mirror add --terminal <returnedHandle> --json
+ORCA hub mirror add --terminal <handle> --into <handleShownInThatCard> --json
+```
+
+Without `--into` the tab joins the card that shows your own terminal. `hub status --json`
+lists `cards` with their tabs and marks yours with `containsCaller`.
+
+To read every waiting question and its options without a caller pane (the Orb, a paired
+client), use `hub questions --all-hosts --json`; relay the person's explicit choice with
+`hub answer --question <id> --option <id>`. Neither `hub status` nor `hub questions` is a
+global guarantee: check each host's `status` and `complete`.
+
+Load `references/agent-hub.md` before using these commands. **`hub ask` exit 2 means
+pending: resume the printed request ID with short `--wait` calls; do not ask again.**
+Do not spam the user or operate on unrelated panes without their request.
+
 <!-- host-capability: artifact-publishing -->
 
 ## Artifacts
@@ -399,6 +429,7 @@ This guide covers worktrees, terminals, and handoffs on its own. At a gate below
 | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | Driving Orca's embedded browser: navigation, snapshots, refs, tabs, concurrent pages, or `browser_*` recoveries              | `references/browser.md`          |
 | Creating, editing, running, or inspecting scheduled automations                                                              | `references/automations.md`      |
+| Showing the user a result, asking a decision, publishing progress, or managing Agent Hub mirrors                             | `references/agent-hub.md`        |
 | Running as a bot: which command reaches Slack, Linear or GitHub, finds a place, starts an automation or hands over a webhook | `references/bots.md`             |
 | Running as a bot that uses or sets up an app through Composio, or starts on its events                                       | `references/composio.md`         |
 | Running as a bot that is setting up Google for its owner: paths, step checks, misses, recovery                               | `references/google-setup.md`     |

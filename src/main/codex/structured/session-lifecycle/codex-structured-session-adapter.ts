@@ -38,8 +38,8 @@ import { createCodexStructuredNotificationRetry } from './codex-structured-notif
 import { acquireCodexStructuredSession } from '../acquisition/codex-structured-session-acquire'
 import * as requestEndWait from '../turns/codex-request-end-wait'
 import { changeCodexThreadGoalWithSettings } from '../threads/codex-structured-thread-goal'
-import { startCodexTerminalStopProbe } from '../background-work/codex-background-terminals'
 import * as backgroundStops from '../background-work/codex-background-task-stops'
+import { CodexStructuredVoiceAdapter } from '../../codex-structured-voice-adapter'
 import {
   compactCodexStructuredSession,
   answerCodexStructuredPrompt,
@@ -48,7 +48,7 @@ import {
 import { renameCodexProviderSession } from './codex-provider-session-rename'
 import { approveCodexAutoReviewDenial } from './codex-auto-review-approval'
 import * as codexRewind from '../threads/codex-structured-rewind'
-import * as turnEnd from '../turns/codex-structured-turn-end-settlement'
+import { emitCodexStructuredSessionEvent } from './codex-structured-session-emit'
 import { codexAcquireFailure } from '../../app-server/codex-startup-outcome'
 import { openCodexStart, recoverCodexRewindAtStart } from './codex-structured-start-verdict'
 
@@ -57,6 +57,7 @@ export class CodexStructuredSessionAdapter implements SessionAdapter {
   private readonly acquisitions = new CodexAcquisitionRegistry()
   private readonly notificationRetries: ReturnType<typeof createCodexStructuredNotificationRetry>
   private readonly teardown: CodexStructuredSessionTeardown
+  readonly voice = new CodexStructuredVoiceAdapter(this.sessions, () => this.deps)
 
   constructor(private readonly deps: CodexStructuredSessionAdapterDeps) {
     this.atRestCommands = deps.atRestCommands
@@ -145,34 +146,17 @@ export class CodexStructuredSessionAdapter implements SessionAdapter {
     }
   }
 
-  /** Journal first so observers never see an event ahead of its durable row. */
   private emit(
     session: CodexSession,
     event: CodexStructuredSessionEvent
   ): CodexJournalTranslationAdmission {
-    if (event.type === 'notification') {
-      turnEnd.noteCodexTurnOpened(session, event.method, event.params)
-      if (event.method === 'skills/changed') {
-        session.skillReport?.refresh(true)
-      }
-    }
-    const admission = session.translator?.handle(event) ?? { accepted: true }
-    if (!admission.accepted) {
-      return admission
-    }
-    if (event.type === 'notification') {
-      turnEnd.publishCodexTurnOpened(session, event, this.sessions)
-      // Only an admitted turn end settles; a refused one settles on the retry that lands.
-      turnEnd.settleCodexSendsInEndedTurn(session, event)
-      // Child records observe refused frames only after a retry reaches the journal.
-      session.backgroundTasks.observe(event, session.prompts.takeAbandonedCommands())
-      // After the journal and the parent's republished row, never ahead of either.
-      session.backgroundTasks.publishChildWork()
-      startCodexTerminalStopProbe(this.sessions, event.sessionId, session, this.deps)
-    }
-    requestEndWait.settleCodexRequestEndWaiters(session)
-    this.deps.onEvent?.(event)
-    return admission
+    return emitCodexStructuredSessionEvent({
+      session,
+      event,
+      sessions: this.sessions,
+      voice: this.voice,
+      deps: this.deps
+    })
   }
 
   private handleServerRequest(

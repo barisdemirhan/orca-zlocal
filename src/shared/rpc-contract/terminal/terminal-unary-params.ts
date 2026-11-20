@@ -2,6 +2,7 @@ import * as z from 'zod'
 import { TERMINAL_KITTY_FILE_MAX_BYTES } from '../../terminal/images/terminal-kitty-file'
 import { OptionalFiniteNumber, OptionalString, requiredString } from '../rpc-param-primitives'
 import { isTuiAgent } from '../../agent-launch/catalog/tui-agent-config'
+import { TerminalSurfaceCloseCapture } from './terminal-surface-close-capture'
 import { SpawnIntentParam } from './agent-session-params'
 import {
   canonicalizeWindowsShellOverride,
@@ -20,28 +21,6 @@ export const WindowsShellOverrideParam = z
   })
   // Canonicalize host-side to the .exe spellings exact-matched by spawn, even if the client did not.
   .transform((shell) => canonicalizeWindowsShellOverride(shell) ?? shell)
-
-const TerminalSurfaceCloseIdentity = z.object({
-  worktreeId: requiredString('Missing worktree id'),
-  tabId: requiredString('Missing tab id'),
-  leafId: requiredString('Missing leaf id'),
-  createdAt: z.number().finite().nullable(),
-  generation: z.number().int().nonnegative(),
-  hasLeaf: z.boolean(),
-  ptyId: z.string().nullable(),
-  incarnationId: z.string().nullable()
-})
-const TerminalSurfaceCloseCapture = z.object({
-  identity: TerminalSurfaceCloseIdentity,
-  holders: z
-    .array(
-      z.object({
-        hostId: OptionalExecutionHostId.unwrap(),
-        identity: TerminalSurfaceCloseIdentity.nullable()
-      })
-    )
-    .max(64)
-})
 
 export const TerminalHandle = z.object({
   terminal: requiredString('Missing terminal handle'),
@@ -251,6 +230,7 @@ export const ResumeProviderSessionParam = z.object({
 })
 
 export const TerminalCreateParams = z.object({
+  callerTerminalHandle: OptionalString,
   worktree: OptionalString,
   clientMutationId: z.string().min(1).max(128).optional(),
   reconcileExisting: z.boolean().optional(),
@@ -300,6 +280,7 @@ export const TerminalSplit = z
     // Required unless `pane` names the source; the refinement keeps the handle's message.
     terminal: OptionalString,
     expectedIncarnationId: TerminalHandle.shape.expectedIncarnationId,
+    callerTerminalHandle: OptionalString,
     direction: z
       .unknown()
       .transform((v) => (v === 'vertical' || v === 'horizontal' ? v : undefined))
@@ -360,3 +341,10 @@ export const AgentTeamsPrepareLaunch = z.object({
   env: z.record(z.string(), z.string()).optional(),
   prepareAuth: z.boolean().optional()
 })
+export const TerminalSuspension = z
+  .object({
+    terminal: z.string().min(1),
+    suspended: z.boolean().optional(),
+    expectedIncarnationId: z.string().min(1).optional()
+  })
+  .strict()

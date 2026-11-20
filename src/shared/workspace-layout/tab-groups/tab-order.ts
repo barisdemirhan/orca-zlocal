@@ -63,12 +63,12 @@ export function reorderProjectedTabOrder(
 }
 
 export function partitionPinnedTabOrder(
-  tabOrder: string[],
+  tabOrder: readonly string[],
   tabs: readonly PinnedTab[],
   movingTabId: string
 ): string[] {
   const tabById = new Map(tabs.map((tab) => [tab.id, tab]))
-  const withoutMoving = dedupeTabOrder(tabOrder).filter((id) => id !== movingTabId)
+  const withoutMoving = dedupeTabOrder([...tabOrder]).filter((id) => id !== movingTabId)
   const pinnedIds = withoutMoving.filter((id) => tabById.get(id)?.isPinned)
   const unpinnedIds = withoutMoving.filter((id) => !tabById.get(id)?.isPinned)
   return [...pinnedIds, movingTabId, ...unpinnedIds]

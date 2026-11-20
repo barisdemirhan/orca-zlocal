@@ -104,6 +104,10 @@ function createCodexAdapter(context: StructuredAgentAdapterContext): StructuredA
       queueMicrotask(() => host()?.publishWorkChanged(sessionId)),
     logger: deps.logger,
     onEvent: (event) => {
+      if (event.type === 'voice') {
+        host()?.voice.publish(event)
+        return
+      }
       // Every exit, expected or not: the host ends that child's record.
       if (event.type === 'options-reported' || (event.type === 'ended' && 'cause' in event)) {
         context.deliverLifecycle(event)

@@ -330,17 +330,7 @@ export type DispatchContextRow = {
   origin_ref: string | null
 }
 
-export type DecisionGateRow = {
-  id: string
-  run_id: string
-  task_id: string
-  question: string
-  options: string
-  status: GateStatus
-  resolution: string | null
-  created_at: string
-  resolved_at: string | null
-}
+export type { DecisionGateRow } from './decision-gates/decision-gate-row'
 
 export type CoordinatorRun = {
   id: string

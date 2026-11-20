@@ -35,6 +35,10 @@ import { structuredChatDisplayName } from '../../../../shared/agent-session/view
 import { agentSessionRecordShownName } from '../../agent-session/records/agent-session-record-shown-name'
 
 export abstract class OrcaRuntimeWithPruneMobileSessionTabGroupLayout extends OrcaRuntimeWithSavedConversationTitlePublication {
+  protected abstract getTerminalSpawnedBy(
+    paneKey: string
+  ): NonNullable<AgentStatusEntry['spawnedBy']> | undefined
+
   protected pruneMobileSessionTabGroupLayout(
     layout: TabGroupLayoutNode | null | undefined,
     validGroupIds: ReadonlySet<string>
@@ -140,6 +144,8 @@ export abstract class OrcaRuntimeWithPruneMobileSessionTabGroupLayout extends Or
       isRendererOwnedMobileBrowserTab: (...args) => this.isRendererOwnedMobileBrowserTab(...args),
       getProviderSessionRows: (paneKey) => this.getAgentProviderSessionRowsForPaneFn?.(paneKey),
       getProviderSessionSnapshot: () => this.getAgentProviderSessionSnapshotFn?.() ?? [],
+      getSpawnedBy: (paneKey) => this.getTerminalSpawnedBy(paneKey),
+      getStatusSnapshot: () => this.getAgentStatusSnapshotFn?.() ?? [],
       getStatusRows: (paneKey, terminalHandle) =>
         this.publicPaneStatusFn?.(paneKey, terminalHandle) ?? [],
       getLeafKey: (tabId, leafId) => this.getLeafKey(tabId, leafId),

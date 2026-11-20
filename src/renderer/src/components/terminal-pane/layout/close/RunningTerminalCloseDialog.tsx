@@ -46,6 +46,7 @@ export default function RunningTerminalCloseDialog(): React.JSX.Element {
     <CloseTerminalDialog
       open={request !== null && pinnedRequest === null}
       copyKind={request?.copyKind ?? 'command'}
+      allowDontAskAgain={request?.allowSkipConfirm !== false}
       // Pass the queued subject so checkbox reset runs even while the dialog stays open.
       {...(request ? { subjectKey: request.terminalTabId } : {})}
       workspaceName={workspaceName}
@@ -61,7 +62,7 @@ export default function RunningTerminalCloseDialog(): React.JSX.Element {
         : {})}
       onCancel={dismissClose}
       onConfirm={(dontAskAgain) => {
-        if (dontAskAgain) {
+        if (dontAskAgain && request?.allowSkipConfirm !== false) {
           void updateSettings({ skipCloseTerminalWithRunningProcessConfirm: true })
           // Why: the user just opted out of this prompt; a queued one must not still appear.
           confirmAllCloses()

@@ -5,6 +5,7 @@ import { SearchableSetting } from '../../section-layout/SearchableSetting'
 import { SettingsRow, SettingsSegmentedControl } from '../../form-controls/SettingsFormControls'
 import {
   getBrowserClientHostedRemoteDescription,
+  getBrowserClientHostedRemoteOptions,
   getBrowserClientHostedRemoteTitle
 } from './browser-client-hosted-remote-copy'
 
@@ -51,24 +52,7 @@ export function BrowserClientHostedRemoteSetting({
             onChange={(value) =>
               updateSettings({ browserClientHostedRemoteEnabled: value === 'device' })
             }
-            options={[
-              {
-                value: 'device',
-                label: t('settings.browser.clientHostedRemote.optionDevice', 'This device'),
-                tooltip: t(
-                  'settings.browser.clientHostedRemote.optionDeviceTooltip',
-                  'Pages render on this desktop, so input and popups behave natively.'
-                )
-              },
-              {
-                value: 'server',
-                label: t('settings.browser.clientHostedRemote.optionServer', 'Server (streamed)'),
-                tooltip: t(
-                  'settings.browser.clientHostedRemote.optionServerTooltip',
-                  'Pages render on the remote server and stream to this device.'
-                )
-              }
-            ]}
+            options={getBrowserClientHostedRemoteOptions(t)}
           />
         }
       />

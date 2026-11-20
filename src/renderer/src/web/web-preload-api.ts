@@ -1,4 +1,5 @@
 import type { PreloadApi } from '../../../preload/api-types'
+import { createDisabledAgentHubOrbApi } from '../../../shared/agent-hub-orb-client'
 import type { StatsSummary } from '../../../shared/diagnostics/process-stats-types'
 import { createWebE2EApi } from './preload-api/app/web-e2e-api'
 import {
@@ -57,6 +58,7 @@ import { createWebUiApi } from './preload-api/preferences/web-ui-api'
 import { createUpdaterApi } from './preload-api/app/web-updater-api'
 import { createWebWorkspacePortsApi } from './preload-api/host-capabilities/web-workspace-ports-api'
 import { createWebLinkPreviewApi } from './preload-api/browser/web-link-preview-api'
+import { createWebHostNamesApi } from './preload-api/web-host-names-api'
 import { createWebWorkspaceSessionApi } from './preload-api/workspaces/web-workspace-session-api'
 import { createWorktreesApi } from './preload-api/workspaces/web-worktrees-api'
 import { readStoredWebRuntimeEnvironment } from './pairing/web-runtime-environment'
@@ -79,6 +81,7 @@ function createWebPreloadApi(): Omit<Partial<PreloadApi>, 'settings' | 'plugins'
     ...createWebPlatformApi(),
     ...createWebWorkspacePortsApi(),
     linkPreview: createWebLinkPreviewApi(),
+    ...createWebHostNamesApi(),
     ...createWebOrcaProfilesApi(),
     ...createWebE2EApi(),
     ...createWebSettingsApi(),
@@ -90,6 +93,7 @@ function createWebPreloadApi(): Omit<Partial<PreloadApi>, 'settings' | 'plugins'
     ...createWebOnboardingApi(),
     ...createWebGithubCacheApi(),
     runtime: createWebRuntimeApi(),
+    agentHub: { orb: createDisabledAgentHubOrbApi() },
     nativeChat: createWebNativeChatApi(),
     speech: createWebSpeechApi(),
     runtimeEnvironments: createRuntimeEnvironmentsApi(),

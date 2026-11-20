@@ -21,7 +21,11 @@ import type { SleepingAgentSessionRecord } from '../../../../../shared/agent-ses
 
 export type ResumeSleepingAgentSessionsOptions = {
   suppressNavigation?: boolean
-  // Mounted in-place wakes own these claim keys until spawn succeeds; generic resume must neither launch nor clear their records.
+  paneKeys?: ReadonlySet<string>
+  /** Provider-session claim keys already woken in place by mounted panes
+   *  (WAKE_HIBERNATED_AGENTS_WORKTREE_EVENT). Their sleeping records are
+   *  cleared only after the in-place spawn succeeds, so the generic resume
+   *  must neither launch nor clear them here. */
   skipClaimKeys?: ReadonlySet<string>
   /** Called with the tab id of each freshly launched resume tab, so
    *  navigation-suppressed callers can background-mount exactly those tabs. */

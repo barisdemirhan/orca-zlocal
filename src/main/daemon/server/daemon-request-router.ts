@@ -1,5 +1,6 @@
 import { parseDaemonLaunchNoteChange } from '../protocol/daemon-launch-note-protocol'
 import { handleDaemonTerminalKill } from './daemon-terminal-kill'
+import { sendDaemonExitEvent } from './daemon-exit-event'
 import { handleDaemonFencedTermination } from './daemon-fenced-termination'
 import { performance } from 'node:perf_hooks'
 import { setPtyOwnerHostColors } from '../../../shared/terminal/pty/ingress/pty-owner-color-query-colors'
@@ -117,6 +118,8 @@ export class DaemonRequestRouter {
       case 'signal':
         this.options.host.signal(request.payload.sessionId, request.payload.signal)
         return {}
+      case 'terminalSuspension':
+        return this.options.host.terminalSuspension(request.payload.sessionId, request.payload)
       case 'detach':
         this.options.attachments.detachSessionForClient(request.payload.sessionId, clientId)
         this.options.log.log('session-detached', { sessionId: request.payload.sessionId })
@@ -205,7 +208,7 @@ export class DaemonRequestRouter {
     } catch (error) {
       this.options.attachments.clearInput(sessionId)
       if (error instanceof SessionNotFoundError) {
-        this.sendExitEvent(client, sessionId, -1)
+        sendDaemonExitEvent(this.options.streamDataBatcher, client, sessionId, -1)
       }
       throw error
     }
@@ -222,7 +225,7 @@ export class DaemonRequestRouter {
       this.options.host.resize(sessionId, cols, rows)
     } catch (error) {
       if (error instanceof SessionNotFoundError) {
-        this.sendExitEvent(client, sessionId, -1)
+        sendDaemonExitEvent(this.options.streamDataBatcher, client, sessionId, -1)
       }
       throw error
     }
@@ -288,22 +291,5 @@ export class DaemonRequestRouter {
       this.options.lifecycle.finishRpcShutdownWithoutReply(serverClose)
     }
     return {}
-  }
-
-  private sendExitEvent(
-    client: ConnectedDaemonClient | undefined,
-    sessionId: string,
-    code: number
-  ): void {
-    if (!client?.streamSocket) {
-      return
-    }
-    this.options.streamDataBatcher.enqueueControlEvent(client.clientId, sessionId, {
-      type: 'event',
-      event: 'exit',
-      sessionId,
-      payload: { code }
-    })
-    this.options.streamDataBatcher.flush(client.clientId)
   }
 }

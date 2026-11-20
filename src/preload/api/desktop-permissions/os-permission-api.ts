@@ -21,9 +21,11 @@ import type {
   StructuredNotificationRead
 } from '../../../shared/notifications/notification-settings-types'
 import type { AgentSessionExecutionLocation } from '../../../shared/agent-session/lifecycle/agent-session-record'
+import type { AgentHubPresence } from '../../../shared/agent-hub-requests'
 
 export type NotificationsApi = {
   getDesktopAwayState: () => Promise<boolean | undefined>
+  getDesktopPresence: () => Promise<AgentHubPresence | undefined>
   dispatch: (args: NotificationDispatchRequest) => Promise<NotificationDispatchResult>
   acknowledgeAttention: (
     acknowledgement: NotificationAttentionAcknowledgement,

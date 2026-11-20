@@ -1,3 +1,4 @@
+import { renderAgentHubSidebarPopout } from '../../../agent-hub/AgentHubSidebarPopout'
 import type { BranchContext } from './worktree-agent-branch-context'
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
@@ -279,6 +280,7 @@ const AgentBranch = React.memo(function AgentBranch({
     : undefined
   const common = {
     agent: row,
+    renderTrailingControl: renderAgentHubSidebarPopout,
     showModel: context.showAgentModels,
     now: context.now,
     isUnvisited: row.rowSource === 'live' && acknowledgedAt < row.entry.stateStartedAt,

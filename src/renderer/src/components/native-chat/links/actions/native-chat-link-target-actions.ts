@@ -1,5 +1,4 @@
 import {
-  buildHttpLinkActions,
   httpLinkActionDestinationsFor,
   type HttpLinkActionDestinations
 } from '@/lib/browser/navigation/http-link-destinations'
@@ -13,13 +12,16 @@ import {
 import { routeNativeChatHref } from '../../../../../../shared/native-chat/file-access/native-chat-href-routing'
 import { useAppStore } from '../../../../store/index'
 import { resolveNativeChatFileLink, type NativeChatResolvedFileLink } from './native-chat-file-link'
+import { openDetectedFilePath } from '@/components/terminal-pane/links/files/terminal-file-open-routing'
 import type { NativeChatFileLinkContext } from './native-chat-file-link-context'
 import { resolveNativeChatHttpLinkSourceOwner } from './native-chat-http-link-source-owner'
 import { canOpenRemoteLinkInWorkspaceBrowser } from '@/lib/browser/workspace/workspace-browser-route-eligibility'
-import { openNativeChatWebLink } from './native-chat-web-link-actions'
+import { nativeChatWebLinkActions, nativeChatWebPeekSource } from './native-chat-web-link-actions'
+import type { AgentHubPeekLinkSource } from '../../../agent-hub/agent-hub-peek-routing'
 import { showFileLinkOpenFailureToast } from '@/lib/files/open/file-link-open-failure-toast'
 import type { Translate } from '@/i18n/use-translate'
 
+/** Who owns a chat http(s) link and where it may open: the rows its popover and menu offer. */
 export function resolveNativeChatHttpLinkRouting(
   state: AppState,
   worktreeId: string,
@@ -52,9 +54,11 @@ export function nativeChatFileOpenDeps(
   }
 }
 
+/** The rows a chat file link offers, on click and on right-click alike. */
 export function nativeChatFileLinkActions(
   target: NativeChatResolvedFileLink,
   context: NativeChatFileLinkContext,
+  peekSource = nativeChatFilePeekSource(target, context),
   t?: Translate
 ): FileLinkActions {
   return buildFileLinkActions(
@@ -63,15 +67,51 @@ export function nativeChatFileLinkActions(
     target.column,
     { ...nativeChatFileOpenDeps(target, context), omitOpenInNewTab: true },
     resolveNativeChatHttpLinkSourceOwner(useAppStore.getState(), context.worktreeId),
+    peekSource,
     t,
     target.isDirectoryHint ? { directoryHint: true } : undefined
   )
 }
 
+export function nativeChatFilePeekSource(
+  target: NativeChatResolvedFileLink,
+  context: NativeChatFileLinkContext,
+  event?: Pick<MouseEvent, 'target'>,
+  previewOnModifier = false
+): AgentHubPeekLinkSource {
+  const deps = nativeChatFileOpenDeps(target, context)
+  return {
+    worktreeId: context.worktreeId,
+    worktreePath: context.worktreePath,
+    sourceOwner: resolveNativeChatHttpLinkSourceOwner(useAppStore.getState(), context.worktreeId),
+    onPairedRuntime: Boolean(context.runtimeEnvironmentId),
+    event,
+    line: target.line,
+    column: target.column,
+    previewOnModifier,
+    fromOrb:
+      previewOnModifier ||
+      Boolean(
+        event?.target &&
+        event.target instanceof Element &&
+        event.target.closest('[data-agent-hub-orb-panel]')
+      ),
+    openInWorkspace: () =>
+      openDetectedFilePath(target.absolutePath, target.line, target.column, deps),
+    openExternally: () =>
+      openDetectedFilePath(target.absolutePath, target.line, target.column, {
+        ...deps,
+        openWithSystemDefault: true
+      })
+  }
+}
+
+/** The rows a right-clicked chat link offers: its click popover's, or null when it opens nothing. */
 export function nativeChatLinkActions(
   href: string,
   context: NativeChatFileLinkContext | null,
-  t?: Translate
+  t?: Translate,
+  event?: Pick<MouseEvent, 'target'>
 ): FileLinkActions | null {
   if (!context) {
     return null
@@ -79,7 +119,23 @@ export function nativeChatLinkActions(
   const route = routeNativeChatHref(href)
   if (route.kind === 'file') {
     const target = resolveNativeChatFileLink(href, context)
-    return target ? nativeChatFileLinkActions(target, context, t) : null
+    return target
+      ? nativeChatFileLinkActions(
+          target,
+          context,
+          nativeChatFilePeekSource(
+            target,
+            context,
+            event,
+            Boolean(
+              event?.target &&
+              event.target instanceof Element &&
+              event.target.closest('[data-agent-hub-orb-panel], [data-agent-hub-orb-request-modal]')
+            )
+          ),
+          t
+        )
+      : null
   }
   if (route.kind !== 'web' || !/^https?:/i.test(route.url)) {
     return null
@@ -92,34 +148,21 @@ export function nativeChatLinkActions(
   return {
     destination: route.url,
     kind: 'url',
-    ...buildHttpLinkActions(
-      routing.destinations,
-      (destination) =>
-        openNativeChatWebLink(
+    ...nativeChatWebLinkActions(
+      route.url,
+      {
+        ...routing,
+        worktreeId: context.worktreeId,
+        sourceTabId: context.sourceTabId,
+        peekSource: nativeChatWebPeekSource(
           route.url,
           {
             worktreeId: context.worktreeId,
             sourceTabId: context.sourceTabId,
             sourceOwner: routing.sourceOwner
           },
-          destination
-        ),
-      {
-        worktreeId: context.worktreeId,
-        sourceTabId: context.sourceTabId,
-        sourceOwner: routing.sourceOwner,
-        url: route.url,
-        openInSourceGroup: () =>
-          openNativeChatWebLink(
-            route.url,
-            {
-              worktreeId: context.worktreeId,
-              sourceTabId: context.sourceTabId,
-              sourceOwner: routing.sourceOwner
-            },
-            'orca',
-            true
-          )
+          event
+        )
       },
       t
     )

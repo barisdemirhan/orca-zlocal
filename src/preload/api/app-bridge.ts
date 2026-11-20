@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron'
+import type { AgentHubOrbIdentityFiles } from '../../shared/agent-hub-orb-identity'
 import type { AppIdentity } from '../../shared/app-lifecycle/identity/app-identity'
 import type { MacosUpgradeSupport } from '../../shared/updater/requirements/macos-upgrade-support'
 import type { FloatingTerminalCwdRequest } from '../../shared/ui-chrome/ui-chrome-types'
@@ -104,6 +105,17 @@ export const appApi = {
     ipcRenderer.invoke('app:getFloatingTerminalCwd', args),
   getFloatingMarkdownDirectory: (): Promise<string> =>
     ipcRenderer.invoke('app:getFloatingMarkdownDirectory'),
+  getAgentHubOrbDirectory: (): Promise<string> => ipcRenderer.invoke('app:getAgentHubOrbDirectory'),
+  readAgentHubOrbIdentity: (): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:readAgentHubOrbIdentity'),
+  writeAgentHubOrbSoul: (text: string): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:writeAgentHubOrbSoul', text),
+  writeAgentHubOrbUser: (text: string): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:writeAgentHubOrbUser', text),
+  forgetAgentHubOrbMemory: (line: string | null): Promise<AgentHubOrbIdentityFiles> =>
+    ipcRenderer.invoke('app:forgetAgentHubOrbMemory', line),
+  refreshAgentHubOrbInstructions: (): Promise<{ truncated: boolean }> =>
+    ipcRenderer.invoke('app:refreshAgentHubOrbInstructions'),
   pickFloatingMarkdownDocument: (): Promise<MarkdownDocument | null> =>
     ipcRenderer.invoke('app:pickFloatingMarkdownDocument'),
   pickFloatingWorkspaceDirectory: (): Promise<string | null> =>

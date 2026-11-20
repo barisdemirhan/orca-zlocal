@@ -174,7 +174,12 @@ export function isCommandGroup(specs: CommandSpec[], commandPath: string[]): boo
 }
 
 export function normalizeCommandPositionals(specs: CommandSpec[], parsed: ParsedArgs): ParsedArgs {
+  // A leaf command must not be read as a shorter command plus positionals.
+  const exact = findCommandSpec(specs, parsed.commandPath)
   for (const spec of specs) {
+    if (exact && exact !== spec) {
+      continue
+    }
     const positionalArgs = spec.positionalArgs ?? []
     // Alias-only paths still need canonicalization without positional arguments.
     if (positionalArgs.length === 0 && !spec.aliases) {

@@ -1,4 +1,5 @@
 import type { UiLanguageDetection } from '../../shared/i18n/ui-locale'
+import type { AgentHubOrbIdentityFiles } from '../../shared/agent-hub-orb-identity'
 import type { WindowMaterial } from '../../shared/app-lifecycle/windows/window-material'
 import type { AppIdentity } from '../../shared/app-lifecycle/identity/app-identity'
 import type { MacosUpgradeSupport } from '../../shared/updater/requirements/macos-upgrade-support'
@@ -70,6 +71,16 @@ export type AppApi = {
   getFloatingTerminalCwd: (args?: FloatingTerminalCwdRequest) => Promise<string>
   /** App-owned directory for auto-created Floating Workspace notes. */
   getFloatingMarkdownDirectory: () => Promise<string>
+  /** Creates Orb's own folder under userData, with its instruction files, and returns it. */
+  getAgentHubOrbDirectory: () => Promise<string>
+  /** Orb's SOUL.md, USER.md and memory entries; the writes return the fresh set and refresh CLAUDE.md/AGENTS.md. */
+  readAgentHubOrbIdentity: () => Promise<AgentHubOrbIdentityFiles>
+  writeAgentHubOrbSoul: (text: string) => Promise<AgentHubOrbIdentityFiles>
+  writeAgentHubOrbUser: (text: string) => Promise<AgentHubOrbIdentityFiles>
+  /** Forgets one memory line by its exact text, or every entry when null. */
+  forgetAgentHubOrbMemory: (line: string | null) => Promise<AgentHubOrbIdentityFiles>
+  /** Rewrites CLAUDE.md/AGENTS.md from the current settings, e.g. after a name change. */
+  refreshAgentHubOrbInstructions: () => Promise<{ truncated: boolean }>
   /** Picks a Floating Workspace document and authorizes editor reads/writes. */
   pickFloatingMarkdownDocument: () => Promise<MarkdownDocument | null>
   /** Picks a directory and authorizes Floating Workspace markdown creation. */

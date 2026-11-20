@@ -363,6 +363,7 @@ export function RemoteBrowserPagePane({
       ) : null}
       <RemoteBrowserPageToolbar
         runtimeEnvironmentId={runtimeEnvironmentId}
+        page={{ id: browserTab.id, worktreeId, url: browserTab.url }}
         addressBarValue={addressBarValue}
         onAddressBarChange={setAddressBarValue}
         onSubmitAddressBar={submitAddressBar}

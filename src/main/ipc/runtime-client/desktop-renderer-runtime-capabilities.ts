@@ -1,5 +1,6 @@
 import { GIT_REVERT_CONFLICT_CLIENT_CAPABILITY } from '../../../shared/git/commands/git-commit-action'
 import { GIT_GRAPH_TAB_CAPABILITY } from '../../../shared/source-control/runtime/git-graph-capabilities'
+import { AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY } from '../../../shared/agent-session-voice'
 import type { RuntimeCapability } from '../../../shared/remote-runtime/protocol/protocol-version'
 import {
   REPO_SEARCH_CANONICAL_REFS_RUNTIME_CAPABILITY,
@@ -18,6 +19,7 @@ import {
 
 /** Curate one capability set for unary/streaming desktop calls; remote-only gates can alter local semantics even on the same build. */
 export const DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES: readonly RuntimeCapability[] = [
+  AGENT_SESSION_CODEX_VOICE_RUNTIME_CAPABILITY,
   GIT_GRAPH_TAB_CAPABILITY,
   GIT_REVERT_CONFLICT_CLIENT_CAPABILITY,
   ...STRUCTURED_AGENT_SESSION_RENDERER_CLIENT_CAPABILITIES,

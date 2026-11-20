@@ -3,7 +3,7 @@ import { NativeChatCrewFrame, NativeChatCrewPanel } from '../orchestration-crew/
 import { NativeChatUsageLimitActionsProvider } from './usage/NativeChatUsageLimitActions'
 import { useNativeChatHandOff } from './pane/actions/use-native-chat-hand-off'
 import { useNativeChatStructuredPaneNotices } from '@/components/native-chat/messages/notices/use-native-chat-structured-pane-notices'
-import { useRef, useState } from 'react'
+import { useContext, useRef, useState } from 'react'
 import { structuredAgentSessionPaneKey } from '../../../../shared/agent-session/view/structured-agent-session-projection'
 import { useStructuredChatLiveSession } from './session/structured/use-structured-chat-live-session'
 import { NativeChatStructuredPromptCard } from './prompts/NativeChatStructuredPromptCard'
@@ -68,6 +68,11 @@ import { useNativeChatHostSendGate } from '@/components/native-chat/host-access/
 import { useStructuredAgentSessionStartFailureFacts } from '@/components/native-chat/messages/notices/use-structured-agent-session-start-failure-facts'
 import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-session/requests/prompts/agent-session-approval-subject'
 import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
+import {
+  NativeChatStructuredComposerState,
+  NativeChatStructuredPromptSlot
+} from './NativeChatStructuredOrbSlots'
+import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import type { NativeChatComposerHandle } from './composer/native-chat-composer-types'
 import {
   NativeChatPartyWorkerApprovalStack,
@@ -75,7 +80,10 @@ import {
   nativeChatWorkerApprovalParty
 } from './worker-approvals/NativeChatWorkerApprovals'
 
-export function NativeChatStructuredSession(props: Omit<NativeChatStructuredViewProps, 'mode'>) {
+export function NativeChatStructuredSession(
+  props: Omit<NativeChatStructuredViewProps, 'mode'>
+): React.JSX.Element {
+  const orb = useContext(NativeChatPresentationContext) === 'orb'
   const { ownerWorktreeId, turnBot, bot: chatBot } = useBotChatOwner(props)
   const slackMirror = useNativeChatSlackMirror(chatBot, props.sessionId)
   const fileLinkContext = useNativeChatFileLinkContext(props.tabId)
@@ -174,7 +182,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   const subagentOpen = subagents.openId !== null
   // A subagent's view takes the composer's place; the main agent's prompts still show.
   const composerShown =
-    (prompt === null || promptsUnanswerable) &&
+    (orb || prompt === null || promptsUnanswerable) &&
     readFailure?.final !== true &&
     !botServerDown &&
     !subagentOpen
@@ -182,6 +190,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   const installLayout = viewState.kind === 'empty' ? 'hero' : 'strip'
   const install = useNativeChatInstallSlot(props, agentLabel, installLayout)
   const canMention = composerShown && install.unavailableHint === undefined
+  const focusPrompt = !orb && !promptsUnanswerable && props.isVisible && props.isFocusedGroup
   const cancelPrompt = () => cancelStructuredPrompt(controller, prompt)
   const surface = useNativeChatSurface({
     tabId: props.tabId,
@@ -350,17 +359,24 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                 focusComposer={focusComposer}
               />
             )}
-            {composerShown || subagentOpen ? null : (
-              <NativeChatPromptSlotNotices notices={notices} />
-            )}
-            <NativeChatStructuredPromptCard
-              key={prompt ? `${prompt.itemId}:${prompt.revision}` : undefined}
+            <NativeChatStructuredPromptSlot
+              pane={props}
               prompt={prompt}
-              promptResponse={promptResponse}
-              onCancel={cancelPrompt}
-              shouldFocus={!promptsUnanswerable && props.isVisible && props.isFocusedGroup}
-              answerInputRef={questionAnswerInputRef}
-            />
+              appearanceStyle={surface.appearance}
+            >
+              {composerShown || subagentOpen ? null : (
+                <NativeChatPromptSlotNotices notices={notices} />
+              )}
+              <NativeChatStructuredPromptCard
+                multiline={orb}
+                key={prompt ? `${prompt.itemId}:${prompt.revision}` : undefined}
+                prompt={prompt}
+                promptResponse={promptResponse}
+                onCancel={cancelPrompt}
+                shouldFocus={focusPrompt}
+                answerInputRef={questionAnswerInputRef}
+              />
+            </NativeChatStructuredPromptSlot>
             {nativeChatStructuredAsyncQuestion(props, controller, session, transport, submits)}
             {botServerDown && hostOutage ? (
               <BotServerOutageCard key={hostOutage.environmentId} outage={hostOutage} />
@@ -368,20 +384,27 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
             {composerShown && <NativeChatInstallSlot install={install} agentLabel={agentLabel} />}
             {subagents.statusBar}
             {composerShown ? (
-              <NativeChatComposer
-                ref={composerRef}
-                terminalTabId={props.tabId}
-                paneKey={paneKey}
-                draftScopeKey={structuredAgentSessionDraftScopeKey(props.sessionId)}
-                targetPtyId={null}
-                agent={props.agent}
-                {...bot.stopControls.composer}
-                unavailableHint={install.unavailableHint}
-                steerHead={bot.stopControls.stopping ? undefined : submits.queuedMessages.steerHead}
-                structuredTransport={transport}
-                notices={notices}
-                recallSource={{ messages: session.messages, withoutImageMarkers: true }}
-              />
+              <NativeChatStructuredComposerState
+                sessionId={props.sessionId}
+                controller={controller}
+              >
+                <NativeChatComposer
+                  ref={composerRef}
+                  terminalTabId={props.tabId}
+                  paneKey={paneKey}
+                  draftScopeKey={structuredAgentSessionDraftScopeKey(props.sessionId)}
+                  targetPtyId={null}
+                  agent={props.agent}
+                  {...bot.stopControls.composer}
+                  unavailableHint={install.unavailableHint}
+                  steerHead={
+                    bot.stopControls.stopping ? undefined : submits.queuedMessages.steerHead
+                  }
+                  structuredTransport={transport}
+                  notices={notices}
+                  recallSource={{ messages: session.messages, withoutImageMarkers: true }}
+                />
+              </NativeChatStructuredComposerState>
             ) : null}
           </>
         )}
