@@ -24,6 +24,8 @@ export type ProjectGroupHeaderDropPreview = WorktreeSidebarHeaderDropPreview
 /** What the drag reads of a header: its bucket and its order. The Bots section's rows reuse it. */
 export type ProjectGroupHeaderDragItem = Pick<ProjectGroup, 'parentGroupId' | 'tabOrder'>
 
+const isProjectGroup = (item: ProjectGroupHeaderDragItem): item is ProjectGroup => 'name' in item
+
 export type ProjectGroupTabOrderUpdate = {
   groupId: string
   tabOrder: number
@@ -114,12 +116,19 @@ export function getProjectGroupTabOrderUpdatesForSidebarDrop(args: {
   const orderedIds = siblingIds.slice()
   orderedIds.splice(siblingDropIndex, 0, args.draggedGroupId)
 
-  const allGroups = [...args.projectGroupById.values()]
+  const items = [...args.projectGroupById.values()]
+  // The Bots section's items are not project groups and never merge across hosts.
+  const allGroups = items.every(isProjectGroup) ? items : null
   const updates: ProjectGroupTabOrderUpdate[] = []
   for (const [index, groupId] of orderedIds.entries()) {
+    const group = args.projectGroupById.get(groupId)
+    if (!group) {
+      continue
+    }
     // Equal legacy ranks require updating the full order to represent an interior insertion.
     // Why every member: a header's other hosts can be behind even when its leader is already in place.
-    if (getCrossHostProjectGroupMembers(allGroups, groupId).some((m) => m.tabOrder !== index)) {
+    const members = allGroups ? getCrossHostProjectGroupMembers(allGroups, groupId) : [group]
+    if (members.some((m) => m.tabOrder !== index)) {
       updates.push({ groupId, tabOrder: index })
     }
   }
