@@ -2,7 +2,12 @@ import { useAppStore } from '@/store/index'
 import { persistAgentLaunchTabOrder } from '@/lib/agent-session/launch/pane/launch-agent-tab-order'
 import '@/diagnostics/telemetry/telemetry'
 import { tuiAgentToAgentKind } from '../../../../../../shared/agent-status/identity/agent-kind'
-import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/workspace/ownership/worktree-runtime-owner'
+import {
+  getKnownExecutionHostIdForWorktree,
+  runtimeEnvironmentIdOrLocalUnlessTwin
+} from '@/lib/workspace/ownership/worktree-runtime-owner'
+import { getSavedTerminalSessionName } from '@/lib/agent-session/history/session-names/terminal-session-names'
+import { setWebRuntimeTabProps } from '@/runtime/hosted-terminals/actions/web-runtime-tab-properties'
 import { createWebRuntimeSessionTerminal } from '@/runtime/hosted-terminals/creation/web-runtime-terminal-creation'
 import { isWebRuntimeSessionActive } from '@/runtime/web-session-tabs-sync/identity/web-runtime-session-environment'
 import { createWebRuntimeSessionTerminalResult } from '@/runtime/hosted-terminals/creation/web-runtime-terminal-create-operation'
@@ -40,6 +45,7 @@ export function launchAiVaultSessionInNewTab(args: {
   activate?: false
 }): LaunchAiVaultSessionInNewTabResult {
   const store = useAppStore.getState()
+  const savedName = savedNameForResume(store, args)
   // Why both paths split: the runtime path used to return first and drop the split (#22791).
   const split =
     args.splitDirection && args.targetGroupId
@@ -66,11 +72,26 @@ export function launchAiVaultSessionInNewTab(args: {
       ...(args.providerSession ? { providerSession: args.providerSession } : {}),
       ...(args.launchConfig ? { agentArgs: args.launchConfig.agentArgs } : {})
     }
+    // The mirrored tab may not be here yet; name it on its host, which republishes the name.
+    const nameMirroredTab = (mirroredTabId: string | null | undefined): void => {
+      if (savedName && mirroredTabId) {
+        setWebRuntimeTabProps({
+          worktreeId: args.worktreeId,
+          tabId: mirroredTabId,
+          customTitle: savedName
+        })
+      }
+    }
     if (args.activate === false) {
       const created = createWebRuntimeSessionTerminalResult({
         ...terminal,
         activate: false,
         selectWorktree: false
+      }).then((result) => {
+        if (result.outcome.status === 'created') {
+          nameMirroredTab(result.outcome.mirroredTabId)
+        }
+        return result
       })
       return {
         tabId: null,
@@ -88,6 +109,7 @@ export function launchAiVaultSessionInNewTab(args: {
     )
     const observedRuntimeLaunch = runtimeLaunch.then((outcome) => {
       if (outcome.status === 'created') {
+        nameMirroredTab(outcome.mirroredTabId)
         useAppStore.getState().setActiveTabType('terminal', args.worktreeId)
       } else if (splitGroupId) {
         // A refused or failed drop must not leave a blank pane behind.
@@ -115,6 +137,9 @@ export function launchAiVaultSessionInNewTab(args: {
       }
     }
   })
+  if (savedName) {
+    store.setTabCustomTitle(tab.id, savedName, { recordInteraction: false })
+  }
   if (args.activate !== false) {
     store.setActiveTabType('terminal', args.worktreeId)
   }
@@ -122,4 +147,21 @@ export function launchAiVaultSessionInNewTab(args: {
   persistAgentLaunchTabOrder(args.worktreeId, tab.id)
 
   return { tabId: tab.id }
+}
+
+/** A resumed session reopens under the name its tab had (forks carry no provider session, so a
+ *  copy is never named after its source). The tab takes over the saved name once it shows it. */
+function savedNameForResume(
+  state: ReturnType<typeof useAppStore.getState>,
+  args: {
+    agent: AiVaultAgent
+    worktreeId: string
+    providerSession?: AgentProviderSessionMetadata
+  }
+): string | null {
+  const sessionId = args.providerSession?.id
+  const executionHostId = getKnownExecutionHostIdForWorktree(state, args.worktreeId)
+  return sessionId && executionHostId
+    ? getSavedTerminalSessionName(executionHostId, args.agent, sessionId)
+    : null
 }

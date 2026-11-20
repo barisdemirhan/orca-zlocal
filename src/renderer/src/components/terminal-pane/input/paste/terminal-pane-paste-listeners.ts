@@ -1,3 +1,4 @@
+import { recordRecentTerminalImage } from '../recent-terminal-images'
 import { useAppStore } from '../../../../store/index'
 import { getConnectionId } from '@/lib/workspace/ownership/connection-context'
 import { resolveTerminalPasteRuntimeEnvironmentId } from './terminal-paste-runtime'
@@ -195,6 +196,7 @@ export function registerTerminalPanePasteListeners({
       copiedFiles: createPaneClipboardCopiedFiles(pane),
       connectionId,
       runtimeEnvironmentId,
+      onLocalImagePasted: (path) => recordRecentTerminalImage(pane.terminal, path, true),
       protectedMultilineTextPasteOptions: resolvePaneProtectedMultilinePasteOptions(pane),
       pasteText: (text, options) =>
         executePanePasteText(pane, 'app-menu', activeElementAtDispatch, text, options),

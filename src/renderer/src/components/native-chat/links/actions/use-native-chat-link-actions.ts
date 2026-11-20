@@ -77,7 +77,7 @@ export function useNativeChatLinkClick(
       const state = useAppStore.getState()
       const plainClickBehavior = nativeChatPlainLinkClickBehavior(state.settings)
       const anchor = event.currentTarget
-      const routing = resolveNativeChatHttpLinkRouting(state, context.worktreeId)
+      const routing = resolveNativeChatHttpLinkRouting(state, context.worktreeId, route.url)
       handleNativeChatWebLink(event, route.url, {
         worktreeId: context.worktreeId,
         sourceTabId: context.sourceTabId,
