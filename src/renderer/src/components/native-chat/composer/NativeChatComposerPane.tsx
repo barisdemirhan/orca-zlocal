@@ -10,7 +10,7 @@ import { useNativeChatComposerRecall } from '../drafts/use-native-chat-composer-
 import { useNativeChatLaunchDraftAdoption } from '../drafts/use-native-chat-launch-draft-adoption'
 import { NativeChatRoomContext, useNativeChatComposerMentions } from '../native-chat-composer-room'
 import { NativeChatBotChatChooserContext } from '../native-chat-room-context'
-import { NativeChatComposerWorkspace } from './controls/NativeChatComposerWorkspace'
+import { NativeChatComposerFooter } from './controls/NativeChatComposerFooter'
 import { NativeChatComposerField } from './editor/NativeChatComposerField'
 import { useNativeChatComposerAttachments } from '../attachments/chips/use-native-chat-composer-attachments'
 import { nativeChatComposerSendState } from './submit/native-chat-composer-send-state'
@@ -352,7 +352,7 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
 
     const workspace = { terminalTabId, structuredTransport, isWorking }
     const workspaceFooter =
-      editSession || launchPrompt ? undefined : <NativeChatComposerWorkspace {...workspace} />
+      editSession || launchPrompt ? undefined : <NativeChatComposerFooter {...workspace} />
     return (
       <div ref={root} data-native-chat-composer-scope={draftScopeKey}>
         <NativeChatRoomContext.Provider value={mentions.roomContext}>

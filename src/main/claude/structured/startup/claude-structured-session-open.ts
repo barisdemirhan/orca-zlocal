@@ -92,6 +92,7 @@ async function openStartingClaudeSession(
     session,
     input.promptSuggestionsWanted?.(request.sessionId) ?? false
   )
+  session.pluginUi.start()
   // The stored leaf is set only on a resume, and is the chat's last completed turn.
   const history = session.initialization.history
   const leafUuid = history.leafUuid

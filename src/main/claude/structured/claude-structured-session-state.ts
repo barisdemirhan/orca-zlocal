@@ -22,6 +22,8 @@ import type { AgentSessionFastModeState } from '../../../shared/agent-session/ag
 import type { AgentChildWorkEvidence } from '../../../shared/agent-status/child-work/agent-status-child-work-evidence'
 import type { ClaudeBackgroundTaskTracker } from '../background-tasks/claude-background-task-tracker'
 import type { ClaudeChildWorkDecoder } from '../child-work/claude-child-work-decoder'
+import type { ClaudePluginSurfaces } from '../plugin-surfaces/claude-plugin-surfaces'
+import type { ClaudePluginUiBridge } from '../plugin-surfaces/claude-plugin-ui-bridge'
 import type { ClaudeSlashCommandCatalog } from '../command-catalog/claude-slash-command-catalog'
 import type { ClaudeAtRestCommandCatalog } from '../command-catalog/claude-at-rest-commands'
 import type { ClaudeInitProof } from './startup/claude-structured-init-proof'
@@ -163,6 +165,10 @@ export type ClaudeSession = {
   childWork: ClaudeChildWorkDecoder
   /** Commands seeded by init and updated by later init or commands_changed frames. */
   commands: ClaudeSlashCommandCatalog
+  /** Status lines and toasts mods raised through `$.ui` in this process. */
+  pluginSurfaces: ClaudePluginSurfaces
+  /** What mods draw through the internal render protocol in this process; trees and presses. */
+  pluginUi: ClaudePluginUiBridge
   /** Monotonic fence advanced when a dispatch starts, including unresolved dispatches. */
   dispatchSequence: number
   /** Fences overlapping option writes so a late completion cannot restore stale state. */

@@ -139,6 +139,9 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
     }
   }
 
+  pressPluginUi: StructuredAgentSessionAdapter['pressPluginUi'] = (sessionId, press) =>
+    this.sessions.get(sessionId)?.pluginUi.press(press) ?? Promise.resolve()
+
   /** Await exit publication after cleanup/cursor writes; unproven exits stay indexed for retry. */
   drainObservedExits = (): Promise<void> => drainClaudeObservedExits(this.exits)
 

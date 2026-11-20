@@ -8,6 +8,7 @@ import type {
 import type { AgentJournalItemIdentity } from '../../../../shared/agent-session/journal/agent-session-journal-identity'
 import type { AgentJournalTurnScope } from '../../../../shared/agent-session/journal/agent-session-journal-turn-scope'
 import type {
+  AgentSessionPluginSurfaceUpdate,
   AgentSessionPromptSuggestion,
   AgentSessionTurnActivity
 } from '../../../../shared/agent-session/agent-session-wire'
@@ -94,6 +95,8 @@ export type StructuredAgentSessionEventSink = StructuredAgentSessionTransitionSi
   setActivity?(activity: AgentSessionTurnActivity | null): void
   /** Never journaled; null clears the session's suggestion. */
   setPromptSuggestion?(suggestion: AgentSessionPromptSuggestion | null): void
+  /** Never journaled. A status list replaces the last (empty clears); a toast reaches only readers attached now. */
+  setPluginSurfaces?(update: AgentSessionPluginSurfaceUpdate): void
   tryAppendItem?(
     identity: AgentJournalItemIdentity,
     body: AgentJournalItemBody,
@@ -157,6 +160,7 @@ export type StructuredAgentSessionEventTarget = {
   fence: number
   publish: (activity?: AgentSessionTurnActivity | null) => void
   publishPromptSuggestion?: (suggestion: AgentSessionPromptSuggestion | null) => void
+  publishPluginSurfaces?: (update: AgentSessionPluginSurfaceUpdate) => void
   publishLiveText?: (items: readonly AgentJournalRenderItem[]) => void
   /** Turn rows any writer's commit left terminal on this journal. */
   observeSettledTurns?: (listener: (turnItemIds: readonly string[]) => void) => () => void
@@ -216,11 +220,7 @@ export function createDeferredStructuredAgentSessionEventSink(deps: {
     })
     deps.onFailed?.(error)
   }
-  const queue = new StructuredAgentSessionSinkQueue({
-    ...deps,
-    watermarks,
-    onFailed: failed
-  })
+  const queue = new StructuredAgentSessionSinkQueue({ ...deps, watermarks, onFailed: failed })
   const resolvedAppend = createStructuredAgentSessionResolvedAppend(queue)
 
   const appendLifecycleBatch = (

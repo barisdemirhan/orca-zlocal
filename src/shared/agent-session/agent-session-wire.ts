@@ -31,6 +31,11 @@ import type { AgentProviderSessionMetadata } from './lifecycle/agent-session-res
 import type { NativeChatSubagentEntry } from '../native-chat/native-chat-types'
 import type { AgentSessionStatusPermissionFields } from './options/permissions/agent-session-status-permission-fields'
 import type { StructuredAgentSessionProjectedStatus } from './view/structured-agent-session-projection'
+import type {
+  AgentSessionPluginSurfaceFields,
+  AgentSessionPluginSurfaceUpdate
+} from './plugin-surfaces/agent-session-plugin-surface-wire'
+export type { AgentSessionPluginSurfaceUpdate }
 
 export type AgentSessionTurnActivity = { turnId: string; text: string }
 
@@ -178,6 +183,7 @@ export type AgentSessionSubscribeEvent =
       /** On a catch-up page with more behind it; absent on the last, live, and from older hosts. */
       hasNewer?: true
     } & AgentSessionCurrentWorkFields &
+      AgentSessionPluginSurfaceFields &
       AgentSessionFrameFields)
   | ({
       type: 'reset'

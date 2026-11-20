@@ -27,6 +27,8 @@ import {
   type StructuredPromptItem
 } from '../../../../../../shared/agent-session/view/structured-agent-session-message-projection'
 import { useStructuredAgentSessionMessages } from '../../conversation/projection/use-structured-agent-session-messages'
+import { useAgentSessionPluginToasts } from './use-agent-session-plugin-toasts'
+import { useAgentSessionPluginSurfaces } from './use-agent-session-plugin-surfaces'
 import { useStructuredAgentSessionTransportState } from './use-structured-agent-session-transport-state'
 import {
   stopStructuredAgentSessionBackgroundTask,
@@ -86,6 +88,8 @@ export function useStructuredAgentSession(args: StructuredAgentSessionViewArgs) 
   const commandPending = useRef(false)
   const legacyLaunchStop = useStructuredLegacyLaunchStop(sessionId)
   const transportState = useStructuredAgentSessionTransportState(state, transportEnabled)
+  useAgentSessionPluginToasts(transportEnabled ? state.plugins?.toasts : undefined)
+  const pluginSurfaces = useAgentSessionPluginSurfaces(target, sessionId, state, transportEnabled)
   const journalItems = transportState.journalItems
   const {
     conversationCommands,
@@ -310,6 +314,7 @@ export function useStructuredAgentSession(args: StructuredAgentSessionViewArgs) 
     optionSnapshot,
     optionSurface,
     sessionCommands: transportEnabled ? (state.commands ?? undefined) : undefined,
+    ...pluginSurfaces,
     ...commandMenu,
     setStructuredOption,
     /** Why the host's catalog probe says no chat can start here; the chat shows it as a notice. */

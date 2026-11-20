@@ -74,4 +74,39 @@ describe('structured agent session reducer', () => {
     })
     expect(live.items.map(({ itemId }) => itemId).slice(-2)).toEqual(['next-a', 'next-b'])
   })
+
+  it('keeps plugin status lines across a cursor-less batch and holds a toast once', () => {
+    const paged = reduceStructuredAgentSession(EMPTY_STRUCTURED_AGENT_SESSION, {
+      type: 'history-page',
+      page: hydrationPage([item('a', 1)])
+    })
+    const frame = (fields: object): Parameters<typeof reduceStructuredAgentSession>[1] => ({
+      type: 'event',
+      event: {
+        type: 'batch',
+        sessionId: 'session-a',
+        batch: {
+          cursor: { epoch: 'epoch-a', sequence: 1 },
+          items: [],
+          removedItemIds: [],
+          submissions: []
+        },
+        ...fields
+      }
+    })
+    const toast = { id: 't1', plugin: 'p', text: 'hi', timeoutMs: 4000 }
+    const withStatus = reduceStructuredAgentSession(
+      paged,
+      frame({ pluginStatuses: [{ plugin: 'p', text: 'busy' }] })
+    )
+    const withToast = reduceStructuredAgentSession(withStatus, frame({ pluginToasts: [toast] }))
+    const again = reduceStructuredAgentSession(withToast, frame({ pluginToasts: [toast] }))
+    expect(withToast.plugins).toEqual({
+      statuses: [{ plugin: 'p', text: 'busy' }],
+      toasts: [toast],
+      promptHint: null,
+      pane: null
+    })
+    expect(again.plugins?.toasts).toEqual([toast])
+  })
 })

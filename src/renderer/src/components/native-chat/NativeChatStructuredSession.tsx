@@ -260,6 +260,7 @@ export function NativeChatStructuredSession(
           panel={
             <NativeChatCrewPanel {...props} composerRef={composerRef} canMention={canMention} />
           }
+          plugins={controller}
         >
           <NativeChatContextClearFade
             // A read failure stays in view: no divider may come to end the fade.
