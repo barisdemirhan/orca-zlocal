@@ -27,6 +27,8 @@ const GAP = 10
 const MARGIN = 8
 // Leaving the tray for a moment (to reach a chip's alert) must not snap it back into a pile.
 const PILE_DELAY_MS = 260
+// Passing over the pile on the way to the composer must not fan it over the composer.
+const FAN_DELAY_MS = 220
 // A chip is 40px tall and 6px from the next; piled, each one behind peeks out by this much.
 const PILE_PEEK = 6
 const PILE_STEP = 46 - PILE_PEEK
@@ -113,8 +115,8 @@ function TrayPlacement({
 }
 
 /**
- * Minimized mirrors, parked beside the hub as a pile with the most urgent on top. Pointing at
- * the pile fans it out: four at most until the "+N" opens the rest.
+ * Minimized mirrors, parked beside the hub as a pile with the most urgent on top. Resting on
+ * the pile (not the hub) fans it out: four at most until the "+N" opens the rest.
  */
 export function AgentHubMirrorTray({
   items,
@@ -159,30 +161,32 @@ export function AgentHubMirrorTray({
   const [pointed, setPointed] = useState(false)
   const [peeking, setPeeking] = useState(false)
   const pileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const point = (): void => {
-    if (pileTimerRef.current) {
-      clearTimeout(pileTimerRef.current)
-      pileTimerRef.current = null
+  const fanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearTimer = (timerRef: typeof pileTimerRef): void => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
     }
+  }
+  const fan = (): void => {
+    clearTimer(pileTimerRef)
+    clearTimer(fanTimerRef)
     setPointed(true)
   }
+  const point = (): void => {
+    clearTimer(pileTimerRef)
+    if (!pointed && !fanTimerRef.current) {
+      fanTimerRef.current = setTimeout(fan, FAN_DELAY_MS)
+    }
+  }
   const unpoint = (): void => {
+    clearTimer(fanTimerRef)
     pileTimerRef.current = setTimeout(() => setPointed(false), PILE_DELAY_MS)
   }
-  // Pointing at the hub itself fans the pile too: the two read as one spot.
-  useAnchorBinding(anchorRef, 'point', (anchor) => {
-    anchor.addEventListener('pointerenter', point)
-    anchor.addEventListener('pointerleave', unpoint)
-    return () => {
-      anchor.removeEventListener('pointerenter', point)
-      anchor.removeEventListener('pointerleave', unpoint)
-    }
-  })
   useEffect(
     () => () => {
-      if (pileTimerRef.current) {
-        clearTimeout(pileTimerRef.current)
-      }
+      clearTimer(pileTimerRef)
+      clearTimer(fanTimerRef)
     },
     []
   )
@@ -238,7 +242,7 @@ export function AgentHubMirrorTray({
       data-resting={!fanned}
       onPointerEnter={point}
       onPointerLeave={unpoint}
-      onFocus={point}
+      onFocus={fan}
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       // Nearest the hub first: a tray above the bottom dock stacks upward.
       // Why faded as one layer: what is behind stays readable until the tray is pointed at, and
