@@ -6,6 +6,7 @@ import { AgentHubOrbComposerState } from '../agent-hub/AgentHubOrbComposerState'
 
 type Controller = ReturnType<typeof useStructuredAgentSession>
 
+/** Prompt cards take the composer's slot, below the background-task dock. */
 export function NativeChatStructuredPromptSlot({
   pane,
   prompt,

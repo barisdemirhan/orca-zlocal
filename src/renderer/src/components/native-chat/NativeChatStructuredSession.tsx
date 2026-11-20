@@ -359,7 +359,6 @@ export function NativeChatStructuredSession(
                 focusComposer={focusComposer}
               />
             )}
-            {/* Prompt cards take the composer's slot, below the background-task dock. */}
             <NativeChatStructuredPromptSlot
               pane={props}
               prompt={prompt}
