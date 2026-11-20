@@ -187,7 +187,12 @@ function subscribe(
   args: { params: AgentSessionVoiceOwner & { sessionId: string } },
   onResponse: (response: unknown) => void
 ) {
-  onResponse({ id: 'voice', ok: true, result: { ...args.params, type: 'ready' } })
+  onResponse({
+    id: 'voice',
+    ok: true,
+    result: { ...args.params, type: 'ready' },
+    _meta: { runtimeId: 'voice-runtime' }
+  })
   return Promise.resolve({ unsubscribe: mocks.unsubscribe })
 }
 beforeEach(() => {
@@ -421,7 +426,9 @@ it.each(['live', 'dictate'] as const)(
         await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Minimize Orb' })))
         await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Expand Orb' })))
       }
-      await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Mini window' })))
+      await act(async () =>
+        fireEvent.click(screen.getByRole('button', { name: 'Floating window' }))
+      )
       await act(async () => {
         finishCheck?.()
         rerender(view(false))
