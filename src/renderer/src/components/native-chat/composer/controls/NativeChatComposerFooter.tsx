@@ -10,7 +10,7 @@ export function NativeChatComposerFooter({
   terminalTabId: string
   structuredTransport?: Pick<
     NativeChatStructuredComposerTransport,
-    'worktreeId' | 'runtimeEnvironmentId' | 'pluginStatuses'
+    'worktreeId' | 'runtimeEnvironmentId' | 'pluginStatuses' | 'pluginPromptHint' | 'pressPluginUi'
   >
   isWorking?: boolean
 }): React.JSX.Element {
@@ -21,7 +21,11 @@ export function NativeChatComposerFooter({
         structuredTransport={structuredTransport}
         isWorking={isWorking}
       />
-      <NativeChatPluginStatusRow statuses={structuredTransport?.pluginStatuses} />
+      <NativeChatPluginStatusRow
+        statuses={structuredTransport?.pluginStatuses}
+        hint={structuredTransport?.pluginPromptHint}
+        onPress={structuredTransport?.pressPluginUi}
+      />
     </>
   )
 }

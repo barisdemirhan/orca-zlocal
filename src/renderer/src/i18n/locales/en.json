@@ -22080,6 +22080,10 @@
       "pluginStatus": {
         "label": "Plugin status"
       },
+      "pluginPane": {
+        "collapse": "Collapse pane",
+        "expand": "Expand pane"
+      },
       "composerWorkspace": {
         "copyFailed": "Failed to copy",
         "copyIdentity": "Copy {{value0}}",

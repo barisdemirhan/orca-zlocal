@@ -221,6 +221,8 @@ export function useNativeChatStructuredComposerTransport(args: {
       optionPickerRequest,
       sessionCommands: controller.sessionCommands,
       pluginStatuses: controller.pluginStatuses,
+      pluginPromptHint: controller.pluginPromptHint,
+      pressPluginUi: controller.pressPluginUi,
       refreshCommands: controller.refreshCommands,
       setCommandsMenuOpen: controller.setCommandsMenuOpen,
       commandsChecking: controller.commandsChecking,

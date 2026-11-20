@@ -1,13 +1,23 @@
 import { useTranslate } from '@/i18n/use-translate'
-import type { AgentSessionPluginStatus } from '../../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import type {
+  AgentSessionPluginNode,
+  AgentSessionPluginStatus,
+  AgentSessionPluginUiPress
+} from '../../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import { NativeChatPluginTree } from '../../plugin-surfaces/NativeChatPluginTree'
 
 export function NativeChatPluginStatusRow({
-  statuses
+  statuses,
+  hint,
+  onPress
 }: {
   statuses: readonly AgentSessionPluginStatus[] | undefined
+  /** A mod's drawn prompt hint, shown in the same row as the status lines. */
+  hint?: AgentSessionPluginNode
+  onPress?: (press: AgentSessionPluginUiPress) => void
 }): React.JSX.Element | null {
   const t = useTranslate()
-  if (!statuses?.length) {
+  if (!statuses?.length && !(hint && onPress)) {
     return null
   }
   return (
@@ -15,7 +25,16 @@ export function NativeChatPluginStatusRow({
       aria-label={t('components.native-chat.pluginStatus.label', 'Plugin status')}
       className="flex min-w-0 flex-wrap items-center gap-x-3 px-3 text-2xs text-chat-foreground-faint"
     >
-      {statuses.map(({ plugin, text }) => (
+      {hint && onPress ? (
+        <li className="flex min-w-0 max-w-full items-center">
+          <NativeChatPluginTree
+            node={hint}
+            target={{ component: 'PromptHint', instanceId: 'prompt-hint' }}
+            onPress={onPress}
+          />
+        </li>
+      ) : null}
+      {statuses?.map(({ plugin, text }) => (
         <li
           key={plugin}
           title={`${plugin}: ${text}`}

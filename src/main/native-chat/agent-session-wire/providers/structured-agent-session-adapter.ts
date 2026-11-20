@@ -52,6 +52,7 @@ import type {
 } from '../startup/structured-agent-session-startup-attempt-contract'
 import type { AgentSessionCreatePhaseRecorder } from '../../../observability/agent-session-instrumentation'
 import type { AgentSessionStartFailure } from '../startup/structured-agent-session-start-failure'
+import type { AgentSessionPluginUiPress } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type {
   StructuredAgentSessionProviderOpen,
   StructuredAgentSessionProviderOpenResult
@@ -356,6 +357,8 @@ export type StructuredAgentSessionAdapter = AdapterControls & {
   stopProviderNaming?(): void
   /** The session gained its first, or lost its last, reader that shows prompt suggestions. */
   promptSuggestionInterestChanged?(sessionId: string, wanted: boolean): void
+  /** A press on an element a provider mod drew for this session; the redraw arrives as a plugin surface update. */
+  pressPluginUi?(sessionId: string, press: AgentSessionPluginUiPress): Promise<void>
   /** True proves child exit; root/processless verdicts throw only after finalization (stopAgentSessionProviderRoot). */
   closeSession?(
     sessionId: string,

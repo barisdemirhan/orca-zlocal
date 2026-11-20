@@ -103,7 +103,9 @@ describe('structured agent session reducer', () => {
     const again = reduceStructuredAgentSession(withToast, frame({ pluginToasts: [toast] }))
     expect(withToast.plugins).toEqual({
       statuses: [{ plugin: 'p', text: 'busy' }],
-      toasts: [toast]
+      toasts: [toast],
+      promptHint: null,
+      pane: null
     })
     expect(again.plugins?.toasts).toEqual([toast])
   })

@@ -79,6 +79,15 @@ function mergeBatch(
     ...(right.pluginStatuses !== undefined || left.pluginStatuses !== undefined
       ? { pluginStatuses: right.pluginStatuses ?? left.pluginStatuses }
       : {}),
+    ...(right.pluginPromptHint !== undefined || left.pluginPromptHint !== undefined
+      ? {
+          pluginPromptHint:
+            right.pluginPromptHint !== undefined ? right.pluginPromptHint : left.pluginPromptHint
+        }
+      : {}),
+    ...(right.pluginPane !== undefined || left.pluginPane !== undefined
+      ? { pluginPane: right.pluginPane !== undefined ? right.pluginPane : left.pluginPane }
+      : {}),
     ...(latestTurn !== undefined ? { latestTurn } : {}),
     ...(actionablePromptIds !== undefined ? { actionablePromptIds } : {}),
     ...(working !== undefined ? { working } : {}),

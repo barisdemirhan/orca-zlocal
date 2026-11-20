@@ -8,6 +8,7 @@ import {
   providerDiagnostic,
   withProviderDiagnostic
 } from '../../../shared/agent-session/failures/agent-session-failure'
+import { createClaudeUiRequest } from './claude-agent-sdk-ui-request'
 
 export class ClaudeControlRequestError extends Error {
   constructor(
@@ -210,6 +211,8 @@ export type ClaudeControlSurface = {
   getContextUsage: (options?: ClaudeControlOptions) => Promise<unknown>
   /** Names `sessionId` as the user's rename; refused once the CLI has moved to another session. */
   renameSession: (title: string, sessionId: string, options?: ClaudeControlOptions) => Promise<void>
+  /** One internal mod-UI control request (`ui_attach`, `ui_render`, `ui_press`) answering the reply's payload; rejects when this SDK has no raw request. */
+  uiRequest?: (body: Record<string, unknown>, options?: ClaudeControlOptions) => Promise<unknown>
   /** The `/mcp` panel's requests; test connections leave it out. */
   mcp?: ClaudeMcpControls
   /** Stops or restarts the CLI generating prompt suggestions; a new process starts unpaused. */
@@ -309,6 +312,7 @@ export function createClaudeControlSurface(query: Query): ClaudeControlSurface {
             )
           )
     },
+    uiRequest: createClaudeUiRequest(query, runClaudeControl),
     getSettings: (options) => {
       const read = claudeQuerySettingsReader(query)
       return read

@@ -1,4 +1,5 @@
 import { readAttachTelemetryCaller } from './structured-agent-session-attach-telemetry'
+import { AGENT_SESSION_PLUGIN_SURFACES_RESET } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import { prepareStructuredAgentSessionAttach } from './structured-agent-session-attach-preparation'
 import {
   publishAttachedChild,
@@ -254,8 +255,8 @@ async function runAttachUnderAbort(
           })
         }
         if (owner === 'acquired') {
-          // A new process starts with no plugin status lines.
-          context.subscribers.pluginSurfaces.publish(sessionId, { statuses: [] })
+          // A new process starts with no plugin status lines or drawn trees.
+          context.subscribers.pluginSurfaces.publish(sessionId, AGENT_SESSION_PLUGIN_SURFACES_RESET)
         }
         eventSink.bind({
           journal: attached.journal,

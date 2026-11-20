@@ -23,6 +23,7 @@ import {
   queuedSendAnswer,
   structuredSendAnswer
 } from '../delivery/structured-agent-session-queued-send-answer'
+import type { AgentSessionPluginUiPress } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type { JournalMailAttempt } from '../../agent-session-journal/journal-mail-observation'
 import { compareAgentJournalItems } from '../../../../shared/agent-session/journal/agent-session-journal-position'
 
@@ -191,6 +192,8 @@ export function createStructuredAgentSessionConversationReads(context: () => Rea
       const { deps, conversation } = context()
       return revealStructuredAgentSession(deps, id, conversation)
     },
+    pressPluginUi: (id: string, press: AgentSessionPluginUiPress): Promise<void> =>
+      context().deps.adapter.pressPluginUi?.(id, press) ?? Promise.resolve(),
     sessionAgent: (id: string) => context().deps.store.getConversation(id)?.provider ?? null,
     /** The home a running child launched under. ACP adapters report none, so `orPinned` falls
      *  back to the record's pinned home while a child runs. */
