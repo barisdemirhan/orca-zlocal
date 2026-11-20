@@ -50,6 +50,31 @@ describe('a left-sidebar click that leaves the canvas', () => {
     expect(click('#title', { shiftKey: true })).toBe(false)
   })
 
+  it("is a click on the current bot's card or on any of its chats", () => {
+    document.body.innerHTML = `
+      <div data-bot-sidebar-entry="bot-1">
+        <div id="bot" data-worktree-card-surface="true" data-worktree-card-active="primary">
+          <span id="bot-name">Workspace cleanup</span>
+          <button id="fold">⌄</button>
+        </div>
+        <div id="home" role="button" data-bot-sidebar-chat="home" aria-current="true">Home Chat</div>
+        <div id="thread" role="button" data-bot-sidebar-chat="thread-2">
+          <span id="thread-title">Friday run</span>
+          <button id="chevron">›</button>
+        </div>
+      </div>
+      <div data-bot-sidebar-entry="bot-2">
+        <div data-worktree-card-surface="true"><span id="other-bot">Other</span></div>
+      </div>`
+
+    expect(click('#bot-name')).toBe(true)
+    expect(click('#fold')).toBe(false)
+    expect(click('#home')).toBe(true)
+    expect(click('#thread-title')).toBe(true)
+    expect(click('#chevron')).toBe(false)
+    expect(click('#other-bot')).toBe(false)
+  })
+
   it("is a click on the current page's navigation button", () => {
     document.body.innerHTML = `
       <div data-contextual-tour-target="sidebar-navigation">

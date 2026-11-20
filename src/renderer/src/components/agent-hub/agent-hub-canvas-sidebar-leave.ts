@@ -1,8 +1,9 @@
 import { isAgentHubMirrorTabClickBlocked } from './agent-hub-mirror-gesture'
 // Where the user already is: the current workspace's card, or the current page's nav button.
 // Going anywhere else changes the page or workspace, which leaves the canvas by itself.
+// A bot's chats all live in its home workspace, so switching between them changes neither.
 const CURRENT_DESTINATION =
-  '[data-worktree-sidebar] [data-worktree-card-surface][data-worktree-card-active], [data-contextual-tour-target="sidebar-navigation"] [aria-current="page"]'
+  '[data-worktree-sidebar] [data-worktree-card-surface][data-worktree-card-active], [data-bot-sidebar-entry] [data-worktree-card-surface][data-worktree-card-active], [data-bot-sidebar-chat], [data-contextual-tour-target="sidebar-navigation"] [aria-current="page"]'
 const NESTED_CONTROL = 'button, a, input, [role="button"], [role="menuitem"]'
 
 /**
