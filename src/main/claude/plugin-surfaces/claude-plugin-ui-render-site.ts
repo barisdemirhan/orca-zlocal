@@ -1,8 +1,13 @@
 import type {
+  AgentSessionPluginNode,
   AgentSessionPluginPane,
   AgentSessionPluginUiComponent,
   AgentSessionPluginUiLayout
 } from '../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import {
+  dockedPluginPaneRows,
+  inlinePluginPaneRows
+} from '../../../shared/agent-session/plugin-surfaces/agent-session-plugin-pane-rows'
 
 export type PluginUiInstance = { component: AgentSessionPluginUiComponent; instanceId: string }
 export type PluginPaneEntry = Omit<AgentSessionPluginPane, 'tree'>
@@ -17,8 +22,10 @@ export const DEFAULT_PLUGIN_UI_LAYOUT: AgentSessionPluginUiLayout = {
   placement: 'inline',
   paneColumns: 96,
   bandColumns: 95,
+  hintColumns: 100,
   isWorking: false,
-  isDraft: false
+  isDraft: false,
+  isBandCollapsed: false
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -51,16 +58,34 @@ export function readPluginPaneEntry(entry: unknown): PluginPaneEntry | null {
   }
 }
 
-/** The chat's size as Claude Code's `viewport`; the chat has no scrollback mode, so it reads as fullscreen. */
-export function pluginUiViewport(layout: AgentSessionPluginUiLayout): Record<string, unknown> {
-  return { columns: layout.columns, rows: layout.rows, isFullscreen: true }
+/** The shown pane as the chat draws it, every open pane a tab when there are several. */
+export function paneWithTabs(
+  pane: PluginPaneEntry,
+  tree: AgentSessionPluginNode,
+  panes: readonly PluginPaneEntry[]
+): AgentSessionPluginPane {
+  const tabs = panes.map(({ id, title }) => ({ id, title }))
+  return { ...pane, tree, ...(tabs.length > 1 ? { tabs } : {}) }
+}
+
+/**
+ * The chat's size as Claude Code's `viewport`; the chat has no scrollback mode, so it reads as fullscreen.
+ * The prompt hint lays out across the viewport, so it gets the row under the composer as its width.
+ */
+export function pluginUiViewport(
+  layout: AgentSessionPluginUiLayout,
+  component?: PluginUiInstance['component']
+): Record<string, unknown> {
+  const columns = component === 'PromptHint' ? layout.hintColumns : layout.columns
+  return { columns, rows: layout.rows, isFullscreen: true }
 }
 
 /** The props the terminal hands each render site, sized to the chat (see the `claude-code` d.ts). */
 export function pluginUiSiteProps(
   instance: PluginUiInstance,
   layout: AgentSessionPluginUiLayout,
-  pane: PluginPaneEntry | undefined
+  pane: PluginPaneEntry | undefined,
+  hasTabs = false
 ): Record<string, unknown> {
   const halfRows = Math.max(4, Math.floor(layout.rows / 2))
   switch (instance.component) {
@@ -69,7 +94,7 @@ export function pluginUiSiteProps(
     case 'AbovePrompt':
       return {
         hasSurvey: false,
-        isCollapsed: false,
+        isCollapsed: layout.isBandCollapsed,
         isWorking: layout.isWorking,
         maxRows: halfRows,
         bodyColumns: layout.bandColumns,
@@ -79,8 +104,9 @@ export function pluginUiSiteProps(
     case 'Pane': {
       const bodyRows =
         layout.placement === 'dock'
-          ? Math.max(4, layout.rows - 1)
-          : Math.max(4, Math.min(pane?.rows ?? halfRows, halfRows) - 2)
+          ? dockedPluginPaneRows(layout.rows)
+          : // Inline, the tabs take the box's first row.
+            inlinePluginPaneRows(layout.rows) - (hasTabs ? 1 : 0)
       return {
         title: pane?.title ?? instance.instanceId,
         isFocused: false,

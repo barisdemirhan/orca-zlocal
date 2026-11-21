@@ -24,6 +24,10 @@ import {
   structuredSendAnswer
 } from '../delivery/structured-agent-session-queued-send-answer'
 import type { StructuredAgentSessionHostRuntimeState } from './structured-agent-session-host-runtime-state'
+import type {
+  AgentSessionPluginClientAnswer,
+  AgentSessionPluginClientCall
+} from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-client-wire'
 import type { AgentSessionPluginUiAction } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type { JournalMailAttempt } from '../../agent-session-journal/journal-mail-observation'
 import { compareAgentJournalItems } from '../../../../shared/agent-session/journal/agent-session-journal-position'
@@ -196,6 +200,11 @@ export function createStructuredAgentSessionConversationReads(context: () => Rea
     },
     actOnPluginUi: (id: string, action: AgentSessionPluginUiAction): Promise<void> =>
       context().deps.adapter.actOnPluginUi?.(id, action) ?? Promise.resolve(),
+    callPluginUiClient: (
+      id: string,
+      call: AgentSessionPluginClientCall
+    ): Promise<AgentSessionPluginClientAnswer> =>
+      context().deps.adapter.callPluginUiClient?.(id, call) ?? Promise.resolve(null),
     sessionAgent: (id: string) => context().deps.store.getConversation(id)?.provider ?? null,
     /** After an out-of-turn options write, so an open tab re-reads the chat's options. */
     publishStatus: (id: string) => context().publishStatus(id),

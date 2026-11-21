@@ -59,7 +59,7 @@ describe('ClaudePluginUiBridge', () => {
     expect(calls[3]).toMatchObject({
       component: 'Pane',
       instance_id: 'deck',
-      props: { bodyColumns: 96, placement: 'inline', scroll: { offset: 0, bodyRows: 12 } }
+      props: { bodyColumns: 96, placement: 'inline', scroll: { offset: 0, bodyRows: 11 } }
     })
     expect(published).toEqual([
       { promptHint: hint('PromptHint') },
@@ -82,8 +82,10 @@ describe('ClaudePluginUiBridge', () => {
       placement: 'dock',
       paneColumns: 50,
       bandColumns: 103,
+      hintColumns: 108,
       isWorking: true,
-      isDraft: false
+      isDraft: false,
+      isBandCollapsed: false
     })
     await flush()
     expect(calls.find((call) => call.component === 'Pane' && call !== calls[3])).toMatchObject({

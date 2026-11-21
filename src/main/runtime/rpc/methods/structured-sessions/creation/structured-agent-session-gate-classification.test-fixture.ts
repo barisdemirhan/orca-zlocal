@@ -109,6 +109,10 @@ export const WORK_METHODS = [
     method: 'agentSession.pluginUiAction',
     params: { sessionId: SESSION, action: { kind: 'close', paneId: 'deck' } }
   },
+  {
+    method: 'agentSession.pluginUiClient',
+    params: { sessionId: SESSION, call: { kind: 'module', plugin: 'dino' } }
+  },
   { method: 'agentSession.rename', params: { sessionId: SESSION, name: 'Release notes' } },
   { method: 'agentSession.subscribeStatus', params: null }
 ] as const

@@ -52,10 +52,13 @@ function plainJson(value: unknown, depth: number): AgentSessionPluginJson | unde
   return undefined
 }
 
+type ClientHashes = Record<string, unknown>
+
 function sanitizeNode(
   raw: unknown,
   depth: number,
-  budget: { nodes: number }
+  budget: { nodes: number },
+  hashes: ClientHashes
 ): AgentSessionPluginNode | null {
   if (
     depth > MAX_PLUGIN_TREE_DEPTH ||
@@ -81,7 +84,7 @@ function sanitizeNode(
       if (typeof child === 'string') {
         children.push(cappedString(child))
       } else {
-        const kept = sanitizeNode(child, depth + 1, budget)
+        const kept = sanitizeNode(child, depth + 1, budget, hashes)
         if (kept) {
           children.push(kept)
         }
@@ -101,12 +104,24 @@ function sanitizeNode(
   ) {
     node.press = { plugin: cappedString(press.plugin), handle: press.handle }
   }
+  const client = raw.client
+  if (raw.type === 'Client' && isRecord(client) && typeof client.plugin === 'string') {
+    const hash = hashes[client.plugin]
+    node.client = {
+      plugin: cappedString(client.plugin),
+      ...(typeof hash === 'string' ? { hash: cappedString(hash) } : {})
+    }
+  }
   return node
 }
 
-/** A tree the chat can render safely, or null when the value is not a tree or exceeds the size caps. */
-export function sanitizePluginTree(raw: unknown): AgentSessionPluginNode | null {
-  const tree = sanitizeNode(raw, 1, { nodes: 0 })
+/** A tree the chat can render safely, or null when the value is not a tree or exceeds the size caps.
+ * `clientModules` is the render's plugin-to-hash map, which stamps each `Client` node. */
+export function sanitizePluginTree(
+  raw: unknown,
+  clientModules?: unknown
+): AgentSessionPluginNode | null {
+  const tree = sanitizeNode(raw, 1, { nodes: 0 }, isRecord(clientModules) ? clientModules : {})
   return tree && JSON.stringify(tree).length <= MAX_PLUGIN_TREE_BYTES ? tree : null
 }
 

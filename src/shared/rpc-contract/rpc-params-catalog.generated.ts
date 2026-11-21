@@ -953,6 +953,7 @@ import {
 import { CurrentRequestsParams } from './structured-agent-session/agent-session-current-requests-params'
 import { ReadVisualParams } from './structured-agent-session/agent-session-visual-params'
 import { PluginUiActionParams } from './structured-agent-session/plugin-ui-action-params'
+import { PluginUiClientParams } from './structured-agent-session/plugin-ui-client-params'
 import { SkipAsyncQuestionsParams } from './structured-agent-session/skip-async-questions-params'
 import { AutoReviewApprovalParams } from './structured-agent-session/structured-agent-session-auto-review-params'
 import { ContinueInterruptedParams } from './structured-agent-session/structured-agent-session-continue-params'
@@ -1229,6 +1230,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentSession.modelCatalog': ModelCatalogParams,
   'agentSession.options': OptionsParams,
   'agentSession.pluginUiAction': PluginUiActionParams,
+  'agentSession.pluginUiClient': PluginUiClientParams,
   'agentSession.queuedMessageDelete': QueuedMessageActionParams,
   'agentSession.queuedMessageEditHold': QueuedMessageEditHoldParams,
   'agentSession.queuedMessageMove': QueuedMessageMoveParams,

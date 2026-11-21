@@ -10,6 +10,8 @@ import {
   NativeChatPluginFrame,
   type NativeChatPluginFrameSurfaces
 } from '../native-chat/plugin-surfaces/NativeChatPluginFrame'
+import { PluginClientProvider } from '../native-chat/plugin-surfaces/client/plugin-client-context'
+import type { PluginClientTransport } from '../native-chat/plugin-surfaces/client/plugin-client-host'
 import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 
 export function NativeChatCrewPanel({
@@ -60,7 +62,7 @@ export function NativeChatCrewFrame({
   /** The availability gate prevents unavailable panels from acquiring subscriptions. */
   panel: React.ReactNode
   /** Surfaces mods drew for this chat, seated around the transcript as the terminal seats them. */
-  plugins?: NativeChatPluginFrameSurfaces
+  plugins?: NativeChatPluginFrameSurfaces & { callPluginUiClient?: PluginClientTransport }
   children: React.ReactNode
 }): React.JSX.Element {
   const enabled = useOrchestrationPanelEnabled()
@@ -76,7 +78,9 @@ export function NativeChatCrewFrame({
   )
   return (
     <div className="@container flex min-h-0 flex-1 flex-col">
-      {plugins ? <NativeChatPluginFrame plugins={plugins} transcript={transcript} /> : transcript}
+      <PluginClientProvider transport={plugins?.callPluginUiClient}>
+        {plugins ? <NativeChatPluginFrame plugins={plugins} transcript={transcript} /> : transcript}
+      </PluginClientProvider>
     </div>
   )
 }

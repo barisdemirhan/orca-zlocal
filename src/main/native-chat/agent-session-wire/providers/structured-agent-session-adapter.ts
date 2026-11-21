@@ -52,6 +52,7 @@ import type {
 } from '../startup/structured-agent-session-startup-attempt-contract'
 import type { AgentSessionCreatePhaseRecorder } from '../../../observability/agent-session-instrumentation'
 import type { AgentSessionStartFailure } from '../startup/structured-agent-session-start-failure'
+import type { AgentSessionPluginClientCaller } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-client-wire'
 import type { AgentSessionPluginUiAction } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type {
   StructuredAgentSessionProviderOpen,
@@ -371,6 +372,8 @@ export type StructuredAgentSessionAdapter = AdapterControls & {
   promptSuggestionInterestChanged?(sessionId: string, wanted: boolean): void
   /** A press, layout change or pane close from a provider mod's surface; redraws arrive as plugin surface updates. */
   actOnPluginUi?(sessionId: string, action: AgentSessionPluginUiAction): Promise<void>
+  /** A surface runtime's request for a mod's `Client` regions: its modules, a press, a post or a fault. */
+  callPluginUiClient?: AgentSessionPluginClientCaller
   /** True proves child exit; root/processless verdicts throw only after finalization (stopAgentSessionProviderRoot). */
   closeSession?(
     sessionId: string,

@@ -26,6 +26,8 @@ export type AgentSessionPluginNode = {
   props?: Record<string, AgentSessionPluginJson>
   children?: (AgentSessionPluginNode | string)[]
   press?: { plugin: string; handle: number }
+  /** A `Client` node: the plugin whose surface module draws it, and that module set's hash. */
+  client?: { plugin: string; hash?: string }
 }
 
 /** The mod pane Claude Code reports as shown, with its latest drawing. */
@@ -37,6 +39,8 @@ export type AgentSessionPluginPane = {
   /** Cells across and rows the mod asked for; the chat docks the pane this wide. */
   columns?: number
   rows?: number
+  /** Every open pane, in order, when more than one is: the terminal draws them as tabs. */
+  tabs?: { id: string; title: string }[]
 }
 
 /** The render sites a press can name. */
@@ -52,8 +56,12 @@ export type AgentSessionPluginUiLayout = {
   placement: AgentSessionPluginPanePlacement
   paneColumns: number
   bandColumns: number
+  /** The prompt hint's own width, which it reads as the viewport's columns. */
+  hintColumns: number
   isWorking: boolean
   isDraft: boolean
+  /** The band folded to one line by its [-], as the terminal's ctrl+x ctrl+a does. */
+  isBandCollapsed: boolean
 }
 
 /** The plugin fields of a batch frame; never sent to phones. */
@@ -79,11 +87,19 @@ export type AgentSessionPluginUiPress = {
   key?: string
 }
 
-/** What a view of the chat does to the mods' surfaces: a press, its size, or closing a pane. */
+/** An edit of an Input a mod drew: each change, or Enter. */
+export type AgentSessionPluginUiEdit = AgentSessionPluginUiPress & {
+  edit: 'change' | 'submit'
+  value: string
+}
+
+/** What a view of the chat does to the mods' surfaces: a press, an edit, its size, or a pane picked or closed. */
 export type AgentSessionPluginUiAction =
   | ({ kind: 'press' } & AgentSessionPluginUiPress)
+  | ({ kind: 'input' } & AgentSessionPluginUiEdit)
   | ({ kind: 'layout' } & AgentSessionPluginUiLayout)
   | { kind: 'close'; paneId: string }
+  | { kind: 'show'; paneId: string }
 
 /** What one provider frame changes: the whole status list, one toast, or a drawn tree (null clears it). */
 export type AgentSessionPluginSurfaceUpdate = {

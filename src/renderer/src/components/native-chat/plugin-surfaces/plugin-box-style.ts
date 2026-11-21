@@ -63,7 +63,9 @@ export function boxStyle(props: PluginProps, border: BorderSpec | null): CSSProp
     justifyContent: readOneOf(props.justifyContent, JUSTIFY),
     columnGap: cellLength(firstDefined(props.columnGap, gap), 'x'),
     rowGap: cellLength(firstDefined(props.rowGap, gap), 'y'),
-    width: cellLength(props.width, 'x'),
+    // Out of flow, Ink sizes a box to what it holds rather than to the room left of its offset.
+    width:
+      cellLength(props.width, 'x') ?? (props.position === 'absolute' ? 'max-content' : undefined),
     height: cellLength(props.height, 'y'),
     minWidth: cellLength(props.minWidth, 'x') ?? 0,
     minHeight: cellLength(props.minHeight, 'y') ?? 0,

@@ -1,3 +1,4 @@
+import type { AgentSessionPluginClientCaller } from '../../../shared/agent-session/plugin-surfaces/agent-session-plugin-client-wire'
 import { dispatchClaudeCommand } from './turns/claude-structured-command-dispatch'
 import { isKillDeliveredExitReceipt } from './lifecycle/claude-kill-delivered-exit-receipt'
 import { manageClaudeMcp } from './lifecycle/claude-structured-mcp'
@@ -123,11 +124,7 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
   }
 
   promptSuggestionInterestChanged(sessionId: string, wanted: boolean): void {
-    if (wanted) {
-      this.suggestionReaders.add(sessionId)
-    } else {
-      this.suggestionReaders.delete(sessionId)
-    }
+    this.suggestionReaders[wanted ? 'add' : 'delete'](sessionId)
     const session = this.sessions.get(sessionId)
     if (session) {
       syncClaudePromptSuggestionPause(session, wanted)
@@ -136,6 +133,9 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
 
   actOnPluginUi: StructuredAgentSessionAdapter['actOnPluginUi'] = (sessionId, action) =>
     this.sessions.get(sessionId)?.pluginUi.act(action) ?? Promise.resolve()
+
+  callPluginUiClient: AgentSessionPluginClientCaller = async (id, call) =>
+    (await this.sessions.get(id)?.pluginUi.callClient(call)) ?? null
 
   /** Await exit publication after cleanup/cursor writes; unproven exits stay indexed for retry. */
   drainObservedExits = (): Promise<void> => drainClaudeObservedExits(this.exits)

@@ -1,4 +1,8 @@
 import type {
+  AgentSessionPluginClientAnswer,
+  AgentSessionPluginClientCall
+} from '../../../shared/agent-session/plugin-surfaces/agent-session-plugin-client-wire'
+import type {
   AgentSessionPluginSurfaceUpdate,
   AgentSessionPluginUiAction,
   AgentSessionPluginUiLayout,
@@ -7,16 +11,24 @@ import type {
 import {
   DEFAULT_PLUGIN_UI_LAYOUT,
   isRecord,
-  pluginUiSiteProps,
+  paneWithTabs,
   pluginUiText as text,
   pluginUiViewport,
   readPluginPaneEntry,
   type PluginPaneEntry,
   type PluginUiInstance
 } from './claude-plugin-ui-render-site'
+import { ClaudePluginUiPublication } from './claude-plugin-ui-publication'
+import { pluginUiRenderBody } from './claude-plugin-ui-render-body'
+import { clientModulesOf, sendMountedPluginClientCall } from './claude-plugin-ui-client-calls'
 import { pluginTreeDrawsContent, sanitizePluginTree } from './claude-plugin-ui-tree'
+import {
+  pluginUiActionRequest,
+  type PluginUiRequestAction
+} from './claude-plugin-ui-action-requests'
 
 const SURFACE = 'desktop'
+
 const PROMPT_HINT_INSTANCE = 'prompt-hint'
 const ABOVE_PROMPT_INSTANCE = 'above-prompt'
 const INVALIDATE_DEBOUNCE_MS = 100
@@ -40,7 +52,7 @@ export class ClaudePluginUiBridge {
   private layout: AgentSessionPluginUiLayout = DEFAULT_PLUGIN_UI_LAYOUT
   private readonly mounted = new Map<string, PluginUiInstance>()
   private readonly renderSequence = new Map<string, number>()
-  private readonly published = new Map<string, string>()
+  private readonly publication: ClaudePluginUiPublication
   private pendingInstances = new Set<string>()
   private pendingAll = false
   private timer: ReturnType<typeof setTimeout> | null = null
@@ -48,6 +60,7 @@ export class ClaudePluginUiBridge {
 
   constructor(private readonly deps: ClaudePluginUiBridgeDeps) {
     // Claude Code rejects a client_id outside 1-64 of [A-Za-z0-9._-]; it reserves the colon.
+    this.publication = new ClaudePluginUiPublication(deps.publish)
     this.clientId = deps.clientId.replace(/[^A-Za-z0-9._-]/g, '-').slice(0, 64) || 'orca'
   }
 
@@ -79,8 +92,8 @@ export class ClaudePluginUiBridge {
     if (action.kind === 'press') {
       return this.press(action)
     }
-    if (action.kind === 'close') {
-      return this.close(action.paneId)
+    if (action.kind !== 'layout') {
+      return this.request(action)
     }
     const { kind: _kind, ...layout } = action
     if (JSON.stringify(layout) !== JSON.stringify(this.layout)) {
@@ -90,14 +103,22 @@ export class ClaudePluginUiBridge {
     return Promise.resolve()
   }
 
-  private async close(paneId: string): Promise<void> {
-    if (this.mode !== 'ready' || !this.panes.some((pane) => pane.id === paneId)) {
+  /** A `Client` region's request: its modules, or a press, post or fault from its frame. */
+  callClient(call: AgentSessionPluginClientCall): Promise<AgentSessionPluginClientAnswer> {
+    return this.mode === 'ready'
+      ? sendMountedPluginClientCall((body) => this.send(body), this.clientId, this.mounted, call)
+      : Promise.resolve(null)
+  }
+
+  private async request(action: PluginUiRequestAction): Promise<void> {
+    const body = pluginUiActionRequest(action, SURFACE, this.clientId, this.panes, this.mounted)
+    if (this.mode !== 'ready' || !body) {
       return
     }
     try {
-      await this.send({ subtype: 'ui_close', id: paneId, client_id: this.clientId })
+      await this.send(body)
     } catch {
-      // The pane stays until the next ui_panes says otherwise.
+      // Nothing changed; the next ui_panes or redraw shows what is true.
     }
   }
 
@@ -121,7 +142,7 @@ export class ClaudePluginUiBridge {
       if (tree === undefined) {
         await this.render(instance)
       } else {
-        this.apply(instance, this.nextSequence(instance), tree)
+        this.apply(instance, this.nextSequence(instance), tree, clientModulesOf(drawn, reply))
       }
     } catch {
       // The next invalidation redraws; a failed press changes nothing here.
@@ -135,8 +156,7 @@ export class ClaudePluginUiBridge {
       clearTimeout(this.timer)
       this.timer = null
     }
-    const had = this.published.size > 0
-    this.published.clear()
+    const had = this.publication.clear()
     this.mounted.clear()
     this.panes = []
     this.shownPaneId = null
@@ -149,18 +169,7 @@ export class ClaudePluginUiBridge {
   }
 
   private renderBody(instance: PluginUiInstance): Record<string, unknown> {
-    return {
-      surface: SURFACE,
-      client_id: this.clientId,
-      component: instance.component,
-      instance_id: instance.instanceId,
-      viewport: pluginUiViewport(this.layout),
-      props: pluginUiSiteProps(
-        instance,
-        this.layout,
-        this.panes.find((pane) => pane.id === instance.instanceId)
-      )
-    }
+    return pluginUiRenderBody(SURFACE, this.clientId, instance, this.layout, this.panes)
   }
 
   private async attach(request: NonNullable<ClaudePluginUiBridgeDeps['request']>): Promise<void> {
@@ -239,13 +248,23 @@ export class ClaudePluginUiBridge {
     const sequence = this.nextSequence(instance)
     try {
       const reply = await this.send({ subtype: 'ui_render', ...this.renderBody(instance) })
-      this.apply(instance, sequence, isRecord(reply) ? reply.tree : undefined)
+      this.apply(
+        instance,
+        sequence,
+        isRecord(reply) ? reply.tree : undefined,
+        clientModulesOf(reply, reply)
+      )
     } catch {
       // A failed draw keeps what is showing.
     }
   }
 
-  private apply(instance: PluginUiInstance, sequence: number, raw: unknown): void {
+  private apply(
+    instance: PluginUiInstance,
+    sequence: number,
+    raw: unknown,
+    clientModules?: unknown
+  ): void {
     if (
       this.mode !== 'ready' ||
       this.renderSequence.get(instance.instanceId) !== sequence ||
@@ -253,10 +272,10 @@ export class ClaudePluginUiBridge {
     ) {
       return
     }
-    const tree = sanitizePluginTree(raw)
+    const tree = sanitizePluginTree(raw, clientModules)
     if (instance.component !== 'Pane') {
       const drawn = tree && pluginTreeDrawsContent(tree) ? tree : null
-      this.publishChanged(
+      this.publication.changed(
         instance.component,
         drawn,
         instance.component === 'PromptHint' ? { promptHint: drawn } : { band: drawn }
@@ -264,28 +283,11 @@ export class ClaudePluginUiBridge {
       return
     }
     const pane = this.panes.find((entry) => entry.id === instance.instanceId)
-    this.publishPane(tree && pane ? { ...pane, tree } : null)
+    this.publishPane(tree && pane ? paneWithTabs(pane, tree, this.panes) : null)
   }
 
   private publishPane(pane: AgentSessionPluginSurfaceUpdate['pane']): void {
-    this.publishChanged('pane', pane, { pane })
-  }
-
-  private publishChanged(
-    field: string,
-    value: unknown,
-    update: AgentSessionPluginSurfaceUpdate
-  ): void {
-    const serialized = JSON.stringify(value)
-    if ((this.published.get(field) ?? 'null') === serialized) {
-      return
-    }
-    if (value === null) {
-      this.published.delete(field)
-    } else {
-      this.published.set(field, serialized)
-    }
-    this.deps.publish(update)
+    this.publication.changed('pane', pane, { pane })
   }
 
   private invalidate(message: Record<string, unknown>): void {
@@ -300,8 +302,7 @@ export class ClaudePluginUiBridge {
       this.pendingAll = true
     }
     if (this.pendingAll || this.pendingInstances.size > 0) {
-      this.timer ??= setTimeout(() => this.flush(), this.deps.debounceMs ?? INVALIDATE_DEBOUNCE_MS)
-      this.timer.unref?.()
+      this.schedule()
     }
   }
 
@@ -310,6 +311,10 @@ export class ClaudePluginUiBridge {
       return
     }
     this.pendingAll = true
+    this.schedule()
+  }
+
+  private schedule(): void {
     this.timer ??= setTimeout(() => this.flush(), this.deps.debounceMs ?? INVALIDATE_DEBOUNCE_MS)
     this.timer.unref?.()
   }
