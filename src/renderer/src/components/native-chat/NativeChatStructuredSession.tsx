@@ -75,7 +75,7 @@ import { useNativeChatHostSendGate } from '@/components/native-chat/host-access/
 import { useStructuredAgentSessionStartFailureFacts } from '@/components/native-chat/messages/notices/use-structured-agent-session-start-failure-facts'
 import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-session/requests/prompts/agent-session-approval-subject'
 import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
-import { NativeChatCrewFrame } from '../orchestration-crew/NativeChatCrewPanel'
+import { NativeChatPluginTranscript } from './plugin-surfaces/NativeChatPluginFrame'
 import type { NativeChatComposerHandle } from './composer/native-chat-composer-types'
 import {
   NativeChatWorkerApprovalTimeline,
@@ -266,7 +266,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
             <NativeChatSubagentSheetLayer {...subagents.layer}>
               {paneHeader}
               <NativeChatWorkerAutoCloseBanner pane={props} />
-              <NativeChatCrewFrame panel={null} plugins={controller}>
+              <NativeChatPluginTranscript plugins={controller}>
                 <NativeChatContextClearFade
                   // A read failure stays in view: no divider may come to end the fade.
                   clearing={controller.contextClear.clearing && viewState.kind !== 'error'}
@@ -335,7 +335,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                     </NativeChatRowActionsProvider>
                   )}
                 </NativeChatContextClearFade>
-              </NativeChatCrewFrame>
+              </NativeChatPluginTranscript>
               <NativeChatDock
                 shown={!readFailure?.final}
                 keepFloatingTerminalTriggerClear={props.isVisible}

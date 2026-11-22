@@ -6,12 +6,6 @@ import type { RefObject } from 'react'
 import type { NativeChatComposerHandle } from '../native-chat/composer/native-chat-composer-types'
 import { LazyOrchestrationCrewPanel } from './LazyOrchestrationCrewPanel'
 import { useOrchestrationPanelEnabled } from './use-orchestration-panel-enabled'
-import {
-  NativeChatPluginFrame,
-  type NativeChatPluginFrameSurfaces
-} from '../native-chat/plugin-surfaces/NativeChatPluginFrame'
-import { PluginClientProvider } from '../native-chat/plugin-surfaces/client/plugin-client-context'
-import type { PluginClientTransport } from '../native-chat/plugin-surfaces/client/plugin-client-host'
 import type { RuntimeClientTarget } from '../../../../shared/remote-runtime/host-catalog/runtime-client-target'
 
 export function NativeChatCrewPanel({
@@ -56,31 +50,21 @@ export function NativeChatCrewPanel({
 /** Wraps a native chat's transcript: the crew panel overlays it, never the header's buttons or the composer below it. */
 export function NativeChatCrewFrame({
   panel,
-  plugins,
   children
 }: {
   /** The availability gate prevents unavailable panels from acquiring subscriptions. */
   panel: React.ReactNode
-  /** Surfaces mods drew for this chat, seated around the transcript as the terminal seats them. */
-  plugins?: NativeChatPluginFrameSurfaces & { callPluginUiClient?: PluginClientTransport }
   children: React.ReactNode
 }): React.JSX.Element {
   const enabled = useOrchestrationPanelEnabled()
   // Keep transcript layout independent of panel availability.
-  const transcript = (
-    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col">
       {enabled ? (
         // Clips the panel to the transcript even when it is shorter than the panel's header.
         <div className="pointer-events-none absolute inset-0 overflow-hidden">{panel}</div>
       ) : null}
       {children}
-    </div>
-  )
-  return (
-    <div className="@container flex min-h-0 flex-1 flex-col">
-      <PluginClientProvider transport={plugins?.callPluginUiClient}>
-        {plugins ? <NativeChatPluginFrame plugins={plugins} transcript={transcript} /> : transcript}
-      </PluginClientProvider>
     </div>
   )
 }

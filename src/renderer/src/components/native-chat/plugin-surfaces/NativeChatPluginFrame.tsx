@@ -20,6 +20,8 @@ import {
   type NativeChatPluginLayout
 } from './use-native-chat-plugin-layout'
 import { inlinePluginPaneRows } from '../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-pane-rows'
+import { PluginClientProvider } from './client/plugin-client-context'
+import type { PluginClientTransport } from './client/plugin-client-host'
 
 const BAND_INSTANCE = 'above-prompt'
 const CONTENT_COLUMN = 'mx-auto w-full max-w-(--chat-content-max-width)'
@@ -318,6 +320,24 @@ export function NativeChatPluginFrame({
         </div>
       </div>
       {docked ? <DockedPane pane={pane} layout={layout} act={act} press={press} /> : null}
+    </div>
+  )
+}
+
+/** Wraps a native chat's transcript with what mods drew for it, as the terminal seats them. */
+export function NativeChatPluginTranscript({
+  plugins,
+  children
+}: {
+  plugins: NativeChatPluginFrameSurfaces & { callPluginUiClient?: PluginClientTransport }
+  children: React.ReactNode
+}): React.JSX.Element {
+  const transcript = <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+  return (
+    <div className="@container flex min-h-0 flex-1 flex-col">
+      <PluginClientProvider transport={plugins.callPluginUiClient}>
+        <NativeChatPluginFrame plugins={plugins} transcript={transcript} />
+      </PluginClientProvider>
     </div>
   )
 }
