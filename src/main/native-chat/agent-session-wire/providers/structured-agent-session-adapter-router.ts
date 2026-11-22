@@ -3,6 +3,7 @@ import type { AgentChatPermissionChoice } from '../../../../shared/agent-launch/
 import type { AgentSessionJournalIdentity } from '../../../../shared/agent-session/journal/agent-session-journal-identity'
 import type { AgentSessionExecutionLocation } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { StructuredAgentSessionAdapter as Adapter } from './structured-agent-session-adapter'
+import { routeStructuredAgentSessionPluginUi } from './structured-agent-session-plugin-ui-adapter'
 import type { StructuredAgentSessionAcquisitionReceipt } from '../startup/structured-agent-session-startup-attempt-contract'
 import type {
   StructuredAgentRegistration,
@@ -110,11 +111,7 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
     }
   }
 
-  actOnPluginUi: NonNullable<Adapter['actOnPluginUi']> = async (id, action) =>
-    this.liveOwnerOrNull(id)?.actOnPluginUi?.(id, action)
-
-  callPluginUiClient: NonNullable<Adapter['callPluginUiClient']> = async (id, call) =>
-    (await this.liveOwnerOrNull(id)?.callPluginUiClient?.(id, call)) ?? null
+  readonly pluginUi = routeStructuredAgentSessionPluginUi((id) => this.liveOwnerOrNull(id))
 
   renameProviderSession: NonNullable<Adapter['renameProviderSession']> = (input) =>
     this.capabilityOwner(

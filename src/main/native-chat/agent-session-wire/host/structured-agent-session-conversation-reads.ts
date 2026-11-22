@@ -199,12 +199,12 @@ export function createStructuredAgentSessionConversationReads(context: () => Rea
       return revealStructuredAgentSession(deps, id, conversation)
     },
     actOnPluginUi: (id: string, action: AgentSessionPluginUiAction): Promise<void> =>
-      context().deps.adapter.actOnPluginUi?.(id, action) ?? Promise.resolve(),
+      context().deps.adapter.pluginUi?.act(id, action) ?? Promise.resolve(),
     callPluginUiClient: (
       id: string,
       call: AgentSessionPluginClientCall
     ): Promise<AgentSessionPluginClientAnswer> =>
-      context().deps.adapter.callPluginUiClient?.(id, call) ?? Promise.resolve(null),
+      context().deps.adapter.pluginUi?.callClient(id, call) ?? Promise.resolve(null),
     sessionAgent: (id: string) => context().deps.store.getConversation(id)?.provider ?? null,
     /** After an out-of-turn options write, so an open tab re-reads the chat's options. */
     publishStatus: (id: string) => context().publishStatus(id),
