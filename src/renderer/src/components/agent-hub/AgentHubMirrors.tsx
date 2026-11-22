@@ -244,6 +244,7 @@ export function AgentHubMirrors({
                   ? null
                   : (alerts.findLast(
                       (candidate): candidate is AgentHubThreadAlert =>
+                        !candidate.bot &&
                         !candidate.request &&
                         agentHubTargetShowsThread(shownTarget, candidate.thread)
                     ) ?? null)

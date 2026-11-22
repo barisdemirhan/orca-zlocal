@@ -9,6 +9,7 @@ import { HubSection } from './AgentHubSectionHeader'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubRequestCard } from './AgentHubRequestCard'
 import { AgentHubAwayAnswers } from './AgentHubAwayAnswers'
+import { AgentHubBotNeedsSection, useAgentHubBotNeedsShown } from './AgentHubBotNeeds'
 import { agentHubInboxCards, type AgentHubInboxCard } from './agent-hub-inbox-cards'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
@@ -101,6 +102,7 @@ export function AgentHubInboxBody({
   const { finished, working } = lists
   const card = cards[cardIndex] ?? null
   const cardThread = card?.thread ?? null
+  const botNeedsShown = useAgentHubBotNeedsShown()
   return (
     <>
       {card ? (
@@ -160,7 +162,7 @@ export function AgentHubInboxBody({
             />
           ) : null}
         </>
-      ) : hiddenCards > 0 ? null : (
+      ) : hiddenCards > 0 || botNeedsShown ? null : (
         <div className="flex flex-col items-center gap-1 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground">
           <CheckCheck className="mb-1 size-5 text-status-success" />
           <b className="text-[13px] font-medium text-foreground/85">
@@ -182,6 +184,7 @@ export function AgentHubInboxBody({
           </span>
         </div>
       )}
+      <AgentHubBotNeedsSection />
       <AgentHubAwayAnswers presentationOf={requestPresentationOf} />
       {hiddenCards > 0 ? (
         <button

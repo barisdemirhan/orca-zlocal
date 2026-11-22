@@ -22,6 +22,7 @@ import { AgentHubDimBackdrop } from './AgentHubDimToggle'
 import { AgentHubPeek } from './AgentHubPeek'
 import { AgentHubWorkspaceFocusShade } from './AgentHubMirrorFocusShade'
 import { AgentHubDictationPaneTag } from './AgentHubDictationPaneTag'
+import { AgentHubBotWatchers } from './AgentHubBotWatchers'
 import { useAgentHubFocusedPaneOutline } from './use-agent-hub-focused-pane-outline'
 import { AgentHubMirrors } from './AgentHubMirrors'
 import type { AgentHubOpenRequest } from './AgentHubPanel'
@@ -410,6 +411,7 @@ export function AgentHubRoot(): React.JSX.Element {
       {orb.pill}
       {inSettings ? null : <AgentHubPeek />}
       <AgentHubDictationPaneTag />
+      <AgentHubBotWatchers />
     </>
   )
 }

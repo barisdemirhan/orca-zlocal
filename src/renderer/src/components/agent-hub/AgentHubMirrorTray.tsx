@@ -5,7 +5,7 @@ import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubAlertSide } from './AgentHubAlertStack'
 import { AgentHubMirrorChip } from './AgentHubMirrorChip'
-import type { AgentHubAlert, AgentHubRequestAlert } from './agent-hub-alerts'
+import type { AgentHubAlert, AgentHubRequestAlert, AgentHubThreadAlert } from './agent-hub-alerts'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import type { AgentHubMirrorChip as ChipState } from './agent-hub-mirror-store'
@@ -151,7 +151,7 @@ export function AgentHubMirrorTray({
   peekMs: number
   onRestore: (key: string) => void
   onReveal: (item: AgentHubTrayItem, alert?: AgentHubAlert) => void
-  locationOfAlert?: (alert: AgentHubAlert) => AgentHubLocation
+  locationOfAlert?: (alert: AgentHubThreadAlert | AgentHubRequestAlert) => AgentHubLocation
   onClose: (key: string) => void
   onOpenAlert: (key: string, alert: AgentHubAlert) => void
   onDismissAlert: (id: string) => void

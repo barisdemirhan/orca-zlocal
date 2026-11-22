@@ -1,12 +1,12 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import {
   BellOff,
-  Bot,
   CornerDownRight,
   Frame,
   Inbox,
   PictureInPicture2,
-  SquareTerminal
+  SquareTerminal,
+  Users
 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import {
@@ -21,6 +21,7 @@ import {
 } from '../../app-shell/chrome/workspace-chrome-metrics'
 import { AgentHubDockArrangeButton } from './AgentHubDockArrangeButton'
 import { AgentHubDockMenu } from './AgentHubDockMenu'
+import { AgentHubDockBotsSlot } from './AgentHubDockBotsSlot'
 import {
   DOCK_BUTTON,
   DOCK_COUNT_BUTTON,
@@ -268,10 +269,11 @@ export function AgentHubDock({
               onClick={() => onOpenTab('agents')}
             >
               <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums group-data-[edge=left]/dock:flex-col group-data-[edge=right]/dock:flex-col">
-                <Bot aria-hidden className="size-3.5" />
+                <Users aria-hidden className="size-3.5" />
                 {terminalCounts.agents}
               </span>
             </DockButton>
+            <AgentHubDockBotsSlot side={side} onOpenTab={onOpenTab} />
             {hasMirrors ? mirrorsButton : null}
             {canvas ? (
               <DockButton

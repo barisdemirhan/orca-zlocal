@@ -48,6 +48,9 @@ export function AgentHubRootAlerts({
       }
       requestPresentationOf={(alert) => requestPresentationOf(alert.host, alert.request)}
       onOpen={(alert) => {
+        if (alert.bot) {
+          return
+        }
         if (alert.request) {
           onOpenCard(agentHubRequestKey(alert.host, alert.request.requestId))
         } else if (alert.kind !== 'done') {

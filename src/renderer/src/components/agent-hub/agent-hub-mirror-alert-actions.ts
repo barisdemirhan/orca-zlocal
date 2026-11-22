@@ -2,7 +2,7 @@ import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubTrayItem } from './AgentHubMirrorTray'
-import type { AgentHubAlert, AgentHubRequestAlert } from './agent-hub-alerts'
+import type { AgentHubAlert, AgentHubRequestAlert, AgentHubThreadAlert } from './agent-hub-alerts'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
 import { agentHubAlertMatchesMirrorTab } from './agent-hub-alert-target'
 import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
@@ -28,7 +28,7 @@ export function agentHubMirrorAlertTrayActions({
   onOpenCard: (key: string) => void
 }) {
   return {
-    locationOfAlert: (alert: AgentHubAlert) =>
+    locationOfAlert: (alert: AgentHubThreadAlert | AgentHubRequestAlert) =>
       alert.request
         ? requestPresentationOf(alert.host, alert.request).location
         : locationOf(alert.thread),
@@ -50,6 +50,9 @@ export function agentHubMirrorAlertTrayActions({
       )
     },
     onOpenAlert: (_key: string, alert: AgentHubAlert): void => {
+      if (alert.bot) {
+        return
+      }
       if (alert.request) {
         onOpenCard(agentHubRequestKey(alert.host, alert.request.requestId))
         return

@@ -26,6 +26,7 @@ import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { AgentHubTabSwitcher } from './AgentHubTabSwitcher'
 import { HubNestedCount } from './AgentHubSectionHeader'
 import type { AgentHubCardControl } from './AgentHubAttentionCard'
+import { useAgentHubBotNeedsTotal } from './agent-hub-bot-needs-store'
 import { AgentHubPanelFooter, agentHubPopoutKeys } from './AgentHubPanelFooter'
 import {
   AgentHubInboxBody,
@@ -167,6 +168,7 @@ export function AgentHubPanel({
   const requestCards = agentHubInboxRequests(requests)
   const cards = agentHubInboxCards(needsYou, requestCards)
   const awayCount = agentHubAwayAnswerCount(requests)
+  const botNeedsYou = useAgentHubBotNeedsTotal()
   const hiddenCards = lists.needsYou.length - needsYou.length
   const focusedCardIndex =
     cardFocus.paneKey === null ? -1 : cards.findIndex((card) => card.key === cardFocus.paneKey)
@@ -292,7 +294,8 @@ export function AgentHubPanel({
   }
 
   const counts: Record<AgentHubTab, number> = {
-    inbox: lists.needsYou.length + requestCards.length + lists.finished.length + awayCount,
+    inbox:
+      lists.needsYou.length + requestCards.length + lists.finished.length + awayCount + botNeedsYou,
     running: lists.working.length,
     agents: agentCount,
     all: terminalCount
@@ -311,7 +314,9 @@ export function AgentHubPanel({
           tabs={AGENT_HUB_TABS.map((value) => ({ value, label: agentHubTabLabel(value) }))}
           value={tab}
           onChange={switchTab}
-          askValue={lists.needsYou.length + requestCards.length > 0 ? 'inbox' : undefined}
+          askValue={
+            lists.needsYou.length + requestCards.length + botNeedsYou > 0 ? 'inbox' : undefined
+          }
           counts={{
             inbox: counts.inbox,
             running: (

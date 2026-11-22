@@ -1,6 +1,8 @@
 import { agentHubThreadCardKey } from './agent-hub-answered-cards'
 import type { NotificationSettings } from '../../../../shared/notifications/notification-settings-types'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
+import type { Bot } from '../../../../shared/bot-types'
+import type { BotItem } from '../../../../shared/bots/bot-items'
 import { parseExecutionHostId } from '../../../../shared/execution-host/execution-host'
 import { agentHubIsApproval, agentHubStateSince, type AgentHubLists } from './agent-hub-lists'
 import {
@@ -17,6 +19,7 @@ export type AgentHubThreadAlert = {
   thread: AgentPaneThread
   request?: never
   host?: never
+  bot?: never
   /** A worker's result: shown only by that worker's minimized mirror, never by the hub. */
   mirrorOnly?: true
 }
@@ -25,8 +28,19 @@ export type AgentHubRequestAlert = AgentHubInboxRequest & {
   kind: AgentHubAlertKind | 'info'
   thread?: never
   mirrorOnly?: never
+  bot?: never
 }
-export type AgentHubAlert = AgentHubThreadAlert | AgentHubRequestAlert
+/** A bot's item asks the owner something; the bubble answers it through the bot's own host. */
+export type AgentHubBotAlert = {
+  id: string
+  kind: 'ask'
+  bot: { bot: Bot; botKey: string; item: BotItem }
+  thread?: never
+  request?: never
+  host?: never
+  mirrorOnly?: never
+}
+export type AgentHubAlert = AgentHubThreadAlert | AgentHubRequestAlert | AgentHubBotAlert
 
 export function agentHubRequestAlerts(state: AgentHubRequestsState): AgentHubRequestAlert[] {
   return [...state]
@@ -54,6 +68,9 @@ export function agentHubRequestAlerts(state: AgentHubRequestsState): AgentHubReq
 }
 
 export function agentHubAlertPaneKey(alert: AgentHubAlert): string {
+  if (alert.bot) {
+    return `bot:${alert.bot.botKey}:${alert.bot.item.uid}`
+  }
   if (alert.request) {
     return JSON.stringify([alert.host, alert.request.caller.paneKey])
   }

@@ -14,6 +14,9 @@ export function agentHubAlertMatchesTarget(
   alert: AgentHubAlert,
   target: AgentHubPaneTarget
 ): boolean {
+  if (alert.bot) {
+    return false
+  }
   if (!alert.request) {
     return agentHubTargetShowsThread(target, alert.thread)
   }
@@ -50,7 +53,8 @@ export function agentHubAlertsOutsideMirrors(
       !chips.some((chip) =>
         chip.window.tabs.some((tab) => agentHubAlertMatchesMirrorTab(candidate, tab))
       ) &&
-      (candidate.request ||
+      (candidate.bot ||
+        candidate.request ||
         !windows.some((window) => agentHubMirrorWindowShowsThread(window, candidate.thread)))
   )
 }

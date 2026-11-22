@@ -9,6 +9,7 @@ import { translate } from '@/i18n/i18n'
 import type { AgentHubPreferences } from './use-agent-hub-settings'
 import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
 import { agentHubCounts } from './agent-hub-lists'
+import { useAgentHubBotNeedsTotal } from './agent-hub-bot-needs-store'
 import { agentHubOrbThread } from './agent-hub-orb-state'
 import { agentHubCurrentOrbRequest } from './agent-hub-orb-request-owner'
 import {
@@ -96,10 +97,11 @@ export function useAgentHubOrbSurfaces(
     [panelOpen, chatVisible, hidden, belongsToCurrentOrb]
   )
   const inbox = agentHubInboxRequests(requests)
+  const botNeedsYou = useAgentHubBotNeedsTotal()
   const pillVisible = agentHubOrbPillShown(orb.state.kind) && !inbox.some(belongsToCurrentOrb)
   const counts = agentHubCounts(
     { ...lists, needsYou: hubLists.needsYou },
-    inbox.filter((item) => !ownsRequest(item)).length,
+    inbox.filter((item) => !ownsRequest(item)).length + botNeedsYou,
     agentHubAwayAnswerCount(requests)
   )
   const label =

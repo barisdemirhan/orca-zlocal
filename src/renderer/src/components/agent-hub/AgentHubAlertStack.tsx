@@ -17,6 +17,7 @@ import type {
   AgentHubRequestAlert as RequestAlert
 } from './agent-hub-alerts'
 import { AgentHubRequestAlert } from './AgentHubRequestAlert'
+import { AgentHubBotAlertCard } from './AgentHubBotAlertCard'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
@@ -260,7 +261,7 @@ export function AgentHubAlertStack({
   side: AgentHubAlertSide
   /** 1–9 answers the newest question or approval and ↵ opens it, while no field has the keys. */
   answerKeys?: boolean
-  locationOf: (alert: AgentHubAlert) => AgentHubLocation
+  locationOf: (alert: AgentHubThreadAlert | RequestAlert) => AgentHubLocation
   onOpen: (alert: AgentHubAlert) => void
   /** Straight to the terminal in its workspace, past the mirror or card a click opens. */
   onJump: (alert: AgentHubAlert) => void
@@ -300,7 +301,9 @@ export function AgentHubAlertStack({
       className="fixed z-[48] flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto p-0.5 scrollbar-sleek"
     >
       {ordered.map((alert) =>
-        alert.request ? (
+        alert.bot ? (
+          <AgentHubBotAlertCard key={alert.id} alert={alert} onDismiss={onDismiss} />
+        ) : alert.request ? (
           <AgentHubRequestAlert
             key={alert.id}
             alert={alert}

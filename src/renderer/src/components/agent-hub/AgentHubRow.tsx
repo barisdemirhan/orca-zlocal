@@ -10,6 +10,8 @@ import { HubRowAction, HubRowCloseAgent, HubRowMirrorActions } from './AgentHubR
 import { useAgentHubProgress } from './use-agent-hub-progress'
 import { findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { useAgentHubMirrors } from './agent-hub-mirror-store'
+import { AgentHubBotAvatar, AgentHubBotLine } from './AgentHubBotMark'
+import { useAgentHubBotIdentity } from './agent-hub-bot-identity'
 
 /** One agent or shell row: click opens the live mirror, ↵ jumps to the pane. */
 export function AgentHubRow({
@@ -61,6 +63,7 @@ export function AgentHubRow({
   sleeping?: boolean
 }): React.JSX.Element {
   const progress = useAgentHubProgress(mirrorTarget)
+  const bot = useAgentHubBotIdentity(mirrorTarget)
   const presence = findAgentHubMirrorMembership(
     useAgentHubMirrors(),
     mirrorTarget ?? mirrorKey
@@ -78,6 +81,7 @@ export function AgentHubRow({
       data-indent={indent}
       data-current={current}
       data-agent-hub-row
+      data-agent-hub-bot-row={bot?.bot.id}
       title={
         current
           ? translate('agentHub.row.currentWorkspace', 'In the workspace you have open')
@@ -96,17 +100,22 @@ export function AgentHubRow({
       <span className="grid w-3 shrink-0 place-items-center">
         <HubStateIndicator kind={kind} />
       </span>
-      <HubAvatar agentType={agentType} kind={agentType ? kind : null} sleeping={sleeping} />
+      {bot ? (
+        <AgentHubBotAvatar identity={bot} />
+      ) : (
+        <HubAvatar agentType={agentType} kind={agentType ? kind : null} sleeping={sleeping} />
+      )}
       <span className="min-w-0 flex-1">
         <span
           data-sleeping={sleeping}
           className="block truncate text-[13px] font-medium data-[sleeping=true]:opacity-60"
         >
-          {title}
+          {bot ? bot.bot.name : title}
         </span>
-        {progress || subtitle ? (
+        {progress || subtitle || bot ? (
           <span className="block truncate text-xs text-muted-foreground">
-            {progress ?? subtitle}
+            {progress ??
+              (bot ? bot.origin === 'home' ? <AgentHubBotLine bot={bot.bot} /> : title : subtitle)}
           </span>
         ) : null}
         {snippet ? (

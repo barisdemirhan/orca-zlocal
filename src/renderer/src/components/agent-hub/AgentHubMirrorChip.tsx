@@ -9,7 +9,7 @@ import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubAlertStack, type AgentHubAlertSide } from './AgentHubAlertStack'
-import type { AgentHubAlert, AgentHubRequestAlert } from './agent-hub-alerts'
+import type { AgentHubAlert, AgentHubRequestAlert, AgentHubThreadAlert } from './agent-hub-alerts'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
 import {
@@ -20,6 +20,8 @@ import { paneTargetFromThread, type AgentHubLocation } from './agent-hub-pane-ta
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
 import { useAgentHubSleepingTargetTest } from './agent-hub-pane-sleep'
+import { AgentHubBotAvatar, AgentHubBotLine } from './AgentHubBotMark'
+import { useAgentHubBotIdentity } from './agent-hub-bot-identity'
 
 /** A minimized mirror in the tray beside the hub: click to restore; it speaks up when its agent does. */
 export function AgentHubMirrorChip({
@@ -44,7 +46,7 @@ export function AgentHubMirrorChip({
   alert: AgentHubAlert | null
   /** The side away from the hub, where the chip's alert opens. */
   alertSide: AgentHubAlertSide
-  locationOfAlert?: (alert: AgentHubAlert) => AgentHubLocation
+  locationOfAlert?: (alert: AgentHubThreadAlert | AgentHubRequestAlert) => AgentHubLocation
   onRestore: () => void
   /** Closes the chip and opens the pane in its workspace. */
   onReveal: (alert?: AgentHubAlert) => void
@@ -60,6 +62,7 @@ export function AgentHubMirrorChip({
   const isSleeping = useAgentHubSleepingTargetTest()
   const title = useAgentHubTargetTitle(target)
   const current = useAgentHubWorktreeCurrent(target.worktree.id)
+  const bot = useAgentHubBotIdentity(target)
 
   return (
     <>
@@ -99,15 +102,30 @@ export function AgentHubMirrorChip({
           className="flex h-full min-w-0 flex-1 items-center gap-2 pr-1 pl-2 transition-opacity data-[current=true]:opacity-55 data-[current=true]:hover:opacity-100"
         >
           <HubStateIndicator kind={kind} />
-          <HubAvatar
-            agentType={target.agentType}
-            kind={thread ? kind : null}
-            sleeping={isSleeping(target)}
-          />
-          <span className="min-w-0 flex-1 text-xs leading-tight">
-            <span className="block truncate font-semibold">{title}</span>
+          {bot ? (
+            <AgentHubBotAvatar identity={bot} />
+          ) : (
+            <HubAvatar
+              agentType={target.agentType}
+              kind={thread ? kind : null}
+              sleeping={isSleeping(target)}
+            />
+          )}
+          <span
+            className="min-w-0 flex-1 text-xs leading-tight"
+            data-agent-hub-bot-chip={bot?.bot.id}
+          >
+            <span className="block truncate font-semibold">{bot ? bot.bot.name : title}</span>
             <span className="block truncate [&>span]:text-[11px]">
-              <HubCrumb location={location} />
+              {bot ? (
+                bot.origin === 'home' ? (
+                  <AgentHubBotLine bot={bot.bot} />
+                ) : (
+                  title
+                )
+              ) : (
+                <HubCrumb location={location} />
+              )}
             </span>
           </span>
           {chip.window.tabs.length > 1 ? (

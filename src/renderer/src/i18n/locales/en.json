@@ -25548,6 +25548,29 @@
     "unavailable": "Unable to play this media file. The file may be unavailable or use an unsupported codec."
   },
   "agentHub": {
+    "bots": {
+      "dock": "Bots",
+      "needsYou": "Bots",
+      "openItem": "Open",
+      "alertAsking": "{{name}} is asking",
+      "connector": "{{name}} needs you",
+      "connectorHint": "Sign in again to keep it working",
+      "fixConnector": "Open {{name}}",
+      "access": "{{person}} asked for access",
+      "accessReview": "Review and approve",
+      "accessDeny": "Deny",
+      "suggestionStart": "Start",
+      "suggestionDismiss": "Dismiss",
+      "origin": {
+        "home": "Home chat",
+        "github": "From GitHub",
+        "slack": "From Slack",
+        "linear": "From Linear",
+        "automation": "From an automation",
+        "side": "Side chat",
+        "worker": "Worker"
+      }
+    },
     "attention": {
       "answerInTerminal": "Answer this one in its terminal: pop it out or open it in Orca."
     },
