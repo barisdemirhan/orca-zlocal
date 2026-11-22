@@ -62,6 +62,7 @@ export function resolveClaudeStateBeforeWait(
     state: previousLead.state,
     // Child waits must retain the lead's verdict and clock.
     ...(previousLead.outcome ? { outcome: previousLead.outcome } : {}),
+    ...(previousLead.failure ? { failure: previousLead.failure } : {}),
     stateStartedAt: previousLead.stateStartedAt,
     ...(previousLead.taskWakeupTurn ? { taskWakeupTurn: true as const } : {}),
     // Keep the displaced lead end time so later child drain belongs to the same turn.

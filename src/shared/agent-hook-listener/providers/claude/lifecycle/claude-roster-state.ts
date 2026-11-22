@@ -132,12 +132,16 @@ export function setClaudeMainAgentTurnState(
   now = Date.now()
 ): ClaudeLeadTurnState {
   const previous = state.claudeLeadStateByPaneKey.get(paneKey)
-  const { state: nextState, outcome, stateStartedAt, model, ...rest } = next
+  const { state: nextState, outcome, failure, stateStartedAt, model, ...rest } = next
   // Lead events that omit the model keep the last reported one.
   const retainedModel = model || previous?.model
   const record: ClaudeLeadTurnState = {
     ...rest,
-    ...continueMainAgentStatus(previous, { state: nextState, outcome, stateStartedAt }, now),
+    ...continueMainAgentStatus(
+      previous,
+      { state: nextState, outcome, failure, stateStartedAt },
+      now
+    ),
     ...(retainedModel ? { model: retainedModel } : {})
   }
   state.claudeLeadStateByPaneKey.set(paneKey, record)
@@ -155,6 +159,9 @@ export function claudeMainAgentStatusForPayload(
   return {
     state: own.state,
     ...(own.state === 'done' && own.outcome ? { outcome: own.outcome } : {}),
+    ...(own.state === 'done' && own.outcome === 'failure' && own.failure
+      ? { failure: own.failure }
+      : {}),
     stateStartedAt: own.stateStartedAt
   }
 }
@@ -233,6 +240,7 @@ export function seedClaudeLeadTurnFromPersistedStatus(
     setClaudeMainAgentTurnState(state, paneKey, {
       state: 'done',
       ...(mainAgent.outcome ? { outcome: mainAgent.outcome } : {}),
+      ...(mainAgent.failure ? { failure: mainAgent.failure } : {}),
       stateStartedAt: mainAgent.stateStartedAt,
       ...(status.payload.turnCompletedAt !== undefined
         ? { turnCompletedAt: status.payload.turnCompletedAt }
