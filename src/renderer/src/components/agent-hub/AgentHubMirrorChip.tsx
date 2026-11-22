@@ -1,14 +1,13 @@
 import { activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
-import { openAgentHubMirrorInLayout } from './agent-hub-floating-arrangement'
+import { AgentHubMirrorChipAlert } from './AgentHubMirrorChipAlert'
 import { useRef, useState } from 'react'
 import { ArrowUpRight, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { Badge } from '../ui/badge'
-import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { HubAvatar, HubStateIndicator } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
-import { AgentHubAlertStack, type AgentHubAlertSide } from './AgentHubAlertStack'
+import type { AgentHubAlertSide } from './AgentHubAlertStack'
 import type { AgentHubAlert, AgentHubRequestAlert, AgentHubThreadAlert } from './agent-hub-alerts'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
@@ -16,7 +15,7 @@ import {
   isAgentHubMirrorStageQuiet,
   type AgentHubMirrorChip as ChipState
 } from './agent-hub-mirror-store'
-import { paneTargetFromThread, type AgentHubLocation } from './agent-hub-pane-target'
+import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
 import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
 import { useAgentHubSleepingTargetTest } from './agent-hub-pane-sleep'
@@ -165,29 +164,16 @@ export function AgentHubMirrorChip({
         </div>
       </div>
       {alert ? (
-        <AgentHubAlertStack
-          // The chip shows the newest alert across its entries.
-          alerts={[alert]}
+        <AgentHubMirrorChipAlert
+          alert={alert}
           anchorRef={chipRef}
-          side={alertSide}
-          locationOf={locationOfAlert ?? (() => location)}
+          alertSide={alertSide}
+          location={location}
+          locationOfAlert={locationOfAlert}
           requestPresentationOf={requestPresentationOf}
-          onOpen={onOpenAlert}
-          onPopout={(shown) => {
-            if (!shown.thread) {
-              onOpenAlert(shown)
-              return
-            }
-            onDismissAlert(shown.id)
-            openAgentHubMirrorInLayout(
-              paneTargetFromThread(shown.thread, activityThreadRowCopy(shown.thread).taskTitle)
-            )
-          }}
-          onJump={(shown) => {
-            onDismissAlert(shown.id)
-            onReveal(shown)
-          }}
-          onDismiss={onDismissAlert}
+          onOpenAlert={onOpenAlert}
+          onDismissAlert={onDismissAlert}
+          onReveal={onReveal}
         />
       ) : null}
     </>

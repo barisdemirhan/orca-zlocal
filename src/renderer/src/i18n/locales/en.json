@@ -25569,6 +25569,17 @@
         "automation": "From an automation",
         "side": "Side chat",
         "worker": "Worker"
+      },
+      "family": {
+        "chatOne": "1 chat",
+        "chatMany": "{{value0}} chats",
+        "workerOne": "1 worker",
+        "workerMany": "{{value0}} workers",
+        "chats": "Chats",
+        "workers": "Workers",
+        "asks": "Asks",
+        "toggle": "{{name}}'s parked chats",
+        "close": "Close all of {{name}}"
       }
     },
     "attention": {

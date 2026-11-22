@@ -1,10 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronsDownUp } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubAlertSide } from './AgentHubAlertStack'
 import { AgentHubMirrorChip } from './AgentHubMirrorChip'
+import { AgentHubBotFamilyChip } from './AgentHubBotFamilyChip'
+import { AgentHubBotFamilyProbe } from './AgentHubBotFamilyProbe'
+import { groupAgentHubBotFamilies } from './agent-hub-bot-family'
+import type { AgentHubBotIdentity } from './agent-hub-bot-identity'
 import type { AgentHubAlert, AgentHubRequestAlert, AgentHubThreadAlert } from './agent-hub-alerts'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubIndicatorKind } from './agent-hub-lists'
@@ -160,6 +164,23 @@ export function AgentHubMirrorTray({
   const [expanded, setExpanded] = useState(false)
   const [pointed, setPointed] = useState(false)
   const [peeking, setPeeking] = useState(false)
+  const [identities, setIdentities] = useState<ReadonlyMap<string, AgentHubBotIdentity>>(
+    () => new Map()
+  )
+  const onIdentity = useCallback((key: string, identity: AgentHubBotIdentity | null): void => {
+    setIdentities((current) => {
+      if (!identity && !current.has(key)) {
+        return current
+      }
+      const next = new Map(current)
+      if (identity) {
+        next.set(key, identity)
+      } else {
+        next.delete(key)
+      }
+      return next
+    })
+  }, [])
   const pileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const clearTimer = (timerRef: typeof pileTimerRef): void => {
@@ -220,11 +241,12 @@ export function AgentHubMirrorTray({
     []
   )
   const fanned = pointed || peeking
+  const entries = groupAgentHubBotFamilies(items, (key) => identities.get(key))
   // With nothing left behind "+N", the next overflow starts folded again.
-  if (expanded && items.length <= AGENT_HUB_TRAY_VISIBLE) {
+  if (expanded && entries.length <= AGENT_HUB_TRAY_VISIBLE) {
     setExpanded(false)
   }
-  const { shown, folded } = foldAgentHubTray(items, expanded)
+  const { shown, folded } = foldAgentHubTray(entries, expanded)
   if (items.length === 0) {
     return null
   }
@@ -250,27 +272,46 @@ export function AgentHubMirrorTray({
       className="pointer-events-auto fixed z-[47] flex max-h-[calc(100vh-96px)] flex-col items-start gap-1.5 p-0.5 transition-opacity duration-200 scrollbar-sleek data-[resting=true]:opacity-80 data-[hidden=true]:pointer-events-none data-[hidden=true]:invisible data-[expanded=true]:overflow-y-auto data-[side=top]:flex-col-reverse"
     >
       <TrayPlacement trayRef={trayRef} anchorRef={anchorRef} side={side} />
-      {shown.map((item, index) => (
+      {items.map((item) => (
+        <AgentHubBotFamilyProbe key={item.key} chip={item.chip} onIdentity={onIdentity} />
+      ))}
+      {shown.map((entry, index) => (
         <div
-          key={item.key}
+          key={entry.key}
           style={pileStyle(index, piled, side)}
           className="relative shrink-0 transition-[margin,transform,opacity] duration-300 ease-out"
         >
-          <AgentHubMirrorChip
-            chip={item.chip}
-            thread={item.thread}
-            kind={item.kind}
-            location={item.location}
-            alert={alertsHidden ? null : item.alert}
-            alertSide={alertSide}
-            locationOfAlert={locationOfAlert}
-            requestPresentationOf={requestPresentationOf}
-            onRestore={() => onRestore(item.key)}
-            onReveal={(alert) => onReveal(item, alert)}
-            onClose={() => onClose(item.key)}
-            onOpenAlert={(alert) => onOpenAlert(item.key, alert)}
-            onDismissAlert={onDismissAlert}
-          />
+          {entry.type === 'family' ? (
+            <AgentHubBotFamilyChip
+              bot={entry.bot}
+              members={entry.members}
+              alertSide={alertSide}
+              alertsHidden={alertsHidden}
+              locationOfAlert={locationOfAlert}
+              requestPresentationOf={requestPresentationOf}
+              onRestore={onRestore}
+              onReveal={onReveal}
+              onClose={onClose}
+              onOpenAlert={onOpenAlert}
+              onDismissAlert={onDismissAlert}
+            />
+          ) : (
+            <AgentHubMirrorChip
+              chip={entry.item.chip}
+              thread={entry.item.thread}
+              kind={entry.item.kind}
+              location={entry.item.location}
+              alert={alertsHidden ? null : entry.item.alert}
+              alertSide={alertSide}
+              locationOfAlert={locationOfAlert}
+              requestPresentationOf={requestPresentationOf}
+              onRestore={() => onRestore(entry.item.key)}
+              onReveal={(alert) => onReveal(entry.item, alert)}
+              onClose={() => onClose(entry.item.key)}
+              onOpenAlert={(alert) => onOpenAlert(entry.item.key, alert)}
+              onDismissAlert={onDismissAlert}
+            />
+          )}
         </div>
       ))}
       {!piled && (folded > 0 || expanded) ? (

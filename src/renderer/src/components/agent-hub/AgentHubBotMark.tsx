@@ -29,7 +29,18 @@ const ORIGIN_GLYPHS: Record<AgentHubBotOrigin, LucideIcon> = {
 
 const NO_GROUPS: readonly Bot[] = []
 
-function originLabel(origin: AgentHubBotOrigin): string {
+export function AgentHubBotOriginGlyph({
+  origin,
+  className
+}: {
+  origin: AgentHubBotOrigin
+  className?: string
+}): React.JSX.Element {
+  const Glyph = ORIGIN_GLYPHS[origin]
+  return <Glyph aria-hidden className={className} />
+}
+
+export function originLabel(origin: AgentHubBotOrigin): string {
   switch (origin) {
     case 'home':
       return translate('agentHub.bots.origin.home', 'Home chat')
