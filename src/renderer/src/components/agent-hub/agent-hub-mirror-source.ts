@@ -122,6 +122,7 @@ function sourceHostConnected(state: SourceState, target: AgentHubPaneTarget): bo
         sshConnectionStates: state.sshConnectionStates ?? new Map(),
         sshStateByEnvironment: state.sshStateByEnvironment ?? new Map()
       },
+      state.runtimeStatusByEnvironmentId ?? new Map(),
       environmentId ?? null,
       host.targetId
     ) === 'connected'

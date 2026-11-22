@@ -26,6 +26,7 @@ import {
 } from '../bots/bot-group'
 import {
   BrowserClientFileChannelAbortParams,
+  BrowserClientFileChannelBeginParams,
   BrowserClientFileChannelReadParams,
   BrowserClientFileChannelWriteParams
 } from '../browser/client-hosting/browser-client-file-channel-protocol'
@@ -257,6 +258,12 @@ import { BotWorkForget, BotWorkList } from './bots-work-params'
 import { CertificateProceed, PageZoom, Reload } from './browser/browser-core-params'
 import { ExtensionList, ExtensionReload } from './browser/browser-extension-params'
 import { MouseClick } from './browser/browser-extras-params'
+import {
+  GrabAwait,
+  GrabCaptureSelection,
+  GrabSetMode,
+  GrabViewportBridge
+} from './browser/browser-grab-params'
 import { BrowserIdentitySet, ProfileCreate } from './browser/browser-identity-params'
 import { Screenshot, Snapshot } from './browser/browser-observation-params'
 import {
@@ -523,6 +530,7 @@ import {
 } from './google-read-params'
 import {
   GoogleSetupAnswer,
+  GoogleSetupImportHostKey,
   GoogleSetupRead,
   GoogleSetupStart,
   GoogleSetupWrite
@@ -626,6 +634,7 @@ import { LinkPreviewGetParams } from './link-preview/link-preview-params'
 import { NativeChatSession, NativeChatUnsubscribe } from './native-chat/native-chat-params'
 import {
   NotificationGetMissedSinceParams,
+  NotificationPushCoverageParams,
   NotificationRegisterPushParams,
   NotificationReportDesktopPresenceParams,
   NotificationUnsubscribeParams,
@@ -729,6 +738,7 @@ import {
   PluginsPanelActionParams
 } from './plugins/plugins-params'
 import {
+  PreflightAgentDetection,
   PreflightAgentRefresh,
   PreflightCheck,
   PreflightDetectRemoteAgents,
@@ -906,6 +916,7 @@ import {
   QueuedMessageActionParams,
   QueuedMessagesResumeParams,
   RespondParams,
+  RestartLaunchSettledParams,
   RestartResumableParams,
   RestartResumeParams,
   RevealParams,
@@ -1071,6 +1082,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'accounts.antigravityChatApiKeySave': AntigravityChatApiKeySaveParams,
   'accounts.antigravityChatApiKeyStatus': null,
   'accounts.antigravityChatAuthApply': AntigravityChatAuthConfigSchema,
+  'accounts.antigravityChatAuthDetect': null,
   'accounts.antigravityChatAuthGet': null,
   'accounts.antigravityChatSignInCancel': AntigravityChatSignInFlowParams,
   'accounts.antigravityChatSignInComplete': AntigravityChatSignInCompleteParams,
@@ -1175,6 +1187,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentSession.respondToApproval': RespondParams,
   'agentSession.respondToQuestion': RespondToQuestionParams,
   'agentSession.restartContinue': RestartResumeParams,
+  'agentSession.restartLaunchSettled': RestartLaunchSettledParams,
   'agentSession.restartResumable': RestartResumableParams,
   'agentSession.restartResumableDismiss': RestartResumableParams,
   'agentSession.restartResume': RestartResumeParams,
@@ -1274,6 +1287,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'bots.github.unlink': null,
   'bots.github.users': BotGitHubUsers,
   'bots.googleSetup.answer': GoogleSetupAnswer,
+  'bots.googleSetup.importHostKey': GoogleSetupImportHostKey,
   'bots.googleSetup.read': GoogleSetupRead,
   'bots.googleSetup.start': GoogleSetupStart,
   'bots.googleSetup.write': GoogleSetupWrite,
@@ -1374,6 +1388,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'browser.clientHost.commandResult': BrowserClientHostCommandResultParams,
   'browser.clientHost.commandResultChunk': BrowserClientHostCommandResultChunkParams,
   'browser.clientHost.fileChannel.abort': BrowserClientFileChannelAbortParams,
+  'browser.clientHost.fileChannel.begin': BrowserClientFileChannelBeginParams,
   'browser.clientHost.fileChannel.read': BrowserClientFileChannelReadParams,
   'browser.clientHost.fileChannel.write': BrowserClientFileChannelWriteParams,
   'browser.clientHost.pageMetadata': BrowserClientPageMetadataParams,
@@ -1402,6 +1417,13 @@ export const RPC_PARAMS_BY_METHOD = {
   'browser.geolocation': Geolocation,
   'browser.get': Get,
   'browser.goto': Goto,
+  'browser.grab.await': GrabAwait,
+  'browser.grab.cancel': BrowserTarget,
+  'browser.grab.captureSelection': GrabCaptureSelection,
+  'browser.grab.extractHover': BrowserTarget,
+  'browser.grab.setMode': GrabSetMode,
+  'browser.grab.viewportBridge': GrabViewportBridge,
+  'browser.grab.watch': BrowserTarget,
   'browser.highlight': Highlight,
   'browser.hover': Element,
   'browser.identity.get': null,
@@ -1512,6 +1534,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'emulator.permissions': PermissionsParams,
   'emulator.rotate': RotateParams,
   'emulator.shutdown': ShutdownParams,
+  'emulator.syncKeyboardLayout': ListParams,
   'emulator.tap': TapParams,
   'emulator.type': TypeParams,
   'emulator.unregisterActive': EmulatorUnregisterActiveParams,
@@ -1845,6 +1868,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'nativeChat.unsubscribe': NativeChatUnsubscribe,
   'network.browserTunnel': BrowserNetworkTunnelAttachParams,
   'notifications.getMissedSince': NotificationGetMissedSinceParams,
+  'notifications.pushCoverage': NotificationPushCoverageParams,
   'notifications.registerPush': NotificationRegisterPushParams,
   'notifications.reportDesktopPresence': NotificationReportDesktopPresenceParams,
   'notifications.subscribe': NotificationsSubscribeParams,
@@ -1964,6 +1988,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'preflight.detectRemoteAgents': PreflightDetectRemoteAgents,
   'preflight.detectRemoteWindowsTerminalCapabilities':
     PreflightDetectRemoteWindowsTerminalCapabilities,
+  'preflight.installedAgents': PreflightAgentDetection,
   'preflight.refreshAgents': PreflightAgentRefresh,
   'project.list': null,
   'project.update': ProjectUpdate,

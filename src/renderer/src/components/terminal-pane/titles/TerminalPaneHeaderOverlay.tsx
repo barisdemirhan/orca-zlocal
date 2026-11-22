@@ -219,7 +219,7 @@ export default function TerminalPaneHeaderOverlay({
                       size="icon-xs"
                       aria-label={t(
                         'components.agentSessionContinuation.handOffToAnotherAgent',
-                        'Hand Off to Another Agent'
+                        'Hand off to agent'
                       )}
                       onClick={(event) => {
                         event.stopPropagation()
@@ -232,7 +232,7 @@ export default function TerminalPaneHeaderOverlay({
                   <TooltipContent side="bottom" sideOffset={4}>
                     {t(
                       'components.agentSessionContinuation.handOffToAnotherAgent',
-                      'Hand Off to Another Agent'
+                      'Hand off to agent'
                     )}
                   </TooltipContent>
                 </Tooltip>

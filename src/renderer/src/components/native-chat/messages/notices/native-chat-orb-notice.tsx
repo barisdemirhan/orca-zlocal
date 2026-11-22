@@ -13,10 +13,12 @@ import { agentSessionRestartNoteText } from './agent-session-restart-note-text'
 import { ProviderFrameRow } from '../diagnostics/NativeChatProviderDetails'
 import type { NativeChatTextBlock } from '../../../../../../shared/native-chat/native-chat-types'
 
-/** The Orb's replacement for a notice row: null hides it, undefined leaves the regular row. */
-function nativeChatOrbNoticeRow(block: NativeChatTextBlock): React.JSX.Element | null | undefined {
+const HiddenRow = (): null => null
+
+/** The Orb's replacement for a notice row: HiddenRow hides it, undefined leaves the regular row. */
+function nativeChatOrbNoticeRow(block: NativeChatTextBlock): React.JSX.Element | undefined {
   if (nativeChatApprovedReviewSummary(block)) {
-    return null
+    return <HiddenRow />
   }
   if (isCodexMcpStartupNotice(block)) {
     return (
@@ -38,7 +40,7 @@ function nativeChatOrbNoticeText(block: NativeChatTextBlock): string | null {
 
 /** What the Orb changes about a notice; undefined `row` leaves the regular row. */
 export function useNativeChatOrbNotice(block: NativeChatTextBlock): {
-  row: React.JSX.Element | null | undefined
+  row: React.JSX.Element | undefined
   noteText: (text: string, t: Translate) => string
 } {
   const orb = useContext(NativeChatPresentationContext) === 'orb'

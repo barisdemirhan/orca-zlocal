@@ -11,6 +11,7 @@ import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
 import { registerOrbOperations } from './agent-hub/agent-hub-orb-operations'
 import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
 import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
+import type { RuntimeMobileSessionProjectionHost } from './session-lifecycle/projection/runtime-mobile-session-projection-contract'
 import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surfaces/terminal-surface-close-target'
 import { resolveStructuredWorkerAuthority } from './orchestration/terminal-authority/structured-sessions/structured-worker-authority'
 import {
@@ -84,6 +85,11 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessT
 
   getTerminalSpawnedBy(paneKey: string) {
     return this.paneSpawnLineage.get(paneKey)
+  }
+
+  protected override getMobileSessionProjectionHost(): RuntimeMobileSessionProjectionHost {
+    const host = super.getMobileSessionProjectionHost()
+    return { ...host, getSpawnedBy: (paneKey) => this.getTerminalSpawnedBy(paneKey) }
   }
 
   recordWorkerSpawnLineage(

@@ -195,7 +195,6 @@ describe('Orb dock button', () => {
           counts={counts}
           label="Agents"
           open={false}
-          iconOnly={false}
           onClick={openHub}
           orb={<AgentHubOrbButton state={{ kind: 'idle' }} side="top" onOpen={openOrb} />}
         />

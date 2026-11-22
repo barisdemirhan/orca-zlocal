@@ -4,7 +4,8 @@ import type { BrowserTabInfo } from '../../../../shared/browser/runtime/runtime-
 import type {
   RuntimeMobileSessionBrowserTab,
   RuntimeMobileSessionClientTab,
-  RuntimeMobileSessionTerminalTab
+  RuntimeMobileSessionTerminalTab,
+  RuntimeMobileTerminalTheme
 } from '../../../../shared/remote-runtime/session-graph/runtime-mobile-session-tab-contracts'
 import type {
   RuntimeMobileSessionTabGroup,
@@ -34,7 +35,6 @@ export type RuntimeMobileSessionProjectionHost = {
   getProviderSessionRows(paneKey: string): AgentStatusIpcPayload[] | undefined
   getProviderSessionSnapshot(): AgentStatusIpcPayload[]
   getStatusRows(paneKey: string, terminalHandle: string | null): AgentStatusIpcPayload[]
-  getStatusSnapshot(): AgentStatusIpcPayload[]
   getSpawnedBy?(paneKey: string): AgentStatusEntry['spawnedBy']
   getLeafKey(tabId: string, leafId: string): string
   findPty(
@@ -73,6 +73,8 @@ export type RuntimeMobileSessionProjectionHost = {
     validGroupIds: ReadonlySet<string>
   ): TabGroupLayoutNode | null
   collectTabIds(tabs: readonly RuntimeMobileSessionClientTab[]): Set<string>
+  /** This host's own palette, for a terminal row no window themed. */
+  hostTerminalTheme?(): RuntimeMobileTerminalTheme | undefined
 }
 
 export type RuntimeMobileSessionProjectionInput = {

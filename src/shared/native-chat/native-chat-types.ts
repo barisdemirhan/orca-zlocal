@@ -246,8 +246,9 @@ export type NativeChatSpokenProvenance = {
 /** A transcript row. Structured rows carry the journal row's producer linkage, so
  *  "who said this" survives the projection; terminal-backed rows carry none. */
 export type NativeChatMessage = AgentJournalProducerLinkage & {
-  /** Stable across re-reads/appends so the assembler and the renderer list can
-   *  dedup and key by it. */
+  /** Client projection: this answer preceded a goal check grouped into its goal row. */
+  goalCheckAnswer?: true
+  /** Stable dedup/list identity across re-reads and appends. */
   id: string
   role: NativeChatRole
   blocks: NativeChatBlock[]

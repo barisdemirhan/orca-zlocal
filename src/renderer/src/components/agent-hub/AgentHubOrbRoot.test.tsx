@@ -137,7 +137,7 @@ afterEach(() => {
 const show = () =>
   render(
     <TooltipProvider>
-      <AgentHubRoot iconOnly={false} />
+      <AgentHubRoot />
     </TooltipProvider>
   )
 
@@ -201,7 +201,7 @@ it('returns the same queued peek after Orb releases its slot, even while alerts 
   })
   rerender(
     <TooltipProvider>
-      <AgentHubRoot iconOnly={false} />
+      <AgentHubRoot />
     </TooltipProvider>
   )
   expect(screen.queryByTestId('peek')).toBeNull()
@@ -215,7 +215,7 @@ it('returns the same queued peek after Orb releases its slot, even while alerts 
   })
   rerender(
     <TooltipProvider>
-      <AgentHubRoot iconOnly={false} />
+      <AgentHubRoot />
     </TooltipProvider>
   )
   expect(screen.getByTestId('peek').textContent).toBe('Existing worker question')

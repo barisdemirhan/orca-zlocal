@@ -51,7 +51,12 @@ describe('CLI-started agents in Hub', () => {
             }
           })
         ),
-        tabsByWorktree: { [worktree.id]: [makeTabWithIds('tab-1', worktree.id)] },
+        tabsByWorktree: {
+          [worktree.id]: [
+            makeTabWithIds('tab-1', worktree.id),
+            makeTabWithIds(structuredAgentSessionTabId(sessionId), worktree.id)
+          ]
+        },
         worktreeMap: new Map([[worktree.id, worktree]]),
         repoMap: new Map([['repo-1', makeRepo()]]),
         acknowledgedAgentsByPaneKey: {},

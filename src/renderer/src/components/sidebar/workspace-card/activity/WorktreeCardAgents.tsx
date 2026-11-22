@@ -2,7 +2,10 @@ import { renderAgentHubSidebarPopout } from '../../../agent-hub/AgentHubSidebarP
 import type { BranchContext } from './worktree-agent-branch-context'
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
+import { shallow } from 'zustand/shallow'
 import { useAppStore } from '@/store/index'
+import { agentAttentionTurnAt } from '@/attention/agent-attention-acknowledgement'
+import { useAppStoreWithHostStatuses } from '@/store/slices/runtime-status/views/use-runtime-status-view'
 import DashboardAgentRow from '@/components/dashboard/DashboardAgentRow'
 import { useNow } from '@/lib/window-activity/use-now'
 import { deriveRunningAgentSendTargets } from '@/lib/agent-session/messaging/running-agent-targets'
@@ -76,7 +79,10 @@ function WorktreeCardAgentsBody({
   const onDismiss = useAppStore((s) => s.dropAgentStatus)
   const send = useAppStore((s) => s.sendPromptToSidebarAgentTarget)
   const control = useAppStore(useShallow((s) => selectSendTargetControlInputs(s, worktreeId)))
-  const inputs = useAppStore(useShallow((s) => selectSendTargetInputs(s, worktreeId)))
+  const inputs = useAppStoreWithHostStatuses(
+    (s, statuses) => selectSendTargetInputs(s, statuses, worktreeId),
+    shallow
+  )
   const targets = useMemo(
     () =>
       recomputeOn([languageRevision], () => {
@@ -283,7 +289,7 @@ const AgentBranch = React.memo(function AgentBranch({
     renderTrailingControl: renderAgentHubSidebarPopout,
     showModel: context.showAgentModels,
     now: context.now,
-    isUnvisited: row.rowSource === 'live' && acknowledgedAt < row.entry.stateStartedAt,
+    isUnvisited: row.rowSource === 'live' && acknowledgedAt < agentAttentionTurnAt(row.entry),
     onActivate: context.onActivate,
     childAgentCount: hasChildren ? children.keys.length : undefined,
     childAgentsExpanded: expanded,

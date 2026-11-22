@@ -12,6 +12,8 @@ import {
 import { BROWSER_CLIENT_HOST_REQUEST_CAPABILITY } from '../../../../../shared/browser/client-hosting/browser-client-host-request-protocol'
 import { getBrowserHostRequestRegistry } from '../../../browser-host/leases/browser-host-request-registry'
 import { agentHubDesktopId } from '../agent-hub-caller'
+import { GOOGLE_SETUP_CARDS_CLIENT_CAPABILITY } from '../../../../../shared/google/google-connect-types'
+import { registerGoogleCardRenderer } from '../../../../google/google-card-reach'
 import {
   STRUCTURED_CHAT_START_TELEMETRY_CLIENT_CAPABILITY,
   STRUCTURED_CHAT_PROMPT_TELEMETRY_CLIENT_CAPABILITY
@@ -55,6 +57,11 @@ export const CLIENT_EVENT_METHODS = [
           clientCapabilities?.includes(BROWSER_CLIENT_HOST_REQUEST_CAPABILITY)
             ? getBrowserHostRequestRegistry(runtime).register({ pairedDeviceId, emit })
             : undefined
+        const unregisterCardRenderer =
+          clientKind === 'runtime' &&
+          clientCapabilities?.includes(GOOGLE_SETUP_CARDS_CLIENT_CAPABILITY)
+            ? registerGoogleCardRenderer()
+            : undefined
         const readsStarts = clientCapabilities?.includes(
           STRUCTURED_CHAT_START_TELEMETRY_CLIENT_CAPABILITY
         )
@@ -86,6 +93,7 @@ export const CLIENT_EVENT_METHODS = [
           unsubscribe()
           unregisterDesktop()
           unregisterHostVolunteer?.()
+          unregisterCardRenderer?.()
           unsubscribeTelemetry?.()
           emit({ type: 'end' })
           resolve()

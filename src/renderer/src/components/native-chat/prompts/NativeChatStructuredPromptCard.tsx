@@ -1,4 +1,5 @@
-import { useState, type RefObject } from 'react'
+import { useContext, useState, type RefObject } from 'react'
+import { NativeChatPresentationContext } from '../native-chat-presentation-context'
 import { agentSessionPromptQuestions } from '../../../../../shared/agent-session/requests/prompts/agent-session-question-answer'
 import { structuredQuestionCard } from '../../../../../shared/native-chat/input/questions/structured-agent-question-card'
 import { chatApprovalFromJournal } from '../../../../../shared/native-chat/input/native-chat-interactive-prompt'
@@ -17,17 +18,17 @@ export function NativeChatStructuredPromptCard({
   promptResponse,
   onCancel,
   shouldFocus,
-  answerInputRef,
-  multiline = false
+  answerInputRef
 }: {
   prompt: PromptItem | null
   promptResponse: PromptResponse
   onCancel: () => void
   shouldFocus: boolean
   answerInputRef: RefObject<HTMLTextAreaElement | null>
-  multiline?: boolean
 }): React.JSX.Element | null {
   const [collapsed, setCollapsed] = useState(false)
+  // The Orb's slot has room for a multi-line answer.
+  const multiline = useContext(NativeChatPresentationContext) === 'orb'
   if (prompt?.body.kind === 'approval') {
     return (
       <NativeChatApprovalCard

@@ -7,14 +7,12 @@ export function AgentHubStatusTrigger({
   counts,
   label,
   open,
-  iconOnly,
   orb,
   ...buttonProps
 }: React.ComponentProps<'button'> & {
   counts: AgentHubCounts
   label: string
   open: boolean
-  iconOnly: boolean
   orb?: React.ReactNode
 }): React.JSX.Element {
   return (
@@ -31,14 +29,12 @@ export function AgentHubStatusTrigger({
         <span className="flex h-4.5 items-center gap-2 rounded-full border border-foreground/10 bg-background px-2">
           <DockCounters counts={counts} />
         </span>
-        {iconOnly ? null : (
-          <span
-            data-attention={counts.needsYou > 0}
-            className="data-[attention=true]:text-agent-question-text"
-          >
-            {label}
-          </span>
-        )}
+        <span
+          data-attention={counts.needsYou > 0}
+          className="data-[attention=true]:text-agent-question-text"
+        >
+          {label}
+        </span>
       </button>
     </>
   )

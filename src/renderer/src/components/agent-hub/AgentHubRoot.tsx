@@ -66,7 +66,7 @@ import { useAgentHubOrbSurfaces } from './AgentHubOrbSurfaces'
 import { closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbPanelExclusion } from './agent-hub-orb-panel-exclusion'
 
-export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Element {
+export function AgentHubRoot(): React.JSX.Element {
   const preferences = useAgentHubPreferences()
   const anchorRef = useRef<HTMLElement>(null)
   const inSettings = useAppStore((s) => s.activeView === 'settings')
@@ -353,7 +353,6 @@ export function AgentHubRoot({ iconOnly }: { iconOnly: boolean }): React.JSX.Ele
                   counts={orb.counts}
                   label={orb.label}
                   open={open}
-                  iconOnly={iconOnly}
                   orb={orb.statusButton}
                 />
               </PopoverTrigger>
