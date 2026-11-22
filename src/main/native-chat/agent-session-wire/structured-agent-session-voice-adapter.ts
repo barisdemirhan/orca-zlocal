@@ -21,14 +21,20 @@ export type StructuredAgentSessionVoiceAdapter = {
 
 type VoiceOwnerLookup = (sessionId: string) => { voice?: StructuredAgentSessionVoiceAdapter } | null
 
-/** Routes voice to the session's provider adapter; a live owner is required past `start`. */
+/** Routes voice to the session's live provider adapter; `start` without one throws, as the router's other calls do. */
 export function routeStructuredAgentSessionVoice(
-  owner: VoiceOwnerLookup,
   liveOwner: VoiceOwnerLookup
 ): StructuredAgentSessionVoiceAdapter {
+  const owner = (sessionId: string): { voice?: StructuredAgentSessionVoiceAdapter } => {
+    const adapter = liveOwner(sessionId)
+    if (!adapter) {
+      throw new Error(`no live structured adapter owns ${sessionId}`)
+    }
+    return adapter
+  }
   return {
     start: (input) =>
-      owner(input.sessionId)?.voice?.start(input) ??
+      owner(input.sessionId).voice?.start(input) ??
       Promise.resolve({ ok: false, rejected: 'Live voice is unavailable for this provider.' }),
     appendText: (input) =>
       liveOwner(input.sessionId)?.voice?.appendText(input) ?? Promise.resolve(false),

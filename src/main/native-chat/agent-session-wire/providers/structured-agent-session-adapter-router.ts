@@ -165,9 +165,7 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
   heldSends = (sessionId: string): ReadonlySet<string> | undefined =>
     this.liveOwnerOrNull(sessionId)?.heldSends?.(sessionId)
 
-  readonly voice = routeStructuredAgentSessionVoice(this.owner.bind(this), (id) =>
-    this.liveOwnerOrNull(id)
-  )
+  readonly voice = routeStructuredAgentSessionVoice((id) => this.liveOwnerOrNull(id))
 
   holdsLiveProviderProcess = (sessionId: string, acquisitionGeneration: string): boolean =>
     this.liveOwnerOrNull(sessionId)?.holdsLiveProviderProcess?.(sessionId, acquisitionGeneration) ??
