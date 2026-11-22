@@ -13,7 +13,7 @@ export default function BotConnectorsPanel(): React.JSX.Element | null {
   return bot ? <BotConnectorsPanelBody key={botRefKey(bot)} bot={bot} /> : null
 }
 
-function BotConnectorsPanelBody({ bot }: { bot: Bot }): React.JSX.Element {
+export function BotConnectorsPanelBody({ bot }: { bot: Bot }): React.JSX.Element {
   // Its server is down: the list stays as last read, with its actions off until it's back.
   const offline = useBotHostOffline(bot.hostId)
   return (

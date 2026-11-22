@@ -7,7 +7,6 @@ import {
   agentHubAwayAnswerCount,
   useAgentHubRequests
 } from './agent-hub-requests-store'
-import { agentHubTabLabel } from './agent-hub-copy'
 import { agentHubInboxCards } from './agent-hub-inbox-cards'
 import {
   agentHubRequestPresentation,
@@ -27,6 +26,8 @@ import { AgentHubTabSwitcher } from './AgentHubTabSwitcher'
 import { HubNestedCount } from './AgentHubSectionHeader'
 import type { AgentHubCardControl } from './AgentHubAttentionCard'
 import { useAgentHubBotNeedsTotal } from './agent-hub-bot-needs-store'
+import { AgentHubBotsTab } from './AgentHubBotsTab'
+import { useAgentHubBotsTab } from './use-agent-hub-bots-tab'
 import { AgentHubPanelFooter, agentHubPopoutKeys } from './AgentHubPanelFooter'
 import {
   AgentHubInboxBody,
@@ -38,7 +39,6 @@ import {
   moveAgentHubSelection,
   nextAgentHubTab,
   resolveAgentHubKeyAction,
-  AGENT_HUB_TABS,
   type AgentHubTab
 } from './agent-hub-keys'
 import { useAgentHubExpandedChildren } from './agent-hub-child-expansion'
@@ -134,7 +134,8 @@ export function AgentHubPanel({
     request: AgentHubRequestBase
   ) => AgentHubRequestPresentation
 }): React.JSX.Element {
-  const [tab, setTab] = useState<AgentHubTab>(initialTab)
+  const [pickedTab, setTab] = useState<AgentHubTab>(initialTab)
+  const { tab, tabs, options: tabOptions, botCount } = useAgentHubBotsTab(pickedTab)
   const presentationOf =
     requestPresentationOf ??
     ((host: string, request: AgentHubRequestBase) =>
@@ -197,6 +198,9 @@ export function AgentHubPanel({
   )
   const narrowed = isAgentHubTreeNarrowed(query, windowFilter, hostFilter.value)
   const items = useMemo<HubItem[]>(() => {
+    if (tab === 'bots') {
+      return []
+    }
     if (tab === 'inbox') {
       return lists.finished.map(threadItem)
     }
@@ -266,7 +270,7 @@ export function AgentHubPanel({
     }
     switch (action.type) {
       case 'switchTab':
-        switchTab(nextAgentHubTab(tab, action.direction))
+        switchTab(nextAgentHubTab(tab, action.direction, tabs))
         break
       case 'moveSelection':
         setSelectedIndex(moveAgentHubSelection(activeIndex, action.delta, items.length))
@@ -298,7 +302,8 @@ export function AgentHubPanel({
       lists.needsYou.length + requestCards.length + lists.finished.length + awayCount + botNeedsYou,
     running: lists.working.length,
     agents: agentCount,
-    all: terminalCount
+    all: terminalCount,
+    bots: botCount
   }
 
   return (
@@ -311,22 +316,20 @@ export function AgentHubPanel({
       <div className="flex shrink-0 items-center gap-3 pt-3.5 pr-3.5 pb-2.5 pl-4.5">
         <h2 className="shrink-0 text-sm font-semibold">{translate('agentHub.title', 'Agents')}</h2>
         <AgentHubTabSwitcher
-          tabs={AGENT_HUB_TABS.map((value) => ({ value, label: agentHubTabLabel(value) }))}
+          tabs={tabOptions}
           value={tab}
           onChange={switchTab}
           askValue={
             lists.needsYou.length + requestCards.length + botNeedsYou > 0 ? 'inbox' : undefined
           }
           counts={{
-            inbox: counts.inbox,
+            ...counts,
             running: (
               <>
                 {counts.running}
                 <HubNestedCount value={lists.nestedWorking} />
               </>
-            ),
-            agents: counts.agents,
-            all: counts.all
+            )
           }}
         />
         <AgentHubShortcutsButton />
@@ -345,7 +348,8 @@ export function AgentHubPanel({
         // Why keyed: each tab fades in fresh instead of swapping content in place.
         key={tab}
         role="listbox"
-        className="min-h-0 flex-1 animate-in overflow-y-auto px-2.5 pb-2.5 duration-150 scrollbar-sleek fade-in-0"
+        data-tab={tab}
+        className="min-h-0 flex-1 animate-in overflow-y-auto px-2.5 pb-2.5 duration-150 scrollbar-sleek fade-in-0 data-[tab=bots]:flex data-[tab=bots]:flex-col"
       >
         {tab === 'inbox' ? (
           <AgentHubInboxBody
@@ -376,6 +380,7 @@ export function AgentHubPanel({
             onPopoutAll={() => onPopoutAll(items.map(({ target, thread }) => ({ target, thread })))}
           />
         ) : null}
+        {tab === 'bots' ? <AgentHubBotsTab onClose={onClose} /> : null}
         {listsTerminals ? (
           <AgentHubTerminalTree
             groups={filteredTree}

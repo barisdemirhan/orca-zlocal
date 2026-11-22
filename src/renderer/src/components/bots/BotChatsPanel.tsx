@@ -74,7 +74,7 @@ export default function BotChatsPanel(): React.JSX.Element | null {
   return bot ? <BotChatsTab key={bot.id} bot={bot} /> : null
 }
 
-function BotChatsTab({ bot }: { bot: Bot }): React.JSX.Element {
+export function BotChatsTab({ bot }: { bot: Bot }): React.JSX.Element {
   const t = useTranslate()
   const tree = useBotOwnChatTree(bot)
   // Its server is down: the last read shows with its actions off until it's back.

@@ -58,14 +58,23 @@ function NeedLine({
   )
 }
 
-function BotNeedsBlock({ needs }: { needs: AgentHubBotNeeds }): React.JSX.Element {
+/** One bot's needs: its asks, sign-ins and access requests, and its suggestions; `part` shows one half. */
+export function BotNeedsBlock({
+  needs,
+  part = 'all'
+}: {
+  needs: AgentHubBotNeeds
+  part?: 'all' | 'needs' | 'suggestions'
+}): React.JSX.Element {
   const { bot } = needs
+  const showNeeds = part !== 'suggestions'
+  const showSuggestions = part !== 'needs'
   return (
     <div data-agent-hub-bot-needs={needs.botKey}>
-      {needs.items.map((item) => (
+      {(showNeeds ? needs.items : []).map((item) => (
         <AgentHubBotAskRow key={item.uid} bot={bot} item={item} />
       ))}
-      {needs.connectors.map(({ key, connector }) => {
+      {(showNeeds ? needs.connectors : []).map(({ key, connector }) => {
         const name = botConnectorTitleText(connector.title)
         return (
           <NeedLine
@@ -83,7 +92,7 @@ function BotNeedsBlock({ needs }: { needs: AgentHubBotNeeds }): React.JSX.Elemen
           />
         )
       })}
-      {needs.access.map((request) => (
+      {(showNeeds ? needs.access : []).map((request) => (
         <NeedLine
           key={request.requestId}
           needs={needs}
@@ -106,7 +115,7 @@ function BotNeedsBlock({ needs }: { needs: AgentHubBotNeeds }): React.JSX.Elemen
           }
         />
       ))}
-      {needs.suggestions.map((suggestion) => (
+      {(showSuggestions ? needs.suggestions : []).map((suggestion) => (
         <NeedLine
           key={suggestion.id}
           needs={needs}

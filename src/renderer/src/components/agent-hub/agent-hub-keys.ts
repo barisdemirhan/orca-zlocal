@@ -1,7 +1,12 @@
-/** `agents` is every agent terminal, busy or idle; `all` adds plain shells. */
-export type AgentHubTab = 'inbox' | 'running' | 'agents' | 'all'
+/** `agents` is every agent terminal, busy or idle; `all` adds plain shells; `bots` exists only while bots are on. */
+export type AgentHubTab = 'inbox' | 'running' | 'agents' | 'all' | 'bots'
 
 export const AGENT_HUB_TABS: readonly AgentHubTab[] = ['inbox', 'running', 'agents', 'all']
+const AGENT_HUB_TABS_WITH_BOTS: readonly AgentHubTab[] = [...AGENT_HUB_TABS, 'bots']
+
+export function agentHubTabs(botsActive: boolean): readonly AgentHubTab[] {
+  return botsActive ? AGENT_HUB_TABS_WITH_BOTS : AGENT_HUB_TABS
+}
 
 export type AgentHubKeyInput = {
   key: string
@@ -69,10 +74,14 @@ export function resolveAgentHubKeyAction(
   return null
 }
 
-export function nextAgentHubTab(tab: AgentHubTab, direction: 1 | -1): AgentHubTab {
-  const index = AGENT_HUB_TABS.indexOf(tab)
-  const count = AGENT_HUB_TABS.length
-  return AGENT_HUB_TABS[(index + direction + count) % count] ?? 'inbox'
+export function nextAgentHubTab(
+  tab: AgentHubTab,
+  direction: 1 | -1,
+  tabs: readonly AgentHubTab[] = AGENT_HUB_TABS
+): AgentHubTab {
+  const index = tabs.indexOf(tab)
+  const count = tabs.length
+  return tabs[(index + direction + count) % count] ?? 'inbox'
 }
 
 /** Arrow-key selection over `count` rows; -1 means nothing is selected. */

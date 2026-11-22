@@ -48,5 +48,7 @@ export function agentHubTabLabel(tab: AgentHubTab): string {
       return translate('agentHub.tab.agents', 'Agents')
     case 'all':
       return translate('agentHub.tab.all', 'All terminals')
+    case 'bots':
+      return translate('agentHub.bots.tab.title', 'Bots')
   }
 }

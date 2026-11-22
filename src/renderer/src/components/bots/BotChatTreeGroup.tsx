@@ -36,7 +36,7 @@ import { BotChatTreeWorkerRow } from './BotChatTreeWorkerRow'
 import { BotChatContextMenu, BotChatMoreButton, botChatHasMenu } from './BotChatRowMenu'
 import { openBotSession } from './bot-session-open'
 
-function openChat(bot: Bot, chat: BotChatTreeChat): void {
+export function openChat(bot: Bot, chat: BotChatTreeChat): void {
   const { run } = chat
   if (run) {
     // A terminal run has no chat: its terminal is what opens, else its run record.

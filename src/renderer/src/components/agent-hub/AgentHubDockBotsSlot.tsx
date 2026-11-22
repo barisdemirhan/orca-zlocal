@@ -25,7 +25,7 @@ export function AgentHubDockBotsSlot({
       label={translate('agentHub.bots.dock', 'Bots')}
       side={side}
       className={DOCK_COUNT_BUTTON}
-      onClick={() => onOpenTab('inbox')}
+      onClick={() => onOpenTab('bots')}
     >
       <span
         data-agent-hub-bot-dock

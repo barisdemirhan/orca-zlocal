@@ -25580,6 +25580,40 @@
         "asks": "Asks",
         "toggle": "{{name}}'s parked chats",
         "close": "Close all of {{name}}"
+      },
+      "tab": {
+        "title": "Bots",
+        "newBot": "New bot",
+        "empty": "No bots yet. Make one to hand work to.",
+        "groups": "Groups",
+        "chats": "Chats",
+        "automations": "Automations",
+        "moreChats": "{{count}} more chats",
+        "treeEmpty": "Nothing here yet",
+        "toggleTree": "Show {{name}}'s chats",
+        "runsOn": "Runs on {{host}}",
+        "needsYou": "{{count}} need you"
+      },
+      "page": {
+        "tabHome": "Home",
+        "tabConnectors": "Connectors",
+        "tabChats": "Chats",
+        "tabFiles": "Files",
+        "needsYou": "Needs you",
+        "nothingNeeded": "Nothing needs you",
+        "suggestions": "Suggestions",
+        "openTab": "Open {{name}}'s page",
+        "settings": "Bot settings",
+        "disconnected": "Disconnected",
+        "paused": "Paused",
+        "idle": "Idle",
+        "ask": "Ask {{name}}…",
+        "askLabel": "Message {{name}}",
+        "sent": "Sent",
+        "sendFailed": "Couldn't send",
+        "filesFailed": "Couldn't read the folder",
+        "filesLoading": "Reading the folder…",
+        "filesEmpty": "No files in this folder"
       }
     },
     "attention": {

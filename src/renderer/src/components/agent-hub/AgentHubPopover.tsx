@@ -161,6 +161,10 @@ export function AgentHubPopoverContent({
       onEscapeKeyDown={(event) => {
         // Why: Esc in a non-empty filter clears it (see AgentHubTerminalTree) instead of closing.
         const active = document.activeElement
+        // Why: Esc on a bot's page steps back to the Bots list first (see AgentHubBotPage).
+        if (document.querySelector('[data-agent-hub-bot-page]')) {
+          event.preventDefault()
+        }
         if (
           active instanceof HTMLInputElement &&
           active.dataset.agentHubSearch !== undefined &&
