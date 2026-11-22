@@ -30,6 +30,7 @@ import {
   NotchShape
 } from './AgentHubDockParts'
 import {
+  agentHubDockBottomFootprint,
   agentHubDockDropPosition,
   agentHubDockPlacement,
   agentHubDockPopoverSide,
@@ -43,6 +44,7 @@ import {
 import type { AgentHubCounts } from './agent-hub-lists'
 import { agentHubMirrorsToggleAction } from './agent-hub-mirror-tray'
 import { useDockBarMotion } from './use-dock-bar-motion'
+import { usePublishAgentHubDockFootprint } from './agent-hub-dock-footprint'
 import { useViewportSize } from './use-viewport-size'
 import { AgentHubOrbButton } from './AgentHubOrbButton'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
@@ -141,15 +143,19 @@ export function AgentHubDock({
     </DockButton>
   )
   const zoom = AGENT_HUB_DOCK_ZOOM[size]
+  const chrome = flushTop ? { ...DOCK_CHROME, titleBarHeight: 0 } : DOCK_CHROME
   // The bar measures in its own (unzoomed) pixels; placement works in the window's.
   const placement = dragPoint
     ? { left: dragPoint.x, top: dragPoint.y, transform: 'translate(-50%, -50%)' }
     : agentHubDockPlacement(
         position,
         viewport,
-        flushTop ? { ...DOCK_CHROME, titleBarHeight: 0 } : DOCK_CHROME,
+        chrome,
         agentHubDockMeasuredExtent(position.edge, zoom, restSize, barSize)
       )
+  usePublishAgentHubDockFootprint(
+    agentHubDockBottomFootprint(position, viewport, chrome, zoom, restSize)
+  )
 
   useLayoutEffect(
     () => () => {

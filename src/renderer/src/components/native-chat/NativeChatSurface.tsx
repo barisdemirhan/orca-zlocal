@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/class-names'
 import { LinkActionPopover } from '@/components/link-actions/LinkActionPopover'
+import { useAgentHubDockBottomClearance } from '@/components/agent-hub/agent-hub-dock-footprint'
 import { NATIVE_CHAT_APPEARANCE_ROOT_CLASS } from './appearance/native-chat-appearance-style'
 import { NativeChatFindBar } from './viewport/find/NativeChatFindBar'
 import { NativeChatFindQueryContext } from './viewport/find/native-chat-find-query'
@@ -20,6 +21,7 @@ export function NativeChatSurface({
   working: boolean
   children: ReactNode
 } & Record<`data-${string}`, string | undefined>): React.JSX.Element {
+  const dockClearance = useAgentHubDockBottomClearance(surface.rootRef)
   return (
     <div
       ref={surface.rootRef}
@@ -32,7 +34,9 @@ export function NativeChatSurface({
         NATIVE_CHAT_APPEARANCE_ROOT_CLASS,
         'flex h-full min-h-0 w-full flex-col focus:outline-none'
       )}
-      style={surface.appearance}
+      style={
+        dockClearance ? { ...surface.appearance, paddingBottom: dockClearance } : surface.appearance
+      }
       data-native-chat-scheme={surface.appearance.colorScheme}
     >
       <NativeChatLinkClickContext value={surface.onLinkClick}>

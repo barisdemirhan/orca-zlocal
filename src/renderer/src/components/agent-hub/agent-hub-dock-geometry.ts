@@ -71,6 +71,26 @@ export function agentHubDockPlacement(
   }
 }
 
+/** The folded bottom dock's box, so neighbours can keep clear of it; null on any other edge. */
+export function agentHubDockBottomFootprint(
+  position: AgentHubDockPosition,
+  viewport: Viewport,
+  chrome: { statusBarHeight: number; titleBarHeight: number },
+  zoom: number,
+  rest: { width: number; height: number } | null
+): { left: number; right: number; top: number } | null {
+  if (position.edge !== 'bottom' || !rest) {
+    return null
+  }
+  const extent = { rest: rest.width * zoom, current: rest.width * zoom }
+  const { left = 0, bottom = 0 } = agentHubDockPlacement(position, viewport, chrome, extent)
+  return {
+    left,
+    right: left + extent.rest,
+    top: Math.round(viewport.height - bottom - rest.height * zoom)
+  }
+}
+
 /** Where a dropped dock lands: the nearest window edge. */
 export function agentHubDockDropPosition(point: Point, viewport: Viewport): AgentHubDockPosition {
   const distances: [AgentHubDockEdge, number][] = [
