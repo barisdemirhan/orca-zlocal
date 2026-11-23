@@ -29541,7 +29541,8 @@
         "support": "Support & triage",
         "planning": "Planning & docs",
         "ops": "Ops",
-        "personal": "Personal assistant"
+        "personal": "Personal assistant",
+        "hub": "Agent Hub"
       },
       "paletteLine": "Bot template"
     },
