@@ -25554,6 +25554,7 @@
       "dock": "Bots",
       "needsYou": "Bots",
       "openItem": "Open",
+      "mirror": "Open in mirror",
       "alertAsking": "{{name}} is asking",
       "connector": "{{name}} needs you",
       "connectorHint": "Sign in again to keep it working",

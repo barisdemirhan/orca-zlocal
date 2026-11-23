@@ -6,7 +6,9 @@ import { openChat } from '../bots/BotChatTreeGroup'
 import { openBotAutomation } from '../bots/bot-automation-open'
 import { useBotOwnChatTree } from '../bots/use-bot-chat-tree'
 import { useBotActivity } from '../bots/use-bot-activity'
-import { Clock } from 'lucide-react'
+import { Clock, PictureInPicture2 } from 'lucide-react'
+import { HubRowAction } from './AgentHubRowActions'
+import { mirrorBotChat } from './agent-hub-bot-mirror'
 import { chatsTabWorkers } from '../../../../shared/bots/bot-chat-tree-view'
 import type { Bot } from '../../../../shared/bot-types'
 import type { BotChatTreeChat } from '../../../../shared/bots/bot-chat-tree'
@@ -55,18 +57,35 @@ export function AgentHubBotsTree({
         const { workers } = chatsTabWorkers(chat, WORKERS_SHOWN)
         return (
           <div key={chat.chatId}>
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={() => {
-                openChat(bot, chat)
-                onNavigate()
-              }}
-              className="flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-xs text-foreground hover:bg-foreground/[0.05]"
-            >
-              <BotChatStatusSlot chat={chat} />
-              <span className="min-w-0 flex-1 truncate">{chat.title}</span>
-            </button>
+            <div className="group/chat flex min-w-0 items-center rounded-md hover:bg-foreground/[0.05]">
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => {
+                  openChat(bot, chat)
+                  onNavigate()
+                }}
+                className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1 text-left text-xs text-foreground"
+              >
+                <BotChatStatusSlot chat={chat} />
+                <span className="min-w-0 flex-1 truncate">{chat.title}</span>
+              </button>
+              {chat.run ? null : (
+                <span className="hidden pr-1 group-hover/chat:flex">
+                  <HubRowAction
+                    label={translate('agentHub.bots.mirror', 'Open in mirror')}
+                    onClick={() =>
+                      void mirrorBotChat(
+                        bot,
+                        chat.origin === 'home' ? null : (chat.liveSessionId ?? chat.chatId)
+                      )
+                    }
+                  >
+                    <PictureInPicture2 className="size-3.5" />
+                  </HubRowAction>
+                </span>
+              )}
+            </div>
             {workers.length > 0 ? (
               <div className="ml-4">
                 {workers.map((worker) => (

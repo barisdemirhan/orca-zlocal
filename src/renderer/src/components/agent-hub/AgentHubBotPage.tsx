@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ExternalLink, Settings } from 'lucide-react'
+import { ArrowLeft, ExternalLink, PictureInPicture2, Settings } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { openBotHomeTab } from '@/lib/bot-catalog'
 import { cn } from '@/lib/class-names'
@@ -14,6 +14,7 @@ import type { FolderWorkspace } from '../../../../shared/folder-workspaces/folde
 import { useAgentHubBotNeedsList } from './agent-hub-bot-needs-store'
 import { botRefKey } from '@/lib/bot-hosts'
 import { AgentHubBotPageFiles } from './AgentHubBotPageFiles'
+import { mirrorBotChat } from './agent-hub-bot-mirror'
 import { AgentHubBotPageHome } from './AgentHubBotPageHome'
 import { AgentHubBotQuickSend } from './AgentHubBotQuickSend'
 import { AgentHubBotFace, AgentHubBotNeedsPill } from './AgentHubBotsRow'
@@ -107,6 +108,12 @@ export function AgentHubBotPage({
           {translate('agentHub.bots.tab.title', 'Bots')}
         </button>
         <span className="flex-1" />
+        <HeaderAction
+          label={translate('agentHub.bots.mirror', 'Open in mirror')}
+          onClick={() => void mirrorBotChat(bot, null)}
+        >
+          <PictureInPicture2 aria-hidden className="size-3.5" />
+        </HeaderAction>
         <HeaderAction
           label={translate('agentHub.bots.page.openTab', 'Open {{name}}’s page', {
             name: bot.name
