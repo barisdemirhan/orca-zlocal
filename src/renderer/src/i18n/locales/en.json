@@ -20852,6 +20852,7 @@
         "unmuteMicrophone": "Unmute microphone",
         "muteMicrophone": "Mute microphone",
         "finishDictation": "Finish and send dictation",
+        "botPaused": "Paused · holds the message",
         "cancelDictation": "Cancel dictation",
         "stopSpeaking": "Stop speaking",
         "expand": "Expand Orb",

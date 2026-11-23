@@ -3,6 +3,8 @@ import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { sendAgentHubOrbText, useAgentHubOrbComposerReady } from './agent-hub-orb-composer'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 import type { AgentHubInboxRequest } from './agent-hub-requests-store'
+import { useAgentHubOrbBotMention } from './use-agent-hub-orb-bot-mention'
+import { botMentionToken } from '../../../../shared/bots/bot-mention-context'
 import { useAgentHubOrbQuickDictation } from './use-agent-hub-orb-quick-dictation'
 
 const AGENT_HUB_ORB_STALL_MS = 1_500
@@ -32,6 +34,9 @@ export function useAgentHubOrbQuickWrite({
   const ready = useAgentHubOrbComposerReady(tabId)
   const inputRef = useRef<HTMLInputElement>(null)
   const [draft, setDraft] = useState('')
+  const mention = useAgentHubOrbBotMention(draft, setDraft)
+  const mentionedBot = mention.bot
+  const clearMention = mention.clear
   // Why a latch: the done state expires before the bubble does; a new turn clears it, idle keeps it.
   const [latch, setLatch] = useState<QuickTurn>({ key: '', text: null, ask: null })
   const latchKey =
@@ -78,19 +83,26 @@ export function useAgentHubOrbQuickWrite({
   }, [])
   const submit = useCallback((): void => {
     const text = inputRef.current?.value ?? ''
-    if (tabId && sendAgentHubOrbText(tabId, text)) {
+    // Why: the same token a native chat @bot pick sends, so the host adds how to reach the bot.
+    const sent = mentionedBot && text.trim() ? `${botMentionToken(mentionedBot)} ${text}` : text
+    if (tabId && sendAgentHubOrbText(tabId, sent)) {
       setDraft('')
+      clearMention()
       askCount.current += 1
       setLatch((current) => ({
         ...current,
         text: null,
-        ask: { id: askCount.current, text: text.trim(), status: 'sent' }
+        ask: {
+          id: askCount.current,
+          text: (mentionedBot ? `@${mentionedBot.name} ${text}` : text).trim(),
+          status: 'sent'
+        }
       }))
       // Why: the question moves into the bubble, so the box steps aside until it is wanted again.
       setOpen(false)
       inputRef.current?.blur()
     }
-  }, [tabId, setOpen])
+  }, [tabId, setOpen, mentionedBot, clearMention])
   const dictation = useAgentHubOrbQuickDictation({
     inputRef,
     prepare: prepareDictation,
@@ -108,6 +120,7 @@ export function useAgentHubOrbQuickWrite({
     inputRef,
     draft,
     setDraft,
+    mention,
     submit,
     dictation,
     reply,

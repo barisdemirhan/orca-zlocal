@@ -357,6 +357,7 @@ export function AgentHubOrbConversation({
                 inputRef={quick.inputRef}
                 value={quick.draft}
                 dictation={quick.dictation}
+                mention={quick.mention}
                 onChange={quick.setDraft}
                 onInput={quick.dictation.onInput}
                 onKeyDown={quick.dictation.onKeyDown}

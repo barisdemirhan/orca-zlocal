@@ -1,9 +1,13 @@
-import { Mic, Square, MessageSquare } from 'lucide-react'
+import { Bot, Mic, Square, MessageSquare } from 'lucide-react'
 import type { RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { BotAvatar } from '../bots/BotAvatar'
+import { NativeChatPromptPill } from '../native-chat/composer/editor/NativeChatPromptPill'
+import { AgentHubOrbBotPicker } from './AgentHubOrbBotPicker'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
+import type { AgentHubOrbBotMention } from './use-agent-hub-orb-bot-mention'
 import type { AgentHubOrbQuickDictation } from './use-agent-hub-orb-quick-dictation'
 
 function QuickAction({
@@ -43,6 +47,7 @@ export function AgentHubOrbQuickInput({
   inputRef,
   value,
   dictation,
+  mention,
   onChange,
   onInput,
   onKeyDown,
@@ -57,6 +62,7 @@ export function AgentHubOrbQuickInput({
   inputRef: RefObject<HTMLInputElement | null>
   value: string
   dictation: Pick<AgentHubOrbQuickDictation, 'active' | 'phase' | 'missed'>
+  mention: AgentHubOrbBotMention
   onChange: (value: string) => void
   onInput: () => void
   onKeyDown: () => void
@@ -73,14 +79,29 @@ export function AgentHubOrbQuickInput({
     <div
       data-agent-hub-orb-quick-input
       data-agent-hub-orb-interactive
-      data-open={open || listening || value.length > 0}
-      className="agent-hub-orb-quick focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
+      data-open={open || listening || value.length > 0 || mention.bot !== null}
+      className="agent-hub-orb-quick relative focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
       onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget) && !value && !listening) {
+        if (
+          !event.currentTarget.contains(event.relatedTarget) &&
+          !value &&
+          !listening &&
+          !mention.bot
+        ) {
           onClose()
         }
       }}
     >
+      {mention.bot ? (
+        <span className="mr-1.5 flex shrink-0 items-center">
+          <NativeChatPromptPill
+            icon={Bot}
+            avatar={<BotAvatar bot={mention.bot} className="size-full" />}
+            label={mention.bot.name}
+            selected={false}
+          />
+        </span>
+      ) : null}
       <input
         ref={inputRef}
         type="text"
@@ -106,17 +127,21 @@ export function AgentHubOrbQuickInput({
         onInput={onInput}
         onKeyDown={(event) => {
           onKeyDown()
-          if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+          if (mention.handleKey(event)) {
+            event.preventDefault()
+          } else if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
             event.preventDefault()
             onSubmit()
           } else if (event.key === 'Escape') {
             event.preventDefault()
             onChange('')
+            mention.clear()
             event.currentTarget.blur()
             onClose()
           }
         }}
       />
+      {mention.listOpen ? <AgentHubOrbBotPicker mention={mention} /> : null}
       {listening ? (
         <QuickAction
           label={translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation')}

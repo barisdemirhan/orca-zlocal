@@ -240,6 +240,13 @@
   margin-top: 8px;
   margin-bottom: calc(-14px - var(--orb-diameter) * 0.225);
 }
+/* Why: with the box above the sphere the @bot list opens upward too, so it stays on screen. */
+.agent-hub-orb-stage[data-pinned='up'] .agent-hub-orb-bot-picker {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 4px;
+}
 .agent-hub-orb-stage[data-pinned='up']:not([data-quick='beside']):has(.agent-hub-orb-quick)
   .agent-hub-orb-hover-controls {
   top: calc(var(--orb-diameter) * 0.225 - 28px);
