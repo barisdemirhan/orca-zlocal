@@ -58,7 +58,7 @@ export const BOT_TEMPLATES_AGENT_HUB: readonly BotTemplate[] = [
     firstChat:
       'Asks when your night starts and ends, then checks the Agent Hub through the night. What can wait goes into a morning list; only a blocked agent gets a notification, with `orca hub notify`.',
     mascot: 'N1',
-    watches: 'Running agents and workers, from your evening to your morning',
+    watches: 'Running agents and workers overnight',
     does: 'Keeps what can wait for the morning and notifies you only about blockers.',
     reports: 'Here, nightly, and a notification for a blocker',
     connectors: [],
