@@ -141,8 +141,12 @@ function Frame({ tree }: { tree: AgentSessionPluginNode }): React.JSX.Element {
           actOnPluginUi: () => {}
         }}
         transcript={<div className="flex-1 p-4 text-sm">Transcript</div>}
+        footer={
+          <div className="m-2 h-20 shrink-0 rounded-xl border border-chat-composer-border p-3 text-sm">
+            Composer
+          </div>
+        }
       />
-      <div className="h-12 shrink-0 border-t border-chat-composer-border p-2 text-sm">Composer</div>
     </div>
   )
 }

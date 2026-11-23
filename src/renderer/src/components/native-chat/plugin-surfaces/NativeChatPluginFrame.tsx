@@ -8,6 +8,7 @@ import type {
   AgentSessionPluginUiEdit,
   AgentSessionPluginUiPress
 } from '../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import { NativeChatDockTranscript } from '../pane/dock/NativeChatDock'
 import { NativeChatPluginTree } from './NativeChatPluginTree'
 import {
   PLUGIN_CELL_FONT_CLASS,
@@ -260,10 +261,12 @@ function PluginBand({
 /** Seats what mods drew around the transcript: the pane docked or inline, and the band above the composer. */
 export function NativeChatPluginFrame({
   plugins,
-  transcript
+  transcript,
+  footer
 }: {
   plugins: NativeChatPluginFrameSurfaces
   transcript: React.ReactNode
+  footer?: React.ReactNode
 }): React.JSX.Element {
   const { pluginPane: pane, pluginBand: band, actOnPluginUi: act } = plugins
   const [isBandCollapsed, setBandCollapsed] = useState(false)
@@ -318,25 +321,29 @@ export function NativeChatPluginFrame({
             ) : null}
           </div>
         </div>
+        {footer}
       </div>
       {docked ? <DockedPane pane={pane} layout={layout} act={act} press={press} /> : null}
     </div>
   )
 }
 
-/** Wraps a native chat's transcript with what mods drew for it, as the terminal seats them. */
+/** Wraps a native chat's transcript and footer with what mods drew for it, as the terminal seats them. */
 export function NativeChatPluginTranscript({
   plugins,
-  children
+  children,
+  footer
 }: {
   plugins: NativeChatPluginFrameSurfaces & { callPluginUiClient?: PluginClientTransport }
   children: React.ReactNode
+  /** The dock, seated in the chat column below the band, so a docked pane runs beside the composer too. */
+  footer?: React.ReactNode
 }): React.JSX.Element {
-  const transcript = <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
+  const transcript = <NativeChatDockTranscript>{children}</NativeChatDockTranscript>
   return (
     <div className="@container flex min-h-0 flex-1 flex-col">
       <PluginClientProvider transport={plugins.callPluginUiClient}>
-        <NativeChatPluginFrame plugins={plugins} transcript={transcript} />
+        <NativeChatPluginFrame plugins={plugins} transcript={transcript} footer={footer} />
       </PluginClientProvider>
     </div>
   )
