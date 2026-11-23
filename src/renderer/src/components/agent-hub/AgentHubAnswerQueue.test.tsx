@@ -35,7 +35,7 @@ const send = vi.hoisted(() => ({
   cancelAsk: vi.fn(async () => true),
   cancel: vi.fn()
 }))
-const toast = vi.hoisted(() => vi.fn())
+const toast = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn() }))
 vi.mock('sonner', () => ({ toast }))
 vi.mock('@/store', async () => {
   const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
