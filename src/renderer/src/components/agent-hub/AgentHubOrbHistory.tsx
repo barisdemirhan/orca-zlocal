@@ -7,6 +7,7 @@ import { getIntlLocale, translate } from '@/i18n/i18n'
 import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import type { AgentHubOrbConversation } from '../../../../shared/agent-hub-orb'
 import { useNow } from '@/lib/window-activity/use-now'
+import { openArchivedAgentHubOrbChat } from './agent-hub-orb-archived-chat'
 
 function dayKey(time: number): string {
   const date = new Date(time)
@@ -110,7 +111,11 @@ export function AgentHubOrbHistory({
                   'flex w-full flex-col gap-1 rounded-md px-3 py-2 text-left outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50',
                   entry.sessionId === activeSessionId && 'bg-accent text-accent-foreground'
                 )}
-                onClick={() => onReopen(entry.sessionId)}
+                onClick={() =>
+                  entry.archivedWorkspaceId
+                    ? openArchivedAgentHubOrbChat(entry.sessionId, entry.archivedWorkspaceId)
+                    : onReopen(entry.sessionId)
+                }
               >
                 <span className="flex w-full items-center gap-2 text-sm">
                   <span className="min-w-0 flex-1 truncate font-medium">
@@ -129,6 +134,9 @@ export function AgentHubOrbHistory({
                 </span>
                 <span className="w-full truncate text-xs text-muted-foreground">
                   {structuredAgentLabel(entry.agent)}
+                  {entry.archivedWorkspaceId
+                    ? ` · ${translate('auto.agentHub.orb.archivedBeforeBot', 'Before the Orb bot')}`
+                    : ''}
                   {entry.lastReply ? ` · ${entry.lastReply}` : ''}
                 </span>
               </button>

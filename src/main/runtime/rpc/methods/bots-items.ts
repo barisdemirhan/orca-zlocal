@@ -9,6 +9,7 @@ import {
 } from '../../../../shared/bots/bot-items'
 import { BotItemsList, BotItemsShow } from '../../../../shared/rpc-contract/bots-items-params'
 import { BotItemError } from '../../../bots/bot-item-error'
+import { botOfCaller } from '../../../bots/bot-of-caller'
 import { defineMethod } from '../core'
 import { itemsReader, itemsWriter } from './bots-items-caller'
 import { BOT_ITEMS_OWNER_METHODS } from './bots-items-owner-methods'
@@ -21,8 +22,8 @@ const LIST = defineMethod({
   params: BotItemsList,
   handler: async (params, context) => {
     const { runtime } = context
-    runtime.bots.assertEnabled()
     const bot = itemsReader(params, context)
+    runtime.bots.assertEnabled(bot)
     const statuses: readonly BotItemStatus[] = params.statuses?.length
       ? params.statuses
       : params.all
@@ -62,7 +63,7 @@ const SHOW = defineMethod({
   params: BotItemsShow,
   handler: async (params, context) => {
     const { runtime } = context
-    runtime.bots.assertEnabled()
+    runtime.bots.assertEnabled(botOfCaller(runtime, params.callerSessionId, context.pairedDeviceId))
     const store = runtime.botItems.store()
     const record = await resolveItem(store, params.item)
     const after = params.after !== undefined ? parseBotItemEventId(params.after) : 0

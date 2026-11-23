@@ -5,20 +5,27 @@ import { translate } from '@/i18n/i18n'
 import { Button } from '../ui/button'
 import { useAgentHubBorrowedTabs } from './agent-hub-borrowed-tabs'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
+import { AgentHubOrbBorrowedChat } from './AgentHubOrbBorrowedChat'
 
 export function AgentHubBorrowedTerminal({
   worktreeId,
-  groupId
+  groupId,
+  tabId
 }: {
   worktreeId: string
   groupId: string
+  /** The group's active tab, which the Orb window may be holding. */
+  tabId?: string
 }): React.JSX.Element | null {
   const enabled = useAppStore((state) => state.settings?.experimentalAgentHub === true)
   const borrowed = useAgentHubBorrowedTabs().find(
     (tab) => tab.worktreeId === worktreeId && tab.groupId === groupId
   )
-  if (!enabled || !borrowed) {
+  if (!enabled) {
     return null
+  }
+  if (!borrowed) {
+    return <AgentHubOrbBorrowedChat tabId={tabId} />
   }
   return (
     <div

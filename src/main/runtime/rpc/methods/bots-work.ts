@@ -34,8 +34,8 @@ export const BOT_WORK_METHODS = [
     permission: 'workspace',
     params: BotWorkList,
     handler: async (params, context): Promise<BotWorkListResult> => {
-      context.runtime.bots.assertEnabled()
       const bot = botOf(params, context)
+      context.runtime.bots.assertEnabled(bot)
       return { items: await context.runtime.botWork.list(bot.id), botName: bot.name }
     }
   }),
@@ -44,8 +44,8 @@ export const BOT_WORK_METHODS = [
     permission: 'workspace',
     params: BotWorkForget,
     handler: async (params, context) => {
-      context.runtime.bots.assertEnabled()
       const caller = callerOf(params.callerSessionId, context)
+      context.runtime.bots.assertEnabled(caller ? botOfSession(context.runtime.bots, caller) : null)
       return { forgotten: caller ? await context.runtime.botWork.forget(caller) : false }
     }
   })

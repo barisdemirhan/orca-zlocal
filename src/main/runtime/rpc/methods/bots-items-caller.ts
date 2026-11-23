@@ -67,7 +67,7 @@ export function itemsWriter(
 ): BotItemWriter {
   const runtime: CallerRuntime = context.runtime
   const sessionId = claimedSession(callerSessionId, context)
-  if (!sessionId || !runtime.bots.enabled()) {
+  if (!sessionId) {
     throw new BotItemError('invalid_argument', ONLY_BOT_CHATS)
   }
   const store = readAgentSessionRecordStore()
@@ -83,6 +83,7 @@ export function itemsWriter(
   if (!bot || !store || !record || !isOrcaSessionId(sessionId)) {
     throw new BotItemError('invalid_argument', ONLY_BOT_CHATS)
   }
+  runtime.bots.assertEnabled(bot)
   const rootOf = createCanonicalOrcaSessionResolver(store)
   const root = (id: string) => (isOrcaSessionId(id) ? rootOf(id) : id)
   if (!isBotOwnChat(record, runtime.getOrchestrationDb(), store)) {

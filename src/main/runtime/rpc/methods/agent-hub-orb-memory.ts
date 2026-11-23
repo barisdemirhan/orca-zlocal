@@ -24,7 +24,10 @@ export const AGENT_HUB_ORB_MEMORY_METHODS = [
     handler: async (params, ctx) => {
       const { caller, target } = resolveAgentHubPanes(params, ctx)
       if (caller.kind !== 'orb') {
-        throw new AgentHubError('invalid_argument', 'Only the Orb can propose a memory')
+        throw new AgentHubError(
+          'invalid_argument',
+          'Only the Orb proposes memories, from its Home Chat in the Orb window'
+        )
       }
       if (!ctx.runtime.isAgentHubOrbMemorySuggestionsEnabled()) {
         throw new AgentHubError(

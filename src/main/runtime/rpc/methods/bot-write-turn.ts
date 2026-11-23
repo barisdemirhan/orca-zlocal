@@ -10,11 +10,11 @@ export async function readBotWriteTurn(
   callerSessionId: string | undefined,
   pairedDeviceId: string | undefined
 ): Promise<BotWriteTurn | null> {
-  if (!callerSessionId || pairedDeviceId !== undefined || !runtime.bots.enabled()) {
+  if (!callerSessionId || pairedDeviceId !== undefined) {
     return null
   }
   const bot = botOfSession(runtime.bots, callerSessionId)
-  if (!bot) {
+  if (!bot || !runtime.bots.enabled(bot)) {
     return null
   }
   const { turn, conversation } = await readBotTurn(

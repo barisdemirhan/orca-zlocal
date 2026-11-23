@@ -19258,6 +19258,7 @@
         "allAgents": "Tous les agents",
         "today": "Aujourd’hui",
         "yesterday": "Hier",
+        "archivedBeforeBot": "Avant le bot Orb",
         "noConversations": "Aucune conversation trouvée",
         "historyFailed": "Impossible de charger les conversations. Réessayez.",
         "disabled": "Activez le contrôle des agents pour parler à Orb",
@@ -23155,6 +23156,7 @@
       "all": "Tous les terminaux",
       "agents": "Agents",
       "shownInMirror": "Affiché dans un miroir",
+      "shownInOrb": "Affiché dans la fenêtre Orb",
       "bringBack": "Ramener"
     },
     "inbox": {

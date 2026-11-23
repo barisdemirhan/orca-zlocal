@@ -53,6 +53,9 @@ async function updateBot(params: BotUpdateParams, context: RpcContext) {
     ownerOnly(context, 'Only your owner changes your Who can ask or permissions, in Orca.')
   }
   const bot = await context.runtime.bots.update(params.botId, params.updates)
+  if (bot.role === 'orb') {
+    context.runtime.followAgentHubOrbBotEdit(bot, params.updates)
+  }
   if (params.updates.skillProjects !== undefined) {
     relinkBotSkills(bot, context.runtime.listRepos())
   }
@@ -88,8 +91,8 @@ async function updateBot(params: BotUpdateParams, context: RpcContext) {
 /** New Home Chat, for the owner only: from Orca, a script, or the bot's Home Chat on a turn they typed. */
 async function newHomeChat(params: BotChatResetParams, context: RpcContext) {
   const { runtime } = context
-  runtime.bots.assertEnabled()
   const { bot, caller, callerBot } = namedOrCallerBot(params, context)
+  runtime.bots.assertEnabled(bot)
   // A bot's threads, runs and connector messages answer other people, who can't start one.
   if (
     caller &&

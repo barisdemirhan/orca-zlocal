@@ -102,13 +102,14 @@ export class BotController {
     this.memory = hostBotMemoryRecord(deps.filesystem)
   }
 
-  /** Off, bots take no conversations or runs, and nothing creates or opens one; their homes stay. */
-  enabled(): boolean {
-    return isBotsEnabled(this.deps.getStore()?.getSettings())
+  /** Off, bots take no conversations or runs, and nothing creates or opens one; their homes stay.
+   *  The Orb bot keeps working for its own calls: it is the Orb, not one of the Bots. */
+  enabled(bot?: Pick<Bot, 'role'> | null): boolean {
+    return bot?.role === 'orb' || isBotsEnabled(this.deps.getStore()?.getSettings())
   }
 
-  assertEnabled(): void {
-    if (!this.enabled()) {
+  assertEnabled(bot?: Pick<Bot, 'role'> | null): void {
+    if (!this.enabled(bot)) {
       throw new BotsDisabledError()
     }
   }

@@ -6,6 +6,9 @@ import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-de
 import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager-factory'
 import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
 import { runtimeAgentHubOrbBotChats } from '../agent-hub/orb/agent-hub-orb-runtime-bot-chats'
+import { agentHubOrbSettingsFromBotEdit } from '../agent-hub/orb/agent-hub-orb-bot-settings'
+import type { Bot } from '../../shared/bot-types'
+import type { BotHostUpdates } from '../../shared/rpc-contract/bots-params'
 import type { OrchestrationDb } from './orchestration/db/orchestration-db'
 import { OrcaRuntimeWithWindowlessTerminalActivity } from './sidebar-inputs/temporal/orca-runtime-windowless-terminal-activity'
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
@@ -165,6 +168,14 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessT
 
   isAgentHubOrbMemorySuggestionsEnabled(): boolean {
     return this.store?.getSettings?.()?.agentHubOrbMemorySuggestions !== false
+  }
+
+  /** Writes an edit made on the Orb bot's page into the Orb settings, so the next Orb open keeps it. */
+  followAgentHubOrbBotEdit(bot: Bot, updates: BotHostUpdates): void {
+    const settings = agentHubOrbSettingsFromBotEdit(bot, updates)
+    if (Object.keys(settings).length) {
+      this.store?.updateSettings?.(settings, { notifyListeners: true })
+    }
   }
 
   getAgentHubCaller(handle: string): AgentHubCaller | null {

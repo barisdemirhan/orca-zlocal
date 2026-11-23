@@ -43,7 +43,7 @@ let db: InstanceType<typeof OrchestrationDb>
 
 function context(): Pick<RpcContext, 'runtime' | 'pairedDeviceId'> {
   const runtime = {
-    bots: { enabled: () => true, list: () => [bot] },
+    bots: { enabled: () => true, assertEnabled: () => {}, list: () => [bot] },
     lookAround: { botOfLook: () => null, botOfTidyUp: () => null },
     botItems: { chatSource: () => ({ kind: 'side', title: 'Chat' }) },
     getOrchestrationDb: () => db

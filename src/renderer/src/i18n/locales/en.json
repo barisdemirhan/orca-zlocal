@@ -20834,6 +20834,7 @@
         "allAgents": "All agents",
         "today": "Today",
         "yesterday": "Yesterday",
+        "archivedBeforeBot": "Before the Orb bot",
         "noConversations": "No conversations found",
         "historyFailed": "Could not load conversations. Try again.",
         "disabled": "Enable Agent control to talk to Orb",
@@ -25724,6 +25725,7 @@
       "all": "All terminals",
       "agents": "Agents",
       "shownInMirror": "Shown in a mirror",
+      "shownInOrb": "Shown in the Orb window",
       "bringBack": "Bring back"
     },
     "inbox": {

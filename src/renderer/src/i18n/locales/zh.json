@@ -19791,6 +19791,7 @@
         "allAgents": "所有智能体",
         "today": "今天",
         "yesterday": "昨天",
+        "archivedBeforeBot": "Orb 机器人之前",
         "noConversations": "未找到对话",
         "historyFailed": "无法加载对话。请重试。",
         "disabled": "启用代理控制以与 Orb 对话",
@@ -24491,6 +24492,7 @@
       "all": "所有终端",
       "agents": "智能体",
       "shownInMirror": "已显示在镜像窗口中",
+      "shownInOrb": "在 Orb 窗口中显示",
       "bringBack": "恢复显示"
     },
     "inbox": {

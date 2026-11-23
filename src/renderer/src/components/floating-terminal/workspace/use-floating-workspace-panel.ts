@@ -36,7 +36,8 @@ export function useFloatingWorkspacePanel() {
   )
   const statusBarVisible = useAppStore((s) => s.statusBarVisible)
   const visibleTabCount = useAppStore(selectFloatingVisibleTabCount)
-  const orbPanelOpen = useAgentHubOrbPanel((s) => s.session !== null)
+  // Only an Orb chat that still lives in the floating workspace needs that panel mounted.
+  const orbNeedsPanel = useAgentHubOrbPanel((s) => s.session !== null && !s.session.workspaceId)
 
   // Why: floating workspace is a transient overlay; hotkey minimize returns focus to the surface the user came from.
   const returnFocusRef = useRef<HTMLElement | null>(null)
@@ -125,7 +126,7 @@ export function useFloatingWorkspacePanel() {
     }
   }, [settingsHydrated, enabled, setOpenWithFocus])
 
-  const shouldMountPanel = (enabled && (open || visibleTabCount > 0)) || orbPanelOpen
+  const shouldMountPanel = (enabled && (open || visibleTabCount > 0)) || orbNeedsPanel
   const showToggleButton = enabled && (triggerLocation === 'floating-button' || !statusBarVisible)
   // Stable identity lets memoized root surfaces skip the App render each workspace switch causes.
   return useMemo(

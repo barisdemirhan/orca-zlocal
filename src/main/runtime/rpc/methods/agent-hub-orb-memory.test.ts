@@ -114,7 +114,9 @@ describe('Orb memory proposals', () => {
           caller: { kind: 'local-cli' }
         }
       )
-    ).rejects.toMatchObject({ message: 'Only the Orb can propose a memory' })
+    ).rejects.toMatchObject({
+      message: 'Only the Orb proposes memories, from its Home Chat in the Orb window'
+    })
     suggestions = false
     await expect(propose('Another fact')).rejects.toMatchObject({ code: 'disabled_by_user' })
   })

@@ -36,13 +36,12 @@ export function homeBotName(
   store:
     | {
         getSettings?: () => Partial<Pick<GlobalSettings, 'botsEnabled'>>
-        getBots?: () => readonly Pick<Bot, 'name' | 'folderWorkspaceId'>[]
+        getBots?: () => readonly Pick<Bot, 'name' | 'folderWorkspaceId' | 'role'>[]
       }
     | null
     | undefined,
   workspaceId: string
 ): string | null {
-  return isBotsEnabled(store?.getSettings?.())
-    ? (botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)?.name ?? null)
-    : null
+  const bot = botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)
+  return bot && (bot.role === 'orb' || isBotsEnabled(store?.getSettings?.())) ? bot.name : null
 }

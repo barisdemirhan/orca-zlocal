@@ -373,7 +373,7 @@ export default function TabGroupPanel({
         className="relative flex-1 min-h-0 overflow-hidden"
         style={bodyAnchorStyle}
       >
-        <AgentHubBorrowedTerminal worktreeId={worktreeId} groupId={groupId} />
+        <AgentHubBorrowedTerminal worktreeId={worktreeId} groupId={groupId} tabId={activeTab?.id} />
         {/* Why: empty anchor so the agent-sessions tour reads as a terminal-area tip, not toolbar chrome. */}
         {isFocused ? (
           <div

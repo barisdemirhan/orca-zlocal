@@ -14,6 +14,10 @@ import { botHomeFolder } from '../../bots/bot-home'
 import type { BotController } from '../../bots/bot-controller'
 import { createBotFromTemplate, type BotTemplateCreateDeps } from '../../bots/bot-template-create'
 import { AGENT_HUB_ORB_BOT_USER_FILE } from './agent-hub-orb-bot-preamble'
+import {
+  agentHubOrbAvatarColorUpdate,
+  agentHubOrbTintAvatarColor
+} from './agent-hub-orb-bot-settings'
 import { getAgentHubOrbDirectory } from './agent-hub-orb-folder-path'
 import { parseAgentHubOrbMemory } from './agent-hub-orb-identity-files'
 import { agentHubOrbPermissionMode } from './agent-hub-orb-permission-settings'
@@ -109,7 +113,11 @@ function settingsUpdates(
   settings: AgentHubSettings
 ): BotHostUpdates {
   const updates: BotHostUpdates = {}
-  const { name } = normalizeAgentHubOrbIdentitySettings(settings)
+  const { name, tint } = normalizeAgentHubOrbIdentitySettings(settings)
+  const avatarColor = agentHubOrbAvatarColorUpdate(bot, tint)
+  if (avatarColor) {
+    updates.avatarColor = avatarColor
+  }
   const taken = bots.some(
     (entry) => entry.id !== bot.id && entry.name.toLowerCase() === name.toLowerCase()
   )
@@ -147,9 +155,11 @@ async function makeOrbBot(deps: AgentHubOrbBotDeps, legacy: string): Promise<Bot
   const chosen = normalizeAgentHubOrbSettings(settings)
   const agent = isBotAgent(chosen.agent) ? chosen.agent : 'claude'
   const mode = agentHubOrbPermissionMode(settings, agent)
+  const { name, tint } = normalizeAgentHubOrbIdentitySettings(settings)
   const bot = await createBotFromTemplate(deps.createDeps(), {
-    name: normalizeAgentHubOrbIdentitySettings(settings).name,
+    name,
     agent,
+    avatarColor: agentHubOrbTintAvatarColor(tint),
     ...(mode ? { permissionMode: mode } : {}),
     ...(chosen.model ? { launch: { model: chosen.model } } : {}),
     fromTemplate: ORB_TEMPLATE

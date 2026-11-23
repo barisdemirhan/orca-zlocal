@@ -1,5 +1,5 @@
 import type { AgentChatPermissionMode } from '../../../shared/agent-launch/permissions/agent-chat-permission-mode'
-import type { AgentHubOrbSession } from '../../../shared/agent-hub-orb'
+import type { AgentHubOrbConversation, AgentHubOrbSession } from '../../../shared/agent-hub-orb'
 import {
   AGENT_HUB_ORB_PI_PERMISSION_REASON,
   agentHubOrbSupportsAsk,
@@ -14,6 +14,7 @@ import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { agentHubOrbPermissionMode } from './agent-hub-orb-permission-settings'
 import { requireIdleAgentHubOrbSession } from './agent-hub-orb-settings-transition'
 import { releaseAgentHubOrbOperations } from './agent-hub-orb-session-close'
+import { listAgentHubOrbConversations } from './agent-hub-orb-history'
 import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
 
 type OrbSettings = ReturnType<typeof normalizeAgentHubOrbSettings>
@@ -91,13 +92,27 @@ export async function openAgentHubOrbBotSession(input: {
   }
 }
 
-/** The Orb bot keeps one Home chat; older floating chats stay in the Bots history. */
-export function agentHubOrbBotRecords(
+/** The Orb bot's Home chat, then the floating chats from before it, kept as an archive that opens
+ *  each one as a tab where it ran. */
+export async function listAgentHubOrbBotConversations(
   host: StructuredAgentSessionHost,
-  bot: Bot
-): AgentSessionRecord[] {
+  bot: Bot,
+  floating: AgentSessionRecord[],
+  limit: number
+): Promise<AgentHubOrbConversation[]> {
   const home = bot.chatSessionId ? host.deps.store.getRecord(bot.chatSessionId) : null
-  return home ? [home] : []
+  const archived = new Map(
+    floating.map((record) => [record.sessionId, record.location.workspaceId])
+  )
+  const listed = await listAgentHubOrbConversations(
+    host,
+    home ? [home, ...floating] : floating,
+    limit
+  )
+  return listed.map((entry) => {
+    const workspaceId = archived.get(entry.sessionId)
+    return workspaceId ? { ...entry, archivedWorkspaceId: workspaceId } : entry
+  })
 }
 
 /** Stops the Home chat (its history stays) and frees the operations it held. */

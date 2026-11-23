@@ -25,7 +25,7 @@ import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
 import {
-  agentHubOrbBotRecords,
+  listAgentHubOrbBotConversations,
   agentHubOrbBotSession,
   closeAgentHubOrbBotChat,
   openAgentHubOrbBotSession,
@@ -174,8 +174,9 @@ export class AgentHubOrbSessionManager {
     this.requireEnabled()
     const host = await this.ensureHost()
     const bot = this.botChats?.find()
-    const records = bot ? agentHubOrbBotRecords(host, bot) : this.orbRecords(host)
-    return listAgentHubOrbConversations(host, records, limit)
+    return bot
+      ? listAgentHubOrbBotConversations(host, bot, this.orbRecords(host), limit)
+      : listAgentHubOrbConversations(host, this.orbRecords(host), limit)
   }
 
   private async openOnce(params: AgentHubOrbOpenParams): Promise<AgentHubOrbSession> {

@@ -21,7 +21,6 @@ export async function checkedWorkerOrigin(
   if (!origin.startsWith(BOT_ITEM_ORIGIN_PREFIX)) {
     throw new BotItemError('invalid_argument', 'A worker origin is set by `worker-start --item`.')
   }
-  context.runtime.bots.assertEnabled()
   const sessionId = sessionCallerOf(context.orchestrationCaller)?.sessionId ?? undefined
   // The caller's session comes from its credentials, not its say-so.
   const writer = itemsWriter(sessionId, { runtime: context.runtime, pairedDeviceId: undefined })

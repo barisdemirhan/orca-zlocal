@@ -32,7 +32,6 @@ export type BotItemWriteResult = {
 /** Stops a write when the caller is not a bot chat, before any store work. The writer is the session
  *  the host verified; a different `callerSessionId` is refused. */
 export function writerOf(params: { callerSessionId?: string }, context: RpcContext): BotItemWriter {
-  context.runtime.bots.assertEnabled()
   const sessionId = sessionCallerOf(context.orchestrationCaller)?.sessionId ?? undefined
   if (
     !sessionId ||

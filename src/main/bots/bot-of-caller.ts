@@ -18,12 +18,15 @@ export function botOfCaller(
   callerSessionId: string | undefined,
   pairedDeviceId: string | undefined
 ): Bot | null {
-  if (!callerSessionId || pairedDeviceId !== undefined || !runtime.bots.enabled()) {
+  if (!callerSessionId || pairedDeviceId !== undefined) {
     return null
   }
   const bot = botOfSession(runtime.bots, callerSessionId)
   if (bot) {
-    return bot
+    return runtime.bots.enabled(bot) ? bot : null
+  }
+  if (!runtime.bots.enabled()) {
+    return null
   }
   const lookBotId = runtime.lookAround.botOfLook(callerSessionId)
   return lookBotId ? (runtime.bots.list().find((entry) => entry.id === lookBotId) ?? null) : null
@@ -48,7 +51,7 @@ export function botOfToken(
   if (!botToken || pairedDeviceId !== undefined) {
     return { kind: 'owner' }
   }
-  const botId = runtime.bots.enabled() ? relay.botOf(botToken) : null
+  const botId = relay.botOf(botToken)
   const bot = botId ? runtime.bots.list().find((entry) => entry.id === botId) : undefined
-  return bot ? { kind: 'bot', bot } : { kind: 'ended' }
+  return bot && runtime.bots.enabled(bot) ? { kind: 'bot', bot } : { kind: 'ended' }
 }

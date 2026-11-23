@@ -30,6 +30,8 @@ export type AgentHubOrbConversation = {
   startedAt: number
   lastActiveAt: number
   lastReply?: string
+  /** A floating chat from before the Orb bot: it opens as a tab in this workspace, not in the Orb. */
+  archivedWorkspaceId?: string
 }
 export type AgentHubOrbApi = {
   open(params?: AgentHubOrbOpenParams): Promise<AgentHubOrbSession>
