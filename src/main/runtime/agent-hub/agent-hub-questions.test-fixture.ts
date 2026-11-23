@@ -3,7 +3,9 @@ import type { RuntimeTerminalSend } from '../../../shared/terminal/runtime/runti
 import type { PtyLivenessVerdict } from '../../../shared/terminal/pty/lifecycle/pty-liveness-verdict'
 import type { LaunchedAgentForeground } from '../terminal/wait/launched-agent-foreground'
 import type { HubQuestionTerminal } from './agent-hub-questions'
-import { PANE } from '../../external-conversations/external-conversation.test-fixture'
+
+export const WORKTREE = 'repo-1::/work/a'
+export const PANE = 'tab-1:11111111-1111-4111-8111-111111111111'
 
 /** A terminal that records the raw keys an answer writes, and can exit or be replaced. */
 export function fakeTerminal() {

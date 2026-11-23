@@ -4,6 +4,7 @@ import { SIDEBAR_INPUT_METHODS } from './sidebar-inputs/sidebar-inputs'
 import { AGENT_HUB_METHODS } from './agent-hub'
 import { AGENT_HUB_ORB_METHODS } from './agent-hub-orb'
 import { AGENT_HUB_ORB_MEMORY_METHODS } from './agent-hub-orb-memory'
+import { SIDEBAR_REPO_ICON_METHODS } from './sidebar-inputs/sidebar-repo-icons'
 import { ORCAD_TERMINAL_CENSUS_METHODS } from './orcad/orcad-terminal-census'
 import { ORCAD_MIGRATION_METHODS } from './orcad/orcad-migration'
 import { SESSION_TERMINAL_SCROLLBACK_METHODS } from './terminal/session-terminal-scrollback'
@@ -28,6 +29,7 @@ import { BROWSER_CLIENT_FILE_CHANNEL_METHODS } from './browser/browser-client-fi
 import { BROWSER_NETWORK_TUNNEL_METHODS } from './browser/browser-network-tunnel'
 import { ORCHESTRATION_METHODS } from './orchestration/orchestration'
 import { NOTIFICATION_METHODS } from './notifications/notifications'
+import { PAIRED_SERVER_ASKS_METHODS } from './paired-server-asks/paired-server-asks-methods'
 import { STATS_METHODS } from './host-management/stats'
 import { USAGE_ANALYTICS_METHODS } from './host-management/usage-analytics'
 import { DIAGNOSTICS_METHODS } from './host-management/diagnostics'
@@ -133,6 +135,7 @@ const CORE_RPC_METHODS = [
   ...AGENT_HUB_ORB_METHODS,
   ...AGENT_HUB_ORB_MEMORY_METHODS,
   ...STATUS_METHODS,
+  ...PAIRED_SERVER_ASKS_METHODS,
   ...DESKTOP_WINDOW_METHODS,
   ...ORCAD_TERMINAL_CENSUS_METHODS,
   ...ORCAD_MIGRATION_METHODS,
@@ -258,6 +261,7 @@ const SERVICE_RPC_METHODS = [
   ...MOBILE_PROJECT_SECTIONS_METHODS,
   // Switch point: a window-fed build publishes no sidebar input.
   ...(ORCA_SIDEBAR_INPUTS_IS_MAIN ? SIDEBAR_INPUT_METHODS : []),
+  ...SIDEBAR_REPO_ICON_METHODS,
   ...UPDATER_METHODS,
   ...AUTOMATIC_WORK_METHODS
 ] as const

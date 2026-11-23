@@ -126,6 +126,8 @@ export const runtimeEnvironmentsApi = {
     timeoutMs?: number
     expectedEnvironmentPairingRevision?: number
     expectedEnvironmentRuntimeId?: string
+    background?: boolean
+    wake?: boolean
   }): Promise<RuntimeRpcResponse<unknown>> => ipcRenderer.invoke('runtimeEnvironments:call', args),
   cancelSubscription: (args: { subscriptionId: string }): Promise<void> =>
     cancelRuntimeEnvironmentSubscriptionFromPreload(ipcRenderer, args.subscriptionId),
@@ -140,6 +142,8 @@ export const runtimeEnvironmentsApi = {
       timeoutMs?: number
       expectedEnvironmentPairingRevision?: number
       expectedEnvironmentRuntimeId?: string
+      background?: boolean
+      wake?: boolean
     },
     callbacks: {
       onResponse: (response: RuntimeRpcResponse<unknown>) => void

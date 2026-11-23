@@ -75,6 +75,12 @@ export class OrchestrationRequestEvidence {
         compatibilityInvocationId: request.requestId ?? base.compatibilityInvocationId
       }
     }
+    // A worker's own terminal or chat names itself, so the terminal it creates closes with it.
+    if ((method === 'terminal.create' || method === 'terminal.split') && !request.remote) {
+      return {
+        orchestrationCompatibilityEvidence: this.orchestration.orchestrationCompatibilityEvidence
+      }
+    }
     // A write into another session names the chat it came from.
     if (
       SESSION_WRITE_METHODS.has(method) &&

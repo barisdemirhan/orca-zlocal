@@ -1,6 +1,6 @@
-import { AgentHookServerStatusHookLifecycle } from './server-status-hook-lifecycle'
+import { AgentHookServerClaudeStatusLineModel } from './server-claude-statusline-model'
 
-export abstract class AgentHookServerRuntimeStateReset extends AgentHookServerStatusHookLifecycle {
+export abstract class AgentHookServerRuntimeStateReset extends AgentHookServerClaudeStatusLineModel {
   protected resetHookRuntimeState(): void {
     this.clearAllAssistantMessageRetries()
     this.hookSilenceRechecks.clear()

@@ -24,7 +24,8 @@ export const Question = z.object({
   multiSelect: z.boolean(),
   options: z.array(PromptOption),
   freeTextQuestionId: z.string().optional(),
-  freeTextInput: FreeTextInput.optional()
+  freeTextInput: FreeTextInput.optional(),
+  skippable: z.literal(true).optional()
 })
 
 export const Resolution = z.object({

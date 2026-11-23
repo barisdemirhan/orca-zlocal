@@ -1,7 +1,7 @@
 // A bot's sessions run for the bot, not for a tab: closing one's tab hides it and its agent keeps going.
 import type { Bot } from '../../shared/bot-types'
 import { botOfHomeWorkspace } from '../../shared/bots/bot-homes'
-import { isBotActive } from '../../shared/bots-switch'
+import { areHostBotsEnabled } from './bot-team-policy'
 import type { GlobalSettings } from '../../shared/settings/global-settings-types'
 import type { StructuredAgentSessionHost } from '../native-chat/agent-session-wire/host/structured-agent-session-host'
 import { getStructuredAgentSessionHost } from '../native-chat/agent-session-wire/host/structured-agent-session-registry'
@@ -43,5 +43,5 @@ export function homeBotName(
   workspaceId: string
 ): string | null {
   const bot = botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)
-  return bot && isBotActive(bot, store?.getSettings?.()) ? bot.name : null
+  return bot && (bot.role === 'orb' || areHostBotsEnabled(store?.getSettings?.())) ? bot.name : null
 }

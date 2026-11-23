@@ -56,6 +56,7 @@ import { cancelStructuredPrompt } from './session/structured/writes/native-chat-
 import { useNativeChatBotHome } from './NativeChatBotHomeScope'
 import { useStructuredAgentSessionHostExecution } from '@/components/native-chat/session/status/structured-agent-session-status-hooks'
 import { useNativeChatPaneFork } from '@/components/native-chat/messages/actions/use-native-chat-fork'
+import { NativeChatDock, NativeChatDockTranscript } from './pane/dock/NativeChatDock'
 import { useAppStore } from '@/store/index'
 import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import { useNativeChatStructuredComposerTransport } from '@/components/native-chat/composer/submit/use-native-chat-structured-composer-transport'
@@ -74,7 +75,6 @@ import { NativeChatHostSetupContext } from '@/components/native-chat/host-access
 import * as Orb from './NativeChatStructuredOrbSlots'
 import type { NativeChatComposerHandle } from './composer/native-chat-composer-types'
 import {
-  NativeChatPartyWorkerApprovalStack,
   NativeChatWorkerApprovalTimeline,
   nativeChatWorkerApprovalParty
 } from './worker-approvals/NativeChatWorkerApprovals'
@@ -175,14 +175,13 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   const pageBot = useBotForWorkspace(ownerWorktreeId ?? null)
   const botServerDown = pageBot !== null && hostOutage !== null && hostOutage.kind !== 'stopped'
   const subagents = useStructuredNativeChatSubagents({ ...props, paneKey, controller })
-  const subagentOpen = subagents.openId !== null
   // A subagent's view takes the composer's place; the main agent's prompts still show.
   const composerShown =
     (prompt === null || promptsUnanswerable) &&
     readFailure?.final !== true &&
     !botServerDown &&
-    !subagentOpen
-  const slotNoticesHidden = composerShown || subagentOpen
+    subagents.openId === null
+  const slotNoticesHidden = composerShown || subagents.openId !== null
   // An owned prompt keeps its card; otherwise a missing program leaves the composer disabled.
   const installLayout = viewState.kind === 'empty' ? 'hero' : 'strip'
   const install = useNativeChatInstallSlot(props, agentLabel, installLayout)
@@ -259,9 +258,13 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
     <NativeChatAntigravityAuthProvider target={install.antigravityAuth}>
       <NativeChatSlackMirrorContext.Provider value={slackMirror}>
         <NativeChatCrewContext.Provider value={crew}>
-          <NativeChatSurface surface={surface} working={controller.isWorking}>
+          <NativeChatSurface
+            surface={surface}
+            working={controller.isWorking}
+            className="[container-type:size]"
+          >
             {nativeChatPaneHeader(props, ownerWorktreeId, surface.appearance.colorScheme, handOff)}
-            <div className="relative flex min-h-0 flex-1 flex-col">
+            <NativeChatDockTranscript>
               <NativeChatContextClearFade
                 // A read failure stays in view: no divider may come to end the fade.
                 clearing={controller.contextClear.clearing && viewState.kind !== 'error'}
@@ -330,27 +333,15 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                   </NativeChatRowActionsProvider>
                 )}
               </NativeChatContextClearFade>
-            </div>
-            {readFailure?.final ? null : (
+            </NativeChatDockTranscript>
+            <NativeChatDock
+              shown={!readFailure?.final}
+              keepFloatingTerminalTriggerClear={props.isVisible}
+            >
               <Orb.ComposerState sessionId={props.sessionId} controller={controller}>
-                {/* Keep queued drafts outside the transcript and above the background-task dock. */}
-                <NativeChatQueuedMessageList
-                  controller={submits.queuedMessages}
-                  chatWorktreeId={ownerWorktreeId ?? null}
-                  agentName={agentLabel}
-                  statedFailures={startFailures}
-                  steerHeld={bot.stopControls.stopping || hostHeld}
-                  focusComposer={focusComposer}
-                  editAttachTo={{ terminalTabId: props.tabId, agent: props.agent, transport }}
-                />
-                {subagents.strip}
-                {/* Workers' open prompts stay pinned here, above this chat's own prompt. */}
-                <NativeChatPartyWorkerApprovalStack
-                  party={workerApprovalParty}
-                  target={props.target}
-                  isVisible={props.isVisible}
-                />
-                {prompt || subagentOpen ? null : (
+                {subagents.dock}
+                {subagents.pairedAsks}
+                {prompt || subagents.openId !== null ? null : (
                   <NativeChatStructuredComposerTabStrips
                     tabId={props.tabId}
                     runtimeContext={imageRuntimeContext}
@@ -376,6 +367,15 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                   />
                 </Orb.PromptSlot>
                 {nativeChatStructuredAsyncQuestion(props, controller, session, transport, submits)}
+                <NativeChatQueuedMessageList
+                  controller={submits.queuedMessages}
+                  chatWorktreeId={ownerWorktreeId ?? null}
+                  agentName={agentLabel}
+                  statedFailures={startFailures}
+                  steerHeld={bot.stopControls.stopping || hostHeld}
+                  focusComposer={focusComposer}
+                  editAttachTo={{ terminalTabId: props.tabId, agent: props.agent, transport }}
+                />
                 {botServerDown && hostOutage ? (
                   <BotServerOutageCard key={hostOutage.environmentId} outage={hostOutage} />
                 ) : null}
@@ -406,7 +406,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                   />
                 ) : null}
               </Orb.ComposerState>
-            )}
+            </NativeChatDock>
             {handOff.dialog}
           </NativeChatSurface>
         </NativeChatCrewContext.Provider>

@@ -80,7 +80,7 @@ export function usePreviewAppearance(
   terminalRef: React.RefObject<Terminal | null>,
   settings: GlobalSettings | null,
   macOptionIsMeta: boolean,
-  fontReady?: boolean
+  fontLoadKey?: string
 ): void {
   useEffect(() => {
     const terminal = terminalRef.current
@@ -89,5 +89,5 @@ export function usePreviewAppearance(
     }
     Object.assign(terminal.options, buildPreviewAppearanceOptions(settings, macOptionIsMeta))
     syncPreviewTerminalLigatures(terminal, settings)
-  }, [terminalRef, settings, macOptionIsMeta, fontReady])
+  }, [terminalRef, settings, macOptionIsMeta, fontLoadKey])
 }

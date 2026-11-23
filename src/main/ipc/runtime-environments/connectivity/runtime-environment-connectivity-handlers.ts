@@ -3,31 +3,25 @@ import { ipcMain } from 'electron'
 import {
   addEnvironmentFromPairingCode,
   listEnvironments,
-  removeEnvironment,
   resolveEnvironment
 } from '../../../../shared/remote-runtime/host-store/runtime-environment-store'
 import {
   redactRuntimeEnvironment,
-  type PublicKnownRuntimeEnvironment,
-  type RuntimeEnvironmentRemoval
+  type PublicKnownRuntimeEnvironment
 } from '../../../../shared/remote-runtime/host-catalog/runtime-environments'
-import {
-  connectThroughOwningService,
-  removeThroughOwningService
-} from './runtime-environment-host-service-ops'
+import { connectThroughOwningService } from './runtime-environment-host-service-ops'
 import type { RuntimeRpcResponse } from '../../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
 import type { RuntimeStatus } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
-import type { Store } from '../../../persistence/loading-store/store'
-import { retireRemovedRuntimeEnvironment } from '../catalog/runtime-environment-removal-cleanup'
-import { removeRedundantManagedPairing } from '../catalog/runtime-environment-redundant-managed-removal'
 import { readSettingsWithRuntimeEnvironmentPreference } from '../catalog/runtime-environment-preference'
 import { verifyAndAddRuntimeEnvironmentFromPairingCode } from '../pairing/runtime-environment-pairing-verification'
 import { publishVerifiedPairing } from '../pairing/runtime-environment-verified-pairing-publish'
-import {
-  closeRemoteRuntimeRequestConnection,
-  getRuntimeEnvironmentStatusSnapshots
-} from '../connections/runtime-environment-request-connections'
+import { getRuntimeEnvironmentStatusSnapshots } from '../connections/runtime-environment-request-connections'
 import { clearRuntimeEnvironmentManualDisconnect } from './runtime-environment-manual-disconnect'
+import {
+  closeLegacySelectorTransport,
+  registerRuntimeEnvironmentRemoveHandler,
+  type ConnectivityHandlerOptions
+} from './runtime-environment-remove-handler'
 import { getRuntimeEnvironmentStatus } from '../status/runtime-environment-status-probe'
 import { noteRuntimeEnvironmentConnectRequested } from '../pairing/runtime-environment-pairing-refusal-registry'
 import { publicRuntimeEnvironmentWithHostKey } from '../catalog/runtime-environment-host-key'
@@ -41,12 +35,6 @@ import {
   assertWslHostReachable,
   isGatedOffWslHost
 } from '../../../wsl/host-lifecycle/wsl-host-gate'
-
-type ConnectivityHandlerOptions = {
-  store: Store
-  getUserDataPath: () => string
-  invalidateTransport: (environmentId: string) => Promise<void> | void
-}
 
 export function registerRuntimeEnvironmentConnectivityHandlers({
   store,
@@ -95,47 +83,7 @@ export function registerRuntimeEnvironmentConnectivityHandlers({
   ipcMain.handle('runtimeEnvironments:resolve', async (_event, args: { selector: string }) =>
     redactRuntimeEnvironment(await resolveEnvironment(getUserDataPath(), args.selector))
   )
-  ipcMain.handle(
-    'runtimeEnvironments:remove',
-    async (
-      _event,
-      args: { selector: string }
-    ): Promise<RuntimeEnvironmentRemoval | Promise<RuntimeEnvironmentRemoval>> => {
-      const environment = await resolveEnvironment(getUserDataPath(), args.selector)
-      if (store.getSettings().activeRuntimeEnvironmentId === environment.id) {
-        throw new Error(
-          'This server is the default host for new projects. Choose another one under New projects open on before removing it.'
-        )
-      }
-      // A closed gate leaves persisted WSL hosts untouched on disk.
-      assertWslHostReachable(environment)
-      const ownedRemoval = removeThroughOwningService(environment)
-      if (ownedRemoval) {
-        // A WSL host whose server Remove couldn't prove stopped stays listed; say so (E11).
-        return ownedRemoval.then((serverStop) => ({
-          removed: redactRuntimeEnvironment(environment),
-          serverStop
-        }))
-      }
-      const redundantManagedRemoval = await removeRedundantManagedPairing(
-        getUserDataPath(),
-        environment
-      )
-      if (redundantManagedRemoval) {
-        closeLegacySelectorTransport(args.selector, environment.id)
-        return redundantManagedRemoval
-      }
-      const removed = await removeEnvironment(getUserDataPath(), args.selector)
-      void retireRemovedRuntimeEnvironment(
-        removed.id,
-        invalidateTransport,
-        store,
-        getUserDataPath()
-      )
-      closeLegacySelectorTransport(args.selector, removed.id)
-      return { removed: redactRuntimeEnvironment(removed) }
-    }
-  )
+  registerRuntimeEnvironmentRemoveHandler({ store, getUserDataPath, invalidateTransport })
   ipcMain.handle(
     'runtimeEnvironments:disconnect',
     async (
@@ -169,11 +117,4 @@ export function registerRuntimeEnvironmentConnectivityHandlers({
       })
     }
   )
-}
-
-function closeLegacySelectorTransport(selector: string, environmentId: string): void {
-  if (selector === environmentId) {
-    return
-  }
-  closeRemoteRuntimeRequestConnection(selector)
 }

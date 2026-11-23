@@ -10,7 +10,7 @@ import { agentHubOrbSettingsFromBotEdit } from '../agent-hub/orb/agent-hub-orb-b
 import type { Bot } from '../../shared/bot-types'
 import type { BotHostUpdates } from '../../shared/rpc-contract/bots-params'
 import type { OrchestrationDb } from './orchestration/db/orchestration-db'
-import { OrcaRuntimeWithWindowlessTerminalActivity } from './sidebar-inputs/temporal/orca-runtime-windowless-terminal-activity'
+import { OrcaRuntimeWithTerminalWorkerRestartResume } from './construction/orca-runtime-terminal-worker-restart-resume'
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
 import { registerOrbOperations } from './agent-hub/agent-hub-orb-operations'
 import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
@@ -24,7 +24,7 @@ import {
 } from '../../shared/agent-session/view/structured-agent-session-projection'
 
 /** Agent Hub ledger, Orb and pane spawn lineage, layered over the upstream runtime chain. */
-export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessTerminalActivity {
+export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithTerminalWorkerRestartResume {
   private readonly paneSpawnLineage: RuntimePaneSpawnLineage
   readonly agentHubOrb: AgentHubOrbSessionManager = createAgentHubOrbSessionManager(
     this,
@@ -51,7 +51,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessT
   )
 
   override async createTerminal(
-    ...args: Parameters<OrcaRuntimeWithWindowlessTerminalActivity['createTerminal']>
+    ...args: Parameters<OrcaRuntimeWithTerminalWorkerRestartResume['createTerminal']>
   ) {
     const terminal = await super.createTerminal(...args)
     if (!terminal.isReattach) {
@@ -61,7 +61,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessT
   }
 
   override async splitTerminal(
-    ...args: Parameters<OrcaRuntimeWithWindowlessTerminalActivity['splitTerminal']>
+    ...args: Parameters<OrcaRuntimeWithTerminalWorkerRestartResume['splitTerminal']>
   ) {
     const split = await super.splitTerminal(...args)
     this.paneSpawnLineage.record(split.handle, args[1]?.callerTerminalHandle)
@@ -69,7 +69,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessT
   }
 
   override async createManagedWorktree(
-    ...args: Parameters<OrcaRuntimeWithWindowlessTerminalActivity['createManagedWorktree']>
+    ...args: Parameters<OrcaRuntimeWithTerminalWorkerRestartResume['createManagedWorktree']>
   ) {
     const result = await super.createManagedWorktree(...args)
     if (result.startupTerminal?.handle) {
@@ -194,7 +194,7 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessT
     }
   }
 
-  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithWindowlessTerminalActivity>) {
+  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithTerminalWorkerRestartResume>) {
     super(...args)
     registerOrbOperations(this, this.agentHub.orbOperations)
     this.paneSpawnLineage = new RuntimePaneSpawnLineage({

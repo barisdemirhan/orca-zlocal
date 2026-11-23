@@ -25,6 +25,7 @@ import {
 } from '../../../shared/workspace/identity/workspace-scope'
 import { getRepoIdFromWorktreeId } from '../../../shared/worktree/id'
 import { OrcaRuntimeWithAgentHub } from '../orca-runtime-agent-hub'
+import { unrefTimer } from './orca-runtime-terminal-worker-restart-resume'
 import { getRuntimeDesktopSurface } from './runtime-desktop-surface'
 import type { AgentStatusStoreView } from '../sidebar-inputs/workspace-facts/workspace-activity-facts-producer'
 import { subscribeHookStatusTitles } from '../terminal/layout/hook-status-title-subscription'
@@ -47,12 +48,6 @@ import {
   TerminalAgentPhonePush,
   type TerminalAgentWorkspaceLabels
 } from '../push/notifications/terminal-agent-phone-push'
-
-function unrefTimer(run: () => void, delayMs: number): { cancel: () => void } {
-  const timer = setTimeout(run, delayMs)
-  timer.unref?.()
-  return { cancel: () => clearTimeout(timer) }
-}
 
 /** All hosts/builds own transition detection and windowless phone pushes. */
 export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithAgentHub {
@@ -204,7 +199,9 @@ export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithAge
       github2:
         cloud?.cloudFeatures()?.has('triggers.github2' satisfies ConnectorCloudFeature) ?? false,
       workflows:
-        cloud?.cloudFeatures()?.has('triggers.workflows' satisfies ConnectorCloudFeature) ?? false
+        cloud?.cloudFeatures()?.has('triggers.workflows' satisfies ConnectorCloudFeature) ?? false,
+      ciFinished:
+        cloud?.cloudFeatures()?.has('triggers.ci_finished' satisfies ConnectorCloudFeature) ?? false
     })
   }
 
@@ -226,7 +223,7 @@ export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithAge
         const dispatchId = this.getAgentStatusOrchestrationContextForPaneKey(paneKey)?.dispatchId
         return dispatchId ? (index?.botOfDispatch(dispatchId) ?? null) : null
       },
-      inGroupRoom: (sessionId) => this.botSessions.groupRoomOf(sessionId) !== null,
+      groupRoomOf: (sessionId) => this.botSessions.groupRoomOf(sessionId)?.group.id ?? null,
       workerPane: (paneKey) =>
         this.getAgentStatusOrchestrationContextForPaneKey(paneKey) !== undefined,
       readEveryBot: () => this.botChatTreeIndex?.readEveryBot() !== false

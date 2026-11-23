@@ -42,6 +42,7 @@ import { STRUCTURED_AGENT_SESSION_THREAD_GOAL_METHODS } from './conversation/str
 import { STRUCTURED_AGENT_SESSION_VOICE_METHODS } from '../structured-agent-session-voice'
 import { STRUCTURED_AGENT_SESSION_CONVERSATION_OUTLINE_METHODS } from './history/structured-agent-session-conversation-outline'
 import { STRUCTURED_AGENT_SESSION_ITEM_METHODS } from './history/structured-agent-session-item'
+import { STRUCTURED_AGENT_SESSION_TOOL_CALLER_METHODS } from './identity/structured-agent-session-tool-caller'
 import { STRUCTURED_AGENT_SESSION_SEND_RECORDED_METHODS } from './history/structured-agent-session-send-recorded'
 import { STRUCTURED_AGENT_SESSION_OPTIONS_READ_METHODS } from './catalog/structured-agent-session-options-read'
 import {
@@ -222,6 +223,7 @@ export const STRUCTURED_AGENT_SESSION_METHODS = [
   ...STRUCTURED_AGENT_SESSION_VOICE_METHODS,
   ...STRUCTURED_AGENT_SESSION_CONVERSATION_OUTLINE_METHODS,
   ...STRUCTURED_AGENT_SESSION_ITEM_METHODS,
+  ...STRUCTURED_AGENT_SESSION_TOOL_CALLER_METHODS,
   ...STRUCTURED_AGENT_SESSION_SEND_RECORDED_METHODS,
   ...STRUCTURED_AGENT_SESSION_CURRENT_REQUESTS_METHODS,
   ...STRUCTURED_AGENT_SESSION_ACCOUNT_USAGE_METHODS,

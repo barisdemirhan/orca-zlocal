@@ -3,7 +3,7 @@ import { reapUnconfirmedRestoredClaudeSubagents } from './claude-subagent-roster
 
 export function clearClaudeSessionGates(state: HookListenerState, paneKey: string): void {
   state.claudeSubagentRosterByPaneKey.delete(paneKey)
-  state.claudeRunningNonAgentTaskPaneKeys.delete(paneKey)
+  state.claudeRunningNonAgentTasksByPaneKey.delete(paneKey)
   state.claudeActiveSessionCronPaneKeys.delete(paneKey)
   state.claudeLaunchedBackgroundTasksByPaneKey.delete(paneKey)
 }

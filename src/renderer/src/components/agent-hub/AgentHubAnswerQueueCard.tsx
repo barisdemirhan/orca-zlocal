@@ -139,7 +139,6 @@ export function AgentHubAnswerQueueCard({
           send={send}
           finishAnswerAfterUnmount
           layout="embedded"
-          highlightRecommended
           controlRef={controlRef}
           answerInputRef={answerInputRef}
           answerTextareaRef={textareaRef}

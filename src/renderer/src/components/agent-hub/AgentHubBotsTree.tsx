@@ -122,7 +122,7 @@ export function AgentHubBotsTree({
           type="button"
           tabIndex={-1}
           onClick={() => {
-            openBotAutomation(row.automation.id, row.latestRunId ?? null)
+            openBotAutomation(bot.hostId, row.automation.id, row.latestRunId ?? null)
             onNavigate()
           }}
           className="flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-xs text-foreground hover:bg-foreground/[0.05]"

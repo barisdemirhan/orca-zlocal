@@ -318,7 +318,6 @@ export function AgentHubAttentionCard({
               finishAnswerAfterUnmount
               onDismiss={() => setDismissedNativeKey(nativeCardKey)}
               layout="embedded"
-              highlightRecommended
               controlRef={nativeControlRef}
             />
           )}

@@ -6,7 +6,7 @@ import {
 } from '../../../../shared/workspace-layout/tab-groups/tab-group-moves'
 import type { Bot } from '../../../../shared/bot-types'
 import { botOfHomeWorkspace } from '../../../../shared/bots/bot-homes'
-import { isBotActive } from '../../../../shared/bots-switch'
+import { areHostBotsEnabled } from '../../../bots/bot-team-policy'
 import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 
 type BotHomeStore = {
@@ -20,7 +20,9 @@ export function botHomeSessionId(
   workspaceId: string
 ): string | null {
   const bot = botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)
-  return bot && isBotActive(bot, store?.getSettings?.()) ? (bot.chatSessionId ?? null) : null
+  return bot && (bot.role === 'orb' || areHostBotsEnabled(store?.getSettings?.()))
+    ? (bot.chatSessionId ?? null)
+    : null
 }
 
 /** Why a pin edit on a bot's page is refused; null when allowed. Home stays pinned, side chats never pin. */

@@ -207,7 +207,6 @@ function PaneQuickReplyCard({
                 focusPanePreservingOverlays(pane)
               }}
               layout="embedded"
-              highlightRecommended
               controlRef={nativeControlRef}
               answerInputRef={nativeAnswerInputRef}
               answerTextareaRef={nativeAnswerTextareaRef}

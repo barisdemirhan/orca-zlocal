@@ -6,7 +6,6 @@ import {
   normalizeAgentStatusPayload,
   type ParsedAgentStatusPayload
 } from '../../../agent-status/contracts/agent-status-types'
-import { isAskUserQuestionTool } from '../../../agent-status/lifecycle/agent-question-answered-intent'
 import {
   mainAgentTurnInterrupted,
   type AgentLeadStatusResolution
@@ -23,7 +22,6 @@ import {
 } from './codex-subagent-transcript'
 import {
   codexApprovalUsesTurnReviewer,
-  codexTurnApprovalsAreAutoReviewed,
   reconcileCodexSubagentReviewer
 } from './codex-subagent-reviewer'
 import { normalizedTranscriptPath } from './codex-rollout-paths'
@@ -44,7 +42,11 @@ import {
   resolveCodexPaneStatus,
   setCodexMainAgentTurnState
 } from './codex-state'
-import { pendingCodexAsyncQuestion, trackCodexAsyncQuestions } from './codex-async-questions'
+import {
+  codexWaitBesideQuestion,
+  pendingCodexAsyncQuestion,
+  trackCodexAsyncQuestions
+} from './codex-async-questions'
 
 export function buildCodexStatusPayload(
   state: HookListenerState,
@@ -52,28 +54,26 @@ export function buildCodexStatusPayload(
   promptText: string,
   paneKey: string,
   hookPayload: Record<string, unknown>,
-  options: AgentLeadStatusResolution & { updateLead: boolean; sessionBoundary?: true }
+  options: AgentLeadStatusResolution & {
+    updateLead: boolean
+    sessionBoundary?: true
+    reviewerOwnsApproval?: boolean
+  }
 ): ParsedAgentStatusPayload | null {
+  const reviewed = options.reviewerOwnsApproval === true
   const toolFields = extractToolFields('codex', eventName, hookPayload)
-  if (
-    eventName === 'PermissionRequest' &&
-    codexApprovalUsesTurnReviewer(toolFields.toolName) &&
-    !isAskUserQuestionTool(toolFields.toolName) &&
-    codexTurnApprovalsAreAutoReviewed(
-      state.codexSubagentTranscriptByPaneKey.get(paneKey),
-      readFirstString(hookPayload, ['transcript_path', 'transcriptPath'])
-    )
-  ) {
+  if (reviewed) {
     // Review-owned approvals must not leave a human reply card in the shared tool snapshot.
     toolFields.interactivePrompt = undefined
   }
   const snapshot = options.updateLead
-    ? resolveToolState(state, paneKey, toolFields, {
+    ? (codexWaitBesideQuestion(state, paneKey, eventName, hookPayload, reviewed) ??
+      resolveToolState(state, paneKey, toolFields, {
         resetOnNewTurn: isNewTurnEvent('codex', eventName)
-      })
+      }))
     : (state.lastToolByPaneKey.get(paneKey) ?? {})
   const lead = state.codexLeadStateByPaneKey.get(paneKey)
-  // An approval or blocking question on screen wins; otherwise a waiting row shows the open async question.
+  // A human's approval or blocking question on screen wins; otherwise a waiting row shows the open async question.
   const asyncQuestion =
     options.stateName === 'waiting' && !snapshot.interactivePrompt
       ? pendingCodexAsyncQuestion(state, paneKey)
@@ -89,7 +89,8 @@ export function buildCodexStatusPayload(
     agentType: 'codex',
     model: lead?.model,
     toolName: asyncQuestion?.toolName ?? snapshot.toolName,
-    toolInput: snapshot.toolInput,
+    // The snapshot's input belongs to whatever tool runs now, not the question.
+    toolInput: asyncQuestion ? asyncQuestion.title : snapshot.toolInput,
     interactivePrompt: asyncQuestion?.prompt ?? snapshot.interactivePrompt,
     lastAssistantMessage: snapshot.lastAssistantMessage,
     lastAssistantMessageIsToolOutput: snapshot.lastAssistantMessageIsToolOutput,
@@ -305,6 +306,7 @@ export function normalizeCodexEvent(
   })
   return buildCodexStatusPayload(state, eventName, promptText, paneKey, hookPayload, {
     ...resolveCodexPaneStatus(state, paneKey, record),
-    updateLead: true
+    updateLead: true,
+    reviewerOwnsApproval: stateName === 'waiting' && ownedState === 'working'
   })
 }

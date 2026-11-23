@@ -40,7 +40,6 @@ export function NativeChatInteractiveCard({
   answerTextareaRef,
   answerAccessory,
   layout,
-  highlightRecommended,
   controlRef,
   finishAnswerAfterUnmount = false
 }: {
@@ -61,7 +60,6 @@ export function NativeChatInteractiveCard({
   /** Forwarded to the question card's free-text row. */
   answerAccessory?: React.ReactNode
   layout?: 'composer' | 'embedded'
-  highlightRecommended?: boolean
   /** Number-key answers: option N of a question, or approval choice N. */
   controlRef?: Ref<NativeChatInteractiveCardControl>
   /** The sender owns delivery after this short-lived card leaves. */
@@ -170,7 +168,6 @@ export function NativeChatInteractiveCard({
         answerTextareaRef={answerTextareaRef}
         answerAccessory={answerAccessory}
         layout={layout}
-        highlightRecommended={highlightRecommended}
         controlRef={questionControlRef}
         onAnswer={(selections) => {
           if (submittingRef.current) {

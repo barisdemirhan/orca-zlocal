@@ -15,11 +15,14 @@ export function NativeChatSurface({
   surface,
   working,
   children,
+  className,
   ...dataAttributes
 }: {
   surface: NativeChatSurfaceState
   working: boolean
   children: ReactNode
+  /** Extra root classes, e.g. the size container a structured chat's worker dock measures. */
+  className?: string
 } & Record<`data-${string}`, string | undefined>): React.JSX.Element {
   const dockClearance = useAgentHubDockBottomClearance(surface.rootRef)
   return (
@@ -32,7 +35,8 @@ export function NativeChatSurface({
       {...surface.rootProps}
       className={cn(
         NATIVE_CHAT_APPEARANCE_ROOT_CLASS,
-        'flex h-full min-h-0 w-full flex-col focus:outline-none'
+        'flex h-full min-h-0 w-full flex-col focus:outline-none',
+        className
       )}
       style={
         dockClearance ? { ...surface.appearance, paddingBottom: dockClearance } : surface.appearance

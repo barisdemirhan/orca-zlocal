@@ -1,9 +1,9 @@
 import { agentHookServer } from '../agent-hooks/server/agent-hook-server'
 import { AgentHubQuestions } from './agent-hub/agent-hub-questions'
-import { OrcaRuntimeWithAgentTransitions } from './construction/orca-runtime-agent-transitions'
+import { OrcaRuntimeWithAgentQuestions } from './construction/orca-runtime-agent-questions'
 
 /** Agent Hub's pane questions read the transition detector, so they sit right above it. */
-export abstract class OrcaRuntimeWithAgentHubQuestions extends OrcaRuntimeWithAgentTransitions {
+export abstract class OrcaRuntimeWithAgentHubQuestions extends OrcaRuntimeWithAgentQuestions {
   readonly agentHubQuestions = new AgentHubQuestions({
     readHookRow: (paneKey) => this.agentTransitions.latestRow(paneKey),
     panesNeedingYou: () => this.agentTransitions.panesNeedingYou(),

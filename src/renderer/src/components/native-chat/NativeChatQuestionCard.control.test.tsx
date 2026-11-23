@@ -3,6 +3,7 @@
 import { act, createRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import {
   NativeChatQuestionCard,
   type NativeChatQuestionCardControl
@@ -29,19 +30,19 @@ afterEach(() => {
 
 function render(
   prompt: AskPrompt,
-  onAnswer: (selections: AskAnswerSelection[]) => void,
-  props: { highlightRecommended?: boolean } = {}
+  onAnswer: (selections: AskAnswerSelection[]) => void
 ): React.RefObject<NativeChatQuestionCardControl | null> {
   const controlRef = createRef<NativeChatQuestionCardControl>()
   act(() => {
     root.render(
-      <NativeChatQuestionCard
-        prompt={prompt}
-        onAnswer={onAnswer}
-        onCancel={() => {}}
-        controlRef={controlRef}
-        {...props}
-      />
+      <TooltipProvider>
+        <NativeChatQuestionCard
+          prompt={prompt}
+          onAnswer={onAnswer}
+          onCancel={() => {}}
+          controlRef={controlRef}
+        />
+      </TooltipProvider>
     )
   })
   return controlRef

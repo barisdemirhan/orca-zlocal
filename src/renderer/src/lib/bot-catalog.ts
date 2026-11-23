@@ -15,6 +15,10 @@ import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
+import {
+  isOrcaCloudTeamFeatureBlocked,
+  ORCA_CLOUD_TEAM_POLICY_FLAGS
+} from '../../../shared/orca-profiles/orca-cloud-team-policy'
 import { activateAndRevealFolderWorkspace } from './workspace/activation/worktree-activation'
 import {
   activateStructuredAgentSessionById,
@@ -95,11 +99,8 @@ export function useBotHomeWorkspaces(
   const selectHomes = useMemo(() => createBotHomesSelector([...bots, ...groups]), [bots, groups])
   const homes = useAppStore(useShallow(selectHomes))
   // The listed hosts change when a server is first listed from its kept read.
-  const hostIds = useSyncExternalStore(
-    enabled ? subscribe : subscribeToNothing,
-    readBotHostIds,
-    readBotHostIds
-  )
+  const subscribeHosts = enabled ? subscribe : subscribeToNothing
+  const hostIds = useSyncExternalStore(subscribeHosts, readBotHostIds, readBotHostIds)
   return useMemo(() => withKeptBotHomes(homes, hostIds), [homes, hostIds])
 }
 
@@ -142,11 +143,8 @@ export function useCardBot(botId: string): { bot: Bot | null; ref: BotRef } {
 
 /** `readHasBot`, or null while `enabled` is false. */
 export function useHasBot(enabled: boolean): boolean | null {
-  return useSyncExternalStore(
-    enabled ? subscribe : subscribeToNothing,
-    enabled ? readHasBot : readNoBot,
-    enabled ? readHasBot : readNoBot
-  )
+  const read = enabled ? readHasBot : readNoBot
+  return useSyncExternalStore(enabled ? subscribe : subscribeToNothing, read, read)
 }
 
 /** The bot's waits still waiting, from the last list read; none from an older host. */
@@ -190,12 +188,19 @@ export function useBotHostConnectorStatus(
 
 /** Settings › Bots › Enable bots, on unless turned off. Off hides every bot surface; the bots and their folders stay. */
 export function useBotsEnabled(): boolean {
-  return useAppStore((state) => state.settings?.botsEnabled !== false)
+  return useAppStore(botsEnabled)
 }
 
 /** `useBotsEnabled` for code outside React. */
 export function readBotsEnabled(): boolean {
-  return useAppStore.getState().settings?.botsEnabled !== false
+  return botsEnabled(useAppStore.getState())
+}
+
+function botsEnabled(state: AppState): boolean {
+  return (
+    state.settings?.botsEnabled !== false &&
+    !isOrcaCloudTeamFeatureBlocked(state.orcaProfileAuthStatus, ORCA_CLOUD_TEAM_POLICY_FLAGS.bots)
+  )
 }
 
 /** Makes the bot on `hostId`; it answers stamped with that host, so calls about it go there. */

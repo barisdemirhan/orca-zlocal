@@ -32,7 +32,6 @@ import {
   inspectProcessFromRuntimeController,
   probePtyLivenessFromRuntimeController,
   resizePtyFromRuntimeController,
-  serializeProviderBufferFromRuntimeController,
   waitForRendererSerializerFromRuntimeController,
   writePtyFromRuntimeController
 } from './operations'
@@ -40,6 +39,10 @@ import {
   getPtyAvailabilityFromRuntimeController,
   hasPtyFromRuntimeController
 } from './ready-provider-reads'
+import {
+  serializeProviderBufferFromRuntimeController,
+  supportsVisibleProjectionSnapshotFromRuntimeController
+} from './provider-buffer-snapshot'
 import { supportsForegroundProcessEvidenceFromRuntimeController } from './foreground-process-evidence-capability'
 import {
   listProcessesFromRuntimeController,
@@ -116,8 +119,8 @@ export function installPtyRuntimeController(deps: PtyRuntimeControllerDeps): voi
       // Mobile needs exact screen state and geometry before rendering live TUI output.
       return requestSerializedBuffer(ptyId, opts)
     },
-    serializeProviderBuffer: (ptyId, opts) =>
-      serializeProviderBufferFromRuntimeController(ptyId, opts),
+    serializeProviderBuffer: serializeProviderBufferFromRuntimeController,
+    supportsVisibleProjectionSnapshot: supportsVisibleProjectionSnapshotFromRuntimeController,
     hasRendererSerializer: (ptyId) => hasRendererSerializerFromRuntimeController(ptyId),
     getRendererSerializerGeneration: (ptyId) =>
       getRendererSerializerGenerationFromRuntimeController(ptyId),
