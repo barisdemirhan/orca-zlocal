@@ -5,6 +5,7 @@ import type { AgentHubOrbState } from './agent-hub-orb-state'
 import type { AgentHubInboxRequest } from './agent-hub-requests-store'
 import { useAgentHubOrbBotMention } from './use-agent-hub-orb-bot-mention'
 import { botMentionToken } from '../../../../shared/bots/bot-mention-context'
+import { botMentionServer } from '../bots/bot-mention-server'
 import { useAgentHubOrbQuickDictation } from './use-agent-hub-orb-quick-dictation'
 
 const AGENT_HUB_ORB_STALL_MS = 1_500
@@ -84,7 +85,10 @@ export function useAgentHubOrbQuickWrite({
   const submit = useCallback((): void => {
     const text = inputRef.current?.value ?? ''
     // Why: the same token a native chat @bot pick sends, so the host adds how to reach the bot.
-    const sent = mentionedBot && text.trim() ? `${botMentionToken(mentionedBot)} ${text}` : text
+    const token = mentionedBot
+      ? botMentionToken(mentionedBot, undefined, botMentionServer(mentionedBot.hostId) ?? undefined)
+      : null
+    const sent = token && text.trim() ? `${token} ${text}` : text
     if (tabId && sendAgentHubOrbText(tabId, sent)) {
       setDraft('')
       clearMention()
