@@ -24,11 +24,14 @@ import {
 } from './agent-hub-answered-cards'
 import { agentHubStateSince } from './agent-hub-lists'
 import { useAgentHubLivePty } from './use-agent-hub-live-pty'
+import { requestBackgroundTerminalWorktreeMount } from '../terminal/workspace-mounting/background-terminal-worktree-mount'
 
 /** A key pressed as a card appears was meant for whatever it replaced. */
 export const AGENT_HUB_CARD_KEY_GUARD_MS = 400
 /** How long an answered small surface stays, so what went out can be read. */
 export const AGENT_HUB_ANSWERED_VISIBLE_MS = 1000
+/** How long past its expected end an answer may stay unsettled before it is handed back. */
+export const AGENT_HUB_ANSWER_SETTLE_GRACE_MS = 8_000
 
 const FINISH_ANSWER_AFTER_UNMOUNT = { finishAnswerAfterUnmount: true }
 
@@ -135,6 +138,43 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
   // Why re-read: another surface may have answered since this one rendered.
   const open = (): boolean => canAnswer && !pending && readAnsweredAgentHubCard(cardKey) === null
 
+  const failAnswer = (): void => {
+    toast.error(translate('agentHub.requests.sendFailed', 'Could not send your answer. Try again.'))
+    // Why: a pane that is not mounted cannot recover its PTY link; the pop-out mounts it the same way.
+    requestBackgroundTerminalWorktreeMount({ worktreeId: target.worktreeId, tabIds: [tabId] })
+  }
+  const sendQuestionAnswer = (
+    prompt: Parameters<Send['sendAnswer']>[0],
+    selections: Parameters<Send['sendAnswer']>[1],
+    marker: number,
+    onDeliverySettled?: (delivered: boolean) => void
+  ): { settleAfterMs: number } => {
+    const settle = recordAgentHubCardAnswer(cardKey, marker, true)
+    let watchdog: ReturnType<typeof setTimeout> | undefined
+    // An answer that never started (this agent answers in its terminal) fails quietly, as before.
+    let started = false
+    const finish = (delivered: boolean): void => {
+      clearTimeout(watchdog)
+      if (!settle(delivered)) {
+        return
+      }
+      if (!delivered && started) {
+        failAnswer()
+      }
+      onDeliverySettled?.(delivered)
+    }
+    const result = send.sendAnswer(prompt, selections, finish)
+    if (result.settleAfterMs <= 0) {
+      settle(false)
+      return result
+    }
+    started = true
+    watchdog = setTimeout(() => {
+      send.cancelPending()
+      finish(false)
+    }, result.settleAfterMs + AGENT_HUB_ANSWER_SETTLE_GRACE_MS)
+    return result
+  }
   const answerQuestion = (
     selections: Parameters<Send['sendAnswer']>[1],
     marker: number,
@@ -143,18 +183,7 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
     if (!simpleQuestion || card?.kind !== 'question' || !open()) {
       return false
     }
-    const settle = recordAgentHubCardAnswer(cardKey, marker, true)
-    // A refused or lost delivery hands the answer back for another try.
-    const result = send.sendAnswer(card.prompt, selections, (delivered) => {
-      if (settle(delivered)) {
-        onDeliverySettled?.(delivered)
-      }
-    })
-    if (result.settleAfterMs <= 0) {
-      settle(false)
-      return false
-    }
-    return true
+    return sendQuestionAnswer(card.prompt, selections, marker, onDeliverySettled).settleAfterMs > 0
   }
   const answerApproval = (index: number, key: string | null): Promise<boolean> | null => {
     if (!approval || !open()) {
@@ -167,9 +196,7 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
       .then((delivered) => {
         const current = settle(delivered)
         if (current && !delivered) {
-          toast.error(
-            translate('agentHub.requests.sendFailed', 'Could not send your answer. Try again.')
-          )
+          failAnswer()
         }
         return current && delivered
       })
@@ -200,16 +227,7 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
       if (card?.kind !== 'question' || !open()) {
         return { settleAfterMs: 0 }
       }
-      const settle = recordAgentHubCardAnswer(cardKey, -1, true)
-      const result = send.sendAnswer(prompt, selections, (delivered) => {
-        if (settle(delivered)) {
-          onDeliverySettled?.(delivered)
-        }
-      })
-      if (result.settleAfterMs <= 0) {
-        settle(false)
-      }
-      return result
+      return sendQuestionAnswer(prompt, selections, -1, onDeliverySettled)
     },
     cancelAsk: () => {
       if (card?.kind !== 'question' || !open()) {
@@ -219,7 +237,13 @@ export function useAgentHubQuickAnswer(target: AgentHubQuickAnswerTarget): Agent
       return send
         .cancelAsk()
         .catch(() => false)
-        .then((delivered) => settle(delivered) && delivered)
+        .then((delivered) => {
+          const current = settle(delivered)
+          if (current && !delivered) {
+            failAnswer()
+          }
+          return current && delivered
+        })
     }
   }
   return {

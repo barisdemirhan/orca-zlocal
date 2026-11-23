@@ -2,6 +2,7 @@ import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-owners
 /** @vitest-environment happy-dom */
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
 import type { NativeChatInteractiveSend } from '../native-chat/session/terminal/send/use-native-chat-interactive-send'
@@ -37,6 +38,10 @@ vi.mock('@/store', async () => {
   const { createTestStore } = await import('@/store/testing/app-store-test-fixture')
   return { useAppStore: createTestStore() }
 })
+vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
+vi.mock('../terminal/workspace-mounting/background-terminal-worktree-mount', () => ({
+  requestBackgroundTerminalWorktreeMount: vi.fn()
+}))
 vi.mock('./use-agent-hub-live-pty', () => ({ useAgentHubLivePty: () => 'pty-1' }))
 vi.mock('../native-chat/host-access/use-native-chat-can-send', () => ({
   useNativeChatCanSend: () => true
@@ -138,6 +143,30 @@ it('hands the answer back when nothing could be sent', () => {
   })
   expect(chosen).toBe(false)
   expect(hook.result.current.chosen).toBeNull()
+})
+
+it('hands the answer back when its delivery never settles', () => {
+  vi.useFakeTimers()
+  const thread = threadWith(
+    JSON.stringify({ questions: [{ question: 'Keep it?', options: [{ label: 'Yes' }] }] })
+  )
+  const hook = renderHook(() => useAgentHubQuickAnswer(quickAnswerTargetOf(thread)))
+  act(() => {
+    hook.result.current.choose(0)
+  })
+  expect(hook.result.current.pending).toBe(true)
+  act(() => {
+    vi.advanceTimersByTime(60_000)
+  })
+  expect(toast.error).toHaveBeenCalledOnce()
+  expect(send.cancelPending).toHaveBeenCalledOnce()
+  expect(readAnsweredAgentHubCard(agentHubThreadCardKey(thread))).toBeNull()
+  let again = false
+  act(() => {
+    again = hook.result.current.choose(0)
+  })
+  expect(again).toBe(true)
+  expect(send.sendAnswer).toHaveBeenCalledTimes(2)
 })
 
 it('ignores a number key pressed as the surface appears, and takes it after the guard', () => {

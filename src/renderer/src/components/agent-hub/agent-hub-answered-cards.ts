@@ -92,11 +92,13 @@ export function recordAgentHubCardAnswer(
     pending,
     answerToken
   })
+  let settled = false
   return (delivered) => {
     const current = records.get(key)
-    if (current?.answerToken !== answerToken) {
+    if (settled || current?.answerToken !== answerToken) {
       return false
     }
+    settled = true
     write(key, { ...current, choice: delivered ? choice : null, pending: false, at: Date.now() })
     return true
   }
