@@ -26,12 +26,13 @@ export function useAgentHubOrbBotMention(
   setDraft: (value: string) => void
 ): AgentHubOrbBotMention {
   const enabled = useBotsEnabled()
-  const bots = useBots(enabled)
+  const query = TRIGGER.exec(draft)?.[2]
+  // Why: the first subscription loads every host's bots; wait until `@` asks for them.
+  const bots = useBots(enabled && query !== undefined)
   const purposes = useKnownBotPurposes()
   const [bot, setBot] = useState<Bot | null>(null)
   const [active, setActive] = useState(0)
   const [dismissed, setDismissed] = useState<string | null>(null)
-  const query = TRIGGER.exec(draft)?.[2]
   const listOpen = query !== undefined && dismissed !== draft && bot === null
   useEffect(() => {
     if (listOpen) {
