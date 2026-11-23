@@ -134,7 +134,7 @@ export function AgentHubOrbHistory({
                 </span>
                 <span className="w-full truncate text-xs text-muted-foreground">
                   {structuredAgentLabel(entry.agent)}
-                  {entry.archivedWorkspaceId
+                  {entry.archivedWorkspaceId && !entry.earlier
                     ? ` · ${translate('auto.agentHub.orb.archivedBeforeBot', 'Before the Orb bot')}`
                     : ''}
                   {entry.lastReply ? ` · ${entry.lastReply}` : ''}

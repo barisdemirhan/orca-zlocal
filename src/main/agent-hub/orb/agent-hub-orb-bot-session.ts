@@ -30,6 +30,8 @@ export type AgentHubOrbBotChats = {
   ensureChat: (botId: string) => Promise<string>
   resetChat: (botId: string) => Promise<string>
   closeChat: (sessionId: string) => Promise<{ stopped: boolean; reason?: string }>
+  /** The ids of the bot's side chats that hold messages: a replaced Home and chats the owner opened. */
+  earlierChats: (bot: Bot) => Promise<string[]>
 }
 
 /** The Orb bot's Home chat while its tab exists. */
@@ -106,26 +108,43 @@ export async function openAgentHubOrbBotSession(input: {
   }
 }
 
-/** The Orb bot's Home chat, then the floating chats from before it, kept as an archive that opens
- *  each one as a tab where it ran. */
+/** The Orb bot's Home chat, then its earlier chats and the floating chats from before it, which
+ *  open as tabs where they ran. */
 export async function listAgentHubOrbBotConversations(
   host: StructuredAgentSessionHost,
+  chats: AgentHubOrbBotChats,
   bot: Bot,
   floating: AgentSessionRecord[],
   limit: number
 ): Promise<AgentHubOrbConversation[]> {
   const home = bot.chatSessionId ? host.deps.store.getRecord(bot.chatSessionId) : null
+  const earlier = (await chats.earlierChats(bot)).flatMap((sessionId) => {
+    const record = host.deps.store.getRecord(sessionId)
+    return record ? [record] : []
+  })
+  const earlierIds = new Set(earlier.map((record) => record.sessionId))
   const archived = new Map(
-    floating.map((record) => [record.sessionId, record.location.workspaceId])
+    [...earlier, ...floating].map((record) => [
+      record.sessionId,
+      earlierIds.has(record.sessionId)
+        ? folderWorkspaceKey(bot.folderWorkspaceId)
+        : record.location.workspaceId
+    ])
   )
   const listed = await listAgentHubOrbConversations(
     host,
-    home ? [home, ...floating] : floating,
+    [...(home ? [home] : []), ...earlier, ...floating],
     limit
   )
   return listed.map((entry) => {
     const workspaceId = archived.get(entry.sessionId)
-    return workspaceId ? { ...entry, archivedWorkspaceId: workspaceId } : entry
+    return workspaceId
+      ? {
+          ...entry,
+          archivedWorkspaceId: workspaceId,
+          ...(earlierIds.has(entry.sessionId) ? { earlier: true } : {})
+        }
+      : entry
   })
 }
 

@@ -173,9 +173,10 @@ export class AgentHubOrbSessionManager {
   async list(limit = 30): Promise<AgentHubOrbConversation[]> {
     this.requireEnabled()
     const host = await this.ensureHost()
-    const bot = this.botChats?.find()
-    return bot
-      ? listAgentHubOrbBotConversations(host, bot, this.orbRecords(host), limit)
+    const chats = this.botChats
+    const bot = chats?.find()
+    return chats && bot
+      ? listAgentHubOrbBotConversations(host, chats, bot, this.orbRecords(host), limit)
       : listAgentHubOrbConversations(host, this.orbRecords(host), limit)
   }
 

@@ -1,5 +1,6 @@
 import type { AgentHubSettings } from '../../../shared/agent-hub-settings'
 import { closeBotSession, runtimeBotChats } from '../../bots/bot-chat-session'
+import { readBotChatTree, runtimeBotChatTreeHost } from '../../bots/bot-chat-tree-host'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { botShareCreateDeps } from '../../runtime/rpc/methods/bots-share-create-deps'
 import { ensureAgentHubOrbBot, findAgentHubOrbBot } from './agent-hub-orb-bot'
@@ -31,6 +32,11 @@ export function runtimeAgentHubOrbBotChats(
       }),
     ensureChat: (botId) => runtimeBotChats(runtime()).ensure(botId),
     resetChat: (botId) => runtimeBotChats(runtime()).reset(botId),
-    closeChat: (sessionId) => closeBotSession(runtime(), sessionId)
+    closeChat: (sessionId) => closeBotSession(runtime(), sessionId),
+    earlierChats: async (bot) =>
+      (await readBotChatTree(runtimeBotChatTreeHost(runtime()), { botId: bot.id })).chats
+        // The tree lists an empty side chat only while its tab is open; without a preview it is empty.
+        .filter((chat) => chat.origin === 'side' && chat.preview !== undefined)
+        .map((chat) => chat.liveSessionId ?? chat.chatId)
   }
 }

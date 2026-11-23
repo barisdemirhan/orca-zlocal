@@ -32,5 +32,6 @@ export const AgentHubOrbConversationSchema = z.object({
   startedAt: z.number(),
   lastActiveAt: z.number(),
   lastReply: z.string().optional(),
-  archivedWorkspaceId: z.string().optional()
+  archivedWorkspaceId: z.string().optional(),
+  earlier: z.boolean().optional()
 })
