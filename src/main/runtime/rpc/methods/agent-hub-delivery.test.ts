@@ -19,6 +19,16 @@ vi.mock('../../../ssh/targets/ssh-target-registry', () => ({
   getRegisteredSshState: () => null
 }))
 vi.mock('../../hosts/platform-probe/public-ssh-state', () => ({ getPublicSshState: () => null }))
+vi.mock('../../../native-chat/agent-session-wire/host/structured-agent-session-registry', () => ({
+  getStructuredAgentSessionHost: () => ({
+    deps: {
+      store: {
+        getConversation: (id: string) =>
+          id === 'bot_chat' ? { location: { workspaceId: 'folder:bot-home' } } : null
+      }
+    }
+  })
+}))
 
 const caller = { paneKey: 'pane-1', terminalHandle: 'term-1', agentType: 'codex', title: 'Worker' }
 let bus: RuntimeClientEventBus
@@ -35,10 +45,15 @@ beforeEach(() => {
   })
   ledger = new AgentHubLedger((event) => bus.emit({ type: 'agentHub', event }))
   registry = new RuntimeSubscriptionRegistry()
-  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: these RPC handlers use only the supplied pane lookup, ledger, event bus and subscription registry.
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: these RPC handlers use only the supplied pane lookup, bot list, ledger, event bus and subscription registry.
   runtime = {
     agentHub: ledger,
     agentHubOrb: { current: orbCurrent },
+    bots: {
+      list: () => [
+        { id: 'bot-1', name: 'Night Watch', agent: 'claude', folderWorkspaceId: 'bot-home' }
+      ]
+    },
     onClientEvent: bus.on.bind(bus),
     registerSubscriptionCleanup: registry.register.bind(registry),
     cleanupSubscription: registry.cleanup.bind(registry),
@@ -168,6 +183,18 @@ describe('Agent Hub runtime boundary', () => {
       desktop.ctx
     )
     await expect(added).resolves.toMatchObject({ mirror: 'added' })
+  })
+
+  it('names a bot chat caller and requires an explicit pane target for its mirror', () => {
+    const ctx: RpcContext = { runtime, caller: { kind: 'local-cli' } }
+    expect(resolveAgentHubPanes({ callerSessionId: 'bot_chat' }, ctx).caller).toMatchObject({
+      sessionId: 'bot_chat',
+      botId: 'bot-1',
+      title: 'Night Watch'
+    })
+    expect(() => resolveAgentHubPanes({ callerSessionId: 'bot_chat' }, ctx, 'mirror')).toThrow(
+      'Night Watch cannot mirror without a target; pass --terminal'
+    )
   })
 
   it('refuses ordinary structured sessions and cross-host Orb identity claims', () => {

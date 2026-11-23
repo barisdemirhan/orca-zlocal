@@ -5,6 +5,8 @@ export type AgentHubPane = { paneKey: string; terminalHandle: string }
 export type AgentHubCaller = AgentHubPane & {
   kind?: 'pane' | 'orb'
   sessionId?: string
+  /** Set when one of a bot's chats calls; its kind stays a pane's for older readers. */
+  botId?: string
   agentType?: string
   title?: string
 }

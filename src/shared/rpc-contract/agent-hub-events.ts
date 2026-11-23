@@ -8,6 +8,7 @@ const base = z.object({
   caller: pane.extend({
     kind: z.enum(['pane', 'orb']).optional(),
     sessionId: z.string().optional(),
+    botId: z.string().optional(),
     agentType: z.string().optional(),
     title: z.string().optional()
   }),

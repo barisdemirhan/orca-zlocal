@@ -52,7 +52,12 @@ export function AgentHubRequestCard({
   const busy =
     (state !== undefined && state.phase !== 'error') || (request.kind === 'gate' && !canResolveGate)
   const orbName = useAgentHubOrbName()
-  const agent = request.caller.kind === 'orb' ? orbName : (request.caller.agentType ?? 'agent')
+  const agent =
+    request.caller.kind === 'orb'
+      ? orbName
+      : request.caller.botId
+        ? (request.caller.title ?? 'bot')
+        : (request.caller.agentType ?? 'agent')
   const send = (result: Parameters<typeof answerAgentHubRequest>[2]): void => {
     void answerAgentHubRequest(host, request.requestId, result)
   }

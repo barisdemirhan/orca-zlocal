@@ -1,5 +1,6 @@
 import { AgentHubAlertStack, type AgentHubAlertSide } from './AgentHubAlertStack'
-import type { AgentHubAlert } from './agent-hub-alerts'
+import type { AgentHubAlert, AgentHubRequestAlert } from './agent-hub-alerts'
+import { openAgentHubBotCaller } from './agent-hub-bot-caller-open'
 import { dismissAgentHubAlert } from './agent-hub-alert-queue'
 import { agentHubRequestKey } from './agent-hub-requests-store'
 import {
@@ -10,6 +11,17 @@ import {
 import type { AgentHubOpenRequest } from './AgentHubPanel'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
+
+/** A bot chat's card opens that chat; a notice it raised is read once opened. */
+function openBotCaller(alert: AgentHubRequestAlert): boolean {
+  if (!openAgentHubBotCaller(alert.host, alert.request.caller)) {
+    return false
+  }
+  if (alert.request.kind === 'notify') {
+    dismissAgentHubAlert(alert.id)
+  }
+  return true
+}
 
 export function AgentHubRootAlerts({
   alerts,
@@ -34,6 +46,8 @@ export function AgentHubRootAlerts({
     if (alert.thread) {
       dismissAgentHubAlert(alert.id)
       action(threadOpenRequest(alert.thread))
+    } else if (alert.request) {
+      openBotCaller(alert)
     }
   }
   return (
@@ -52,7 +66,9 @@ export function AgentHubRootAlerts({
           return
         }
         if (alert.request) {
-          onOpenCard(agentHubRequestKey(alert.host, alert.request.requestId))
+          if (!openBotCaller(alert)) {
+            onOpenCard(agentHubRequestKey(alert.host, alert.request.requestId))
+          }
         } else if (alert.kind !== 'done') {
           onOpenCard(alert.thread.paneKey)
         } else {
