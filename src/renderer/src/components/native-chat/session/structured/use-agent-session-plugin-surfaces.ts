@@ -5,6 +5,7 @@ import type { PluginClientTransport } from '../../plugin-surfaces/client/plugin-
 import type {
   AgentSessionPluginNode,
   AgentSessionPluginPane,
+  AgentSessionPluginPromptFill,
   AgentSessionPluginStatus,
   AgentSessionPluginUiAction,
   AgentSessionPluginUiPress
@@ -16,6 +17,8 @@ export type NativeChatPluginSurfaces = {
   pluginPromptHint?: AgentSessionPluginNode
   pluginPane?: AgentSessionPluginPane
   pluginBand?: AgentSessionPluginNode
+  /** One-shot requests to put text in the composer; each carries a unique id. */
+  pluginPromptFills?: readonly AgentSessionPluginPromptFill[]
   /** Fire and forget: the host redraws through a later frame, and a failed action changes nothing. */
   actOnPluginUi: (action: AgentSessionPluginUiAction) => void
   pressPluginUi: (press: AgentSessionPluginUiPress) => void
@@ -59,6 +62,7 @@ export function useAgentSessionPluginSurfaces(
       ...(shown?.promptHint ? { pluginPromptHint: shown.promptHint } : {}),
       ...(shown?.pane ? { pluginPane: shown.pane } : {}),
       ...(shown?.band ? { pluginBand: shown.band } : {}),
+      ...(shown?.promptFills.length ? { pluginPromptFills: shown.promptFills } : {}),
       actOnPluginUi,
       pressPluginUi,
       callPluginUiClient

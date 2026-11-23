@@ -2,6 +2,7 @@ import {
   AGENT_SESSION_PLUGIN_SURFACES_RESET,
   type AgentSessionPluginNode,
   type AgentSessionPluginPane,
+  type AgentSessionPluginPromptFill,
   type AgentSessionPluginStatus,
   type AgentSessionPluginSurfaceUpdate,
   type AgentSessionPluginToast
@@ -20,12 +21,13 @@ type PluginSurfaceDeliveryPort = {
 type PluginSurfaceFields = {
   pluginStatuses?: AgentSessionPluginStatus[]
   pluginToasts?: AgentSessionPluginToast[]
+  pluginPromptFills?: AgentSessionPluginPromptFill[]
   pluginPromptHint?: AgentSessionPluginNode | null
   pluginPane?: AgentSessionPluginPane | null
   pluginBand?: AgentSessionPluginNode | null
 }
 
-/** Status lines and drawn trees are restated to a late subscriber; toasts reach only subscribers attached now. Phones get none. */
+/** Status lines and drawn trees are restated to a late subscriber; toasts and prompt fills reach only subscribers attached now. Phones get none. */
 export class AgentSessionPluginSurfaceDelivery {
   private readonly statusesBySession = new Map<string, AgentSessionPluginStatus[]>()
   private readonly promptHintBySession = new Map<string, AgentSessionPluginNode>()
@@ -35,7 +37,7 @@ export class AgentSessionPluginSurfaceDelivery {
   constructor(private readonly port: PluginSurfaceDeliveryPort) {}
 
   publish(sessionId: string, update: AgentSessionPluginSurfaceUpdate): void {
-    const { statuses, toast, promptHint, pane, band } = update
+    const { statuses, toast, promptFill, promptHint, pane, band } = update
     if (statuses) {
       rememberLatestPerSession(this.statusesBySession, sessionId, statuses.length ? statuses : null)
     }
@@ -46,6 +48,7 @@ export class AgentSessionPluginSurfaceDelivery {
       this.send(subscriber, {
         ...(statuses ? { pluginStatuses: statuses } : {}),
         ...(toast ? { pluginToasts: [toast] } : {}),
+        ...(promptFill ? { pluginPromptFills: [promptFill] } : {}),
         ...(promptHint !== undefined ? { pluginPromptHint: promptHint } : {}),
         ...(pane !== undefined ? { pluginPane: pane } : {}),
         ...(band !== undefined ? { pluginBand: band } : {})

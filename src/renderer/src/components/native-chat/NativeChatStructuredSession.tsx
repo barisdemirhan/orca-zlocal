@@ -76,6 +76,7 @@ import { useStructuredAgentSessionStartFailureFacts } from '@/components/native-
 import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-session/requests/prompts/agent-session-approval-subject'
 import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
 import { NativeChatPluginTranscript } from './plugin-surfaces/NativeChatPluginFrame'
+import { useNativeChatPluginPromptFill } from './plugin-surfaces/use-native-chat-plugin-prompt-fill'
 import type { NativeChatComposerHandle } from './composer/native-chat-composer-types'
 import {
   NativeChatWorkerApprovalTimeline,
@@ -110,6 +111,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
     transportEnabled: provisionalLaunch.transportEnabled,
     ...(provisionalLaunch.launch ? { launch: provisionalLaunch.launch } : {})
   })
+  useNativeChatPluginPromptFill(controller.pluginPromptFills, props.sessionId, focusComposer)
   useRecheckNativeChatFileLinksWhenTurnEnds(controller.isWorking)
   const { composerError, reportComposerError } = useNativeChatComposerError(
     controller.commandRefusalCauses

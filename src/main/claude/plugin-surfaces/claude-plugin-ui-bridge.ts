@@ -178,7 +178,8 @@ export class ClaudePluginUiBridge {
         subtype: 'ui_attach',
         surface: SURFACE,
         client_id: this.clientId,
-        viewport: pluginUiViewport(this.layout)
+        viewport: pluginUiViewport(this.layout),
+        answers: ['ui_prompt_fill']
       })
       if (!isRecord(reply) || !Array.isArray(reply.surfaces)) {
         throw new Error('unknown ui_attach answer')

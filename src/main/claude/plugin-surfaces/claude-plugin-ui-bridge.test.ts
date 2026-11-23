@@ -43,7 +43,8 @@ describe('ClaudePluginUiBridge', () => {
       subtype: 'ui_attach',
       surface: 'desktop',
       client_id: 'orca-s1',
-      viewport: { columns: 100, rows: 40, isFullscreen: true }
+      viewport: { columns: 100, rows: 40, isFullscreen: true },
+      answers: ['ui_prompt_fill']
     })
     expect(calls[1]).toMatchObject({
       subtype: 'ui_render',

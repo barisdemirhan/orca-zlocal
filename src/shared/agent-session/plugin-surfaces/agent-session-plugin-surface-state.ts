@@ -1,16 +1,19 @@
 import type {
   AgentSessionPluginNode,
   AgentSessionPluginPane,
+  AgentSessionPluginPromptFill,
   AgentSessionPluginStatus,
   AgentSessionPluginToast
 } from './agent-session-plugin-surface-wire'
 
 const RETAINED_PLUGIN_TOASTS = 8
+const RETAINED_PLUGIN_PROMPT_FILLS = 8
 
 /** Live status lines, restated by the host on every open, and the newest toasts a consumer fires once each. */
 export type AgentSessionPluginSurfaceState = {
   statuses: AgentSessionPluginStatus[]
   toasts: AgentSessionPluginToast[]
+  promptFills: AgentSessionPluginPromptFill[]
   promptHint: AgentSessionPluginNode | null
   pane: AgentSessionPluginPane | null
   band: AgentSessionPluginNode | null
@@ -19,6 +22,7 @@ export type AgentSessionPluginSurfaceState = {
 type PluginSurfaceFrame = {
   pluginStatuses?: AgentSessionPluginStatus[]
   pluginToasts?: AgentSessionPluginToast[]
+  pluginPromptFills?: AgentSessionPluginPromptFill[]
   pluginPromptHint?: AgentSessionPluginNode | null
   pluginPane?: AgentSessionPluginPane | null
   pluginBand?: AgentSessionPluginNode | null
@@ -48,6 +52,7 @@ export function pluginSurfacesRestated(
 ): boolean {
   return (
     frame.pluginToasts === undefined &&
+    frame.pluginPromptFills === undefined &&
     (frame.pluginStatuses === undefined ||
       statusesEqual(frame.pluginStatuses, current?.statuses ?? [])) &&
     (frame.pluginPromptHint === undefined ||
@@ -65,6 +70,7 @@ export function pluginSurfacesAfterBatch(
   if (
     frame.pluginStatuses === undefined &&
     frame.pluginToasts === undefined &&
+    frame.pluginPromptFills === undefined &&
     frame.pluginPromptHint === undefined &&
     frame.pluginPane === undefined &&
     frame.pluginBand === undefined
@@ -73,6 +79,8 @@ export function pluginSurfacesAfterBatch(
   }
   const held = current?.toasts ?? []
   const known = new Set(held.map((toast) => toast.id))
+  const heldFills = current?.promptFills ?? []
+  const knownFills = new Set(heldFills.map((fill) => fill.id))
   return {
     plugins: {
       statuses: frame.pluginStatuses ?? current?.statuses ?? [],
@@ -85,7 +93,11 @@ export function pluginSurfacesAfterBatch(
       toasts: [
         ...held,
         ...(frame.pluginToasts ?? []).filter((toast) => !known.has(toast.id))
-      ].slice(-RETAINED_PLUGIN_TOASTS)
+      ].slice(-RETAINED_PLUGIN_TOASTS),
+      promptFills: [
+        ...heldFills,
+        ...(frame.pluginPromptFills ?? []).filter((fill) => !knownFills.has(fill.id))
+      ].slice(-RETAINED_PLUGIN_PROMPT_FILLS)
     }
   }
 }

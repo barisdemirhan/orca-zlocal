@@ -12,6 +12,14 @@ export type AgentSessionPluginToast = {
   timeoutMs: number
 }
 
+/** A mod asking to put text in the prompt box; `id` is unique per fill so several views apply it once. */
+export type AgentSessionPluginPromptFill = {
+  id: string
+  text: string
+  mode: 'replace' | 'append' | 'insert'
+  cursor?: number
+}
+
 export type AgentSessionPluginJson =
   | string
   | number
@@ -70,6 +78,8 @@ export type AgentSessionPluginSurfaceFields = {
   pluginStatuses?: AgentSessionPluginStatus[]
   /** One-shot toasts for this frame only; never replayed to a later subscriber. */
   pluginToasts?: AgentSessionPluginToast[]
+  /** One-shot prompt fills for this frame only; never replayed to a later subscriber. */
+  pluginPromptFills?: AgentSessionPluginPromptFill[]
   /** The tree a mod drew under the composer; null clears, absent keeps. */
   pluginPromptHint?: AgentSessionPluginNode | null
   /** The mod pane showing now; null clears, absent keeps. */
@@ -105,6 +115,7 @@ export type AgentSessionPluginUiAction =
 export type AgentSessionPluginSurfaceUpdate = {
   statuses?: AgentSessionPluginStatus[]
   toast?: AgentSessionPluginToast
+  promptFill?: AgentSessionPluginPromptFill
   promptHint?: AgentSessionPluginNode | null
   pane?: AgentSessionPluginPane | null
   band?: AgentSessionPluginNode | null

@@ -22,6 +22,8 @@ import { ClaudeBackgroundTaskTracker } from '../../background-tasks/claude-backg
 import { ClaudeChildWorkDecoder } from '../../child-work/claude-child-work-decoder'
 import { ClaudePluginSurfaces } from '../../plugin-surfaces/claude-plugin-surfaces'
 import { ClaudePluginUiBridge } from '../../plugin-surfaces/claude-plugin-ui-bridge'
+import { answerPluginPromptFill } from '../../plugin-surfaces/claude-plugin-ui-prompt-fill'
+import type { AgentSessionPluginSurfaceUpdate } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import { ClaudeSlashCommandCatalog } from '../../command-catalog/claude-slash-command-catalog'
 import type { ClaudeStructuredLaunch } from '../launch/claude-structured-launch-resolution'
 import type { ClaudeAcquisitionLaunch } from '../launch/claude-structured-acquisition-launch'
@@ -114,6 +116,18 @@ export function createClaudeSessionPublication(input: {
     ...(linkId ? { linkId } : {}),
     observedAt: input.deps.now?.() ?? Date.now()
   })
+  const publishPluginSurfaces = (update: AgentSessionPluginSurfaceUpdate): void =>
+    input.request.events?.setPluginSurfaces?.(update)
+  const pluginUi = new ClaudePluginUiBridge({
+    request: input.connection.uiRequest
+      ? (body) => input.connection.uiRequest?.(body) ?? Promise.reject(new Error('no request'))
+      : undefined,
+    clientId: `orca-${input.request.identity.sessionId}`,
+    publish: publishPluginSurfaces
+  })
+  input.connection.setUiHost?.({
+    promptFill: (body) => answerPluginPromptFill(body, publishPluginSurfaces)
+  })
   return {
     acquisition: {
       process: input.process,
@@ -137,13 +151,7 @@ export function createClaudeSessionPublication(input: {
       // An unread catalog is unavailable, not empty.
       commands: new ClaudeSlashCommandCatalog(),
       pluginSurfaces: new ClaudePluginSurfaces(),
-      pluginUi: new ClaudePluginUiBridge({
-        request: input.connection.uiRequest
-          ? (body) => input.connection.uiRequest?.(body) ?? Promise.reject(new Error('no request'))
-          : undefined,
-        clientId: `orca-${input.request.identity.sessionId}`,
-        publish: (update) => input.request.events?.setPluginSurfaces?.(update)
-      }),
+      pluginUi,
       dispatchSequence: 0,
       optionMutationSequence: 0,
       options: new Map(input.launch.savedOptions.options),

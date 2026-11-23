@@ -35,13 +35,15 @@ export function structuredAgentSessionEphemeralPublications(
         // Each other update carries one field, so its key keeps that field's newest value only.
         publicationKey: update.toast
           ? `plugin-toast:${update.toast.id}`
-          : update.promptHint !== undefined
-            ? 'plugin-prompt-hint'
-            : update.pane !== undefined
-              ? 'plugin-pane'
-              : update.band !== undefined
-                ? 'plugin-band'
-                : 'plugin-statuses',
+          : update.promptFill
+            ? `plugin-prompt-fill:${update.promptFill.id}`
+            : update.promptHint !== undefined
+              ? 'plugin-prompt-hint'
+              : update.pane !== undefined
+                ? 'plugin-pane'
+                : update.band !== undefined
+                  ? 'plugin-band'
+                  : 'plugin-statuses',
         run: (bound) => bound.publishPluginSurfaces?.(update)
       })
     }

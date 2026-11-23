@@ -46,3 +46,17 @@ export function createClaudeUiRequest(
     )
   }
 }
+
+/** What the SDK calls when the engine asks this client to act on its prompt box. */
+export type ClaudeUiHost = {
+  promptFill: (body: Record<string, unknown>) => Promise<unknown> | unknown
+}
+
+// setUiHost(host) exists at runtime but is absent from Query's declaration.
+type ClaudeQueryUiHostSetter = { setUiHost?: (host: ClaudeUiHost) => void }
+
+/** Registers `host` on the SDK query; undefined when this SDK has no `setUiHost`. */
+export function createClaudeUiHostSetter(query: Query): ((host: ClaudeUiHost) => void) | undefined {
+  const setUiHost = (query as unknown as ClaudeQueryUiHostSetter).setUiHost
+  return typeof setUiHost === 'function' ? (host) => setUiHost.call(query, host) : undefined
+}

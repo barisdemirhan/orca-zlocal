@@ -13,8 +13,9 @@ function bypassCoalescing(event: AgentSessionSubscribeEvent): boolean {
     // Deliver queue lists immediately or the queued response removes Sending before its replacement card arrives.
     event.queuedMessages !== undefined ||
     event.currentRequests !== undefined ||
-    // A toast fires once, so it must not wait behind or merge with another frame.
+    // A toast or prompt fill fires once, so it must not wait behind or merge with another frame.
     event.pluginToasts !== undefined ||
+    event.pluginPromptFills !== undefined ||
     event.batch.removedItemIds.length > 0 ||
     // Replies and reasoning are what stream; every other row applies at once.
     event.batch.items.some(
