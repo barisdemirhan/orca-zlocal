@@ -17,7 +17,8 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItemSlot } from '@/components/ui/radio-group'
 import { useTranslate } from '@/i18n/use-translate'
 import { isScreenSubmitShortcut } from '@/lib/keyboard/screen-submit-shortcut'
-import { takeOverWorkspace, useBots } from '@/lib/bot-catalog'
+import { takeOverWorkspace } from '@/lib/bot-catalog'
+import { useListedBots } from '@/lib/use-listed-bots'
 import { useWorktreeAgentRows } from '@/components/sidebar/workspace-card/activity/useWorktreeAgentRows'
 import { formatAgentTypeLabel } from '../../../../../shared/agent-status/presentation/agent-type-label'
 import {
@@ -76,7 +77,7 @@ export function HandToBotFlow({
   const [madeBotKey, setMadeBotKey] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const workspaceHostId = useAppStore((s) => getExecutionHostIdForWorktree(s, worktree.id))
-  const listed = useBots()
+  const listed = useListedBots()
   // This computer's bots can take a workspace anywhere; a server's bot only one on its own server.
   const bots = useMemo(
     () =>

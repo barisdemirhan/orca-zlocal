@@ -1,4 +1,4 @@
-import { useBots } from '@/lib/bot-catalog'
+import { useListedBots } from '@/lib/use-listed-bots'
 import { agentHubTabLabel } from './agent-hub-copy'
 import { agentHubTabs, type AgentHubTab } from './agent-hub-keys'
 import { useAgentHubBotsActive } from './agent-hub-bot-identity'
@@ -11,7 +11,7 @@ export function useAgentHubBotsTab(picked: AgentHubTab): {
   botCount: number
 } {
   const active = useAgentHubBotsActive()
-  const botCount = useBots(active).length
+  const botCount = useListedBots(active).length
   const tabs = agentHubTabs(active)
   return {
     tab: picked === 'bots' && !active ? 'inbox' : picked,

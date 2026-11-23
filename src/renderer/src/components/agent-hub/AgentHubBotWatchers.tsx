@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { useBots } from '@/lib/bot-catalog'
+import { useListedBots } from '@/lib/use-listed-bots'
 import { botRefKey } from '@/lib/bot-hosts'
 import { useNow } from '@/lib/window-activity/use-now'
 import { useBotActivity } from '../bots/use-bot-activity'
@@ -55,7 +55,7 @@ function AgentHubBotWatcher({ bot }: { bot: Bot }): null {
 /** Headless: one watcher per bot while the hub and bots are on. */
 export function AgentHubBotWatchers(): React.JSX.Element | null {
   const active = useAgentHubBotsActive()
-  const bots = useBots(active)
+  const bots = useListedBots(active)
   return active ? (
     <>
       {bots.map((bot) => (

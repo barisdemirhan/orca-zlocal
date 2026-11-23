@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({ callRuntimeRpc: vi.fn() }))
 vi.mock('@/runtime/rpc/calls/runtime-rpc-call', () => ({ callRuntimeRpc: mocks.callRuntimeRpc }))
 
-import { botTarget, callBotRpc, forEachBotHost } from './bot-hosts'
+import { botTarget, callBotRpc, forEachBotHost, withoutOtherComputersOrbs } from './bot-hosts'
 import { emitBotsChangedWindowEvent, onBotsChanged } from './bots-changed-window-event'
 
 afterEach(() => {
@@ -18,6 +18,15 @@ describe('botTarget', () => {
 
   it('refuses a host no bot can run on', () => {
     expect(() => botTarget({ hostId: 'ssh:box' })).toThrow()
+  })
+})
+
+describe('withoutOtherComputersOrbs', () => {
+  it('drops a paired server’s Orb and keeps this computer’s', () => {
+    const own = { hostId: 'local', id: 'o1', role: 'orb' } as const
+    const bot = { hostId: 'runtime:env-1', id: 'b1' } as const
+    const theirs = { hostId: 'runtime:env-1', id: 'o2', role: 'orb' } as const
+    expect(withoutOtherComputersOrbs([own, theirs, bot])).toEqual([own, bot])
   })
 })
 

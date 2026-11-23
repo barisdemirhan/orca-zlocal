@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useBots } from '@/lib/bot-catalog'
+import { useListedBots } from '@/lib/use-listed-bots'
 import { openBotGroup } from '@/lib/bot-group-catalog'
 import { refreshBotGroups } from '@/lib/bot-group-list'
 import type { BotGroup } from '../../../../shared/bots/bot-group'
@@ -55,7 +55,7 @@ export function BotGroupMembersDialog({
   onClose: () => void
 }): React.JSX.Element {
   const t = useTranslate()
-  const listedBots = useBots()
+  const listedBots = useListedBots()
   // A room on this computer can also hold bots on paired computers; a paired server's room holds
   // only that server's bots. A paired web window's bots all live on its one server.
   const canMix = !isPairedWebClientWindow() && (!group || group.hostId === LOCAL_EXECUTION_HOST_ID)

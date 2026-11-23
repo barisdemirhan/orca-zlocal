@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
-import { useBots, useBotsEnabled } from '@/lib/bot-catalog'
+import { useBotsEnabled } from '@/lib/bot-catalog'
+import { useListedBots } from '@/lib/use-listed-bots'
 import { AutomationEditorDialog } from './authoring/AutomationEditorDialog'
 import { getAutomationAuthorityTarget } from './hosts/automation-host-client'
 import type { AutomationsPageController } from './use-automations-page-controller'
@@ -36,7 +37,7 @@ export function AutomationsPageEditorDialog({
     editorNoticeHost,
     setEditorNoticeHost
   } = local
-  const bots = useBots()
+  const bots = useListedBots()
   const botsEnabled = useBotsEnabled()
   const editingBotId = draft.bot?.botId
   const editorBots = useMemo(
