@@ -4,6 +4,7 @@ import { useAppStore } from '@/store'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/workspace/identity/floating-workspace-id'
 import { findStructuredAgentSessionTab } from '@/lib/agent-session/structured-agent-session-tab-activation'
 import { refreshLocalStructuredSessionTabs } from '@/runtime/local-structured-session-tabs-sync/inventory-refresh'
+import { requestBackgroundTerminalWorktreeMount } from '../terminal/workspace-mounting/background-terminal-worktree-mount'
 import type { AgentHubOrbOpenParams } from '../../../../shared/agent-hub-orb'
 import type { AgentHubOrbAction } from '../../../../shared/agent-hub-settings'
 import { normalizeAgentHubOrbSettings } from '../../../../shared/agent-hub-orb-settings'
@@ -24,23 +25,22 @@ async function open(
   try {
     const session = await window.api.agentHub.orb.open(params)
     hostOpened()
-    let store = useAppStore.getState()
-    let tab = findStructuredAgentSessionTab(store.unifiedTabsByWorktree, {
-      workspaceId: FLOATING_TERMINAL_WORKTREE_ID,
+    const where = {
+      workspaceId: session.workspaceId ?? FLOATING_TERMINAL_WORKTREE_ID,
       sessionId: session.sessionId,
-      target: { kind: 'local' }
-    })
+      target: { kind: 'local' as const }
+    }
+    let tab = findStructuredAgentSessionTab(useAppStore.getState().unifiedTabsByWorktree, where)
     if (!tab) {
       await refreshLocalStructuredSessionTabs()
-      store = useAppStore.getState()
-      tab = findStructuredAgentSessionTab(store.unifiedTabsByWorktree, {
-        workspaceId: FLOATING_TERMINAL_WORKTREE_ID,
-        sessionId: session.sessionId,
-        target: { kind: 'local' }
-      })
+      tab = findStructuredAgentSessionTab(useAppStore.getState().unifiedTabsByWorktree, where)
     }
     if (!tab) {
       throw new Error('Orb tab was not published')
+    }
+    if (session.workspaceId) {
+      // The Orb bot's workspace is usually off screen; its chat must still mount for the Orb to show it.
+      requestBackgroundTerminalWorktreeMount({ worktreeId: session.workspaceId, tabIds: [tab.id] })
     }
     if (useAgentHubOrbPanel.getState().closeGeneration !== closeGeneration) {
       return true

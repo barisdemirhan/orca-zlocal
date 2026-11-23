@@ -1,3 +1,7 @@
+import {
+  agentHubOrbIdentityDirectory,
+  findAgentHubOrbBot
+} from '../agent-hub/orb/agent-hub-orb-bot'
 import { getSystemLanguageDetection } from '../i18n/system-language'
 import { setMainUiLanguage } from '../i18n/main-i18n'
 import { rebuildAppMenu } from '../menu/register-app-menu'
@@ -242,7 +246,9 @@ export function registerAppHandlers(store: Store, options: RegisterAppHandlersOp
   ipcMain.handle('app:getFloatingMarkdownDirectory', () => ensureDefaultFloatingWorkspacePath())
 
   ipcMain.handle('app:getAgentHubOrbDirectory', () =>
-    ensureAgentHubOrbDirectory(undefined, agentHubOrbIdentityOptions(store.getSettings()))
+    findAgentHubOrbBot(store.getBots())
+      ? agentHubOrbIdentityDirectory(store.getBots())
+      : ensureAgentHubOrbDirectory(undefined, agentHubOrbIdentityOptions(store.getSettings()))
   )
   registerAgentHubOrbIdentityHandlers(store)
 

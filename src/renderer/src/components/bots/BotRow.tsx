@@ -157,17 +157,20 @@ export function BotRow({
         </>
       }
       menuFooter={
-        <>
-          <ContextMenuSeparator />
-          <ContextMenuItem
-            variant="destructive"
-            disabled={offline}
-            onSelect={() => void handleDelete()}
-          >
-            <Trash2 className="size-3.5" />
-            {t('bots.row.delete', 'Delete bot')}
-          </ContextMenuItem>
-        </>
+        // The Orb is Orca's own bot: it stays.
+        bot.role ? undefined : (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              variant="destructive"
+              disabled={offline}
+              onSelect={() => void handleDelete()}
+            >
+              <Trash2 className="size-3.5" />
+              {t('bots.row.delete', 'Delete bot')}
+            </ContextMenuItem>
+          </>
+        )
       }
     />
   )

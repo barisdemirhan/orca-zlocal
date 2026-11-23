@@ -61,10 +61,11 @@ beforeEach(() => {
   files.read.mockReset().mockResolvedValue([])
   ledger = new AgentHubLedger((event) => events.push({ type: 'agentHub', event }))
   ledger.registerDesktop('local')
-  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: these handlers use only the ledger, Orb session lookup and pane lookup.
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: these handlers use only the ledger, Orb session, bot list and pane lookups.
   runtime = {
     agentHub: ledger,
     agentHubOrb: { current: () => ({ sessionId: 'codex_orb', resumed: false }) },
+    bots: { list: () => [] },
     isAgentHubOrbMemorySuggestionsEnabled: () => suggestions,
     getAgentHubCaller: (handle: string) => (handle === pane.terminalHandle ? pane : null),
     getTerminalHandleForPaneKey: () => null
@@ -80,7 +81,12 @@ describe('Orb memory proposals', () => {
     expect(files.append).not.toHaveBeenCalled()
 
     await decide(proposal.requestId, 'remember', 'Prefers short, plain answers')
-    expect(files.append).toHaveBeenCalledWith('Prefers short, plain answers', expect.any(Date))
+    expect(files.append).toHaveBeenCalledWith(
+      'Prefers short, plain answers',
+      expect.any(Date),
+      expect.any(String),
+      'orb'
+    )
 
     files.read.mockResolvedValue([
       { line: '- [2026-10-23] Prefers short answers', text: 'Prefers short answers', date: null }

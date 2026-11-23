@@ -287,6 +287,9 @@ export class BotController {
     return this.serialize(async () => {
       const store = this.requireStore()
       const bot = this.requireBot(store, botId)
+      if (bot.role) {
+        throw new Error('bot_reserved')
+      }
       const folderPath = botHomeFolder(bot, this.deps.botsRoot())
       if (deleteFolder) {
         await assertBotOwnsHome(this.deps.filesystem, folderPath, botId)

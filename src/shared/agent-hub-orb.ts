@@ -15,7 +15,13 @@ export type AgentHubOrbOpenParams = {
   model?: string | null
   cwd?: string
 }
-export type AgentHubOrbSession = { sessionId: string; tabId?: string; resumed: boolean }
+export type AgentHubOrbSession = {
+  sessionId: string
+  tabId?: string
+  resumed: boolean
+  /** The workspace holding the Orb's tab when it runs as the Orb bot's Chat; absent, the floating one. */
+  workspaceId?: string
+}
 export type AgentHubOrbConversation = {
   sessionId: string
   agent: StructuredAgentId

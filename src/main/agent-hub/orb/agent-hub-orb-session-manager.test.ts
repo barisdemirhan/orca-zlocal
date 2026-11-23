@@ -1,10 +1,8 @@
 import { join } from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  AgentHubOrbSessionManager,
-  createAgentHubOrbSessionManager
-} from './agent-hub-orb-session-manager'
+import { AgentHubOrbSessionManager } from './agent-hub-orb-session-manager'
+import { createAgentHubOrbSessionManager } from './agent-hub-orb-session-manager-factory'
 import { readTestHostJournal } from '../../native-chat/agent-session-journal/journal-observation.test-support'
 import { hostTestState } from '../../native-chat/agent-session-wire/host/testing/structured-agent-session-host.test-fixture'
 import {

@@ -1,13 +1,10 @@
 import {
   ORB_ACCESS_RANK,
-  agentHubOrbAccessRank,
   agentHubOrbPermissionMode,
   agentHubOrbPermissionOptions
 } from './agent-hub-orb-permission-settings'
 import { resumeAgentHubOrbSession } from './agent-hub-orb-session-resume'
 import type { AgentChatPermissionMode } from '../../../shared/agent-launch/permissions/agent-chat-permission-mode'
-import { stat } from 'node:fs/promises'
-import { isAbsolute } from 'node:path'
 import {
   AGENT_HUB_ORB_ORIGIN,
   type AgentHubOrbConversation,
@@ -25,10 +22,20 @@ import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle
 import { getStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-registry'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
-import type { RuntimeStore } from '../../runtime/construction/runtime-store-contract'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
-import { agentHubOrbIdentityOptions, ensureAgentHubOrbDirectory } from './agent-hub-orb-directory'
+import {
+  agentHubOrbBotRecords,
+  agentHubOrbBotSession,
+  closeAgentHubOrbBotChat,
+  openAgentHubOrbBotSession,
+  type AgentHubOrbBotChats
+} from './agent-hub-orb-bot-session'
+import {
+  agentHubOrbIdentityOptions,
+  ensureAgentHubOrbDirectory,
+  requireAgentHubOrbCwd
+} from './agent-hub-orb-directory'
 import { listAgentHubOrbConversations } from './agent-hub-orb-history'
 import {
   prepareAgentHubOrbSessionCreate,
@@ -42,7 +49,7 @@ import {
 } from './agent-hub-orb-settings-transition'
 
 const caller = { callerKey: 'trusted-local:agent-hub-orb' }
-type OrbRuntime = Pick<
+export type OrbRuntime = Pick<
   OrcaRuntimeService,
   | 'isAgentHubEnabled'
   | 'ensureStructuredAgentSessionHost'
@@ -68,7 +75,9 @@ export class AgentHubOrbSessionManager {
     private readonly saveCwd: (cwd: string) => void | Promise<void>,
     /** The Orb folder, created and its instruction files refreshed on every open. */
     private readonly resolveDirectory: () => Promise<string> = () =>
-      ensureAgentHubOrbDirectory(undefined, agentHubOrbIdentityOptions(getSettings()))
+      ensureAgentHubOrbDirectory(undefined, agentHubOrbIdentityOptions(getSettings())),
+    /** With it the Orb is the Orb bot's Home chat; without it, a floating chat of its own. */
+    private readonly botChats?: AgentHubOrbBotChats
   ) {}
 
   requireEnabled(): void {
@@ -84,10 +93,21 @@ export class AgentHubOrbSessionManager {
 
   private currentSession(): AgentHubOrbSession | null {
     const host = getStructuredAgentSessionHost()
+    const bot = this.botChats?.find()
+    const session = bot ? agentHubOrbBotSession(host, bot) : this.floatingSession(host)
+    if (!session) {
+      this.active = null
+    }
+    return session
+  }
+
+  /** The Orb's own floating chat, from before the Orb bot or without one. */
+  private floatingSession(
+    host: StructuredAgentSessionHost | null | undefined
+  ): AgentHubOrbSession | null {
     const record =
       host && this.orbRecords(host).find((entry) => host.getSessionTabId(entry.sessionId))
     if (!record || !host) {
-      this.active = null
       return null
     }
     const tabId = host.getSessionTabId(record.sessionId)
@@ -138,7 +158,9 @@ export class AgentHubOrbSessionManager {
     if (!current) {
       return
     }
-    await closeAgentHubOrbSession(this.runtime, host, current)
+    await (this.botChats?.find()
+      ? closeAgentHubOrbBotChat(this.runtime, this.botChats, current.sessionId)
+      : closeAgentHubOrbSession(this.runtime, host, current))
     this.active = null
     this.appliedMode = null
   }
@@ -151,24 +173,19 @@ export class AgentHubOrbSessionManager {
   async list(limit = 30): Promise<AgentHubOrbConversation[]> {
     this.requireEnabled()
     const host = await this.ensureHost()
-    return listAgentHubOrbConversations(host, this.orbRecords(host), limit)
+    const bot = this.botChats?.find()
+    const records = bot ? agentHubOrbBotRecords(host, bot) : this.orbRecords(host)
+    return listAgentHubOrbConversations(host, records, limit)
   }
 
   private async openOnce(params: AgentHubOrbOpenParams): Promise<AgentHubOrbSession> {
+    if (this.botChats) {
+      return this.openBot(this.botChats, params)
+    }
     const settings = normalizeAgentHubOrbSettings(this.getSettings())
-    const cwd = params.cwd?.trim()
     // Older clients may supply a cwd; ordinary opens run in the Orb folder.
-    if (params.cwd !== undefined) {
-      if (!cwd || !isAbsolute(cwd)) {
-        throw new AgentHubError('invalid_argument', 'Orb folder must be an absolute path')
-      }
-      const directory = await stat(cwd).catch(() => null)
-      if (!directory?.isDirectory()) {
-        throw new AgentHubError(
-          'invalid_argument',
-          'Orb folder does not exist or is not a directory'
-        )
-      }
+    const cwd = params.cwd === undefined ? undefined : await requireAgentHubOrbCwd(params.cwd)
+    if (cwd) {
       await this.saveCwd(cwd)
     }
     const host = await this.ensureHost()
@@ -237,6 +254,39 @@ export class AgentHubOrbSessionManager {
     return this.finishOpen(host, created, settings, orbDirectory)
   }
 
+  private async openBot(
+    chats: AgentHubOrbBotChats,
+    params: AgentHubOrbOpenParams
+  ): Promise<AgentHubOrbSession> {
+    const host = await this.ensureHost()
+    this.requireEnabled()
+    const settings = normalizeAgentHubOrbSettings(this.getSettings())
+    const { session, mode } = await openAgentHubOrbBotSession({
+      host,
+      hub: this.runtime.agentHub,
+      chats,
+      rawSettings: this.getSettings(),
+      settings,
+      previous: this.selectedSettings,
+      resumeSessionId: params.resume?.sessionId
+    })
+    this.appliedMode = mode
+    this.active = session
+    this.selectedSettings = settings
+    const floating = this.floatingSession(host)
+    if (floating) {
+      // The floating chat from before the Orb bot would otherwise keep running beside it.
+      await closeAgentHubOrbSession(this.runtime, host, floating).catch((error: unknown) => {
+        console.warn('Could not close the Orb chat from before the Orb bot', error)
+      })
+    }
+    if (!this.runtime.isAgentHubEnabled()) {
+      await this.closeOnce()
+      throw new AgentHubError('disabled', 'Agent Hub Orb is disabled')
+    }
+    return session
+  }
+
   private async finishOpen(
     host: StructuredAgentSessionHost,
     session: AgentHubOrbSession,
@@ -268,41 +318,4 @@ export class AgentHubOrbSessionManager {
       .filter((record) => record.origin === AGENT_HUB_ORB_ORIGIN)
       .sort((left, right) => right.createdAt - left.createdAt)
   }
-}
-
-export function createAgentHubOrbSessionManager(
-  runtime: OrbRuntime,
-  store: Pick<RuntimeStore, 'getSettings' | 'updateSettings' | 'onSettingsChanged'> | null,
-  resolveDirectory?: () => Promise<string>
-): AgentHubOrbSessionManager {
-  const manager = new AgentHubOrbSessionManager(
-    runtime,
-    () => store?.getSettings?.() ?? {},
-    (cwd) => {
-      if (!store?.updateSettings) {
-        throw new Error('runtime_unavailable')
-      }
-      store.updateSettings({ agentHubOrbCwd: cwd }, { notifyListeners: true })
-    },
-    resolveDirectory
-  )
-  // Why: partial stores (tests, early boot) have no getSettings.
-  let permission = normalizeAgentHubOrbSettings(store?.getSettings?.() ?? {}).permission
-  let enabled = runtime.isAgentHubEnabled()
-  store?.onSettingsChanged?.(() => {
-    const next = normalizeAgentHubOrbSettings(store.getSettings()).permission
-    // Why: with no choice the next chat gets Approve for me at most; compare against what the open chat really runs.
-    const applied = manager.appliedAccessRank() ?? agentHubOrbAccessRank(permission)
-    const restrict = agentHubOrbAccessRank(next) < applied
-    const nextEnabled = runtime.isAgentHubEnabled()
-    const disabled = enabled && !nextEnabled
-    permission = next
-    enabled = nextEnabled
-    if (restrict || disabled) {
-      void manager.close().catch((error: unknown) => {
-        console.warn('Could not stop Orb after its settings changed', error)
-      })
-    }
-  })
-  return manager
 }

@@ -3,8 +3,9 @@ import type {
   TerminalSuspensionResult
 } from '../../shared/terminal-suspension'
 import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-decision-gates'
-import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
+import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager-factory'
 import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
+import { runtimeAgentHubOrbBotChats } from '../agent-hub/orb/agent-hub-orb-runtime-bot-chats'
 import type { OrchestrationDb } from './orchestration/db/orchestration-db'
 import { OrcaRuntimeWithWindowlessTerminalActivity } from './sidebar-inputs/temporal/orca-runtime-windowless-terminal-activity'
 import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
@@ -24,7 +25,9 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithWindowlessT
   private readonly paneSpawnLineage: RuntimePaneSpawnLineage
   readonly agentHubOrb: AgentHubOrbSessionManager = createAgentHubOrbSessionManager(
     this,
-    this.store
+    this.store,
+    undefined,
+    runtimeAgentHubOrbBotChats(this, () => this.store?.getSettings?.() ?? {})
   )
 
   async terminalSuspension(

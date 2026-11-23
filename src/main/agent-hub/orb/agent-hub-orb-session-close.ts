@@ -48,11 +48,16 @@ export async function closeAgentHubOrbSession(
     }
   }
   if (structuredSessionCloseSettled(current.sessionId)) {
-    const operations = readOrbOperations(runtime)
-    for (const event of operations?.snapshot() ?? []) {
-      if (event.orbOperation?.sessionId === current.sessionId) {
-        operations?.release(event.orbOperation.id)
-      }
+    releaseAgentHubOrbOperations(runtime, current.sessionId)
+  }
+}
+
+/** Frees the operations a closed Orb chat held, so the next chat can take them. */
+export function releaseAgentHubOrbOperations(runtime: object, sessionId: string): void {
+  const operations = readOrbOperations(runtime)
+  for (const event of operations?.snapshot() ?? []) {
+    if (event.orbOperation?.sessionId === sessionId) {
+      operations?.release(event.orbOperation.id)
     }
   }
 }

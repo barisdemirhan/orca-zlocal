@@ -20,7 +20,8 @@ export const AgentHubOrbListParamsSchema = z
 export const AgentHubOrbSessionSchema = z.object({
   sessionId: z.string(),
   tabId: z.string().optional(),
-  resumed: z.boolean()
+  resumed: z.boolean(),
+  workspaceId: z.string().optional()
 })
 export const AgentHubOrbConversationSchema = z.object({
   sessionId: z.string(),

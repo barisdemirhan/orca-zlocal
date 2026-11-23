@@ -241,6 +241,8 @@ export const BotSchema = z.object({
   sharedFrom: BotSharedFromSchema.optional().catch(undefined),
   /** The built-in template it was made from. */
   templateId: z.string().max(64).optional().catch(undefined),
+  /** A reserved bot Orca runs itself: `orb` is the Agent Hub Orb. Set by the host only; older hosts drop it. */
+  role: z.literal('orb').optional().catch(undefined),
   createdAt: z.number(),
   updatedAt: z.number()
 })

@@ -196,12 +196,17 @@ const StructuredAgentSessionPaneOverlayLayer = memo(
       Boolean(isWorktreeActive && groupActiveTabById.get(tab.groupId) === tab.id)
     // Why: a chat holds no view state until it is first shown, and mounting every restored chat runs the renderer out of memory at thousands of tabs.
     const [shownTabIds, setShownTabIds] = useState(NO_SHOWN_TAB_IDS)
+    // The Orb shows its chat from any workspace, even one whose tab was never opened here.
+    const orbTabId = useAgentHubOrbPanel((s) => s.session?.tabId ?? null)
     const mountedTabs = useMemo(
       () =>
         structuredTabs.filter(
-          (tab) => shownTabIds.has(tab.id) || groupActiveTabById.get(tab.groupId) === tab.id
+          (tab) =>
+            shownTabIds.has(tab.id) ||
+            groupActiveTabById.get(tab.groupId) === tab.id ||
+            tab.id === orbTabId
         ),
-      [structuredTabs, shownTabIds, groupActiveTabById]
+      [structuredTabs, shownTabIds, groupActiveTabById, orbTabId]
     )
     let newlyShownCount = 0
     for (const tab of mountedTabs) {

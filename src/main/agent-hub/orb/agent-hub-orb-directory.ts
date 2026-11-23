@@ -1,4 +1,4 @@
-import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { AGENT_HUB_ORB_OPENING_PROMPT } from '../../../shared/agent-hub-orb'
 import { normalizeAgentHubOrbIdentitySettings } from '../../../shared/agent-hub-orb-settings'
@@ -15,6 +15,7 @@ import {
   readAgentHubOrbUser
 } from './agent-hub-orb-identity-files'
 import { getAgentHubOrbDirectory } from './agent-hub-orb-folder-path'
+import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 
 export { getAgentHubOrbDirectory }
 // Why both names: Claude reads CLAUDE.md, Codex and Pi read AGENTS.md, each from the working folder.
@@ -109,4 +110,17 @@ export function isAgentHubOrbDirectory(
   orbDirectory: string
 ): boolean {
   return launchDirectory !== undefined && path.resolve(launchDirectory) === orbDirectory
+}
+
+/** An absolute folder that exists, trimmed; older clients still send one. */
+export async function requireAgentHubOrbCwd(value: string): Promise<string> {
+  const cwd = value.trim()
+  if (!cwd || !path.isAbsolute(cwd)) {
+    throw new AgentHubError('invalid_argument', 'Orb folder must be an absolute path')
+  }
+  const directory = await stat(cwd).catch(() => null)
+  if (!directory?.isDirectory()) {
+    throw new AgentHubError('invalid_argument', 'Orb folder does not exist or is not a directory')
+  }
+  return cwd
 }

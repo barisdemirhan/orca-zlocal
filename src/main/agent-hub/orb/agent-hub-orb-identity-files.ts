@@ -5,6 +5,7 @@ import {
   type AgentHubOrbMemoryEntry,
   type AgentHubOrbTone
 } from '../../../shared/agent-hub-orb-identity'
+import { BOT_MEMORY_SEED } from '../../bots/bot-home'
 import { getAgentHubOrbDirectory } from './agent-hub-orb-folder-path'
 
 export type { AgentHubOrbMemoryEntry }
@@ -13,7 +14,8 @@ const SOUL_FILE = 'SOUL.md'
 const USER_FILE = 'USER.md'
 const MEMORY_FILE = 'MEMORY.md'
 const MEMORY_HEADING = '# Memory'
-const DATED_ENTRY = /^- \[(\d{4}-\d{2}-\d{2})\]\s*(.*)$/
+// The Orb folder writes `- [date] text`; a bot's MEMORY.md, `- date text`.
+const DATED_ENTRY = /^- \[?(\d{4}-\d{2}-\d{2})\]?\s+(.*)$/
 
 async function readText(directory: string, name: string): Promise<string> {
   return readFile(path.join(directory, name), 'utf8').catch(() => '')
@@ -87,15 +89,25 @@ function isoDay(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
+/** `orb` appends `- [date] text` to the Orb folder's file; `bot` puts `- date text` first in the Orb
+ *  bot's MEMORY.md, newest first as every bot keeps it. */
 export async function appendAgentHubOrbMemory(
   text: string,
   date: Date,
-  directory = getAgentHubOrbDirectory()
+  directory = getAgentHubOrbDirectory(),
+  form: 'orb' | 'bot' = 'orb'
 ): Promise<void> {
-  const entry = `- [${isoDay(date)}] ${text.replace(/\s+/g, ' ').trim()}`
+  const clean = text.replace(/\s+/g, ' ').trim()
   const existing = await readText(directory, MEMORY_FILE)
+  if (form === 'bot') {
+    const lines = (existing.trim() ? existing : BOT_MEMORY_SEED).replace(/\n*$/, '').split('\n')
+    const first = lines.findIndex((line) => line.startsWith('- '))
+    lines.splice(first === -1 ? lines.length : first, 0, `- ${isoDay(date)} ${clean}`)
+    await writeText(directory, MEMORY_FILE, `${lines.join('\n')}\n`)
+    return
+  }
   const base = existing.trim() ? existing.replace(/\n*$/, '\n') : `${MEMORY_HEADING}\n\n`
-  await writeText(directory, MEMORY_FILE, `${base}${entry}\n`)
+  await writeText(directory, MEMORY_FILE, `${base}- [${isoDay(date)}] ${clean}\n`)
 }
 
 /** Removes the first line equal to `line`, or every entry line when `line` is null. */

@@ -8,6 +8,10 @@ import {
   readAgentHubOrbMemory
 } from '../../../agent-hub/orb/agent-hub-orb-identity-files'
 import type { OrcaRuntimeService } from '../../orca-runtime'
+import {
+  agentHubOrbIdentityDirectory,
+  findAgentHubOrbBot
+} from '../../../agent-hub/orb/agent-hub-orb-bot'
 import { resolveAgentHubPanes } from './agent-hub-caller'
 
 const writing = new Set<string>()
@@ -29,7 +33,9 @@ export const AGENT_HUB_ORB_MEMORY_METHODS = [
         )
       }
       const key = normalizeAgentHubOrbMemory(params.text)
-      const saved = await readAgentHubOrbMemory()
+      const saved = await readAgentHubOrbMemory(
+        agentHubOrbIdentityDirectory(ctx.runtime.bots.list())
+      )
       if (saved.some((entry) => normalizeAgentHubOrbMemory(entry.text) === key)) {
         throw new AgentHubError('invalid_argument', 'This is already in memory.')
       }
@@ -58,7 +64,13 @@ export async function respondToAgentHubMemory(
     }
     writing.add(requestId)
     try {
-      await appendAgentHubOrbMemory(result.text, new Date())
+      const bots = runtime.bots.list()
+      await appendAgentHubOrbMemory(
+        result.text,
+        new Date(),
+        agentHubOrbIdentityDirectory(bots),
+        findAgentHubOrbBot(bots) ? 'bot' : 'orb'
+      )
       return runtime.agentHub.respond(requestId, result, desktop)
     } finally {
       writing.delete(requestId)

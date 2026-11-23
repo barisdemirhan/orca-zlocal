@@ -362,19 +362,21 @@ export function BotSettingsRoot({
       <BotItemsSettingsGroup bot={bot} update={update} />
       {home ? <SoulAndMemoryGroup home={home} open={open} /> : null}
       <AccessGroup bot={bot} open={open} />
-      <BotSharingGroup bot={bot} open={open} />
+      {bot.role ? null : <BotSharingGroup bot={bot} open={open} />}
       <NotificationsGroup bot={bot} update={update} />
-      <div>
-        <Button
-          variant="ghost-destructive"
-          size="sm"
-          disabled={controlsOff}
-          onClick={() => void deleteBot().then((deleted) => deleted && onDeleted())}
-        >
-          <Trash2 />
-          {t('bots.settingsView.deleteBot', 'Delete bot…')}
-        </Button>
-      </div>
+      {bot.role ? null : (
+        <div>
+          <Button
+            variant="ghost-destructive"
+            size="sm"
+            disabled={controlsOff}
+            onClick={() => void deleteBot().then((deleted) => deleted && onDeleted())}
+          >
+            <Trash2 />
+            {t('bots.settingsView.deleteBot', 'Delete bot…')}
+          </Button>
+        </div>
+      )}
     </>
   )
 }

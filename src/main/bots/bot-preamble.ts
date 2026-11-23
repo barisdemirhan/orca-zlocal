@@ -8,6 +8,10 @@ import { BOT_ITEMS_UI_READY } from '../../shared/bot-items-ui'
 import { workflowWaitRecipe } from '../../shared/automation-workflow-wait-recipe'
 import { folderWorkspaceKey } from '../../shared/workspace/identity/workspace-scope'
 import { type BotHomeFilesystem, localBotHomeFilesystem } from './bot-home'
+import {
+  agentHubOrbBotPreambleSection,
+  readAgentHubOrbBotUser
+} from '../agent-hub/orb/agent-hub-orb-bot-preamble'
 
 // A login shell can put another install's `orca` first on PATH; ORCA_CLI_COMMAND names this session's.
 // Windows shells don't expand this form.
@@ -136,6 +140,8 @@ export function buildBotPreamble(input: {
   agent: BotAgent
   soul: string | null
   memory: string | null
+  /** The Orb bot's USER.md; absent for any other bot. */
+  orbUser?: string | null
 }): string {
   const { tools, rules } = botRulesSections(input.agent)
   return [
@@ -144,6 +150,7 @@ export function buildBotPreamble(input: {
     `## SOUL.md\n\n${input.soul?.trim() || '(empty)'}`,
     botNameLine(input.name),
     `## MEMORY.md\n\n${quotedBotMemory(input.memory)}`,
+    ...(input.orbUser !== undefined ? [agentHubOrbBotPreambleSection(input.orbUser)] : []),
     rules
   ].join('\n\n')
 }
@@ -179,18 +186,26 @@ export async function readBotHomeFiles(
 /** Read when a conversation's agent starts; a running chat hears of later edits from its turn context. */
 export async function readBotPreamble(
   fs: Pick<BotHomeFilesystem, 'readText'>,
-  bot: Pick<Bot, 'name' | 'agent'>,
+  bot: Pick<Bot, 'name' | 'agent'> & Partial<Pick<Bot, 'role'>>,
   folder: string,
   onRead?: (files: BotHomeFiles) => void
 ): Promise<string> {
-  const files = await readBotHomeFiles(fs, folder)
+  const [files, orbUser] = await Promise.all([
+    readBotHomeFiles(fs, folder),
+    bot.role === 'orb' ? readAgentHubOrbBotUser(fs, folder) : undefined
+  ])
   onRead?.(files)
-  return buildBotPreamble({ name: bot.name, agent: bot.agent, ...files })
+  return buildBotPreamble({
+    name: bot.name,
+    agent: bot.agent,
+    ...files,
+    ...(orbUser !== undefined ? { orbUser } : {})
+  })
 }
 
 /** The preamble for a session in a bot's home workspace, read from the folder it runs in; null elsewhere. */
 export async function botSessionPreamble<
-  B extends Pick<Bot, 'name' | 'agent' | 'folderWorkspaceId'>
+  B extends Pick<Bot, 'name' | 'agent' | 'folderWorkspaceId'> & Partial<Pick<Bot, 'role'>>
 >(
   bots: readonly B[],
   session: {
@@ -212,7 +227,10 @@ export async function botSessionPreamble<
   }
   // An automation on its own agent, or a chat started on another, runs on its record's agent.
   const agent = session.provider && isBotAgent(session.provider) ? session.provider : bot.agent
-  return readBotPreamble(fs, { name: bot.name, agent }, session.launchDirectory, (files) =>
-    onRead?.(bot, files, agent)
+  return readBotPreamble(
+    fs,
+    { name: bot.name, agent, role: bot.role },
+    session.launchDirectory,
+    (files) => onRead?.(bot, files, agent)
   )
 }
