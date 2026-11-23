@@ -190,8 +190,8 @@ jobs:
       - name: Widen the mobile web bundle fence
         run: |
           f=config/scripts/build/mobile-web-app/verify-mobile-web-app-bundle.mjs
-          sed -i -E 's/^(export const MOBILE_WEB_APP_BUNDLE_MAX_TOTAL_BYTES = )([0-9.]+) \* 1024 \* 1024$/\1(\2 + 0.0625) * 1024 * 1024/' "$f"
-          grep -qE '^export const MOBILE_WEB_APP_BUNDLE_MAX_TOTAL_BYTES = \([0-9.]+ \+ 0\.0625\) \* 1024 \* 1024$' "$f"
+          sed -i -E 's/^(export const MOBILE_WEB_APP_BUNDLE_MAX_(TOTAL|EAGER)_BYTES = )([0-9.]+) \* 1024 \* 1024$/\1(\3 + 0.0625) * 1024 * 1024/' "$f"
+          grep -qE '^export const MOBILE_WEB_APP_BUNDLE_MAX_(TOTAL|EAGER)_BYTES = \([0-9.]+ \+ 0\.0625\) \* 1024 \* 1024$' "$f"
       # The same step list as build:desktop minus its typecheck, which the typecheck job runs.
       - run: pnpm run build:desktop:assets
       - name: Pack out/
@@ -293,8 +293,8 @@ jobs:
       - name: Widen the mobile web bundle fence
         run: |
           f=config/scripts/build/mobile-web-app/verify-mobile-web-app-bundle.mjs
-          sed -i -E 's/^(export const MOBILE_WEB_APP_BUNDLE_MAX_TOTAL_BYTES = )([0-9.]+) \* 1024 \* 1024$/\1(\2 + 0.0625) * 1024 * 1024/' "$f"
-          grep -qE '^export const MOBILE_WEB_APP_BUNDLE_MAX_TOTAL_BYTES = \([0-9.]+ \+ 0\.0625\) \* 1024 \* 1024$' "$f"
+          sed -i -E 's/^(export const MOBILE_WEB_APP_BUNDLE_MAX_(TOTAL|EAGER)_BYTES = )([0-9.]+) \* 1024 \* 1024$/\1(\3 + 0.0625) * 1024 * 1024/' "$f"
+          grep -qE '^export const MOBILE_WEB_APP_BUNDLE_MAX_(TOTAL|EAGER)_BYTES = \([0-9.]+ \+ 0\.0625\) \* 1024 \* 1024$' "$f"
       - run: pnpm run build:desktop:assets
       - run: pnpm run ensure:electron-runtime
       - name: Package the deb
