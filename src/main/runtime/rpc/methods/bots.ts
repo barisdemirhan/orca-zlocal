@@ -247,6 +247,9 @@ export const BOT_METHODS = [
     params: BotDelete,
     handler: async (params, { runtime }) => {
       const bot = runtime.bots.list().find((entry) => entry.id === params.botId)
+      if (bot?.role) {
+        throw new Error('bot_reserved')
+      }
       if (bot) {
         // Before anything goes: its home's purge would drop unsaved editor text, as on the desktop.
         refuseUnsavedFolderDrafts(runtime.requireStore(), bot.folderWorkspaceId)

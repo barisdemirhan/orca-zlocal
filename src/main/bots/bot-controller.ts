@@ -10,7 +10,7 @@ import {
 } from '../../shared/bot-avatar'
 import { type Bot, botFolderName } from '../../shared/bot-types'
 import { assertBotNameFree, freeBotName } from './bot-free-name'
-import { BotsDisabledError, isBotsEnabled } from '../../shared/bots-switch'
+import { BotsDisabledError, isBotActive } from '../../shared/bots-switch'
 import { type BotRosterEntry, botRosterFields, soulSpecialty } from '../../shared/bot-roster'
 import {
   applyBotUpdates,
@@ -105,7 +105,7 @@ export class BotController {
   /** Off, bots take no conversations or runs, and nothing creates or opens one; their homes stay.
    *  The Orb bot keeps working for its own calls: it is the Orb, not one of the Bots. */
   enabled(bot?: Pick<Bot, 'role'> | null): boolean {
-    return bot?.role === 'orb' || isBotsEnabled(this.deps.getStore()?.getSettings())
+    return isBotActive(bot, this.deps.getStore()?.getSettings())
   }
 
   assertEnabled(bot?: Pick<Bot, 'role'> | null): void {

@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import type { AgentHubOrbIdentityFiles } from '../../shared/agent-hub-orb-identity'
+import type { BotController } from '../bots/bot-controller'
 import type { Store } from '../persistence/loading-store/store'
 import {
   agentHubOrbIdentityOptions,
@@ -10,6 +11,7 @@ import {
   agentHubOrbIdentityDirectory,
   findAgentHubOrbBot
 } from '../agent-hub/orb/agent-hub-orb-bot'
+import { forgetAgentHubOrbBotMemory } from '../agent-hub/orb/agent-hub-orb-bot-memory'
 import {
   forgetAgentHubOrbMemory,
   readAgentHubOrbMemory,
@@ -41,7 +43,10 @@ async function readIdentity(store: Store): Promise<AgentHubOrbIdentityFiles> {
   return { soul, user, memory, truncated }
 }
 
-export function registerAgentHubOrbIdentityHandlers(store: Store): void {
+export function registerAgentHubOrbIdentityHandlers(
+  store: Store,
+  bots: Pick<BotController, 'memory'>
+): void {
   ipcMain.handle('app:readAgentHubOrbIdentity', () => readIdentity(store))
   ipcMain.handle('app:writeAgentHubOrbSoul', async (_event, text: unknown) => {
     await writeAgentHubOrbSoul(
@@ -58,10 +63,11 @@ export function registerAgentHubOrbIdentityHandlers(store: Store): void {
     return readIdentity(store)
   })
   ipcMain.handle('app:forgetAgentHubOrbMemory', async (_event, line: unknown) => {
-    await forgetAgentHubOrbMemory(
-      typeof line === 'string' ? line : null,
-      agentHubOrbIdentityDirectory(store.getBots())
-    )
+    const raw = typeof line === 'string' ? line : null
+    const orbBot = findAgentHubOrbBot(store.getBots())
+    await (orbBot
+      ? forgetAgentHubOrbBotMemory(bots, orbBot, raw)
+      : forgetAgentHubOrbMemory(raw, agentHubOrbIdentityDirectory(store.getBots())))
     return readIdentity(store)
   })
   ipcMain.handle('app:refreshAgentHubOrbInstructions', async () => refresh(store))

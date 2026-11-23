@@ -8,7 +8,8 @@ export const AgentHubOrbOpenParamsSchema = z
     resume: z.object({ sessionId: z.string().min(1).max(512) }).optional(),
     agent: z.string().refine(isStructuredAgentId).optional(),
     model: z.string().trim().min(1).max(512).nullable().optional(),
-    cwd: z.string().trim().min(1).max(32_768).optional()
+    cwd: z.string().trim().min(1).max(32_768).optional(),
+    fresh: z.boolean().optional()
   })
   .default({})
 export const AgentHubOrbListParamsSchema = z
@@ -30,5 +31,6 @@ export const AgentHubOrbConversationSchema = z.object({
   title: z.string(),
   startedAt: z.number(),
   lastActiveAt: z.number(),
-  lastReply: z.string().optional()
+  lastReply: z.string().optional(),
+  archivedWorkspaceId: z.string().optional()
 })

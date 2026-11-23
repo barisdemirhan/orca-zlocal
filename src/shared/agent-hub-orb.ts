@@ -14,6 +14,8 @@ export type AgentHubOrbOpenParams = {
   agent?: StructuredAgentId
   model?: string | null
   cwd?: string
+  /** Starts a new Home chat instead of reopening the current one (the Orb bot only). */
+  fresh?: boolean
 }
 export type AgentHubOrbSession = {
   sessionId: string

@@ -83,6 +83,7 @@ export function openAgentHubOrb(
     agent: params?.agent,
     model: params?.model,
     cwd: params?.cwd,
+    fresh: params?.fresh,
     agentSetting: settings.agent,
     modelSetting: settings.model,
     permission: settings.permission,

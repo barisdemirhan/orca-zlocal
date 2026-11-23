@@ -44,7 +44,7 @@ export function useAgentHubOrbReopen({
         await window.api.agentHub.orb.close()
       }
       const opened = await openAgentHubOrb(
-        resumeId ? { resume: { sessionId: resumeId } } : undefined
+        resumeId ? { resume: { sessionId: resumeId } } : { fresh: true }
       )
       if (!opened) {
         setFailure({

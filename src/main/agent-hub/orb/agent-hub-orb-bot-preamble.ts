@@ -8,7 +8,7 @@ import type { BotHomeFilesystem } from '../../bots/bot-home'
 export const AGENT_HUB_ORB_BOT_USER_FILE = 'USER.md'
 
 // Replaces the bots' own MEMORY.md rule: the owner approves each Orb memory, and can turn suggestions off.
-const MEMORY_RULE = `Memory: this replaces the MEMORY.md rules above. Never edit MEMORY.md yourself. From your Home Chat (the Orb window), propose a lasting fact about the owner or their work with \`orca hub orb remember "<text>"\` (${AGENT_HUB_ORB_MEMORY_MAX_LENGTH} characters at most); the owner decides. If it answers that suggestions are off, propose nothing. When a memory shapes a decision, say so in one line.`
+const MEMORY_RULE = `Memory: this replaces the "Keep MEMORY.md current" rule under Rules, including any later rules update. Never edit MEMORY.md yourself. From your Home Chat (the Orb window), propose a lasting fact about the owner or their work with \`orca hub orb remember "<text>"\` (${AGENT_HUB_ORB_MEMORY_MAX_LENGTH} characters at most); the owner decides. If it answers that suggestions are off, propose nothing. When a memory shapes a decision, say so in one line.`
 
 /** What the Orb bot hears on top of any bot's preamble: its Agent Hub role and its owner's notes. */
 export function agentHubOrbBotPreambleSection(user: string | null): string {

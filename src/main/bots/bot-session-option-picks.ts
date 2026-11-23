@@ -17,11 +17,11 @@ export async function keepSessionPicksOnBot(
   mutation: NativeChatSessionOptionSettingsMutation,
   host?: SessionLookup
 ): Promise<boolean> {
-  if (mutation.type !== 'apply-picks' || !mutation.sessionId || !bots.enabled()) {
+  if (mutation.type !== 'apply-picks' || !mutation.sessionId) {
     return false
   }
   const bot = botOfSession(bots, mutation.sessionId, host)
-  if (!bot) {
+  if (!bot || !bots.enabled(bot)) {
     return false
   }
   // A conversation in the bot's home on another agent still is not the owner's chat to remember.

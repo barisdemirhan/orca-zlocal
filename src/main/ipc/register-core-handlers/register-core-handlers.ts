@@ -136,6 +136,7 @@ export async function registerCoreHandlers(
   }
   return (registration ??= (async () => {
     registerAppHandlers(store, {
+      bots: runtime.bots,
       rendererCheckpoint,
       onBeforeRelaunch: lifecycleOptions.onBeforeRelaunch,
       // Restart/profile switching closes this through will-quit; this callback covers relaunch exit.

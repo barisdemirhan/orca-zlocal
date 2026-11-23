@@ -27,7 +27,7 @@ import { closeAgentHubOrbSession } from './agent-hub-orb-session-close'
 import {
   listAgentHubOrbBotConversations,
   agentHubOrbBotSession,
-  closeAgentHubOrbBotChat,
+  closeAgentHubOrbBotHome,
   openAgentHubOrbBotSession,
   type AgentHubOrbBotChats
 } from './agent-hub-orb-bot-session'
@@ -154,13 +154,13 @@ export class AgentHubOrbSessionManager {
     if (!host) {
       return
     }
-    const current = this.currentSession()
-    if (!current) {
-      return
+    const bot = this.botChats?.find()
+    const current = bot ? null : this.currentSession()
+    if (bot && this.botChats) {
+      await closeAgentHubOrbBotHome(this.runtime, host, this.botChats, bot)
+    } else if (current) {
+      await closeAgentHubOrbSession(this.runtime, host, current)
     }
-    await (this.botChats?.find()
-      ? closeAgentHubOrbBotChat(this.runtime, this.botChats, current.sessionId)
-      : closeAgentHubOrbSession(this.runtime, host, current))
     this.active = null
     this.appliedMode = null
   }
@@ -262,19 +262,20 @@ export class AgentHubOrbSessionManager {
     const host = await this.ensureHost()
     this.requireEnabled()
     const settings = normalizeAgentHubOrbSettings(this.getSettings())
-    const { session, mode } = await openAgentHubOrbBotSession({
+    const { session, mode, created } = await openAgentHubOrbBotSession({
       host,
       hub: this.runtime.agentHub,
       chats,
       rawSettings: this.getSettings(),
       settings,
       previous: this.selectedSettings,
-      resumeSessionId: params.resume?.sessionId
+      resumeSessionId: params.resume?.sessionId,
+      fresh: params.fresh
     })
     this.appliedMode = mode
     this.active = session
     this.selectedSettings = settings
-    const floating = this.floatingSession(host)
+    const floating = created ? this.floatingSession(host) : null
     if (floating) {
       // The floating chat from before the Orb bot would otherwise keep running beside it.
       await closeAgentHubOrbSession(this.runtime, host, floating).catch((error: unknown) => {

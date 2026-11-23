@@ -101,8 +101,12 @@ async function moveIdentityFiles(
   const lines = botMemoryLines(await readText(path.join(legacy, 'MEMORY.md')))
   if (lines.length) {
     const memoryFile = path.join(home, 'MEMORY.md')
-    const current = (await readText(memoryFile)).replace(/\n*$/, '\n')
-    await writeFile(memoryFile, `${current}${lines.join('\n')}\n`)
+    const currentText = await readText(memoryFile)
+    const have = new Set(currentText.split('\n'))
+    const missing = lines.filter((line) => !have.has(line))
+    if (missing.length) {
+      await writeFile(memoryFile, `${currentText.replace(/\n*$/, '\n')}${missing.join('\n')}\n`)
+    }
   }
 }
 
@@ -179,7 +183,8 @@ async function ensureOnce(deps: AgentHubOrbBotDeps): Promise<Bot> {
     await deps.bots.endFirstRun(bot.id)
   }
   const marker = await readMarker(legacy)
-  if (!existing || (marker?.botId === bot.id && !marker.done)) {
+  const moved = marker?.botId === bot.id && marker.done
+  if (!moved && (!existing || marker?.botId === bot.id)) {
     await moveIdentityFiles(deps, bot, legacy)
     await writeMarker(legacy, { botId: bot.id, done: true })
   }

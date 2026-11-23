@@ -20,3 +20,11 @@ export function isBotsEnabled(
 ): boolean {
   return settings?.botsEnabled !== false
 }
+
+/** Whether `bot` works: the Orb bot always does (it is the Orb, not one of the Bots); the rest need Bots on. */
+export function isBotActive(
+  bot: { role?: string } | null | undefined,
+  settings: Pick<GlobalSettings, 'botsEnabled'> | null | undefined
+): boolean {
+  return bot?.role === 'orb' || isBotsEnabled(settings)
+}

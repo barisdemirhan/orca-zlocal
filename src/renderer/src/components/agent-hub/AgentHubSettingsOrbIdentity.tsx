@@ -129,7 +129,7 @@ export function AgentHubSettingsOrbIdentity({
     setStarting(true)
     try {
       await window.api.agentHub.orb.close()
-      await openAgentHubOrb(undefined, true)
+      await openAgentHubOrb({ fresh: true }, true)
       setChanged(false)
     } catch {
       toast.error(translate('auto.agentHub.orb.openFailed', 'Could not open Orb. Try again.'))

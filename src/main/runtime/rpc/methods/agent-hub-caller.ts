@@ -34,7 +34,7 @@ function chatCaller(runtime: RpcContext['runtime'], sessionId: string): AgentHub
   }
   const bot = botOfSession(runtime.bots, sessionId)
   // Older readers see a pane caller they cannot resolve, titled with the bot's name.
-  return bot
+  return bot && runtime.bots.enabled(bot)
     ? { sessionId, botId: bot.id, title: bot.name, agentType: bot.agent, ...keys('bot') }
     : null
 }

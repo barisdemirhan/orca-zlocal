@@ -6,13 +6,16 @@ import {
   type normalizeAgentHubOrbSettings
 } from '../../../shared/agent-hub-orb-settings'
 import type { AgentHubSettings } from '../../../shared/agent-hub-settings'
-import type { Bot } from '../../../shared/bot-types'
+import { isBotAgent, type Bot } from '../../../shared/bot-types'
 import { folderWorkspaceKey } from '../../../shared/workspace/identity/workspace-scope'
 import type { StructuredAgentSessionHost } from '../../native-chat/agent-session-wire/host/structured-agent-session-host'
 import type { AgentHubLedger } from '../../runtime/agent-hub/agent-hub-ledger'
 import { AgentHubError } from '../../runtime/agent-hub/agent-hub-error'
 import { agentHubOrbPermissionMode } from './agent-hub-orb-permission-settings'
-import { requireIdleAgentHubOrbSession } from './agent-hub-orb-settings-transition'
+import {
+  agentHubOrbSettingsNeedTransition,
+  requireIdleAgentHubOrbSession
+} from './agent-hub-orb-settings-transition'
 import { releaseAgentHubOrbOperations } from './agent-hub-orb-session-close'
 import { listAgentHubOrbConversations } from './agent-hub-orb-history'
 import type { AgentSessionRecord } from '../../../shared/agent-session/lifecycle/agent-session-record'
@@ -55,18 +58,27 @@ export async function openAgentHubOrbBotSession(input: {
   settings: OrbSettings
   previous: OrbSettings | null
   resumeSessionId?: string | undefined
-}): Promise<{ session: AgentHubOrbSession; mode: AgentChatPermissionMode | null }> {
+  fresh?: boolean | undefined
+}): Promise<{
+  session: AgentHubOrbSession
+  mode: AgentChatPermissionMode | null
+  created: boolean
+}> {
   const { host, chats, settings, previous } = input
   const before = chats.find()
   if (input.resumeSessionId && input.resumeSessionId !== before?.chatSessionId) {
     throw new AgentHubError('not_found', 'Orb conversation was not found on this host')
   }
   const record = before?.chatSessionId ? host.deps.store.getRecord(before.chatSessionId) : null
+  // The Orb bot runs only bot agents; any other chosen agent keeps the one it already has.
+  const asRun = (chosen: OrbSettings): OrbSettings => ({
+    ...chosen,
+    agent: isBotAgent(chosen.agent) ? chosen.agent : (before?.agent ?? chosen.agent)
+  })
+  // Only against settings this app run applied: a chat's record takes the model it ran with, so on
+  // the first open it differs from an unset model without anything having changed.
   const changed =
-    previous !== null &&
-    (previous.agent !== settings.agent ||
-      previous.model !== settings.model ||
-      previous.permission !== settings.permission)
+    previous !== null && agentHubOrbSettingsNeedTransition(asRun(previous), asRun(settings), record)
   if (record && changed) {
     await requireIdleAgentHubOrbSession(host, input.hub, record.sessionId)
   }
@@ -79,7 +91,8 @@ export async function openAgentHubOrbBotSession(input: {
     record !== null &&
     record.provider === bot.agent &&
     (changed || (mode !== null && record.permissionMode !== mode))
-  const sessionId = stale ? await chats.resetChat(bot.id) : await chats.ensureChat(bot.id)
+  const sessionId =
+    stale || input.fresh ? await chats.resetChat(bot.id) : await chats.ensureChat(bot.id)
   const tabId = host.getSessionTabId(sessionId)
   return {
     session: {
@@ -88,7 +101,8 @@ export async function openAgentHubOrbBotSession(input: {
       resumed: false,
       workspaceId: folderWorkspaceKey(bot.folderWorkspaceId)
     },
-    mode
+    mode,
+    created: before === null
   }
 }
 
@@ -126,4 +140,16 @@ export async function closeAgentHubOrbBotChat(
     throw new AgentHubError('invalid_argument', 'Orb conversation could not be closed')
   }
   releaseAgentHubOrbOperations(runtime, sessionId)
+}
+
+/** A bot chat keeps running after its tab closes, so it is closed by the bot, not by the tab. */
+export async function closeAgentHubOrbBotHome(
+  runtime: object,
+  host: StructuredAgentSessionHost,
+  chats: AgentHubOrbBotChats,
+  bot: Bot
+): Promise<void> {
+  if (bot.chatSessionId && host.deps.store.getConversation(bot.chatSessionId)) {
+    await closeAgentHubOrbBotChat(runtime, chats, bot.chatSessionId)
+  }
 }

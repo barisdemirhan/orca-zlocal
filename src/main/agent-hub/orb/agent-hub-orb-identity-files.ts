@@ -5,7 +5,6 @@ import {
   type AgentHubOrbMemoryEntry,
   type AgentHubOrbTone
 } from '../../../shared/agent-hub-orb-identity'
-import { BOT_MEMORY_SEED } from '../../bots/bot-home'
 import { getAgentHubOrbDirectory } from './agent-hub-orb-folder-path'
 
 export type { AgentHubOrbMemoryEntry }
@@ -89,50 +88,49 @@ function isoDay(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-/** `orb` appends `- [date] text` to the Orb folder's file; `bot` puts `- date text` first in the Orb
- *  bot's MEMORY.md, newest first as every bot keeps it. */
+/** Appends `- [date] text` to the Orb folder's file. */
 export async function appendAgentHubOrbMemory(
   text: string,
   date: Date,
-  directory = getAgentHubOrbDirectory(),
-  form: 'orb' | 'bot' = 'orb'
+  directory = getAgentHubOrbDirectory()
 ): Promise<void> {
-  const clean = text.replace(/\s+/g, ' ').trim()
+  const clean = cleanAgentHubOrbMemoryText(text)
   const existing = await readText(directory, MEMORY_FILE)
-  if (form === 'bot') {
-    const lines = (existing.trim() ? existing : BOT_MEMORY_SEED).replace(/\n*$/, '').split('\n')
-    const first = lines.findIndex((line) => line.startsWith('- '))
-    lines.splice(first === -1 ? lines.length : first, 0, `- ${isoDay(date)} ${clean}`)
-    await writeText(directory, MEMORY_FILE, `${lines.join('\n')}\n`)
-    return
-  }
   const base = existing.trim() ? existing.replace(/\n*$/, '\n') : `${MEMORY_HEADING}\n\n`
   await writeText(directory, MEMORY_FILE, `${base}- [${isoDay(date)}] ${clean}\n`)
 }
 
-/** Removes the first line equal to `line`, or every entry line when `line` is null. */
+export function cleanAgentHubOrbMemoryText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
+/** `text` without the first line equal to `line`, or without every entry line when `line` is null. */
+export function withoutAgentHubOrbMemory(text: string, line: string | null): string {
+  let removed = false
+  return text
+    .split('\n')
+    .filter((candidate) => {
+      if (!candidate.startsWith('- ')) {
+        return true
+      }
+      if (line === null) {
+        return false
+      }
+      if (!removed && candidate === line) {
+        removed = true
+        return false
+      }
+      return true
+    })
+    .join('\n')
+}
+
 export async function forgetAgentHubOrbMemory(
   line: string | null,
   directory = getAgentHubOrbDirectory()
 ): Promise<void> {
   const existing = await readText(directory, MEMORY_FILE)
-  if (!existing) {
-    return
+  if (existing) {
+    await writeText(directory, MEMORY_FILE, withoutAgentHubOrbMemory(existing, line))
   }
-  const lines = existing.split('\n')
-  let removed = false
-  const kept = lines.filter((candidate) => {
-    if (!candidate.startsWith('- ')) {
-      return true
-    }
-    if (line === null) {
-      return false
-    }
-    if (!removed && candidate === line) {
-      removed = true
-      return false
-    }
-    return true
-  })
-  await writeText(directory, MEMORY_FILE, kept.join('\n'))
 }

@@ -33,6 +33,7 @@ import {
   agentHubOrbIdentityOptions,
   ensureAgentHubOrbDirectory
 } from '../agent-hub/orb/agent-hub-orb-directory'
+import type { BotController } from '../bots/bot-controller'
 import { registerAgentHubOrbIdentityHandlers } from './agent-hub-orb-identity'
 import {
   isMarkdownDocumentName,
@@ -53,6 +54,7 @@ import { getMacosUpgradeSupport } from '../macos-update-requirement/macos-upgrad
 import { resolveWslMappedDrivePath } from '../wsl/filesystem/wsl-mapped-drive-share'
 
 type RegisterAppHandlersOptions = {
+  bots: Pick<BotController, 'memory'>
   rendererCheckpoint: RendererShutdownCheckpointService
   onBeforeRelaunch?: () => void | Promise<void>
   /** Only for app:relaunch, whose app.exit(0) is committed and skips will-quit. */
@@ -250,7 +252,7 @@ export function registerAppHandlers(store: Store, options: RegisterAppHandlersOp
       ? agentHubOrbIdentityDirectory(store.getBots())
       : ensureAgentHubOrbDirectory(undefined, agentHubOrbIdentityOptions(store.getSettings()))
   )
-  registerAgentHubOrbIdentityHandlers(store)
+  registerAgentHubOrbIdentityHandlers(store, options.bots)
 
   ipcMain.handle('app:pickFloatingMarkdownDocument', (event) => pickFloatingMarkdownDocument(event))
 

@@ -6,12 +6,12 @@ import {
 } from '../../../../shared/workspace-layout/tab-groups/tab-group-moves'
 import type { Bot } from '../../../../shared/bot-types'
 import { botOfHomeWorkspace } from '../../../../shared/bots/bot-homes'
-import { isBotsEnabled } from '../../../../shared/bots-switch'
+import { isBotActive } from '../../../../shared/bots-switch'
 import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 
 type BotHomeStore = {
   getSettings?: () => Partial<Pick<GlobalSettings, 'botsEnabled'>>
-  getBots?: () => readonly Pick<Bot, 'folderWorkspaceId' | 'chatSessionId'>[]
+  getBots?: () => readonly Pick<Bot, 'folderWorkspaceId' | 'chatSessionId' | 'role'>[]
 }
 
 /** The session the bot whose home `workspaceId` is names Home now; null off a bot's page or with bots off. */
@@ -19,9 +19,8 @@ export function botHomeSessionId(
   store: BotHomeStore | null | undefined,
   workspaceId: string
 ): string | null {
-  return isBotsEnabled(store?.getSettings?.())
-    ? (botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)?.chatSessionId ?? null)
-    : null
+  const bot = botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)
+  return bot && isBotActive(bot, store?.getSettings?.()) ? (bot.chatSessionId ?? null) : null
 }
 
 /** Why a pin edit on a bot's page is refused; null when allowed. Home stays pinned, side chats never pin. */

@@ -84,8 +84,7 @@ describe('Orb memory proposals', () => {
     expect(files.append).toHaveBeenCalledWith(
       'Prefers short, plain answers',
       expect.any(Date),
-      expect.any(String),
-      'orb'
+      expect.any(String)
     )
 
     files.read.mockResolvedValue([

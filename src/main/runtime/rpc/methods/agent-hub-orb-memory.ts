@@ -7,6 +7,7 @@ import {
   appendAgentHubOrbMemory,
   readAgentHubOrbMemory
 } from '../../../agent-hub/orb/agent-hub-orb-identity-files'
+import { addAgentHubOrbBotMemory } from '../../../agent-hub/orb/agent-hub-orb-bot-memory'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import {
   agentHubOrbIdentityDirectory,
@@ -68,12 +69,10 @@ export async function respondToAgentHubMemory(
     writing.add(requestId)
     try {
       const bots = runtime.bots.list()
-      await appendAgentHubOrbMemory(
-        result.text,
-        new Date(),
-        agentHubOrbIdentityDirectory(bots),
-        findAgentHubOrbBot(bots) ? 'bot' : 'orb'
-      )
+      const orbBot = findAgentHubOrbBot(bots)
+      await (orbBot
+        ? addAgentHubOrbBotMemory(runtime.bots, orbBot, result.text, new Date())
+        : appendAgentHubOrbMemory(result.text, new Date(), agentHubOrbIdentityDirectory(bots)))
       return runtime.agentHub.respond(requestId, result, desktop)
     } finally {
       writing.delete(requestId)
