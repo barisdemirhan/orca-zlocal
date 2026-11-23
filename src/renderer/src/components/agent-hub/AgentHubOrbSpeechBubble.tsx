@@ -153,7 +153,8 @@ export function AgentHubOrbSpeechBubble({
         sideOffset={sideOffset}
         collisionPadding={16}
         respectReducedMotion
-        className="w-80 max-w-[var(--radix-popover-content-available-width)]"
+        // Why z-[48]: above the Orb panel (z-[47]) but under dialogs (z-50), like the sphere.
+        className="z-[48] w-80 max-w-[var(--radix-popover-content-available-width)]"
         onPointerEnter={() => setBubbleHovered(true)}
         onPointerLeave={() => setBubbleHovered(false)}
         onFocusCapture={() => setBubbleFocused(true)}
