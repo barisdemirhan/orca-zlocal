@@ -86,15 +86,20 @@ export function useBots(enabled = true): readonly Bot[] {
 }
 
 /** The bots' and groups' homes: the store's, and each away server's kept homes. Other folder
- * workspaces' writes (activity, unread) keep this identity. */
+ * workspaces' writes (activity, unread) keep this identity. `enabled: false` loads nothing, as in `useBots`. */
 export function useBotHomeWorkspaces(
   bots: readonly BotHomeOwner[],
-  groups: readonly BotHomeOwner[]
+  groups: readonly BotHomeOwner[],
+  enabled = true
 ): readonly FolderWorkspace[] {
   const selectHomes = useMemo(() => createBotHomesSelector([...bots, ...groups]), [bots, groups])
   const homes = useAppStore(useShallow(selectHomes))
   // The listed hosts change when a server is first listed from its kept read.
-  const hostIds = useSyncExternalStore(subscribe, readBotHostIds, readBotHostIds)
+  const hostIds = useSyncExternalStore(
+    enabled ? subscribe : subscribeToNothing,
+    readBotHostIds,
+    readBotHostIds
+  )
   return useMemo(() => withKeptBotHomes(homes, hostIds), [homes, hostIds])
 }
 

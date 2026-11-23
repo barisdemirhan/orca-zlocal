@@ -52,7 +52,8 @@ beforeEach(() => {
     bots: {
       list: () => [
         { id: 'bot-1', name: 'Night Watch', agent: 'claude', folderWorkspaceId: 'bot-home' }
-      ]
+      ],
+      enabled: () => true
     },
     onClientEvent: bus.on.bind(bus),
     registerSubscriptionCleanup: registry.register.bind(registry),

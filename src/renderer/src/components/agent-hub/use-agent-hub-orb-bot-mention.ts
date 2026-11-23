@@ -31,8 +31,9 @@ export function useAgentHubOrbBotMention(
   const enabled = useBotsEnabled()
   const query = TRIGGER.exec(draft)?.[2]
   // Why: the first subscription loads every host's bots; wait until `@` asks for them.
-  const bots = useBots(enabled && query !== undefined)
-  const homes = useBotHomeWorkspaces(bots, NO_GROUPS)
+  const listing = enabled && query !== undefined
+  const bots = useBots(listing)
+  const homes = useBotHomeWorkspaces(bots, NO_GROUPS, listing)
   const [bot, setBot] = useState<Bot | null>(null)
   const [active, setActive] = useState(0)
   const [dismissed, setDismissed] = useState<string | null>(null)

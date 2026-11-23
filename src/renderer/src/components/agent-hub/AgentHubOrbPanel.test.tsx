@@ -99,6 +99,7 @@ vi.mock('@/lib/agent-session/launch/structured-agent-session-launch-label', () =
   structuredAgentLabel: (id: string) => (id === 'codex' ? 'Codex' : 'Claude')
 }))
 vi.mock('@/lib/agent-session/structured-agent-session-tab-activation', () => ({
+  activateStructuredAgentSessionById: vi.fn(),
   findStructuredAgentSessionTab: (_tabs: unknown, params: { sessionId: string }) => ({
     id: `tab-${params.sessionId}`
   })
