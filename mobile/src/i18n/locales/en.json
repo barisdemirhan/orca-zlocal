@@ -6159,6 +6159,96 @@
             "action": "Prep note"
           }
         }
+      },
+      "hub-orb": {
+        "name": "Orb",
+        "line": "Runs your Agent Hub: sees who is waiting and answers by your standing rules.",
+        "firstChat": "Asks for your standing rules (what it may answer on its own, what always comes to you), then looks at the Agent Hub with `orca hub status` and `orca hub questions --all-hosts`. It answers only what your rules cover and says so in one line.",
+        "watches": "Agents and workers waiting on you, on every host",
+        "does": "Answers waiting questions by your standing rules and leaves the rest for you.",
+        "reports": "Here, one line per round",
+        "example1": "Answered 2 “continue?” prompts by your rule. 1 waits on you: delete the old migration?",
+        "example2": "No agent is blocked."
+      },
+      "hub-secretary": {
+        "name": "Hub Secretary",
+        "line": "Reads the Inbox every hour and sends you one summary of what needs you.",
+        "firstChat": "Reads what is waiting in the Agent Hub with `orca hub questions --all-hosts`, groups it by agent and host, and tells you what needs you first. It answers nothing.",
+        "watches": "The Agent Hub Inbox: questions, approvals and finished work",
+        "does": "Groups what is waiting by agent and host and puts what needs you first.",
+        "reports": "Here, every hour",
+        "example1": "3 need you: a deploy approval (api), a naming question (docs), a failing test (app).",
+        "example2": "5 agents are working; none are stuck.",
+        "schedules": {
+          "hourly-inbox": {
+            "when": "Every hour",
+            "what": "What needs you"
+          }
+        }
+      },
+      "night-watch": {
+        "name": "Night Watch",
+        "line": "Watches agents overnight and wakes you only for blockers.",
+        "firstChat": "Asks when your night starts and ends, then checks the Agent Hub through the night. What can wait goes into a morning list; only a blocked agent gets a notification, with `orca hub notify`.",
+        "watches": "Running agents and workers overnight",
+        "does": "Keeps what can wait for the morning and notifies you only about blockers.",
+        "reports": "Here, nightly, and a notification for a blocker",
+        "example1": "2 agents finished, 1 asked a style question. All of it waits for the morning.",
+        "example2": "Blocked at 02:10: the release agent needs a signing password.",
+        "schedules": {
+          "nightly-watch": {
+            "when": "Nightly at 11 PM",
+            "what": "Night watch"
+          }
+        }
+      },
+      "review-sentry": {
+        "name": "Review Sentry",
+        "line": "Follows review threads, answers reviewers and asks before a force-push.",
+        "firstChat": "Asks which repos to follow, then reads the review comments on your open pull requests and drafts an answer to each. It asks you before it answers for you, and always before a force-push.",
+        "watches": "Review comments on your pull requests, and the agents working on them",
+        "does": "Answers reviewers with what the agent changed, and asks you before a force-push.",
+        "reports": "Here, when a reviewer writes",
+        "example1": "#212: the reviewer asked why the retry is capped at 3. Draft answer below.",
+        "example2": "The fix needs a force-push after a rebase. Go ahead?",
+        "events": {
+          "review-comment": {
+            "trigger": "When a reviewer comments on your pull request",
+            "action": "Draft an answer"
+          }
+        }
+      },
+      "upstream-watch": {
+        "name": "Upstream Watch",
+        "line": "Waits for new upstream releases and drafts the update notes.",
+        "firstChat": "Asks which upstream repo you follow, then waits for its new releases. When one lands it compares it with your branches and drafts what came and what it touches.",
+        "watches": "New releases of the upstream repo you pick",
+        "does": "Drafts the update notes: what came, and which of your features it touches.",
+        "reports": "Here, when a release lands",
+        "example1": "v1.4.272 is out: 14 changes. 2 touch the Agent Hub tabs.",
+        "example2": "Notes drafted. Start the update on the feature branch?",
+        "schedules": {
+          "daily-upstream": {
+            "when": "Weekdays at 8 AM",
+            "what": "New upstream releases"
+          }
+        }
+      },
+      "machine-hygiene": {
+        "name": "Machine Hygiene",
+        "line": "Finds sleeping workers and stale worktrees on each host and offers to clean up.",
+        "firstChat": "Lists workers with `orca orchestration worker-list` and workspaces with `orca worktree list` on each host, and tells you which are asleep or stale. It removes nothing until you pick.",
+        "watches": "Workers and workspaces on every host",
+        "does": "Finds sleeping workers and stale workspaces, and removes the ones you pick.",
+        "reports": "Here, Mondays at 9 AM",
+        "example1": "mac: 4 sleeping workers, 2 stale workspaces. pd: 1 worker, 6 workspaces merged.",
+        "example2": "Remove the 6 merged ones on pd?",
+        "schedules": {
+          "weekly-hygiene": {
+            "when": "Mondays at 9 AM",
+            "what": "Cleanup list"
+          }
+        }
       }
     },
     "tidyUp": {
