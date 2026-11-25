@@ -33,32 +33,31 @@ function clamp(position: Position): Position {
   return { x: geometry.x, y: Math.max(top, geometry.y) }
 }
 
+function restPosition(saved: Position | null | undefined): Position {
+  return clamp(
+    saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)
+      ? saved
+      : {
+          x: getDefaultFloatingTerminalTriggerPosition().left - ORB_SIZE.width - 12,
+          y: window.innerHeight - 104
+        }
+  )
+}
+
 export function useAgentHubOrbPosition() {
   const saved = useAppStore((s) => s.settings?.agentHubOrbPosition)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const viewport = useViewportSize()
-  const [position, setPosition] = useState<Position>(() =>
-    clamp(
-      saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)
-        ? saved
-        : {
-            x: getDefaultFloatingTerminalTriggerPosition().left - ORB_SIZE.width - 12,
-            y: window.innerHeight - 104
-          }
-    )
-  )
+  const [position, setPosition] = useState<Position>(() => restPosition(saved))
   const drag = useRef<Drag | null>(null)
   const suppressClick = useRef(false)
 
+  // From the saved spot each time, so a window that grows back gives the Orb its place again.
   useEffect(() => {
-    if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y) && !drag.current) {
-      setPosition(clamp(saved))
+    if (!drag.current) {
+      setPosition(restPosition(saved))
     }
-  }, [saved])
-
-  useEffect(() => {
-    setPosition((current) => clamp(current))
-  }, [viewport.width, viewport.height])
+  }, [saved, viewport.width, viewport.height])
 
   useEffect(() => {
     const release = (current: Drag): void => {
