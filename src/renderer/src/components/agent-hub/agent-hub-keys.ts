@@ -2,7 +2,13 @@
 export type AgentHubTab = 'inbox' | 'running' | 'agents' | 'all' | 'bots'
 
 export const AGENT_HUB_TABS: readonly AgentHubTab[] = ['inbox', 'running', 'agents', 'all']
-const AGENT_HUB_TABS_WITH_BOTS: readonly AgentHubTab[] = [...AGENT_HUB_TABS, 'bots']
+const AGENT_HUB_TABS_WITH_BOTS: readonly AgentHubTab[] = [
+  'inbox',
+  'running',
+  'bots',
+  'agents',
+  'all'
+]
 
 export function agentHubTabs(botsActive: boolean): readonly AgentHubTab[] {
   return botsActive ? AGENT_HUB_TABS_WITH_BOTS : AGENT_HUB_TABS
