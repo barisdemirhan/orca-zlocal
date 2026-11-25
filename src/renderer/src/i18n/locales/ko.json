@@ -23624,6 +23624,10 @@
     "startupRegistration": {
       "title": "Orca 알림을 받을 준비가 되었습니다",
       "body": "알림을 허용하면 에이전트가 작업을 마치거나 터미널에서 확인이 필요할 때 Orca가 알려 드립니다."
+    },
+    "bot": {
+      "asksYou": "{{name}}의 질문",
+      "finished": "{{name}} 완료"
     }
   },
   "sidebar": {
@@ -25224,6 +25228,42 @@
         "ownWords": "직접 답장 작성",
         "sendNow": "지금 보내기",
         "useThese": "이것들 사용"
+      },
+      "tab": {
+        "alreadyRead": "이미 읽음",
+        "asleep": "잠자기 중 · 요청 시 깨어남",
+        "automationFailing": "실패 중",
+        "automationPaused": "일시 중지됨",
+        "automationsFailing": "{{count}}개 실패 중",
+        "chatFailed": "{{count}}개 실패",
+        "hostOffline": "{{host}} 오프라인",
+        "hostOfflineReason": "{{host}}이(가) 오프라인입니다",
+        "loading": "봇 불러오는 중…",
+        "markRead": "읽음으로 표시",
+        "more": "더 보기",
+        "mute": "1시간 동안 음소거",
+        "newChat": "새 채팅",
+        "noMatch": "“{{query}}”와 일치하는 봇이나 채팅이 없습니다",
+        "notificationSettings": "알림 설정…",
+        "openAutomation": "자동화 열기",
+        "openChat": "채팅 열기",
+        "openMain": "메인 탭에서 열기",
+        "openPage": "페이지 열기",
+        "paused": "일시 중지됨",
+        "renameChat": "채팅 이름 바꾸기",
+        "searchChats": "봇과 채팅 검색",
+        "searchLabel": "봇 찾기",
+        "settings": "봇 설정",
+        "showMore": "{{count}}개 더 보기",
+        "signedOut": "Orca에서 로그아웃됨 · Slack과 이벤트가 꺼져 있습니다",
+        "sleep": "잠자기",
+        "sleepAlready": "이미 잠자기 중",
+        "sleepBusy": "지금 작업 중",
+        "thisDevice": "이 기기",
+        "toggleWorkers": "{{title}}의 워커 보기",
+        "unmute": "음소거 해제",
+        "unread": "읽지 않음",
+        "unreadChats": "읽지 않음 {{count}}개"
       }
     },
     "attention": {
@@ -25238,7 +25278,8 @@
       "bringBack": "다시 가져오기",
       "showInMirror": "미러에 표시",
       "closeAgent": "에이전트 닫기",
-      "closeShell": "터미널 닫기"
+      "closeShell": "터미널 닫기",
+      "workers_other": "워커 {{count}}개"
     },
     "mirror": {
       "newAgent": "새 에이전트",
@@ -25319,6 +25360,84 @@
         "showAllProjects": "모든 프로젝트 표시",
         "outside": "필터 밖에 {{value0}}개 더",
         "showAll": "모두 표시"
+      },
+      "closeOthers": "다른 탭 닫기",
+      "drawer": {
+        "changes": "변경 사항",
+        "changesEmpty": "커밋되지 않은 변경 사항이 없습니다.",
+        "checkFailed": "실패",
+        "checkLog": "로그",
+        "checksPassed_other": "검사 {{count}}개 통과",
+        "checksPending_other": "검사 {{count}}개 실행 중",
+        "commands": "명령",
+        "compact": "압축",
+        "compacting": "압축 중…",
+        "draftFailed": "지금은 이 에이전트가 초안을 받을 수 없습니다",
+        "drafted": "에이전트 초안에 추가했습니다",
+        "edit": "편집",
+        "fromAgent": "에이전트",
+        "fromAutomation": "자동화",
+        "fromConnector": "커넥터",
+        "fromPerson": "다른 사람",
+        "inbound": "수신",
+        "label": "서랍",
+        "merge": "병합…",
+        "openAll": "모두 열기",
+        "openAsTab": "탭으로 열기",
+        "openDiff": "diff 열기",
+        "openPr": "호스트에서 열기",
+        "plan": "계획",
+        "pr": "PR",
+        "prClosed": "닫힘",
+        "prDraft": "초안",
+        "prMerged": "병합됨",
+        "prOpen": "열림",
+        "queueClosed": "채팅이 열려 있는 동안 대기열이 여기에 표시됩니다.",
+        "queueEmpty": "대기 중인 항목이 없습니다.",
+        "queueUnreported": "이 터미널은 대기열을 보고하지 않습니다.",
+        "queued": "대기 중",
+        "received": "받음",
+        "removeQueued": "대기열에서 제거",
+        "rerun": "다시 실행",
+        "rerunRequested": "다시 실행을 요청했습니다",
+        "reviewComments": "리뷰",
+        "sendNow": "지금 보내기",
+        "sendToAgent": "에이전트로 보내기",
+        "settings": "설정",
+        "settingsClosed": "채팅이 열려 있는 동안 여기에 설정이 표시됩니다.",
+        "settingsUnreported": "이 터미널은 설정을 보고하지 않습니다.",
+        "stop": "중지",
+        "stopping": "중지 중…",
+        "subagents": "하위 에이전트",
+        "work": "작업",
+        "workEmpty": "실행 중인 항목이 없습니다.",
+        "workerAsking": "질문 중",
+        "workerDone": "완료",
+        "workerIdle": "대기",
+        "workerWorking": "작업 중",
+        "workers": "워커"
+      },
+      "menu": "미러 메뉴",
+      "menuAgentCard": "이 에이전트가 자신의 카드를 사용하도록 허용",
+      "menuCanvas": "캔버스로 이동",
+      "menuDock": "도킹",
+      "menuDrawer": "서랍 열기",
+      "menuJump": "터미널로 이동",
+      "menuStrip": "작업 막대 표시",
+      "renameTab": "이름 변경…",
+      "strip": {
+        "clean": "변경 없음",
+        "commands_other": "명령 {{count}}",
+        "context": "컨텍스트 {{percent}}%",
+        "idle": "대기",
+        "inbound": "수신",
+        "label": "작업 막대",
+        "queued": "{{count}}개 대기 중",
+        "running": "{{count}}개 실행 중",
+        "settings": "설정",
+        "subagents_other": "하위 에이전트 {{count}}",
+        "workers_other": "워커 {{count}}",
+        "review": "PR #{{number}}"
       }
     },
     "title": "에이전트",
@@ -25341,13 +25460,71 @@
       "emptyHint": "{{value0}}개 작업 중 · 질문이 오면 알려드립니다",
       "oneAgent": "에이전트 1개",
       "agents": "에이전트 {{value0}}개",
-      "hidden": "{{value0}}개 숨김 · 표시"
+      "hidden": "{{value0}}개 숨김 · 표시",
+      "agentsFirst": "에이전트 먼저",
+      "agentsOnly": "에이전트만",
+      "answerQueue": "답변 대기열",
+      "answeredBy": "답변됨 · {{name}}",
+      "botsFirst": "봇 먼저",
+      "botsOnly": "봇만",
+      "failedPrefix": "실패 · ",
+      "finishedCount": "{{count}}개 완료",
+      "hostOffline": "{{host}} 오프라인",
+      "markRead": "읽음으로 표시",
+      "menu": {
+        "answer": "답하기",
+        "copyQuestion": "질문 복사",
+        "hideCard": "카드 숨기기",
+        "jump": "터미널로 이동",
+        "later": "나중에",
+        "markAllRead": "모두 읽음으로 표시",
+        "notificationSettings": "알림 설정…",
+        "openBotPage": "봇 페이지 열기",
+        "openChat": "채팅 열기",
+        "openItem": "#{{number}} 열기",
+        "openMirror": "미러에서 열기",
+        "openWorkspace": "워크스페이스 열기",
+        "popOut": "분리하기"
+      },
+      "offline": "오프라인",
+      "onlySuggestions": "제안만 있고 아래에 접혀 있습니다",
+      "open": "열기",
+      "openChat": "채팅 열기",
+      "partialAnswer": "답하기",
+      "partialOpenMany": "답하지 않은 질문 {{count}}개",
+      "partialOpenOne": "답하지 않은 질문 1개",
+      "reply": "답장",
+      "senderMenu": "{{name}} 메뉴",
+      "showAll": "모두 보기",
+      "side": {
+        "agents": "에이전트",
+        "bots": "봇",
+        "keyHint": "{{label}} (B)"
+      },
+      "sort": {
+        "label": "정렬",
+        "longest": "오래 기다린 순",
+        "newest": "최신순",
+        "order": "순서",
+        "within": "각 항목 내"
+      },
+      "suggestionMany": "제안 {{count}}개",
+      "suggestionOne": "제안 1개",
+      "tag": {
+        "approval": "승인",
+        "signIn": "로그인"
+      },
+      "waitingCount": "{{count}}개 대기 중",
+      "workerChip": "워커 · {{agent}}",
+      "workerOf": "{{agent}}의 워커"
     },
     "running": {
       "empty": "현재 작업 중인 에이전트가 없습니다",
-      "working": "작업 중",
       "longestFirst": "오래 실행된 순",
-      "popOutAll": "모두 별도 창으로 열기"
+      "popOutAll": "모두 별도 창으로 열기",
+      "automationRunLine": "자동화 실행",
+      "bots": "봇",
+      "replying": "답변 중…"
     },
     "footer": {
       "move": "이동",
@@ -25372,11 +25549,19 @@
       "shell": "셸",
       "ungrouped": "그룹 없음",
       "unknownProject": "알 수 없음",
-      "termCount": "터미널 {{value0}}개",
       "noMatchHint": "프로젝트, 그룹, 브랜치 또는 에이전트 이름으로 검색해 보세요",
       "sortManualHint": "사이드바에서 정렬한 순서대로 작업 공간을 표시합니다.",
       "sortLabel": "정렬: {{value0}}",
-      "sortBy": "정렬 기준"
+      "sortBy": "정렬 기준",
+      "botChatsCount_other": "채팅 {{count}}개",
+      "botHit_other": "{{name}} · 봇 탭에 채팅 {{count}}개",
+      "botsCount_other": "봇 {{count}}개",
+      "botsGroup": "봇",
+      "botsLink": "봇 →",
+      "byBot": "{{name}} 시작",
+      "idleFold": "유휴 {{count}}개",
+      "searchHub": "에이전트, 프로젝트, 봇 검색",
+      "sortHost": "호스트"
     },
     "card": {
       "recommended": "권장",
@@ -25430,7 +25615,9 @@
       "dockMirrors": "미러를 Agent Hub로 보내기",
       "restoreMirrors": "미러 다시 가져오기",
       "openCanvas": "캔버스 열기",
-      "arrange": "미러 정렬"
+      "arrange": "미러 정렬",
+      "muteBots": "봇만 음소거(1시간)",
+      "unmuteBots": "봇 알림 다시 켜기"
     },
     "children": {
       "agentOne": "에이전트 1개",
@@ -25560,7 +25747,59 @@
     },
     "settings": {
       "agentControl": "에이전트의 Agent Hub 제어 허용",
-      "agentControlCopy": "에이전트가 콘텐츠를 보여주고 질문하며 미러를 관리할 수 있습니다."
+      "agentControlCopy": "에이전트가 콘텐츠를 보여주고 질문하며 미러를 관리할 수 있습니다.",
+      "agentOwnCard": "에이전트가 자신의 카드를 사용할 수 있음",
+      "agentOwnCardCopy": "에이전트는 자신의 카드 서랍을 열고 작업을 읽을 수 있으며, 다른 에이전트의 카드는 사용할 수 없습니다.",
+      "agentsFirst": "에이전트 먼저",
+      "automationEachRun": "실행마다",
+      "automationOff": "끔",
+      "automationSummary": "요약",
+      "botAsks": "질문",
+      "botAutomationResults": "자동화 결과",
+      "botAutomationResultsCopy": "요약은 여러 실행을 한 번에 알리고, 실행마다는 모든 실행을 알립니다.",
+      "botFailures": "실패",
+      "botNameInNotifications": "데스크톱 알림에 봇 이름 표시",
+      "botNameInNotificationsCopy": "끄면 잠금 화면에 봇 이름이 표시되지 않습니다.",
+      "botNotifications": "봇 알림",
+      "botNotificationsCopy": "봇이 허브 옆에 띄우는 알림입니다. 모든 항목은 받은 편지함에도 전달됩니다.",
+      "botResults": "결과",
+      "botSound": "소리 재생",
+      "botSuggestions": "제안",
+      "botSuggestionsCopy": "끄면 제안은 받은 편지함에만 표시됩니다.",
+      "botsFirst": "봇 먼저",
+      "countersAgents": "에이전트만",
+      "countersAgentsAndBots": "에이전트와 봇",
+      "dockCounters": "카운터",
+      "drawerAuto": "자동",
+      "drawerBottom": "아래",
+      "drawerPosition": "서랍 위치",
+      "drawerPositionCopy": "자동은 미러에 맞춰 옆이나 아래를 고릅니다.",
+      "drawerSide": "옆",
+      "foldIdle": "유휴 및 절전 에이전트 접기",
+      "inboxOrder": "받은 편지함 순서",
+      "keepLiveOnSwitch": "채팅 전환 시 Live 유지",
+      "keepLiveOnSwitchCopy": "다른 채팅을 표시해도 라이브 대화는 원래 채팅에 남아 있습니다.",
+      "openOnFailedCheck": "검사 실패 시 서랍 열기",
+      "orbClearHome": "홈 채팅 비우기",
+      "orbNewChat": "새 채팅",
+      "orbNewChatAction": "\"+\" 동작",
+      "orbOpenChatsLimit": "열린 채팅 한도",
+      "orbOpenChatsLimitCopy": "한도에 도달하면 가장 오래 유휴 상태인 채팅이 표시줄에서 빠집니다. 채팅에는 남아 있습니다.",
+      "rememberListState": "접기와 필터 기억",
+      "search": {
+        "automation": "자동화",
+        "botNotifications": "봇 알림",
+        "bots": "봇",
+        "counters": "카운터",
+        "drawer": "서랍",
+        "inboxOrder": "받은 편지함 순서",
+        "openChats": "열린 채팅",
+        "workStrip": "작업 스트립"
+      },
+      "showBotChats": "에이전트에 봇 채팅 표시",
+      "showBotChatsCopy": "끄면 목록 끝의 한 줄로 봇을 엽니다.",
+      "workStrip": "작업 스트립",
+      "workStripCopy": "에이전트가 지금 하는 일을 미러에 얇은 줄로 보여 줍니다."
     },
     "requests": {
       "decisionGate": "결정 대기",
@@ -25626,7 +25865,6 @@
       "kindText": "코드 / 텍스트",
       "kindMedia": "미디어",
       "source": "{{value0}}에서",
-      "showSource": "이 미러를 맨 앞으로 가져오기",
       "openInTab": "탭에서 열기",
       "openInEditor": "편집기에서 열기",
       "openInBrowser": "브라우저에서 열기",
@@ -25641,7 +25879,8 @@
       "fullScreen": "전체 화면",
       "hostAddress": "이 주소는 해당 호스트에서만 사용할 수 있습니다. 작업 공간 브라우저에서 엽니다.",
       "workspaceFallback": "여기서는 미리 보기를 표시할 수 없습니다. 작업 공간에서 엽니다.",
-      "unavailable": "이 링크를 열 수 없습니다."
+      "unavailable": "이 링크를 열 수 없습니다.",
+      "backToMirror": "Peek을 닫고 이 미러로 돌아가기"
     },
     "orb": {
       "mini": {
@@ -25678,7 +25917,8 @@
         "start": "시작",
         "asks": "{{name}}의 질문",
         "otherBots": "다른 봇의 질문",
-        "otherBotsHint": "다른 봇의 질문도 Orb 옆에 표시되고 배지에 포함됩니다."
+        "otherBotsHint": "다른 봇의 질문도 Orb 옆에 표시되고 배지에 포함됩니다.",
+        "replyTo": "Re: {{subject}}"
       },
       "motion": {
         "label": "Orb 움직임",
@@ -25686,7 +25926,133 @@
         "full": "전체",
         "calm": "차분하게",
         "off": "끄기"
+      },
+      "asleep": {
+        "note": "잠자는 중 · 채팅은 계속 읽을 수 있어요",
+        "state": "잠자는 중",
+        "wake": "깨우기"
+      },
+      "botMessage": {
+        "hideThread": "스레드 숨기기",
+        "open": "{{name}} 열기",
+        "showThread": "스레드 보기"
+      },
+      "clearHome": {
+        "action": "홈 채팅 지우기",
+        "description": "사이드 채팅은 열린 채로 유지됩니다. 현재 홈 채팅은 이전 항목으로 이동합니다.",
+        "title": "홈 채팅을 지울까요?"
+      },
+      "footer": {
+        "automation": "자동화에서",
+        "home": "홈 채팅",
+        "live": "이 채팅에서 라이브 중",
+        "side": "사이드 채팅"
+      },
+      "menu": {
+        "botSettings": "봇 설정",
+        "newChat": "새 채팅",
+        "openPage": "봇 페이지 열기"
+      },
+      "quickTarget": "보낼 곳",
+      "sideAsk": {
+        "hint": "질문 1개 · 해당 채팅 열기"
+      },
+      "strip": {
+        "backToLive": "라이브로 돌아가기",
+        "bringHere": "여기로 가져오기",
+        "clearHome": "홈 채팅 지우기",
+        "closeTab": "채팅 닫기",
+        "fullHint": "열린 채팅이 모두 사용 중입니다. 하나를 닫거나 끝날 때까지 기다리세요.",
+        "home": "홈 채팅",
+        "inMainTab": "\"{{name}}\"이(가) 메인 탭에서 열려 있어요.",
+        "live": "라이브",
+        "liveOn": "{{name}}에서 라이브 중",
+        "moveLive": "라이브를 여기로 이동",
+        "new": "새 채팅",
+        "newChat": "새 채팅",
+        "openAsTab": "탭으로 열기",
+        "rename": "이름 바꾸기",
+        "working": "작업 중"
+      },
+      "window": {
+        "asking": "질문 중",
+        "asleep": "잠자는 중",
+        "tabActivity": "활동",
+        "tabChat": "채팅",
+        "tabChats": "채팅",
+        "tabConnectors": "커넥터",
+        "tabHome": "홈",
+        "working": "작업 중"
+      },
+      "worker": {
+        "footer": "워커 · 읽기 전용",
+        "openAsTab": "탭으로 열기",
+        "talkInTerminal": "이 워커와는 터미널에서 대화하세요.",
+        "transcriptNote": "워커 대화 기록, 읽기 전용"
       }
+    },
+    "botBubble": {
+      "access": "{{value0}}님이 {{value1}}에서 저와 대화하기를 요청합니다.",
+      "accessReview": "검토",
+      "answered": "답변함",
+      "asksYou": "질문",
+      "chipMany": "질문 {{value0}}개",
+      "chipOne": "질문 1개",
+      "couldNotFinish": "끝내지 못했습니다",
+      "finished": "완료",
+      "fromHome": "홈 채팅 · #{{value0}}",
+      "fromHomeChat": "홈 채팅",
+      "fromSuggestion": "제안",
+      "fromWorker": "워커 · {{value0}}",
+      "later": "나중에",
+      "moreBots": "봇 +{{value0}}개",
+      "openChat": "채팅 열기",
+      "openInbox": "받은편지함에서 열기",
+      "openInboxChip": "받은편지함 열기",
+      "openItem": "#{{value0}} 열기",
+      "reply": "답장",
+      "runAgain": "다시 실행",
+      "runAgainFailed": "시작할 수 없습니다",
+      "runDone": "{{value0}}이(가) 끝났습니다.",
+      "runFailed": "{{value0}}을(를) 끝내지 못했습니다.",
+      "runsSummary": "{{value0}}개 실행이 끝났고 {{value1}}개는 끝나지 않았습니다.",
+      "signIn": "계속할 수 있도록 {{value0}}에 로그인해 주세요.",
+      "signInAction": "로그인",
+      "suggestionDismiss": "닫기",
+      "suggestionYes": "예",
+      "updates": "업데이트 {{value0}}개"
+    },
+    "filter": {
+      "botStarted": "봇이 시작한 항목",
+      "unreadOnly": "읽지 않은 항목만"
+    },
+    "groupMenu": {
+      "collapseOthers": "나머지 접기",
+      "newAgent": "여기에 새 에이전트",
+      "open": "프로젝트 열기",
+      "sleepIdle": "유휴 에이전트 절전",
+      "sleepSkipped_other": "에이전트 {{count}}개를 절전할 수 없습니다"
+    },
+    "rowMenu": {
+      "canvas": "캔버스에 추가",
+      "close": "닫기",
+      "jump": "터미널로 이동",
+      "markRead": "읽음으로 표시",
+      "mirror": "미러에서 열기",
+      "openLastChat": "마지막 채팅 열기",
+      "rename": "이름 변경…",
+      "renameCancel": "취소",
+      "renameSave": "이름 변경",
+      "renameTitle": "터미널 이름 변경"
+    },
+    "stateChips": {
+      "all": "전체",
+      "ask": "응답 필요",
+      "done": "완료",
+      "idle": "유휴",
+      "label": "상태로 필터",
+      "sleep": "절전 중",
+      "work": "작업 중"
     }
   },
   "workspaceDeletion": {

@@ -23641,6 +23641,10 @@
     "startupRegistration": {
       "title": "Orca 已准备好向你发送通知",
       "body": "允许通知后，当智能体完成工作或终端需要关注时，Orca 会提醒你"
+    },
+    "bot": {
+      "asksYou": "{{name}} 向你提问",
+      "finished": "{{name}} 已完成"
     }
   },
   "sidebar": {
@@ -25212,6 +25216,42 @@
         "ownWords": "用你自己的话回复",
         "sendNow": "立即发送",
         "useThese": "使用这些"
+      },
+      "tab": {
+        "alreadyRead": "已读",
+        "asleep": "休眠中 · 被唤起时醒来",
+        "automationFailing": "失败",
+        "automationPaused": "已暂停",
+        "automationsFailing": "{{count}} 个失败",
+        "chatFailed": "{{count}} 个失败",
+        "hostOffline": "{{host}} 离线",
+        "hostOfflineReason": "{{host}} 已离线",
+        "loading": "正在加载机器人…",
+        "markRead": "标记为已读",
+        "more": "更多",
+        "mute": "静音 1 小时",
+        "newChat": "新建聊天",
+        "noMatch": "没有与“{{query}}”匹配的机器人或聊天",
+        "notificationSettings": "通知设置…",
+        "openAutomation": "打开自动化",
+        "openChat": "打开聊天",
+        "openMain": "在主标签页中打开",
+        "openPage": "打开页面",
+        "paused": "已暂停",
+        "renameChat": "重命名聊天",
+        "searchChats": "搜索机器人和聊天",
+        "searchLabel": "查找机器人",
+        "settings": "机器人设置",
+        "showMore": "再显示 {{count}} 项",
+        "signedOut": "已退出 Orca · Slack 和事件已关闭",
+        "sleep": "休眠",
+        "sleepAlready": "已在休眠",
+        "sleepBusy": "当前正忙",
+        "thisDevice": "此设备",
+        "toggleWorkers": "显示 {{title}} 的 worker",
+        "unmute": "取消静音",
+        "unread": "未读",
+        "unreadChats": "{{count}} 条未读"
       }
     },
     "attention": {
@@ -25226,7 +25266,8 @@
       "bringBack": "恢复显示",
       "showInMirror": "在镜像窗口中显示",
       "closeAgent": "关闭智能体",
-      "closeShell": "关闭终端"
+      "closeShell": "关闭终端",
+      "workers_other": "{{count}} 个 worker"
     },
     "mirror": {
       "newAgent": "新建智能体",
@@ -25307,6 +25348,84 @@
         "showAllProjects": "显示所有项目",
         "outside": "筛选之外还有 {{value0}} 项",
         "showAll": "全部显示"
+      },
+      "closeOthers": "关闭其他",
+      "drawer": {
+        "changes": "更改",
+        "changesEmpty": "没有未提交的更改。",
+        "checkFailed": "失败",
+        "checkLog": "日志",
+        "checksPassed_other": "{{count}} 项检查已通过",
+        "checksPending_other": "{{count}} 项检查运行中",
+        "commands": "命令",
+        "compact": "压缩",
+        "compacting": "正在压缩…",
+        "draftFailed": "此智能体目前无法接收草稿",
+        "drafted": "已添加到智能体草稿",
+        "edit": "编辑",
+        "fromAgent": "智能体",
+        "fromAutomation": "自动化",
+        "fromConnector": "连接器",
+        "fromPerson": "其他人",
+        "inbound": "收到",
+        "label": "抽屉",
+        "merge": "合并…",
+        "openAll": "全部打开",
+        "openAsTab": "在标签页中打开",
+        "openDiff": "打开差异",
+        "openPr": "在托管平台打开",
+        "plan": "计划",
+        "pr": "PR",
+        "prClosed": "已关闭",
+        "prDraft": "草稿",
+        "prMerged": "已合并",
+        "prOpen": "打开",
+        "queueClosed": "聊天打开时,队列会显示在这里。",
+        "queueEmpty": "队列为空。",
+        "queueUnreported": "此终端不报告其队列。",
+        "queued": "排队中",
+        "received": "已收到",
+        "removeQueued": "从队列中移除",
+        "rerun": "重新运行",
+        "rerunRequested": "已请求重新运行",
+        "reviewComments": "评审",
+        "sendNow": "立即发送",
+        "sendToAgent": "发送给智能体",
+        "settings": "设置",
+        "settingsClosed": "聊天打开时，设置会显示在这里。",
+        "settingsUnreported": "此终端不报告其设置。",
+        "stop": "停止",
+        "stopping": "正在停止…",
+        "subagents": "子智能体",
+        "work": "工作",
+        "workEmpty": "没有正在运行的内容。",
+        "workerAsking": "提问中",
+        "workerDone": "已完成",
+        "workerIdle": "空闲",
+        "workerWorking": "工作中",
+        "workers": "Worker"
+      },
+      "menu": "镜像菜单",
+      "menuAgentCard": "允许此智能体使用自己的卡片",
+      "menuCanvas": "移到画布",
+      "menuDock": "停靠",
+      "menuDrawer": "打开抽屉",
+      "menuJump": "跳转到终端",
+      "menuStrip": "显示工作条",
+      "renameTab": "重命名…",
+      "strip": {
+        "clean": "无更改",
+        "commands_other": "{{count}} 条命令",
+        "context": "上下文 {{percent}}%",
+        "idle": "空闲",
+        "inbound": "收到",
+        "label": "工作条",
+        "queued": "{{count}} 条排队中",
+        "running": "{{count}} 个运行中",
+        "settings": "设置",
+        "subagents_other": "{{count}} 个子智能体",
+        "workers_other": "{{count}} 个 Worker",
+        "review": "PR #{{number}}"
       }
     },
     "title": "智能体",
@@ -25329,13 +25448,71 @@
       "emptyHint": "{{value0}} 个正在工作 · 有提问时会通知你",
       "oneAgent": "1 个智能体",
       "agents": "{{value0}} 个智能体",
-      "hidden": "已隐藏 {{value0}} 个 · 显示"
+      "hidden": "已隐藏 {{value0}} 个 · 显示",
+      "agentsFirst": "智能体优先",
+      "agentsOnly": "仅智能体",
+      "answerQueue": "回答队列",
+      "answeredBy": "已回答 · {{name}}",
+      "botsFirst": "机器人优先",
+      "botsOnly": "仅机器人",
+      "failedPrefix": "失败 · ",
+      "finishedCount": "{{count}} 个已完成",
+      "hostOffline": "{{host}} 离线",
+      "markRead": "标为已读",
+      "menu": {
+        "answer": "回答",
+        "copyQuestion": "复制问题",
+        "hideCard": "隐藏卡片",
+        "jump": "跳转到终端",
+        "later": "稍后",
+        "markAllRead": "全部标为已读",
+        "notificationSettings": "通知设置…",
+        "openBotPage": "打开机器人页面",
+        "openChat": "打开聊天",
+        "openItem": "打开 #{{number}}",
+        "openMirror": "在镜像中打开",
+        "openWorkspace": "打开工作区",
+        "popOut": "弹出"
+      },
+      "offline": "离线",
+      "onlySuggestions": "只有建议，已折叠在下方",
+      "open": "打开",
+      "openChat": "打开聊天",
+      "partialAnswer": "回答",
+      "partialOpenMany": "还有 {{count}} 个问题未回答",
+      "partialOpenOne": "还有 1 个问题未回答",
+      "reply": "回复",
+      "senderMenu": "{{name}} 菜单",
+      "showAll": "显示全部",
+      "side": {
+        "agents": "智能体",
+        "bots": "机器人",
+        "keyHint": "{{label}}（B）"
+      },
+      "sort": {
+        "label": "排序",
+        "longest": "等待最久",
+        "newest": "最新",
+        "order": "顺序",
+        "within": "组内"
+      },
+      "suggestionMany": "{{count}} 条建议",
+      "suggestionOne": "1 条建议",
+      "tag": {
+        "approval": "审批",
+        "signIn": "登录"
+      },
+      "waitingCount": "{{count}} 个等待中",
+      "workerChip": "worker · {{agent}}",
+      "workerOf": "{{agent}} 的 worker"
     },
     "running": {
       "empty": "当前没有智能体在工作",
-      "working": "工作中",
       "longestFirst": "运行时间最长的优先",
-      "popOutAll": "全部弹出"
+      "popOutAll": "全部弹出",
+      "automationRunLine": "自动化运行",
+      "bots": "机器人",
+      "replying": "正在回复…"
     },
     "footer": {
       "move": "移动",
@@ -25360,11 +25537,19 @@
       "shell": "Shell",
       "ungrouped": "未分组",
       "unknownProject": "未知",
-      "termCount": "{{value0}} 个终端",
       "noMatchHint": "试试项目、分组、分支或智能体名称",
       "sortManualHint": "按你在侧边栏中排列的顺序显示工作区。",
       "sortLabel": "排序：{{value0}}",
-      "sortBy": "排序方式"
+      "sortBy": "排序方式",
+      "botChatsCount_other": "{{count}} 个聊天",
+      "botHit_other": "{{name}} · 机器人中有 {{count}} 个聊天",
+      "botsCount_other": "{{count}} 个机器人",
+      "botsGroup": "机器人",
+      "botsLink": "机器人 →",
+      "byBot": "由 {{name}} 启动",
+      "idleFold": "{{count}} 个空闲",
+      "searchHub": "搜索智能体、项目、机器人",
+      "sortHost": "主机"
     },
     "card": {
       "recommended": "推荐",
@@ -25418,7 +25603,9 @@
       "dockMirrors": "将镜像窗口移至 Agent Hub",
       "restoreMirrors": "恢复镜像窗口",
       "openCanvas": "打开画布",
-      "arrange": "排列镜像窗口"
+      "arrange": "排列镜像窗口",
+      "muteBots": "仅静音机器人（1 小时）",
+      "unmuteBots": "重新开启机器人提醒"
     },
     "children": {
       "agentOne": "1 个智能体",
@@ -25548,7 +25735,59 @@
     },
     "settings": {
       "agentControl": "允许智能体控制 Agent Hub",
-      "agentControlCopy": "智能体可以向你展示内容、提问并管理其镜像窗口。"
+      "agentControlCopy": "智能体可以向你展示内容、提问并管理其镜像窗口。",
+      "agentOwnCard": "允许智能体使用自己的卡片",
+      "agentOwnCardCopy": "智能体可以打开自己卡片的抽屉并读取其工作内容,但不能访问其他智能体的卡片。",
+      "agentsFirst": "智能体优先",
+      "automationEachRun": "每次运行",
+      "automationOff": "关闭",
+      "automationSummary": "摘要",
+      "botAsks": "提问",
+      "botAutomationResults": "自动化结果",
+      "botAutomationResultsCopy": "摘要会为一批运行发出一次提醒;每次运行则为每次运行都提醒。",
+      "botFailures": "失败",
+      "botNameInNotifications": "桌面通知中显示机器人名称",
+      "botNameInNotificationsCopy": "关闭后,锁屏上不会显示机器人名称。",
+      "botNotifications": "机器人通知",
+      "botNotificationsCopy": "机器人在中心旁提醒的内容。所有内容仍会进入收件箱。",
+      "botResults": "结果",
+      "botSound": "播放声音",
+      "botSuggestions": "建议",
+      "botSuggestionsCopy": "关闭后,建议只显示在收件箱中。",
+      "botsFirst": "机器人优先",
+      "countersAgents": "仅智能体",
+      "countersAgentsAndBots": "智能体和机器人",
+      "dockCounters": "计数器",
+      "drawerAuto": "自动",
+      "drawerBottom": "底部",
+      "drawerPosition": "抽屉位置",
+      "drawerPositionCopy": "自动会根据镜像窗口选择侧边或底部。",
+      "drawerSide": "侧边",
+      "foldIdle": "折叠空闲和休眠的智能体",
+      "inboxOrder": "收件箱顺序",
+      "keepLiveOnSwitch": "切换聊天时保持 Live",
+      "keepLiveOnSwitchCopy": "显示其他聊天时,实时对话仍保留在原聊天中。",
+      "openOnFailedCheck": "检查失败时打开抽屉",
+      "orbClearHome": "清空主聊天",
+      "orbNewChat": "新聊天",
+      "orbNewChatAction": "\"+\" 打开",
+      "orbOpenChatsLimit": "打开聊天数上限",
+      "orbOpenChatsLimitCopy": "达到上限时，闲置最久的聊天会移出标签栏，但仍保留在“聊天”中。",
+      "rememberListState": "记住折叠和筛选",
+      "search": {
+        "automation": "自动化",
+        "botNotifications": "机器人通知",
+        "bots": "机器人",
+        "counters": "计数器",
+        "drawer": "抽屉",
+        "inboxOrder": "收件箱顺序",
+        "openChats": "打开的聊天",
+        "workStrip": "工作条"
+      },
+      "showBotChats": "在智能体中显示机器人聊天",
+      "showBotChatsCopy": "关闭后,列表末尾的一行会打开机器人页面。",
+      "workStrip": "工作条",
+      "workStripCopy": "在镜像窗口上用细条显示智能体当前正在做的事。"
     },
     "requests": {
       "decisionGate": "决策关卡",
@@ -25614,7 +25853,6 @@
       "kindText": "代码 / 文本",
       "kindMedia": "媒体",
       "source": "来自 {{value0}}",
-      "showSource": "将此镜像窗口置于前方",
       "openInTab": "在标签页中打开",
       "openInEditor": "在编辑器中打开",
       "openInBrowser": "在浏览器中打开",
@@ -25629,7 +25867,8 @@
       "fullScreen": "全屏",
       "hostAddress": "此地址仅在所属主机上可用。正在工作区浏览器中打开。",
       "workspaceFallback": "此处无法显示预览。正在工作区中打开。",
-      "unavailable": "无法打开此链接。"
+      "unavailable": "无法打开此链接。",
+      "backToMirror": "关闭 Peek 并返回此镜像窗口"
     },
     "orb": {
       "mini": {
@@ -25666,7 +25905,8 @@
         "start": "开始",
         "asks": "{{name}} 提问",
         "otherBots": "其他机器人的问题",
-        "otherBotsHint": "其他机器人的问题也会显示在 Orb 旁边，并计入徽章。"
+        "otherBotsHint": "其他机器人的问题也会显示在 Orb 旁边，并计入徽章。",
+        "replyTo": "Re: {{subject}}"
       },
       "motion": {
         "label": "Orb 动效",
@@ -25674,7 +25914,133 @@
         "full": "完整",
         "calm": "平静",
         "off": "关闭"
+      },
+      "asleep": {
+        "note": "已休眠 · 聊天仍可阅读",
+        "state": "已休眠",
+        "wake": "唤醒"
+      },
+      "botMessage": {
+        "hideThread": "隐藏对话串",
+        "open": "打开 {{name}}",
+        "showThread": "显示对话串"
+      },
+      "clearHome": {
+        "action": "清除主聊天",
+        "description": "侧边聊天保持打开。当前主聊天将移到“更早”。",
+        "title": "清除主聊天?"
+      },
+      "footer": {
+        "automation": "来自自动化",
+        "home": "主聊天",
+        "live": "实时功能在此聊天上",
+        "side": "侧边聊天"
+      },
+      "menu": {
+        "botSettings": "机器人设置",
+        "newChat": "新聊天",
+        "openPage": "打开机器人页面"
+      },
+      "quickTarget": "发送到",
+      "sideAsk": {
+        "hint": "1 个问题 · 打开该聊天"
+      },
+      "strip": {
+        "backToLive": "返回实时聊天",
+        "bringHere": "移到这里",
+        "clearHome": "清除主聊天",
+        "closeTab": "关闭聊天",
+        "fullHint": "所有已打开的聊天都在忙。请关闭一个或等待其完成。",
+        "home": "主聊天",
+        "inMainTab": "“{{name}}”已在主标签页中打开。",
+        "live": "实时",
+        "liveOn": "实时功能在 {{name}} 上",
+        "moveLive": "将实时功能移到此处",
+        "new": "新聊天",
+        "newChat": "新聊天",
+        "openAsTab": "作为标签页打开",
+        "rename": "重命名",
+        "working": "工作中"
+      },
+      "window": {
+        "asking": "提问中",
+        "asleep": "休眠中",
+        "tabActivity": "活动",
+        "tabChat": "聊天",
+        "tabChats": "聊天",
+        "tabConnectors": "连接器",
+        "tabHome": "主页",
+        "working": "工作中"
+      },
+      "worker": {
+        "footer": "Worker · 只读",
+        "openAsTab": "作为标签页打开",
+        "talkInTerminal": "请在终端中与此 worker 对话。",
+        "transcriptNote": "Worker 记录,只读"
       }
+    },
+    "botBubble": {
+      "access": "{{value0}} 请求在 {{value1}} 上与我对话。",
+      "accessReview": "查看",
+      "answered": "已回答",
+      "asksYou": "向你提问",
+      "chipMany": "{{value0}} 个问题",
+      "chipOne": "1 个问题",
+      "couldNotFinish": "未能完成",
+      "finished": "已完成",
+      "fromHome": "主聊天 · #{{value0}}",
+      "fromHomeChat": "主聊天",
+      "fromSuggestion": "建议",
+      "fromWorker": "Worker · {{value0}}",
+      "later": "稍后",
+      "moreBots": "+{{value0}} 个机器人",
+      "openChat": "打开聊天",
+      "openInbox": "在收件箱中打开",
+      "openInboxChip": "打开收件箱",
+      "openItem": "打开 #{{value0}}",
+      "reply": "回复",
+      "runAgain": "重新运行",
+      "runAgainFailed": "无法启动",
+      "runDone": "{{value0}} 已完成。",
+      "runFailed": "{{value0}} 未能完成。",
+      "runsSummary": "{{value0}} 次运行已完成，{{value1}} 次未完成。",
+      "signIn": "请登录 {{value0}}，我才能继续。",
+      "signInAction": "登录",
+      "suggestionDismiss": "忽略",
+      "suggestionYes": "好",
+      "updates": "{{value0}} 条更新"
+    },
+    "filter": {
+      "botStarted": "由机器人启动",
+      "unreadOnly": "仅未读"
+    },
+    "groupMenu": {
+      "collapseOthers": "折叠其他",
+      "newAgent": "在此新建智能体",
+      "open": "打开项目",
+      "sleepIdle": "休眠空闲智能体",
+      "sleepSkipped_other": "{{count}} 个智能体无法休眠"
+    },
+    "rowMenu": {
+      "canvas": "添加到画布",
+      "close": "关闭",
+      "jump": "跳转到终端",
+      "markRead": "标为已读",
+      "mirror": "在镜像中打开",
+      "openLastChat": "打开最近的聊天",
+      "rename": "重命名…",
+      "renameCancel": "取消",
+      "renameSave": "重命名",
+      "renameTitle": "重命名终端"
+    },
+    "stateChips": {
+      "all": "全部",
+      "ask": "需要你",
+      "done": "已完成",
+      "idle": "空闲",
+      "label": "按状态筛选",
+      "sleep": "休眠中",
+      "work": "工作中"
     }
   },
   "workspaceDeletion": {
