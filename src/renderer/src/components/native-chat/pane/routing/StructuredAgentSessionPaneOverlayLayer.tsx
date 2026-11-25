@@ -61,7 +61,7 @@ const StructuredAgentSessionOverlaySlot = memo(function StructuredAgentSessionOv
     target ? structuredAgentSessionHostKey(target) : ''
   )
   const orbDestination = useAgentHubOrbPanel((s) =>
-    s.session?.tabId === tab.id ? s.destination : null
+    (s.shownTabId ?? s.session?.tabId) === tab.id ? s.destination : null
   )
   const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
   const mirror = useAgentHubChatDestination(tab.id)
@@ -198,15 +198,17 @@ const StructuredAgentSessionPaneOverlayLayer = memo(
     const [shownTabIds, setShownTabIds] = useState(NO_SHOWN_TAB_IDS)
     // The Orb shows its chat from any workspace, even one whose tab was never opened here.
     const orbTabId = useAgentHubOrbPanel((s) => s.session?.tabId ?? null)
+    const orbShownTabId = useAgentHubOrbPanel((s) => s.shownTabId)
     const mountedTabs = useMemo(
       () =>
         structuredTabs.filter(
           (tab) =>
             shownTabIds.has(tab.id) ||
             groupActiveTabById.get(tab.groupId) === tab.id ||
-            tab.id === orbTabId
+            tab.id === orbTabId ||
+            tab.id === orbShownTabId
         ),
-      [structuredTabs, shownTabIds, groupActiveTabById, orbTabId]
+      [structuredTabs, shownTabIds, groupActiveTabById, orbTabId, orbShownTabId]
     )
     let newlyShownCount = 0
     for (const tab of mountedTabs) {

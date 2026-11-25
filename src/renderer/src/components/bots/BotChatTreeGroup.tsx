@@ -1,5 +1,5 @@
 // One chat in the Chats tab: one folded row; its chevron shows the workers it started, capped and stepped.
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import StatusIndicator from '@/components/sidebar/workspace-card/surface/StatusIndicator'
 import { useTranslate } from '@/i18n/use-translate'
@@ -35,6 +35,7 @@ import { parseExecutionHostId } from '../../../../shared/execution-host/executio
 import { BotChatTreeWorkerRow } from './BotChatTreeWorkerRow'
 import { BotChatContextMenu, BotChatMoreButton, botChatHasMenu } from './BotChatRowMenu'
 import { openBotSession } from './bot-session-open'
+import { BotChatOpenOverrideContext } from './bot-chat-open-override'
 
 export function openChat(bot: Bot, chat: BotChatTreeChat): void {
   const { run } = chat
@@ -212,6 +213,12 @@ export function BotChatTreeGroup({
 }): React.JSX.Element {
   const t = useTranslate()
   const stopIndex = useBotUsageLimitStopIndex()
+  const override = useContext(BotChatOpenOverrideContext)
+  const openRow = (): void => {
+    if (!override?.chat?.(bot, chat)) {
+      openChat(bot, chat)
+    }
+  }
   const [limit, setLimit] = useState(CHATS_TAB_FIRST_WORKERS)
   const foldable = unfolded !== null && chat.runningTotal + chat.finishedTotal > 0
   const open = foldable && unfolded === true
@@ -240,13 +247,19 @@ export function BotChatTreeGroup({
   // A press only opens the chat, the open one too; the chevron alone folds. A double-click opens once.
   const pressRow = (event: { detail: number }): void => {
     if (event.detail <= 1) {
-      openChat(bot, chat)
+      openRow()
     }
   }
   return (
     <div className="flex flex-col">
-      <BotChatContextMenu bot={bot} chat={chat} onOpen={() => openChat(bot, chat)}>
-        <div className="group/bot-chat relative flex w-full min-w-0 items-start gap-1 rounded-md py-1.5 pr-2 pl-2 hover:bg-accent">
+      <BotChatContextMenu bot={bot} chat={chat} onOpen={() => openRow()}>
+        <div
+          aria-current={override?.isShown?.(chat) ? 'true' : undefined}
+          className={cn(
+            'group/bot-chat relative flex w-full min-w-0 items-start gap-1 rounded-md py-1.5 pr-2 pl-2 hover:bg-accent',
+            override?.isShown?.(chat) && 'bg-accent'
+          )}
+        >
           <button
             type="button"
             aria-label={[label, chat.unread ? t('bots.chats.unread', 'Unread') : null]
@@ -328,7 +341,7 @@ export function BotChatTreeGroup({
                 <BotChatMoreButton
                   bot={bot}
                   chat={chat}
-                  onOpen={() => openChat(bot, chat)}
+                  onOpen={() => openRow()}
                   className="absolute top-1/2 right-0 -translate-y-1/2"
                 />
               </span>

@@ -2,6 +2,7 @@ import { useNativeChatComposerEditSession } from '../queue/editing/use-native-ch
 import { useNativeChatComposerNotice } from './controls/use-native-chat-composer-notice'
 import { useNativeChatMobileHoldNotice } from '../host-access/use-native-chat-mobile-hold-notice'
 import { forwardRef, useCallback, useState, useRef } from 'react'
+import { usePublishAgentHubMirrorSettings } from '../../agent-hub/use-publish-agent-hub-mirror-chat'
 import { useNativeChatComposerInterrupt } from './submit/use-native-chat-composer-interrupt'
 import { useNativeChatContextUsageSummary } from '../usage/use-native-chat-context-usage-summary'
 import { useNativeChatDraft } from '../drafts/use-native-chat-draft'
@@ -11,7 +12,7 @@ import { useNativeChatLaunchDraftAdoption } from '../drafts/use-native-chat-laun
 import { useNativeChatComposerMentions } from '../native-chat-composer-room'
 import { useNativeChatRoomSend } from '../native-chat-room-send'
 import { NativeChatComposerRoomProvider } from '../NativeChatComposerRoomProvider'
-import { NativeChatComposerWorkspace } from './controls/NativeChatComposerWorkspace'
+import { AgentHubOrbOrWorkspaceFooter } from '../../agent-hub/AgentHubOrbComposerFooter'
 import { NativeChatComposerField } from './editor/NativeChatComposerField'
 import { useNativeChatComposerAttachments } from '../attachments/chips/use-native-chat-composer-attachments'
 import { nativeChatComposerSendState } from './submit/native-chat-composer-send-state'
@@ -218,6 +219,8 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
       structuredTransport
     })
     const contextUsageSummary = useNativeChatContextUsageSummary(structuredTransport)
+    const workspace = { terminalTabId, structuredTransport, isWorking }
+    usePublishAgentHubMirrorSettings(workspace, sessionOptions, contextUsageSummary)
 
     const sendStructured = useNativeChatRoomSend(
       useNativeChatStructuredComposerSend({
@@ -354,9 +357,8 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
       flushPendingAttachments: attachments.flushPendingAttachments
     })
 
-    const workspace = { terminalTabId, structuredTransport, isWorking }
     const workspaceFooter =
-      editSession || launchPrompt ? undefined : <NativeChatComposerWorkspace {...workspace} />
+      editSession || launchPrompt ? undefined : <AgentHubOrbOrWorkspaceFooter {...workspace} />
     return (
       <div ref={root} data-native-chat-composer-scope={draftScopeKey}>
         <NativeChatComposerRoomProvider mentions={mentions}>

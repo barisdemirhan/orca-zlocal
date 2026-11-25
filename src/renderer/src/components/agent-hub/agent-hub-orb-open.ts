@@ -8,6 +8,8 @@ import { requestBackgroundTerminalWorktreeMount } from '../terminal/workspace-mo
 import type { AgentHubOrbOpenParams } from '../../../../shared/agent-hub-orb'
 import type { AgentHubOrbAction } from '../../../../shared/agent-hub-settings'
 import { normalizeAgentHubOrbSettings } from '../../../../shared/agent-hub-orb-settings'
+import { AGENT_HUB_ORB_HOME_CHAT } from './agent-hub-orb-chat-strip'
+import { useAgentHubOrbChatStrip } from './agent-hub-orb-chat-strip-store'
 import { showAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
 import { agentHubOrbErrorMessage } from './agent-hub-orb-error'
@@ -55,6 +57,12 @@ async function open(
         useAgentHubOrbPanel.setState({ session: { ...session, tabId: tab.id } })
       }
     } else {
+      const homeShown =
+        useAgentHubOrbChatStrip.getState().strip.activeId === AGENT_HUB_ORB_HOME_CHAT
+      if (!useAgentHubOrbPanel.getState().session && homeShown) {
+        // The sleeping window pointed Home at the old chat's tab; null follows this session.
+        useAgentHubOrbPanel.setState({ shownTabId: null })
+      }
       showAgentHubOrbPanel({ ...session, tabId: tab.id }, action)
     }
     return true

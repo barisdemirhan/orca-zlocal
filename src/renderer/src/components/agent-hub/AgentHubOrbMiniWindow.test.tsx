@@ -4,6 +4,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useAppStore } from '@/store'
 import { createGlobalSettingsFixture } from '../../../../shared/settings/global-settings-test-fixture'
+import { EMPTY_ORB_VOICE_SNAPSHOT } from './agent-hub-orb-voice-state'
+import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 import { AgentHubOrbMiniWindow } from './AgentHubOrbMiniWindow'
 import { closeAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
@@ -29,10 +31,22 @@ const actions = {
   onSleep: vi.fn(),
   onHide: vi.fn()
 }
+const voice = {
+  ...EMPTY_ORB_VOICE_SNAPSHOT,
+  startLive: vi.fn(),
+  stopLive: vi.fn(),
+  muteInput: vi.fn(),
+  muteOutput: vi.fn(),
+  stopSpeaking: vi.fn(),
+  switchToText: vi.fn(),
+  prepareDictation: vi.fn()
+} as unknown as AgentHubOrbVoiceValue
 const miniWindow = () => (
   <TooltipProvider>
     <AgentHubOrbMiniWindow
       sessionId="orb"
+      voice={voice}
+      onClearHome={vi.fn()}
       sphere={{ phase: 'idle', label: 'Orb is idle' }}
       agentLabel="Codex · gpt-model"
       busy={false}

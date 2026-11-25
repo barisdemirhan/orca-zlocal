@@ -1,16 +1,9 @@
 import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronLeft, Ellipsis, History, Moon, PanelTop, Plus, X } from 'lucide-react'
+import { ChevronLeft, PanelTop, Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/class-names'
+import type { Bot } from '../../../../shared/bot-types'
 import { translate } from '@/i18n/i18n'
 import {
   NATIVE_CHAT_PERMISSION_MODE_ICONS,
@@ -23,18 +16,28 @@ import {
 } from './AgentHubOrbMiniTabs'
 import { AgentHubOrbHeaderAction } from './AgentHubOrbConversationHeader'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
+import type { AgentHubOrbSphereProps } from './AgentHubOrbSphere'
+import { AgentHubOrbBotFace } from './AgentHubOrbBotFace'
+import { AgentHubOrbMoreMenu } from './AgentHubOrbMoreMenu'
+import { useAgentHubOrbHeaderActions } from './use-agent-hub-orb-header-actions'
 import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbMiniWindowDrag } from './use-agent-hub-orb-mini-window-drag'
 import { useAgentHubOrbMiniWindowResize } from './use-agent-hub-orb-mini-window-resize'
 import { useAgentHubOrbPermissionMode } from './use-agent-hub-orb-permission-mode'
 import { useAgentHubOrbBot } from './use-agent-hub-orb-bot'
+import { AgentHubOrbStripBar } from './AgentHubOrbStripBar'
+import { setAgentHubOrbWindowTab, useAgentHubOrbChatStrip } from './agent-hub-orb-chat-strip-store'
+import { useAgentHubOrbChatOpenOverride } from './use-agent-hub-orb-chat-open-override'
+import { useAgentHubOrbStripModel } from './use-agent-hub-orb-strip-model'
+import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 import './agent-hub-orb-stage.css'
 
 /** The narrow chat that opens where the sphere was: the retained chat under a draggable header. */
 export function AgentHubOrbMiniWindow({
   sessionId,
+  voice,
+  onClearHome,
   sphere,
   agentLabel,
   busy,
@@ -50,6 +53,8 @@ export function AgentHubOrbMiniWindow({
   children
 }: {
   sessionId: string
+  voice: AgentHubOrbVoiceValue
+  onClearHome: () => void
   sphere: AgentHubOrbSphereProps
   agentLabel: string | null
   busy: boolean
@@ -75,11 +80,18 @@ export function AgentHubOrbMiniWindow({
   const PermissionIcon = permission ? NATIVE_CHAT_PERMISSION_MODE_ICONS[permission] : null
   const title = useAgentHubOrbName()
   const bot = useAgentHubOrbBot()
-  const [selectedTab, setSelectedTab] = useState<AgentHubOrbMiniTab>('chat')
-  const tab = bot ? selectedTab : 'chat'
+  const windowTab = useAgentHubOrbChatStrip((s) => s.windowTab)
+  const tab: AgentHubOrbMiniTab =
+    bot && (windowTab === 'home' || windowTab === 'chats') ? windowTab : 'chat'
+  const homeTitle = translate('agentHub.orb.strip.home', 'Home chat')
+  const override = useAgentHubOrbChatOpenOverride(onClearHome)
   const backLabel = translate('agentHub.orb.backToOrb', 'Back to Orb')
   const permissionLabel = permission ? nativeChatPermissionModeLabel(permission) : ''
-  const moreLabel = translate('agentHub.orb.moreActions', 'More actions')
+  const actions = useAgentHubOrbHeaderActions({
+    bot: bot ?? null,
+    clearHome: onClearHome,
+    fallbackNew: onNew
+  })
   return createPortal(
     <>
       <section
@@ -100,9 +112,7 @@ export function AgentHubOrbMiniWindow({
               onClick={onMinimize}
             >
               <ChevronLeft aria-hidden className="size-3.5" />
-              <span className="inline-flex size-5">
-                <AgentHubOrbSphere {...sphere} />
-              </span>
+              <AgentHubOrbBotFace bot={bot ?? null} sphere={sphere} size={24} />
               <span className="text-sm font-semibold text-foreground">{title}</span>
             </button>
           </AgentHubActionTooltip>
@@ -123,30 +133,24 @@ export function AgentHubOrbMiniWindow({
           >
             <PanelTop />
           </AgentHubOrbHeaderAction>
-          <DropdownMenu modal={false}>
-            <AgentHubActionTooltip label={moreLabel}>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={moreLabel}>
-                  <Ellipsis />
-                </Button>
-              </DropdownMenuTrigger>
-            </AgentHubActionTooltip>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled={busy} onSelect={onNew}>
-                <Plus />
-                {translate('auto.agentHub.orb.newConversation', 'New')}
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled={busy} onSelect={onHistory}>
-                <History />
-                {translate('auto.agentHub.orb.pastConversations', 'Past conversations')}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={busy} onSelect={onSleep}>
-                <Moon />
-                {translate('agentHub.orb.sleepNamed', 'Put {{name}} to sleep', { name: title })}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AgentHubOrbHeaderAction
+            label={translate('auto.agentHub.orb.newConversation', 'New')}
+            disabled={busy}
+            onClick={actions.onNew}
+          >
+            <Plus />
+          </AgentHubOrbHeaderAction>
+          <AgentHubOrbMoreMenu
+            name={title}
+            busy={busy}
+            botPage={Boolean(bot)}
+            onNew={actions.onNew}
+            onClearHome={onClearHome}
+            onOpenPage={actions.onOpenPage}
+            onBotSettings={actions.onBotSettings}
+            onHistory={onHistory}
+            onSleep={onSleep}
+          />
           <AgentHubOrbHeaderAction
             label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name: title })}
             onClick={onHide}
@@ -159,7 +163,16 @@ export function AgentHubOrbMiniWindow({
             bot={bot}
             tab={tab}
             chatWaiting={requestVisible}
-            onSelect={setSelectedTab}
+            onSelect={setAgentHubOrbWindowTab}
+          />
+        ) : null}
+        {bot && tab === 'chat' ? (
+          <MiniStrip
+            bot={bot}
+            sessionId={sessionId}
+            homeTitle={homeTitle}
+            voice={voice}
+            onClearHome={onClearHome}
           />
         ) : null}
         {/* Retained: hidden, not unmounted, so the chat and its request host survive other tabs. */}
@@ -175,7 +188,9 @@ export function AgentHubOrbMiniWindow({
           {memory}
           {children}
         </div>
-        {bot && tab !== 'chat' ? <AgentHubOrbMiniBotPane bot={bot} tab={tab} /> : null}
+        {bot && tab !== 'chat' ? (
+          <AgentHubOrbMiniBotPane bot={bot} tab={tab} override={override} />
+        ) : null}
       </section>
       <div
         aria-hidden
@@ -220,4 +235,21 @@ export function AgentHubOrbMiniWindow({
     </>,
     container
   )
+}
+
+function MiniStrip({
+  bot,
+  sessionId,
+  homeTitle,
+  voice,
+  onClearHome
+}: {
+  bot: Bot
+  sessionId: string
+  homeTitle: string
+  voice: AgentHubOrbVoiceValue
+  onClearHome: () => void
+}): React.JSX.Element {
+  const model = useAgentHubOrbStripModel({ bot, sessionId, homeTitle, voice, onClearHome })
+  return <AgentHubOrbStripBar model={model} voice={voice} onClearHome={onClearHome} />
 }

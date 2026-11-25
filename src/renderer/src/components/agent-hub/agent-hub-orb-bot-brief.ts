@@ -56,14 +56,16 @@ export function orbBriefParts(facts: OrbBriefFacts): string[] {
   if (facts.questions > 0) {
     parts.push(
       translate('agentHub.orb.bot.briefQuestions', '{{count}} questions waiting', {
-        count: facts.questions
+        count: facts.questions,
+        defaultValue_one: '{{count}} question waiting'
       })
     )
   }
   if (facts.finished > 0) {
     parts.push(
       translate('agentHub.orb.bot.briefFinished', '{{count}} automations finished overnight', {
-        count: facts.finished
+        count: facts.finished,
+        defaultValue_one: '{{count}} automation finished overnight'
       })
     )
   }

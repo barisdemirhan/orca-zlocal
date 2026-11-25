@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { sendAgentHubOrbText, useAgentHubOrbComposerReady } from './agent-hub-orb-composer'
+import { AGENT_HUB_ORB_HOME_CHAT } from './agent-hub-orb-chat-strip'
+import { sendAgentHubOrbTextToStripChat } from './agent-hub-orb-side-chat'
+import { useAgentHubOrbBot } from './use-agent-hub-orb-bot'
+import { useAgentHubOrbQuickTarget } from './use-agent-hub-orb-quick-target'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
 import type { AgentHubInboxRequest } from './agent-hub-requests-store'
 import { useAgentHubOrbBotMention } from './use-agent-hub-orb-bot-mention'
@@ -36,6 +40,8 @@ export function useAgentHubOrbQuickWrite({
   const inputRef = useRef<HTMLInputElement>(null)
   const [draft, setDraft] = useState('')
   const mention = useAgentHubOrbBotMention(draft, setDraft)
+  const quickTarget = useAgentHubOrbQuickTarget(open)
+  const orbBot = useAgentHubOrbBot()
   const mentionedBot = mention.bot
   const clearMention = mention.clear
   // Why a latch: the done state expires before the bubble does; a new turn clears it, idle keeps it.
@@ -89,7 +95,7 @@ export function useAgentHubOrbQuickWrite({
       ? botMentionToken(mentionedBot, undefined, botMentionServer(mentionedBot.hostId) ?? undefined)
       : null
     const sent = token && text.trim() ? `${token} ${text}` : text
-    if (tabId && sendAgentHubOrbText(tabId, sent)) {
+    const sentOk = (): void => {
       setDraft('')
       clearMention()
       askCount.current += 1
@@ -106,7 +112,14 @@ export function useAgentHubOrbQuickWrite({
       setOpen(false)
       inputRef.current?.blur()
     }
-  }, [tabId, setOpen, mentionedBot, clearMention])
+    if (quickTarget.target !== AGENT_HUB_ORB_HOME_CHAT) {
+      void sendAgentHubOrbTextToStripChat(quickTarget.target, orbBot ?? null, sent).then(
+        (ok) => ok && sentOk()
+      )
+    } else if (tabId && sendAgentHubOrbText(tabId, sent)) {
+      sentOk()
+    }
+  }, [tabId, setOpen, mentionedBot, clearMention, quickTarget.target, orbBot])
   const dictation = useAgentHubOrbQuickDictation({
     inputRef,
     prepare: prepareDictation,
@@ -125,6 +138,7 @@ export function useAgentHubOrbQuickWrite({
     draft,
     setDraft,
     mention,
+    quickTarget,
     submit,
     dictation,
     reply,

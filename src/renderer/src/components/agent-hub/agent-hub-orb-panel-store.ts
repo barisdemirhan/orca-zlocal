@@ -14,12 +14,16 @@ export type AgentHubOrbLaunchRequest = {
 
 type OrbPanelState = {
   session: AgentHubOrbSession | null
+  /** Put to sleep from the full window: it stays open with its chats readable until Wake. */
+  asleep: boolean
   opening: boolean
   closeGeneration: number
   launchSequence: number
   launchRequest: AgentHubOrbLaunchRequest | null
   destination: HTMLElement | null
   chatVisible: boolean
+  /** Chat tab shown in the window: null is Home, '' shows no chat (a read-only or other tab). */
+  shownTabId: string | null
   /** `mini` is the narrow chat window that opens where the sphere was. */
   presentation: 'chat' | 'orb' | 'mini'
   compact: boolean
@@ -43,12 +47,14 @@ type OrbPanelState = {
 
 export const useAgentHubOrbPanel = create<OrbPanelState>(() => ({
   session: null,
+  asleep: false,
   opening: false,
   closeGeneration: 0,
   launchSequence: 0,
   launchRequest: null,
   destination: null,
   chatVisible: true,
+  shownTabId: null,
   presentation: 'orb',
   compact: false,
   preferredDiameter: AGENT_HUB_ORB_DEFAULT_DIAMETER,
@@ -73,6 +79,7 @@ export function showAgentHubOrbPanel(
   const launchSequence = state.launchSequence + 1
   useAgentHubOrbPanel.setState({
     session,
+    asleep: false,
     launchSequence,
     launchRequest:
       action && session.tabId
@@ -87,7 +94,8 @@ export function showAgentHubOrbPanel(
     chatVisible: true,
     ...(previous?.sessionId !== session.sessionId || previous?.tabId !== session.tabId
       ? {
-          presentation: 'orb',
+          // Waking from the asleep window keeps it; anything else starts as the sphere.
+          presentation: state.asleep ? ('chat' as const) : ('orb' as const),
           compact: false,
           nativeRequestPending: false,
           nativeRequestVisible: false,
@@ -102,6 +110,7 @@ export function closeAgentHubOrbPanel(): void {
   setAgentHubOrbRequestDestination(null)
   useAgentHubOrbPanel.setState({
     session: null,
+    asleep: false,
     launchRequest: null,
     closeGeneration: useAgentHubOrbPanel.getState().closeGeneration + 1,
     chatVisible: true,

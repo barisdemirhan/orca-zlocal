@@ -9,7 +9,8 @@ export function AgentHubOrbBorrowedChat({
   tabId: string | undefined
 }): React.JSX.Element | null {
   const borrowed = useAgentHubOrbPanel(
-    (s) => tabId !== undefined && s.session?.tabId === tabId && s.destination !== null
+    (s) =>
+      tabId !== undefined && (s.shownTabId ?? s.session?.tabId) === tabId && s.destination !== null
   )
   if (!borrowed) {
     return null

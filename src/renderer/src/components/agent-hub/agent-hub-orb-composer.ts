@@ -71,6 +71,17 @@ export function sendAgentHubOrbText(tabId: string, text: string): boolean {
   return true
 }
 
+/** Waits for a chat that was just brought into the Orb to register its composer, then sends. */
+export async function sendAgentHubOrbTextWhenReady(tabId: string, text: string): Promise<boolean> {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (sendAgentHubOrbText(tabId, text)) {
+      return true
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50))
+  }
+  return false
+}
+
 export function finishAgentHubOrbDictationForText(tabId: string | undefined): void {
   if (
     !tabId ||

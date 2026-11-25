@@ -23,7 +23,9 @@ function closeToSlot(): void {
 
 /** Hide keeps the session running behind the sphere; Sleep ends it, leaving it in History. */
 export async function sleepAgentHubOrb(): Promise<void> {
-  const tabId = useAgentHubOrbPanel.getState().session?.tabId
+  const { session, presentation, chatVisible } = useAgentHubOrbPanel.getState()
+  const tabId = session?.tabId
+  const stayOpen = presentation === 'chat' && chatVisible
   if (
     tabId &&
     isDictationRunning(useAppStore.getState().dictationState) &&
@@ -35,7 +37,13 @@ export async function sleepAgentHubOrb(): Promise<void> {
     if (tabId) {
       await readAgentHubOrbVoice(tabId)?.stopLive()
     }
-    closeToSlot()
+    if (stayOpen) {
+      // Why: set before the host answers, so an Orb opened meanwhile is not marked asleep.
+      closeAgentHubOrbPanel()
+      useAgentHubOrbPanel.setState({ asleep: true, presentation: 'chat' })
+    } else {
+      closeToSlot()
+    }
     await window.api.agentHub.orb.close()
     toast(
       translate('agentHub.orb.asleepNamed', '{{name}} is asleep. The conversation is in History.', {

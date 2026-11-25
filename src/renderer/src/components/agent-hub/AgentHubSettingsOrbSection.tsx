@@ -22,6 +22,7 @@ import {
   SettingsSwitchRow
 } from '../settings/form-controls/SettingsFormControls'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
+import { AgentHubSettingsOrbChatRows } from './AgentHubSettingsOrbChatRows'
 import { AgentHubSettingsOrbActions } from './AgentHubSettingsOrbActions'
 import { AgentHubSettingsOrbIdentity } from './AgentHubSettingsOrbIdentity'
 import { AgentHubSettingsOrbMemory } from './AgentHubSettingsOrbMemory'
@@ -103,6 +104,7 @@ export function AgentHubSettingsOrbSection({
         updateSettings={updateSettings}
         orbDirectory={orbDirectory}
       />
+      <AgentHubSettingsOrbChatRows updateSettings={updateSettings} />
       <SettingsRow
         label={agentLabel}
         control={

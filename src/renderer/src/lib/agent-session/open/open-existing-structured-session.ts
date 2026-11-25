@@ -65,6 +65,9 @@ const defaultDeps: StructuredSessionOpenAdapterDeps = {
   reveal: revealStructuredSession
 }
 
+/** For a caller that finds a chat's tab and shows it itself; swap `activate` to keep the main window still. */
+export const defaultStructuredSessionOpenDeps = defaultDeps
+
 export type StructuredSessionOpenOutcome = 'activated' | 'gone' | 'host-cannot-open' | 'unavailable'
 
 export function structuredSessionOpenOutcome(

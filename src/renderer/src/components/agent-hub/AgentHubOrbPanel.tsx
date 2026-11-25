@@ -11,8 +11,10 @@ import type { AgentHubRequestPresentation } from './agent-hub-request-presentati
 import { useAnchorBinding } from './use-anchor-binding'
 import { AgentHubOrbConversation } from './AgentHubOrbConversation'
 import { useAgentHubOrbSettingsSync } from './use-agent-hub-orb-settings-sync'
-import { useAgentHubOrbVoice } from './use-agent-hub-orb-voice'
+import { useAgentHubOrbLiveBinding } from './use-agent-hub-orb-live-binding'
 import type { AgentHubOrbState } from './agent-hub-orb-state'
+import { AgentHubOrbAsleepWindow } from './AgentHubOrbAsleepWindow'
+import { useAgentHubOrbBot } from './use-agent-hub-orb-bot'
 import { AgentHubOrbWakeGhost } from './AgentHubOrbWakeGhost'
 
 const IDLE_ORB_STATE: AgentHubOrbState = { kind: 'idle' }
@@ -45,7 +47,9 @@ export function AgentHubOrbPanel({
   const chatVisible = useAgentHubOrbPanel((s) => s.chatVisible)
   const presentation = useAgentHubOrbPanel((s) => s.presentation)
   const compact = useAgentHubOrbPanel((s) => s.compact)
-  const voice = useAgentHubOrbVoice(session, !hidden && chatVisible)
+  const asleep = useAgentHubOrbPanel((s) => s.asleep)
+  const orbBot = useAgentHubOrbBot()
+  const voice = useAgentHubOrbLiveBinding(session, !hidden && chatVisible)
   const orbOnly = chatVisible && (presentation !== 'chat' || compact)
   useAgentHubOrbSettingsSync(session !== null)
   const [anchored, setAnchored] = useState(false)
@@ -61,7 +65,7 @@ export function AgentHubOrbPanel({
     <>
       <AgentHubOrbWakeGhost hidden={hidden} />
       <Popover
-        open={Boolean(session) && !hidden}
+        open={(Boolean(session) || (asleep && Boolean(orbBot))) && !hidden}
         onOpenChange={(next) => {
           if (!next) {
             closeAgentHubOrbPanel()
@@ -69,7 +73,7 @@ export function AgentHubOrbPanel({
         }}
       >
         <PopoverAnchor virtualRef={virtualRef} />
-        {session ? (
+        {session || (asleep && orbBot) ? (
           <PopoverContent
             updatePositionStrategy={floating ? 'always' : 'optimized'}
             side={anchored ? side : 'top'}
@@ -97,6 +101,9 @@ export function AgentHubOrbPanel({
                 event.preventDefault()
                 return
               }
+              if (!session) {
+                return
+              }
               if (voice.output === 'speaking') {
                 event.preventDefault()
                 voice.stopSpeaking()
@@ -118,14 +125,18 @@ export function AgentHubOrbPanel({
             }}
             onInteractOutside={(event) => event.preventDefault()}
           >
-            <AgentHubOrbConversation
-              sessionId={session.sessionId}
-              tabId={session.tabId}
-              state={state}
-              voice={voice}
-              visible={!hidden}
-              requestPresentationOf={requestPresentationOf}
-            />
+            {session ? (
+              <AgentHubOrbConversation
+                sessionId={session.sessionId}
+                tabId={session.tabId}
+                state={state}
+                voice={voice}
+                visible={!hidden}
+                requestPresentationOf={requestPresentationOf}
+              />
+            ) : orbBot ? (
+              <AgentHubOrbAsleepWindow bot={orbBot} />
+            ) : null}
             {anchored ? <PopoverArrow width={14} height={7} /> : null}
           </PopoverContent>
         ) : null}

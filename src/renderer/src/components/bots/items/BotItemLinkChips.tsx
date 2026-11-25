@@ -2,7 +2,8 @@
 // owner reads and answers lower down. Each chip opens its link as its row in the full list would; the
 // chips with no room go behind "+N", whose popover lists them as full rows.
 import { FileText, GitPullRequest, Hourglass, Link2, Square } from 'lucide-react'
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useContext, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { BotChatOpenOverrideContext } from '../bot-chat-open-override'
 import { Button } from '@/components/ui/button'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -232,7 +233,8 @@ function WorkerChip({
 }): React.JSX.Element {
   const t = useTranslate()
   const worker = botItemWorkerRow(link)
-  const open = botChatTreeWorkerOpen(bot, worker)
+  const override = useContext(BotChatOpenOverrideContext)
+  const open = botChatTreeWorkerOpen(bot, worker, override)
   const canStop = botChatTreeWorkerRunning(worker) && Boolean(worker.dispatchId)
   const { stopping, stop } = useWorkerStop(worker.dispatchId ?? '')
   return (

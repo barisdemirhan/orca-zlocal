@@ -1,6 +1,13 @@
-import { Bot, Mic, Square, MessageSquare } from 'lucide-react'
-import type { RefObject } from 'react'
+import { Bot, ChevronDown, Mic, Square, MessageSquare } from 'lucide-react'
+import { useState, type RefObject } from 'react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { BotAvatar } from '../bots/BotAvatar'
@@ -8,6 +15,7 @@ import { NativeChatPromptPill } from '../native-chat/composer/editor/NativeChatP
 import { AgentHubOrbBotPicker } from './AgentHubOrbBotPicker'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 import type { AgentHubOrbBotMention } from './use-agent-hub-orb-bot-mention'
+import type { AgentHubOrbQuickTarget } from './use-agent-hub-orb-quick-target'
 import type { AgentHubOrbQuickDictation } from './use-agent-hub-orb-quick-dictation'
 
 function QuickAction({
@@ -48,6 +56,7 @@ export function AgentHubOrbQuickInput({
   value,
   dictation,
   mention,
+  quickTarget,
   onChange,
   onInput,
   onKeyDown,
@@ -63,6 +72,8 @@ export function AgentHubOrbQuickInput({
   value: string
   dictation: Pick<AgentHubOrbQuickDictation, 'active' | 'phase' | 'missed'>
   mention: AgentHubOrbBotMention
+  /** The chat the line goes to; absent where the Orb has no bot page. */
+  quickTarget?: AgentHubOrbQuickTarget
   onChange: (value: string) => void
   onInput: () => void
   onKeyDown: () => void
@@ -73,16 +84,19 @@ export function AgentHubOrbQuickInput({
   onClose: () => void
 }): React.JSX.Element {
   const name = useAgentHubOrbName()
+  // Why: the menu's portal takes focus, which must not read as leaving the box.
+  const [targetMenuOpen, setTargetMenuOpen] = useState(false)
   const { active: listening, phase, missed } = dictation
   const label = translate('agentHub.orb.quickInputNamed', 'Message {{name}}', { name })
   return (
     <div
       data-agent-hub-orb-quick-input
       data-agent-hub-orb-interactive
-      data-open={open || listening || value.length > 0 || mention.bot !== null}
+      data-open={open || targetMenuOpen || listening || value.length > 0 || mention.bot !== null}
       className="agent-hub-orb-quick relative focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
       onBlurCapture={(event) => {
         if (
+          !targetMenuOpen &&
           !event.currentTarget.contains(event.relatedTarget) &&
           !value &&
           !listening &&
@@ -142,6 +156,33 @@ export function AgentHubOrbQuickInput({
         }}
       />
       {mention.listOpen ? <AgentHubOrbBotPicker mention={mention} /> : null}
+      {quickTarget ? (
+        <DropdownMenu modal={false} open={targetMenuOpen} onOpenChange={setTargetMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              tabIndex={open ? 0 : -1}
+              aria-label={translate('agentHub.orb.quickTarget', 'Send to')}
+              className="flex max-w-24 shrink-0 cursor-pointer items-center gap-1 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-xs"
+            >
+              <span className="truncate">{quickTarget.label}</span>
+              <ChevronDown aria-hidden className="size-3 shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuRadioGroup
+              value={quickTarget.target}
+              onValueChange={quickTarget.setTarget}
+            >
+              {quickTarget.options.map((option) => (
+                <DropdownMenuRadioItem key={option.id} value={option.id}>
+                  {option.label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
       {listening ? (
         <QuickAction
           label={translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation')}

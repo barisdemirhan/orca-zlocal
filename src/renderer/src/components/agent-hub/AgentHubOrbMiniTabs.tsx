@@ -4,6 +4,10 @@ import { cn } from '@/lib/class-names'
 import { AttentionDot } from '../bots/AttentionDot'
 import { BotChatsTab } from '../bots/BotChatsPanel'
 import type { Bot } from '../../../../shared/bot-types'
+import {
+  BotChatOpenOverrideContext,
+  type BotChatOpenOverride
+} from '../bots/bot-chat-open-override'
 import { AgentHubBotPageHome } from './AgentHubBotPageHome'
 import { AgentHubBotNeedsPill } from './AgentHubBotsRow'
 import { useAgentHubBotNeedsList } from './agent-hub-bot-needs-store'
@@ -71,14 +75,18 @@ export function AgentHubOrbMiniTabRow({
 /** The Orb bot's Home or Chats, filling the mini window under the tab row. */
 export function AgentHubOrbMiniBotPane({
   bot,
-  tab
+  tab,
+  override
 }: {
   bot: Bot
   tab: 'home' | 'chats'
+  override: BotChatOpenOverride
 }): React.JSX.Element {
   return (
-    <div className="scrollbar-sleek flex min-h-0 flex-1 flex-col overflow-y-auto">
-      {tab === 'home' ? <AgentHubBotPageHome bot={bot} /> : <BotChatsTab bot={bot} />}
-    </div>
+    <BotChatOpenOverrideContext.Provider value={override}>
+      <div className="scrollbar-sleek flex min-h-0 flex-1 flex-col overflow-y-auto">
+        {tab === 'home' ? <AgentHubBotPageHome bot={bot} /> : <BotChatsTab bot={bot} />}
+      </div>
+    </BotChatOpenOverrideContext.Provider>
   )
 }

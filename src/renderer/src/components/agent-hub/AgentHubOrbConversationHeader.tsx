@@ -63,6 +63,9 @@ export function AgentHubOrbConversationHeader({
   chatVisible,
   busy,
   agentLabel,
+  face,
+  stateLabel,
+  moreMenu,
   onBack,
   onHistory,
   onSettings,
@@ -78,6 +81,11 @@ export function AgentHubOrbConversationHeader({
   chatVisible: boolean
   busy: boolean
   agentLabel: string | null
+  /** The Orb bot's face and state line when the window is a bot page. */
+  face?: ReactNode
+  stateLabel?: string
+  /** The ⋯ menu of the bot-page entries. */
+  moreMenu?: ReactNode
   onBack: () => void
   onHistory: () => void
   onSettings: () => void
@@ -109,6 +117,7 @@ export function AgentHubOrbConversationHeader({
           <ArrowLeft />
         </AgentHubOrbHeaderAction>
       ) : null}
+      {chatVisible && face ? face : null}
       {chatVisible ? (
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
@@ -153,8 +162,10 @@ export function AgentHubOrbConversationHeader({
           />
         </AgentHubActionTooltip>
       ) : null}
-      {chatVisible && agentLabel ? (
-        <span className="min-w-0 truncate text-xs text-muted-foreground">{agentLabel}</span>
+      {chatVisible && (stateLabel || agentLabel) ? (
+        <span className="min-w-0 truncate text-xs text-muted-foreground">
+          {[stateLabel, agentLabel].filter(Boolean).join(' · ')}
+        </span>
       ) : null}
       {chatVisible ? <AgentHubOrbQuotaChip /> : null}
       <span className="flex-1" />
@@ -169,6 +180,7 @@ export function AgentHubOrbConversationHeader({
           <AgentHubOrbHeaderAction label={newLabel} disabled={busy} onClick={onNew}>
             <Plus />
           </AgentHubOrbHeaderAction>
+          {moreMenu}
           <AgentHubOrbHeaderAction
             label={translate('agentHub.orb.miniWindow', 'Floating window')}
             onClick={onMiniWindow}

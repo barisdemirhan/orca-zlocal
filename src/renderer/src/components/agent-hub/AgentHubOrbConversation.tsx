@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { translate } from '@/i18n/i18n'
 import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import { useAppStore } from '@/store'
@@ -11,7 +11,6 @@ import {
 import { useAgentHubOrbConversations } from './agent-hub-orb-conversations'
 import { AgentHubOrbSecondaryViews } from './AgentHubOrbSecondaryViews'
 import { AgentHubOrbMiniWindow } from './AgentHubOrbMiniWindow'
-import { cancelDictation } from './agent-hub-dictation-cancel'
 import { useAgentHubDictationSession } from './agent-hub-dictation-origin'
 import { isDictationRunning } from './agent-hub-mirror-mic-state'
 import {
@@ -24,17 +23,16 @@ import type { AgentHubOrbState } from './agent-hub-orb-state'
 import { agentHubCurrentOrbRequest } from './agent-hub-orb-request-owner'
 import { AgentHubOrbStage } from './AgentHubOrbStage'
 import { agentHubOrbSphereAction } from './agent-hub-orb-sphere-action'
-import { AgentHubOrbHoverControls } from './AgentHubOrbHoverControls'
+import { AgentHubOrbStageControls, AgentHubOrbStageQuickInput } from './AgentHubOrbStageControls'
 import { agentHubOrbVoiceNotice } from './agent-hub-orb-voice-state'
-import { AgentHubOrbConversationHeader } from './AgentHubOrbConversationHeader'
+import { AgentHubOrbWindowHeader } from './AgentHubOrbWindowHeader'
+import { useAgentHubOrbHeaderActions } from './use-agent-hub-orb-header-actions'
 import { agentHubOrbPresentation } from './agent-hub-orb-presentation'
 import { useAgentHubOrbAttention } from './agent-hub-orb-attention'
 import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
-import { dispatchDictationControl } from '../dictation/dictation-control-events'
-import { AgentHubRequestCard } from './AgentHubRequestCard'
+import { useAgentHubOrbSphereClick } from './use-agent-hub-orb-sphere-click'
+import { AgentHubOrbRequestCard } from './AgentHubOrbStageControls'
 import { AgentHubOrbRequestModal } from './AgentHubOrbRequestModal'
-import { AgentHubOrbLiveControls } from './AgentHubOrbLiveControls'
-import { AgentHubOrbQuickInput } from './AgentHubOrbQuickInput'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { AgentHubOrbFollowNotices } from './AgentHubOrbFollowNotices'
@@ -45,15 +43,19 @@ import { openAgentHubMirrors } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { sleepAgentHubOrb } from './agent-hub-orb-sleep'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
-import { setAgentHubOrbPinned } from './agent-hub-orb-dock-pin'
 import { useAgentHubOrbBotBubble } from './use-agent-hub-orb-bot-bubble'
 import { AgentHubOrbBotAskCard } from './AgentHubOrbBotBubble'
 import { agentHubOrbCaptionSlots } from './agent-hub-orb-caption-slots'
 import { normalizeAgentHubPlacement } from '../../../../shared/agent-hub-settings'
+import { AgentHubOrbWindow } from './AgentHubOrbWindow'
+import { useAgentHubOrbChatStrip } from './agent-hub-orb-chat-strip-store'
+import { agentHubOrbWindowStateLabel } from './agent-hub-orb-window-state'
+import { AgentHubOrbSideAskCard } from './AgentHubOrbSideAskCard'
+import { useAgentHubOrbBot } from './use-agent-hub-orb-bot'
+import { useAgentHubOrbClearHome } from './use-agent-hub-orb-clear-home'
+import { useAgentHubOrbSideAsk } from './use-agent-hub-orb-side-ask'
 
-const sleep = (): void => {
-  void sleepAgentHubOrb()
-}
+const sleep = (): void => void sleepAgentHubOrb()
 
 export function AgentHubOrbConversation({
   sessionId,
@@ -84,6 +86,10 @@ export function AgentHubOrbConversation({
   )
   const showChat = chatVisible && presentation === 'chat' && !compact
   const showMini = chatVisible && presentation === 'mini' && !compact
+  const orbBot = useAgentHubOrbBot()
+  const windowTab = useAgentHubOrbChatStrip((s) => s.windowTab)
+  const sideAsk = useAgentHubOrbSideAsk(sessionId)
+  const sideAskId = sideAsk?.id ?? null
   const live =
     voice.connection === 'connecting' ||
     voice.connection === 'live' ||
@@ -128,7 +134,13 @@ export function AgentHubOrbConversation({
     refresh,
     onOpened: () => setView('chat')
   })
-  const startNew = (): void => void reopen()
+  const startNew = useCallback((): void => void reopen(), [reopen])
+  const clearHome = useAgentHubOrbClearHome(startNew)
+  const headerActions = useAgentHubOrbHeaderActions({
+    bot: orbBot ?? null,
+    clearHome,
+    fallbackNew: startNew
+  })
   const conversation = conversations.find((entry) => entry.sessionId === sessionId)
   const tabAgent = useAppStore(
     (s) =>
@@ -173,7 +185,7 @@ export function AgentHubOrbConversation({
   })
   // Why: a waiting bot ask only colours the sphere while nothing livelier is going on.
   const askAttention =
-    botBubble.attention &&
+    (botBubble.attention || sideAskId !== null) &&
     !live &&
     !quickDictating &&
     voice.connection !== 'error' &&
@@ -187,22 +199,27 @@ export function AgentHubOrbConversation({
     currentRequest?.request.kind === 'gate' || currentRequest?.request.kind === 'consent',
     attention
   )
+  const sphereProps = {
+    ...visual,
+    inputMuted: live && voice.input === 'muted',
+    outputMuted: live && voice.outputMuted,
+    inputSpeaking: voice.inputSpeaking
+  }
   const requestCard = currentRequest ? (
-    <AgentHubRequestCard
+    <AgentHubOrbRequestCard
       key={currentRequest.request.requestId}
       item={currentRequest}
       presentation={requestPresentationOf(currentRequest.host, currentRequest.request)}
-      onDismiss={showChat || showMini ? undefined : quick.later}
-      dismissLabel={
-        currentRequest.request.kind === 'notify'
-          ? undefined
-          : translate('agentHub.orb.answerLater', 'Answer later')
-      }
+      onLater={showChat || showMini ? undefined : quick.later}
     />
   ) : null
   const askCard =
     askCardVisible && botBubble.askEntry ? (
       <AgentHubOrbBotAskCard entry={botBubble.askEntry} onLater={botBubble.later} />
+    ) : null
+  const sideAskCard =
+    askAttention && sideAsk && !hasRequest && !askCardVisible ? (
+      <AgentHubOrbSideAskCard chat={sideAsk} />
     ) : null
   const captionSlots = agentHubOrbCaptionSlots({
     live,
@@ -227,26 +244,15 @@ export function AgentHubOrbConversation({
     'finish-dictation': translate('auto.agentHub.orb.finishDictation', 'Finish and send dictation'),
     'quick-input': translate('agentHub.orb.quickInputNamed', 'Message {{name}}', { name: orbName })
   }
-  const stopDictation = (): void => {
-    if (quick.dictation.active) {
-      quick.dictation.stop()
-    } else {
-      dispatchDictationControl('stop')
-    }
-  }
-  const onSphereClick = () => {
-    cancelAgentHubOrbLaunch(sessionId, tabId)
-    if (sphereAction === 'finish-dictation') {
-      stopDictation()
-    } else if (sphereAction === 'quick-input') {
-      if (!hasRequest && botBubble.hasAsks && !botBubble.asking) {
-        botBubble.openAsk()
-      } else {
-        botBubble.closeAsk()
-        quick.onSphereClick()
-      }
-    }
-  }
+  const onSphereClick = useAgentHubOrbSphereClick({
+    sessionId,
+    tabId,
+    sideAskId,
+    action: sphereAction,
+    hasRequest,
+    botBubble,
+    quick
+  })
   const canHold = sphereAction === 'quick-input' && !busy && voice.connection !== 'stopping'
   const agentLabel = agent
     ? `${structuredAgentLabel(agent)} · ${conversation?.model ?? translate('auto.agentHub.orb.agentDefault', 'Agent default')}`
@@ -256,22 +262,31 @@ export function AgentHubOrbConversation({
     <div
       ref={setAgentHubOrbDestination}
       data-agent-hub-orb-chat-tab-id={tabId}
-      className={showChat || showMini ? 'relative min-h-0 flex-1 overflow-hidden' : 'hidden'}
+      className={
+        (showChat || showMini) && (!orbBot || windowTab === 'chat')
+          ? 'relative min-h-0 flex-1 overflow-hidden'
+          : 'hidden'
+      }
     />
   )
   return (
     <section aria-label={orbName} className="flex h-[min(640px,calc(100vh-96px))] min-h-0 flex-col">
       {showChat || !chatVisible ? (
-        <AgentHubOrbConversationHeader
+        <AgentHubOrbWindowHeader
+          bot={orbBot}
+          sphere={sphereProps}
+          name={orbName}
+          actions={headerActions}
+          onClearHome={clearHome}
           history={history}
           settingsView={showSettings}
           chatVisible={chatVisible}
           busy={busy}
           agentLabel={agentLabel}
+          stateLabel={orbBot ? agentHubOrbWindowStateLabel(orbBot, state, askAttention) : undefined}
           onBack={() => setView('chat')}
           onHistory={() => setView('history')}
           onSettings={() => setView('settings')}
-          onNew={startNew}
           onMiniWindow={showMiniWindow}
           onMinimize={() => useAgentHubOrbPanel.setState({ compact: true })}
           onSleep={sleep}
@@ -306,12 +321,9 @@ export function AgentHubOrbConversation({
       {showMini ? (
         <AgentHubOrbMiniWindow
           sessionId={sessionId}
-          sphere={{
-            ...visual,
-            inputMuted: live && voice.input === 'muted',
-            outputMuted: live && voice.outputMuted,
-            inputSpeaking: voice.inputSpeaking
-          }}
+          voice={voice}
+          onClearHome={clearHome}
+          sphere={sphereProps}
           agentLabel={agentLabel}
           busy={busy}
           request={requestCard}
@@ -326,6 +338,17 @@ export function AgentHubOrbConversation({
         >
           {chatHost}
         </AgentHubOrbMiniWindow>
+      ) : orbBot && showChat ? (
+        <AgentHubOrbWindow
+          bot={orbBot}
+          sessionId={sessionId}
+          homeTitle={translate('agentHub.orb.strip.home', 'Home chat')}
+          voice={voice}
+          chatWaiting={hasRequest || askCardVisible}
+          onClearHome={clearHome}
+        >
+          {chatHost}
+        </AgentHubOrbWindow>
       ) : (
         chatHost
       )}
@@ -343,59 +366,32 @@ export function AgentHubOrbConversation({
           live={live}
           compact={compact}
           visible={visible && chatVisible}
-          requestVisible={requestVisible || askCardVisible}
+          requestVisible={requestVisible || askCardVisible || sideAskCard !== null}
           sphereLabel={sphereLabels[sphereAction]}
           onSphereClick={onSphereClick}
           onSphereDoubleClick={showMiniWindow}
           onSphereHoldStart={canHold ? quick.onSphereHoldStart : undefined}
           onSphereHoldEnd={quick.dictation.stop}
-          quickInput={
-            live ? null : (
-              <AgentHubOrbQuickInput
-                open={quick.open}
-                ready={quick.ready && !busy}
-                inputRef={quick.inputRef}
-                value={quick.draft}
-                dictation={quick.dictation}
-                mention={quick.mention}
-                onChange={quick.setDraft}
-                onInput={quick.dictation.onInput}
-                onKeyDown={quick.dictation.onKeyDown}
-                onSubmit={quick.submit}
-                onDictate={quick.dictation.start}
-                onStopDictation={quick.dictation.stop}
-                onOpenChat={quick.showChat}
-                onClose={quick.close}
-              />
-            )
-          }
+          quickInput={live ? null : <AgentHubOrbStageQuickInput quick={quick} busy={busy} />}
           notice={agentHubOrbVoiceNotice(voice)}
-          request={requestCard ?? askCard}
+          request={requestCard ?? askCard ?? sideAskCard}
           sphereControls={
-            live ? (
-              <AgentHubOrbLiveControls voice={voice} />
-            ) : (
-              <AgentHubOrbHoverControls
-                voice={voice}
-                codex={agent === 'codex'}
-                compact={compact}
-                busy={busy}
-                dictating={quickDictating}
-                pinned={pinned}
-                canPin={canPin}
-                onMiniWindow={showMiniWindow}
-                onExpand={() =>
-                  useAgentHubOrbPanel.setState({ compact: false, presentation: 'orb' })
-                }
-                onLive={() => {
-                  cancelAgentHubOrbLaunch(sessionId, tabId)
-                  void voice.startLive()
-                }}
-                onSleep={sleep}
-                onCancelDictation={cancelDictation}
-                onTogglePin={() => setAgentHubOrbPinned(!pinned)}
-              />
-            )
+            <AgentHubOrbStageControls
+              voice={voice}
+              live={live}
+              codex={agent === 'codex'}
+              compact={compact}
+              busy={busy}
+              dictating={quickDictating}
+              pinned={pinned}
+              canPin={canPin}
+              onMiniWindow={showMiniWindow}
+              onLive={() => {
+                cancelAgentHubOrbLaunch(sessionId, tabId)
+                void voice.startLive()
+              }}
+              onSleep={sleep}
+            />
           }
         />
       ) : null}
