@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { useAppStore } from '@/store'
+import { recomputeOn } from '@/lib/recompute-on'
 import { makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
 import { agentHubTerminalTreeFromState } from './use-agent-hub-terminal-tree'
 import { agentHubRowOfTab } from './agent-hub-tab-row'
@@ -49,8 +50,8 @@ const notify = (): void => {
     listener()
   }
 }
-const keyFor = (target: AgentHubPaneTarget): string =>
-  `${getWorktreeHostIdentity(target.worktree)}\u0000${agentHubSleepPaneKey(target) ?? target.tab.id}`
+const keyFor = (target: AgentHubPaneTarget, paneKey: string | null): string =>
+  `${getWorktreeHostIdentity(target.worktree)}\u0000${paneKey ?? target.tab.id}`
 
 export function isAgentHubTargetSleeping(target: AgentHubPaneTarget): boolean {
   if (!target.agentType && readAgentHubTerminalSuspension(target)?.state === 'suspended') {
@@ -95,7 +96,7 @@ export function useAgentHubSleepingTargetTest(): (target: AgentHubPaneTarget) =>
 }
 
 async function runOperation(target: AgentHubPaneTarget, wake: boolean): Promise<void> {
-  const key = keyFor(target)
+  const key = keyFor(target, agentHubSleepPaneKey(target))
   const previous = operations.get(key)
   if (previous?.phase === 'sleeping-pending' || previous?.phase === 'waking') {
     return
@@ -118,12 +119,14 @@ async function runOperation(target: AgentHubPaneTarget, wake: boolean): Promise<
 }
 
 export function useAgentHubPaneSleep(target: AgentHubPaneTarget) {
-  const key = keyFor(target)
+  const paneKey = useAppStore((state) => agentHubSleepPaneKey(target, state))
+  const key = keyFor(target, paneKey)
   const operation = useSyncExternalStore(subscribe, () => operations.get(key))
-  useAgentHubTerminalSuspension(target)
+  const suspension = useAgentHubTerminalSuspension(target)
   const sleepingTest = useAgentHubSleepingTargetTest()
-  const paneKey = agentHubSleepPaneKey(target)
-  useAppStore((state) => (paneKey ? state.agentStatusByPaneKey.get(paneKey) : undefined))
+  const agentStatus = useAppStore((state) =>
+    paneKey ? state.agentStatusByPaneKey.get(paneKey) : undefined
+  )
   const sleeping = sleepingTest(target)
   const unverifiable = useAppStore(
     (state) => resolveWorkspaceTerminalHostAuthority(state, target.worktree.id) === 'unverifiable'
@@ -131,7 +134,12 @@ export function useAgentHubPaneSleep(target: AgentHubPaneTarget) {
   const settledPhase = operation?.phase === 'failed' ? undefined : operation?.phase
   const phase: AgentHubPaneSleepPhase =
     settledPhase ?? (unverifiable ? 'unverifiable' : sleeping ? 'sleeping' : 'awake')
-  const reason = sleeping ? undefined : agentHubPaneSleepReason(target)
+  // sleepingTest stands for the terminal state the reason reads: PTYs, layouts and sleep records.
+  const reason = sleeping
+    ? undefined
+    : recomputeOn([sleepingTest, suspension, agentStatus, paneKey, unverifiable], () =>
+        agentHubPaneSleepReason(target)
+      )
   return {
     phase,
     kind: target.agentType ? ('agent' as const) : ('terminal' as const),

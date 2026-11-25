@@ -1,8 +1,10 @@
 import { translate } from '@/i18n/i18n'
+import { recomputeOn } from '@/lib/recompute-on'
 import { agentHubWorkArea } from './agent-hub-floating-arrangement'
 import { mirrorTabDetachGeometry } from './agent-hub-mirror-detach-geometry'
 import type { AgentHubMirrorTabDrag } from './agent-hub-mirror-drag-data'
 import type { MirrorTabDrop } from './agent-hub-mirror-drop-target'
+import { useAgentHubWorkAreaKey } from './use-agent-hub-work-area-key'
 
 export function AgentHubMirrorDetachDrop({
   active,
@@ -11,10 +13,11 @@ export function AgentHubMirrorDetachDrop({
   active: AgentHubMirrorTabDrag | null
   drop: MirrorTabDrop | null
 }): React.JSX.Element | null {
+  const areaKey = useAgentHubWorkAreaKey()
   if (!active) {
     return null
   }
-  const area = agentHubWorkArea()
+  const area = recomputeOn([areaKey, active], agentHubWorkArea)
   const geometry =
     drop?.kind === 'detach' ? mirrorTabDetachGeometry(active.windowId, drop.point) : null
   return (

@@ -36,8 +36,9 @@ import {
 import { fallbackAgentHubPeek } from './agent-hub-peek-routing'
 import { agentHubPeekPageItem } from './agent-hub-peek-page-navigation'
 import { openAgentHubPeekMarkdownLink } from './agent-hub-peek-markdown-links'
-import { useViewportSize } from './use-viewport-size'
+import { useAgentHubWorkAreaKey } from './use-agent-hub-work-area-key'
 import { useAppStore } from '@/store'
+import { recomputeOn } from '@/lib/recompute-on'
 import { STATUS_BAR_RESERVE_HEIGHT } from '../../app-shell/chrome/workspace-chrome-metrics'
 
 function kindLabel(item: AgentHubPeekItem): string {
@@ -122,8 +123,7 @@ function SourceButton({
 export function AgentHubPeek(): React.JSX.Element | null {
   const peek = useAgentHubPeek()
   const rootRef = useRef<HTMLDivElement>(null)
-  // Recomputed on resize: the work area follows the window and the sidebars.
-  useViewportSize()
+  const areaKey = useAgentHubWorkAreaKey()
   // The status bar stays lit under the shade: the dock grows out of it.
   const statusBarHeight = useAppStore((s) => (s.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0))
   const item = peek ? peek.history[peek.index] : null
@@ -179,7 +179,8 @@ export function AgentHubPeek(): React.JSX.Element | null {
       : measured?.location === item.location
         ? measured.size
         : { width: 0, height: 0 }
-  const box = agentHubPeekGeometry(agentHubWorkArea(), contentSize, fullScreen)
+  const area = recomputeOn([areaKey, item], agentHubWorkArea)
+  const box = agentHubPeekGeometry(area, contentSize, fullScreen)
   const fullScreenLabel = fullScreen
     ? translate('agentHub.peek.exitFullScreen', 'Exit full screen')
     : translate('agentHub.peek.fullScreen', 'Full screen')

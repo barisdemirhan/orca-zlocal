@@ -12,9 +12,11 @@ const useSuspensions = create<{ entries: ReadonlyMap<string, TerminalSuspensionR
   entries: new Map()
 }))
 const pending = new Map<string, Promise<TerminalSuspensionResult>>()
-function keyFor(target: AgentHubPaneTarget): string {
-  const ptyId = resolveAgentHubPtyId(useAppStore.getState(), target.tab.id, target.paneKey)
-  const leaf = useAppStore.getState().terminalLayoutsByTabId[target.tab.id]?.activeLeafId
+function keyFor(
+  target: AgentHubPaneTarget,
+  ptyId = resolveAgentHubPtyId(useAppStore.getState(), target.tab.id, target.paneKey),
+  leaf = useAppStore.getState().terminalLayoutsByTabId[target.tab.id]?.activeLeafId
+): string {
   return JSON.stringify([
     getWorktreeHostIdentity(target.worktree),
     target.tab.id,
@@ -66,7 +68,9 @@ export async function changeAgentHubTerminalSuspension(
 export function useAgentHubTerminalSuspension(
   target: AgentHubPaneTarget
 ): TerminalSuspensionResult | undefined {
-  const key = keyFor(target)
+  const ptyId = useAppStore((state) => resolveAgentHubPtyId(state, target.tab.id, target.paneKey))
+  const leaf = useAppStore((state) => state.terminalLayoutsByTabId[target.tab.id]?.activeLeafId)
+  const key = keyFor(target, ptyId, leaf)
   const entry = useSuspensions((state) => state.entries.get(key))
   useEffect(() => {
     if (target.agentType || entry) {

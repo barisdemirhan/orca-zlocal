@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
+import type { AppState } from '@/store/types'
 import { runtimeEnvironmentSupportsCapability } from '@/runtime/rpc/compatibility/runtime-capability-proof'
 import { AGENT_HUB_MANUAL_PANE_SLEEP_CAPABILITY } from '../../../../shared/agent-hub-capabilities'
 import { parsePaneKey, makePaneKey } from '../../../../shared/workspace-layout/stable-pane-id'
@@ -21,11 +22,14 @@ import {
   readAgentHubTerminalSuspension
 } from './agent-hub-terminal-suspension'
 
-export function agentHubSleepPaneKey(target: AgentHubPaneTarget): string | null {
+export function agentHubSleepPaneKey(
+  target: AgentHubPaneTarget,
+  state: Pick<AppState, 'terminalLayoutsByTabId'> = useAppStore.getState()
+): string | null {
   if (target.paneKey) {
     return target.paneKey
   }
-  const leaf = useAppStore.getState().terminalLayoutsByTabId[target.tab.id]?.activeLeafId
+  const leaf = state.terminalLayoutsByTabId[target.tab.id]?.activeLeafId
   return leaf ? makePaneKey(target.tab.id, leaf) : null
 }
 
