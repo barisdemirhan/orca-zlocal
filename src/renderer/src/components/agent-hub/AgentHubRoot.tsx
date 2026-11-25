@@ -65,11 +65,12 @@ import { useAgentHubSessionRestore } from './use-agent-hub-session-restore'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 import { useAgentHubOrbSurfaces } from './AgentHubOrbSurfaces'
 import { closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
+import { useAnchorTarget } from './use-anchor-binding'
 import { useAgentHubOrbPanelExclusion } from './agent-hub-orb-panel-exclusion'
 
 export function AgentHubRoot(): React.JSX.Element {
   const preferences = useAgentHubPreferences()
-  const anchorRef = useRef<HTMLElement>(null)
+  const [anchorRef, attachAnchor] = useAnchorTarget<HTMLElement>()
   const inSettings = useAppStore((s) => s.activeView === 'settings')
   const docked = preferences.placement === 'dock'
   const side = docked ? agentHubDockPopoverSide(preferences.dockPosition.edge) : 'top'
@@ -315,9 +316,7 @@ export function AgentHubRoot(): React.JSX.Element {
             createPortal(
               <PopoverAnchor asChild>
                 <AgentHubDock
-                  ref={(node: HTMLDivElement | null) => {
-                    anchorRef.current = node
-                  }}
+                  ref={attachAnchor}
                   position={preferences.dockPosition}
                   size={preferences.dockSize}
                   counts={orb.counts}
@@ -348,9 +347,7 @@ export function AgentHubRoot(): React.JSX.Element {
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
                 <AgentHubStatusTrigger
-                  ref={(node: HTMLButtonElement | null) => {
-                    anchorRef.current = node
-                  }}
+                  ref={attachAnchor}
                   counts={orb.counts}
                   label={orb.label}
                   open={open}
