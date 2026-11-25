@@ -65,8 +65,7 @@ export function requestAgentHubMirrorPlacements(
 export function agentHubWorkArea(): AgentHubRect {
   const state = useAppStore.getState()
   const left = state.sidebarOpen ? state.sidebarWidth : 0
-  // Mirrors on the canvas never share the window with the right sidebar: it is closed there,
-  // and a mirror takes its place before the canvas has closed it.
+  // Mirrors on the canvas never share the window with the right sidebar: the canvas covers it.
   const onCanvas = isAgentHubCanvasOpen()
   const right = state.rightSidebarOpen && !onCanvas ? state.rightSidebarWidth : 0
   const bottom = state.statusBarVisible ? STATUS_BAR_RESERVE_HEIGHT : 0

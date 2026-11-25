@@ -79,28 +79,19 @@ afterEach(() => {
 })
 
 describe('the right sidebar under the canvas', () => {
-  it('closes with the canvas up, stays closed whoever asks, and returns as it was', () => {
-    useAppStore.setState({ rightSidebarOpen: true })
+  it.each([true, false])('keeps its own state (open: %s) whoever asks', (rightSidebarOpen) => {
+    useAppStore.setState({ rightSidebarOpen })
 
+    // Never written while the canvas is up: the saved layout and the bots' panel memory read it.
     openAgentHubCanvas()
-    expect(useAppStore.getState().rightSidebarOpen).toBe(false)
-
-    useAppStore.getState().setRightSidebarOpen(true)
-    expect(useAppStore.getState().rightSidebarOpen).toBe(false)
+    expect(useAppStore.getState().rightSidebarOpen).toBe(rightSidebarOpen)
+    useAppStore.getState().setRightSidebarOpen(!rightSidebarOpen)
+    expect(useAppStore.getState().rightSidebarOpen).toBe(rightSidebarOpen)
 
     closeAgentHubCanvas()
-    expect(useAppStore.getState().rightSidebarOpen).toBe(true)
-  })
-
-  it('stays closed afterwards when it was closed before', () => {
-    openAgentHubCanvas()
-    useAppStore.getState().setRightSidebarOpen(true)
-    closeAgentHubCanvas()
-
-    expect(useAppStore.getState().rightSidebarOpen).toBe(false)
-    // The canvas no longer holds it shut.
-    useAppStore.getState().setRightSidebarOpen(true)
-    expect(useAppStore.getState().rightSidebarOpen).toBe(true)
+    expect(useAppStore.getState().rightSidebarOpen).toBe(rightSidebarOpen)
+    useAppStore.getState().setRightSidebarOpen(!rightSidebarOpen)
+    expect(useAppStore.getState().rightSidebarOpen).toBe(!rightSidebarOpen)
   })
 })
 

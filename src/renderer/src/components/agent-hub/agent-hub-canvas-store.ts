@@ -17,8 +17,6 @@ const OVER_THE_CANVAS =
 let open = false
 // The mirrors on the canvas when it was last left, front first; they come back with it.
 let parked: readonly string[] = []
-// The right sidebar as it was before the canvas closed it.
-let rightSidebarWasOpen = false
 let stopGuarding: (() => void) | null = null
 const listeners = new Set<() => void>()
 
@@ -40,16 +38,16 @@ export function useAgentHubCanvasOpen(): boolean {
 }
 
 /**
- * While the canvas is up: going to another page or workspace leaves it, and the right sidebar
- * stays closed whoever asks for it (its toggle, a shortcut, a flow that reveals a panel).
+ * While the canvas is up: going to another page or workspace leaves it, and the right sidebar it
+ * covers stays as it was whoever asks (its toggle, a shortcut, a flow that reveals a panel).
  */
 function guardShell(): () => void {
-  const { activeView, activeWorktreeId } = useAppStore.getState()
+  const { activeView, activeWorktreeId, rightSidebarOpen } = useAppStore.getState()
   return useAppStore.subscribe((state) => {
     if (state.activeView !== activeView || state.activeWorktreeId !== activeWorktreeId) {
       closeAgentHubCanvas()
-    } else if (state.rightSidebarOpen) {
-      state.setRightSidebarOpen(false)
+    } else if (state.rightSidebarOpen !== rightSidebarOpen) {
+      state.setRightSidebarOpen(rightSidebarOpen)
     }
   })
 }
@@ -89,11 +87,6 @@ export function openAgentHubCanvas(preserveKeyboardFocus = false): void {
     return
   }
   open = true
-  const app = useAppStore.getState()
-  rightSidebarWasOpen = app.rightSidebarOpen
-  if (rightSidebarWasOpen) {
-    app.setRightSidebarOpen(false)
-  }
   stopGuarding = guardShell()
   bringParkedMirrorsBack()
   // Why: keys must not reach a terminal or editor the canvas now hides.
@@ -108,7 +101,7 @@ export function openAgentHubCanvas(preserveKeyboardFocus = false): void {
   emit()
 }
 
-/** Leaves the canvas: its mirrors fly to the tray and the right sidebar returns as it was. */
+/** Leaves the canvas: its mirrors fly to the tray. */
 export function closeAgentHubCanvas(): void {
   if (!open) {
     return
@@ -122,9 +115,6 @@ export function closeAgentHubCanvas(): void {
     .windows.map((window) => window.id)
     .toReversed()
   requestAgentHubMirrorsDock()
-  if (rightSidebarWasOpen) {
-    useAppStore.getState().setRightSidebarOpen(true)
-  }
   emit()
 }
 
@@ -140,5 +130,4 @@ export function toggleAgentHubCanvas(): void {
 export function resetAgentHubCanvasForTest(): void {
   closeAgentHubCanvas()
   parked = []
-  rightSidebarWasOpen = false
 }
