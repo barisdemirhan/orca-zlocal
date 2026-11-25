@@ -5,7 +5,6 @@ import { useAppStore } from '@/store'
 import { selectExecutionHostDisplayLabel } from '@/runtime/hosts/display/execution-host-display-label'
 import { getTerminalQuickCommandHostOptions } from '@/lib/terminal/quick-commands/use-terminal-quick-command-hosts'
 import { useBotChatTree } from '../bots/use-bot-chat-tree'
-import { NativeChatComposerWorkspace } from '../native-chat/composer/controls/NativeChatComposerWorkspace'
 import { AgentHubOrbComposerContext } from './agent-hub-orb-composer'
 import { AGENT_HUB_ORB_HOME_CHAT } from './agent-hub-orb-chat-strip'
 import { useAgentHubOrbChatStrip } from './agent-hub-orb-chat-strip-store'
@@ -57,14 +56,12 @@ function AgentHubOrbComposerFooter({ tabId }: { tabId: string }): React.JSX.Elem
   )
 }
 
-/** The Orb window says which of the bot's chats this is; every other chat names its workspace. */
-export function AgentHubOrbOrWorkspaceFooter(
-  workspace: React.ComponentProps<typeof NativeChatComposerWorkspace>
-): React.JSX.Element {
+/** The Orb window says which of the bot's chats this is; every other chat keeps its own footer. */
+export function AgentHubOrbOrWorkspaceFooter({
+  children
+}: {
+  children: React.ReactNode
+}): React.JSX.Element {
   const orbTabId = useContext(AgentHubOrbComposerContext)
-  return orbTabId ? (
-    <AgentHubOrbComposerFooter tabId={orbTabId} />
-  ) : (
-    <NativeChatComposerWorkspace {...workspace} />
-  )
+  return orbTabId ? <AgentHubOrbComposerFooter tabId={orbTabId} /> : <>{children}</>
 }

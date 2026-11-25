@@ -3,6 +3,7 @@ import { useNativeChatComposerNotice } from './controls/use-native-chat-composer
 import { useNativeChatMobileHoldNotice } from '../host-access/use-native-chat-mobile-hold-notice'
 import { forwardRef, useCallback, useState, useRef } from 'react'
 import { usePublishAgentHubMirrorSettings } from '../../agent-hub/use-publish-agent-hub-mirror-chat'
+import { AgentHubOrbOrWorkspaceFooter } from '../../agent-hub/AgentHubOrbComposerFooter'
 import { useNativeChatComposerInterrupt } from './submit/use-native-chat-composer-interrupt'
 import { useNativeChatContextUsageSummary } from '../usage/use-native-chat-context-usage-summary'
 import { useNativeChatDraft } from '../drafts/use-native-chat-draft'
@@ -12,7 +13,7 @@ import { useNativeChatLaunchDraftAdoption } from '../drafts/use-native-chat-laun
 import { useNativeChatComposerMentions } from '../native-chat-composer-room'
 import { useNativeChatRoomSend } from '../native-chat-room-send'
 import { NativeChatComposerRoomProvider } from '../NativeChatComposerRoomProvider'
-import { AgentHubOrbOrWorkspaceFooter } from '../../agent-hub/AgentHubOrbComposerFooter'
+import { NativeChatComposerWorkspace } from './controls/NativeChatComposerWorkspace'
 import { NativeChatComposerField } from './editor/NativeChatComposerField'
 import { useNativeChatComposerAttachments } from '../attachments/chips/use-native-chat-composer-attachments'
 import { nativeChatComposerSendState } from './submit/native-chat-composer-send-state'
@@ -358,7 +359,11 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
     })
 
     const workspaceFooter =
-      editSession || launchPrompt ? undefined : <AgentHubOrbOrWorkspaceFooter {...workspace} />
+      editSession || launchPrompt ? undefined : (
+        <AgentHubOrbOrWorkspaceFooter>
+          <NativeChatComposerWorkspace {...workspace} />
+        </AgentHubOrbOrWorkspaceFooter>
+      )
     return (
       <div ref={root} data-native-chat-composer-scope={draftScopeKey}>
         <NativeChatComposerRoomProvider mentions={mentions}>
