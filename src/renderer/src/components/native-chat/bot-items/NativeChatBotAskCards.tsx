@@ -7,6 +7,7 @@ import { translate } from '@/i18n/i18n'
 import { useListedBotItemsNeedingOwner } from '@/lib/bot-catalog'
 import { useLatestHandler } from '@/lib/use-latest-handler'
 import { AgentHubBotAskView } from '../../agent-hub/AgentHubBotAskView'
+import { agentHubBotAskProgress } from '../../agent-hub/agent-hub-bot-ask-progress'
 import { useAgentHubBotAskSteps } from '../../agent-hub/use-agent-hub-bot-ask-steps'
 import { useBotItems } from '../../bots/items/use-bot-items'
 import { openBotItemInHome } from '../../bots/items/bot-item-open'
@@ -48,10 +49,11 @@ export function NativeChatBotAskCard({
 }): React.JSX.Element | null {
   const hiddenAsk = useHiddenBotAsk(bot, item.uid)
   const ask = useAgentHubBotAskSteps(bot, item)
-  // A part of the answer was sent: the item moved on with its other lines open.
-  const answered = ask.phase === 'answered' || (ask.phase === 'open' && !ask.waiting)
+  // Lines still open after a "Send now" keep the card; only a fully answered ask lingers and goes.
+  const progress = agentHubBotAskProgress(ask)
+  const answered = progress === 'answered'
   // An ask gone before its events were read has nothing to show or linger on.
-  const gone = ask.phase === 'closed'
+  const gone = progress === 'gone'
   const finish = useLatestHandler(() => onAnswered?.())
   useEffect(() => {
     if (gone) {

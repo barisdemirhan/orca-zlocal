@@ -41,10 +41,14 @@ export function publishAgentHubBotNeeds(needs: AgentHubBotNeeds): () => void {
   published.set(needs.botKey, needs)
   recompute()
   return () => {
-    if (published.get(needs.botKey) === needs) {
-      published.delete(needs.botKey)
-      recompute()
-    }
+    // Why deferred: a republish replaces the entry in the same commit, and deleting it first would
+    // drop the bot's section and re-add it at the end of the list.
+    queueMicrotask(() => {
+      if (published.get(needs.botKey) === needs) {
+        published.delete(needs.botKey)
+        recompute()
+      }
+    })
   }
 }
 

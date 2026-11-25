@@ -91,7 +91,7 @@ function BotActivityOrSettings({ bot }: { bot: Bot }): React.JSX.Element {
   )
 }
 
-function BotActivityTab({ bot }: { bot: Bot }): React.JSX.Element {
+export function BotActivityTab({ bot }: { bot: Bot }): React.JSX.Element {
   const t = useTranslate()
   const activity = useBotActivity(bot)
   const now = useBotNow(bot)

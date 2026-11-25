@@ -70,7 +70,15 @@ export function getAgentHubSearchEntry(): SettingsSearchEntry {
       ...translateSearchKeyword('auto.agentHub.search.restore', 'restore'),
       ...translateSearchKeyword('auto.agentHub.search.shells', 'shells'),
       ...translateSearchKeyword('auto.agentHub.search.orb', 'orb'),
-      ...translateSearchKeyword('auto.agentHub.search.voice', 'voice')
+      ...translateSearchKeyword('auto.agentHub.search.voice', 'voice'),
+      ...translateSearchKeyword('agentHub.settings.search.bots', 'bots'),
+      ...translateSearchKeyword('agentHub.settings.search.botNotifications', 'bot notifications'),
+      ...translateSearchKeyword('agentHub.settings.search.inboxOrder', 'inbox order'),
+      ...translateSearchKeyword('agentHub.settings.search.counters', 'counters'),
+      ...translateSearchKeyword('agentHub.settings.search.workStrip', 'work strip'),
+      ...translateSearchKeyword('agentHub.settings.search.drawer', 'drawer'),
+      ...translateSearchKeyword('agentHub.settings.search.openChats', 'open chats'),
+      ...translateSearchKeyword('agentHub.settings.search.automation', 'automation')
     ]
   }
 }

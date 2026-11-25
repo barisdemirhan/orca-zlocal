@@ -10,7 +10,10 @@ function itemKey(bot: BotRef, uid: string): string {
   return `${botRefKey(bot)}\0${uid}`
 }
 
+let version = 0
+
 function announce(): void {
+  version += 1
   listeners.forEach((listener) => listener())
 }
 
@@ -52,4 +55,17 @@ export function pruneHiddenBotAsks(
 export function useHiddenBotAsk(bot: BotRef | null, uid: string): string | undefined {
   const read = (): string | undefined => (bot ? hidden.get(itemKey(bot, uid)) : undefined)
   return useSyncExternalStore(subscribe, read, read)
+}
+
+/** Bumps whenever any card is hidden or shown, for lists that count the hidden ones. */
+export function useHiddenBotAsksVersion(): number {
+  return useSyncExternalStore(
+    subscribe,
+    () => version,
+    () => version
+  )
+}
+
+export function readHiddenBotAsk(bot: BotRef, uid: string): string | undefined {
+  return hidden.get(itemKey(bot, uid))
 }

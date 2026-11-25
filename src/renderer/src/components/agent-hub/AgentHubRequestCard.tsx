@@ -29,6 +29,7 @@ export function AgentHubRequestCard({
   presentation,
   controlRef,
   compact = false,
+  bare = false,
   onOpen,
   onDismiss,
   dismissLabel
@@ -37,6 +38,8 @@ export function AgentHubRequestCard({
   presentation: AgentHubRequestPresentation
   controlRef?: Ref<AgentHubCardControl>
   compact?: boolean
+  /** Inside another bubble: no frame, no header, no close of its own. */
+  bare?: boolean
   onOpen?: () => void
   onDismiss?: () => void
   dismissLabel?: string
@@ -106,39 +109,41 @@ export function AgentHubRequestCard({
         : `@${agent}`
   const header = (
     <>
-      <div className="flex items-start gap-2.5 pr-6">
-        <HubAvatar
-          agentType={request.caller.agentType ?? null}
-          kind={
-            request.kind === 'notify'
-              ? request.level === 'done'
-                ? 'done'
-                : request.level === 'info'
-                  ? 'idle'
-                  : 'ask'
-              : 'ask'
-          }
-        />
-        <div className="min-w-0 flex-1">
-          <div
-            data-tone={request.kind === 'notify' ? request.level : 'needs-you'}
-            className="text-[13px] font-semibold break-words text-agent-question-text data-[tone=done]:text-status-success data-[tone=info]:text-foreground"
-          >
-            {headline}
-          </div>
-          {request.kind === 'gate' ? (
-            <Badge variant="secondary">
-              {translate('agentHub.requests.decisionGate', 'Decision gate')}
-            </Badge>
-          ) : null}
-          {request.kind === 'gate' ? (
-            <div className="truncate text-xs text-muted-foreground">
-              {request.runTitle} · {request.taskTitle}
+      {bare ? null : (
+        <div className="flex items-start gap-2.5 pr-6">
+          <HubAvatar
+            agentType={request.caller.agentType ?? null}
+            kind={
+              request.kind === 'notify'
+                ? request.level === 'done'
+                  ? 'done'
+                  : request.level === 'info'
+                    ? 'idle'
+                    : 'ask'
+                : 'ask'
+            }
+          />
+          <div className="min-w-0 flex-1">
+            <div
+              data-tone={request.kind === 'notify' ? request.level : 'needs-you'}
+              className="text-[13px] font-semibold break-words text-agent-question-text data-[tone=done]:text-status-success data-[tone=info]:text-foreground"
+            >
+              {headline}
             </div>
-          ) : null}
-          <AgentHubRequestSource presentation={presentation} />
+            {request.kind === 'gate' ? (
+              <Badge variant="secondary">
+                {translate('agentHub.requests.decisionGate', 'Decision gate')}
+              </Badge>
+            ) : null}
+            {request.kind === 'gate' ? (
+              <div className="truncate text-xs text-muted-foreground">
+                {request.runTitle} · {request.taskTitle}
+              </div>
+            ) : null}
+            <AgentHubRequestSource presentation={presentation} />
+          </div>
         </div>
-      </div>
+      )}
       {compact && (request.kind === 'ask' || request.kind === 'gate') ? (
         <div className="mt-3 mb-2 text-sm leading-snug font-semibold">{request.question}</div>
       ) : null}
@@ -274,13 +279,15 @@ export function AgentHubRequestCard({
           : undefined
       }
       className={
-        compact
-          ? 'relative w-80 shrink-0 animate-in rounded-xl border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95'
-          : 'relative animate-in rounded-xl border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1'
+        bare
+          ? 'relative'
+          : compact
+            ? 'relative w-80 shrink-0 animate-in rounded-xl border border-foreground/[0.12] bg-popover px-3 py-2.5 text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95'
+            : 'relative animate-in rounded-xl border border-foreground/[0.08] bg-foreground/[0.035] px-3.5 pt-3.5 pb-2.5 duration-200 fade-in-0 slide-in-from-right-1'
       }
     >
       {content}
-      {request.kind === 'notify' || onDismiss ? (
+      {!bare && (request.kind === 'notify' || onDismiss) ? (
         <Button
           type="button"
           variant="ghost"

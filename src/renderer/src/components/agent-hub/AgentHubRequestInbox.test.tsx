@@ -3,7 +3,7 @@ import { createRef } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { AgentHubPanel } from './AgentHubPanel'
+import { AgentHubPanelWithInbox as AgentHubPanel } from './agent-hub-inbox-test-panel'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { buildAgentHubLists } from './agent-hub-lists'
 import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
@@ -71,7 +71,7 @@ it('opens the requested host card, preserves its draft and focus across arrivals
   )
   expect(screen.getByText('Second question')).toBeTruthy()
   expect(screen.getByRole('tab', { name: /^Inbox/ }).textContent).toBe('Inbox2')
-  const input = screen.getByRole('textbox', { name: 'Reply to @claude…' })
+  const input = screen.getAllByRole('textbox', { name: 'Reply to @claude…' })[0]!
   input.focus()
   fireEvent.change(input, { target: { value: 'Draft stays here' } })
   act(() => {
@@ -92,13 +92,21 @@ it('opens the requested host card, preserves its draft and focus across arrivals
     throw new Error('Inbox root missing')
   }
   root.focus()
+  // A number key answers the card shown, bound to its id: a newly arrived older question does not take it over.
+  act(() => vi.advanceTimersByTime(401))
   await act(async () => fireEvent.keyDown(root, { key: '2' }))
-  expect(respond).toHaveBeenCalledWith('workhost', second.requestId, {
-    kind: 'ask',
-    answer: 'Second',
-    index: 2
-  })
-  act(() => applyAgentHubDelivery('workhost', { ...second, kind: 'closed', reason: 'responded' }))
-  expect(screen.queryByText('Second question')).toBeNull()
+  expect(respond).toHaveBeenCalledWith(
+    'workhost',
+    'second',
+    expect.objectContaining({ kind: 'ask', index: 2 })
+  )
+  act(() =>
+    applyAgentHubDelivery('local', {
+      ...agentHubAskRequest({ requestId: 'earlier', question: 'Earlier question', createdAt: 0 }),
+      kind: 'closed',
+      reason: 'responded'
+    })
+  )
+  expect(screen.queryByText('Earlier question')).toBeNull()
   expect(screen.getByRole('tab', { name: /^Inbox/ }).textContent).toBe('Inbox2')
 })

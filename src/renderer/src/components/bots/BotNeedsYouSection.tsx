@@ -20,6 +20,7 @@ import { botActivityRowTitle } from './bot-activity-row-title'
 import { botErrorMessage } from './bot-presentation'
 import { botConnectorTitleText } from './bot-connector-titles'
 import { openBotSession } from './bot-session-open'
+import { BotChatOpenOverrideContext } from './bot-chat-open-override'
 import { useBotHostLabel } from './use-bot-host-label'
 import { useBotSessionPrompt } from './use-bot-session-prompt'
 import { useStructuredAgentSessionAsyncQuestionSkip } from '../native-chat/prompts/use-structured-agent-session-async-question-skip'
@@ -146,6 +147,7 @@ function SessionRowNeed({
   onApproval: ReportApproval
 }): React.JSX.Element {
   const t = useTranslate()
+  const override = useContext(BotChatOpenOverrideContext)
   const title = botActivityRowTitle(row)
   const sessionId = row.kind === 'worker' ? null : row.sessionId
   const hostLabel = useBotHostLabel(row.kind === 'worker' ? (row.hostId ?? 'local') : 'local')
@@ -156,7 +158,7 @@ function SessionRowNeed({
         needKey={needKey}
         title={title}
         sessionId={sessionId}
-        onOpen={() => openBotSession(bot, sessionId)}
+        onOpen={() => override?.session?.(bot, sessionId, title) || openBotSession(bot, sessionId)}
         onApproval={onApproval}
       />
     )
@@ -199,10 +201,15 @@ const NeedItem = memo(function NeedItem({
   onApproval: ReportApproval
 }): React.JSX.Element {
   const t = useTranslate()
+  const override = useContext(BotChatOpenOverrideContext)
   switch (need.kind) {
     case 'chat': {
       const title = t('bots.needs.chat', 'Your chat with {{name}}', { name: bot.name })
-      const onOpen = (): void => void openBotHomeTab(bot)
+      const onOpen = (): void => {
+        if (!(bot.chatSessionId && override?.session?.(bot, bot.chatSessionId, title))) {
+          void openBotHomeTab(bot)
+        }
+      }
       return bot.chatSessionId ? (
         <SessionNeedRow
           bot={bot}
@@ -228,7 +235,10 @@ const NeedItem = memo(function NeedItem({
           needKey={need.key}
           title={need.title || t('bots.chats.untitled', 'New chat')}
           sessionId={need.sessionId}
-          onOpen={() => openBotSession(bot, need.sessionId)}
+          onOpen={() =>
+            override?.session?.(bot, need.sessionId, need.title) ||
+            openBotSession(bot, need.sessionId)
+          }
           onApproval={onApproval}
         />
       )
