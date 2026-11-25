@@ -53,7 +53,7 @@ it('keeps the same multi-question answer and step when the modal is deferred and
   render(<Host />)
   const modal = await screen.findByRole('dialog')
   expect(within(modal).getByText('Which period?')).toBeTruthy()
-  fireEvent.click(within(modal).getByRole('button', { name: 'Details' }))
+  fireEvent.click(within(modal).getByRole('button', { name: 'Next question' }))
   const input = within(modal).getByRole('textbox')
   fireEvent.change(input, { target: { value: 'A detailed measurement. '.repeat(30) } })
   fireEvent.click(within(modal).getByRole('button', { name: 'Answer later' }))

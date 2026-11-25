@@ -4,11 +4,9 @@ import type { NativeChatQuestionCardLook } from './NativeChatQuestionCardParts'
 
 export function NativeChatQuestionHeading({
   question,
-  multiStep,
   look
 }: {
   question: string
-  multiStep: boolean
   look: NativeChatQuestionCardLook | undefined
 }): React.JSX.Element {
   return (
@@ -19,9 +17,7 @@ export function NativeChatQuestionHeading({
         // The card's heading, one step above its body text and scaling with it; it fades while more lies below.
         'native-chat-question-card-question min-h-[1lh] shrink overflow-y-auto px-3.5 text-[length:calc(var(--text-sm)*15/13)] leading-snug font-semibold text-foreground scrollbar-sleek',
         // Capped at whole lines plus its own top padding, so a long question never shows a cut line.
-        multiStep
-          ? 'max-h-[calc(8lh+var(--spacing)*0.5)] pt-0.5'
-          : 'max-h-[calc(8lh+var(--spacing)*3)] pt-3',
+        'max-h-[calc(8lh+var(--spacing)*3)] pt-3',
         // In a scrolling body the whole question scrolls with the options, never in a box of its own.
         '[[data-native-chat-dock-fit~=card]_&]:max-h-none [[data-native-chat-dock-fit~=card]_&]:shrink-0 [[data-native-chat-dock-fit~=card]_&]:overflow-visible'
       )}

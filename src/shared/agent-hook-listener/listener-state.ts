@@ -105,8 +105,12 @@ export type HookListenerState = humanTurns.HumanTurnMaps & {
   lastLaunchTokenByPaneKey: Map<string, string>
   /** Hermes turn per pane, so tool hooks from its post-turn background review can be ignored. */
   hermesTurnByPaneKey: Map<string, HermesPaneTurn>
-  /** DSH child sessions named by SubagentStart; the bridge stamps their hooks with their own session_id. */
-  dshChildSessionIdsByPaneKey: Map<string, Set<string>>
+  /**
+   * Child agent sessions (DSH SubagentStart, Droid Task workers); their hooks carry their own session_id.
+   * For Droid, a pane's set exists only while the root's turn is open: its UserPromptSubmit sets a fresh
+   * one and its done deletes it.
+   */
+  childSessionIdsByPaneKey: Map<string, Set<string>>
 }
 
 const legacyStatusAdapterByState = new WeakMap<HookListenerState, AgentStatusLegacyAdapter>()
@@ -160,7 +164,7 @@ export function createHookListenerState(
     opencodeSessionPaneBySessionId: new Map(),
     lastLaunchTokenByPaneKey: new Map(),
     hermesTurnByPaneKey: new Map(),
-    dshChildSessionIdsByPaneKey: new Map()
+    childSessionIdsByPaneKey: new Map()
   }
   legacyStatusAdapterByState.set(state, adapter)
   return state
@@ -240,7 +244,7 @@ export function clearPaneProcessCacheState(state: HookListenerState, paneKey: st
   unbindOpenCodeSessionsOfPane(state, paneKey)
   deletePaneScopedCacheEntry(state.lastLaunchTokenByPaneKey, paneKey)
   state.hermesTurnByPaneKey.delete(paneKey)
-  state.dshChildSessionIdsByPaneKey.delete(paneKey)
+  state.childSessionIdsByPaneKey.delete(paneKey)
   // Unfinished evidence and exit intent belong to the ended process.
   deletePaneScopedCacheEntry(state.hookRootAttempts, paneKey)
 }
@@ -299,7 +303,7 @@ export function movePaneCacheState(
   moveOpenCodeSessionBindings(state, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.lastLaunchTokenByPaneKey, fromPaneKey, toPaneKey)
   movePaneScopedMapEntries(state.hermesTurnByPaneKey, fromPaneKey, toPaneKey)
-  movePaneScopedMapEntries(state.dshChildSessionIdsByPaneKey, fromPaneKey, toPaneKey)
+  movePaneScopedMapEntries(state.childSessionIdsByPaneKey, fromPaneKey, toPaneKey)
 }
 
 export function clearAllListenerCaches(state: HookListenerState): void {
@@ -337,6 +341,6 @@ export function clearAllListenerCaches(state: HookListenerState): void {
   state.opencodeSessionPaneBySessionId.clear()
   state.lastLaunchTokenByPaneKey.clear()
   state.hermesTurnByPaneKey.clear()
-  state.dshChildSessionIdsByPaneKey.clear()
+  state.childSessionIdsByPaneKey.clear()
   state.hookRootAttempts.clear()
 }

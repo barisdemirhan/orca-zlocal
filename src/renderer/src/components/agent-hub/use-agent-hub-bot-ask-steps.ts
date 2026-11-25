@@ -68,7 +68,7 @@ function listedShape(item: BotItem): BotItemQuestionShape {
 export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskModel {
   const view = useBotItemView(bot, item.uid, item)
   const live = view.item ?? item
-  const pending = useBotItemPendingComments(bot, item.uid, view.events)
+  const pending = useBotItemPendingComments(bot, item.uid, view.events, view.retry)
   // As the panel's comment box sends: after the newest event read, naming the question it answers.
   const send = useLatestHandler<Parameters<BotItemQuestionStepsSend>, void>(
     (text, paths = [], ...rest) =>
@@ -96,12 +96,17 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
 
   const shape = steps?.shape ?? asked?.shape ?? listedShape(live)
   const total = Math.max(1, shape.decisions.length)
-  const lineIndex = steps?.current ?? 0
+  // Upstream shows every line at once; the hub steps through them one at a time.
+  const [focused, setFocused] = useState(0)
+  const firstOpen = steps?.lines.find((line) => !steps.picks[line]) ?? steps?.lines[0]
+  const lineIndex = steps ? (steps.lines.includes(focused) ? focused : (firstOpen ?? 0)) : 0
+  const heldCount = steps ? steps.picks.filter(Boolean).length : 0
   const decision: BotItemDecision | undefined = shape.decisions[lineIndex]
   const question = decision?.question ?? waitingLine?.line ?? agentHubBotAskLine(live)
 
-  const sentAll = sent
-    ? sent.answers.filter(Boolean).length >= (steps ? steps.lines.length : total)
+  const sentAnswers = sent.get(steps?.askId ?? asked?.askId ?? '')
+  const sentAll = sentAnswers
+    ? sentAnswers.filter(Boolean).length >= (steps ? steps.lines.length : total)
     : false
   const postingOne = !steps && pending.shown.some(({ failed }) => !failed)
   const open = asked !== null && !sentAll && !postingOne
@@ -134,14 +139,14 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
             reply && !steps.lines.includes(index) && !asked.byOrder[index]
               ? botItemAnswerWords(shape, index, reply.data)
               : null
-          const words = index === lineIndex ? null : (posted ?? steps.held[index])
+          const words = index === lineIndex ? null : (posted ?? steps.picks[index])
           return words ? [{ index, question: line.question, words, reopens: !posted }] : []
         })
       : []
-  const at = steps ? steps.lines.indexOf(steps.current) : 0
-  const held = steps ? (steps.held[steps.current] ?? null) : null
+  const at = steps ? steps.lines.indexOf(lineIndex) : 0
+  const held = steps ? (steps.picks[lineIndex] ?? null) : null
   const answeredCount = steps
-    ? total - steps.lines.filter((line) => !steps.held[line]).length
+    ? total - steps.lines.filter((line) => !steps.picks[line]).length
     : phase === 'answered'
       ? total
       : 0
@@ -160,20 +165,26 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
     held,
     nav: steps ? { at, count: steps.lines.length } : null,
     answeredCount,
-    heldCount: steps?.heldCount ?? 0,
+    heldCount,
     step: (delta) => {
       const target = steps?.lines[at + delta]
-      if (steps && target !== undefined) {
-        steps.go(target)
+      if (target !== undefined) {
+        setFocused(target)
       }
     },
-    reopen: (index) => steps?.go(index),
+    reopen: setFocused,
     pick: (labels) => {
       const words = labels.join(', ')
-      if (steps) {
-        steps.answer(steps.current, words)
-      } else {
+      if (!steps) {
         quick(words)
+        return
+      }
+      const clears = steps.picks[lineIndex] === words
+      steps.pick(lineIndex, words)
+      // As a held answer did: the next line still unanswered opens.
+      const next = steps.lines.find((line) => line !== lineIndex && !steps.picks[line])
+      if (!clears && next !== undefined) {
+        setFocused(next)
       }
     },
     reply: (text) => fromBox(text, [], waitingLine?.id ?? null),
@@ -182,10 +193,10 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
         return
       }
       // Lines without a held answer stay open: the Inbox keeps the ask, and counts it, until it is answered.
-      if (steps.heldCount < steps.lines.length) {
-        keepAgentHubBotAskOpen(bot, live, steps.askId, steps.lines.length - steps.heldCount)
+      if (heldCount < steps.lines.length) {
+        keepAgentHubBotAskOpen(bot, live, steps.askId, steps.lines.length - heldCount)
       }
-      steps.sendHeld()
+      steps.send()
     },
     retry: view.retry
   }

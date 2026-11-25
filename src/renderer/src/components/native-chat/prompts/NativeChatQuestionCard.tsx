@@ -328,8 +328,6 @@ export function NativeChatQuestionCard({
         >
           <NativeChatQuestionCardHeader
             steps={prompt.questions.map((question, i) => ({
-              // Questions never reorder within a card, so their position is their identity.
-              id: `question-${i}`,
               header:
                 question.header ||
                 t('components.native-chat.question.step', 'Step {{value0}}', { value0: i + 1 }),
@@ -349,7 +347,7 @@ export function NativeChatQuestionCard({
             // still tall enough for the question's first line and option 1, and faded while more lies below.
             className="native-chat-question-card-body scrollbar-sleek flex min-h-0 shrink flex-col [[data-native-chat-dock-fit~=card]_&]:min-h-[calc(var(--spacing)*26)] [[data-native-chat-dock-fit~=card]_&]:overflow-y-auto"
           >
-            <NativeChatQuestionHeading question={q.question} multiStep={total > 1} look={look} />
+            <NativeChatQuestionHeading question={q.question} look={look} />
             {q.options.length > 0 ? (
               // Padded so each tile's outside focus outline clears the scroll clip.
               <div

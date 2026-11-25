@@ -9,7 +9,8 @@ import {
   getBrowserClientHostedRemoteOptions,
   type BrowserClientHostedRemoteChoice
 } from '@/components/settings/browser/routing/browser-client-hosted-remote-copy'
-import { switchBrowserPageChannel } from '../../browser-page-channel-switch'
+import { moveBrowserPageAcrossDevices } from '../../navigate/device-move/browser-page-device-move'
+import { browserPageMoveOutcomeText } from '../../navigate/device-move/browser-page-device-move-copy'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -275,23 +276,21 @@ function RemoteBrowserChannelControls({
           )}
           onClick={() => {
             setMoving(true)
-            void switchBrowserPageChannel({
-              environmentId: runtimeEnvironmentId,
+            const destination = choice === 'server' ? 'server' : 'client'
+            void moveBrowserPageAcrossDevices({
+              browserPageId: page.id,
               worktreeId: page.worktreeId,
-              pageId: page.id,
-              lastCommittedUrl: page.url,
-              channel: choice
+              environmentId: runtimeEnvironmentId,
+              destination,
+              url: page.url
             })
-              .then((moved) => {
-                if (moved) {
+              .then((outcome) => {
+                const text = browserPageMoveOutcomeText(outcome, destination)
+                if (text) {
+                  toast.error(text)
+                }
+                if (outcome !== 'failed') {
                   onMoved()
-                } else {
-                  toast.error(
-                    t(
-                      'browser.remoteEgress.moveFailed',
-                      "Couldn't reopen this page. Check the connection and try again."
-                    )
-                  )
                 }
               })
               .catch((error: unknown) => {

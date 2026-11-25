@@ -1,8 +1,35 @@
 import { cn } from '@/lib/class-names'
 
-/** The approval card's wrapper classes for where it sits: the chat's own slot, a stacked card, or
- *  joined inside the worker dock, which draws the frame and scrolls. */
+type ApprovalCardFrame = { outer: string; gutter: string; column: string; card: string }
+
+export type ApprovalLayout = {
+  /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
+  layout?: 'composer' | 'embedded'
+}
+
+/** The approval card's wrapper classes for where it sits: the chat's own slot, a stacked card,
+ *  joined inside the worker dock, which draws the frame and scrolls, or embedded in a host that
+ *  frames the card itself. */
 export function approvalCardFrameClasses({
+  layout = 'composer',
+  ...place
+}: {
+  stacked: boolean
+  joined: boolean
+  quiet: boolean
+} & ApprovalLayout): ApprovalCardFrame {
+  const frame = composerFrameClasses(place)
+  return layout === 'embedded'
+    ? {
+        ...frame,
+        outer: cn(frame.outer, 'bg-transparent'),
+        gutter: cn(frame.gutter, 'max-w-none p-0 sm:p-0 [scrollbar-gutter:auto]'),
+        column: cn(frame.column, 'max-w-none px-0')
+      }
+    : frame
+}
+
+function composerFrameClasses({
   stacked,
   joined,
   quiet
@@ -10,7 +37,7 @@ export function approvalCardFrameClasses({
   stacked: boolean
   joined: boolean
   quiet: boolean
-}): { outer: string; gutter: string; column: string; card: string } {
+}): ApprovalCardFrame {
   const fill = !stacked && 'h-full min-h-0 max-h-full'
   return {
     outer: joined ? '' : stacked ? 'bg-chat-pane' : 'min-h-0 shrink overflow-hidden bg-chat-pane',

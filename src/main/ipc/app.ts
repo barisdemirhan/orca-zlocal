@@ -15,6 +15,7 @@ import type { FloatingTerminalCwdRequest } from '../../shared/ui-chrome/ui-chrom
 import { relaunchApp, runBeforeRelaunchCleanup } from '../startup/quit/app-relaunch'
 import { setWindowMaterialSuppressed } from '../window/presentation/window-material-suppression'
 import { isTrustedUIRenderer } from './ui'
+import { handleAppQuitRequest } from './renderer-requests/app-quit-request'
 import { prepareWindowsAdministratorRestart } from '../windows/windows-administrator-restart'
 import { quitProcess } from '../startup/quit/process-quit-request'
 import type { Store } from '../persistence/loading-store/store'
@@ -59,6 +60,8 @@ type RegisterAppHandlersOptions = {
   onBeforeRelaunch?: () => void | Promise<void>
   /** Only for app:relaunch, whose app.exit(0) is committed and skips will-quit. */
   onBeforeRelaunchExit?: () => void | Promise<void>
+  /** Ordinary user quit, the same path as the app menu and tray Quit. */
+  onQuit?: () => void
 }
 
 async function pickFloatingMarkdownDocument(
@@ -220,6 +223,8 @@ export function registerAppHandlers(store: Store, options: RegisterAppHandlersOp
       app.exit(0)
     }, 150)
   })
+
+  ipcMain.handle('app:quit', (event) => handleAppQuitRequest(event, () => options.onQuit?.()))
 
   ipcMain.handle('app:restart', async () => {
     // Normal quit flushes daemon checkpoints and telemetry.

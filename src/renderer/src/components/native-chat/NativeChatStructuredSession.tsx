@@ -17,7 +17,7 @@ import { NativeChatLoadingCue } from './host-access/NativeChatLoadingCue'
 import { NativeChatSubagentTranscripts } from './subagents/NativeChatSubagentTranscripts'
 import { useStructuredNativeChatSubagents } from './subagents/use-structured-native-chat-subagents'
 import { NativeChatContextClearFade } from './conversation/projection/NativeChatContextClearFade'
-import { useStructuredNativeChatSubmitReveal } from './pane/actions/use-structured-native-chat-submit-reveal'
+import { useStructuredNativeChatSubmitReveal as useSubmitReveal } from './pane/actions/use-structured-native-chat-submit-reveal'
 import { useStructuredPromptResponseHold } from './prompts/use-structured-prompt-response-hold'
 import { nativeChatStructuredAsyncQuestion } from './prompts/NativeChatStructuredAsyncQuestion'
 import {
@@ -63,17 +63,17 @@ import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agen
 import { useNativeChatStructuredComposerTransport } from '@/components/native-chat/composer/submit/use-native-chat-structured-composer-transport'
 import { NativeChatStructuredComposerTabStrips } from '@/components/native-chat/pane/actions/NativeChatStructuredComposerTabStrips'
 import { nativeChatPaneHeader } from '@/components/native-chat/pane/actions/NativeChatPaneHeader'
+import { NativeChatWorkerAutoCloseBanner } from '@/components/native-chat/worker-lifetime/NativeChatWorkerAutoCloseBanner'
 import { structuredAgentSessionReadFailureNotice } from '@/components/native-chat/messages/notices/structured-agent-session-read-failure-notice'
 import { useStructuredAgentSessionDeliveryNotices } from '@/components/native-chat/session/structured/delivery/use-structured-agent-session-delivery-notices'
 import { dispatchWasWithdrawn } from '../../../../shared/agent-session/requests/structured-agent-session-dispatch-rejection'
 import { useNativeChatHostOutage } from '@/components/native-chat/host-access/use-native-chat-host-outage'
 import { useNativeChatHostOutageNotice } from '@/components/native-chat/host-access/use-native-chat-host-outage-notice'
-import { useBotForWorkspace } from '@/components/bots/bot-workspace'
 import { useNativeChatHostSendGate } from '@/components/native-chat/host-access/use-native-chat-host-send-gate'
 import { useStructuredAgentSessionStartFailureFacts } from '@/components/native-chat/messages/notices/use-structured-agent-session-start-failure-facts'
 import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
 import * as Orb from './NativeChatStructuredOrbSlots'
-import { NativeChatBotCards } from './bot-items/NativeChatBotCards'
+import { NativeChatBotCards, useNativeChatBotOutage } from './bot-items/NativeChatBotCards'
 import type { NativeChatComposerHandle } from './composer/native-chat-composer-types'
 import {
   NativeChatWorkerApprovalTimeline,
@@ -127,7 +127,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   const agentLabel = structuredAgentLabel(props.agent)
   const hostSendGate = useNativeChatHostSendGate(props.target, props.agent, hostOutage)
   const hostHeld = hostSendGate.sendBlockedReason !== null
-  const submits = useStructuredNativeChatSubmitReveal(controller, provisionalLaunch.retry, hostHeld)
+  const submits = useSubmitReveal(controller, provisionalLaunch.retry, hostHeld, focusComposer)
   const workerApprovalParty = nativeChatWorkerApprovalParty(props)
   const promptResponse = useStructuredPromptResponseHold(submits.respond)
   const needsFailureFacts =
@@ -173,8 +173,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   // Unknown prompts leave the composer usable; a send starts a turn whose cancel can resolve them.
   const promptsUnanswerable = Orb.usePromptsUnanswerable(controller.prompts)
   // A bot's page whose server is down keeps its last read; the recovery card stands in for the composer.
-  const pageBot = useBotForWorkspace(ownerWorktreeId ?? null)
-  const botOutage = pageBot !== null && hostOutage?.kind !== 'stopped' ? hostOutage : null
+  const botOutage = useNativeChatBotOutage(ownerWorktreeId, hostOutage)
   const subagents = useStructuredNativeChatSubagents({ ...props, paneKey, controller })
   usePublishAgentHubMirrorChat(props.tabId, session.messages, submits.queuedMessages, subagents)
   // A subagent's view takes the composer's place; the main agent's prompts still show.
@@ -266,6 +265,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
             className="[container-type:size]"
           >
             {nativeChatPaneHeader(props, ownerWorktreeId, surface.appearance.colorScheme, handOff)}
+            <NativeChatWorkerAutoCloseBanner pane={props} />
             <NativeChatDockTranscript>
               <NativeChatContextClearFade
                 // A read failure stays in view: no divider may come to end the fade.
@@ -287,7 +287,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                     tabId={props.tabId}
                   />
                 ) : (
-                  <NativeChatRowActionsProvider pane={props} chat={controller} forks={forks}>
+                  <NativeChatRowActionsProvider pane={props} chat={submits.rows} forks={forks}>
                     <NativeChatUsageLimitActionsProvider
                       recovery={controller}
                       pane={props}
@@ -345,7 +345,6 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                 {subagents.pairedAsks}
                 {prompt || subagents.openId !== null ? null : (
                   <NativeChatStructuredComposerTabStrips
-                    tabId={props.tabId}
                     runtimeContext={imageRuntimeContext}
                     threadGoal={controller.threadGoal}
                     transport={transport}

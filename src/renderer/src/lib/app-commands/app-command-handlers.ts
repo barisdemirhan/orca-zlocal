@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { readSidebarRevealTarget } from '@/components/sidebar/sidebar-reveal-target-state'
 import { workspaceRenameUnsupportedReason } from './workspace-rename-target'
 import { requestVirtualizedScrollAnchorRecord } from '@/lib/list-interaction/virtualized-scrolling/requestVirtualizedScrollAnchorRecord'
+import { setShowSleepingWorkspacesKeepingActiveRow } from '@/components/sidebar/worktree-list/controls/sleeping-workspaces-visibility'
 import { showTerminalShortcutCaptureNotification } from '@/lib/notifications/terminal-shortcut-capture-notification'
 import { canNavigateWorktreeHistory } from '../../app-shell/chrome/titlebar-worktree-history-controls'
 import { TOGGLE_WORKSPACE_BOARD_EVENT } from '../../components/sidebar/workspace-board/surface/useWorkspaceBoardPanel'
@@ -17,6 +18,7 @@ import {
 import { requestTerminalTabRename } from '../../components/tab-bar/terminal-tabs/terminal-tab-rename-request'
 import { useAppStore } from '../../store/index'
 import { agentHubCommandHandlers } from '@/components/agent-hub/agent-hub-command-handlers'
+import { showWorkspaceListThen } from '../../components/app-rail/app-rail-navigation'
 import { readRuntimeStatuses } from '@/store/slices/runtime-status/views/runtime-status-owner'
 import type { usePluginCommands } from '@/store/plugins/catalog/plugin-contribution-catalog'
 import { isGitRepoKind } from '../../../../shared/repository/repo-kind'
@@ -148,14 +150,22 @@ export function createAppCommandHandlers(
         return claim('worktree.history.forward', () => useAppStore.getState().goForwardWorktree())
       }
     ],
-    ['sidebar.left.toggle', () => claim('sidebar.left.toggle', () => actions.toggleSidebar())],
+    [
+      'sidebar.left.toggle',
+      () =>
+        claim('sidebar.left.toggle', () => {
+          if (!showWorkspaceListThen(useAppStore)) {
+            actions.toggleSidebar()
+          }
+        })
+    ],
     [
       'sidebar.sleepingWorkspaces.toggle',
       () =>
         claim('sidebar.sleepingWorkspaces.toggle', () => {
           const store = useAppStore.getState()
           const nextShowSleeping = !store.showSleepingWorkspaces
-          store.setShowSleepingWorkspaces(nextShowSleeping)
+          setShowSleepingWorkspacesKeepingActiveRow(nextShowSleeping)
           if (nextShowSleeping) {
             store.setSidebarOpen(true)
           }
@@ -241,8 +251,14 @@ export function createAppCommandHandlers(
           return false
         }
         return claim('workspace.openBoard', () => {
+          const toggleBoard = (): void => {
+            window.dispatchEvent(new CustomEvent(TOGGLE_WORKSPACE_BOARD_EVENT))
+          }
+          if (showWorkspaceListThen(useAppStore, toggleBoard)) {
+            return
+          }
           useAppStore.getState().setSidebarOpen(true)
-          window.dispatchEvent(new CustomEvent(TOGGLE_WORKSPACE_BOARD_EVENT))
+          toggleBoard()
         })
       }
     ],
