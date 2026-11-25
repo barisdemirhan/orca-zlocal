@@ -72,27 +72,28 @@ function splitHeld(held: string | null): readonly string[] {
 }
 
 /** The open question with its replies and own-words line; keyed by the question, so its typed words
- *  and picks start over on each. */
+ *  start over on each. */
 function OpenQuestion({
   ask,
+  picked,
+  onPicked,
   variant,
   disabled
 }: {
   ask: AgentHubBotAskModel
+  picked: readonly string[]
+  onPicked: (labels: readonly string[]) => void
   variant: AgentHubBotAskVariant
   disabled: boolean
 }): React.JSX.Element {
   const [text, setText] = useState('')
-  const [picked, setPicked] = useState<readonly string[]>(() => splitHeld(ask.held))
   const [typing, setTyping] = useState(false)
   const recommended = translate('bots.items.ask.recommended', 'Recommended')
   const heldTyped =
     ask.held !== null && !ask.replies.some((reply) => ask.held?.split(', ').includes(reply.label))
   const ownWordsShown = variant !== 'inline' || typing || ask.replies.length === 0
   const toggle = (label: string): void =>
-    setPicked((now) =>
-      now.includes(label) ? now.filter((each) => each !== label) : [...now, label]
-    )
+    onPicked(picked.includes(label) ? picked.filter((each) => each !== label) : [...picked, label])
   const choose = (label: string): void => (ask.multi ? toggle(label) : ask.pick([label]))
   return (
     <div
@@ -218,6 +219,10 @@ export function AgentHubBotAskView({
   actions?: React.ReactNode
   className?: string
 }): React.JSX.Element | null {
+  const [draft, setDraft] = useState<{ key: string; labels: readonly string[] } | null>(null)
+  const picked = draft?.key === ask.openKey ? draft.labels : splitHeld(ask.held)
+  // "Send now" would leave these picks behind; "Use these" comes first.
+  const unusedPicks = ask.multi && picked.length > 0 && picked.join(', ') !== ask.held
   if (ask.phase === 'closed') {
     return null
   }
@@ -285,7 +290,14 @@ export function AgentHubBotAskView({
           ))}
         </div>
       ) : null}
-      <OpenQuestion key={ask.openKey} ask={ask} variant={variant} disabled={!open} />
+      <OpenQuestion
+        key={ask.openKey}
+        ask={ask}
+        picked={picked}
+        onPicked={(labels) => setDraft({ key: ask.openKey, labels })}
+        variant={variant}
+        disabled={!open}
+      />
       {ask.phase === 'failed' ? <BotItemsReadFailed onRetry={ask.retry} /> : null}
       {ask.total > 1 || actions || ask.heldCount > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -298,7 +310,7 @@ export function AgentHubBotAskView({
               : null}
           </span>
           <span className="flex items-center gap-3">
-            {ask.heldCount > 0 ? (
+            {ask.heldCount > 0 && !unusedPicks ? (
               <Button
                 type="button"
                 variant="link-underlined"

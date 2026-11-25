@@ -25,6 +25,8 @@ export type AgentHubBotAskPhase = 'reading' | 'failed' | 'open' | 'answered' | '
 
 export type AgentHubBotAskModel = {
   phase: AgentHubBotAskPhase
+  /** The item itself still waits on the owner; some lines can stay open after it moves on. */
+  waiting: boolean
   number: number
   title: string
   /** The ask's question lines (at least one). */
@@ -135,6 +137,7 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
 
   return {
     phase,
+    waiting: live.status === 'needs_you',
     number: live.number,
     title: live.title,
     total,

@@ -48,7 +48,8 @@ export function NativeChatBotAskCard({
 }): React.JSX.Element | null {
   const hiddenAsk = useHiddenBotAsk(bot, item.uid)
   const ask = useAgentHubBotAskSteps(bot, item)
-  const answered = ask.phase === 'answered'
+  // A part of the answer was sent: the item moved on with its other lines open.
+  const answered = ask.phase === 'answered' || (ask.phase === 'open' && !ask.waiting)
   // An ask gone before its events were read has nothing to show or linger on.
   const gone = ask.phase === 'closed'
   const finish = useLatestHandler(() => onAnswered?.())
