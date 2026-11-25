@@ -7,12 +7,15 @@ import {
 } from '../settings/form-controls/SettingsFormControls'
 import type { AgentHubSettingsSectionProps } from './agent-hub-settings-section-props'
 import type { AgentHubDockSize, AgentHubPlacement } from '../../../../shared/agent-hub-settings'
+import { SurfaceChoiceRow } from './AgentHubSettingsSurfaceRows'
+import { useBotsEnabled } from '@/lib/bot-catalog'
 import { AGENT_HUB_DOCK_SIZES, agentHubDockSizeLabel } from './AgentHubDockMenu'
 
 export function AgentHubSettingsDockSection({
   preferences,
   updateSettings
 }: AgentHubSettingsSectionProps): React.JSX.Element {
+  const botsEnabled = useBotsEnabled()
   return (
     <section className="space-y-3">
       <SettingsSubsectionHeader title={translate('auto.agentHub.settings.dock', 'Dock')} />
@@ -84,6 +87,23 @@ export function AgentHubSettingsDockSection({
           )}
           checked={preferences.dockAutoHide}
           onChange={() => updateSettings({ agentHubDockAutoHide: !preferences.dockAutoHide })}
+        />
+      ) : null}
+      {botsEnabled ? (
+        <SurfaceChoiceRow
+          settingKey="agentHubDockCounters"
+          label={translate('agentHub.settings.dockCounters', 'Counters')}
+          options={[
+            {
+              value: 'agents',
+              label: translate('agentHub.settings.countersAgents', 'Agents only')
+            },
+            {
+              value: 'agents-and-bots',
+              label: translate('agentHub.settings.countersAgentsAndBots', 'Agents and bots')
+            }
+          ]}
+          updateSettings={updateSettings}
         />
       ) : null}
     </section>

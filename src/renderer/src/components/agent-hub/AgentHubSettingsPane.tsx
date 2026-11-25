@@ -7,6 +7,8 @@ import { AgentHubAlertSettings } from './AgentHubAlertSettings'
 import { AgentHubSettingsPopoverSection } from './AgentHubSettingsPopoverSection'
 import { AgentHubSettingsMirrorsSection } from './AgentHubSettingsMirrorsSection'
 import { AgentHubSettingsVoiceSection } from './AgentHubSettingsVoiceSection'
+import { AgentHubSettingsBotNotificationsSection } from './AgentHubSettingsBotNotificationsSection'
+import { SurfaceSwitchRow } from './AgentHubSettingsSurfaceRows'
 import { AgentHubSettingsOrbSection } from './AgentHubSettingsOrbSection'
 import { Button } from '../ui/button'
 import { openAgentHubShortcuts } from './agent-hub-shortcuts-dialog'
@@ -31,6 +33,17 @@ export function AgentHubSettingsPane({
         checked={preferences.agentControl}
         onChange={() => updateSettings({ agentHubAgentControl: !preferences.agentControl })}
       />
+      {preferences.agentControl ? (
+        <SurfaceSwitchRow
+          settingKey="agentHubAgentOwnCard"
+          label={translate('agentHub.settings.agentOwnCard', 'Agents can use their own card')}
+          description={translate(
+            'agentHub.settings.agentOwnCardCopy',
+            "An agent can open its card's drawers and read its work, never another agent's card."
+          )}
+          updateSettings={updateSettings}
+        />
+      ) : null}
       <AgentHubSettingsDockSection {...sectionProps} />
       <SettingsRow
         label={translate('agentHub.shortcuts.title', 'Keyboard shortcuts')}
@@ -43,9 +56,10 @@ export function AgentHubSettingsPane({
       <section className="space-y-3">
         <AgentHubAlertSettings {...sectionProps} />
       </section>
+      <AgentHubSettingsBotNotificationsSection updateSettings={updateSettings} />
       <AgentHubSettingsPopoverSection {...sectionProps} />
       <AgentHubSettingsMirrorsSection {...sectionProps} />
-      <AgentHubSettingsVoiceSection />
+      <AgentHubSettingsVoiceSection updateSettings={updateSettings} />
       <AgentHubSettingsOrbSection settings={settings} updateSettings={updateSettings} />
     </div>
   )

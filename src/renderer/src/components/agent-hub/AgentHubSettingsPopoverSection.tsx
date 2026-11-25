@@ -5,6 +5,8 @@ import {
   SettingsSubsectionHeader,
   SettingsSwitchRow
 } from '../settings/form-controls/SettingsFormControls'
+import { useBotsEnabled } from '@/lib/bot-catalog'
+import { SurfaceChoiceRow, SurfaceSwitchRow } from './AgentHubSettingsSurfaceRows'
 import type { AgentHubSettingsSectionProps } from './agent-hub-settings-section-props'
 import {
   AGENT_HUB_FINISHED_CLEAR_MINUTES,
@@ -29,6 +31,7 @@ export function AgentHubSettingsPopoverSection({
   preferences,
   updateSettings
 }: AgentHubSettingsSectionProps): React.JSX.Element {
+  const botsEnabled = useBotsEnabled()
   return (
     <section className="space-y-3">
       <SettingsSubsectionHeader
@@ -120,6 +123,41 @@ export function AgentHubSettingsPopoverSection({
         )}
         checked={preferences.paneQuickReply}
         onChange={() => updateSettings({ agentHubPaneQuickReply: !preferences.paneQuickReply })}
+      />
+      {botsEnabled ? (
+        <SurfaceChoiceRow
+          settingKey="agentHubInboxOrder"
+          label={translate('agentHub.settings.inboxOrder', 'Inbox order')}
+          options={[
+            { value: 'bots-first', label: translate('agentHub.settings.botsFirst', 'Bots first') },
+            {
+              value: 'agents-first',
+              label: translate('agentHub.settings.agentsFirst', 'Agents first')
+            }
+          ]}
+          updateSettings={updateSettings}
+        />
+      ) : null}
+      <SurfaceSwitchRow
+        settingKey="agentHubFoldIdleAgents"
+        label={translate('agentHub.settings.foldIdle', 'Fold idle and sleeping agents')}
+        updateSettings={updateSettings}
+      />
+      {botsEnabled ? (
+        <SurfaceSwitchRow
+          settingKey="agentHubShowBotChatsInAgents"
+          label={translate('agentHub.settings.showBotChats', 'Show bot chats in Agents')}
+          description={translate(
+            'agentHub.settings.showBotChatsCopy',
+            'When off, one line at the end of the list opens Bots instead.'
+          )}
+          updateSettings={updateSettings}
+        />
+      ) : null}
+      <SurfaceSwitchRow
+        settingKey="agentHubRememberListState"
+        label={translate('agentHub.settings.rememberListState', 'Remember folds and filters')}
+        updateSettings={updateSettings}
       />
     </section>
   )

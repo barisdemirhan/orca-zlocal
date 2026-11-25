@@ -8,8 +8,6 @@ export type AgentHubOrbNewChatAction = 'new-chat' | 'clear-home'
 export type AgentHubSurfaceSettings = {
   /** Agents may open their own card's drawers and read its work; never another agent's card. */
   agentHubAgentOwnCard?: boolean
-  /** Card events are also sent to the agent as a note; off means they are read on request. */
-  agentHubSendCardEvents?: boolean
   agentHubInboxOrder?: AgentHubInboxOrder
   agentHubFoldIdleAgents?: boolean
   /** Bots' own chats stay listed in Agents; off leaves one closing line that opens Bots. */
@@ -36,7 +34,6 @@ export const AGENT_HUB_ORB_OPEN_CHATS_LIMITS = [4, 8, 10] as const
 
 export const AGENT_HUB_SURFACE_DEFAULTS: Required<AgentHubSurfaceSettings> = {
   agentHubAgentOwnCard: true,
-  agentHubSendCardEvents: false,
   agentHubInboxOrder: 'bots-first',
   agentHubFoldIdleAgents: true,
   agentHubShowBotChatsInAgents: false,
