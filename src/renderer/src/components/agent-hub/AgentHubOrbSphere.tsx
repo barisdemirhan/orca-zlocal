@@ -22,6 +22,15 @@ export type AgentHubOrbSphereProps = {
   decorative?: boolean
 }
 
+/** Called from the canvas loop after each step; the stage's motion writes the sphere's transform here. */
+export type AgentHubOrbFrame = {
+  dt: number
+  now: number
+  root: HTMLElement
+  pulse: () => void
+}
+type AgentHubOrbFrameHandler = (frame: AgentHubOrbFrame) => void
+
 const MAX_DEVICE_PIXEL_RATIO = 2
 
 export function AgentHubOrbSphere({
@@ -31,20 +40,26 @@ export function AgentHubOrbSphere({
   outputMuted = false,
   inputSpeaking = false,
   outcome = 'success',
-  decorative = false
-}: AgentHubOrbSphereProps): React.JSX.Element {
+  decorative = false,
+  onFrame
+}: AgentHubOrbSphereProps & { onFrame?: AgentHubOrbFrameHandler }): React.JSX.Element {
   const rootRef = useRef<HTMLSpanElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const organismRef = useRef<AgentHubOrganism | null>(null)
   const stateKey = agentHubOrbStateKey(phase, outcome)
   const stateKeyRef = useRef(stateKey)
   const inputSpeakingRef = useRef(inputSpeaking)
+  const onFrameRef = useRef(onFrame)
   const tint = useAgentHubOrbTint()
 
   useEffect(() => {
     stateKeyRef.current = stateKey
     organismRef.current?.setState(stateKey)
   }, [stateKey])
+
+  useEffect(() => {
+    onFrameRef.current = onFrame
+  }, [onFrame])
 
   useEffect(() => {
     inputSpeakingRef.current = inputSpeaking
@@ -86,8 +101,10 @@ export function AgentHubOrbSphere({
       if (!shouldRun()) {
         return
       }
-      organism.step(last ? (now - last) / 1000 : 0)
+      const dt = last ? (now - last) / 1000 : 0
+      organism.step(dt)
       last = now
+      onFrameRef.current?.({ dt, now, root, pulse: organism.pulse })
       paint()
       frame = requestAnimationFrame(tick)
     }

@@ -88,6 +88,7 @@ export function AgentHubOrbButton({
       }
       disabled={disabled}
       preserveFocus
+      orbSlot
       onClick={(event) =>
         onOpen(getShortcutPlatform() === 'darwin' ? event.metaKey : event.ctrlKey)
       }

@@ -152,6 +152,7 @@ export function DockButton({
   disabled,
   pressed,
   preserveFocus = false,
+  orbSlot = false,
   onClick,
   children
 }: {
@@ -164,6 +165,8 @@ export function DockButton({
   /** For a button that switches something on and off. */
   pressed?: boolean
   preserveFocus?: boolean
+  /** The Orb's launcher: its sphere flies from and back to this button. */
+  orbSlot?: boolean
   onClick: React.MouseEventHandler<HTMLButtonElement>
   children: React.ReactNode
 }): React.JSX.Element {
@@ -173,6 +176,7 @@ export function DockButton({
       aria-label={label}
       disabled={disabled}
       aria-pressed={pressed}
+      data-agent-hub-orb-slot={orbSlot ? '' : undefined}
       onClick={onClick}
       onMouseDown={preserveFocus ? (event) => event.preventDefault() : undefined}
       className={className}

@@ -8,6 +8,10 @@ import {
   agentHubOrbSupportsAsk,
   resolveAgentHubOrbMode
 } from '../../../../shared/agent-hub-orb-settings'
+import {
+  normalizeAgentHubOrbMotion,
+  type AgentHubOrbMotion
+} from '../../../../shared/agent-hub-orb-motion-setting'
 import { nativeChatPermissionModeLabel } from '../native-chat/session/options/controls/native-chat-permission-mode-labels'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -59,6 +63,8 @@ export function AgentHubSettingsOrbSection({
     }))
   ]
   const placementLabel = translate('auto.agentHub.orb.placement', 'Placement')
+  const motionLabel = translate('agentHub.orb.motion.label', 'Orb motion')
+  const motion = normalizeAgentHubOrbMotion(settings.agentHubOrbMotion)
   const placement =
     settings.agentHubOrbPlacement === 'dock' ||
     settings.agentHubOrbPlacement === 'statusBar' ||
@@ -250,6 +256,25 @@ export function AgentHubSettingsOrbSection({
                 )
               },
               { value: 'hidden', label: translate('auto.agentHub.orb.hidden', 'Hidden') }
+            ]}
+          />
+        }
+      />
+      <SettingsRow
+        label={motionLabel}
+        description={translate(
+          'agentHub.orb.motion.hint',
+          'How much the sphere moves. The system Reduce Motion setting does not change it.'
+        )}
+        control={
+          <SettingsSegmentedControl<AgentHubOrbMotion>
+            value={motion}
+            ariaLabel={motionLabel}
+            onChange={(value) => updateSettings({ agentHubOrbMotion: value })}
+            options={[
+              { value: 'full', label: translate('agentHub.orb.motion.full', 'Full') },
+              { value: 'calm', label: translate('agentHub.orb.motion.calm', 'Calm') },
+              { value: 'off', label: translate('agentHub.orb.motion.off', 'Off') }
             ]}
           />
         }

@@ -16,6 +16,8 @@ import { useAgentHubOrbGeometry } from './use-agent-hub-orb-geometry'
 import { agentHubOrbResizeArc } from './agent-hub-orb-geometry'
 import { useAgentHubOrbSphereGestures } from './use-agent-hub-orb-sphere-gestures'
 import { AgentHubOrbSpeechBubble } from './AgentHubOrbSpeechBubble'
+import { agentHubOrbSphereCentre } from './agent-hub-orb-dock-pin'
+import { useAgentHubOrbMotion, type AgentHubOrbMotionHandle } from './use-agent-hub-orb-motion'
 import './agent-hub-orb-stage.css'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 
@@ -26,6 +28,7 @@ export function AgentHubOrbStage({
   embedded,
   compact,
   live = false,
+  ghost = false,
   visible,
   sphereControls,
   quickInput,
@@ -49,6 +52,8 @@ export function AgentHubOrbStage({
   embedded: boolean
   compact: boolean
   live?: boolean
+  /** A stand-in for the sphere while the host opens or after it slept, so it can fly without a session. */
+  ghost?: boolean
   visible: boolean
   /** What the hover pill shows at the top of the sphere. */
   sphereControls?: ReactNode
@@ -73,6 +78,10 @@ export function AgentHubOrbStage({
   onSphereHoldEnd?: () => void
 }): React.JSX.Element {
   const inlineRef = useRef<HTMLDivElement>(null)
+  const artRef = useRef<HTMLDivElement>(null)
+  const shadowRef = useRef<HTMLSpanElement>(null)
+  const motionRef = useRef<AgentHubOrbMotionHandle | null>(null)
+  const quickInputOpen = useAgentHubOrbPanel((s) => s.quickInputOpen)
   const dismissedCaption = useAgentHubOrbPanel((s) => s.dismissedCaption)
   const captionId = captionKey ?? caption ?? ''
   const [captionEngaged, setCaptionEngaged] = useState(false)
@@ -89,7 +98,7 @@ export function AgentHubOrbStage({
     requestRef,
     beginGesture,
     resizeKey
-  } = useAgentHubOrbGeometry({ embedded, compact, live, requestVisible })
+  } = useAgentHubOrbGeometry({ embedded, compact, live, requestVisible, motionRef })
   const gestures = useAgentHubOrbSphereGestures(
     {
       onClick: () => onSphereClick?.(),
@@ -99,6 +108,22 @@ export function AgentHubOrbStage({
     },
     !embedded && onSphereClick !== undefined
   )
+  const onFrame = useAgentHubOrbMotion({
+    enabled: !embedded,
+    ghost,
+    centre: pinned?.centre ?? agentHubOrbSphereCentre({ x: geometry.x, y: geometry.y }, geometry),
+    engaged:
+      captionEngaged ||
+      quickInputOpen ||
+      requestVisible ||
+      (Boolean(caption) && captionId !== dismissedCaption),
+    pinned: pinned !== null,
+    needsYou:
+      sphere.phase === 'request' || sphere.phase === 'attention' || sphere.phase === 'approval',
+    handleRef: motionRef,
+    artRef,
+    shadowRef
+  })
   // Why: a hidden stage never sends pointerleave, which would keep captions engaged.
   useEffect(() => {
     if (!visible) {
@@ -167,6 +192,7 @@ export function AgentHubOrbStage({
             {request}
           </div>
           <div
+            ref={artRef}
             className="agent-hub-orb-art"
             onPointerEnter={() => setCaptionEngaged(true)}
             onPointerLeave={() => setCaptionEngaged(false)}
@@ -192,6 +218,9 @@ export function AgentHubOrbStage({
               </div>
             ) : null}
             <div className="agent-hub-orb-art-sphere">
+              {!embedded ? (
+                <span ref={shadowRef} aria-hidden className="agent-hub-orb-shadow" />
+              ) : null}
               <AgentHubOrbSpeechBubble
                 open={captionId !== dismissedCaption}
                 engaged={captionEngaged}
@@ -212,11 +241,11 @@ export function AgentHubOrbStage({
                     aria-label={sphereLabel}
                     className="inline-flex size-full cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   >
-                    <AgentHubOrbSphere {...sphere} />
+                    <AgentHubOrbSphere {...sphere} onFrame={onFrame} />
                   </button>
                 ) : (
                   <span className="inline-flex size-full">
-                    <AgentHubOrbSphere {...sphere} />
+                    <AgentHubOrbSphere {...sphere} onFrame={onFrame} />
                   </span>
                 )}
               </AgentHubOrbSpeechBubble>

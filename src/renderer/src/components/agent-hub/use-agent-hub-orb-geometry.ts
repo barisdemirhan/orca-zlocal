@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { useAppStore } from '@/store'
 import {
   fitAgentHubOrb,
@@ -16,6 +16,7 @@ import {
 } from './agent-hub-orb-overhang'
 import { useAgentHubOrbDiameter } from './use-agent-hub-orb-diameter'
 import { useAgentHubOrbDrag } from './use-agent-hub-orb-drag'
+import type { AgentHubOrbMotionHandle } from './use-agent-hub-orb-motion'
 import {
   agentHubOrbPinnedQuickFits,
   layoutAgentHubOrbPinned,
@@ -27,12 +28,14 @@ export function useAgentHubOrbGeometry({
   embedded,
   compact,
   live = false,
-  requestVisible
+  requestVisible,
+  motionRef
 }: {
   embedded: boolean
   compact: boolean
   live?: boolean
   requestVisible: boolean
+  motionRef?: RefObject<AgentHubOrbMotionHandle | null>
 }) {
   const { preferredDiameter, rememberDiameter } = useAgentHubOrbDiameter()
   const dockPlacement = useAppStore(
@@ -205,7 +208,8 @@ export function useAgentHubOrbGeometry({
     geometry,
     overhang: fit.overhang,
     preferredDiameter,
-    rememberDiameter
+    rememberDiameter,
+    motionRef
   })
 
   return {

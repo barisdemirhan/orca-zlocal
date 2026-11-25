@@ -85,6 +85,8 @@ export type AgentHubOrganism = {
   setState: (key: AgentHubOrbStateKey) => void
   setPalette: (palette: AgentHubOrbPalette) => void
   setInputActive: (active: boolean) => void
+  /** A ring in the current state's own colours, for a landing. */
+  pulse: () => void
   step: (dt: number) => void
   draw: (ctx: CanvasRenderingContext2D, size: number, detail: AgentHubOrbDetail) => void
 }
@@ -245,6 +247,10 @@ export function createAgentHubOrganism(
     setPalette,
     setInputActive: (active) => {
       inputActive = active
+    },
+    pulse: () => {
+      emitRing(1, cur.rim)
+      emitRing(0.6, cur.core, 0.25)
     },
     step,
     draw: (ctx, size, detail) => drawOrganism(ctx, size, detail, view)

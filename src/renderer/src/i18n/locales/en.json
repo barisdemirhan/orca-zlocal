@@ -26408,7 +26408,14 @@
       },
       "sleepFailed": "Could not put Orb to sleep. Try again.",
       "menuNamed": "{{name}} menu",
-      "moreActions": "More actions"
+      "moreActions": "More actions",
+      "motion": {
+        "label": "Orb motion",
+        "hint": "How much the sphere moves. The system Reduce Motion setting does not change it.",
+        "full": "Full",
+        "calm": "Calm",
+        "off": "Off"
+      }
     },
     "sleep": {
       "waking": "Waking…",

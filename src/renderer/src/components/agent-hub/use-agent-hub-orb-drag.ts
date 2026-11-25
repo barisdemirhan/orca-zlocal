@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import {
   agentHubOrbResizeKeyDiameter,
   clampAgentHubOrbDiameter,
@@ -9,6 +9,8 @@ import { readAgentHubOrbBounds } from './agent-hub-orb-viewport'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { clampAgentHubOrbPosition } from './agent-hub-orb-overhang'
 import { claimAgentHubOrbGesture, releaseAgentHubOrbGesture } from './agent-hub-orb-gesture'
+import { orbReleaseVelocity, type OrbPoint, type OrbTrailSample } from './agent-hub-orb-motion'
+import type { AgentHubOrbMotionHandle } from './use-agent-hub-orb-motion'
 import {
   agentHubOrbDockDrop,
   agentHubOrbPinnedCentre,
@@ -37,6 +39,8 @@ type OrbGesture = {
   width: number
   height: number
   overhang: AgentHubOrbOverhang
+  /** The last pointer samples, for the speed a release throws the sphere with. */
+  trail: OrbTrailSample[]
 }
 
 export function useAgentHubOrbDrag({
@@ -46,7 +50,8 @@ export function useAgentHubOrbDrag({
   geometry,
   overhang,
   preferredDiameter,
-  rememberDiameter
+  rememberDiameter,
+  motionRef
 }: {
   embedded: boolean
   compact: boolean
@@ -55,6 +60,7 @@ export function useAgentHubOrbDrag({
   overhang: AgentHubOrbOverhang
   preferredDiameter: number
   rememberDiameter: (diameter: number) => void
+  motionRef?: RefObject<AgentHubOrbMotionHandle | null>
 }) {
   const gesture = useRef<OrbGesture | null>(null)
   /** The drop zone beside the dock while a drag is near it, with the pinned sphere's centre. */
@@ -72,6 +78,7 @@ export function useAgentHubOrbDrag({
         return
       }
       setDockDrop(null)
+      motionRef?.current?.setDragging(false)
       if (cancel) {
         useAgentHubOrbPanel.setState({
           stagePosition: active.start,
@@ -88,9 +95,46 @@ export function useAgentHubOrbDrag({
       } else if (active.drop === 'armed') {
         useAgentHubOrbPanel.setState({ stagePosition: active.start })
         setAgentHubOrbPinned(true)
+      } else if (active.mode === 'move' && !active.pinned) {
+        throwSphere(active)
       }
       if (active.element.hasPointerCapture(active.pointerId)) {
         active.element.releasePointerCapture(active.pointerId)
+      }
+    }
+    // Why: the rest spot is stored at release, so the thrown sphere only flies there visually.
+    const throwSphere = (active: OrbGesture): void => {
+      const velocity = orbReleaseVelocity(active.trail, performance.now())
+      if (!velocity) {
+        return
+      }
+      const origin = agentHubOrbSphereCentre({ x: 0, y: 0 }, active)
+      const bounds = readAgentHubOrbBounds()
+      const clamp = (centre: OrbPoint): OrbPoint => {
+        const clamped = clampAgentHubOrbPosition(
+          { x: centre.x - origin.x, y: centre.y - origin.y },
+          active,
+          bounds,
+          active.overhang
+        )
+        return { x: clamped.x + origin.x, y: clamped.y + origin.y }
+      }
+      const dock = readAgentHubOrbDockBox()
+      const thrown = motionRef?.current?.throwFrom({
+        velocity,
+        clamp,
+        dock: dock ? agentHubOrbPinnedCentre(dock) : null
+      })
+      if (!thrown) {
+        return
+      }
+      if (thrown.docked) {
+        useAgentHubOrbPanel.setState({ stagePosition: active.start })
+        setAgentHubOrbPinned(true)
+      } else {
+        useAgentHubOrbPanel.setState({
+          stagePosition: { x: thrown.rest.x - origin.x, y: thrown.rest.y - origin.y }
+        })
       }
     }
     const unpin = (active: OrbGesture, event: PointerEvent): void => {
@@ -116,6 +160,10 @@ export function useAgentHubOrbDrag({
       const dx = event.clientX - active.pointer.x
       const dy = event.clientY - active.pointer.y
       event.preventDefault()
+      active.trail.push({ x: event.clientX, y: event.clientY, t: performance.now() })
+      if (active.trail.length > 8) {
+        active.trail.shift()
+      }
       if (active.mode === 'resize') {
         useAgentHubOrbPanel.setState({
           preferredDiameter: clampAgentHubOrbDiameter(active.diameter + Math.max(dx, dy))
@@ -172,7 +220,7 @@ export function useAgentHubOrbDrag({
       document.removeEventListener('keydown', escape, true)
       cancel()
     }
-  }, [embedded, compact, rememberDiameter])
+  }, [embedded, compact, rememberDiameter, motionRef])
 
   return {
     dockDrop,
@@ -203,7 +251,11 @@ export function useAgentHubOrbDrag({
         diameter: geometry.diameter,
         width: geometry.width,
         height: geometry.height,
-        overhang
+        overhang,
+        trail: []
+      }
+      if (mode === 'move') {
+        motionRef?.current?.setDragging(true)
       }
       event.currentTarget.setPointerCapture(event.pointerId)
     },

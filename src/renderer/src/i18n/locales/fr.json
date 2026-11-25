@@ -23513,7 +23513,14 @@
       "modelsUnavailable": "Impossible de charger les modèles disponibles. Ouvrez le menu des modèles pour réessayer.",
       "modelUnavailable": "Indisponible",
       "settingsApply": "Les changements d’agent, de modèle et d’approbation démarrent une nouvelle conversation quand Orb est inactif. Les conversations passées gardent leur agent et leur modèle.",
-      "liveHoldsInput": "La voix en direct est active. Arrêtez-la pour écrire."
+      "liveHoldsInput": "La voix en direct est active. Arrêtez-la pour écrire.",
+      "motion": {
+        "label": "Mouvement d’Orb",
+        "hint": "Dans quelle mesure la sphère bouge. Le réglage système de réduction des animations ne le modifie pas.",
+        "full": "Complet",
+        "calm": "Calme",
+        "off": "Désactivé"
+      }
     }
   },
   "workspaceDeletion": {

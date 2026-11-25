@@ -11,6 +11,11 @@ import { normalizeAgentHubOrbSettings } from '../../../../shared/agent-hub-orb-s
 import { showAgentHubOrbPanel, useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 
 import { agentHubOrbErrorMessage } from './agent-hub-orb-error'
+import {
+  beginAgentHubOrbWake,
+  endAgentHubOrbWake,
+  failAgentHubOrbWake
+} from './agent-hub-orb-flight-store'
 
 let opening: Promise<boolean> | null = null
 let openingKey: string | null = null
@@ -56,6 +61,7 @@ async function open(
   } catch (error) {
     const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null
     if (!useAgentHubOrbPanel.getState().session) {
+      failAgentHubOrbWake()
       toast.error(
         code === 'disabled'
           ? translate('auto.agentHub.orb.disabled', 'Enable Agent control to talk to Orb')
@@ -94,6 +100,9 @@ export function openAgentHubOrb(
   if (opening && openingCanJoin && openingKey === key) {
     return opening
   }
+  if (!preserveVisibility && !useAgentHubOrbPanel.getState().session && !opening) {
+    beginAgentHubOrbWake()
+  }
   const next = (opening ?? Promise.resolve())
     .then(() =>
       open(
@@ -113,6 +122,7 @@ export function openAgentHubOrb(
         opening = null
         openingKey = null
         openingCanJoin = false
+        endAgentHubOrbWake()
         useAgentHubOrbPanel.setState({ opening: false })
       }
     })

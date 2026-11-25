@@ -24233,7 +24233,14 @@
       "modelsUnavailable": "利用可能なモデルを読み込めませんでした。モデルメニューを開いて再試行してください。",
       "modelUnavailable": "利用不可",
       "settingsApply": "Orb がアイドル状態のとき、Agent ・モデル・承認の変更で新規会話が始まります。過去の会話はその Agent とモデルを保持します。",
-      "liveHoldsInput": "ライブ音声がオンです。入力するには停止してください。"
+      "liveHoldsInput": "ライブ音声がオンです。入力するには停止してください。",
+      "motion": {
+        "label": "Orb の動き",
+        "hint": "球体がどれだけ動くかを選びます。システムの「視差効果を減らす」設定では変わりません。",
+        "full": "フル",
+        "calm": "穏やか",
+        "off": "オフ"
+      }
     }
   },
   "workspaceDeletion": {

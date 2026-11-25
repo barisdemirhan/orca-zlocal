@@ -25645,7 +25645,14 @@
       "modelsUnavailable": "사용 가능한 모델을 불러오지 못했습니다. 모델 메뉴를 열어 다시 시도하세요.",
       "modelUnavailable": "사용 불가",
       "settingsApply": "Orb가 유휴 상태일 때 에이전트, 모델, 승인 변경은 새 대화를 시작합니다. 이전 대화는 해당 에이전트와 모델을 유지합니다.",
-      "liveHoldsInput": "라이브 음성이 켜져 있습니다. 입력하려면 중지하세요."
+      "liveHoldsInput": "라이브 음성이 켜져 있습니다. 입력하려면 중지하세요.",
+      "motion": {
+        "label": "Orb 움직임",
+        "hint": "구체가 얼마나 움직일지 정합니다. 시스템의 동작 줄이기 설정은 이를 바꾸지 않습니다.",
+        "full": "전체",
+        "calm": "차분하게",
+        "off": "끄기"
+      }
     }
   },
   "workspaceDeletion": {

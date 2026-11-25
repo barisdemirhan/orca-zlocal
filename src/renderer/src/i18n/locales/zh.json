@@ -25633,7 +25633,14 @@
       "modelsUnavailable": "无法加载可用模型。请打开模型菜单重试。",
       "modelUnavailable": "不可用",
       "settingsApply": "Orb 空闲时，更改代理、模型或审批设置会开始新对话。过去的对话会保留其代理和模型。",
-      "liveHoldsInput": "实时语音已开启。停止后即可输入。"
+      "liveHoldsInput": "实时语音已开启。停止后即可输入。",
+      "motion": {
+        "label": "Orb 动效",
+        "hint": "设置球体的运动幅度。系统的“减弱动态效果”设置不会改变它。",
+        "full": "完整",
+        "calm": "平静",
+        "off": "关闭"
+      }
     }
   },
   "workspaceDeletion": {

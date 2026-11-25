@@ -17,6 +17,7 @@ export const AGENT_HUB_DEFAULT_SETTINGS: Pick<GlobalSettings, AgentHubSettingKey
   agentHubOrbName: 'Orb',
   agentHubOrbTone: 'calm',
   agentHubOrbTint: 'silver',
+  agentHubOrbMotion: 'full',
   agentHubOrbMemorySuggestions: true,
   agentHubPlacement: 'dock',
   agentHubDockPosition: DEFAULT_AGENT_HUB_DOCK_POSITION,

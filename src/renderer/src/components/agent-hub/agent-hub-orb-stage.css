@@ -38,8 +38,25 @@
   cursor: grabbing;
 }
 .agent-hub-orb-art-sphere {
+  position: relative;
   width: var(--orb-diameter);
   height: var(--orb-diameter);
+}
+/* Why: the shadow is centred on the sphere and moved by the motion loop, so it never takes part in layout. */
+.agent-hub-orb-shadow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 62%;
+  height: 12%;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--foreground) 22%, transparent),
+    transparent
+  );
+  pointer-events: none;
 }
 /* Why: the grip's box starts at the sphere's centre; only the arc's stroke takes the pointer, so the sphere stays clickable. */
 .agent-hub-orb-resize {

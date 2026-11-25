@@ -1,6 +1,7 @@
 import type { PersistedUIState } from './orca-profiles/persisted-ui-state-types'
 import type { StructuredAgentId } from './agent-session/lifecycle/provider-handles/agent-session-provider-handle'
 import type { AgentHubOrbTint, AgentHubOrbTone } from './agent-hub-orb-identity'
+import type { AgentHubOrbMotion } from './agent-hub-orb-motion-setting'
 
 /** Where the Agent Hub lives: a draggable dock on a window edge, or a status-bar item. */
 export type AgentHubPlacement = 'dock' | 'status-bar'
@@ -59,6 +60,8 @@ export type AgentHubSettings = {
   agentHubOrbTone?: AgentHubOrbTone
   /** Colours the idle sphere only; state colours never change. */
   agentHubOrbTint?: AgentHubOrbTint
+  /** How much the floating sphere moves; the system's Reduce Motion setting does not change it. */
+  agentHubOrbMotion?: AgentHubOrbMotion
   /** Whether Orb may propose lasting memories; absent means on. */
   agentHubOrbMemorySuggestions?: boolean
   /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */
