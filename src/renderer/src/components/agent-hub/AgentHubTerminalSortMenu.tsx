@@ -1,4 +1,12 @@
-import { Activity, ArrowDownAZ, Clock, FolderTree, GripVertical } from 'lucide-react'
+import {
+  Activity,
+  ArrowDownAZ,
+  ArrowDownUp,
+  Clock,
+  FolderTree,
+  GripVertical,
+  Server
+} from 'lucide-react'
 import { DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -6,8 +14,12 @@ import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings
 import { SORT_OPTIONS } from '../sidebar/worktree-list/controls/sidebar-workspace-option-items'
 import { AgentHubListMenu } from './AgentHubListMenu'
 
-function SortIcon({ sortBy }: { sortBy: AgentHubTerminalSort }): React.JSX.Element {
+const HOST_SORT = 'host'
+
+function SortIcon({ sortBy }: { sortBy: AgentHubTerminalSort | 'host' }): React.JSX.Element {
   switch (sortBy) {
+    case HOST_SORT:
+      return <Server className="size-3.5" />
     case 'name':
       return <ArrowDownAZ className="size-3.5" />
     case 'smart':
@@ -40,31 +52,43 @@ export function AgentHubTerminalSortMenu({
   sortBy,
   onSortChange,
   onClosed,
-  focusable = false
+  focusable = false,
+  byHost
 }: {
   sortBy: AgentHubTerminalSort
   onSortChange: (sortBy: AgentHubTerminalSort) => void
+  /** The hub's own Host sort; absent hides the option (the picker has none). */
+  byHost?: { value: boolean; onChange: (value: boolean) => void }
   /** The menu closed: the caller decides where focus goes. */
   onClosed: () => void
   focusable?: boolean
 }): React.JSX.Element {
-  const current = SORT_OPTIONS.find((option) => option.id === sortBy)?.label ?? ''
+  const shown = byHost?.value ? HOST_SORT : sortBy
+  const current =
+    shown === HOST_SORT
+      ? translate('agentHub.terminals.sortHost', 'Host')
+      : (SORT_OPTIONS.find((option) => option.id === sortBy)?.label ?? '')
   const label = translate('agentHub.terminals.sortLabel', 'Sort: {{value0}}', {
     value0: current
   })
   return (
     <AgentHubListMenu
       menu="sort"
-      value={sortBy}
+      value={shown}
       label={label}
-      icon={<SortIcon sortBy={sortBy} />}
+      icon={<ArrowDownUp className="size-3.5" />}
       title={translate('agentHub.terminals.sortBy', 'Sort by')}
       focusable={focusable}
       onClosed={onClosed}
     >
       <DropdownMenuRadioGroup
-        value={sortBy}
+        value={shown}
         onValueChange={(value) => {
+          if (value === HOST_SORT) {
+            byHost?.onChange(true)
+            return
+          }
+          byHost?.onChange(false)
           const next = SORT_OPTIONS.find((option) => option.id === value)?.id
           if (next) {
             onSortChange(next)
@@ -90,6 +114,12 @@ export function AgentHubTerminalSortMenu({
             item
           )
         })}
+        {byHost ? (
+          <DropdownMenuRadioItem value={HOST_SORT}>
+            <SortIcon sortBy={HOST_SORT} />
+            {translate('agentHub.terminals.sortHost', 'Host')}
+          </DropdownMenuRadioItem>
+        ) : null}
       </DropdownMenuRadioGroup>
     </AgentHubListMenu>
   )

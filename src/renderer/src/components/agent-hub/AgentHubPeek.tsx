@@ -90,7 +90,7 @@ function SourceButton({
   const label = translate('agentHub.peek.source', 'From {{value0}}', { value0: title })
   return (
     <AgentHubActionTooltip
-      label={translate('agentHub.peek.showSource', 'Close Peek and go back to this mirror')}
+      label={translate('agentHub.peek.backToMirror', 'Close Peek and go back to this mirror')}
     >
       <Button
         type="button"

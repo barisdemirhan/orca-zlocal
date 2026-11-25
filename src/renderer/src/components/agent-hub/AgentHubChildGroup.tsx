@@ -34,7 +34,7 @@ function childGroupLabel(workerCount: number, subagentCount: number): string {
 }
 
 /** An in-process subagent: no pane of its own, so a click opens its parent's mirror. */
-function SubagentRow({
+export function SubagentRow({
   row,
   now,
   onOpen

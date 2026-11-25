@@ -5,9 +5,13 @@ import type { Repo } from '../../../../shared/repository/repo-types'
 import type { TerminalTab } from '../../../../shared/workspace-layout/terminal-tab-types'
 import type { TerminalAgent } from '../../../../shared/agent-status/identity/terminal-agent'
 import type { Worktree } from '../../../../shared/worktree/types'
+import type { Bot } from '../../../../shared/bot-types'
 import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { agentHubSection, type AgentHubCounts } from './agent-hub-lists'
+
+/** The bot behind a workspace: its home (every chat there is the bot's) or a workspace beneath it. */
+export type AgentHubRowBot = { bot: Bot; home: boolean }
 
 /** One terminal pane: an agent pane carries its thread, a plain shell tab does not. */
 export type AgentHubTerminalRow = {
@@ -23,6 +27,8 @@ export type AgentHubTerminalRow = {
   idleAgent: TerminalAgent | null
   /** Worker panes this agent dispatched, listed under it instead of in their own workspace. */
   children: AgentHubTerminalRow[]
+  /** Set when the pane sits in a bot's home or in a workspace the bot opened. */
+  bot?: AgentHubRowBot
 }
 
 export type AgentHubWorkspaceNode = {
@@ -33,6 +39,9 @@ export type AgentHubWorkspaceNode = {
   /** Worktree name; null for folder workspaces and the floating terminal. */
   workspaceLabel: string | null
   rows: AgentHubTerminalRow[]
+  bot?: AgentHubRowBot
+  /** Idle agents folded out of `rows` (or shown, when `open`); set only while the fold is on. */
+  idleFold?: { count: number; open: boolean; rows: AgentHubTerminalRow[] }
 }
 
 export type AgentHubGroupNode = {
@@ -61,9 +70,13 @@ export type AgentHubTerminalTreeInput = {
   unknownProjectLabel: string
   /** Worker pane → its dispatcher (see agent-hub-lineage). */
   parentOf?: ReadonlyMap<string, string>
+  /** The bot a workspace belongs to; absent while bots are off. */
+  botOf?: (worktree: Worktree) => AgentHubRowBot | null
+  botsGroupLabel?: string
 }
 
 export const AGENT_HUB_FLOATING_GROUP_KEY = 'floating'
+export const AGENT_HUB_BOTS_GROUP = 'agent-hub:bots'
 const UNGROUPED_GROUP_KEY = 'ungrouped'
 
 function shellTabTitle(tab: TerminalTab): string {
@@ -75,9 +88,10 @@ function buildRows(
   repo: Repo | null,
   tabs: readonly TerminalTab[],
   threadsByTabId: ReadonlyMap<string, AgentPaneThread[]>,
-  input: Pick<AgentHubTerminalTreeInput, 'includeShells' | 'idleAgentOf'>
+  input: Pick<AgentHubTerminalTreeInput, 'includeShells' | 'idleAgentOf' | 'botOf'>
 ): AgentHubTerminalRow[] {
   const rows: AgentHubTerminalRow[] = []
+  const bot = input.botOf?.(worktree) ?? undefined
   for (const tab of tabs) {
     const tabThreads = threadsByTabId.get(tab.id)
     if (tabThreads && tabThreads.length > 0) {
@@ -91,7 +105,8 @@ function buildRows(
           title: activityThreadRowCopy(thread).taskTitle || shellTabTitle(tab),
           thread,
           idleAgent: null,
-          children: []
+          children: [],
+          bot
         })
       }
       continue
@@ -109,7 +124,8 @@ function buildRows(
       title: shellTabTitle(tab),
       thread: null,
       idleAgent,
-      children: []
+      children: [],
+      bot
     })
   }
   return rows
@@ -167,7 +183,8 @@ function nestWorkerRows(
   for (const [childPaneKey, parentPaneKey] of parentOf) {
     const child = rowByPaneKey.get(childPaneKey)
     const parent = rowByPaneKey.get(parentPaneKey)
-    if (child && parent) {
+    // A bot's worker keeps its own workspace, so it stays listed when the bot's chats are hidden.
+    if (child && parent && !parent.bot?.home) {
       parent.children.push(child)
       nested.add(child)
     }
@@ -194,9 +211,14 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
 
   const placed: { groupKey: string; node: AgentHubWorkspaceNode }[] = []
   const addWorkspace = (groupKey: string, node: AgentHubWorkspaceNode): void => {
-    if (node.rows.length > 0) {
-      placed.push({ groupKey, node })
+    if (node.rows.length === 0) {
+      return
     }
+    const bot = input.botOf?.(node.worktree) ?? undefined
+    placed.push({
+      groupKey: bot?.home ? AGENT_HUB_BOTS_GROUP : groupKey,
+      node: bot ? { ...node, bot } : node
+    })
   }
 
   const groupIds = new Set(input.projectGroups.map((group) => group.id))
@@ -286,7 +308,8 @@ export function buildAgentHubTerminalTree(input: AgentHubTerminalTreeInput): Age
       .sort((a, b) => a.tabOrder - b.tabOrder)
       .map((group) => ({ key: group.id, label: group.name })),
     { key: UNGROUPED_GROUP_KEY, label: input.ungroupedLabel },
-    { key: AGENT_HUB_FLOATING_GROUP_KEY, label: input.floating?.label ?? '' }
+    { key: AGENT_HUB_FLOATING_GROUP_KEY, label: input.floating?.label ?? '' },
+    { key: AGENT_HUB_BOTS_GROUP, label: input.botsGroupLabel ?? 'Bots' }
   ]
   const groups: AgentHubGroupNode[] = []
   for (const { key, label } of orderedGroups) {

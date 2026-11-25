@@ -8,10 +8,12 @@ import {
   sortWorktreesSmart
 } from '../../../../shared/sidebar-list/sorting/smart-sort'
 import { agentHubIndicatorKind, agentHubStateSince } from './agent-hub-lists'
-import type {
-  AgentHubGroupNode,
-  AgentHubTerminalRow,
-  AgentHubWorkspaceNode
+import { AGENT_HUB_SLEEPING_GROUP } from './agent-hub-sleeping-groups'
+import {
+  AGENT_HUB_BOTS_GROUP,
+  type AgentHubGroupNode,
+  type AgentHubTerminalRow,
+  type AgentHubWorkspaceNode
 } from './agent-hub-terminal-tree'
 
 export type AgentHubTreeOrder = {
@@ -165,6 +167,22 @@ function compareWorkspaceLabel(a: AgentHubWorkspaceNode, b: AgentHubWorkspaceNod
  * state and the arrow-key walk simply follow the result.
  */
 export function sortAgentHubTerminalTree(
+  groups: readonly AgentHubGroupNode[],
+  order: AgentHubTreeOrder
+): AgentHubGroupNode[] {
+  const sorted = sortGroupsAndRows(groups, order)
+  // The sleeping agents and the bots' chats stay at the end whatever the order.
+  const pinned = (group: AgentHubGroupNode): number =>
+    group.key === AGENT_HUB_BOTS_GROUP ? 2 : group.key === AGENT_HUB_SLEEPING_GROUP ? 1 : 0
+  return sorted.every((group) => pinned(group) === 0)
+    ? sorted
+    : sorted
+        .map((group, index) => ({ group, index }))
+        .sort((a, b) => pinned(a.group) - pinned(b.group) || a.index - b.index)
+        .map(({ group }) => group)
+}
+
+function sortGroupsAndRows(
   groups: readonly AgentHubGroupNode[],
   order: AgentHubTreeOrder
 ): AgentHubGroupNode[] {

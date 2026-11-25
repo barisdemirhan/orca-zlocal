@@ -66,6 +66,7 @@ export function AgentHubDock({
   position,
   size,
   counts,
+  botAsks,
   muted,
   pinned,
   mirrors,
@@ -82,6 +83,8 @@ export function AgentHubDock({
   position: AgentHubDockPosition
   size: AgentHubDockSize
   counts: AgentHubCounts
+  /** Bot asks waiting, from the Inbox's own computation. */
+  botAsks: number
   muted: boolean
   /** Keep it unfolded (the hub's panel is open from it). */
   pinned: boolean
@@ -273,7 +276,7 @@ export function AgentHubDock({
                 {terminalCounts.agents}
               </span>
             </DockButton>
-            <AgentHubDockBotsSlot side={side} onOpenTab={onOpenTab} />
+            <AgentHubDockBotsSlot side={side} needsYou={botAsks} onOpenTab={onOpenTab} />
             {hasMirrors ? mirrorsButton : null}
             {canvas ? (
               <DockButton

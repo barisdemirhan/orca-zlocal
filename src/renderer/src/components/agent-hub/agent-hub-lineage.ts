@@ -32,7 +32,8 @@ export const EMPTY_AGENT_HUB_LINEAGE: AgentHubLineage = {
   childrenOf: () => NO_CHILDREN
 }
 
-function subagentRows(thread: AgentPaneThread, now: number): AgentChildRowModel[] {
+/** Every child row of one agent (subagents, commands, monitors), flattened in host order. */
+export function agentHubChildRows(thread: AgentPaneThread, now: number): AgentChildRowModel[] {
   const entry = thread.paneEntry ?? thread.currentAgentEntry
   if (!entry || (entry.children === undefined && !entry.subagents?.length)) {
     return []
@@ -45,8 +46,12 @@ function subagentRows(thread: AgentPaneThread, now: number): AgentChildRowModel[
     entry.children !== undefined
       ? buildAgentChildRowModels(entry.children, context)
       : buildLegacyAgentChildRowModels(entry.subagents ?? [], context)
+  return flattenAgentChildRowModels(rows)
+}
+
+function subagentRows(thread: AgentPaneThread, now: number): AgentChildRowModel[] {
   // Like the sidebar: shells and monitors show through their owner's state.
-  return flattenAgentChildRowModels(rows).filter((row) => row.kind === 'agent')
+  return agentHubChildRows(thread, now).filter((row) => row.kind === 'agent')
 }
 
 /** Orchestration parents win; CLI-created panes fold only in Hub. */

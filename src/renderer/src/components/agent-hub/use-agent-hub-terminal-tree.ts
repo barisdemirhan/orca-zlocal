@@ -8,7 +8,15 @@ import { standaloneActivityWorktree } from '../activity/events/activity-standalo
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { agentHubChatAgents, agentHubTabsByWorktree } from './agent-hub-chat-tabs'
 import { resolveAgentHubIdleAgent } from './agent-hub-idle-agent'
-import { buildAgentHubTerminalTree, type AgentHubGroupNode } from './agent-hub-terminal-tree'
+import {
+  buildAgentHubTerminalTree,
+  type AgentHubGroupNode,
+  type AgentHubRowBot
+} from './agent-hub-terminal-tree'
+import { useAgentHubWorktreeBot } from './use-agent-hub-worktree-bot'
+import type { Worktree } from '../../../../shared/worktree/types'
+
+type AgentHubTreeBotLookup = (worktree: Worktree) => AgentHubRowBot | null
 
 type AgentHubTerminalTreeState = Pick<
   AppState,
@@ -31,7 +39,8 @@ export function agentHubTerminalTreeFromState(
   state: AgentHubTerminalTreeState,
   threads: readonly AgentPaneThread[],
   includeShells: boolean,
-  parentOf: ReadonlyMap<string, string>
+  parentOf: ReadonlyMap<string, string>,
+  botOf?: AgentHubTreeBotLookup
 ): AgentHubGroupNode[] {
   const floating = standaloneActivityWorktree(FLOATING_TERMINAL_WORKTREE_ID)
   const chatAgents = agentHubChatAgents(state)
@@ -48,7 +57,9 @@ export function agentHubTerminalTreeFromState(
     idleAgentOf: (tab) => chatAgents.get(tab.id) ?? resolveAgentHubIdleAgent(tab, state),
     ungroupedLabel: translate('agentHub.terminals.ungrouped', 'Ungrouped'),
     unknownProjectLabel: translate('agentHub.terminals.unknownProject', 'Unknown'),
-    parentOf
+    parentOf,
+    botOf,
+    botsGroupLabel: translate('agentHub.terminals.botsGroup', 'Bots')
   })
 }
 
@@ -64,6 +75,7 @@ export function useAgentHubTerminalTree(
   const folderWorkspaces = useAppStore((s) => s.folderWorkspaces)
   const tabsByWorktree = useAppStore((s) => s.tabsByWorktree)
   const unifiedTabsByWorktree = useAppStore((s) => s.unifiedTabsByWorktree)
+  const botOf = useAgentHubWorktreeBot()
   const idleSignals = useAppStore(
     useShallow((s) => ({
       terminalLayoutsByTabId: s.terminalLayoutsByTabId,
@@ -88,7 +100,8 @@ export function useAgentHubTerminalTree(
         },
         threads,
         includeShells,
-        parentOf
+        parentOf,
+        botOf
       ),
     [
       projectGroups,
@@ -100,7 +113,8 @@ export function useAgentHubTerminalTree(
       threads,
       includeShells,
       idleSignals,
-      parentOf
+      parentOf,
+      botOf
     ]
   )
 }

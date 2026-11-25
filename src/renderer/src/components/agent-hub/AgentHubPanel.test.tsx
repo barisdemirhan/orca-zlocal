@@ -20,7 +20,7 @@ import {
   PANE_KEY_2,
   PANE_KEY_3
 } from './agent-hub-activity-test-fixtures'
-import { AgentHubPanel } from './AgentHubPanel'
+import { AgentHubPanelWithInbox as AgentHubPanel } from './agent-hub-inbox-test-panel'
 import { AgentHubRow } from './AgentHubRow'
 import { EMPTY_AGENT_HUB_LINEAGE } from './agent-hub-lineage'
 import { buildAgentHubLists } from './agent-hub-lists'
@@ -101,7 +101,7 @@ function fixture() {
 
 const PROJECT_ORDER: AgentHubTreeOrder = { sortBy: 'repo', workspaceRank: new Map(), now: 0 }
 
-function renderPanel(treeOrder: AgentHubTreeOrder = PROJECT_ORDER) {
+function renderPanel(treeOrder: AgentHubTreeOrder = PROJECT_ORDER, initialTab?: 'agents') {
   const { lists, tree } = fixture()
   const handlers = {
     onSortChange: vi.fn(),
@@ -124,6 +124,7 @@ function renderPanel(treeOrder: AgentHubTreeOrder = PROJECT_ORDER) {
           terminalCount={3}
           locationOf={() => ({ group: null, project: 'Repo', workspace: 'feature' })}
           rootRef={rootRef}
+          initialTab={initialTab}
           {...handlers}
         />
       </TooltipProvider>
@@ -150,9 +151,8 @@ describe('AgentHubPanel keyboard', () => {
     expect(handlers.onJump).toHaveBeenCalledTimes(1)
     expect(handlers.onJump.mock.calls[0]?.[0].thread.paneKey).toBe(PANE_KEY_3)
 
-    press(panel.current, 'ArrowDown')
     press(panel.current, 'Enter', { altKey: true })
-    expect(handlers.onPopout.mock.calls[0]?.[0].thread.paneKey).toBe(PANE_KEY_2)
+    expect(handlers.onPopout.mock.calls[0]?.[0].thread.paneKey).toBe(PANE_KEY_3)
   })
 
   it('switches to Running with Tab and opens the working agent', () => {
@@ -250,7 +250,8 @@ describe('AgentHubPanel terminal sort', () => {
       'Agent Activity',
       'Recent',
       'Project',
-      'Manual'
+      'Manual',
+      'Host'
     ])
     expect(
       options.find((option) => option.getAttribute('aria-checked') === 'true')?.textContent
@@ -316,7 +317,7 @@ describe('AgentHubPanel row mirror button', () => {
   }
 
   it('keeps a row click and the pop-out button apart', () => {
-    const { handlers } = renderPanel()
+    const { handlers } = renderPanel(PROJECT_ORDER, 'agents')
 
     click(rowButton('Pop out'))
     expect(handlers.onPopout).toHaveBeenCalledTimes(1)
@@ -328,13 +329,13 @@ describe('AgentHubPanel row mirror button', () => {
   })
 
   it('offers a close-agent button on a row', () => {
-    renderPanel()
+    renderPanel(PROJECT_ORDER, 'agents')
     expect(rowButton('Close agent')).not.toBeNull()
     expect(rowButton('Close mirror')).toBeNull()
   })
 
   it('raises an open owner and restores a parked owner with a close beside it', () => {
-    const { handlers } = renderPanel()
+    const { handlers } = renderPanel(PROJECT_ORDER, 'agents')
     const popOut = rowButton('Pop out')
     click(popOut)
     const [{ target }] = handlers.onPopout.mock.calls[0] ?? []
@@ -365,103 +366,3 @@ vi.mock('./agent-hub-mirror-source', async (original) => ({
     target: Parameters<typeof MirrorSource.resolveAgentHubMirrorTarget>[0]
   ) => target
 }))
-
-describe('AgentHubPanel inbox card', () => {
-  function waitingLists(waiting: readonly (readonly [string, number])[]) {
-    const repo = makeRepo()
-    const worktree = makeWorktree()
-    const tabs = ['tab-1', 'tab-2', 'tab-3'].map((id) => makeTabWithIds(id, worktree.id))
-    const entries = Object.fromEntries(
-      waiting.map(([paneKey, at]) => [
-        paneKey,
-        {
-          state: 'waiting',
-          prompt: `Question ${paneKey.slice(0, 5)}`,
-          updatedAt: at,
-          stateStartedAt: at,
-          paneKey,
-          terminalTitle: 'Claude',
-          stateHistory: [],
-          agentType: 'claude'
-        } satisfies AgentStatusEntry
-      ])
-    )
-    const threads = makeThreads(
-      buildActivityEvents({
-        chatNames: new Map(),
-        agentStatusByPaneKey: acceptedAgentStatuses(Object.entries(entries)),
-        tabsByWorktree: { [worktree.id]: tabs },
-        worktreeMap: new Map([[worktree.id, worktree]]),
-        repoMap: new Map([[repo.id, repo]]),
-        acknowledgedAgentsByPaneKey: {},
-        now: 10_000
-      })
-    )
-    return buildAgentHubLists(threads)
-  }
-
-  function render(lists: ReturnType<typeof buildAgentHubLists>) {
-    const { tree } = fixture()
-    act(() => {
-      root.render(
-        <TooltipProvider>
-          <AgentHubPanel
-            lists={lists}
-            lineage={EMPTY_AGENT_HUB_LINEAGE}
-            tree={tree}
-            treeOrder={PROJECT_ORDER}
-            terminalCount={3}
-            locationOf={() => ({ group: null, project: 'Repo', workspace: 'feature' })}
-            rootRef={createRef<HTMLDivElement>()}
-            onSortChange={vi.fn()}
-            onJump={vi.fn()}
-            onOpen={vi.fn()}
-            onPopout={vi.fn()}
-            onPopoutAll={vi.fn()}
-            onMarkRead={vi.fn()}
-            onClose={vi.fn()}
-          />
-        </TooltipProvider>
-      )
-    })
-  }
-
-  const shownCard = (): string | null =>
-    container
-      .querySelector('[data-agent-hub-attention-card]')
-      ?.getAttribute('data-agent-hub-attention-card') ?? null
-
-  it('stays on the card being read when an older one sorts in ahead of it', () => {
-    render(waitingLists([[PANE_KEY_2, 5_000]]))
-    expect(shownCard()).toBe(PANE_KEY_2)
-
-    render(
-      waitingLists([
-        [PANE_KEY, 1_000],
-        [PANE_KEY_2, 5_000]
-      ])
-    )
-
-    expect(shownCard()).toBe(PANE_KEY_2)
-  })
-
-  it('moves to the card now in the same place once the shown one is answered', () => {
-    render(
-      waitingLists([
-        [PANE_KEY, 1_000],
-        [PANE_KEY_2, 5_000],
-        [PANE_KEY_3, 6_000]
-      ])
-    )
-    expect(shownCard()).toBe(PANE_KEY)
-
-    render(
-      waitingLists([
-        [PANE_KEY_2, 5_000],
-        [PANE_KEY_3, 6_000]
-      ])
-    )
-
-    expect(shownCard()).toBe(PANE_KEY_2)
-  })
-})

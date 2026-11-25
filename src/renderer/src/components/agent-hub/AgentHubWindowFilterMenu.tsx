@@ -1,5 +1,6 @@
 import { ListFilter } from 'lucide-react'
 import {
+  DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -16,6 +17,14 @@ import type { AgentHubHostFilter } from './use-agent-hub-host-filter'
 
 const ALL_HOSTS = '\u0000all-hosts'
 
+export type AgentHubRowToggles = {
+  unreadOnly: boolean
+  botStartedOnly: boolean
+  /** Offered only while bots are on. */
+  botsAvailable: boolean
+  onChange: (patch: { unreadOnly?: boolean; botStartedOnly?: boolean }) => void
+}
+
 /**
  * Narrows the list to terminals open in a window, minimized to a chip, or in neither, and to
  * one host when the terminals span several.
@@ -24,16 +33,22 @@ export function AgentHubWindowFilterMenu({
   filter,
   onFilterChange,
   host,
+  toggles,
   onClosed
 }: {
   filter: AgentHubWindowFilter
   onFilterChange: (filter: AgentHubWindowFilter) => void
   host?: Pick<AgentHubHostFilter, 'value' | 'options' | 'onChange'>
+  toggles?: AgentHubRowToggles
   onClosed: () => void
 }): React.JSX.Element {
   const hostLabel = host?.options.find((option) => option.id === host.value)?.label
   const parts = [
     ...(filter === 'any' ? [] : [agentHubWindowFilterOption(filter).label()]),
+    ...(toggles?.unreadOnly ? [translate('agentHub.filter.unreadOnly', 'Unread only')] : []),
+    ...(toggles?.botStartedOnly
+      ? [translate('agentHub.filter.botStarted', 'Started by a bot')]
+      : []),
     ...(hostLabel ? [hostLabel] : [])
   ]
   return (
@@ -67,6 +82,25 @@ export function AgentHubWindowFilterMenu({
           </DropdownMenuRadioItem>
         ))}
       </DropdownMenuRadioGroup>
+      {toggles ? (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuCheckboxItem
+            checked={toggles.unreadOnly}
+            onCheckedChange={(checked) => toggles.onChange({ unreadOnly: checked === true })}
+          >
+            {translate('agentHub.filter.unreadOnly', 'Unread only')}
+          </DropdownMenuCheckboxItem>
+          {toggles.botsAvailable ? (
+            <DropdownMenuCheckboxItem
+              checked={toggles.botStartedOnly}
+              onCheckedChange={(checked) => toggles.onChange({ botStartedOnly: checked === true })}
+            >
+              {translate('agentHub.filter.botStarted', 'Started by a bot')}
+            </DropdownMenuCheckboxItem>
+          ) : null}
+        </>
+      ) : null}
       {host && host.options.length > 0 ? (
         <>
           <DropdownMenuSeparator />

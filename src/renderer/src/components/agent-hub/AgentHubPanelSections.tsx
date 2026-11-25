@@ -1,10 +1,10 @@
 import type { Ref } from 'react'
-import { CheckCheck, ChevronLeft, ChevronRight, PictureInPicture2 } from 'lucide-react'
+import { CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import { translate } from '@/i18n/i18n'
 import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
-import { HubChip, HubCrumb } from './AgentHubInlineLabels'
+import { HubCrumb } from './AgentHubInlineLabels'
 import { HubSection } from './AgentHubSectionHeader'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubRequestCard } from './AgentHubRequestCard'
@@ -13,17 +13,10 @@ import { AgentHubBotNeedsSection, useAgentHubBotNeedsShown } from './AgentHubBot
 import { agentHubInboxCards, type AgentHubInboxCard } from './agent-hub-inbox-cards'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
-import { AgentHubChildGroup } from './AgentHubChildGroup'
 import { AgentHubRow } from './AgentHubRow'
 import { agentHubThreadCardKey } from './agent-hub-answered-cards'
 import { closeAgentHubAgent } from './agent-hub-close-agent'
-import {
-  agentHubStateSince,
-  agentHubToolName,
-  agentHubTurnSince,
-  type AgentHubLists
-} from './agent-hub-lists'
-import { activeAgentHubChildren, type AgentHubLineage } from './agent-hub-lineage'
+import { agentHubStateSince, type AgentHubLists } from './agent-hub-lists'
 import { agentHubMessageSummary } from './agent-hub-message-summary'
 import {
   paneTargetFromThread,
@@ -242,125 +235,4 @@ export function AgentHubInboxBody({
 
 function closeTarget(thread: AgentPaneThread): AgentHubPaneTarget {
   return paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle)
-}
-
-/** A working agent, then the workers and subagents it still has at work. */
-function RunningRow({
-  thread,
-  now,
-  lineage,
-  expandedKeys,
-  actions
-}: {
-  thread: AgentPaneThread
-  now: number
-  lineage: AgentHubLineage
-  expandedKeys: ReadonlySet<string>
-  actions: AgentHubThreadActions
-}): React.JSX.Element {
-  const tool = agentHubToolName(thread)
-  const childAgents = activeAgentHubChildren(lineage.childrenOf(thread.paneKey))
-  return (
-    <>
-      <AgentHubRow
-        kind="work"
-        agentType={thread.agentType}
-        title={activityThreadRowCopy(thread).taskTitle}
-        subtitle={<HubCrumb location={actions.locationOf(thread)} />}
-        chips={tool ? <HubChip>{tool}</HubChip> : null}
-        time={formatShortTimeAgo(agentHubTurnSince(thread), now)}
-        selected={actions.isSelected(thread)}
-        worktreeId={thread.worktree.id}
-        mirrorKey={thread.paneKey}
-        mirrorTarget={closeTarget(thread)}
-        onOpen={() => actions.onOpen(thread)}
-        onPopout={() => actions.onPopout(thread)}
-        onJump={() => actions.onJump(thread)}
-        onClose={() => closeAgentHubAgent(closeTarget(thread), 'work')}
-      />
-      <AgentHubChildGroup
-        parentKey={thread.paneKey}
-        childAgents={childAgents}
-        expanded={expandedKeys.has(thread.paneKey)}
-        now={now}
-        onOpenParent={() => actions.onOpen(thread)}
-      >
-        {childAgents.workers.map((worker) => (
-          <RunningRow
-            key={worker.paneKey}
-            thread={worker}
-            now={now}
-            lineage={lineage}
-            expandedKeys={expandedKeys}
-            actions={actions}
-          />
-        ))}
-      </AgentHubChildGroup>
-    </>
-  )
-}
-
-export function AgentHubRunningBody({
-  working,
-  nestedWorking,
-  now,
-  lineage,
-  expandedKeys,
-  actions,
-  onPopoutAll
-}: {
-  working: AgentPaneThread[]
-  /** Workers folded under the rows. */
-  nestedWorking: number
-  now: number
-  lineage: AgentHubLineage
-  expandedKeys: ReadonlySet<string>
-  actions: AgentHubThreadActions
-  /** Opens every listed agent's mirror at once. */
-  onPopoutAll: () => void
-}): React.JSX.Element {
-  if (working.length === 0) {
-    return (
-      <div className="flex flex-col items-center px-2.5 pt-5.5 pb-4.5 text-center">
-        <b className="text-[13px] font-medium text-foreground/85">
-          {translate('agentHub.running.empty', 'No agent is working right now')}
-        </b>
-      </div>
-    )
-  }
-  return (
-    <>
-      <HubSection
-        label={translate('agentHub.running.working', 'Working')}
-        count={working.length}
-        nested={nestedWorking}
-        action={
-          <>
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={onPopoutAll}
-              className="mr-2 flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-            >
-              <PictureInPicture2 aria-hidden className="size-3" />
-              {translate('agentHub.running.popOutAll', 'Pop out all')}
-            </button>
-            <span className="text-[11px] font-medium text-muted-foreground/70">
-              {translate('agentHub.running.longestFirst', 'longest first')}
-            </span>
-          </>
-        }
-      />
-      {working.map((thread) => (
-        <RunningRow
-          key={thread.paneKey}
-          thread={thread}
-          now={now}
-          lineage={lineage}
-          expandedKeys={expandedKeys}
-          actions={actions}
-        />
-      ))}
-    </>
-  )
 }

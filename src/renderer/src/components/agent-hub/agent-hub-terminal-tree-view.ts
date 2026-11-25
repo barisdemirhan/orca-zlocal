@@ -1,4 +1,5 @@
 import { AGENT_HUB_SLEEPING_GROUP } from './agent-hub-sleeping-groups'
+import { AGENT_HUB_BOTS_GROUP } from './agent-hub-terminal-tree'
 import {
   countRows,
   type AgentHubGroupNode,
@@ -18,6 +19,7 @@ function rowSearchText(
     workspace.workspaceLabel ?? '',
     // A worker nested under a dispatcher elsewhere still matches its own project and branch.
     row.repo?.displayName ?? '',
+    row.bot?.bot.name ?? '',
     row.worktree.displayName || row.worktree.branch || '',
     row.thread ? row.thread.agentType : 'shell'
   ]
@@ -100,23 +102,29 @@ export function filterAgentHubTerminalTreeRows(
 export function isAgentHubTreeNarrowed(
   query: string,
   windowFilter: string = 'any',
-  host: string | null = null
+  host: string | null = null,
+  rowToggles = false
 ): boolean {
-  return query.trim() !== '' || windowFilter !== 'any' || host !== null
+  return query.trim() !== '' || windowFilter !== 'any' || host !== null || rowToggles
 }
 
-/** A group starts collapsed when it holds only shells; the user's toggle wins after that. */
+/**
+ * A group starts collapsed when it holds only shells, when it is the bots' chats, or (with idle
+ * agents folded) when it is the sleeping agents; the user's toggle wins after that.
+ */
 export function isAgentHubGroupCollapsed(
   group: AgentHubGroupNode,
   overrides: ReadonlyMap<string, boolean>,
-  narrowed: boolean
+  narrowed: boolean,
+  foldSleeping = false
 ): boolean {
   if (narrowed) {
     return false
   }
   return (
     overrides.get(group.key) ??
-    (group.key !== AGENT_HUB_SLEEPING_GROUP && group.agentRowCount === 0)
+    (group.key === AGENT_HUB_BOTS_GROUP ||
+      (group.key === AGENT_HUB_SLEEPING_GROUP ? foldSleeping : group.agentRowCount === 0))
   )
 }
 
@@ -134,14 +142,15 @@ export function visibleAgentHubTreeRows(
   groups: readonly AgentHubGroupNode[],
   overrides: ReadonlyMap<string, boolean>,
   narrowed: boolean,
-  expandedKeys: ReadonlySet<string> = new Set()
+  expandedKeys: ReadonlySet<string> = new Set(),
+  foldSleeping = false
 ): AgentHubTerminalRow[] {
   const withChildren = (row: AgentHubTerminalRow): AgentHubTerminalRow[] =>
     isAgentHubRowExpanded(row.key, expandedKeys, narrowed)
       ? [row, ...row.children.flatMap(withChildren)]
       : [row]
   return groups.flatMap((group) =>
-    isAgentHubGroupCollapsed(group, overrides, narrowed)
+    isAgentHubGroupCollapsed(group, overrides, narrowed, foldSleeping)
       ? []
       : group.workspaces.flatMap((workspace) => workspace.rows.flatMap(withChildren))
   )

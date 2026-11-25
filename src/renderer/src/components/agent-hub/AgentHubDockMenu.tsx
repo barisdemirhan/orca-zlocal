@@ -1,5 +1,5 @@
 import { AgentHubActionTooltip } from './AgentHubShortcut'
-import { Bell, BellOff, Ellipsis, Keyboard, PanelBottom, Settings } from 'lucide-react'
+import { Bell, BellOff, Bot, Ellipsis, Keyboard, PanelBottom, Settings } from 'lucide-react'
 import { agentHubShortcutsLabel } from './AgentHubShortcutsDialog'
 import { openAgentHubShortcuts } from './agent-hub-shortcuts-dialog'
 import { useAppStore } from '@/store'
@@ -20,6 +20,10 @@ import {
 import { translate } from '@/i18n/i18n'
 import type { AgentHubDockEdge, AgentHubDockSize } from '../../../../shared/agent-hub-settings'
 import { AgentHubAlertMuteItems } from './AgentHubAlertMuteItems'
+import {
+  muteAgentHubBotAlertsUntil,
+  useAgentHubBotAlertsMutedNow
+} from './agent-hub-bot-alerts-mute'
 import { agentHubDockPopoverSide } from './agent-hub-dock-geometry'
 
 const EDGES: readonly AgentHubDockEdge[] = ['bottom', 'top', 'left', 'right']
@@ -66,6 +70,7 @@ export function AgentHubDockMenu({
   const updateSettings = useAppStore((s) => s.updateSettings)
   const openAgentHubSettings = useOpenAgentHubSettings()
   const side = agentHubDockPopoverSide(edge)
+  const botsMuted = useAgentHubBotAlertsMutedNow()
   return (
     <DropdownMenu modal={false} onOpenChange={onOpenChange}>
       <AgentHubActionTooltip label={translate('agentHub.dock.more', 'More')}>
@@ -97,6 +102,14 @@ export function AgentHubDockMenu({
             <AgentHubAlertMuteItems updateSettings={updateSettings} />
           </DropdownMenuSubContent>
         </DropdownMenuSub>
+        <DropdownMenuItem
+          onSelect={() => muteAgentHubBotAlertsUntil(botsMuted ? null : Date.now() + 60 * 60_000)}
+        >
+          <Bot />
+          {botsMuted
+            ? translate('agentHub.dock.unmuteBots', 'Turn bot alerts back on')
+            : translate('agentHub.dock.muteBots', 'Mute bots only (1 hour)')}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>{translate('agentHub.dock.position', 'Position')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup

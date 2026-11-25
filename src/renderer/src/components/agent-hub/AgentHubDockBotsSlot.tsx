@@ -1,7 +1,6 @@
 import { Bot as BotIcon } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useListedBots } from '@/lib/use-listed-bots'
-import { usePublishedBotsNeedsYou } from '../bots/bot-needs-you-published'
 import { DockButton, DOCK_COUNT_BUTTON } from './AgentHubDockParts'
 import { useAgentHubBotsActive } from './agent-hub-bot-identity'
 import type { AgentHubTab } from './agent-hub-keys'
@@ -9,14 +8,15 @@ import type { AgentHubTab } from './agent-hub-keys'
 /** The dock's robot slot: how many bots there are and, in orange, how many wait on the owner. */
 export function AgentHubDockBotsSlot({
   side,
+  needsYou,
   onOpenTab
 }: {
   side: 'top' | 'bottom' | 'left' | 'right'
+  needsYou: number
   onOpenTab: (tab: AgentHubTab) => void
 }): React.JSX.Element | null {
   const active = useAgentHubBotsActive()
   const bots = useListedBots(active)
-  const needsYou = usePublishedBotsNeedsYou(bots)
   if (!active || bots.length === 0) {
     return null
   }

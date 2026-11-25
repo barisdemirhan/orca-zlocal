@@ -7,6 +7,7 @@ import { AgentHubPanel, type AgentHubOpenRequest } from './AgentHubPanel'
 import type { AgentHubPopoverOffsets } from './use-agent-hub-canvas-welcome'
 import type { AgentHubTab } from './agent-hub-keys'
 import type { AgentHubLineage } from './agent-hub-lineage'
+import type { AgentHubInboxModel } from './agent-hub-inbox-model'
 import type { AgentHubLists } from './agent-hub-lists'
 import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
@@ -18,6 +19,7 @@ export type AgentHubPopoverRequest = { tab: AgentHubTab; paneKey: string | null;
 
 type AgentHubPopoverBodyProps = {
   lists: AgentHubLists
+  inbox: AgentHubInboxModel
   lineage: AgentHubLineage
   threads: readonly AgentPaneThread[]
   includeShells: boolean
@@ -36,6 +38,7 @@ type AgentHubPopoverBodyProps = {
 /** Mounted only while the popover is open: the tree subscribes to every tab write. */
 function AgentHubPopoverBody({
   lists,
+  inbox,
   lineage,
   threads,
   includeShells,
@@ -61,6 +64,7 @@ function AgentHubPopoverBody({
       // Why the seq key: a dock button or alert reopens on its own tab and card.
       key={request.seq}
       lists={lists}
+      inbox={inbox}
       lineage={lineage}
       tree={tree}
       treeOrder={treeOrder}

@@ -1,13 +1,20 @@
-import { useAgentHubSortedTree } from './use-agent-hub-sorted-tree'
+import { useNearestAgentHubSelection } from './agent-hub-nearest-row'
 import { registerAgentHubSelectedTarget } from './agent-hub-active-target'
-import { AgentHubShortcutsButton } from './AgentHubShortcutsDialog'
-import { AgentHubSettingsButton } from './AgentHubSettingsButton'
+import { AgentHubPanelTerminalList } from './AgentHubPanelTerminalList'
+import { useAgentHubPanelTerminalList } from './use-agent-hub-panel-terminal-list'
+import { AgentHubInboxList } from './AgentHubInboxList'
+import type { AgentHubInboxItem, AgentHubInboxModel } from './agent-hub-inbox-model'
 import {
-  agentHubInboxRequests,
-  agentHubAwayAnswerCount,
-  useAgentHubRequests
-} from './agent-hub-requests-store'
-import { agentHubInboxCards } from './agent-hub-inbox-cards'
+  resetAgentHubPanelListState,
+  updateAgentHubPanelListState,
+  useAgentHubPanelListState
+} from './agent-hub-panel-list-state'
+import { useAgentHubInboxView } from './use-agent-hub-inbox-view'
+import { useAgentHubSurfaceSetting } from './use-agent-hub-surface-setting'
+import { finishedAgentHubPaneKeys, laterAgentHubInboxEntry } from './agent-hub-inbox-later'
+import { AgentHubInboxSubHeader } from './AgentHubInboxSubHeader'
+import { openBotSettingsPage } from '../bots/bot-settings-open'
+import { mirrorBotChat } from './agent-hub-bot-mirror'
 import {
   agentHubRequestPresentation,
   type AgentHubRequestPresentation
@@ -15,26 +22,24 @@ import {
 import { useAppStore } from '@/store'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import {
+  rowItem,
+  threadItem,
+  threadTarget,
+  useAgentHubPanelItems,
+  useScrollSelectedAgentHubRow,
+  type HubItem
+} from './use-agent-hub-panel-items'
 import { useNow } from '@/lib/window-activity/use-now'
 import { isEditableTarget } from '@/lib/text-input/focus/editable-target'
-import { translate } from '@/i18n/i18n'
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
-import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
-import { AgentHubTabSwitcher } from './AgentHubTabSwitcher'
-import { HubNestedCount } from './AgentHubSectionHeader'
-import type { AgentHubCardControl } from './AgentHubAttentionCard'
-import { useAgentHubBotNeedsTotal } from './agent-hub-bot-needs-store'
+import { AgentHubPanelHeader } from './AgentHubPanelHeader'
 import { AgentHubBotsTab } from './AgentHubBotsTab'
 import { useAgentHubBotsTab } from './use-agent-hub-bots-tab'
 import { AgentHubPanelFooter, agentHubPopoutKeys } from './AgentHubPanelFooter'
-import {
-  AgentHubInboxBody,
-  AgentHubRunningBody,
-  type AgentHubThreadActions
-} from './AgentHubPanelSections'
-import { AgentHubTerminalTree } from './AgentHubTerminalTree'
+import type { AgentHubThreadActions } from './AgentHubPanelSections'
+import { AgentHubRunningBody } from './AgentHubRunningBody'
 import {
   moveAgentHubSelection,
   nextAgentHubTab,
@@ -42,29 +47,11 @@ import {
   type AgentHubTab
 } from './agent-hub-keys'
 import { useAgentHubExpandedChildren } from './agent-hub-child-expansion'
-import { visibleAgentHubRunningThreads, type AgentHubLineage } from './agent-hub-lineage'
-import {
-  agentHubThreadCardKey,
-  showAgentHubCardsAgain,
-  useAgentHubCardRecordVersion,
-  withoutDismissedAgentHubCards
-} from './agent-hub-answered-cards'
+import type { AgentHubLineage } from './agent-hub-lineage'
 import type { AgentHubLists } from './agent-hub-lists'
-import {
-  paneTargetFromTerminalRow,
-  paneTargetFromThread,
-  type AgentHubLocation,
-  type AgentHubPaneTarget
-} from './agent-hub-pane-target'
-import {
-  agentOnlyAgentHubTree,
-  type AgentHubGroupNode,
-  type AgentHubTerminalRow
-} from './agent-hub-terminal-tree'
-import { useHeldAgentHubTree } from './use-held-agent-hub-tree'
+import type { AgentHubLocation, AgentHubPaneTarget } from './agent-hub-pane-target'
+import type { AgentHubGroupNode } from './agent-hub-terminal-tree'
 import type { AgentHubTreeOrder } from './agent-hub-terminal-tree-sort'
-import { isAgentHubTreeNarrowed, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
-import type { AgentHubWindowFilter } from './agent-hub-window-filter'
 import { useAgentHubHostFilter } from './use-agent-hub-host-filter'
 
 export type AgentHubOpenRequest = {
@@ -72,22 +59,9 @@ export type AgentHubOpenRequest = {
   thread: AgentPaneThread | null
 }
 
-type HubItem = AgentHubOpenRequest & { key: string }
-
-function threadItem(thread: AgentPaneThread): HubItem {
-  return {
-    key: thread.paneKey,
-    thread,
-    target: paneTargetFromThread(thread, activityThreadRowCopy(thread).taskTitle)
-  }
-}
-
-function rowItem(row: AgentHubTerminalRow): HubItem {
-  return { key: row.key, thread: row.thread, target: paneTargetFromTerminalRow(row) }
-}
-
 export function AgentHubPanel({
   lists,
+  inbox,
   lineage,
   tree,
   treeOrder,
@@ -107,6 +81,8 @@ export function AgentHubPanel({
   requestPresentationOf
 }: {
   lists: AgentHubLists
+  /** The one computation behind the dock's counts and this panel's Inbox. */
+  inbox: AgentHubInboxModel
   lineage: AgentHubLineage
   tree: readonly AgentHubGroupNode[]
   /** How the Agents and All terminals lists are ordered. */
@@ -127,7 +103,7 @@ export function AgentHubPanel({
   initialTab?: AgentHubTab
   /** Reports the tab on show, so the dock can close the hub when it is clicked again. */
   onTabChange?: (tab: AgentHubTab) => void
-  /** Opens the Inbox on this waiting agent's card (an alert was clicked). */
+  /** Opens the Inbox on this waiting agent's row (an alert was clicked). */
   initialPaneKey?: string | null
   requestPresentationOf?: (
     host: string,
@@ -140,94 +116,65 @@ export function AgentHubPanel({
     requestPresentationOf ??
     ((host: string, request: AgentHubRequestBase) =>
       agentHubRequestPresentation(useAppStore.getState(), [], host, request, locationOf))
-  // Why a pane key: a card can sort in ahead of the one being read (an approval's grace ending),
-  // and a number key must still answer the card on screen. The index only places a replacement.
-  const [cardFocus, setCardFocus] = useState(() => ({
-    paneKey: initialPaneKey,
-    index: Math.max(
-      0,
-      lists.needsYou.findIndex((thread) => thread.paneKey === initialPaneKey)
-    )
-  }))
-  const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [query, setQuery] = useState('')
-  const [windowFilter, setWindowFilter] = useState<AgentHubWindowFilter>('any')
-  const hostFilter = useAgentHubHostFilter(tree, () => setSelectedIndex(-1))
-  const [collapseOverrides, setCollapseOverrides] = useState<ReadonlyMap<string, boolean>>(
-    () => new Map()
+  // Selection follows the row's identity, so a re-sorted list keeps the same row selected.
+  const [selectedRowKey, setSelectedRowKey] = useState<string | null>(null)
+  const clearSelection = (): void => setSelectedRowKey(null)
+  const rememberListState = useAgentHubSurfaceSetting('agentHubRememberListState')
+  const listState = useAgentHubPanelListState()
+  const { collapseOverrides } = listState
+  useEffect(
+    () => () => {
+      if (!rememberListState) {
+        resetAgentHubPanelListState()
+      }
+    },
+    [rememberListState]
   )
+  const hostFilter = useAgentHubHostFilter(tree, () => clearSelection())
   const searchRef = useRef<HTMLInputElement>(null)
-  const cardControlRef = useRef<AgentHubCardControl>(null)
   const expandedKeys = useAgentHubExpandedChildren()
   const now = useNow(30_000)
   const popoutKeys = agentHubPopoutKeys()
 
-  // Why: a card closed without an answer leaves the Inbox; its agent keeps waiting and counting.
-  useAgentHubCardRecordVersion()
-  const needsYou = withoutDismissedAgentHubCards(lists.needsYou, 'inbox')
-  const requests = useAgentHubRequests()
-  const requestCards = agentHubInboxRequests(requests)
-  const cards = agentHubInboxCards(needsYou, requestCards)
-  const awayCount = agentHubAwayAnswerCount(requests)
-  const botNeedsYou = useAgentHubBotNeedsTotal()
-  const hiddenCards = lists.needsYou.length - needsYou.length
-  const focusedCardIndex =
-    cardFocus.paneKey === null ? -1 : cards.findIndex((card) => card.key === cardFocus.paneKey)
-  const activeCardIndex =
-    focusedCardIndex >= 0
-      ? focusedCardIndex
-      : Math.min(cardFocus.index, Math.max(0, cards.length - 1))
-  const card = cards[activeCardIndex] ?? null
-  const cardThread = card?.thread ?? null
-  if (card && card.key !== cardFocus.paneKey) {
-    setCardFocus({ paneKey: card.key, index: activeCardIndex })
-  }
-  const agentTree = useMemo(() => agentOnlyAgentHubTree(tree), [tree])
-  const agentCount = agentTree.reduce((total, group) => total + group.rowCount, 0)
+  const terminalList = useAgentHubPanelTerminalList(tab, tree, treeOrder, hostFilter)
+  const { filteredTree, narrowed, foldAgentsList } = terminalList
   const listsTerminals = tab === 'agents' || tab === 'all'
-  const sortedTree = useAgentHubSortedTree(
-    tab === 'agents' ? agentTree : tree,
-    query,
-    treeOrder,
-    windowFilter,
-    hostFilter.rowTest
-  )
-  const filteredTree = useHeldAgentHubTree(
-    sortedTree,
-    `${tab}\u0000${treeOrder.sortBy}\u0000${query}\u0000${windowFilter}\u0000${hostFilter.value}`
-  )
-  const narrowed = isAgentHubTreeNarrowed(query, windowFilter, hostFilter.value)
-  const items = useMemo<HubItem[]>(() => {
-    if (tab === 'bots') {
-      return []
-    }
-    if (tab === 'inbox') {
-      return lists.finished.map(threadItem)
-    }
-    if (tab === 'running') {
-      return visibleAgentHubRunningThreads(lists.working, lineage, expandedKeys).map(threadItem)
-    }
-    return visibleAgentHubTreeRows(filteredTree, collapseOverrides, narrowed, expandedKeys).map(
-      rowItem
-    )
-  }, [tab, lists, lineage, expandedKeys, filteredTree, collapseOverrides, narrowed])
-  const activeIndex = Math.min(selectedIndex, items.length - 1)
+  const items = useAgentHubPanelItems({
+    tab,
+    lists,
+    lineage,
+    expandedKeys,
+    filteredTree,
+    collapseOverrides,
+    narrowed,
+    foldAgentsList
+  })
+  const itemKeys = useMemo(() => items.map((item) => item.key), [items])
+  useNearestAgentHubSelection(itemKeys, selectedRowKey, setSelectedRowKey)
+  const activeIndex = items.findIndex((item) => item.key === selectedRowKey)
   const selectedKey = items[activeIndex]?.key ?? null
+  const inboxView = useAgentHubInboxView(inbox, rootRef, {
+    initialEntryId: initialPaneKey,
+    onLater: laterAgentHubInboxEntry,
+    onMarkRead: (entries) =>
+      onMarkRead(
+        entries.flatMap(({ payload }) =>
+          payload.type === 'finished' ? [payload.thread.paneKey] : []
+        )
+      ),
+    onOpenEntry: (entry, popout) => openInboxEntry(entry, popout),
+    onSearch: () => switchTab('agents')
+  })
   const popoutTarget =
-    items[activeIndex]?.target ??
-    (tab === 'inbox' && cardThread ? threadItem(cardThread).target : null)
+    items[activeIndex]?.target ?? (tab === 'inbox' ? threadTarget(inboxView.selectedThread) : null)
   useEffect(() => registerAgentHubSelectedTarget(popoutTarget), [popoutTarget])
 
-  useEffect(() => {
-    rootRef.current
-      ?.querySelector('[data-agent-hub-row][data-selected="true"]')
-      ?.scrollIntoView({ block: 'nearest' })
-  }, [selectedKey, rootRef])
+  useScrollSelectedAgentHubRow(rootRef, selectedKey)
 
   const switchTab = (next: AgentHubTab): void => {
     setTab(next)
     onTabChange?.(next)
-    setSelectedIndex(-1)
+    clearSelection()
     if (next === 'agents' || next === 'all') {
       requestAnimationFrame(() => searchRef.current?.focus())
     } else if (searchRef.current === document.activeElement) {
@@ -235,11 +182,12 @@ export function AgentHubPanel({
     }
   }
 
-  const pageCard = (delta: 1 | -1): void => {
-    if (cards.length > 0) {
-      const index = (activeCardIndex + delta + cards.length) % cards.length
-      setCardFocus({ paneKey: cards[index]?.key ?? null, index })
-    }
+  const openBots = (botKey: string | null): void => {
+    updateAgentHubPanelListState({
+      botsQuery: '',
+      ...(botKey ? { botsExpanded: new Set([botKey]) } : {})
+    })
+    switchTab('bots')
   }
 
   const openItem = (item: HubItem | null, open: (request: AgentHubOpenRequest) => void): void => {
@@ -255,6 +203,15 @@ export function AgentHubPanel({
     onPopout: (thread) => openItem(threadItem(thread), onPopout)
   }
 
+  const openInboxEntry = (entry: AgentHubInboxItem, popout: boolean): void => {
+    const { payload } = entry
+    if (payload.type === 'thread' || payload.type === 'finished') {
+      openItem(threadItem(payload.thread), popout ? onPopout : onJump)
+    } else if (payload.type === 'bot-item') {
+      void mirrorBotChat(payload.bot, payload.item.chat.id)
+    }
+  }
+
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
     const target = event.target instanceof HTMLElement ? event.target : null
     const action = resolveAgentHubKeyAction(event, {
@@ -263,9 +220,12 @@ export function AgentHubPanel({
       inSearch: target !== null && target === searchRef.current,
       onButton:
         target !== null && target !== event.currentTarget && target.closest('button') !== null,
-      hasCard: card !== null
+      hasCard: false
     })
-    if (!action) {
+    if (tab === 'inbox' && !isEditableTarget(event.target) && inboxView.onPanelKey(event)) {
+      return
+    }
+    if (!action || (tab === 'inbox' && action.type !== 'switchTab')) {
       return
     }
     switch (action.type) {
@@ -273,35 +233,25 @@ export function AgentHubPanel({
         switchTab(nextAgentHubTab(tab, action.direction, tabs))
         break
       case 'moveSelection':
-        setSelectedIndex(moveAgentHubSelection(activeIndex, action.delta, items.length))
-        break
-      case 'pageCard':
-        pageCard(action.delta)
+        setSelectedRowKey(
+          items[moveAgentHubSelection(activeIndex, action.delta, items.length)]?.key ?? null
+        )
         break
       case 'open': {
         const row = items[activeIndex]
         if (row) {
           openItem(row, action.popout ? onPopout : onJump)
-        } else if (tab === 'inbox' && cardThread) {
-          // The card's own Pop out: its mirror takes over and the hub closes.
-          openItem(threadItem(cardThread), action.popout ? onOpen : onJump)
         }
         break
       }
-      case 'answer':
-        if (!cardControlRef.current?.chooseOption(action.optionIndex)) {
-          return
-        }
-        break
     }
     event.preventDefault()
   }
 
   const counts: Record<AgentHubTab, number> = {
-    inbox:
-      lists.needsYou.length + requestCards.length + lists.finished.length + awayCount + botNeedsYou,
+    inbox: inbox.counts.inbox + lists.finished.length,
     running: lists.working.length,
-    agents: agentCount,
+    agents: terminalList.agentCount,
     all: terminalCount,
     bots: botCount
   }
@@ -311,39 +261,26 @@ export function AgentHubPanel({
       ref={rootRef}
       tabIndex={-1}
       onKeyDown={onKeyDown}
-      className="flex max-h-[min(640px,calc(100vh-96px))] min-h-0 flex-col outline-none"
+      className="flex max-h-[calc(100vh-96px)] min-h-0 flex-col outline-none"
     >
-      <div className="flex shrink-0 items-center gap-3 pt-3.5 pr-3.5 pb-2.5 pl-4.5">
-        <h2 className="shrink-0 text-sm font-semibold">{translate('agentHub.title', 'Agents')}</h2>
-        <AgentHubTabSwitcher
-          tabs={tabOptions}
-          value={tab}
-          onChange={switchTab}
-          askValue={
-            lists.needsYou.length + requestCards.length + botNeedsYou > 0 ? 'inbox' : undefined
-          }
-          counts={{
-            ...counts,
-            running: (
-              <>
-                {counts.running}
-                <HubNestedCount value={lists.nestedWorking} />
-              </>
-            )
-          }}
+      <AgentHubPanelHeader
+        tab={tab}
+        tabOptions={tabOptions}
+        counts={counts}
+        nestedWorking={lists.nestedWorking}
+        inbox={inbox}
+        side={listState.side}
+        onTab={switchTab}
+        onClose={onClose}
+      />
+      {tab === 'inbox' ? (
+        <AgentHubInboxSubHeader
+          botsActive={inbox.botsActive}
+          waiting={inbox.counts.inbox}
+          finishedKeys={finishedAgentHubPaneKeys(inbox)}
+          onMarkRead={onMarkRead}
         />
-        <AgentHubShortcutsButton />
-        <AgentHubSettingsButton onOpened={onClose} />
-        <button
-          type="button"
-          tabIndex={-1}
-          aria-label={translate('agentHub.close', 'Close (esc)')}
-          onClick={onClose}
-          className="grid size-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
-        >
-          <X className="size-4" />
-        </button>
-      </div>
+      ) : null}
       <div
         // Why keyed: each tab fades in fresh instead of swapping content in place.
         key={tab}
@@ -352,21 +289,27 @@ export function AgentHubPanel({
         className="min-h-0 flex-1 animate-in overflow-y-auto px-2.5 pb-2.5 duration-150 scrollbar-sleek fade-in-0 data-[tab=bots]:flex data-[tab=bots]:flex-col"
       >
         {tab === 'inbox' ? (
-          <AgentHubInboxBody
-            lists={{ ...lists, needsYou }}
-            hiddenCards={hiddenCards}
-            onShowHidden={() =>
-              showAgentHubCardsAgain(lists.needsYou.map(agentHubThreadCardKey), 'inbox')
-            }
-            cardIndex={activeCardIndex}
-            cards={cards}
-            requestPresentationOf={presentationOf}
-            onPage={pageCard}
-            now={now}
-            popoutKeys={popoutKeys}
-            cardControlRef={cardControlRef}
-            actions={threadActions}
-            onMarkRead={onMarkRead}
+          <AgentHubInboxList
+            model={inbox}
+            view={inboxView}
+            workingCount={lists.working.length}
+            context={{
+              now,
+              popoutKeys,
+              actions: threadActions,
+              presentationOf,
+              onMarkRead,
+              onLater: laterAgentHubInboxEntry,
+              onOpenEntry: openInboxEntry,
+              onOpenBotPage: (bot) => {
+                updateAgentHubPanelListState({ pendingBotPage: bot })
+                switchTab('bots')
+              },
+              onOpenBotSettings: (bot) => {
+                openBotSettingsPage(bot.id)
+                onClose()
+              }
+            }}
           />
         ) : null}
         {tab === 'running' ? (
@@ -382,32 +325,17 @@ export function AgentHubPanel({
         ) : null}
         {tab === 'bots' ? <AgentHubBotsTab onClose={onClose} /> : null}
         {listsTerminals ? (
-          <AgentHubTerminalTree
-            groups={filteredTree}
-            totalCount={tab === 'agents' ? agentCount : terminalCount}
-            query={query}
-            onQueryChange={(value) => {
-              setQuery(value)
-              setSelectedIndex(-1)
-            }}
+          <AgentHubPanelTerminalList
+            list={terminalList}
+            totalCount={tab === 'agents' ? terminalList.agentCount : terminalCount}
             searchRef={searchRef}
-            windowFilter={{
-              value: windowFilter,
-              onChange: (next) => {
-                setWindowFilter(next)
-                setSelectedIndex(-1)
-              },
-              host: hostFilter
-            }}
+            hostFilter={hostFilter}
+            botsAvailable={tabs.includes('bots')}
+            onOpenBots={openBots}
             sortBy={treeOrder.sortBy}
-            onSortChange={(sortBy) => {
-              onSortChange(sortBy)
-              setSelectedIndex(-1)
-            }}
-            collapseOverrides={collapseOverrides}
-            onToggleGroup={(group, collapsed) =>
-              setCollapseOverrides((current) => new Map(current).set(group.key, collapsed))
-            }
+            onSortChange={onSortChange}
+            onListChanged={clearSelection}
+            onMarkRead={onMarkRead}
             selectedKey={selectedKey}
             now={now}
             lineage={lineage}

@@ -7,13 +7,12 @@ import { AGENT_HUB_ORB_VOICE_COMMANDS } from './agent-hub-orb-voice-commands'
 import { AgentHubPaneSleepConfirmationHost } from './AgentHubPaneSleepConfirmation'
 import { useAgentHubOrbAwareness } from './use-agent-hub-orb-awareness'
 import { useNow } from '@/lib/window-activity/use-now'
-import { AgentHubShortcut } from './AgentHubShortcut'
-import { Popover, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover'
+import { Popover, PopoverAnchor } from '@/components/ui/popover'
 import { AgentHubShortcutsDialog } from './AgentHubShortcutsDialog'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAgentPaneThreads } from '../activity/threads/use-agent-pane-threads'
 import { activateWorkspacePaneTarget } from '../activity/thread-list/activity-thread-actions'
+import { useAgentHubParkedBots } from './agent-hub-bot-parked-store'
 import { AgentHubRootAlerts } from './AgentHubRootAlerts'
 import { AgentHubAnswerQueue } from './AgentHubAnswerQueue'
 import { AgentHubCanvas } from './AgentHubCanvas'
@@ -26,8 +25,9 @@ import { AgentHubBotWatchers } from './AgentHubBotWatchers'
 import { useAgentHubFocusedPaneOutline } from './use-agent-hub-focused-pane-outline'
 import { AgentHubMirrors } from './AgentHubMirrors'
 import type { AgentHubOpenRequest } from './AgentHubPanel'
+import { useAgentHubInboxModel } from './agent-hub-inbox-model'
 import { AgentHubPopoverContent, type AgentHubPopoverRequest } from './AgentHubPopover'
-import { AgentHubStatusTrigger } from './AgentHubStatusTrigger'
+import { AgentHubStatusBarButton } from './AgentHubStatusBarButton'
 import { clearAgentHubAlerts, useAgentHubAlertQueue } from './agent-hub-alert-queue'
 import { agentHubAlertsOutsideMirrors } from './agent-hub-alert-target'
 import {
@@ -68,6 +68,9 @@ import { closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAnchorTarget } from './use-anchor-binding'
 import { useAgentHubOrbPanelExclusion } from './agent-hub-orb-panel-exclusion'
 
+/** In the status bar a waiting bot bubble steps aside into its chip after this long without a hover. */
+const BOT_STATUS_BAR_PARK_MS = 8000
+
 export function AgentHubRoot(): React.JSX.Element {
   const preferences = useAgentHubPreferences()
   const [anchorRef, attachAnchor] = useAnchorTarget<HTMLElement>()
@@ -89,6 +92,8 @@ export function AgentHubRoot(): React.JSX.Element {
   useAgentHubOrbAwareness(threads, lists)
   const orb = useAgentHubOrbSurfaces(threads, lists, anchorRef, preferences, inSettings)
   const { ownsRequest } = orb
+  const inbox = useAgentHubInboxModel(orb.hubLists, ownsRequest, lineage)
+  const dockCounts = { ...orb.counts, needsYou: inbox.counts.dock.needsYou }
   useAgentHubAlerts(orb.hubLists, preferences)
   useAgentHubSessionRestore(preferences.restoreOnLaunch, preferences.canvas)
   const alerts = useAgentHubAlertQueue()
@@ -262,6 +267,7 @@ export function AgentHubRoot(): React.JSX.Element {
     closeHub: () => setOpen(false)
   })
   const hubAlerts = agentHubAlertsOutsideMirrors(alerts, { windows, chips })
+  const parkedBots = useAgentHubParkedBots()
   // Settings is its own page; the hub and its floating windows stay out of it.
   const dockHidden =
     inSettings ||
@@ -280,7 +286,8 @@ export function AgentHubRoot(): React.JSX.Element {
       centred={centred}
       anchorRef={anchorRef}
       restoreFocusRef={restoreFocusRef}
-      lists={lists}
+      lists={orb.hubLists}
+      inbox={inbox}
       lineage={lineage}
       threads={threads}
       includeShells={preferences.showShells}
@@ -319,7 +326,8 @@ export function AgentHubRoot(): React.JSX.Element {
                   ref={attachAnchor}
                   position={preferences.dockPosition}
                   size={preferences.dockSize}
-                  counts={orb.counts}
+                  counts={dockCounts}
+                  botAsks={inbox.counts.botAsks}
                   muted={muted}
                   onOpenTab={openHubTab}
                   onNextWaiting={jumpToNextWaiting}
@@ -343,31 +351,19 @@ export function AgentHubRoot(): React.JSX.Element {
             )
           )
         ) : inSettings ? null : (
-          <Tooltip delayDuration={150}>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                <AgentHubStatusTrigger
-                  ref={attachAnchor}
-                  counts={orb.counts}
-                  label={orb.label}
-                  open={open}
-                  orb={orb.statusButton}
-                />
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={6}>
-              <span className="flex items-center gap-2">
-                {translate('agentHub.title', 'Agents')}
-                <AgentHubShortcut actionId="agentHub.toggle" />
-              </span>
-            </TooltipContent>
-          </Tooltip>
+          <AgentHubStatusBarButton
+            ref={attachAnchor}
+            counts={dockCounts}
+            label={orb.label}
+            open={open}
+            orb={orb.statusButton}
+          />
         )}
         {content}
       </Popover>
       {orb.floatingButton}
       {orb.panel(requestPresentationOf)}
-      {hubAlerts.length > 0 && !orb.pillVisible && !open && !inSettings ? (
+      {(hubAlerts.length > 0 || parkedBots.size > 0) && !orb.pillVisible && !open && !inSettings ? (
         <AgentHubRootAlerts
           alerts={hubAlerts}
           anchorRef={chips.length > 0 ? trayRef : anchorRef}
@@ -377,6 +373,8 @@ export function AgentHubRoot(): React.JSX.Element {
           onOpenCard={(key) => openHub('inbox', key)}
           onOpenMirror={openMirror}
           onJump={jump}
+          onOpenInbox={() => openHub('inbox')}
+          parkAfterMs={docked ? null : BOT_STATUS_BAR_PARK_MS}
         />
       ) : null}
       {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}
