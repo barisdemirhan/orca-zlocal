@@ -10,11 +10,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/class-names'
 import { translate } from '@/i18n/i18n'
 import {
   NATIVE_CHAT_PERMISSION_MODE_ICONS,
   nativeChatPermissionModeLabel
 } from '../native-chat/session/options/controls/native-chat-permission-mode-labels'
+import {
+  AgentHubOrbMiniBotPane,
+  AgentHubOrbMiniTabRow,
+  type AgentHubOrbMiniTab
+} from './AgentHubOrbMiniTabs'
 import { AgentHubOrbHeaderAction } from './AgentHubOrbConversationHeader'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
@@ -22,6 +28,7 @@ import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbMiniWindowDrag } from './use-agent-hub-orb-mini-window-drag'
 import { useAgentHubOrbMiniWindowResize } from './use-agent-hub-orb-mini-window-resize'
 import { useAgentHubOrbPermissionMode } from './use-agent-hub-orb-permission-mode'
+import { useAgentHubOrbBot } from './use-agent-hub-orb-bot'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 import './agent-hub-orb-stage.css'
 
@@ -67,6 +74,9 @@ export function AgentHubOrbMiniWindow({
   const permission = useAgentHubOrbPermissionMode(sessionId)
   const PermissionIcon = permission ? NATIVE_CHAT_PERMISSION_MODE_ICONS[permission] : null
   const title = useAgentHubOrbName()
+  const bot = useAgentHubOrbBot()
+  const [selectedTab, setSelectedTab] = useState<AgentHubOrbMiniTab>('chat')
+  const tab = bot ? selectedTab : 'chat'
   const backLabel = translate('agentHub.orb.backToOrb', 'Back to Orb')
   const permissionLabel = permission ? nativeChatPermissionModeLabel(permission) : ''
   const moreLabel = translate('agentHub.orb.moreActions', 'More actions')
@@ -144,16 +154,28 @@ export function AgentHubOrbMiniWindow({
             <X />
           </AgentHubOrbHeaderAction>
         </header>
-        <div
-          ref={setAgentHubOrbRequestDestination}
-          data-agent-hub-orb-request-host
-          className="agent-hub-orb-request-host scrollbar-sleek"
-          hidden={!requestVisible}
-        >
-          {request}
+        {bot ? (
+          <AgentHubOrbMiniTabRow
+            bot={bot}
+            tab={tab}
+            chatWaiting={requestVisible}
+            onSelect={setSelectedTab}
+          />
+        ) : null}
+        {/* Retained: hidden, not unmounted, so the chat and its request host survive other tabs. */}
+        <div className={cn('min-h-0 flex-1 flex-col', tab === 'chat' ? 'flex' : 'hidden')}>
+          <div
+            ref={setAgentHubOrbRequestDestination}
+            data-agent-hub-orb-request-host
+            className="agent-hub-orb-request-host scrollbar-sleek"
+            hidden={!requestVisible}
+          >
+            {request}
+          </div>
+          {memory}
+          {children}
         </div>
-        {memory}
-        {children}
+        {bot && tab !== 'chat' ? <AgentHubOrbMiniBotPane bot={bot} tab={tab} /> : null}
       </section>
       <div
         aria-hidden
