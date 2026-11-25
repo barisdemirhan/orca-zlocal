@@ -27,7 +27,6 @@ import {
   type StructuredPromptItem
 } from '../../../../../../shared/agent-session/view/structured-agent-session-message-projection'
 import { useStructuredAgentSessionMessages } from '../../conversation/projection/use-structured-agent-session-messages'
-import { useAgentSessionPluginToasts } from './use-agent-session-plugin-toasts'
 import { useAgentSessionPluginSurfaces } from './use-agent-session-plugin-surfaces'
 import { useStructuredAgentSessionTransportState } from './use-structured-agent-session-transport-state'
 import {
@@ -88,7 +87,6 @@ export function useStructuredAgentSession(args: StructuredAgentSessionViewArgs) 
   const commandPending = useRef(false)
   const legacyLaunchStop = useStructuredLegacyLaunchStop(sessionId)
   const transportState = useStructuredAgentSessionTransportState(state, transportEnabled)
-  useAgentSessionPluginToasts(transportEnabled ? state.plugins?.toasts : undefined)
   const pluginSurfaces = useAgentSessionPluginSurfaces(target, sessionId, state, transportEnabled)
   const journalItems = transportState.journalItems
   const {

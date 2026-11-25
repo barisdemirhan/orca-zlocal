@@ -10,6 +10,7 @@ import type {
   AgentSessionPluginUiAction,
   AgentSessionPluginUiPress
 } from '../../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
+import { useAgentSessionPluginToasts } from './use-agent-session-plugin-toasts'
 import type { AgentSessionPluginSurfaceState } from '../../../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-state'
 
 export type NativeChatPluginSurfaces = {
@@ -26,7 +27,7 @@ export type NativeChatPluginSurfaces = {
   callPluginUiClient: PluginClientTransport
 }
 
-/** What mods drew for this chat, and the way presses and the chat's size reach the host that runs the session. */
+/** What mods drew for this chat (its toasts shown as they come), and the way presses and the chat's size reach the host that runs the session. */
 export function useAgentSessionPluginSurfaces(
   target: RuntimeClientTarget,
   sessionId: string,
@@ -56,6 +57,7 @@ export function useAgentSessionPluginSurfaces(
     [target, sessionId]
   )
   const shown = transportEnabled ? plugins : undefined
+  useAgentSessionPluginToasts(shown?.toasts)
   return useMemo(
     () => ({
       pluginStatuses: shown?.statuses,
