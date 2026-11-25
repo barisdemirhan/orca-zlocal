@@ -2,6 +2,7 @@ import type { PersistedUIState } from './orca-profiles/persisted-ui-state-types'
 import type { StructuredAgentId } from './agent-session/lifecycle/provider-handles/agent-session-provider-handle'
 import type { AgentHubOrbTint, AgentHubOrbTone } from './agent-hub-orb-identity'
 import type { AgentHubOrbMotion } from './agent-hub-orb-motion-setting'
+import type { AgentHubSurfaceSettings } from './agent-hub-surface-settings'
 
 /** Where the Agent Hub lives: a draggable dock on a window edge, or a status-bar item. */
 export type AgentHubPlacement = 'dock' | 'status-bar'
@@ -35,7 +36,7 @@ export type AgentHubFloatingLayout = 'grid' | 'columns' | 'rows'
 export type AgentHubTerminalSort = PersistedUIState['sortBy']
 
 /** Agent Hub's settings, kept out of global-settings-types.ts (at its line budget). */
-export type AgentHubSettings = {
+export type AgentHubSettings = AgentHubSurfaceSettings & {
   /** Experimental: Agent Hub — every agent and terminal in one popover, with inline answers. */
   experimentalAgentHub?: boolean
   /** Agent requests are consumed only while this permission and the experiment are enabled. */

@@ -1,5 +1,6 @@
 import type { GlobalSettings } from './settings/global-settings-types'
 import { DEFAULT_AGENT_HUB_DOCK_POSITION } from './agent-hub-settings'
+import { AGENT_HUB_SURFACE_DEFAULTS } from './agent-hub-surface-settings'
 
 type AgentHubSettingKey = Extract<
   keyof GlobalSettings,
@@ -7,6 +8,7 @@ type AgentHubSettingKey = Extract<
 >
 
 export const AGENT_HUB_DEFAULT_SETTINGS: Pick<GlobalSettings, AgentHubSettingKey> = {
+  ...AGENT_HUB_SURFACE_DEFAULTS,
   experimentalAgentHub: false,
   agentHubAgentControl: true,
   agentHubOrbAgent: 'claude',
