@@ -2,7 +2,10 @@
 // names its bot and is taken once, by that bot's panel, however often panels remount.
 import { useEffect, useSyncExternalStore } from 'react'
 import { botRefKey, type BotRef } from '@/lib/bot-hosts'
+import { openBotHomeTab } from '@/lib/bot-catalog'
 import { useAppStore } from '@/store'
+import { closeAgentHubCanvas } from '../../agent-hub/agent-hub-canvas-store'
+import type { Bot } from '../../../../../shared/bot-types'
 
 type Request = { bot: string; uid: string }
 
@@ -36,4 +39,13 @@ export function useBotItemOpenRequest(bot: BotRef, open: (uid: string) => void):
       open(pending.uid)
     }
   }, [pending, key, open])
+}
+
+/** From outside the bot's workspace (the hub, a mirror): its Home opens first, so the panel is on screen. */
+export async function openBotItemInHome(bot: Bot, uid: string): Promise<void> {
+  if (await openBotHomeTab(bot)) {
+    // An open canvas snaps the right sidebar back, so the panel would never show.
+    closeAgentHubCanvas()
+    openBotItem(bot, uid)
+  }
 }

@@ -68,11 +68,11 @@ import { dispatchWasWithdrawn } from '../../../../shared/agent-session/requests/
 import { useNativeChatHostOutage } from '@/components/native-chat/host-access/use-native-chat-host-outage'
 import { useNativeChatHostOutageNotice } from '@/components/native-chat/host-access/use-native-chat-host-outage-notice'
 import { useBotForWorkspace } from '@/components/bots/bot-workspace'
-import { BotServerOutageCard } from '@/components/bots/BotServerOutageCard'
 import { useNativeChatHostSendGate } from '@/components/native-chat/host-access/use-native-chat-host-send-gate'
 import { useStructuredAgentSessionStartFailureFacts } from '@/components/native-chat/messages/notices/use-structured-agent-session-start-failure-facts'
 import { NativeChatHostSetupContext } from '@/components/native-chat/host-access/native-chat-host-setup'
 import * as Orb from './NativeChatStructuredOrbSlots'
+import { NativeChatBotCards } from './bot-items/NativeChatBotCards'
 import type { NativeChatComposerHandle } from './composer/native-chat-composer-types'
 import {
   NativeChatWorkerApprovalTimeline,
@@ -173,13 +173,13 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   const promptsUnanswerable = Orb.usePromptsUnanswerable(controller.prompts)
   // A bot's page whose server is down keeps its last read; the recovery card stands in for the composer.
   const pageBot = useBotForWorkspace(ownerWorktreeId ?? null)
-  const botServerDown = pageBot !== null && hostOutage !== null && hostOutage.kind !== 'stopped'
+  const botOutage = pageBot !== null && hostOutage?.kind !== 'stopped' ? hostOutage : null
   const subagents = useStructuredNativeChatSubagents({ ...props, paneKey, controller })
   // A subagent's view takes the composer's place; the main agent's prompts still show.
   const composerShown =
     (prompt === null || promptsUnanswerable) &&
     readFailure?.final !== true &&
-    !botServerDown &&
+    !botOutage &&
     subagents.openId === null
   const slotNoticesHidden = composerShown || subagents.openId !== null
   // An owned prompt keeps its card; otherwise a missing program leaves the composer disabled.
@@ -251,7 +251,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
     composerError,
     install,
     hostSendGate,
-    hostNotice: botServerDown ? null : hostNotice,
+    hostNotice: botOutage ? null : hostNotice,
     kickoffSignIn: bot.signInOwed
   })
   return (
@@ -376,9 +376,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
                   focusComposer={focusComposer}
                   editAttachTo={{ terminalTabId: props.tabId, agent: props.agent, transport }}
                 />
-                {botServerDown && hostOutage ? (
-                  <BotServerOutageCard key={hostOutage.environmentId} outage={hostOutage} />
-                ) : null}
+                <NativeChatBotCards bot={chatBot} sessionId={props.sessionId} outage={botOutage} />
                 {composerShown && (
                   <NativeChatInstallSlot
                     install={install}

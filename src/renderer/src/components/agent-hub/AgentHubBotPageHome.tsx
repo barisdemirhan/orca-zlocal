@@ -19,7 +19,7 @@ function Section({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <section className="flex flex-col gap-0.5">
+    <section className="flex shrink-0 flex-col gap-0.5">
       <h3 className="px-2 pt-2 pb-0.5 text-xs font-semibold text-foreground">{title}</h3>
       {children}
     </section>
@@ -33,7 +33,8 @@ export function AgentHubBotPageHome({ bot }: { bot: Bot }): React.JSX.Element {
   const clock = useNow(60_000)
   const rows = useMemo(() => botAutomationCardRows(bot, activity, clock), [bot, activity, clock])
   return (
-    <div className="flex flex-col pb-2">
+    // Never shrinks: the page scrolls it above the composer, so Suggestions' buttons stay reachable.
+    <div className="flex shrink-0 flex-col pb-3">
       <Section title={translate('agentHub.bots.page.needsYou', 'Needs you')}>
         {needs && needs.count > 0 ? (
           <BotNeedsBlock needs={needs} part="needs" />
@@ -43,7 +44,7 @@ export function AgentHubBotPageHome({ bot }: { bot: Bot }): React.JSX.Element {
           </p>
         )}
       </Section>
-      <div className="px-2">
+      <div className="shrink-0 px-2">
         <BotUpcomingSection
           bot={bot}
           rows={rows}

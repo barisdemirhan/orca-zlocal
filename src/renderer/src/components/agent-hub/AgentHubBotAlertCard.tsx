@@ -2,17 +2,16 @@ import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { openBotHomeTab } from '@/lib/bot-catalog'
-import { HubOptionList } from './AgentHubAnswerBody'
+import { openBotItemInHome } from '../bots/items/bot-item-open'
+import { AgentHubBotAskView } from './AgentHubBotAskView'
 import { AgentHubBotAvatar } from './AgentHubBotMark'
 import { AGENT_HUB_ANSWERED_VISIBLE_MS } from './use-agent-hub-quick-answer'
-import { agentHubBotAskLine, useAgentHubBotAsk } from './use-agent-hub-bot-ask'
+import { useAgentHubBotAskSteps } from './use-agent-hub-bot-ask-steps'
 import type { AgentHubBotAlert } from './agent-hub-alerts'
 
 const ALERT_VISIBLE_MS = 7000
-const QUICK_OPTION_LIMIT = 4
 
-/** A bot's new ask as a bubble: who, its number and question, and chips to answer in place. */
+/** A bot's new ask as a bubble: who and its number, then its open question to answer in place. */
 export function AgentHubBotAlertCard({
   alert,
   onDismiss
@@ -21,7 +20,7 @@ export function AgentHubBotAlertCard({
   onDismiss: (id: string) => void
 }): React.JSX.Element {
   const { bot, item } = alert.bot
-  const { options, chosen, choose } = useAgentHubBotAsk(bot, item)
+  const ask = useAgentHubBotAskSteps(bot, item)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dismissRef = useRef(() => onDismiss(alert.id))
   dismissRef.current = () => onDismiss(alert.id)
@@ -41,6 +40,15 @@ export function AgentHubBotAlertCard({
     timerRef.current = timer
     return () => clearTimeout(timer)
   }, [alert.id])
+  const answered = ask.phase === 'answered'
+  useEffect(() => {
+    if (answered) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+      timerRef.current = setTimeout(() => dismissRef.current(), AGENT_HUB_ANSWERED_VISIBLE_MS)
+    }
+  }, [answered])
   return (
     <div
       role="status"
@@ -48,14 +56,25 @@ export function AgentHubBotAlertCard({
       data-agent-hub-bot-alert={alert.bot.botKey}
       className="w-80 shrink-0 animate-in rounded-xl border border-foreground/[0.12] bg-popover text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95"
       onMouseEnter={stopTimer}
-      onMouseLeave={() => startTimer()}
+      onMouseLeave={(event) => {
+        if (!event.currentTarget.contains(document.activeElement)) {
+          startTimer()
+        }
+      }}
+      // Typing or choosing inside keeps the bubble up, as hovering does.
+      onFocus={stopTimer}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          startTimer()
+        }
+      }}
     >
-      <div className="relative px-3 py-2.5">
+      <div className="relative flex flex-col gap-2 px-3 py-2.5">
         <button
           type="button"
           className="block w-full text-left"
           onClick={() => {
-            void openBotHomeTab(bot)
+            void openBotItemInHome(bot, item.uid)
             onDismiss(alert.id)
           }}
         >
@@ -68,26 +87,8 @@ export function AgentHubBotAlertCard({
               <span className="font-mono text-[11px] text-agent-question-text">#{item.number}</span>
             </span>
           </span>
-          <span className="mt-1.5 line-clamp-3 text-[13px] break-words text-foreground/85">
-            {agentHubBotAskLine(item)}
-          </span>
         </button>
-        {options.length > 0 ? (
-          <div className="mt-2">
-            <HubOptionList
-              options={options.slice(0, QUICK_OPTION_LIMIT)}
-              chosen={chosen}
-              disabled={chosen !== null}
-              density="chip"
-              onChoose={(index) =>
-                choose(index, () => {
-                  stopTimer()
-                  startTimer(AGENT_HUB_ANSWERED_VISIBLE_MS)
-                })
-              }
-            />
-          </div>
-        ) : null}
+        <AgentHubBotAskView ask={ask} variant="plain" />
         <Button
           type="button"
           variant="ghost"

@@ -25203,6 +25203,17 @@
     "updateFailed": "无法更新项目字段"
   },
   "agentHub": {
+    "bots": {
+      "ask": {
+        "answered": "已回答 · {{n}} / {{total}}",
+        "answeredCount": "已回答 {{n}} / {{total}}",
+        "later": "稍后",
+        "openItem": "打开 #{{number}}",
+        "ownWords": "用你自己的话回复",
+        "sendNow": "立即发送",
+        "useThese": "使用这些"
+      }
+    },
     "attention": {
       "answerInTerminal": "请在对应终端中回答：弹出终端或在 Orca 中打开。"
     },
@@ -25621,6 +25632,11 @@
       "unavailable": "无法打开此链接。"
     },
     "orb": {
+      "mini": {
+        "tabChat": "聊天",
+        "tabChats": "聊天记录",
+        "tabHome": "主页"
+      },
       "defaultAction": "打开Orb的模式",
       "defaultActionHint": "用于Orb按钮和快捷键。",
       "alternateAction": "{{modifier}}+点击操作",
@@ -25634,6 +25650,24 @@
       "modelUnavailable": "不可用",
       "settingsApply": "Orb 空闲时，更改代理、模型或审批设置会开始新对话。过去的对话会保留其代理和模型。",
       "liveHoldsInput": "实时语音已开启。停止后即可输入。",
+      "bot": {
+        "greetingMorning": "早上好",
+        "greetingAfternoon": "下午好",
+        "greetingEvening": "晚上好",
+        "briefQuestions_other": "有 {{count}} 个问题在等待",
+        "briefFinished_other": "有 {{count}} 个自动化在夜间完成",
+        "briefNext": "下一次在 {{time}}",
+        "failed": "{{name}} 失败",
+        "finished": "{{name}} 已完成 · {{when}}",
+        "dismiss": "忽略",
+        "answer": "回答",
+        "later": "稍后",
+        "home": "主页",
+        "start": "开始",
+        "asks": "{{name}} 提问",
+        "otherBots": "其他机器人的问题",
+        "otherBotsHint": "其他机器人的问题也会显示在 Orb 旁边，并计入徽章。"
+      },
       "motion": {
         "label": "Orb 动效",
         "hint": "设置球体的运动幅度。系统的“减弱动态效果”设置不会改变它。",
@@ -28449,6 +28483,7 @@
         "why": "bot 会看到原因。不会删除任何内容"
       },
       "chat": {
+        "answer": "回答",
         "added": "添加了 {{items}}",
         "canceled": "取消了 {{items}}",
         "changes": "{{from}} → {{to}} · {{count}} 次更改",

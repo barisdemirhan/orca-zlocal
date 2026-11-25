@@ -23062,6 +23062,17 @@
     "updateFailed": "No se pudo actualizar el campo del proyecto"
   },
   "agentHub": {
+    "bots": {
+      "ask": {
+        "answered": "Respondido · {{n}} de {{total}}",
+        "answeredCount": "{{n}} de {{total}} respondidas",
+        "later": "Más tarde",
+        "openItem": "Abrir #{{number}}",
+        "ownWords": "Responde con tus propias palabras",
+        "sendNow": "Enviar ahora",
+        "useThese": "Usar estas"
+      }
+    },
     "attention": {
       "answerInTerminal": "Responde en su terminal: abre una vista flotante o ábrelo en Orca."
     },
@@ -23480,6 +23491,11 @@
       "unavailable": "No se pudo abrir este enlace."
     },
     "orb": {
+      "mini": {
+        "tabChat": "Chat",
+        "tabChats": "Chats",
+        "tabHome": "Inicio"
+      },
       "defaultAction": "Abrir Orb con",
       "defaultActionHint": "Se usa con el botón de Orb y el atajo.",
       "alternateAction": "Acción de {{modifier}}+clic",
@@ -23493,6 +23509,28 @@
       "modelUnavailable": "No disponible",
       "settingsApply": "Los cambios de agente, modelo y aprobación inician una nueva conversación cuando Orb está inactivo. Las conversaciones anteriores conservan su agente y modelo.",
       "liveHoldsInput": "La voz en directo está activa. Detenla para escribir.",
+      "bot": {
+        "greetingMorning": "Buenos días",
+        "greetingAfternoon": "Buenas tardes",
+        "greetingEvening": "Buenas noches",
+        "briefQuestions_one": "{{count}} pregunta esperando",
+        "briefQuestions_many": "{{count}} preguntas esperando",
+        "briefQuestions_other": "{{count}} preguntas esperando",
+        "briefFinished_one": "{{count}} automatización terminó durante la noche",
+        "briefFinished_many": "{{count}} automatizaciones terminaron durante la noche",
+        "briefFinished_other": "{{count}} automatizaciones terminaron durante la noche",
+        "briefNext": "la próxima a las {{time}}",
+        "failed": "{{name}} falló",
+        "finished": "{{name}} terminó · {{when}}",
+        "dismiss": "Descartar",
+        "answer": "Responder",
+        "later": "Más tarde",
+        "home": "Inicio",
+        "start": "Empezar",
+        "asks": "{{name}} pregunta",
+        "otherBots": "Preguntas de otros bots",
+        "otherBotsHint": "Las preguntas de tus otros bots también aparecen junto al Orb y cuentan en su insignia."
+      },
       "motion": {
         "label": "Movimiento de Orb",
         "hint": "Cuánto se mueve la esfera. El ajuste del sistema para reducir el movimiento no lo cambia.",
@@ -25293,6 +25331,7 @@
         "you": "Tú"
       },
       "chat": {
+        "answer": "Responder",
         "moreItems": "+{{count}} más"
       },
       "comment": {

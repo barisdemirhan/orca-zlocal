@@ -25784,6 +25784,15 @@
       "dock": "Bots",
       "needsYou": "Bots",
       "openItem": "Open",
+      "ask": {
+        "answered": "Answered · {{n}} of {{total}}",
+        "answeredCount": "{{n}} of {{total}} answered",
+        "later": "Later",
+        "openItem": "Open #{{number}}",
+        "ownWords": "Reply in your own words",
+        "sendNow": "Send now",
+        "useThese": "Use these"
+      },
       "mirror": "Open in mirror",
       "alertAsking": "{{name}} is asking",
       "connector": "{{name}} needs you",
@@ -26279,6 +26288,11 @@
       "waiting": "{{count}} waiting"
     },
     "orb": {
+      "mini": {
+        "tabChat": "Chat",
+        "tabChats": "Chats",
+        "tabHome": "Home"
+      },
       "memoryProposal": {
         "added": "Added to memory · Settings › Orb › Memory",
         "declined": "Won't remember this.",
@@ -26409,6 +26423,26 @@
       "sleepFailed": "Could not put Orb to sleep. Try again.",
       "menuNamed": "{{name}} menu",
       "moreActions": "More actions",
+      "bot": {
+        "greetingMorning": "Good morning",
+        "greetingAfternoon": "Good afternoon",
+        "greetingEvening": "Good evening",
+        "briefQuestions_one": "{{count}} question waiting",
+        "briefQuestions_other": "{{count}} questions waiting",
+        "briefFinished_one": "{{count}} automation finished overnight",
+        "briefFinished_other": "{{count}} automations finished overnight",
+        "briefNext": "next at {{time}}",
+        "failed": "{{name}} failed",
+        "finished": "{{name}} finished · {{when}}",
+        "dismiss": "Dismiss",
+        "answer": "Answer",
+        "later": "Later",
+        "home": "Home",
+        "start": "Start",
+        "asks": "{{name}} asks",
+        "otherBots": "Other bots' questions",
+        "otherBotsHint": "Questions from your other bots also appear beside the Orb and count on its badge."
+      },
       "motion": {
         "label": "Orb motion",
         "hint": "How much the sphere moves. The system Reduce Motion setting does not change it.",
@@ -31052,6 +31086,7 @@
         "why": "The bot sees the reason. Nothing is deleted."
       },
       "chat": {
+        "answer": "Answer",
         "added": "Added {{items}}",
         "canceled": "Canceled {{items}}",
         "changes": "{{from}} → {{to}} · {{count}} changes",

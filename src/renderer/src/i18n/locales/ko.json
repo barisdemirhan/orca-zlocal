@@ -25215,6 +25215,17 @@
     "updateFailed": "프로젝트 필드를 업데이트하지 못했습니다"
   },
   "agentHub": {
+    "bots": {
+      "ask": {
+        "answered": "답변 완료 · {{total}}개 중 {{n}}개",
+        "answeredCount": "{{total}}개 중 {{n}}개 답변함",
+        "later": "나중에",
+        "openItem": "#{{number}} 열기",
+        "ownWords": "직접 답장 작성",
+        "sendNow": "지금 보내기",
+        "useThese": "이것들 사용"
+      }
+    },
     "attention": {
       "answerInTerminal": "해당 터미널에서 답하세요. 별도 창이나 Orca에서 열 수 있습니다."
     },
@@ -25633,6 +25644,11 @@
       "unavailable": "이 링크를 열 수 없습니다."
     },
     "orb": {
+      "mini": {
+        "tabChat": "채팅",
+        "tabChats": "채팅 목록",
+        "tabHome": "홈"
+      },
       "defaultAction": "Orb 열기 모드",
       "defaultActionHint": "Orb 버튼과 단축키에 사용합니다.",
       "alternateAction": "{{modifier}}+클릭 동작",
@@ -25646,6 +25662,24 @@
       "modelUnavailable": "사용 불가",
       "settingsApply": "Orb가 유휴 상태일 때 에이전트, 모델, 승인 변경은 새 대화를 시작합니다. 이전 대화는 해당 에이전트와 모델을 유지합니다.",
       "liveHoldsInput": "라이브 음성이 켜져 있습니다. 입력하려면 중지하세요.",
+      "bot": {
+        "greetingMorning": "좋은 아침입니다",
+        "greetingAfternoon": "안녕하세요",
+        "greetingEvening": "좋은 저녁입니다",
+        "briefQuestions_other": "질문 {{count}}개가 기다리고 있습니다",
+        "briefFinished_other": "자동화 {{count}}개가 밤사이 완료되었습니다",
+        "briefNext": "다음은 {{time}}",
+        "failed": "{{name}} 실패",
+        "finished": "{{name}} 완료 · {{when}}",
+        "dismiss": "닫기",
+        "answer": "답변",
+        "later": "나중에",
+        "home": "홈",
+        "start": "시작",
+        "asks": "{{name}}의 질문",
+        "otherBots": "다른 봇의 질문",
+        "otherBotsHint": "다른 봇의 질문도 Orb 옆에 표시되고 배지에 포함됩니다."
+      },
       "motion": {
         "label": "Orb 움직임",
         "hint": "구체가 얼마나 움직일지 정합니다. 시스템의 동작 줄이기 설정은 이를 바꾸지 않습니다.",
@@ -28018,6 +28052,7 @@
         "you": "나"
       },
       "chat": {
+        "answer": "답변",
         "moreItems": "+{{count}}개 더"
       },
       "comment": {

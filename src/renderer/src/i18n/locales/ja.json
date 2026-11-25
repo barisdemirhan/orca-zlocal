@@ -23803,6 +23803,17 @@
     "updateFailed": "プロジェクトフィールドを更新できませんでした"
   },
   "agentHub": {
+    "bots": {
+      "ask": {
+        "answered": "回答済み · {{total}} 件中 {{n}} 件",
+        "answeredCount": "{{total}} 件中 {{n}} 件回答済み",
+        "later": "あとで",
+        "openItem": "#{{number}} を開く",
+        "ownWords": "自分の言葉で返信",
+        "sendNow": "今すぐ送信",
+        "useThese": "これらを使う"
+      }
+    },
     "attention": {
       "answerInTerminal": "このターミナルで回答してください。別ウィンドウか Orca で開けます。"
     },
@@ -24221,6 +24232,11 @@
       "unavailable": "このリンクを開けませんでした。"
     },
     "orb": {
+      "mini": {
+        "tabChat": "チャット",
+        "tabChats": "チャット履歴",
+        "tabHome": "ホーム"
+      },
       "defaultAction": "Orbを開くモード",
       "defaultActionHint": "Orbボタンとショートカットで使用します。",
       "alternateAction": "{{modifier}}+クリックの動作",
@@ -24234,6 +24250,24 @@
       "modelUnavailable": "利用不可",
       "settingsApply": "Orb がアイドル状態のとき、Agent ・モデル・承認の変更で新規会話が始まります。過去の会話はその Agent とモデルを保持します。",
       "liveHoldsInput": "ライブ音声がオンです。入力するには停止してください。",
+      "bot": {
+        "greetingMorning": "おはようございます",
+        "greetingAfternoon": "こんにちは",
+        "greetingEvening": "こんばんは",
+        "briefQuestions_other": "{{count}} 件の質問が待っています",
+        "briefFinished_other": "{{count}} 件のオートメーションが夜間に完了しました",
+        "briefNext": "次は {{time}}",
+        "failed": "{{name}} が失敗しました",
+        "finished": "{{name}} が完了 · {{when}}",
+        "dismiss": "閉じる",
+        "answer": "回答",
+        "later": "あとで",
+        "home": "ホーム",
+        "start": "開始",
+        "asks": "{{name}} からの質問",
+        "otherBots": "他のボットの質問",
+        "otherBotsHint": "他のボットの質問も Orb の横に表示され、バッジに数えられます。"
+      },
       "motion": {
         "label": "Orb の動き",
         "hint": "球体がどれだけ動くかを選びます。システムの「視差効果を減らす」設定では変わりません。",
@@ -26187,6 +26221,7 @@
         "you": "あなた"
       },
       "chat": {
+        "answer": "回答する",
         "moreItems": "+{{count}} 件"
       },
       "comment": {

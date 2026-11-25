@@ -1,12 +1,11 @@
 import { PictureInPicture2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { openBotHomeTab } from '@/lib/bot-catalog'
-import { openBotItem } from '../bots/items/bot-item-open'
-import { HubOptionList } from './AgentHubAnswerBody'
+import { openBotItemInHome } from '../bots/items/bot-item-open'
+import { AgentHubBotAskBlock } from './AgentHubBotAskBlock'
 import { AgentHubBotAvatar } from './AgentHubBotMark'
 import { HubRowAction } from './AgentHubRowActions'
 import { mirrorBotChat } from './agent-hub-bot-mirror'
-import { agentHubBotAskLine, useAgentHubBotAsk } from './use-agent-hub-bot-ask'
 import type { Bot } from '../../../../shared/bot-types'
 import type { BotItem } from '../../../../shared/bots/bot-items'
 
@@ -25,9 +24,8 @@ export function AgentHubBotNameButton({ bot }: { bot: Bot }): React.JSX.Element 
   )
 }
 
-/** One numbered ask from a bot: its question and, when it is a single pick, the answer chips. */
+/** One numbered ask from a bot, answered in place: its open question, replies and own-words line. */
 export function AgentHubBotAskRow({ bot, item }: { bot: Bot; item: BotItem }): React.JSX.Element {
-  const { options, chosen, choose } = useAgentHubBotAsk(bot, item)
   return (
     <div
       data-agent-hub-bot-ask
@@ -42,25 +40,21 @@ export function AgentHubBotAskRow({ bot, item }: { bot: Bot; item: BotItem }): R
             #{item.number}
           </span>
         </div>
-        <span className="text-xs text-foreground/80">{agentHubBotAskLine(item)}</span>
-        {options.length > 0 ? (
-          <HubOptionList
-            options={options}
-            chosen={chosen}
-            disabled={chosen !== null}
-            density="chip"
-            onChoose={(index) => choose(index)}
-          />
-        ) : (
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => openBotItem(bot, item.uid)}
-            className="w-fit text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            {translate('agentHub.bots.openItem', 'Open')}
-          </button>
-        )}
+        <AgentHubBotAskBlock
+          bot={bot}
+          item={item}
+          variant="inline"
+          actions={
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => void openBotItemInHome(bot, item.uid)}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              {translate('agentHub.bots.ask.openItem', 'Open #{{number}}', { number: item.number })}
+            </button>
+          }
+        />
       </div>
       {item.chat.gone ? null : (
         <HubRowAction
