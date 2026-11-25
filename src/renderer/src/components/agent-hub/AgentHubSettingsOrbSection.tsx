@@ -18,7 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import {
   SettingsRow,
   SettingsSegmentedControl,
-  SettingsSubsectionHeader
+  SettingsSubsectionHeader,
+  SettingsSwitchRow
 } from '../settings/form-controls/SettingsFormControls'
 import { useAgentHubOrbOptions } from './use-agent-hub-orb-options'
 import { AgentHubSettingsOrbActions } from './AgentHubSettingsOrbActions'
@@ -277,6 +278,17 @@ export function AgentHubSettingsOrbSection({
               { value: 'off', label: translate('agentHub.orb.motion.off', 'Off') }
             ]}
           />
+        }
+      />
+      <SettingsSwitchRow
+        label={translate('agentHub.orb.bot.otherBots', "Other bots' questions")}
+        description={translate(
+          'agentHub.orb.bot.otherBotsHint',
+          'Questions from your other bots also appear beside the Orb and count on its badge.'
+        )}
+        checked={settings.agentHubOrbOtherBots === true}
+        onChange={() =>
+          updateSettings({ agentHubOrbOtherBots: settings.agentHubOrbOtherBots !== true })
         }
       />
     </section>

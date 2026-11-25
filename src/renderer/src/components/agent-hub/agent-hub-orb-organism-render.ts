@@ -19,6 +19,7 @@ export type OrganismView = {
   readonly t: number
   readonly enteredAt: number
   readonly level: number
+  readonly orbit: number
   readonly stateKey: AgentHubOrbStateKey
   readonly rings: readonly OrbRing[]
   readonly sparks: readonly OrbSpark[]
@@ -31,6 +32,7 @@ export type OrganismView = {
     nuc: number
     ring: number
     beat: number
+    orbit: number
   }
   readonly particles: readonly OrbParticle[]
 }
@@ -165,6 +167,22 @@ export function drawOrganism(
     ctx.beginPath()
     ctx.arc(0, 0, R * 1.32, Math.PI, Math.PI + TAU * 0.12)
     ctx.stroke()
+    ctx.restore()
+  }
+  if (v.orbit > 0.02 && detail !== 'tiny') {
+    // A thin arc with a fading tail; its colour is the state's own rim.
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(ph.orbit)
+    ctx.lineCap = 'round'
+    ctx.lineWidth = Math.max(1, size / 200)
+    const tail = 6
+    for (let i = 0; i < tail; i++) {
+      ctx.strokeStyle = rgba(P.rim, 0.7 * v.orbit * (1 - i / tail) * dimK)
+      ctx.beginPath()
+      ctx.arc(0, 0, R * 1.5, -(i + 1) * 0.1, -i * 0.1)
+      ctx.stroke()
+    }
     ctx.restore()
   }
   const kMax = Math.max(1.05, (half * 0.98) / (R * Math.max(P.scale, 0.5) * 1.12))

@@ -81,12 +81,16 @@ function cloneParams(p: OrbStateParams): OrbStateParams {
 
 export { agentHubOrbDetail, type AgentHubOrbDetail }
 
+export type AgentHubOrbOrbit = 'off' | 'spin' | 'still'
+
 export type AgentHubOrganism = {
   setState: (key: AgentHubOrbStateKey) => void
   setPalette: (palette: AgentHubOrbPalette) => void
   setInputActive: (active: boolean) => void
-  /** A ring in the current state's own colours, for a landing. */
-  pulse: () => void
+  /** A thin arc turning around the sphere while the Orb's own work runs; still keeps it in place. */
+  setOrbit: (mode: AgentHubOrbOrbit) => void
+  /** A ring in the current state's own colours, or in the success or error colour, for a landing. */
+  pulse: (tone?: 'success' | 'error') => void
   step: (dt: number) => void
   draw: (ctx: CanvasRenderingContext2D, size: number, detail: AgentHubOrbDetail) => void
 }
@@ -104,11 +108,14 @@ export function createAgentHubOrganism(
   let level = 0
   let drive = 0
   let inputActive = false
+  let palette = initialPalette
+  let orbitMode: AgentHubOrbOrbit = 'off'
+  let orbit = 0
   let lastPeak = 0
   let rippleClock = 0
   let rings: OrbRing[] = []
   let sparks: OrbSpark[] = []
-  const ph = { b: 0, l2: 0.6, l3: 1.7, l5: 2.9, l11: 0, nuc: 0.8, ring: 0.5, beat: 0.5 }
+  const ph = { b: 0, l2: 0.6, l3: 1.7, l5: 2.9, l11: 0, nuc: 0.8, ring: 0.5, beat: 0.5, orbit: 0 }
   const particles: OrbParticle[] = Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
     rho: Math.random() * 0.9,
     ang: Math.random() * TAU,
@@ -143,7 +150,8 @@ export function createAgentHubOrganism(
     }
   }
 
-  function setPalette(palette: AgentHubOrbPalette): void {
+  function setPalette(next: AgentHubOrbPalette): void {
+    palette = next
     states = buildOrbStateParams(palette)
     target = states[stateKey]
   }
@@ -167,6 +175,10 @@ export function createAgentHubOrganism(
     ph.l11 += 9 * dt
     ph.nuc += (0.3 + cur.swirl * 1.6) * dt
     ph.ring += 1.2 * dt
+    orbit = lerp(orbit, orbitMode === 'off' ? 0 : 1, 1 - Math.exp(-dt / 0.4))
+    if (orbitMode === 'spin') {
+      ph.orbit += 1.7 * dt
+    }
 
     // Syllable-gated noise reads like speech; it only runs while a voice drives it.
     let driveTarget = inputActive ? 1 : 0
@@ -232,6 +244,9 @@ export function createAgentHubOrganism(
     get stateKey() {
       return stateKey
     },
+    get orbit() {
+      return orbit
+    },
     get rings() {
       return rings
     },
@@ -248,9 +263,13 @@ export function createAgentHubOrganism(
     setInputActive: (active) => {
       inputActive = active
     },
-    pulse: () => {
-      emitRing(1, cur.rim)
-      emitRing(0.6, cur.core, 0.25)
+    setOrbit: (mode) => {
+      orbitMode = mode
+    },
+    pulse: (tone) => {
+      const colour = tone ? palette[tone === 'error' ? 'destructive' : 'success'] : null
+      emitRing(1, colour ?? cur.rim)
+      emitRing(0.6, colour ?? cur.core, 0.25)
     },
     step,
     draw: (ctx, size, detail) => drawOrganism(ctx, size, detail, view)

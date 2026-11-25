@@ -13,6 +13,7 @@ import {
 } from './agent-hub-alerts'
 import type { AgentHubBotNeeds } from './agent-hub-bot-needs-store'
 import { playAgentHubAlertSound } from './agent-hub-chime'
+import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubPreferences } from './use-agent-hub-settings'
 
 /** Module-level so a remount of the hub does not announce what it already announced. */
@@ -61,7 +62,20 @@ export function useAgentHubBotAlerts(needs: AgentHubBotNeeds, loaded: boolean): 
       raisedBotAlertIds,
       current.filter((alert) => !baseline.has(alert.id))
     )
-    if (fresh.length === 0 || !alertOnNeedsInput || (alertsMutedUntil ?? 0) > Date.now()) {
+    // Why: an awake Orb shows its own bot's ask on the sphere; one announcement is enough.
+    const panel = useAgentHubOrbPanel.getState()
+    const onSphere =
+      needs.bot.role === 'orb' &&
+      panel.session !== null &&
+      panel.chatVisible &&
+      panel.presentation === 'orb' &&
+      !panel.compact
+    if (
+      fresh.length === 0 ||
+      onSphere ||
+      !alertOnNeedsInput ||
+      (alertsMutedUntil ?? 0) > Date.now()
+    ) {
       return
     }
     pushAgentHubAlerts(fresh)

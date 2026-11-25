@@ -62,6 +62,8 @@ export type AgentHubSettings = {
   agentHubOrbTint?: AgentHubOrbTint
   /** How much the floating sphere moves; the system's Reduce Motion setting does not change it. */
   agentHubOrbMotion?: AgentHubOrbMotion
+  /** Other bots' questions also pop up beside the Orb and count on its badge; absent means off. */
+  agentHubOrbOtherBots?: boolean
   /** Whether Orb may propose lasting memories; absent means on. */
   agentHubOrbMemorySuggestions?: boolean
   /** The mirror microphone’s default action; unsupported controllers fall back to plain dictation. */

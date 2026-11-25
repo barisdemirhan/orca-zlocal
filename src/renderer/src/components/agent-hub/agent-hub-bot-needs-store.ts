@@ -16,6 +16,8 @@ export type AgentHubBotNeeds = {
   suggestions: readonly Suggestion[]
   /** Items, sign-ins and access requests: what the Inbox and the dock count. */
   count: number
+  /** Watched for the Orb alone while bots are off: the Inbox, counts and alerts leave it out. */
+  orbOnly?: boolean
 }
 
 const NO_NEEDS: readonly AgentHubBotNeeds[] = []
@@ -23,11 +25,14 @@ const NO_NEEDS: readonly AgentHubBotNeeds[] = []
 // Per-bot snapshots published by the mounted watchers: the Inbox, the counts and the alerts read one copy.
 const published = new Map<string, AgentHubBotNeeds>()
 let list: readonly AgentHubBotNeeds[] = NO_NEEDS
+let orbList: readonly AgentHubBotNeeds[] = NO_NEEDS
 let total = 0
 const listeners = new Set<() => void>()
 
 function recompute(): void {
-  list = published.size === 0 ? NO_NEEDS : [...published.values()]
+  orbList = published.size === 0 ? NO_NEEDS : [...published.values()]
+  const listed = orbList.filter((needs) => needs.orbOnly !== true)
+  list = listed.length === 0 ? NO_NEEDS : listed
   total = list.reduce((sum, needs) => sum + needs.count, 0)
   listeners.forEach((listener) => listener())
 }
@@ -53,6 +58,15 @@ export function useAgentHubBotNeedsList(): readonly AgentHubBotNeeds[] {
     subscribe,
     () => list,
     () => list
+  )
+}
+
+/** Every watched bot's needs, the Orb's own included even while bots are off. */
+export function useAgentHubOrbNeedsList(): readonly AgentHubBotNeeds[] {
+  return useSyncExternalStore(
+    subscribe,
+    () => orbList,
+    () => orbList
   )
 }
 

@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { ChevronRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { structuredAgentLabel } from '@/lib/agent-session/launch/structured-agent-session-launch-label'
 import { useAppStore } from '@/store'
@@ -37,7 +35,6 @@ import { AgentHubRequestCard } from './AgentHubRequestCard'
 import { AgentHubOrbRequestModal } from './AgentHubOrbRequestModal'
 import { AgentHubOrbLiveControls } from './AgentHubOrbLiveControls'
 import { AgentHubOrbQuickInput } from './AgentHubOrbQuickInput'
-import { AgentHubOrbThinking } from './AgentHubOrbSpeechBubble'
 import type { AgentHubRequestBase } from '../../../../shared/agent-hub-requests'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
 import { AgentHubOrbFollowNotices } from './AgentHubOrbFollowNotices'
@@ -49,10 +46,10 @@ import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { sleepAgentHubOrb } from './agent-hub-orb-sleep'
 import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
 import { setAgentHubOrbPinned } from './agent-hub-orb-dock-pin'
+import { useAgentHubOrbBotBubble } from './use-agent-hub-orb-bot-bubble'
+import { AgentHubOrbBotAskCard } from './AgentHubOrbBotBubble'
+import { agentHubOrbCaptionSlots } from './agent-hub-orb-caption-slots'
 import { normalizeAgentHubPlacement } from '../../../../shared/agent-hub-settings'
-
-/** A written reply stays under the sphere this long; spoken captions keep their minute. */
-const AGENT_HUB_ORB_REPLY_MS = 12_000
 
 const sleep = (): void => {
   void sleepAgentHubOrb()
@@ -158,10 +155,34 @@ export function AgentHubOrbConversation({
   const hasRequest = nativeRequestPending || requests.length > 0
   const requestVisible = nativeRequestVisible || (requests.length > 0 && !quick.requestDismissed)
   const quickDictating = dictating || quick.dictation.active
+  const replyPending = quick.ask?.status === 'sent' || quick.ask?.status === 'working'
+  const botBubble = useAgentHubOrbBotBubble({
+    busy:
+      live ||
+      quick.open ||
+      quickDictating ||
+      hasRequest ||
+      requestVisible ||
+      showChat ||
+      showMini ||
+      compact ||
+      !chatVisible,
+    idle: state.kind === 'idle',
+    replyKey: quick.replyKey,
+    replyPending
+  })
+  // Why: a waiting bot ask only colours the sphere while nothing livelier is going on.
+  const askAttention =
+    botBubble.attention &&
+    !live &&
+    !quickDictating &&
+    voice.connection !== 'error' &&
+    (state.kind === 'idle' || state.kind === 'off' || state.kind === 'done')
+  const askCardVisible = botBubble.asking && !hasRequest
   const visual = agentHubOrbPresentation(
     state,
     voice,
-    hasRequest,
+    hasRequest || askAttention,
     quickDictating ? dictationState : null,
     currentRequest?.request.kind === 'gate' || currentRequest?.request.kind === 'consent',
     attention
@@ -179,6 +200,25 @@ export function AgentHubOrbConversation({
       }
     />
   ) : null
+  const askCard =
+    askCardVisible && botBubble.askEntry ? (
+      <AgentHubOrbBotAskCard entry={botBubble.askEntry} onLater={botBubble.later} />
+    ) : null
+  const captionSlots = agentHubOrbCaptionSlots({
+    live,
+    liveCaption: voice.caption,
+    bubble: botBubble.view,
+    hasAsks: botBubble.hasAsks,
+    onAnswer: botBubble.openAsk,
+    onDismiss: botBubble.dismiss,
+    reply: quick.reply,
+    replyKey: quick.replyKey,
+    ask: quick.ask,
+    state,
+    memoryPending,
+    onShowChat: quick.showChat,
+    onOpenConversation: showMiniWindow
+  })
   const orbName = useAgentHubOrbName()
   const agent = conversation?.agent ?? tabAgent
   const sphereAction = agentHubOrbSphereAction({ liveActive: live, dictating: quickDictating })
@@ -199,7 +239,12 @@ export function AgentHubOrbConversation({
     if (sphereAction === 'finish-dictation') {
       stopDictation()
     } else if (sphereAction === 'quick-input') {
-      quick.onSphereClick()
+      if (!hasRequest && botBubble.hasAsks && !botBubble.asking) {
+        botBubble.openAsk()
+      } else {
+        botBubble.closeAsk()
+        quick.onSphereClick()
+      }
     }
   }
   const canHold = sphereAction === 'quick-input' && !busy && voice.connection !== 'stopping'
@@ -287,55 +332,10 @@ export function AgentHubOrbConversation({
       {!showChat && !showMini ? (
         <AgentHubOrbStage
           {...visual}
-          caption={live ? voice.caption : (quick.reply ?? undefined)}
-          captionKey={live ? undefined : quick.replyKey}
-          captionDurationMs={live ? undefined : AGENT_HUB_ORB_REPLY_MS}
-          captionPrompt={live ? undefined : quick.ask?.text}
-          captionStatus={
-            live || !quick.ask || quick.ask.status === 'answered' ? undefined : quick.ask.status ===
-              'failed' ? (
-              <p className="text-muted-foreground">
-                {translate('agentHub.orb.captionNoReply', 'No reply came back.')}
-              </p>
-            ) : (
-              <AgentHubOrbThinking command={state.kind === 'working' ? state.command : undefined} />
-            )
-          }
-          captionAction={
-            live || (!quick.reply && !quick.ask) ? undefined : (
-              <Button
-                type="button"
-                variant="link"
-                size="xs"
-                className="ml-auto shrink-0"
-                onClick={quick.showChat}
-              >
-                {translate('agentHub.orb.openChat', 'Open chat')}
-                <ChevronRight aria-hidden />
-              </Button>
-            )
-          }
-          captionHint={
-            memoryPending && !live ? (
-              <p
-                className={
-                  quick.reply
-                    ? 'mt-2 text-xs text-muted-foreground'
-                    : 'text-xs text-muted-foreground'
-                }
-              >
-                {translate('agentHub.orb.memoryProposal.hint', 'Memory suggestion')}
-                {' · '}
-                <button
-                  type="button"
-                  className="cursor-pointer underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  onClick={showMiniWindow}
-                >
-                  {translate('agentHub.orb.memoryProposal.openConversation', 'Open conversation')}
-                </button>
-              </p>
-            ) : undefined
-          }
+          badge={botBubble.count}
+          orbit={botBubble.orbit}
+          ring={botBubble.ring}
+          {...captionSlots}
           inputMuted={live && voice.input === 'muted'}
           outputMuted={live && voice.outputMuted}
           inputSpeaking={voice.inputSpeaking}
@@ -343,7 +343,7 @@ export function AgentHubOrbConversation({
           live={live}
           compact={compact}
           visible={visible && chatVisible}
-          requestVisible={requestVisible}
+          requestVisible={requestVisible || askCardVisible}
           sphereLabel={sphereLabels[sphereAction]}
           onSphereClick={onSphereClick}
           onSphereDoubleClick={showMiniWindow}
@@ -370,7 +370,7 @@ export function AgentHubOrbConversation({
             )
           }
           notice={agentHubOrbVoiceNotice(voice)}
-          request={requestCard}
+          request={requestCard ?? askCard}
           sphereControls={
             live ? (
               <AgentHubOrbLiveControls voice={voice} />

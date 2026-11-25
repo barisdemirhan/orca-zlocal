@@ -211,6 +211,9 @@ beforeEach(() => {
     { id: 'host-b', createdAt: 1, pairingRevision: 10 }
   ])
   mocks.call.mockImplementation(async (target, method, params) => {
+    if (method === 'bots.list') {
+      return { bots: [] }
+    }
     if (method === 'agentSession.voiceCapability') {
       return { supported: true, accountAccess: 'unchecked' }
     }
@@ -394,11 +397,13 @@ it.each(['live', 'dictate'] as const)(
     mocks.state.settings.voice = { enabled: true, sttModel: 'test-model' }
     let finishCheck: (() => void) | undefined
     if (action === 'live') {
-      mocks.call.mockImplementationOnce(
-        () =>
-          new Promise((resolve) => {
-            finishCheck = () => resolve({ supported: true, accountAccess: 'unchecked' })
-          })
+      const original = mocks.call.getMockImplementation()
+      mocks.call.mockImplementation((target, method, params, options) =>
+        method === 'agentSession.voiceCapability'
+          ? new Promise((resolve) => {
+              finishCheck = () => resolve({ supported: true, accountAccess: 'unchecked' })
+            })
+          : (original?.(target, method, params, options) ?? Promise.resolve())
       )
     }
     const actions: unknown[] = []

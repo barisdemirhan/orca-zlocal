@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { useAppStore } from '@/store'
 import { useListedBots } from '@/lib/use-listed-bots'
 import { botRefKey } from '@/lib/bot-hosts'
 import { useNow } from '@/lib/window-activity/use-now'
@@ -17,7 +18,7 @@ const NO_ITEMS: readonly BotItem[] = []
 const NO_SUGGESTIONS: readonly Suggestion[] = []
 
 /** Reads one bot's needs, keeps its published Needs you count alive, and raises its asks. */
-function AgentHubBotWatcher({ bot }: { bot: Bot }): null {
+function AgentHubBotWatcher({ bot, orbOnly }: { bot: Bot; orbOnly: boolean }): null {
   const now = useBotNow(bot)
   // Mounting this is what publishes the bot's count for the dock's robot slot.
   useBotNeedsYouCount(bot, now)
@@ -44,23 +45,29 @@ function AgentHubBotWatcher({ bot }: { bot: Bot }): null {
       connectors,
       access,
       suggestions: activity.upNext?.items ?? NO_SUGGESTIONS,
-      count: items.length + connectors.length + access.length
+      count: items.length + connectors.length + access.length,
+      orbOnly: orbOnly || undefined
     }
-  }, [bot, now.needs, items, activity.upNext])
+  }, [bot, now.needs, items, activity.upNext, orbOnly])
   useEffect(() => publishAgentHubBotNeeds(needs), [needs])
-  useAgentHubBotAlerts(needs, read !== null)
+  useAgentHubBotAlerts(needs, read !== null && !orbOnly)
   return null
 }
 
-/** Headless: one watcher per bot while the hub and bots are on. */
+/** Headless: one watcher per bot while the hub and bots are on; the Orb's own bot stays watched with bots off. */
 export function AgentHubBotWatchers(): React.JSX.Element | null {
   const active = useAgentHubBotsActive()
-  const bots = useListedBots(active)
-  return active ? (
+  const hubOn = useAppStore((s) => s.settings?.experimentalAgentHub === true)
+  const listed = useListedBots(hubOn)
+  const bots = useMemo(
+    () => (active ? listed : listed.filter((bot) => bot.role === 'orb')),
+    [active, listed]
+  )
+  return (
     <>
       {bots.map((bot) => (
-        <AgentHubBotWatcher key={botRefKey(bot)} bot={bot} />
+        <AgentHubBotWatcher key={botRefKey(bot)} bot={bot} orbOnly={!active} />
       ))}
     </>
-  ) : null
+  )
 }

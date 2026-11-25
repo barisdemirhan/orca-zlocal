@@ -4,8 +4,11 @@ import { agentHubOrbStateKey, type AgentHubOrbPhase } from './agent-hub-orb-phas
 import {
   agentHubOrbDetail,
   createAgentHubOrganism,
+  type AgentHubOrbOrbit,
   type AgentHubOrganism
 } from './agent-hub-orb-organism'
+import { useAppStore } from '@/store'
+import { normalizeAgentHubOrbMotion } from '../../../../shared/agent-hub-orb-motion-setting'
 import { readAgentHubOrbPalette } from './agent-hub-orb-palette'
 import { useAgentHubOrbTint } from './use-agent-hub-orb-identity'
 import './agent-hub-orb-sphere.css'
@@ -20,6 +23,12 @@ export type AgentHubOrbSphereProps = {
   inputSpeaking?: boolean
   outcome?: 'success' | 'error'
   decorative?: boolean
+  /** How many asks wait on the owner; a small count sits on the sphere. */
+  badge?: number
+  /** The Orb's own automation is running: a thin arc turns around the sphere. */
+  orbit?: boolean
+  /** A ring in the success or error colour, once per id. */
+  ring?: { id: number; tone: 'success' | 'error' } | null
 }
 
 /** Called from the canvas loop after each step; the stage's motion writes the sphere's transform here. */
@@ -41,6 +50,9 @@ export function AgentHubOrbSphere({
   inputSpeaking = false,
   outcome = 'success',
   decorative = false,
+  badge = 0,
+  orbit = false,
+  ring = null,
   onFrame
 }: AgentHubOrbSphereProps & { onFrame?: AgentHubOrbFrameHandler }): React.JSX.Element {
   const rootRef = useRef<HTMLSpanElement>(null)
@@ -51,11 +63,30 @@ export function AgentHubOrbSphere({
   const inputSpeakingRef = useRef(inputSpeaking)
   const onFrameRef = useRef(onFrame)
   const tint = useAgentHubOrbTint()
+  const motion = useAppStore((s) => normalizeAgentHubOrbMotion(s.settings?.agentHubOrbMotion))
+  const orbitMode: AgentHubOrbOrbit = !orbit ? 'off' : motion === 'off' ? 'still' : 'spin'
+  const orbitModeRef = useRef(orbitMode)
+  const ringId = ring?.id
+  const ringTone = ring?.tone
+  const ringSeen = useRef(ringId)
 
   useEffect(() => {
     stateKeyRef.current = stateKey
     organismRef.current?.setState(stateKey)
   }, [stateKey])
+
+  useEffect(() => {
+    orbitModeRef.current = orbitMode
+    organismRef.current?.setOrbit(orbitMode)
+  }, [orbitMode])
+
+  useEffect(() => {
+    // Why: a ring that was already there when the sphere mounted is old news.
+    if (ringId !== undefined && ringId !== ringSeen.current && ringTone) {
+      organismRef.current?.pulse(ringTone)
+    }
+    ringSeen.current = ringId
+  }, [ringId, ringTone])
 
   useEffect(() => {
     onFrameRef.current = onFrame
@@ -83,6 +114,7 @@ export function AgentHubOrbSphere({
     }
     const organism = createAgentHubOrganism(stateKeyRef.current, readAgentHubOrbPalette(root))
     organism.setInputActive(inputSpeakingRef.current)
+    organism.setOrbit(orbitModeRef.current)
     organismRef.current = organism
 
     let size = 0
@@ -148,7 +180,8 @@ export function AgentHubOrbSphere({
       onScreen = entries.at(-1)?.isIntersecting ?? true
       sync()
     })
-    visibility.observe(root)
+    // The resting box: a flight carries `root` off screen, and stopping there would strand it.
+    visibility.observe(root.parentElement ?? root)
 
     const theme = new MutationObserver(() => organism.setPalette(readAgentHubOrbPalette(root)))
     theme.observe(document.documentElement, {
@@ -184,6 +217,11 @@ export function AgentHubOrbSphere({
       aria-hidden={decorative || undefined}
     >
       <canvas ref={canvasRef} className="agent-hub-orb-canvas" aria-hidden />
+      {badge > 0 ? (
+        <span className="agent-hub-orb-badge" aria-hidden>
+          {badge > 9 ? '9+' : badge}
+        </span>
+      ) : null}
       {inputMuted || outputMuted ? (
         <span className="agent-hub-orb-mute-marks" aria-hidden>
           {outputMuted ? <VolumeX /> : null}
