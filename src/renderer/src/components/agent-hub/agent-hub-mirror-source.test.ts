@@ -240,7 +240,10 @@ it('keeps a terminal whose unified tab names it by entity id while its terminal 
     worktreeId: worktree.id,
     label: 'Terminal'
   } as Tab
-  useAppStore.setState({ tabsByWorktree: {}, unifiedTabsByWorktree: { [worktree.id]: [unifiedTerminal] } })
+  useAppStore.setState({
+    tabsByWorktree: {},
+    unifiedTabsByWorktree: { [worktree.id]: [unifiedTerminal] }
+  })
   pruneClosedAgentHubMirrorSources()
   expect(readAgentHubMirrors().windows).toHaveLength(1)
 })

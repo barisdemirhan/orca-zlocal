@@ -29,6 +29,42 @@ export type AgentHubOperation =
   | { kind: 'arrange'; layout?: string }
   | { kind: 'canvas'; action: 'open' | 'close' }
 
+export type AgentHubCardDrawer = 'work' | 'inbound' | 'changes' | 'pr'
+export const AGENT_HUB_CARD_DRAWERS: readonly AgentHubCardDrawer[] = [
+  'work',
+  'inbound',
+  'changes',
+  'pr'
+]
+/** Typed reasons a card command is refused; the CLI exits with the same code. */
+export type AgentHubCardRefusalCode =
+  | 'no_card'
+  | 'not_your_card'
+  | 'drawer_closed_by_user'
+  | 'not_available'
+  | 'agent_control_off'
+  | 'card_use_off'
+export type AgentHubCardOperation =
+  | { action: 'list' }
+  | { action: 'show'; drawer: AgentHubCardDrawer; mirrorId?: string }
+  /** The host turns `last` into the caller's stored cursor before asking the desktop. */
+  | { action: 'events'; since: number }
+export type AgentHubCardInfo = {
+  mirrorId: string
+  tabId: string
+  visible: boolean
+  parked: boolean
+  drawer: AgentHubCardDrawer | 'settings' | null
+  strip: boolean
+  agentMayUse: boolean
+}
+export type AgentHubCardEvent = { seq: number; at: number; kind: string; detail?: string }
+export type AgentHubCardResult =
+  | { action: 'list'; cards: AgentHubCardInfo[] }
+  | { action: 'show'; card: AgentHubCardInfo; drawer: AgentHubCardDrawer }
+  | { action: 'events'; events: AgentHubCardEvent[]; cursor: number }
+  | { action: 'refused'; code: AgentHubCardRefusalCode; message: string }
+
 export type AgentHubAskContent = {
   question: string
   options: string[]
@@ -65,6 +101,7 @@ export type AgentHubRequest = AgentHubRequestBase &
     | { kind: 'memory'; text: string }
     | { kind: 'presence' }
     | { kind: 'status' }
+    | { kind: 'card'; card: AgentHubCardOperation }
     | AgentHubOperation
     | { kind: 'consent'; operation: AgentHubOperation }
   )
@@ -108,6 +145,7 @@ export type AgentHubResponse =
   | ({ kind: 'ask' } & Pick<AgentHubAnswer, 'answer' | 'index' | 'indices'>)
   | ({ kind: 'presence' } & AgentHubPresence)
   | ({ kind: 'status' } & AgentHubStatus)
+  | { kind: 'card'; result: AgentHubCardResult }
   | { kind: 'consent'; decision: 'once' | 'session' | 'deny' }
   | { kind: 'memory'; decision: 'remember' | 'decline'; text: string }
   | {
@@ -117,6 +155,7 @@ export type AgentHubResponse =
     }
 
 export type AgentHubErrorCode =
+  | AgentHubCardRefusalCode
   | 'disabled'
   | 'not_found'
   | 'rate_limited'

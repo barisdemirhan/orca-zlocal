@@ -185,6 +185,28 @@ ORCA hub canvas close --json
 - `canvas open` requires the user's Agent Hub canvas setting enabled; otherwise it
   fails with `invalid_argument`. `canvas close` closes the canvas.
 
+### Your own card
+
+```text
+ORCA hub mirror list --mine --json
+ORCA hub mirror show work|inbound|changes|pr [--mirror <id>] [--json]
+ORCA hub mirror events --since last|<seq> --json
+```
+
+- These act only on cards that show your own terminal or agent session; `--terminal` is not
+  accepted. `list` returns each card's `mirrorId`, `tabId`, `visible`/`parked`, open `drawer`,
+  `strip` and whether you may use it (`agentMayUse`).
+- `show` opens that drawer on your card so the person sees your plan, queue, changes or PR. It
+  never opens a window, takes focus or raises a window. Use it sparingly, once per point you want
+  to make.
+- `events` returns a bounded list of what happened on your cards. `--since last` continues from
+  the cursor kept for you; `--since <seq>` starts after that number. Events are read only on request.
+- Refusals are typed error codes: `no_card`, `not_your_card`, `drawer_closed_by_user` (the person
+  closed it during this turn; do not reopen it), `not_available` (for example no PR or no git),
+  `agent_control_off`, `card_use_off`. Do not retry any of them.
+- Needs Agent Hub's agent control and "agents may use their own card" settings on; older Orca hosts
+  fail with `unsupported_host`.
+
 ### Add to an existing card
 
 1. Run `ORCA hub status --json` on the execution host. Pick `--into` from the intended

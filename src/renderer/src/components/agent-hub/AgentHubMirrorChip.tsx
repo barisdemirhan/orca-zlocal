@@ -130,7 +130,9 @@ export function AgentHubMirrorChip({
           {chip.window.tabs.length > 1 ? (
             <Badge variant="secondary">
               {translate('agentHub.mirror.tabCount', '{{value0}} tabs', {
-                value0: chip.window.tabs.length
+                count: chip.window.tabs.length,
+                value0: chip.window.tabs.length,
+                defaultValue_one: '{{value0}} tab'
               })}
             </Badge>
           ) : null}

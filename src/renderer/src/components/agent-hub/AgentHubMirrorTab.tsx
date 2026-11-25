@@ -141,7 +141,7 @@ export function AgentHubMirrorTab({
         className="min-w-0 flex-1 text-[13px] leading-tight data-[sleeping=true]:opacity-60"
         onDoubleClick={() => onSelect(false)}
       >
-        <AgentHubMirrorTitle target={tab.target} onEditingChange={setEditing} />
+        <AgentHubMirrorTitle target={tab.target} editing={editing} onEditingChange={setEditing} />
         <div className="flex min-w-0 items-center [&>span]:text-[11px]">
           {progress ? (
             <span className="truncate text-muted-foreground">{progress}</span>
@@ -164,6 +164,10 @@ export function AgentHubMirrorTab({
       entryId={tab.id}
       target={closable ? (tab.viewing ?? tab.target) : undefined}
       switchTarget={tab.viewing ?? tab.target}
+      onRename={() => {
+        onSelect(false)
+        setEditing(true)
+      }}
       onReveal={actions.onJump}
       onShowInSidebar={actions.onShowInSidebar}
       onClose={onClose}

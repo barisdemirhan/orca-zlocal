@@ -1,3 +1,4 @@
+import { buildAgentHubLineage } from './agent-hub-lineage'
 import { acceptedAgentStatuses } from '@/store/slices/agent-status/status-ownership/accepted-agent-statuses'
 import type * as MirrorSource from './agent-hub-mirror-source'
 import { shownAgentHubMirrorTarget, activeAgentHubMirrorTab } from './agent-hub-mirror-membership'
@@ -104,6 +105,7 @@ function renderMinimizeStage(alones: boolean[]): void {
             target={activeAgentHubMirrorTab(entry).target}
             shownTarget={shownAgentHubMirrorTarget(activeAgentHubMirrorTab(entry))}
             thread={null}
+            lineage={buildAgentHubLineage([], 0)}
             stackIndex={1}
             besideHubPanel={false}
             surface="in-workspace"
@@ -219,6 +221,7 @@ it('moves per-agent actions into tab menus, restores the singleton header and cl
               }
               target={active}
               thread={null}
+              lineage={buildAgentHubLineage([], 0)}
               stackIndex={1}
               besideHubPanel={false}
               surface="in-workspace"

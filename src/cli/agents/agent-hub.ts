@@ -10,6 +10,7 @@ import {
   AgentHubPresenceParams,
   AgentHubStatusParams,
   AgentHubMirrorParams,
+  AgentHubCardParams,
   AgentHubArrangeParams,
   AgentHubCanvasParams,
   AgentHubOrbRememberParams
@@ -34,6 +35,16 @@ function agentHubPeekLink({ flags, cwd }: HandlerContext): string {
   }
   // Why: the agent's current directory can differ from the pane's startup directory.
   return resolve(cwd, link)
+}
+
+function agentHubCardSince(raw: string | undefined): 'last' | number {
+  if (raw === 'last' || raw === undefined) {
+    return 'last'
+  }
+  if (!/^\d+$/.test(raw)) {
+    throw new RuntimeClientError('invalid_argument', '--since takes last or a sequence number')
+  }
+  return Number(raw)
 }
 
 function operation(
@@ -91,6 +102,21 @@ export const AGENT_HUB_HANDLERS: Record<string, CommandHandler> = {
       }))
     ])
   ),
+  'hub mirror list': operation('agentHub.card', AgentHubCardParams, () => ({
+    action: 'list',
+    terminal: undefined
+  })),
+  'hub mirror show': operation('agentHub.card', AgentHubCardParams, ({ flags }) => ({
+    action: 'show',
+    terminal: undefined,
+    drawer: getOptionalStringFlag(flags, 'drawer'),
+    mirrorId: getOptionalStringFlag(flags, 'mirror')
+  })),
+  'hub mirror events': operation('agentHub.card', AgentHubCardParams, ({ flags }) => ({
+    action: 'events',
+    terminal: undefined,
+    since: agentHubCardSince(getOptionalStringFlag(flags, 'since'))
+  })),
   ...Object.fromEntries(
     ['open', 'close'].map((action) => [
       `hub canvas ${action}`,

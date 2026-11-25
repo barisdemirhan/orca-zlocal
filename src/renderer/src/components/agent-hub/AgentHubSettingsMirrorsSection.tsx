@@ -13,6 +13,7 @@ import {
   AGENT_HUB_TRAY_PEEK_SECONDS,
   DEFAULT_AGENT_HUB_MIRROR_WINDOW_CAP
 } from '../../../../shared/agent-hub-settings'
+import { SurfaceChoiceRow, SurfaceSwitchRow } from './AgentHubSettingsSurfaceRows'
 import { AgentHubSettingsDimMode } from './AgentHubSettingsDimMode'
 
 export function AgentHubSettingsMirrorsSection({
@@ -107,6 +108,34 @@ export function AgentHubSettingsMirrorsSection({
         )}
         checked={preferences.restoreOnLaunch}
         onChange={() => updateSettings({ agentHubRestoreOnLaunch: !preferences.restoreOnLaunch })}
+      />
+      <SurfaceSwitchRow
+        settingKey="agentHubMirrorWorkStrip"
+        label={translate('agentHub.settings.workStrip', 'Work strip')}
+        description={translate(
+          'agentHub.settings.workStripCopy',
+          'A thin line on a mirror showing what the agent is doing right now.'
+        )}
+        updateSettings={updateSettings}
+      />
+      <SurfaceChoiceRow
+        settingKey="agentHubMirrorDrawerPosition"
+        label={translate('agentHub.settings.drawerPosition', 'Drawer position')}
+        description={translate(
+          'agentHub.settings.drawerPositionCopy',
+          'Auto picks the side or the bottom to fit the mirror.'
+        )}
+        options={[
+          { value: 'auto', label: translate('agentHub.settings.drawerAuto', 'Auto') },
+          { value: 'side', label: translate('agentHub.settings.drawerSide', 'Side') },
+          { value: 'bottom', label: translate('agentHub.settings.drawerBottom', 'Bottom') }
+        ]}
+        updateSettings={updateSettings}
+      />
+      <SurfaceSwitchRow
+        settingKey="agentHubMirrorOpenOnFailedCheck"
+        label={translate('agentHub.settings.openOnFailedCheck', 'Open drawer when a check fails')}
+        updateSettings={updateSettings}
       />
       <AgentHubSettingsDimMode updateSettings={updateSettings} />
     </section>

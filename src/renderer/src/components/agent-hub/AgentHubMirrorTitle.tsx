@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { isImeOwnedKeyboardEvent } from '@/lib/text-input/ime/ime-composition-keyboard-event'
@@ -23,29 +22,29 @@ export function useAgentHubTargetTitle(target: AgentHubPaneTarget): string {
 /** A mirror's title: double-click renames the terminal tab, like its tab in the workspace. */
 export function AgentHubMirrorTitle({
   target,
+  editing,
   onEditingChange
 }: {
   target: AgentHubPaneTarget
-  onEditingChange?: (editing: boolean) => void
+  editing: boolean
+  onEditingChange: (editing: boolean) => void
 }): React.JSX.Element {
   const title = useAgentHubTargetTitle(target)
   const setTabCustomTitle = useAppStore((s) => s.setTabCustomTitle)
   const isChat = useAppStore((s) => isAgentHubChatTab(s, target.tab.id))
-  const [editing, setEditing] = useState(false)
-  useEffect(() => onEditingChange?.(editing), [editing, onEditingChange])
   if (!editing) {
     return (
       <div
         className="truncate font-semibold"
         title={translate('agentHub.mirror.renameHint', 'Double-click to rename')}
-        onDoubleClick={() => setEditing(true)}
+        onDoubleClick={() => onEditingChange(true)}
       >
         {title}
       </div>
     )
   }
   const commit = (value: string): void => {
-    setEditing(false)
+    onEditingChange(false)
     const next = value.trim()
     // A chat is named on its host and can't go nameless, so an empty or unchanged name is a no-op.
     if (isChat) {
@@ -73,7 +72,7 @@ export function AgentHubMirrorTitle({
         if (event.key === 'Enter') {
           commit(event.currentTarget.value)
         } else if (event.key === 'Escape') {
-          setEditing(false)
+          onEditingChange(false)
         }
       }}
       className="w-full min-w-0 rounded-sm bg-background px-1 font-semibold outline-none ring-1 ring-border focus:ring-ring"

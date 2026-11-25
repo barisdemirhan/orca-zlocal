@@ -9,6 +9,7 @@ import { AgentHubMirrorMicButton } from './AgentHubMirrorMicButton'
 import { AgentHubMirrorJumpButton } from './AgentHubMirrorJumpButton'
 import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { AgentHubMirrorMenu } from './AgentHubMirrorMenu'
 import { AgentHubMirrorCloseButton } from './AgentHubMirrorCloseButton'
 import { AgentHubMirrorTerminalSwitchButton } from './AgentHubMirrorTerminalSwitchButton'
 
@@ -63,6 +64,15 @@ export function AgentHubMirrorHeaderControls({
         </Button>
       </AgentHubActionTooltip>
       <AgentHubMirrorFocusButton mirrorKey={mirrorKey} focused={focused} />
+      <AgentHubMirrorMenu
+        target={target}
+        mirrorKey={mirrorKey}
+        isAgent={isAgent}
+        showJump={showJump}
+        onReveal={onReveal}
+        onMinimize={onMinimize}
+        onClose={onClose}
+      />
       <AgentHubActionTooltip label={minimizeLabel}>
         <Button
           type="button"

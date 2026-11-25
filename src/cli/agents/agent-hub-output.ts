@@ -19,6 +19,9 @@ export function formatAgentHubResult(method: string, result: unknown): string {
       ...('peek' in result ? [peekLine(result.peek)] : [])
     ].join('\n')
   }
+  if (method === 'agentHub.card' && 'action' in result) {
+    return cardResult(result)
+  }
   if (method === 'agentHub.orb.remember' && 'message' in result) {
     return String(result.message)
   }
@@ -93,4 +96,27 @@ function paneNames(value: unknown): string {
       : '?'
   )
   return panes.length ? panes.join(', ') : 'none'
+}
+
+function cardResult(result: object): string {
+  if ('cards' in result && Array.isArray(result.cards)) {
+    return result.cards.length
+      ? result.cards
+          .map((card: unknown) => {
+            const c = typeof card === 'object' && card !== null ? card : {}
+            const get = (key: string): string => String(key in c ? Reflect.get(c, key) : '?')
+            return `${get('mirrorId')} ${get('parked') === 'true' ? 'parked' : 'visible'} drawer=${get('drawer')} strip=${get('strip')} agentMayUse=${get('agentMayUse')}`
+          })
+          .join('\n')
+      : 'No card shows this terminal.'
+  }
+  if ('drawer' in result && 'card' in result) {
+    return `Opened the ${String(result.drawer)} drawer.`
+  }
+  if ('events' in result && Array.isArray(result.events)) {
+    return result.events.length
+      ? result.events.map((event: unknown) => JSON.stringify(event)).join('\n')
+      : 'No new card events.'
+  }
+  return JSON.stringify(result, null, 2)
 }

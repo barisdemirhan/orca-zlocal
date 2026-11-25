@@ -98,6 +98,17 @@ export const AgentHubMirrorParams = caller.and(
     })
     .refine((value) => !value.into || value.action === 'add', '--into only works with mirror add')
 )
+const cardDrawer = z.enum(['work', 'inbound', 'changes', 'pr'])
+export const AgentHubCardParams = caller.and(
+  z.discriminatedUnion('action', [
+    z.object({ action: z.literal('list') }),
+    z.object({ action: z.literal('show'), drawer: cardDrawer, mirrorId: identity.optional() }),
+    z.object({
+      action: z.literal('events'),
+      since: z.union([z.literal('last'), z.number().int().min(0)])
+    })
+  ])
+)
 export const AgentHubArrangeParams = caller.and(
   z.object({ layout: z.string().trim().min(1).max(80).optional() })
 )
@@ -107,6 +118,45 @@ export const AgentHubOrbRememberParams = caller.and(
 export const AgentHubCanvasParams = caller.and(z.object({ action: z.enum(['open', 'close']) }))
 
 const pane = z.object({ paneKey: identity, terminalHandle: identity })
+const cardInfo = z.object({
+  mirrorId: identity,
+  tabId: identity,
+  visible: z.boolean(),
+  parked: z.boolean(),
+  drawer: z.enum(['work', 'inbound', 'changes', 'pr', 'settings']).nullable(),
+  strip: z.boolean(),
+  agentMayUse: z.boolean()
+})
+const AgentHubCardResultSchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('list'), cards: z.array(cardInfo).max(256) }),
+  z.object({ action: z.literal('show'), card: cardInfo, drawer: cardDrawer }),
+  z.object({
+    action: z.literal('events'),
+    events: z
+      .array(
+        z.object({
+          seq: z.number().int().min(0),
+          at: z.number(),
+          kind: z.string().max(80),
+          detail: z.string().max(500).optional()
+        })
+      )
+      .max(100),
+    cursor: z.number().int().min(0)
+  }),
+  z.object({
+    action: z.literal('refused'),
+    code: z.enum([
+      'no_card',
+      'not_your_card',
+      'drawer_closed_by_user',
+      'not_available',
+      'agent_control_off',
+      'card_use_off'
+    ]),
+    message: z.string().max(1_000)
+  })
+])
 export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('ack'),
@@ -146,6 +196,7 @@ export const AgentHubResponseSchema = z.discriminatedUnion('kind', [
       .nullable()
       .optional()
   }),
+  z.object({ kind: z.literal('card'), result: AgentHubCardResultSchema }),
   z.object({ kind: z.literal('consent'), decision: z.enum(['once', 'session', 'deny']) }),
   z.object({
     kind: z.literal('memory'),

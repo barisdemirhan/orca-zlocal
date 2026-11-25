@@ -1,11 +1,14 @@
 import { AgentHubPaneSleepOverlay } from './AgentHubPaneSleepOverlay'
 import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
-import { Button } from '@/components/ui/button'
 import { useAgentHubMirrorSelectionFocus } from './use-agent-hub-mirror-selection-focus'
 import { agentHubMirrorPanelId, agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
-import type { AgentHubMirrorWindowState } from './agent-hub-mirror-membership'
+import { recordAgentHubMirrorEvent } from './agent-hub-mirror-drawer-store'
+import {
+  agentHubMirrorSourceKey,
+  type AgentHubMirrorWindowState
+} from './agent-hub-mirror-membership'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
-import { Loader2, PanelsTopLeft } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { isAgentHubChatTab } from './agent-hub-chat-tabs'
@@ -17,6 +20,9 @@ import { useAgentHubLivePty } from './use-agent-hub-live-pty'
 import { AgentHubMirrorHeaderControls } from './AgentHubMirrorHeaderControls'
 import { AgentHubMirrorDictationOverlay } from './AgentHubMirrorDictationOverlay'
 import { AgentHubMirrorFamilyTabs } from './AgentHubMirrorFamilyTabs'
+import { AgentHubMirrorInWorkspaceNotice } from './AgentHubMirrorInWorkspaceNotice'
+import { AgentHubMirrorCardBody } from './AgentHubMirrorCardBody'
+import type { AgentHubLineage } from './agent-hub-lineage'
 import { AgentHubMirrorFocusShade } from './AgentHubMirrorFocusShade'
 import {
   isAgentHubMirrorStageQuiet,
@@ -53,6 +59,7 @@ export function AgentHubMirrorWindow({
   shownTarget = target,
   windowKind,
   thread,
+  lineage,
   stackIndex,
   besideHubPanel,
   previewFocus = true,
@@ -79,6 +86,8 @@ export function AgentHubMirrorWindow({
   shownTarget?: AgentHubPaneTarget
   /** Live thread for an agent pane, for its state glyph; null for a shell. */
   thread: AgentPaneThread | null
+  /** Orchestration lineage, for the workers a card lists. */
+  lineage: AgentHubLineage
   /** Its place in the stack of open mirrors (higher is in front). */
   stackIndex: number
   /** The hub's panel is open: a window opening now takes a place beside it. */
@@ -154,6 +163,7 @@ export function AgentHubMirrorWindow({
   )
   const minimizeAlone = (): void => {
     dockingAll.current = false
+    recordAgentHubMirrorEvent(agentHubMirrorSourceKey(shownTarget), { kind: 'card-parked' })
     minimize()
   }
   // Picked again from the hub while open: glow so the eye finds it; with motion reduced, a
@@ -327,58 +337,46 @@ export function AgentHubMirrorWindow({
               onSelect={onRetarget}
             />
           ) : null}
-          {surface === 'in-workspace' ? (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 bg-popover/60 px-8 text-center">
-              <PanelsTopLeft className="size-6 text-muted-foreground" />
-              <div className="text-sm font-semibold">
-                {translate('agentHub.mirror.inWorkspaceTitle', "You're in this workspace")}
-              </div>
-              <p className="max-w-85 text-xs text-muted-foreground">
-                {translate(
-                  'agentHub.mirror.inWorkspace',
-                  'This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.'
+          <AgentHubMirrorCardBody
+            windowId={windowId}
+            target={shownTarget}
+            thread={thread}
+            lineage={lineage}
+            active={surface !== 'in-workspace'}
+          >
+            {surface === 'in-workspace' ? (
+              <AgentHubMirrorInWorkspaceNotice onMinimize={minimizeAlone} />
+            ) : surface === 'chat' ? (
+              <div
+                key="chat"
+                ref={slotRef}
+                data-agent-hub-mirror-slot
+                className="relative flex min-h-0 flex-1 overflow-hidden"
+              />
+            ) : surface !== 'preview' ? (
+              // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
+              <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">
+                <AgentHubMirrorDictationOverlay target={shownTarget} showsTerminal />
+                {ptyId ? null : (
+                  <div className="absolute inset-0 flex items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
+                    {gaveUp ? (
+                      translate(
+                        'agentHub.mirror.noTerminal',
+                        'This pane has no live terminal right now.'
+                      )
+                    ) : (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />
+                        {translate('agentHub.mirror.connecting', 'Connecting to the terminal…')}
+                      </>
+                    )}
+                  </div>
                 )}
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                onClick={minimizeAlone}
-                className="mt-1"
-              >
-                {translate('agentHub.mirror.minimize', 'Minimize')}
-              </Button>
-            </div>
-          ) : surface === 'chat' ? (
-            <div
-              key="chat"
-              ref={slotRef}
-              data-agent-hub-mirror-slot
-              className="relative flex min-h-0 flex-1 overflow-hidden"
-            />
-          ) : surface !== 'preview' ? (
-            // The real pane renders in here (see AgentHubMirrors); it fits and resizes like any pane.
-            <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1">
-              <AgentHubMirrorDictationOverlay target={shownTarget} showsTerminal />
-              {ptyId ? null : (
-                <div className="absolute inset-0 flex items-start gap-2 px-3.5 py-3 font-mono text-xs text-muted-foreground">
-                  {gaveUp ? (
-                    translate(
-                      'agentHub.mirror.noTerminal',
-                      'This pane has no live terminal right now.'
-                    )
-                  ) : (
-                    <>
-                      <Loader2 className="size-3.5 animate-spin" />
-                      {translate('agentHub.mirror.connecting', 'Connecting to the terminal…')}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1" />
-          )}
+              </div>
+            ) : (
+              <div ref={slotRef} data-agent-hub-mirror-slot className="relative min-h-0 flex-1" />
+            )}
+          </AgentHubMirrorCardBody>
         </div>
         <div
           aria-hidden

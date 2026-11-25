@@ -143,6 +143,50 @@ export const AGENT_HUB_COMMAND_SPECS: CommandSpec[] = [
     'Close the card that shows the terminal; processes keep running',
     'mirror close'
   ),
+  // Card commands always act on the caller's own cards, so there is no --terminal.
+  ...[
+    {
+      verb: 'list',
+      summary: 'List your own Agent Hub cards with their open drawer and permissions',
+      usage: 'orca hub mirror list --mine [--json]',
+      flags: ['mine'],
+      booleanFlags: ['mine'],
+      positionalArgs: undefined
+    },
+    {
+      verb: 'show',
+      summary: 'Open a drawer on your own card: work, inbound, changes or pr',
+      usage: 'orca hub mirror show work|inbound|changes|pr [--mirror <id>] [--json]',
+      flags: ['drawer', 'mirror'],
+      booleanFlags: undefined,
+      positionalArgs: ['drawer']
+    },
+    {
+      verb: 'events',
+      summary: 'Read what happened on your own cards since a cursor',
+      usage: 'orca hub mirror events --since last|<seq> [--json]',
+      flags: ['since'],
+      booleanFlags: undefined,
+      positionalArgs: undefined
+    }
+  ].map(({ verb, summary, usage, flags, booleanFlags, positionalArgs }): CommandSpec => ({
+    path: ['hub', 'mirror', verb],
+    summary,
+    usage,
+    allowedFlags: [...GLOBAL_FLAGS, ...flags],
+    ...(booleanFlags ? { booleanFlags } : {}),
+    ...(positionalArgs ? { positionalArgs } : {}),
+    ...(verb === 'events' ? { valueFlags: ['since'] } : {}),
+    notes: [
+      'Only your own cards are visible and usable; a card of another agent is refused. It never opens a window, takes focus or raises one.',
+      'Refusals are typed: no_card, not_your_card, drawer_closed_by_user (the person closed it this turn), not_available, agent_control_off, card_use_off.',
+      ...(verb === 'events'
+        ? [
+            '--since last continues from the cursor kept for you; --since <seq> starts after that sequence number. Events are only read on request.'
+          ]
+        : [])
+    ]
+  })),
   hubSpec(['arrange'], 'Arrange Agent Hub mirrors', 'arrange [--layout <name>]', ['layout']),
   ...['open', 'close'].map((action) =>
     hubSpec(['canvas', action], `${action} the Agent Hub canvas`, `canvas ${action}`)

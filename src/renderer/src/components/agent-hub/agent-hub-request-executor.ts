@@ -14,6 +14,7 @@ import {
 } from './agent-hub-floating-arrangement'
 import { agentHubMirrorWindows, findAgentHubMirrorMembership } from './agent-hub-mirror-membership'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
+import { executeAgentHubCard } from './agent-hub-request-card'
 import { executeAgentHubMirror } from './agent-hub-request-mirror'
 import {
   agentHubRequestHost,
@@ -106,6 +107,8 @@ export async function executeAgentHubRequest(
       case 'notify':
       case 'memory':
         return null
+      case 'card':
+        return { kind: 'card', result: executeAgentHubCard(host, request, context.threads) }
       case 'mirror': {
         const mirror = executeAgentHubMirror(host, request, context)
         return mirror ? { kind: 'ack', mirror } : { kind: 'ack' }

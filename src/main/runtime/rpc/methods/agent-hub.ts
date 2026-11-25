@@ -8,12 +8,14 @@ import {
   AgentHubPresenceParams,
   AgentHubStatusParams,
   AgentHubMirrorParams,
+  AgentHubCardParams,
   AgentHubArrangeParams,
   AgentHubCanvasParams,
   AgentHubRespondParams,
   AgentHubQuestionsParams,
   AgentHubAnswerParams
 } from '../../../../shared/rpc-contract/agent-hub-params'
+import { agentHubCardOperation } from './agent-hub-card-operation'
 import { agentHubDesktopId, resolveAgentHubPanes } from './agent-hub-caller'
 import { AgentHubError } from '../../agent-hub/agent-hub-error'
 import { waitForAgentHubAnswer } from '../../agent-hub/agent-hub-answer-wait'
@@ -157,6 +159,37 @@ export const AGENT_HUB_METHODS = [
         },
         ctx.signal
       )
+    }
+  }),
+  defineMethod({
+    name: 'agentHub.card',
+    permission: 'workspace',
+    params: AgentHubCardParams,
+    handler: async (params, ctx) => {
+      // Why: the card is always the caller's own; --terminal never retargets it.
+      const { caller, target } = resolveAgentHubPanes({ ...params, terminal: undefined }, ctx)
+      if (!ctx.runtime.isAgentHubEnabled()) {
+        throw new AgentHubError(
+          'agent_control_off',
+          'Agent control is off in Agent Hub settings, so agents cannot use cards.'
+        )
+      }
+      if (!ctx.runtime.isAgentHubOwnCardEnabled()) {
+        throw new AgentHubError(
+          'card_use_off',
+          'Agents are not allowed to use their own card in Agent Hub settings.'
+        )
+      }
+      const result = await ctx.runtime.agentHub.card(
+        caller,
+        target,
+        agentHubCardOperation(params),
+        ctx.signal
+      )
+      if (result.action === 'refused') {
+        throw new AgentHubError(result.code, result.message)
+      }
+      return result
     }
   }),
   defineMethod({

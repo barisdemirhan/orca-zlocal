@@ -397,4 +397,26 @@ describe('hub CLI', () => {
     await run(['hub', 'mirror', 'add', '--terminal', 'term-c', '--into', 'term-a'])
     expect(log).toHaveBeenLastCalledWith('Added as a tab in the card.')
   })
+  it('sends card commands for the caller only, with the cursor left to the host', async () => {
+    await run(['hub', 'mirror', 'show', 'changes', '--mirror', 'w1', '--terminal', 'other'], true)
+    expect(call).toHaveBeenLastCalledWith(
+      'agentHub.card',
+      expect.objectContaining({
+        action: 'show',
+        drawer: 'changes',
+        mirrorId: 'w1',
+        terminal: undefined
+      }),
+      expect.anything()
+    )
+    await run(['hub', 'mirror', 'events', '--since', 'last'], true)
+    expect(call).toHaveBeenLastCalledWith(
+      'agentHub.card',
+      expect.objectContaining({ action: 'events', since: 'last' }),
+      expect.anything()
+    )
+    await expect(run(['hub', 'mirror', 'events', '--since', 'soon'])).rejects.toMatchObject({
+      code: 'invalid_argument'
+    })
+  })
 })

@@ -4,6 +4,8 @@ import type {
   AgentHubAnswer,
   AgentHubAskContent,
   AgentHubCaller,
+  AgentHubCardOperation,
+  AgentHubCardResult,
   AgentHubEvent,
   AgentHubOperation,
   AgentHubPane,
@@ -20,28 +22,36 @@ import { AgentHubRateLimits, agentHubCallerRateKey } from './agent-hub-rate-limi
 import { AgentHubPendingRequests } from './agent-hub-pending-requests'
 import { AgentHubProgressLines } from './agent-hub-progress'
 import { AgentHubOrbOperations } from './agent-hub-orb-operations'
-import { agentHubTargetNeedsConsent } from './agent-hub-target-consent'
+import { AgentHubSessionConsent } from './agent-hub-session-consent'
+import { AgentHubCardQuery, type AgentHubCardCommand } from './agent-hub-card-query'
 import {
   AGENT_HUB_ORB_MEMORY_PROPOSAL_TTL_MS as MEMORY_TTL_MS,
   AgentHubOrbMemoryProposals
 } from './agent-hub-orb-memory-proposals'
 import { answerAgentHubAskWhenAway } from './agent-hub-away-answer'
 
+type AgentHubQueryBody =
+  | { kind: 'presence' }
+  | { kind: 'status' }
+  | { kind: 'card'; card: AgentHubCardOperation }
+
 export class AgentHubLedger {
   readonly orbOperations: AgentHubOrbOperations
   private readonly desktops = new Map<string, number>()
-  private readonly sessionGrants = new Set<string>()
+  private readonly consent: AgentHubSessionConsent
   private readonly rates: AgentHubRateLimits
   /** Read by the CLI answer path, which settles asks without a subscribed desktop. */
   readonly requests: AgentHubPendingRequests
   private readonly progress: AgentHubProgressLines
   private readonly memories: AgentHubOrbMemoryProposals
+  private readonly cards = new AgentHubCardQuery()
 
   constructor(
     publish: (event: AgentHubEvent) => void,
     private readonly now: () => number = Date.now,
-    private readonly parentOf: (paneKey: string) => string | undefined = () => undefined
+    parentOf: (paneKey: string) => string | undefined = () => undefined
   ) {
+    this.consent = new AgentHubSessionConsent(parentOf)
     this.rates = new AgentHubRateLimits(now)
     this.requests = new AgentHubPendingRequests(now, publish)
     this.memories = new AgentHubOrbMemoryProposals(this.requests)
@@ -176,7 +186,7 @@ export class AgentHubLedger {
     target: AgentHubPane,
     signal?: AbortSignal
   ): Promise<AgentHubPresence> {
-    const response = await this.query(caller, target, 'presence', signal)
+    const response = await this.query(caller, target, { kind: 'presence' }, signal)
     if (response.kind !== 'presence') {
       throw new AgentHubError('invalid_argument', 'Invalid presence response')
     }
@@ -192,12 +202,23 @@ export class AgentHubLedger {
     target: AgentHubPane,
     signal?: AbortSignal
   ): Promise<AgentHubStatus> {
-    const response = await this.query(caller, target, 'status', signal)
+    const response = await this.query(caller, target, { kind: 'status' }, signal)
     if (response.kind !== 'status') {
       throw new AgentHubError('invalid_argument', 'Invalid status response')
     }
     const { kind: _kind, ...status } = response
     return status
+  }
+
+  async card(
+    caller: AgentHubCaller,
+    target: AgentHubPane,
+    command: AgentHubCardCommand,
+    signal?: AbortSignal
+  ): Promise<AgentHubCardResult> {
+    return this.cards.run(caller, command, (card) =>
+      this.query(caller, target, { kind: 'card', card }, signal)
+    )
   }
 
   async operate(
@@ -208,43 +229,20 @@ export class AgentHubLedger {
   ): Promise<{ requestId: string } & AgentHubAck> {
     this.requireDesktop()
     this.rates.consume(caller, operation.kind.startsWith('peek') ? 'peek' : 'mirror')
-    const grantKey = JSON.stringify([agentHubCallerRateKey(caller), target.paneKey])
-    if (
-      agentHubTargetNeedsConsent(caller, target, this.parentOf) &&
-      !this.sessionGrants.has(grantKey)
-    ) {
-      const consent: AgentHubRequest = {
-        ...this.base(caller, target, 600_000),
-        kind: 'consent',
-        operation
-      }
-      this.requests.create(consent, this.desktops.keys())
-      const { response } = await this.requests.wait(consent.requestId, signal)
-      if (response.kind !== 'consent') {
-        throw new AgentHubError('invalid_argument', 'Invalid consent response')
-      }
-      if (response.decision === 'deny') {
-        throw new AgentHubError('denied_by_user', 'The user denied access to another pane')
-      }
-      if (response.decision === 'session') {
-        this.sessionGrants.add(grantKey)
-      }
+    if (this.consent.needed(caller, target)) {
+      const base = this.base(caller, target, 600_000)
+      const { response } = await this.send({ ...base, kind: 'consent', operation }, signal)
+      this.consent.accept(caller, target, response)
     }
     if (signal?.aborted) {
       throw new AgentHubError('connection_lost', 'Hub caller disconnected before the operation')
     }
     this.requireDesktop()
-    const request: AgentHubRequest = {
-      ...this.base(caller, target, AGENT_HUB_UI_TIMEOUT_MS),
-      ...operation
-    }
+    const request: AgentHubRequest = { ...this.base(caller, target), ...operation }
     const execute = async (operationSignal?: AbortSignal) => {
-      this.requests.create(request, this.desktops.keys())
-      const { response } = await this.requests.wait(request.requestId, operationSignal)
-      const { requestId } = request
-      return response.kind === 'ack'
-        ? { requestId, mirror: response.mirror, peek: response.peek }
-        : { requestId }
+      const { response } = await this.send(request, operationSignal)
+      const ack = response.kind === 'ack' ? { mirror: response.mirror, peek: response.peek } : {}
+      return { requestId: request.requestId, ...ack }
     }
     return caller.kind === 'orb' && caller.sessionId
       ? this.orbOperations.run(
@@ -287,13 +285,13 @@ export class AgentHubLedger {
     this.progress.dispose()
     this.requests.dispose()
     this.desktops.clear()
-    this.sessionGrants.clear()
+    this.consent.clear()
   }
 
   private base(
     caller: AgentHubCaller,
     target: AgentHubPane,
-    timeoutMs: number
+    timeoutMs = AGENT_HUB_UI_TIMEOUT_MS
   ): AgentHubRequestBase {
     const createdAt = this.now()
     return { requestId: randomUUID(), caller, target, createdAt, expiresAt: createdAt + timeoutMs }
@@ -306,13 +304,15 @@ export class AgentHubLedger {
   private async query(
     caller: AgentHubCaller,
     target: AgentHubPane,
-    kind: 'presence' | 'status',
+    body: AgentHubQueryBody,
     signal?: AbortSignal
   ): Promise<AgentHubResponse> {
     this.requireDesktop()
     this.rates.consume(caller, 'query')
-    const request: AgentHubRequest = { ...this.base(caller, target, AGENT_HUB_UI_TIMEOUT_MS), kind }
+    return (await this.send({ ...this.base(caller, target), ...body }, signal)).response
+  }
+  private send(request: AgentHubRequest, signal?: AbortSignal) {
     this.requests.create(request, this.desktops.keys())
-    return (await this.requests.wait(request.requestId, signal)).response
+    return this.requests.wait(request.requestId, signal)
   }
 }

@@ -22,6 +22,7 @@ import {
 import { readAgentHubMirrors, useAgentHubMirrors } from './agent-hub-mirror-store'
 import { agentHubMirrorTabId } from './AgentHubMirrorTabStrip'
 import {
+  closeAgentHubMirrorTab,
   moveAgentHubMirrorTab,
   detachAgentHubMirrorTab,
   toggleAgentHubMirrorTabPin
@@ -63,7 +64,8 @@ function Destination({
           <span className="ml-auto shrink-0 text-xs text-muted-foreground">
             {translate('agentHub.mirror.tabCount', '{{value0}} tabs', {
               count: window.tabs.length,
-              value0: window.tabs.length
+              value0: window.tabs.length,
+              defaultValue_one: '{{value0}} tab'
             })}
           </span>
         </ContextMenuItem>
@@ -82,6 +84,7 @@ export function AgentHubMirrorTabMenu({
   switchTarget,
   onReveal,
   onShowInSidebar,
+  onRename,
   onClose,
   onCloseAgent,
   isAgent = false,
@@ -95,6 +98,8 @@ export function AgentHubMirrorTabMenu({
   /** Jumps to the terminal in its workspace; absent for a window's only tab (its header has it). */
   onReveal?: () => void
   onShowInSidebar?: () => void
+  /** Activates the tab and opens its title editor. */
+  onRename?: () => void
   onClose: () => void
   onCloseAgent?: () => void
   isAgent?: boolean
@@ -108,10 +113,15 @@ export function AgentHubMirrorTabMenu({
   )
   const switchChatWorking = useAgentHubChatWorking(switchChat?.id ?? null)
   const keyboardOrigin = useRef<HTMLElement | null>(null)
+  const renaming = useRef(false)
   const isPinned =
     windows.find((window) => window.id === windowId)?.tabs.find((tab) => tab.id === entryId)
       ?.isPinned === true
   const destinations = windows.filter((window) => window.id !== windowId)
+  const otherTabs =
+    windows
+      .find((window) => window.id === windowId)
+      ?.tabs.filter((tab) => tab.id !== entryId && !tab.isPinned) ?? []
   return (
     <ContextMenu
       open={menu.open}
@@ -153,6 +163,13 @@ export function AgentHubMirrorTabMenu({
         data-agent-hub-no-tab-drop
         respectReducedMotion
         onCloseAutoFocus={(event) => {
+          // The title editor takes focus; returning it to the tab would blur and commit the edit.
+          if (renaming.current) {
+            event.preventDefault()
+            renaming.current = false
+            keyboardOrigin.current = null
+            return
+          }
           if (useAgentHubPaneSleepConfirmation.getState().target) {
             event.preventDefault()
             keyboardOrigin.current = null
@@ -183,6 +200,16 @@ export function AgentHubMirrorTabMenu({
             isOpeningClick={openingClick.isOpeningClick}
             returnFocus={() => document.getElementById(agentHubMirrorTabId(entryId))}
           />
+        ) : null}
+        {onRename ? (
+          <ContextMenuItem
+            onSelect={() => {
+              renaming.current = true
+              onRename()
+            }}
+          >
+            {translate('agentHub.mirror.renameTab', 'Rename…')}
+          </ContextMenuItem>
         ) : null}
         <ContextMenuSub>
           <ContextMenuSubTrigger disabled={!destinations.length}>
@@ -242,6 +269,12 @@ export function AgentHubMirrorTabMenu({
           </ContextMenuItem>
         ) : null}
         <ContextMenuSeparator />
+        <ContextMenuItem
+          disabled={otherTabs.length === 0}
+          onSelect={() => otherTabs.forEach((tab) => closeAgentHubMirrorTab(windowId, tab.id))}
+        >
+          {translate('agentHub.mirror.closeOthers', 'Close others')}
+        </ContextMenuItem>
         <ContextMenuItem onSelect={() => toggleAgentHubMirrorTabPin(windowId, entryId)}>
           {isPinned ? <PinOff /> : <Pin />}
           {isPinned

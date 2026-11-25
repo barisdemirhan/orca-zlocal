@@ -51,6 +51,7 @@ import { useNativeChatComposerError } from './composer/controls/use-native-chat-
 import { useNativeChatProvisionalLaunch } from './host-access/use-native-chat-provisional-launch'
 import { useNativeChatRewindHost } from './messages/actions/use-native-chat-rewind-host'
 import { NativeChatRowActionsProvider } from './messages/actions/NativeChatRowActionsProvider'
+import { usePublishAgentHubMirrorChat } from '../agent-hub/use-publish-agent-hub-mirror-chat'
 import { NativeChatQueuedMessageList } from './queue/NativeChatQueuedMessageList'
 import { cancelStructuredPrompt } from './session/structured/writes/native-chat-structured-stop-controls'
 import { useNativeChatBotHome } from './NativeChatBotHomeScope'
@@ -175,6 +176,7 @@ export function NativeChatStructuredSession(props: Omit<NativeChatStructuredView
   const pageBot = useBotForWorkspace(ownerWorktreeId ?? null)
   const botOutage = pageBot !== null && hostOutage?.kind !== 'stopped' ? hostOutage : null
   const subagents = useStructuredNativeChatSubagents({ ...props, paneKey, controller })
+  usePublishAgentHubMirrorChat(props.tabId, session.messages, submits.queuedMessages, subagents)
   // A subagent's view takes the composer's place; the main agent's prompts still show.
   const composerShown =
     (prompt === null || promptsUnanswerable) &&

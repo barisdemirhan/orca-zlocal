@@ -1,3 +1,4 @@
+import { useContext } from 'react'
 import type { AgentDotState } from '@/components/agent/status/AgentStateDot'
 import { AgentTypeIcon } from '@/components/agent/icons/agent-type-icon'
 import { translate } from '@/i18n/i18n'
@@ -40,6 +41,8 @@ import type { NativeChatEventBadge } from '../events/NativeChatEventRow'
 import { NativeChatAgentMessageRow } from './NativeChatAgentMessageRow'
 import { ItemChip } from '../../bot-items/NativeChatBotItemNoteRow'
 import { agentMessageRowLead } from './agent-message-row-lead'
+import { AgentHubOrbComposerContext } from '../../../agent-hub/agent-hub-orb-composer'
+import { AgentHubOrbBotMessage } from '../../../agent-hub/AgentHubOrbBotMessage'
 
 /** The one word drawn before the name for a start, a hand-off or a task; a plain message draws none. */
 function kindWord(
@@ -109,6 +112,22 @@ export function NativeChatAgentMessageCard({
     senderDispatchId
   )
   const view = useAgentMessageSenderView(sender, worktreeId, target, dispatchId)
+  const inOrb = useContext(AgentHubOrbComposerContext) !== null
+  const senderBot = useAgentMessageSenderBot(sender, worktreeId, target, dispatchId)
+  if (inOrb && (senderBot || (sender?.bot && sender.host))) {
+    return (
+      <AgentHubOrbBotMessage
+        messageId={message.id}
+        name={senderName}
+        bot={senderBot}
+        carried={senderBot ? null : { avatar: sender?.botAvatar ?? null }}
+        subject={items[0]?.title ?? null}
+        host={sender?.host ?? null}
+        timestamp={message.timestamp}
+        text={text}
+      />
+    )
+  }
   return (
     <NativeChatAgentMessageRow
       className="w-full"

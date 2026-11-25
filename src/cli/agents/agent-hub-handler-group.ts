@@ -19,6 +19,9 @@ export const AGENT_HUB_HANDLER_GROUP: HandlerGroup = {
     'hub mirror minimize',
     'hub mirror restore',
     'hub mirror close',
+    'hub mirror list',
+    'hub mirror show',
+    'hub mirror events',
     'hub arrange',
     'hub canvas open',
     'hub canvas close'

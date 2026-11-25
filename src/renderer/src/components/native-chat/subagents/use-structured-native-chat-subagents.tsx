@@ -62,6 +62,9 @@ export function useStructuredNativeChatSubagents({
   return {
     /** The subagent whose view replaces the conversation and the composer; null for none. */
     openId,
+    /** The session's background-work Stop, offered to the Agent Hub card's Work drawer. */
+    stop,
+    supportsStop: background.supportsStop,
     onKeyDown: (event: React.KeyboardEvent) => closeNativeChatSubagentOnEscape(event, paneKey),
     dock: isVisible ? (
       <NativeChatStructuredDock

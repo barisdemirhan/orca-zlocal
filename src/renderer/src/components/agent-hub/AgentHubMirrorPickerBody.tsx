@@ -1,6 +1,7 @@
 import type { AgentHubTerminalSort } from '../../../../shared/agent-hub-settings'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNow } from '@/lib/window-activity/use-now'
+import { useNearestAgentHubSelection } from './agent-hub-nearest-row'
 import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
@@ -129,7 +130,12 @@ export function AgentHubMirrorPickerBody({
     changeProjects(new Set())
     searchRef.current?.focus()
   }
-  const rows = visibleAgentHubTreeRows(groups, collapsed, isAgentHubTreeNarrowed(query), expanded)
+  const rows = useMemo(
+    () => visibleAgentHubTreeRows(groups, collapsed, isAgentHubTreeNarrowed(query), expanded),
+    [groups, collapsed, query, expanded]
+  )
+  const rowKeys = useMemo(() => rows.map((row) => row.key), [rows])
+  useNearestAgentHubSelection(rowKeys, selectedKey, setSelectedKey)
   const now = useNow(30_000)
   const totalCount = countRows(sectionTree)
   useEffect(() => {
@@ -175,7 +181,8 @@ export function AgentHubMirrorPickerBody({
               ?.key ?? null
           )
         } else if (event.key === 'Enter' && event.target === searchRef.current) {
-          const selected = rows.find((row) => row.key === selectedKey)
+          const selected =
+            rows.find((row) => row.key === selectedKey) ?? (query.trim() ? rows[0] : undefined)
           if (selected) {
             event.preventDefault()
             onAdd(selected)

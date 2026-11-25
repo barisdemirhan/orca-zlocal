@@ -17,6 +17,7 @@ import {
   clearAgentHubRequestHost,
   readAgentHubRequests
 } from './agent-hub-requests-store'
+import { watchAgentHubMirrorTurns } from './agent-hub-mirror-turn-watch'
 import { executeAgentHubRequest } from './agent-hub-request-executor'
 import { registerAgentHubRequestResponder } from './agent-hub-request-answer'
 
@@ -86,7 +87,9 @@ export function useAgentHubRequestConsumer(
         update(state)
       }
     })
+    const stopTurnWatch = watchAgentHubMirrorTurns()
     return () => {
+      stopTurnWatch()
       unsubscribe()
       unregisterResponder()
       consumer.dispose()

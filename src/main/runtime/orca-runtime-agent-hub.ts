@@ -166,6 +166,10 @@ export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithTerminalWor
     return settings?.experimentalAgentHub === true && settings.agentHubAgentControl !== false
   }
 
+  isAgentHubOwnCardEnabled(): boolean {
+    return this.store?.getSettings?.()?.agentHubAgentOwnCard !== false
+  }
+
   isAgentHubOrbMemorySuggestionsEnabled(): boolean {
     return this.store?.getSettings?.()?.agentHubOrbMemorySuggestions !== false
   }
