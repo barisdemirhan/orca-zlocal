@@ -18,6 +18,7 @@ const questions = [
 function model(patch: Partial<AgentHubBotAskModel>): AgentHubBotAskModel {
   return {
     phase: 'open',
+    waiting: true,
     number: 7,
     title: 'Migration needs your call',
     total: 1,
