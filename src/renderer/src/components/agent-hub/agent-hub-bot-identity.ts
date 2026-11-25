@@ -64,16 +64,31 @@ export function useAgentHubBotIdentity(
   )
   const workerBot = useMemo(() => botOfFolders(folders, bots), [folders, bots])
   const { chats } = useBotChatTree(homeBot)
-  return useMemo(() => {
-    if (!homeBot) {
-      return workerBot ? { bot: workerBot, origin: 'worker' } : null
-    }
-    if (session && isBotHomeTab({ contentType: 'agent-session', entityId: session }, homeBot)) {
-      return { bot: homeBot, origin: 'home' }
-    }
-    const chat = session
-      ? chats.find((entry) => entry.chatId === session || entry.liveSessionId === session)
-      : undefined
-    return { bot: homeBot, origin: chat?.origin ?? 'side' }
-  }, [homeBot, workerBot, session, chats])
+  return useMemo(
+    () => resolveAgentHubBotIdentity({ homeBot, workerBot, session, chats }),
+    [homeBot, workerBot, session, chats]
+  )
+}
+
+type BotChatEntry = ReturnType<typeof useBotChatTree>['chats'][number]
+
+/** The identity once its facts are read; the hook and the alert step both end here. */
+export function resolveAgentHubBotIdentity(inputs: {
+  homeBot: Bot | null
+  workerBot: Bot | null
+  /** The chat session the pane shows, when it shows one. */
+  session: string | null
+  chats: readonly Pick<BotChatEntry, 'chatId' | 'liveSessionId' | 'origin'>[]
+}): AgentHubBotIdentity | null {
+  const { homeBot, workerBot, session, chats } = inputs
+  if (!homeBot) {
+    return workerBot ? { bot: workerBot, origin: 'worker' } : null
+  }
+  if (session && isBotHomeTab({ contentType: 'agent-session', entityId: session }, homeBot)) {
+    return { bot: homeBot, origin: 'home' }
+  }
+  const chat = session
+    ? chats.find((entry) => entry.chatId === session || entry.liveSessionId === session)
+    : undefined
+  return { bot: homeBot, origin: chat?.origin ?? 'side' }
 }

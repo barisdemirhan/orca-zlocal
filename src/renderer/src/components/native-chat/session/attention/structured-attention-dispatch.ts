@@ -42,6 +42,7 @@ import { isWorktreeNotificationDeliveryMuted } from '@/attention/worktree-notifi
 import { canonicalOrchestrationForRow } from '@/runtime/agent-orchestration/visible-agent-orchestration'
 import { isCoordinatorOnlyChatNews } from '../../../../../../shared/orchestration/workers/dispatched-worker-attention'
 import { getNotificationWorkspaceLabels } from '@/attention/notification-workspace-labels'
+import { botNameForDesktopNotification } from '@/components/agent-hub/agent-hub-bot-notification-name'
 import { createStructuredAttentionSurface } from './structured-attention-surface'
 import type { StructuredTab } from '../status/structured-agent-session-tabs'
 
@@ -148,6 +149,7 @@ function dispatchStructuredAttention(
           terminalTitle: tab.label,
           isActiveWorktree: request.workspaceIsActive,
           ...(row?.agentType ? { agentType: row.agentType } : {}),
+          ...botNameForDesktopNotification(state, tab.worktreeId),
           agentState: news.agentState,
           ...(news.outcome ? { agentTurnOutcome: news.outcome } : {}),
           ...(edge.type === 'completion' && edge.completion.failure

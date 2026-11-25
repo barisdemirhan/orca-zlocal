@@ -4,9 +4,6 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
-import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
-import { parseInteractivePrompt } from '../../../../shared/native-chat/input/native-chat-interactive-prompt'
-import { sayNativeChatApprovalTranslated } from '../native-chat/prompts/native-chat-interactive-prompt'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubAlertQuickOptions } from './AgentHubAlertQuickOptions'
@@ -17,9 +14,15 @@ import type {
   AgentHubRequestAlert as RequestAlert
 } from './agent-hub-alerts'
 import { AgentHubRequestAlert } from './AgentHubRequestAlert'
+import { agentHubAlertText } from './agent-hub-alert-text'
 import { AgentHubBotAlertCard } from './AgentHubBotAlertCard'
+import { agentHubBotAlertBubbles } from './agent-hub-bot-alert-groups'
+import { AgentHubBotChipRow, type AgentHubBotChipEntry } from './AgentHubBotPendingChips'
+import { pushAgentHubAlerts } from './agent-hub-alert-queue'
+import { unparkAgentHubBots, useAgentHubParkedBots } from './agent-hub-bot-parked-store'
+import { useAgentHubBotNeedsList } from './agent-hub-bot-needs-store'
+import { openBotAlerts } from './use-agent-hub-bot-alerts'
 import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
-import { agentHubMessageSummary } from './agent-hub-message-summary'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAnchorBinding } from './use-anchor-binding'
 import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
@@ -27,6 +30,7 @@ import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/
 
 const ALERT_VISIBLE_MS = 7000
 const GAP = 10
+const MAX_BOT_BUBBLES = 5
 
 export type AgentHubAlertSide = 'top' | 'bottom' | 'left' | 'right'
 
@@ -39,28 +43,6 @@ function alertHeadline(alert: AgentHubThreadAlert): string {
     case 'done':
       return translate('agentHub.alert.finished', 'finished')
   }
-}
-
-function alertText(alert: AgentHubThreadAlert): string {
-  const entry = alert.thread.currentAgentEntry ?? alert.thread.paneEntry
-  if (alert.kind !== 'done') {
-    const card = parseInteractivePrompt(
-      entry?.interactivePrompt,
-      entry?.toolName,
-      undefined,
-      sayNativeChatApprovalTranslated
-    )
-    if (card?.kind === 'question') {
-      return card.prompt.questions[0]?.question ?? ''
-    }
-    if (card?.kind === 'approval') {
-      return card.approval.detail ?? card.approval.title
-    }
-  }
-  const message = entry?.lastAssistantMessageIsToolOutput
-    ? null
-    : entry?.lastAssistantMessage?.trim()
-  return message ? agentHubMessageSummary(message) : activityThreadRowCopy(alert.thread).statusLine
 }
 
 /** Places a floating element beside its anchor (the hub, the tray or a chip), kept on screen. */
@@ -133,7 +115,7 @@ function AlertCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [alert.id])
 
-  const text = alertText(alert)
+  const text = agentHubAlertText(alert)
   const current = useAgentHubWorktreeCurrent(alert.thread.worktree.id)
   // Answered: the bubble shows what went out, then leaves.
   const onAnswered = (): void => {
@@ -254,7 +236,9 @@ export function AgentHubAlertStack({
   onPopout,
   onDismiss,
   answerKeys = false,
-  requestPresentationOf
+  requestPresentationOf,
+  onOpenInbox,
+  parkAfterMs = null
 }: {
   alerts: readonly AgentHubAlert[]
   anchorRef: React.RefObject<HTMLElement | null>
@@ -269,7 +253,11 @@ export function AgentHubAlertStack({
   onPopout: (alert: AgentHubAlert) => void
   onDismiss: (id: string) => void
   requestPresentationOf?: (alert: RequestAlert) => AgentHubRequestPresentation
-}): React.JSX.Element {
+  /** "Open in Inbox" on a bot's "N updates" bubble. */
+  onOpenInbox?: () => void
+  /** In the status bar a waiting bot bubble steps aside into its chip after this long. */
+  parkAfterMs?: number | null
+}): React.JSX.Element | null {
   const stackRef = useRef<HTMLDivElement>(null)
   // Why newest: a key answers the question that just arrived, the one the eye is on.
   const front =
@@ -291,8 +279,47 @@ export function AgentHubAlertStack({
     return () => observer.disconnect()
   })
 
-  // Newest nearest the anchor: last when the stack grows upward, first when it hangs below.
-  const ordered = side === 'bottom' ? alerts.toReversed() : alerts
+  const needsList = useAgentHubBotNeedsList()
+  const parked = useAgentHubParkedBots()
+  const allBubbles = agentHubBotAlertBubbles(alerts)
+  // Past five bubbles the older ones wait in the chip.
+  const botBubbles = allBubbles.slice(-MAX_BOT_BUBBLES)
+  const folded = new Set(
+    allBubbles.slice(0, -MAX_BOT_BUBBLES).map((entry) => entry.lead.bot.botKey)
+  )
+  const shownBots = new Set(botBubbles.map((entry) => entry.lead.bot.botKey))
+  const chipEntries = needsList.flatMap((needs): AgentHubBotChipEntry[] =>
+    needs.count > 0 &&
+    !needs.orbOnly &&
+    !shownBots.has(needs.botKey) &&
+    (parked.has(needs.botKey) || folded.has(needs.botKey))
+      ? [{ bot: needs.bot, botKey: needs.botKey, count: needs.count }]
+      : []
+  )
+  const reopenBot = (entry: AgentHubBotChipEntry): void => {
+    const needs = needsList.find((candidate) => candidate.botKey === entry.botKey)
+    unparkAgentHubBots([entry.botKey])
+    if (needs) {
+      pushAgentHubAlerts(openBotAlerts(needs, Date.now()))
+    }
+  }
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+  const others = alerts.filter((alert): alert is AgentHubThreadAlert | RequestAlert => !alert.bot)
+  const ordered =
+    side === 'bottom'
+      ? [...botBubbles.toReversed(), ...others.toReversed()]
+      : [...others, ...botBubbles]
+  const chips = (
+    <AgentHubBotChipRow
+      key="bot-chips"
+      entries={chipEntries}
+      onOpenBot={reopenBot}
+      onOpenInbox={() => onOpenInbox?.()}
+    />
+  )
+  if (ordered.length === 0 && chipEntries.length === 0) {
+    return null
+  }
   return createPortal(
     <div
       ref={stackRef}
@@ -300,38 +327,59 @@ export function AgentHubAlertStack({
       {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
       className="fixed z-[48] flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto p-0.5 scrollbar-sleek"
     >
-      {ordered.map((alert) =>
-        alert.bot ? (
-          <AgentHubBotAlertCard key={alert.id} alert={alert} onDismiss={onDismiss} />
-        ) : alert.request ? (
-          <AgentHubRequestAlert
-            key={alert.id}
-            alert={alert}
-            presentation={
-              requestPresentationOf?.(alert) ?? {
-                title: alert.request.caller.title ?? alert.request.caller.terminalHandle,
-                targetTitle: alert.request.target.terminalHandle,
+      {side === 'bottom' ? chips : null}
+      {ordered.map((entry) =>
+        'lead' in entry ? (
+          <AgentHubBotAlertCard
+            key={entry.lead.bot.botKey}
+            lead={entry.lead}
+            updates={entry.updates}
+            ids={entry.ids}
+            onDismiss={onDismiss}
+            onOpenInbox={onOpenInbox}
+            reduceMotion={reduceMotion}
+            answerKeys={answerKeys && entry.lead.id === front?.id}
+            onOpenAlert={onOpen}
+            presentationOf={(request) =>
+              requestPresentationOf?.(request) ?? {
+                title: request.request.caller.title ?? request.request.caller.terminalHandle,
+                targetTitle: request.request.target.terminalHandle,
                 target: null,
-                location: locationOf(alert)
+                location: locationOf(request)
               }
             }
-            onOpen={() => onOpen(alert)}
+            parkAfterMs={parkAfterMs}
+          />
+        ) : entry.request ? (
+          <AgentHubRequestAlert
+            key={entry.id}
+            alert={entry}
+            presentation={
+              requestPresentationOf?.(entry) ?? {
+                title: entry.request.caller.title ?? entry.request.caller.terminalHandle,
+                targetTitle: entry.request.target.terminalHandle,
+                target: null,
+                location: locationOf(entry)
+              }
+            }
+            onOpen={() => onOpen(entry)}
             onDismiss={onDismiss}
-            answerKeys={answerKeys && alert.id === front?.id}
+            answerKeys={answerKeys && entry.id === front?.id}
           />
         ) : (
           <AlertCard
-            key={alert.id}
-            alert={alert}
-            location={locationOf(alert)}
+            key={entry.id}
+            alert={entry}
+            location={locationOf(entry)}
             onOpen={onOpen}
             onJump={onJump}
             onPopout={onPopout}
             onDismiss={onDismiss}
-            answerKeys={answerKeys && alert.id === front?.id}
+            answerKeys={answerKeys && entry.id === front?.id}
           />
         )
       )}
+      {side === 'bottom' ? null : chips}
     </div>,
     document.body
   )

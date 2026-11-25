@@ -1,105 +1,203 @@
-import { useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
+import { useCallback, useState, useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { openBotItemInHome } from '../bots/items/bot-item-open'
-import { AgentHubBotAskView } from './AgentHubBotAskView'
-import { AgentHubBotAvatar } from './AgentHubBotMark'
-import { AGENT_HUB_ANSWERED_VISIBLE_MS } from './use-agent-hub-quick-answer'
-import { useAgentHubBotAskSteps } from './use-agent-hub-bot-ask-steps'
-import type { AgentHubBotAlert } from './agent-hub-alerts'
+import { useBotHostOffline } from '@/lib/bot-host-views'
+import { readBotHostIds, subscribeToBotChanges } from '@/lib/bot-catalog-snapshot'
+import { useBotHostLabel } from '../bots/use-bot-host-label'
+import {
+  AgentHubBotAccessBody,
+  AgentHubBotAskBody,
+  AgentHubBotRequestBody,
+  AgentHubBotRunsBody,
+  AgentHubBotSignInBody,
+  AgentHubBotSuggestionBody,
+  AgentHubBotThreadBody,
+  botAlertFrom
+} from './AgentHubBotBubbleBodies'
+import { AgentHubBotSpeechBubble, type AgentHubBotBubbleTone } from './AgentHubBotSpeechBubble'
+import { parkAgentHubBot } from './agent-hub-bot-parked-store'
+import type { AgentHubRequestPresentation } from './agent-hub-request-presentation'
+import type {
+  AgentHubBotAlert,
+  AgentHubRequestAlert,
+  AgentHubThreadAlert
+} from './agent-hub-alerts'
+import {
+  BOT_ANSWERED_VISIBLE_MS,
+  BOT_FAILURE_VISIBLE_MS,
+  BOT_RESULT_VISIBLE_MS,
+  useAgentHubBotBubbleLifetime
+} from './use-agent-hub-bot-bubble-lifetime'
 
-const ALERT_VISIBLE_MS = 7000
+function toneOf(alert: AgentHubBotAlert): AgentHubBotBubbleTone {
+  return alert.kind === 'ask' ? 'ask' : alert.kind === 'failure' ? 'failure' : 'result'
+}
 
-/** A bot's new ask as a bubble: who and its number, then its open question to answer in place. */
-export function AgentHubBotAlertCard({
-  alert,
-  onDismiss
+function headlineOf(tone: AgentHubBotBubbleTone, updates: number): string {
+  if (updates > 1) {
+    return translate('agentHub.botBubble.updates', '{{value0}} updates', { value0: updates })
+  }
+  switch (tone) {
+    case 'ask':
+      return translate('agentHub.botBubble.asksYou', 'asks you')
+    case 'failure':
+      return translate('agentHub.botBubble.couldNotFinish', 'could not finish')
+    case 'result':
+      return translate('agentHub.botBubble.finished', 'finished')
+  }
+}
+
+function BubbleBody({
+  lead,
+  close,
+  later,
+  settle,
+  answerKeys,
+  onOpenAlert,
+  presentationOf,
+  onOpenInbox
 }: {
-  alert: AgentHubBotAlert
-  onDismiss: (id: string) => void
+  lead: AgentHubBotAlert
+  close: () => void
+  later: () => void
+  settle: () => void
+  answerKeys: boolean
+  onOpenAlert: (alert: AgentHubThreadAlert | AgentHubRequestAlert) => void
+  presentationOf: (alert: AgentHubRequestAlert) => AgentHubRequestPresentation
+  onOpenInbox?: () => void
 }): React.JSX.Element {
-  const { bot, item } = alert.bot
-  const ask = useAgentHubBotAskSteps(bot, item)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const dismissRef = useRef(() => onDismiss(alert.id))
-  dismissRef.current = () => onDismiss(alert.id)
-  const stopTimer = (): void => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-  }
-  const startTimer = (ms = ALERT_VISIBLE_MS): void => {
-    stopTimer()
-    timerRef.current = setTimeout(() => dismissRef.current(), ms)
-  }
-  // A new alert restarts the countdown; re-renders must not.
-  useEffect(() => {
-    const timer = setTimeout(() => dismissRef.current(), ALERT_VISIBLE_MS)
-    timerRef.current = timer
-    return () => clearTimeout(timer)
-  }, [alert.id])
-  const answered = ask.phase === 'answered'
-  useEffect(() => {
-    if (answered) {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-      }
-      timerRef.current = setTimeout(() => dismissRef.current(), AGENT_HUB_ANSWERED_VISIBLE_MS)
-    }
-  }, [answered])
-  return (
-    <div
-      role="status"
-      data-agent-hub-alert="ask"
-      data-agent-hub-bot-alert={alert.bot.botKey}
-      className="w-80 shrink-0 animate-in rounded-xl border border-foreground/[0.12] bg-popover text-popover-foreground shadow-floating duration-200 fade-in-0 zoom-in-95"
-      onMouseEnter={stopTimer}
-      onMouseLeave={(event) => {
-        if (!event.currentTarget.contains(document.activeElement)) {
-          startTimer()
-        }
-      }}
-      // Typing or choosing inside keeps the bubble up, as hovering does.
-      onFocus={stopTimer}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          startTimer()
-        }
-      }}
-    >
-      <div className="relative flex flex-col gap-2 px-3 py-2.5">
-        <button
-          type="button"
-          className="block w-full text-left"
-          onClick={() => {
-            void openBotItemInHome(bot, item.uid)
-            onDismiss(alert.id)
+  const { bot, subject } = lead.bot
+  switch (subject.type) {
+    case 'item':
+      return <AgentHubBotAskBody bot={bot} subject={subject} onLater={later} onSettled={settle} />
+    case 'signin':
+      return <AgentHubBotSignInBody bot={bot} subject={subject} onLater={later} />
+    case 'access':
+      return <AgentHubBotAccessBody subject={subject} onLater={later} />
+    case 'runs':
+      return <AgentHubBotRunsBody bot={bot} subject={subject} />
+    case 'thread':
+      return (
+        <AgentHubBotThreadBody
+          subject={subject}
+          failed={lead.kind === 'failure'}
+          answerKeys={answerKeys}
+          onOpen={() => {
+            onOpenAlert(subject.alert)
+            close()
           }}
-        >
-          <span className="flex items-center gap-2.5 pr-8">
-            <AgentHubBotAvatar identity={{ bot, origin: 'home' }} />
-            <span className="min-w-0 flex-1 truncate text-[13px]">
-              <span className="font-semibold">
-                {translate('agentHub.bots.alertAsking', '{{name}} is asking', { name: bot.name })}
-              </span>{' '}
-              <span className="font-mono text-[11px] text-agent-question-text">#{item.number}</span>
-            </span>
-          </span>
-        </button>
-        <AgentHubBotAskView ask={ask} variant="plain" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={translate('agentHub.alert.dismiss', 'Dismiss')}
-          onClick={() => onDismiss(alert.id)}
-          className="absolute top-2 right-2"
-        >
-          <X className="size-3.5" />
-        </Button>
-      </div>
-    </div>
+          onSettled={settle}
+        />
+      )
+    case 'request':
+      return (
+        <AgentHubBotRequestBody
+          subject={subject}
+          presentation={presentationOf(subject.alert)}
+          onOpen={() => onOpenAlert(subject.alert)}
+          onDismiss={later}
+        />
+      )
+    case 'suggestion':
+      return (
+        <AgentHubBotSuggestionBody
+          bot={bot}
+          subject={subject}
+          onClose={close}
+          onOpenInbox={onOpenInbox}
+        />
+      )
+  }
+}
+
+/**
+ * One bubble per bot: its most urgent news with the body to act on, and "N updates" when more waits.
+ * Later or the cross only hides the bubble; whatever it asked keeps counting in the Inbox.
+ */
+export function AgentHubBotAlertCard({
+  lead,
+  updates,
+  ids,
+  onDismiss,
+  onOpenInbox,
+  reduceMotion,
+  answerKeys,
+  onOpenAlert,
+  presentationOf,
+  parkAfterMs
+}: {
+  lead: AgentHubBotAlert
+  updates: number
+  ids: readonly string[]
+  onDismiss: (id: string) => void
+  onOpenInbox?: () => void
+  reduceMotion: boolean
+  /** The front bubble answers to 1-9 and opens with the Enter key. */
+  answerKeys: boolean
+  onOpenAlert: (alert: AgentHubThreadAlert | AgentHubRequestAlert) => void
+  presentationOf: (alert: AgentHubRequestAlert) => AgentHubRequestPresentation
+  /** In the status bar a question waiting without a hover steps aside into its chip after this long. */
+  parkAfterMs: number | null
+}): React.JSX.Element {
+  const { bot, botKey, at } = lead.bot
+  const tone = toneOf(lead)
+  const offline = useBotHostOffline(bot.hostId)
+  const hostIds = useSyncExternalStore(subscribeToBotChanges, readBotHostIds, readBotHostIds)
+  // Why 2+: with one computer the label says nothing.
+  const hostLabel = useBotHostLabel(bot.hostId)
+  const shownHostLabel = hostIds.length >= 2 ? hostLabel : null
+  const [settledId, setSettledId] = useState<string | null>(null)
+  const settled = settledId === lead.id
+  const close = useCallback(() => ids.forEach(onDismiss), [ids, onDismiss])
+  const park = useCallback(() => {
+    parkAgentHubBot(botKey)
+    ids.forEach(onDismiss)
+  }, [botKey, ids, onDismiss])
+  const ms = settled
+    ? BOT_ANSWERED_VISIBLE_MS
+    : tone === 'ask'
+      ? parkAfterMs
+      : tone === 'failure'
+        ? BOT_FAILURE_VISIBLE_MS
+        : BOT_RESULT_VISIBLE_MS
+  const hoverProps = useAgentHubBotBubbleLifetime(
+    lead.id,
+    ms,
+    !settled,
+    tone === 'ask' && !settled ? park : close
+  )
+  const settle = useCallback(() => setSettledId(lead.id), [lead.id])
+  return (
+    <AgentHubBotSpeechBubble
+      bot={bot}
+      tone={tone}
+      headline={headlineOf(tone, updates)}
+      from={updates > 1 ? null : botAlertFrom(lead)}
+      hostLabel={shownHostLabel}
+      at={at}
+      offline={offline}
+      reduceMotion={reduceMotion}
+      alertKey={botKey}
+      onDismiss={close}
+      hoverProps={hoverProps}
+    >
+      <fieldset disabled={offline} className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
+        <BubbleBody
+          lead={lead}
+          close={close}
+          later={park}
+          settle={settle}
+          answerKeys={answerKeys}
+          onOpenAlert={onOpenAlert}
+          presentationOf={presentationOf}
+          onOpenInbox={onOpenInbox}
+        />
+        {updates > 1 && onOpenInbox ? (
+          <Button size="xs" variant="outline" className="self-start" onClick={onOpenInbox}>
+            {translate('agentHub.botBubble.openInbox', 'Open in Inbox')}
+          </Button>
+        ) : null}
+      </fieldset>
+    </AgentHubBotSpeechBubble>
   )
 }

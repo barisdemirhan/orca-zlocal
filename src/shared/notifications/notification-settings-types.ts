@@ -110,6 +110,8 @@ export type NotificationDispatchRequest = {
   agentRepliesInSlack?: true
   /** The verdict on the turn this notification reports, which picks its wording. */
   agentTurnOutcome?: AgentTurnOutcome
+  /** The bot whose chat this is, when the owner chose to see bot names; it only words the title. */
+  botName?: string
   /** Why a failed turn failed, typed: its body says so instead of the last message. */
   agentFailure?: AgentSessionFailureFact
   /** Click-routing lane; absence means terminal, preserving pre-structured-chat senders. */

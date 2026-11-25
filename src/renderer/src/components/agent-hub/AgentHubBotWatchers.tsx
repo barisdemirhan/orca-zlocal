@@ -50,7 +50,7 @@ function AgentHubBotWatcher({ bot, orbOnly }: { bot: Bot; orbOnly: boolean }): n
     }
   }, [bot, now.needs, items, activity.upNext, orbOnly])
   useEffect(() => publishAgentHubBotNeeds(needs), [needs])
-  useAgentHubBotAlerts(needs, read !== null && !orbOnly)
+  useAgentHubBotAlerts(needs, read !== null && !orbOnly, activity)
   return null
 }
 

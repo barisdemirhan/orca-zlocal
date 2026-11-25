@@ -17,6 +17,10 @@ import type { Bot } from '../../../../shared/bot-types'
 import type { BotItem } from '../../../../shared/bots/bot-items'
 import type { BotItemQuestionStepsSend } from '../../../../shared/bots/use-bot-item-question-steps'
 import { agentHubBotAskLine } from './use-agent-hub-bot-ask'
+import {
+  keepAgentHubBotAskOpen,
+  releaseAgentHubBotAskOpen
+} from './agent-hub-bot-ask-partial-store'
 
 const NO_REPLIES: readonly BotItemQuickReply[] = []
 
@@ -115,6 +119,13 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
           ? 'failed'
           : 'reading'
 
+  const settled = phase === 'answered' || phase === 'closed'
+  useEffect(() => {
+    if (settled) {
+      releaseAgentHubBotAskOpen(bot, item.uid)
+    }
+  }, [settled, bot, item.uid])
+
   const folded =
     steps && asked
       ? shape.decisions.flatMap((line, index) => {
@@ -166,7 +177,16 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
       }
     },
     reply: (text) => fromBox(text, [], waitingLine?.id ?? null),
-    sendHeld: () => steps?.sendHeld(),
+    sendHeld: () => {
+      if (!steps) {
+        return
+      }
+      // Lines without a held answer stay open: the Inbox keeps the ask, and counts it, until it is answered.
+      if (steps.heldCount < steps.lines.length) {
+        keepAgentHubBotAskOpen(bot, live, steps.askId, steps.lines.length - steps.heldCount)
+      }
+      steps.sendHeld()
+    },
     retry: view.retry
   }
 }

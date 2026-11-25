@@ -6,7 +6,11 @@ import {
 } from '@/attention/agent-attention-notification-delivery'
 import { isOrcaWindowForegroundFocused } from '@/attention/orca-window-foreground-focus'
 import { createTerminalAttentionSurface } from '../terminal-pane/notifications/terminal-attention-surface'
-import { pushAgentHubAlerts, pruneAgentHubRequestAlerts } from './agent-hub-alert-queue'
+import {
+  pruneAgentHubBotChatAsks,
+  pruneAgentHubRequestAlerts,
+  pushAgentHubAlerts
+} from './agent-hub-alert-queue'
 import {
   agentHubAlertBaseline,
   agentHubRequestAlerts,
@@ -15,6 +19,10 @@ import {
   rememberRaisedAlertIds,
   takeUnraisedAlerts
 } from './agent-hub-alerts'
+import { agentHubBotAlertsMuted } from './agent-hub-bot-alerts-mute'
+import { routeRequestAlertsToBots, routeThreadAlertsToBots } from './agent-hub-bot-alert-routing'
+import { readAgentHubBotAlertSettings } from './agent-hub-bot-alert-policy'
+import { agentHubPaneMuteKey, agentHubSenderMuted } from './agent-hub-sender-mute'
 import { playAgentHubAlertSound } from './agent-hub-chime'
 import { isAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { readAgentHubMirrors } from './agent-hub-mirror-store'
@@ -43,11 +51,13 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
       rememberRaisedAlertIds(raisedAlertIds, baselineRef.current)
       return
     }
+    // Why both on: a bot's chat is governed by the bot's switches, decided after routing.
     const diff = diffAgentHubAlerts(baselineRef.current, lists, {
-      onNeedsInput: alertOnNeedsInput,
-      onFinished: alertOnFinished
+      onNeedsInput: true,
+      onFinished: true
     })
     baselineRef.current = diff.baseline
+    pruneAgentHubBotChatAsks(diff.baseline)
     const fresh = takeUnraisedAlerts(raisedAlertIds, diff.fresh)
     if (fresh.length === 0 || (alertsMutedUntil ?? 0) > Date.now()) {
       return
@@ -70,12 +80,24 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
             chip.window.tabs.some((tab) => agentHubTargetShowsThread(tab.target, alert.thread))
           ))
     )
-    if (unseen.length === 0) {
+    const routed = routeThreadAlertsToBots(unseen)
+    const agentAlerts = routed.agents.filter(
+      (alert) =>
+        !agentHubSenderMuted(agentHubPaneMuteKey(alert.thread.paneKey)) &&
+        (alert.kind === 'done' ? alertOnFinished : alertOnNeedsInput)
+    )
+    if (routed.bots.length > 0 && !agentHubBotAlertsMuted(null)) {
+      pushAgentHubAlerts(routed.bots)
+      if (readAgentHubBotAlertSettings().sound) {
+        playAgentHubAlertSound(readAgentAttentionNotificationSound(state.settings ?? {}))
+      }
+    }
+    if (agentAlerts.length === 0) {
       return
     }
-    pushAgentHubAlerts(unseen)
+    pushAgentHubAlerts(agentAlerts)
     const windowFocused = isOrcaWindowForegroundFocused()
-    const quietElsewhere = unseen.some(
+    const quietElsewhere = agentAlerts.some(
       (alert) =>
         !orcaNotificationWillSound({
           notifications: state.settings?.notifications,
@@ -92,15 +114,29 @@ export function useAgentHubAlerts(lists: AgentHubLists, preferences: AgentHubPre
 
   useEffect(() => {
     pruneAgentHubRequestAlerts(requests)
-    const fresh = takeUnraisedAlerts(raisedAlertIds, agentHubRequestAlerts(requests)).filter(
+    const unraised = takeUnraisedAlerts(raisedAlertIds, agentHubRequestAlerts(requests))
+    if (unraised.length === 0 || (alertsMutedUntil ?? 0) > Date.now()) {
+      return
+    }
+    const routed = routeRequestAlertsToBots(unraised)
+    if (routed.bots.length > 0 && !agentHubBotAlertsMuted(null)) {
+      pushAgentHubAlerts(routed.bots)
+      if (readAgentHubBotAlertSettings().sound) {
+        playAgentHubAlertSound(
+          readAgentAttentionNotificationSound(useAppStore.getState().settings ?? {})
+        )
+      }
+    }
+    const fresh = routed.agents.filter(
       (alert) =>
-        alert.kind === 'done'
+        !agentHubSenderMuted(agentHubPaneMuteKey(alert.request.caller.paneKey)) &&
+        (alert.kind === 'done'
           ? alertOnFinished
           : alert.kind === 'info'
             ? alertOnInfo
-            : alertOnNeedsInput
+            : alertOnNeedsInput)
     )
-    if (fresh.length === 0 || (alertsMutedUntil ?? 0) > Date.now()) {
+    if (fresh.length === 0) {
       return
     }
     pushAgentHubAlerts(fresh)

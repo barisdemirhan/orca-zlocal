@@ -25,7 +25,8 @@ vi.mock('../terminal-pane/notifications/terminal-attention-surface', () => ({
 vi.mock('./agent-hub-canvas-store', () => ({ isAgentHubCanvasOpen: () => view.canvasOpen }))
 vi.mock('./agent-hub-alert-queue', () => ({
   pushAgentHubAlerts: vi.fn(),
-  pruneAgentHubRequestAlerts: vi.fn()
+  pruneAgentHubRequestAlerts: vi.fn(),
+  pruneAgentHubBotChatAsks: vi.fn()
 }))
 vi.mock('./agent-hub-chime', () => ({ playAgentHubAlertSound: vi.fn() }))
 vi.mock('./agent-hub-mirror-store', () => ({ readAgentHubMirrors: () => ({ chips: [] }) }))
