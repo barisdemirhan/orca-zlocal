@@ -1,4 +1,4 @@
-import { useContext, type ComponentProps, type CSSProperties, type ReactNode } from 'react'
+import { useContext, type CSSProperties, type ReactNode } from 'react'
 import type { useStructuredAgentSession } from './session/structured/use-structured-agent-session'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
@@ -68,17 +68,21 @@ export function ComposerState({
   )
 }
 
-/** The input dock, with the Orb's composer state around everything in it. */
+/** The pane's input dock, with the Orb's composer state around everything in it. */
 export function Dock({
-  orb,
-  children,
-  ...dock
-}: ComponentProps<typeof NativeChatDock> & {
-  orb: { sessionId: string; controller: Controller }
+  shown,
+  pane,
+  controller,
+  children
+}: {
+  shown: boolean
+  pane: { sessionId: string; isVisible: boolean }
+  controller: Controller
+  children: ReactNode
 }): React.JSX.Element {
   return (
-    <NativeChatDock {...dock}>
-      <ComposerState sessionId={orb.sessionId} controller={orb.controller}>
+    <NativeChatDock shown={shown} keepFloatingTerminalTriggerClear={pane.isVisible}>
+      <ComposerState sessionId={pane.sessionId} controller={controller}>
         {children}
       </ComposerState>
     </NativeChatDock>
