@@ -8,10 +8,10 @@ import type {
 import type { AgentJournalItemIdentity } from '../../../../shared/agent-session/journal/agent-session-journal-identity'
 import type { AgentJournalTurnScope } from '../../../../shared/agent-session/journal/agent-session-journal-turn-scope'
 import type {
-  AgentSessionPluginSurfaceUpdate,
   AgentSessionPromptSuggestion,
   AgentSessionTurnActivity
 } from '../../../../shared/agent-session/agent-session-wire'
+import type { AgentSessionPluginSurfaceUpdate } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type { StructuredAgentSessionPublishOptions } from './structured-agent-session-dispatch'
 export type { StructuredAgentSessionPublishOptions } from './structured-agent-session-dispatch'
 import type { SqlAgentSessionJournal } from '../../agent-session-journal/journal-sql-store'

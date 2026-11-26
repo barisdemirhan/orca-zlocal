@@ -1,8 +1,8 @@
 import type {
-  AgentSessionPluginSurfaceUpdate,
   AgentSessionPromptSuggestion,
   AgentSessionTurnActivity
 } from '../../../../shared/agent-session/agent-session-wire'
+import type { AgentSessionPluginSurfaceUpdate } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type { StructuredAgentSessionSinkQueue } from './structured-agent-session-event-sink-queue'
 
 /** State readers see but the journal never keeps; a newer value replaces one still buffered. */
