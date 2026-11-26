@@ -11,6 +11,7 @@ import {
 } from '../../../appearance/native-chat-appearance-style'
 import { NativeChatJumpToLatest } from '../../../viewport/scroll/NativeChatJumpToLatest'
 import { NativeChatWorkerDockFrame } from './NativeChatWorkerDockFrame'
+import { NativeChatSubagentSheetLayer } from '../../../subagents/NativeChatSubagentSheetLayer'
 
 // Dev-only: the chat pane the worker dock fixtures render their strip in.
 /** The strip in a full-height chat pane above a message box, as a chat shows it. */
@@ -115,62 +116,68 @@ export function workerDockFixturePane(
   return (
     <div
       data-native-chat-root=""
-      className="native-chat-appearance flex h-[calc(100vh-2rem)] flex-col bg-chat-canvas"
+      className="native-chat-appearance relative flex h-[calc(100vh-2rem)] flex-col bg-chat-canvas"
       style={nativeChatAppearanceStyle({})}
     >
-      <FixtureTranscript overlay={more.find} />
-      <Toaster />
-      <NativeChatDock>
-        <NativeChatWorkerDockFrame>{strip}</NativeChatWorkerDockFrame>
-        {prompt ? null : more.goal}
-        {prompt ? (
-          <NativeChatQuestionCard
-            prompt={{
-              questions: [
-                {
-                  header: 'Release notes',
-                  question: 'Which change should the release notes lead with?',
-                  multiSelect: false,
-                  options: [
-                    {
-                      label: 'Worker reliability',
-                      description: 'Show the active work and recent failures.'
-                    },
-                    {
-                      label: 'Composer layout',
-                      description: 'Highlight changes to the message box.'
-                    }
-                  ]
-                }
-              ]
-            }}
-            onAnswer={() => {}}
-            onCancel={() => {}}
-          />
-        ) : null}
-        {sections === 'queue' || sections === 'both' ? (
-          <NativeChatQueuedMessageList controller={queue(more.queued ?? 1)} chatWorktreeId={null} />
-        ) : null}
-        {prompt && more.promptReplacesComposer ? null : more.composer ? (
-          more.composer
-        ) : (
-          <div
-            data-native-chat-composer-scope="fixture"
-            className="shrink-0 px-3 pt-2 pb-4 sm:px-4"
-          >
-            <div className="mx-auto max-w-(--chat-content-max-width) rounded-xl border border-chat-composer-border bg-chat-composer-surface p-1.5 shadow-xs">
-              <textarea
-                data-fixture-composer=""
-                data-native-chat-prompt-editor="true"
-                aria-label="Message"
-                className="block min-h-12 w-full resize-none bg-transparent px-2 py-2 text-sm text-chat-foreground outline-none"
-                defaultValue=""
-                placeholder="Ask anything, / for commands, @ for context"
-              />
+      {/* The pane's own sheet layer, as a chat pane wraps its content, so a row's sheet covers the pane. */}
+      <NativeChatSubagentSheetLayer paneKey="worker-dock-fixture" sessionKey="worker-dock-fixture">
+        <FixtureTranscript overlay={more.find} />
+        <Toaster />
+        <NativeChatDock>
+          <NativeChatWorkerDockFrame>{strip}</NativeChatWorkerDockFrame>
+          {prompt ? null : more.goal}
+          {prompt ? (
+            <NativeChatQuestionCard
+              prompt={{
+                questions: [
+                  {
+                    header: 'Release notes',
+                    question: 'Which change should the release notes lead with?',
+                    multiSelect: false,
+                    options: [
+                      {
+                        label: 'Worker reliability',
+                        description: 'Show the active work and recent failures.'
+                      },
+                      {
+                        label: 'Composer layout',
+                        description: 'Highlight changes to the message box.'
+                      }
+                    ]
+                  }
+                ]
+              }}
+              onAnswer={() => {}}
+              onCancel={() => {}}
+            />
+          ) : null}
+          {sections === 'queue' || sections === 'both' ? (
+            <NativeChatQueuedMessageList
+              controller={queue(more.queued ?? 1)}
+              chatWorktreeId={null}
+            />
+          ) : null}
+          {prompt && more.promptReplacesComposer ? null : more.composer ? (
+            more.composer
+          ) : (
+            <div
+              data-native-chat-composer-scope="fixture"
+              className="shrink-0 px-3 pt-2 pb-4 sm:px-4"
+            >
+              <div className="mx-auto max-w-(--chat-content-max-width) rounded-xl border border-chat-composer-border bg-chat-composer-surface p-1.5 shadow-xs">
+                <textarea
+                  data-fixture-composer=""
+                  data-native-chat-prompt-editor="true"
+                  aria-label="Message"
+                  className="block min-h-12 w-full resize-none bg-transparent px-2 py-2 text-sm text-chat-foreground outline-none"
+                  defaultValue=""
+                  placeholder="Ask anything, / for commands, @ for context"
+                />
+              </div>
             </div>
-          </div>
-        )}
-      </NativeChatDock>
+          )}
+        </NativeChatDock>
+      </NativeChatSubagentSheetLayer>
     </div>
   )
 }

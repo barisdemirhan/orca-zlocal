@@ -32,13 +32,20 @@ function useWorkerDockCommandDetail(
   row: WorkerDockRowView,
   sessionId: string,
   target: RuntimeClientTarget
-): WorkerDockCommandDetail | null {
-  const [detail, setDetail] = useState<WorkerDockCommandDetail | null>(null)
+): WorkerDockCommandDetail | null | undefined {
+  // Undefined while the first read runs, so nothing claims the result is missing before it ends.
+  const [detail, setDetail] = useState<WorkerDockCommandDetail | null | undefined>(undefined)
   const { providerId, settlement, state } = row
   useEffect(() => {
     let cancelled = false
+    const notFound = (): void => {
+      if (!cancelled) {
+        setDetail((current) => current ?? null)
+      }
+    }
     void (async () => {
       if (settlement || !providerId) {
+        notFound()
         return
       }
       let collected: NativeChatBlock[] = []
@@ -55,6 +62,7 @@ function useWorkerDockCommandDetail(
           }
         )
         if (cancelled || !result.ok) {
+          notFound()
           return
         }
         const older = result.page.items.flatMap((item) =>
@@ -70,11 +78,13 @@ function useWorkerDockCommandDetail(
           return
         }
         if (last) {
+          notFound()
           return
         }
         cursor = oldest
       }
-    })().catch(() => {})
+      notFound()
+    })().catch(notFound)
     return () => {
       cancelled = true
     }
@@ -163,12 +173,12 @@ export function WorkerDockCommandSheet({
       <div className="flex min-h-0 flex-1 flex-col gap-3 scrollbar-sleek overflow-y-auto px-4 py-3 text-sm">
         {block ? (
           <NativeChatBackgroundTaskRun block={block} />
-        ) : (
+        ) : detail === null || row.reason ? (
           <p className="text-muted-foreground">
             {row.reason ??
               t('components.native-chat.workerDock.resultUnavailable', 'Worker result unavailable')}
           </p>
-        )}
+        ) : null}
         {detail?.command ? (
           <section className="flex flex-col gap-1">
             <h3 className="text-xs font-medium text-chat-foreground-faint">
@@ -197,7 +207,7 @@ export function WorkerDockCommandSheet({
                     )}\n${output.text}`
                   : output.text}
               </pre>
-            ) : (
+            ) : counting || detail !== undefined ? (
               <p className="text-xs text-muted-foreground">
                 {counting
                   ? t(
@@ -209,7 +219,7 @@ export function WorkerDockCommandSheet({
                       'No output is recorded in this chat.'
                     )}
               </p>
-            )}
+            ) : null}
           </section>
         ) : null}
       </div>
