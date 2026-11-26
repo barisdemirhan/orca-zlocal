@@ -14,6 +14,7 @@ import {
   workerDockCommandDetail,
   type WorkerDockCommandDetail
 } from './worker-dock-command-detail'
+import { useWorkerDockCommandOutputFile } from './use-worker-dock-command-output-file'
 import { workerDockStateLabel } from './worker-dock-labels'
 import { workerDockRowTitle, type WorkerDockRowView } from './WorkerDockRow'
 import {
@@ -99,6 +100,7 @@ export function WorkerDockCommandSheet({
   paneKey,
   sessionId,
   target,
+  worktreeId,
   onClose
 }: {
   row: WorkerDockRowView
@@ -106,6 +108,8 @@ export function WorkerDockCommandSheet({
   paneKey: string
   sessionId: string
   target: RuntimeClientTarget
+  /** The chat's workspace, which a read of the command's output file is made through. */
+  worktreeId?: string | null
   onClose: () => void
 }): React.JSX.Element | null {
   const t = useTranslate()
@@ -126,7 +130,18 @@ export function WorkerDockCommandSheet({
     : false
   const startedAt = block?.startedAt ?? row.startedAt
   const counting = !settled && (row.state === 'running' || row.state === 'starting')
-  const output = detail?.output && !counting ? lastOutputLines(detail.output) : null
+  const transcriptOutput = detail?.output && !counting ? lastOutputLines(detail.output) : null
+  const file = useWorkerDockCommandOutputFile({
+    target,
+    worktreeId,
+    outputFile: detail && !detail.output ? block?.outputFile : undefined,
+    settled: !counting
+  })
+  const fileLines = file ? lastOutputLines(file.text) : null
+  const fileOutput = fileLines?.text
+    ? { ...fileLines, unknownOmitted: file?.truncated === true }
+    : null
+  const output = transcriptOutput ? { ...transcriptOutput, unknownOmitted: false } : fileOutput
   if (!host) {
     return null
   }
@@ -196,16 +211,21 @@ export function WorkerDockCommandSheet({
             </h3>
             {output ? (
               <pre className="font-mono text-xs break-all whitespace-pre-wrap text-chat-foreground">
-                {output.omitted > 0
+                {output.unknownOmitted
                   ? `${t(
-                      'components.native-chat.workerDock.commandOutputOmitted',
-                      '… {{count}} earlier lines',
-                      {
-                        count: output.omitted,
-                        defaultValue_one: '… {{count}} earlier line'
-                      }
+                      'components.native-chat.workerDock.commandOutputEarlier',
+                      '… earlier output'
                     )}\n${output.text}`
-                  : output.text}
+                  : output.omitted > 0
+                    ? `${t(
+                        'components.native-chat.workerDock.commandOutputOmitted',
+                        '… {{count}} earlier lines',
+                        {
+                          count: output.omitted,
+                          defaultValue_one: '… {{count}} earlier line'
+                        }
+                      )}\n${output.text}`
+                    : output.text}
               </pre>
             ) : counting || detail !== undefined ? (
               <p className="text-xs text-muted-foreground">

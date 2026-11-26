@@ -47,6 +47,8 @@ function workerDockRowSettled(row: { state: string; settlement: string | null })
 export function NativeChatStructuredSessionStatus(props: {
   sessionId: string
   target?: RuntimeClientTarget
+  /** The chat's workspace, through which a command's output file is read. */
+  worktreeId?: string | null
   /** The session's own status row, whose verdict the strip's children read; also names the pane a picked agent opens in. */
   paneKey: string
   isVisible: boolean
@@ -256,6 +258,7 @@ export function NativeChatStructuredSessionStatus(props: {
             paneKey={props.paneKey}
             sessionId={props.sessionId}
             target={target}
+            worktreeId={props.worktreeId}
             onClose={() => setProviderDetails(null)}
           />
         </Suspense>

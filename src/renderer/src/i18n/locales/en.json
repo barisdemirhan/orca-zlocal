@@ -23075,6 +23075,7 @@
         "commandOutput": "Output",
         "commandOutputOmitted_one": "… {{count}} earlier line",
         "commandOutputOmitted_other": "… {{count}} earlier lines",
+        "commandOutputEarlier": "… earlier output",
         "commandOutputWhenDone": "The output shows here when the command finishes.",
         "commandOutputNone": "No output is recorded in this chat.",
         "notNow": "Not now",

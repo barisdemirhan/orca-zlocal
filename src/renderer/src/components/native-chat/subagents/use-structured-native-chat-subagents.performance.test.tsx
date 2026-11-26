@@ -32,6 +32,7 @@ function Chat(_props: { update: number }) {
   const subagents = useStructuredNativeChatSubagents({
     sessionId: 'session-1',
     target: LOCAL,
+    tabId: 'tab_chat',
     paneKey: 'tab_chat:pane',
     isVisible: true,
     controller: {
