@@ -1,6 +1,6 @@
 import { Moon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { translate } from '@/i18n/i18n'
+import { useTranslate } from '@/i18n/use-translate'
 import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
 import type { AgentSleptPrompt } from '../../../../shared/agent-status/contracts/agent-status-types'
 import { activityThreadRowCopy } from '../activity/threads/activity-thread-presentation'
@@ -43,6 +43,7 @@ export function AgentHubSleptPromptCard({
   /** The card's footer actions. */
   children?: React.ReactNode
 }): React.JSX.Element {
+  const t = useTranslate()
   const copy = activityThreadRowCopy(thread)
   const view = readSleptPrompt(prompt, thread.agentType)
   const key = sleptPromptKey(thread.paneKey, prompt)
@@ -70,8 +71,8 @@ export function AgentHubSleptPromptCard({
             <span className="font-semibold">@{thread.agentType}</span>
             <HubChip tone="ask">
               {permission
-                ? translate('agentHub.slept.needsPermission', 'needs permission')
-                : translate('agentHub.card.asking', 'asking')}
+                ? t('agentHub.slept.needsPermission', 'needs permission')
+                : t('agentHub.card.asking', 'asking')}
             </HubChip>
             <span className="font-mono text-[11px] text-muted-foreground/70">
               {formatShortTimeAgo(stateSince, now)}
@@ -83,11 +84,11 @@ export function AgentHubSleptPromptCard({
       <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
         <Moon className="size-3.5" />
         {permission
-          ? translate(
+          ? t(
               'agentHub.slept.permissionHint',
               'Asleep. Waking it asks again; the permission prompt then appears here.'
             )
-          : translate(
+          : t(
               'agentHub.slept.questionHint',
               'Asleep. Your answer goes as a message once it wakes.'
             )}
@@ -101,7 +102,7 @@ export function AgentHubSleptPromptCard({
             disabled={locked}
             onClick={() => send(SLEPT_RETRY_MESSAGE)}
           >
-            {translate('agentHub.slept.wakeAndRetry', 'Wake and retry')}
+            {t('agentHub.slept.wakeAndRetry', 'Wake and retry')}
           </Button>
         </>
       ) : lone ? (
@@ -128,7 +129,7 @@ export function AgentHubSleptPromptCard({
       ) : null}
       {permission || questions.length === 0 ? null : (
         <HubReplyField
-          placeholder={translate('agentHub.slept.wakeAndAnswer', 'Wake and answer…')}
+          placeholder={t('agentHub.slept.wakeAndAnswer', 'Wake and answer…')}
           disabled={locked}
           onSend={(text) => {
             send(composeSleptAnswerMessage(questionTexts, [text]))
@@ -139,17 +140,17 @@ export function AgentHubSleptPromptCard({
       {delivery ? (
         <div role="status" className="mt-2 text-xs text-muted-foreground">
           {delivery.phase === 'waking'
-            ? translate('agentHub.slept.waking', 'Waking the agent…')
+            ? t('agentHub.slept.waking', 'Waking the agent…')
             : delivery.phase === 'sending'
-              ? translate('agentHub.slept.waitingReady', 'Waiting until it is ready…')
+              ? t('agentHub.slept.waitingReady', 'Waiting until it is ready…')
               : delivery.phase === 'sent'
-                ? translate('agentHub.slept.sent', 'Sent')
+                ? t('agentHub.slept.sent', 'Sent')
                 : null}
           {delivery.phase === 'failed' ? (
             <span className="flex items-center gap-2 text-destructive">
-              {delivery.error ?? translate('agentHub.slept.deliverFailed', "Couldn't deliver yet.")}
+              {delivery.error ?? t('agentHub.slept.deliverFailed', "Couldn't deliver yet.")}
               <Button size="xs" variant="outline" onClick={() => send(delivery.message)}>
-                {translate('agentHub.slept.sendAgain', 'Send again')}
+                {t('agentHub.slept.sendAgain', 'Send again')}
               </Button>
             </span>
           ) : null}

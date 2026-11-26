@@ -1,6 +1,6 @@
 import { Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { translate } from '@/i18n/i18n'
+import { useTranslate } from '@/i18n/use-translate'
 import { botRefKey } from '@/lib/bot-hosts'
 import { AgentHubMirrorBotSettings } from './AgentHubMirrorBotSettings'
 import {
@@ -13,8 +13,7 @@ import {
   agentHubMirrorBotSurface,
   setAgentHubMirrorBotSettings,
   setAgentHubMirrorBotTab,
-  useAgentHubMirrorBotView,
-  type AgentHubMirrorBotTab
+  useAgentHubMirrorBotView
 } from './agent-hub-mirror-bot-tab-store'
 import type { AgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
@@ -32,6 +31,7 @@ export function AgentHubMirrorBotView({
   botChat: AgentHubMirrorBotChat
   disabled: boolean
 }): React.JSX.Element {
+  const t = useTranslate()
   const { bot, isOrb } = botChat
   const { tab, settings } = useAgentHubMirrorBotView(windowId)
   const override = useAgentHubMirrorBotChatOpenOverride(target, botChat)
@@ -44,7 +44,11 @@ export function AgentHubMirrorBotView({
         tabs={AGENT_HUB_BOT_PAGE_TABS}
         needs={needs}
         chatWaiting={false}
-        onSelect={(next) => setAgentHubMirrorBotTab(windowId, next as AgentHubMirrorBotTab)}
+        onSelect={(next) => {
+          if (next !== 'chat') {
+            setAgentHubMirrorBotTab(windowId, next)
+          }
+        }}
       />
       {settings ? (
         <div className="scrollbar-sleek flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -73,8 +77,8 @@ export function AgentHubMirrorBotView({
           >
             <Settings2 className="size-3" />
             {settings
-              ? translate('agentHub.mirror.bot.backToActivity', 'Back to activity')
-              : translate('agentHub.mirror.bot.settings', 'Bot settings')}
+              ? t('agentHub.mirror.bot.backToActivity', 'Back to activity')
+              : t('agentHub.mirror.bot.settings', 'Bot settings')}
           </Button>
         </div>
       ) : null}
