@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { translate } from '@/i18n/i18n'
-import { openBotHome } from '@/lib/bot-catalog'
 import { useAppStore } from '@/store'
 import { selectExecutionHostDisplayLabel } from '@/runtime/hosts/display/execution-host-display-label'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { AgentHubMirrorBotFace } from './AgentHubMirrorBotFace'
 import { DrawerLink } from './AgentHubMirrorDrawerParts'
+import { openBotPage } from './agent-hub-bot-page-open'
 import {
   agentHubMirrorBotChatName,
   agentHubMirrorBotRuns,
@@ -76,7 +76,7 @@ export function AgentHubMirrorBotHoverCard({
             ) : null}
           </dl>
           <div className="flex items-center gap-3">
-            <DrawerLink onClick={() => openBotHome(bot)}>
+            <DrawerLink onClick={() => void openBotPage(bot)}>
               {translate('agentHub.mirror.bot.openPage', 'Open bot page')}
             </DrawerLink>
             <DrawerLink onClick={() => showBotChatInOrbOrBots(target, botChat)}>

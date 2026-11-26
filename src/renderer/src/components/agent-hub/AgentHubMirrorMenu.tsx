@@ -16,7 +16,7 @@ import { useAppStore } from '@/store'
 import { openAgentHubCanvas, useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { setAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
-import { openBotHome } from '@/lib/bot-catalog'
+import { openBotPage } from './agent-hub-bot-page-open'
 import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { agentHubMirrorSourceKey } from './agent-hub-mirror-membership'
 import { useAgentHubPaneSleep } from './agent-hub-pane-sleep'
@@ -102,7 +102,7 @@ export function AgentHubMirrorMenu({
         <DropdownMenuSeparator />
         {botChat ? (
           <>
-            <DropdownMenuItem onSelect={() => openBotHome(botChat.bot)}>
+            <DropdownMenuItem onSelect={() => void openBotPage(botChat.bot)}>
               {translate('agentHub.mirror.bot.openPage', 'Open bot page')}
             </DropdownMenuItem>
             <DropdownMenuItem

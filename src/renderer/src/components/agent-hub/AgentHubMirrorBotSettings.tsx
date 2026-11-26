@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { openBotHome, updateBot } from '@/lib/bot-catalog'
+import { updateBot } from '@/lib/bot-catalog'
 import { useAppStore } from '@/store'
 import type { Bot } from '../../../../shared/bot-types'
 import type { BotUpdateParams } from '../../../../shared/rpc-contract/bots-params'
@@ -12,9 +12,10 @@ import { AgentHubMirrorBotFace } from './AgentHubMirrorBotFace'
 import { DrawerLink, DrawerRow, DrawerSection } from './AgentHubMirrorDrawerParts'
 import { useAgentHubMirrorChatSettings } from './agent-hub-mirror-chat-feed'
 import { sleepAgentHubOrb } from './agent-hub-orb-sleep'
+import { openBotPage } from './agent-hub-bot-page-open'
 
-function openBotAutomations(bot: Bot): void {
-  if (openBotHome(bot)) {
+async function openBotAutomations(bot: Bot): Promise<void> {
+  if (await openBotPage(bot)) {
     const { setRightSidebarTab, setRightSidebarOpen } = useAppStore.getState()
     setRightSidebarTab('bot-activity')
     setRightSidebarOpen(true)
@@ -64,7 +65,7 @@ export function AgentHubMirrorBotSettings({
       <DrawerSection label={translate('agentHub.mirror.bot.automations', 'Automations')} />
       <DrawerRow
         trail={
-          <DrawerLink onClick={() => openBotAutomations(bot)}>
+          <DrawerLink onClick={() => void openBotAutomations(bot)}>
             {translate('agentHub.mirror.bot.manage', 'Manage')}
           </DrawerLink>
         }
@@ -101,7 +102,7 @@ export function AgentHubMirrorBotSettings({
         </>
       ) : null}
       <div className="px-2 pt-3">
-        <Button variant="ghost" size="xs" onClick={() => openBotHome(bot)}>
+        <Button variant="ghost" size="xs" onClick={() => void openBotPage(bot)}>
           {translate('agentHub.mirror.bot.openPage', 'Open bot page')}
         </Button>
       </div>

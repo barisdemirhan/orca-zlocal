@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/class-names'
-import { openBotHome, startBotSession } from '@/lib/bot-catalog'
+import { startBotSession } from '@/lib/bot-catalog'
 import type { Bot } from '../../../../shared/bot-types'
 import type { BotChatTreeChat } from '../../../../shared/bots/bot-chat-tree'
 import { botChatNeedsOwner } from './agent-hub-bots-chats'
@@ -13,6 +13,7 @@ import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubMirrorBotFace } from './AgentHubMirrorBotFace'
 import { HubStateIndicator } from './AgentHubStateMarks'
 import { showBotChatInMirror } from './agent-hub-bot-mirror'
+import { openBotPage } from './agent-hub-bot-page-open'
 import {
   agentHubMirrorBotChatName,
   agentHubMirrorBotRuns,
@@ -182,7 +183,7 @@ export function AgentHubMirrorBotStrip({
           .then((id) => showBotChatInMirror(target, bot, id))
           .catch((error: unknown) => toast.error(botErrorMessage(error)))
       }
-      onOpenPage={() => openBotHome(bot)}
+      onOpenPage={() => void openBotPage(bot)}
     />
   )
 }

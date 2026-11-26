@@ -26417,6 +26417,8 @@
       },
       "bot": {
         "openPage": "Open bot page",
+        "pageUnavailable": "{{name}}’s home isn’t available here now, so its page can’t open.",
+        "pageUnavailableOnHost": "{{name}}’s home on {{host}} isn’t available now, so its page can’t open. Reconnect {{host}}, then try again.",
         "settings": "Bot settings",
         "settingsTitle": "{{name}} settings",
         "model": "Model",

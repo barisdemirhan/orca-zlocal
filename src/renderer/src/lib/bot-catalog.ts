@@ -19,7 +19,8 @@ import {
   isOrcaCloudTeamFeatureBlocked,
   ORCA_CLOUD_TEAM_POLICY_FLAGS
 } from '../../../shared/orca-profiles/orca-cloud-team-policy'
-import { activateAndRevealFolderWorkspace } from './workspace/activation/worktree-activation'
+import { activateAndRevealFolderWorkspaceWithOutcome } from './workspace/activation/worktree-activation'
+import type { WorkspaceActivationOutcome } from './workspace/activation/worktree-activation-outcome'
 import {
   activateStructuredAgentSessionById,
   activateStructuredAgentSessionTabOnOwner
@@ -311,14 +312,18 @@ export async function deleteBot(
   await refreshBotHost(bot.hostId)
 }
 
-/** False when the home is not in the catalog (or not reachable) yet. */
-export function openBotHome(bot: Bot): boolean {
-  const opened = activateAndRevealFolderWorkspace(bot.folderWorkspaceId, {
+/** Opens the bot's home, saying why when it couldn't. */
+export function openBotHomeWithOutcome(bot: Bot): WorkspaceActivationOutcome {
+  return activateAndRevealFolderWorkspaceWithOutcome(bot.folderWorkspaceId, {
     executionHostId: bot.hostId,
     // Bots are not rows of the workspace list, so there is nothing there to reveal.
     revealInSidebar: false
   })
-  return opened !== false
+}
+
+/** False when the home is not in the catalog (or not reachable) yet. */
+export function openBotHome(bot: Bot): boolean {
+  return 'opened' in openBotHomeWithOutcome(bot)
 }
 
 /**

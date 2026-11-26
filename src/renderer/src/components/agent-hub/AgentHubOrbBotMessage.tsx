@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { openBotHome } from '@/lib/bot-catalog'
 import { getTerminalQuickCommandHostOptions } from '@/lib/terminal/quick-commands/use-terminal-quick-command-hosts'
 import { BotAvatar, CarriedBotAvatar } from '../bots/BotAvatar'
 import type { Bot } from '../../../../shared/bot-types'
 import { NativeChatMarkdown } from '../native-chat/markdown/NativeChatMarkdown'
 import { NativeChatCodeBlock } from '../native-chat/markdown/code/NativeChatCodeBlock'
 import { NativeChatMessageTimestamp } from '../native-chat/messages/rows/NativeChatMessageTimestamp'
+import { openBotPage } from './agent-hub-bot-page-open'
 
 /** Another bot's message in the Orb chat: its face outside, then a bubble with name, subject, host and time. */
 export function AgentHubOrbBotMessage({
@@ -80,7 +80,7 @@ export function AgentHubOrbBotMessage({
               variant="link-muted"
               size="inlineInherit"
               className="text-xs"
-              onClick={() => openBotHome(bot)}
+              onClick={() => void openBotPage(bot)}
             >
               {translate('agentHub.orb.botMessage.open', 'Open {{name}}', { name })}
             </Button>
