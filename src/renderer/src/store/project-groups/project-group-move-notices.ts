@@ -15,12 +15,17 @@ export function notifyProjectGroupOnOtherHost(): void {
 }
 
 /** Why only paired computers: they can drop mid-move, and without a word the project just stays put. */
-export function notifyProjectGroupMoveFailed(projectHostId: ExecutionHostId): void {
+export function notifyProjectGroupMoveFailed(
+  projectHostId: ExecutionHostId,
+  error?: unknown
+): void {
   if (projectHostId === 'local') {
     return
   }
+  const reason = error instanceof Error ? error.message.trim() : ''
   toast.error(
-    translate('auto.store.slices.repos.moveToGroupOtherHost', 'Could not move project to group')
+    translate('auto.store.slices.repos.moveToGroupOtherHost', 'Could not move project to group'),
+    reason ? { description: reason } : undefined
   )
 }
 

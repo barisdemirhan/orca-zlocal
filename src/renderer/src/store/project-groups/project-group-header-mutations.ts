@@ -20,7 +20,13 @@ type HeaderMutationStore = Pick<
  */
 export async function renameProjectGroupHeader(
   store: HeaderMutationStore,
-  args: { groupId: string; name: string; hostId?: ExecutionHostId }
+  args: {
+    groupId: string
+    name: string
+    hostId?: ExecutionHostId
+    /** Called when undoing could not reach a host, so the header is split: the name that stayed there. */
+    onUndoFailed?: (stayed: { hostId: ExecutionHostId; name: string }[]) => void
+  }
 ): Promise<boolean> {
   const members = getCrossHostProjectGroupMembers(store.projectGroups, args.groupId)
   if (members.length <= 1) {
@@ -40,7 +46,7 @@ export async function renameProjectGroupHeader(
       { hostId: getRepoExecutionHostId(member) }
     )
     if (!accepted) {
-      await Promise.all(
+      const undone = await Promise.allSettled(
         renamed.map((done) =>
           store.updateProjectGroup(
             done.id,
@@ -49,6 +55,15 @@ export async function renameProjectGroupHeader(
           )
         )
       )
+      const stayed = renamed
+        .filter((_, index) => {
+          const result = undone[index]
+          return result.status === 'rejected' || !result.value
+        })
+        .map((done) => ({ hostId: getRepoExecutionHostId(done), name: args.name }))
+      if (stayed.length > 0) {
+        args.onUndoFailed?.(stayed)
+      }
       return false
     }
     renamed.push(member)

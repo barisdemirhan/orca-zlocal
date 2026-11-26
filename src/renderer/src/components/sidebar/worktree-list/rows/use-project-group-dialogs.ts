@@ -4,6 +4,7 @@ import { useAppStore } from '@/store'
 import { projectRemovalTargets } from '../../workspace-actions/deletion/removal-unsaved-files'
 import { confirmUnsavedDiscard } from '@/store/slices/worktrees/teardown/removed-workspace-unsaved-files'
 import { translate } from '@/i18n/i18n'
+import { selectExecutionHostDisplayLabel } from '@/runtime/hosts/display/execution-host-display-label'
 import { selectProjectGroupHeaderRemovalTargets } from '@/store/project-groups/project-group-removal-targets'
 import {
   deleteProjectGroupHeader,
@@ -207,7 +208,19 @@ export function useProjectGroupDialogs(args: {
       const renamed = await renameProjectGroupHeader(useAppStore.getState(), {
         groupId: nameDialog.groupId,
         name,
-        hostId: nameDialog.hostId
+        hostId: nameDialog.hostId,
+        onUndoFailed: (stayed) => {
+          const state = useAppStore.getState()
+          for (const entry of stayed) {
+            toast.warning(
+              translate(
+                'auto.components.sidebar.WorktreeList.groupRenameUndoFailed',
+                'On {{hostName}} the name stayed {{name}}',
+                { hostName: selectExecutionHostDisplayLabel(state, entry.hostId), name: entry.name }
+              )
+            )
+          }
+        }
       })
       if (!renamed) {
         toast.error(

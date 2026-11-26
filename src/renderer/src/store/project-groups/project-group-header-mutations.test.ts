@@ -88,6 +88,23 @@ describe('renaming a header', () => {
     expect(update.mock.calls.at(-1)).toEqual(['remote', { name: 'Work' }, { hostId: REMOTE }])
   })
 
+  it('names the host whose old name could not be put back', async () => {
+    const update = vi.fn(
+      async (id: string, patch: { name?: string }) => id === 'remote' && patch.name === 'New'
+    )
+    const store = storeFor([local, remote, group('third', 'runtime:env-2')], update as never)
+    const onUndoFailed = vi.fn()
+
+    await renameProjectGroupHeader(store, {
+      groupId: 'local',
+      name: 'New',
+      hostId: 'local',
+      onUndoFailed
+    })
+
+    expect(onUndoFailed).toHaveBeenCalledWith([{ hostId: REMOTE, name: 'New' }])
+  })
+
   it('makes one call for a group on one host', async () => {
     const store = storeFor([local])
 

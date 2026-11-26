@@ -8116,6 +8116,7 @@
           "groupDeletePartial": "Could not delete the group on every computer",
           "groupDeletePartialDesc": "The group is still on a computer Orca could not reach. Delete it again after reconnecting.",
           "groupRenameFailed": "Failed to rename group",
+          "groupRenameUndoFailed": "On {{hostName}} the name stayed {{name}}",
           "groupRenameFailedDesc": "Orca could not confirm the new name with the group's host. Recheck the group after reconnecting.",
           "failedNestWorkspace": "Failed to nest workspace",
           "sidebarRowMissing": "Target no longer exists",

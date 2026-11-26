@@ -9,6 +9,7 @@ import type { VirtualItem } from '@tanstack/react-virtual'
 import { cn } from '@/lib/class-names'
 import { RepoIconGlyph } from '@/components/repo/repo-icon'
 import { RepoMark } from '@/components/repo/RepoMark'
+import { CrossHostProjectGroupHostMarks } from './CrossHostProjectGroupHostMarks'
 import { RepoForkIndicator } from '@/components/repo/repo-fork-indicator'
 
 import '@/store/project-groups/project-group-owner-routing'
@@ -334,6 +335,10 @@ export function renderWorktreeSectionHeaderRow(
               <div className="flex min-w-0 items-center gap-1.5">
                 <div className="min-w-0 truncate text-[13px] font-semibold leading-4">{label}</div>
                 {hostContext ? <ProjectHeaderHostLabel context={hostContext} /> : null}
+                <CrossHostProjectGroupHostMarks
+                  groupId={projectGroupIdForHeader}
+                  projectGroups={ctx.projectGroups}
+                />
                 <RepoForkIndicator upstream={row.repo?.upstream} />
                 <FolderPathStatusIndicator status={projectGroupPathStatus} />
                 {isRepoHeader ? <RepoScanUnavailableIndicator repo={row.repo!} /> : null}

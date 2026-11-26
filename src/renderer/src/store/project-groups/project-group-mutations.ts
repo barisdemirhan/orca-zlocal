@@ -277,7 +277,7 @@ export function createProjectGroupMutationActions(
         return true
       } catch (err) {
         console.error('Failed to move repo to group:', err)
-        moveNotices.notifyProjectGroupMoveFailed(getRepoExecutionHostId(project))
+        moveNotices.notifyProjectGroupMoveFailed(getRepoExecutionHostId(project), err)
         return false
       }
     }
