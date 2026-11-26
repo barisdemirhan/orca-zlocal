@@ -14,6 +14,9 @@ import { botItemStatusName } from '@/components/bots/items/bot-item-status-name'
 import { openBotItem, openBotItemInHome } from '@/components/bots/items/bot-item-open'
 import { BotItemCommentImages } from '@/components/bots/items/BotItemCommentImages'
 import { findBotByWorkspace, useBotForWorkspace } from '@/components/bots/bot-workspace'
+import { useAgentHubChatDestination } from '@/components/agent-hub/agent-hub-chat-destinations'
+import { closeAgentHubCanvas } from '@/components/agent-hub/agent-hub-canvas-store'
+import { openBotItemInMirror } from '@/components/agent-hub/agent-hub-mirror-bot-item-open'
 import { openBotSession } from '@/components/bots/bot-session-open'
 import { readBots } from '@/lib/bot-catalog'
 import type { Bot } from '../../../../../shared/bot-types'
@@ -61,12 +64,18 @@ function useChatBotResolver(): () => { bot: Bot; inActive: boolean } | null {
   }
 }
 
-/** The item opens in its Items tab; from another workspace, the bot's Home opens first. */
+/** The item opens in the mirror's Activity tab when a mirror shows the chat, else in its Items tab;
+ *  from another workspace, the bot's Home opens first. */
 function useOpenChipItem(): (uid: string) => void {
   const resolve = useChatBotResolver()
+  const mirror = useAgentHubChatDestination(useNativeChatVisualOwner()?.tabId ?? '')
   return (uid) => {
     const found = resolve()
-    if (found?.inActive) {
+    if (found && mirror) {
+      openBotItemInMirror(mirror, found.bot, uid)
+    } else if (found?.inActive) {
+      // An open canvas snaps the right sidebar back, so the panel would never show.
+      closeAgentHubCanvas()
       openBotItem(found.bot, uid)
     } else if (found) {
       void openBotItemInHome(found.bot, uid)

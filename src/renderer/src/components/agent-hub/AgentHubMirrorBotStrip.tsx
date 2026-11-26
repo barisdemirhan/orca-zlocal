@@ -1,18 +1,15 @@
 import { Maximize2, Plus } from 'lucide-react'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/class-names'
-import { startBotSession } from '@/lib/bot-catalog'
 import type { Bot } from '../../../../shared/bot-types'
 import type { BotChatTreeChat } from '../../../../shared/bots/bot-chat-tree'
 import { botChatNeedsOwner } from './agent-hub-bots-chats'
-import { botErrorMessage } from '../bots/bot-presentation'
 import { useBotChatTree } from '../bots/use-bot-chat-tree'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { AgentHubMirrorBotFace } from './AgentHubMirrorBotFace'
 import { HubStateIndicator } from './AgentHubStateMarks'
-import { showBotChatInMirror } from './agent-hub-bot-mirror'
+import { newBotChatInMirror, showBotChatInMirror } from './agent-hub-bot-mirror'
 import { openBotPage } from './agent-hub-bot-page-open'
 import {
   agentHubMirrorBotChatName,
@@ -178,11 +175,7 @@ export function AgentHubMirrorBotStrip({
       line={[runs.state, runs.provider, runs.model].filter(Boolean).join(' · ')}
       pills={agentHubMirrorBotPills(chats, sessionId)}
       onSwitch={(pill) => void showBotChatInMirror(target, bot, pill.sessionId)}
-      onNew={() =>
-        void startBotSession(bot, { agent: bot.agent })
-          .then((id) => showBotChatInMirror(target, bot, id))
-          .catch((error: unknown) => toast.error(botErrorMessage(error)))
-      }
+      onNew={() => void newBotChatInMirror(target, bot)}
       onOpenPage={() => void openBotPage(bot)}
     />
   )

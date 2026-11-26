@@ -1,4 +1,7 @@
-import { openBotChat } from '@/lib/bot-catalog'
+import { toast } from 'sonner'
+import { translate } from '@/i18n/i18n'
+import { openBotChat, startBotSession } from '@/lib/bot-catalog'
+import { botErrorMessage } from '../bots/bot-presentation'
 import { openDesktopStructuredSessionInteraction } from '@/lib/agent-session/open/open-existing-structured-session'
 import { showChatOpenUnavailable } from '@/lib/agent-session/open/chat-open-failure-toast'
 import { useAppStore } from '@/store'
@@ -15,11 +18,13 @@ import { openAgentHubOrbSideChat } from './agent-hub-orb-side-chat'
 import { popOutAgentHubTab } from './agent-hub-tab-popout'
 import { selectAgentHubMirrorFamilyMember } from './agent-hub-mirror-tab-actions'
 
-function findChatTarget(tabId: string): AgentHubPaneTarget | null {
+function findPaneTarget(
+  matches: (target: AgentHubPaneTarget) => boolean
+): AgentHubPaneTarget | null {
   const find = (rows: readonly AgentHubTerminalRow[]): AgentHubPaneTarget | null => {
     for (const row of rows) {
       const target = paneTargetFromTerminalRow(row)
-      if (target.tab.id === tabId) {
+      if (matches(target)) {
         return target
       }
       const child = find(row.children)
@@ -38,6 +43,35 @@ function findChatTarget(tabId: string): AgentHubPaneTarget | null {
     }
   }
   return null
+}
+
+function findChatTarget(tabId: string): AgentHubPaneTarget | null {
+  return findPaneTarget((target) => target.tab.id === tabId)
+}
+
+/** The hub's pane target for a worker's pane key; null when no pane of that key is open. */
+export function findAgentHubPaneTargetByPaneKey(paneKey: string): AgentHubPaneTarget | null {
+  return findPaneTarget((target) => target.paneKey === paneKey)
+}
+
+/** Shows a worker's pane in the mirror tab; false when it has no pane open, which is told to the owner. */
+export function showWorkerPaneInMirror(
+  shown: AgentHubPaneTarget,
+  paneKey: string | undefined
+): boolean {
+  const target = paneKey ? findAgentHubPaneTargetByPaneKey(paneKey) : null
+  const owner = findAgentHubMirrorMembership(readAgentHubMirrors(), shown)
+  if (!target || !owner) {
+    toast.message(
+      translate(
+        'agentHub.mirror.bot.workerNoPane',
+        'This worker has no open pane, so it opens in the main window.'
+      )
+    )
+    return false
+  }
+  selectAgentHubMirrorFamilyMember(owner.window.id, owner.tab.id, target)
+  return true
 }
 
 /** The pane target of one of the bot's chats (its Home chat when `sessionId` is null), its tab
@@ -83,6 +117,15 @@ export async function showBotChatInMirror(
     return
   }
   selectAgentHubMirrorFamilyMember(owner.window.id, owner.tab.id, target)
+}
+
+/** Starts a chat with the bot and shows it in the mirror tab. */
+export async function newBotChatInMirror(shown: AgentHubPaneTarget, bot: Bot): Promise<void> {
+  try {
+    await showBotChatInMirror(shown, bot, await startBotSession(bot, { agent: bot.agent }))
+  } catch (error) {
+    toast.error(botErrorMessage(error))
+  }
 }
 
 /** The Orb's own window for the Orb bot's chat; the sidebar's Bots list for any other bot. */

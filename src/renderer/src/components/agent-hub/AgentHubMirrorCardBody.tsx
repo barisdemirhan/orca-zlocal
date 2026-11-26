@@ -40,7 +40,7 @@ import { AgentHubMirrorWorkDrawer } from './AgentHubMirrorWorkDrawer'
 import { AgentHubMirrorChangesDrawer } from './AgentHubMirrorChangesDrawer'
 import { AgentHubMirrorReviewDrawer } from './AgentHubMirrorReviewDrawer'
 import { AgentHubMirrorInboundDrawer } from './AgentHubMirrorInboundDrawer'
-import { AgentHubMirrorBotSettings } from './AgentHubMirrorBotSettings'
+import { AgentHubMirrorBotView } from './AgentHubMirrorBotView'
 import { AgentHubMirrorBotStrip } from './AgentHubMirrorBotStrip'
 import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { AgentHubMirrorSettingsDrawer } from './AgentHubMirrorSettingsDrawer'
@@ -134,10 +134,10 @@ export function AgentHubMirrorCardBody({
   const drawerBody =
     shown === null ? null : botChat ? (
       shown === 'settings' ? (
-        <AgentHubMirrorBotSettings
-          tabId={target.tab.id}
-          bot={botChat.bot}
-          isOrb={botChat.isOrb}
+        <AgentHubMirrorBotView
+          windowId={windowId}
+          target={target}
+          botChat={botChat}
           disabled={drawerOff}
         />
       ) : null
@@ -176,8 +176,11 @@ export function AgentHubMirrorCardBody({
         role="region"
         aria-label={translate('agentHub.mirror.drawer.label', 'Drawer')}
         className={cn(
-          'scrollbar-sleek min-w-0 shrink-0 overflow-y-auto bg-popover px-1.5 pb-2',
-          side ? 'w-74 border-l border-border' : 'h-56 border-t border-border'
+          'min-w-0 shrink-0 bg-popover',
+          botChat ? 'flex flex-col overflow-hidden' : 'scrollbar-sleek overflow-y-auto px-1.5 pb-2',
+          side
+            ? cn(botChat ? 'w-96' : 'w-74', 'border-l border-border')
+            : cn(botChat ? 'h-80' : 'h-56', 'border-t border-border')
         )}
       >
         {drawerBody}

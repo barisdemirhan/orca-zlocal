@@ -18,6 +18,13 @@ import {
   type AgentHubOrbWindowTab
 } from './agent-hub-orb-chat-strip-store'
 
+export const AGENT_HUB_BOT_PAGE_TABS: readonly Exclude<AgentHubOrbWindowTab, 'chat'>[] = [
+  'home',
+  'chats',
+  'connectors',
+  'activity'
+]
+
 const WINDOW_TABS: readonly AgentHubOrbWindowTab[] = [
   'chat',
   'home',
@@ -41,17 +48,19 @@ function windowTabLabel(tab: AgentHubOrbWindowTab): string {
   }
 }
 
-/** Chat | Home | Chats | Connectors | Activity; Home carries what waits for the owner. */
+/** Chat | Home | Chats | Connectors | Activity (`tabs` narrows it); Home carries what waits for the owner. */
 export function AgentHubOrbWindowTabs({
   tab,
   needs,
   chatWaiting,
-  onSelect
+  onSelect,
+  tabs = WINDOW_TABS
 }: {
   tab: AgentHubOrbWindowTab
   needs: number
   chatWaiting: boolean
   onSelect: (tab: AgentHubOrbWindowTab) => void
+  tabs?: readonly AgentHubOrbWindowTab[]
 }): React.JSX.Element {
   return (
     <div
@@ -59,7 +68,7 @@ export function AgentHubOrbWindowTabs({
       data-agent-hub-orb-window-tabs
       className="scrollbar-sleek flex shrink-0 gap-0.5 overflow-x-auto border-b border-border px-2"
     >
-      {WINDOW_TABS.map((id) => (
+      {tabs.map((id) => (
         <button
           key={id}
           type="button"
@@ -104,15 +113,18 @@ export function AgentHubOrbWindowTabRow({
   )
 }
 
-/** The Orb bot's Home, Chats, Connectors or Activity; chats it lists open in the window's strip. */
+/** A bot's Home, Chats, Connectors or Activity; chats it lists open where `override` sends them. */
 export function AgentHubOrbWindowPane({
   bot,
   tab,
-  override
+  override,
+  activitySurface
 }: {
   bot: Bot
   tab: Exclude<AgentHubOrbWindowTab, 'chat'>
   override: BotChatOpenOverride
+  /** Names the Activity tab for item asks aimed at it (see `openBotItemOnSurface`). */
+  activitySurface?: string
 }): React.JSX.Element {
   return (
     <BotChatOpenOverrideContext.Provider value={override}>
@@ -123,7 +135,7 @@ export function AgentHubOrbWindowPane({
         {tab === 'home' ? <AgentHubBotPageHome bot={bot} /> : null}
         {tab === 'chats' ? <BotChatsTab bot={bot} /> : null}
         {tab === 'connectors' ? <BotConnectorsPanelBody bot={bot} /> : null}
-        {tab === 'activity' ? <BotActivityTab bot={bot} /> : null}
+        {tab === 'activity' ? <BotActivityTab bot={bot} surface={activitySurface} /> : null}
       </div>
     </BotChatOpenOverrideContext.Provider>
   )

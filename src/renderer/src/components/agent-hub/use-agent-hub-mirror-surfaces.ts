@@ -13,6 +13,7 @@ import { setAgentHubChatDestinations } from './agent-hub-chat-destinations'
 import { isAgentHubChatTab } from './agent-hub-chat-tabs'
 import {
   activeAgentHubMirrorTab,
+  agentHubMirrorSourceKey,
   shownAgentHubMirrorTarget,
   type AgentHubMirrorWindowState
 } from './agent-hub-mirror-membership'
@@ -114,16 +115,20 @@ export function useAgentHubMirrorSurfaces({
     () =>
       windows.flatMap((window, index) => {
         const element = slots.get(window.id)
-        return surfaces[index]?.surface === 'chat' && element
-          ? [
-              {
-                tabId: shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window)).tab.id,
-                element,
-                visible: !hidden,
-                focused: takesKeyboard(window, index)
-              }
-            ]
-          : []
+        if (surfaces[index]?.surface !== 'chat' || !element) {
+          return []
+        }
+        const shown = shownAgentHubMirrorTarget(activeAgentHubMirrorTab(window))
+        return [
+          {
+            tabId: shown.tab.id,
+            windowId: window.id,
+            sourceKey: agentHubMirrorSourceKey(shown),
+            element,
+            visible: !hidden,
+            focused: takesKeyboard(window, index)
+          }
+        ]
       }),
     [windows, slots, surfaces, hidden, takesKeyboard]
   )

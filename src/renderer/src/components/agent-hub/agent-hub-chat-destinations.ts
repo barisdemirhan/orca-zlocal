@@ -2,6 +2,9 @@ import { create } from 'zustand'
 
 type AgentHubChatDestination = {
   tabId: string
+  /** The mirror window showing the chat, and its drawer key (`agentHubMirrorSourceKey`). */
+  windowId: string
+  sourceKey: string
   /** The mirror's slot the chat's retained view moves into. */
   element: HTMLElement
   visible: boolean

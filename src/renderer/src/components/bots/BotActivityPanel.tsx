@@ -94,7 +94,14 @@ function BotActivityOrSettings({ bot }: { bot: Bot }): React.JSX.Element {
   )
 }
 
-export function BotActivityTab({ bot }: { bot: Bot }): React.JSX.Element {
+/** `surface` names a mirror window's tab, so an item ask for it isn't taken by the right sidebar's panel. */
+export function BotActivityTab({
+  bot,
+  surface
+}: {
+  bot: Bot
+  surface?: string
+}): React.JSX.Element {
   const t = useTranslate()
   const activityRead = useBotActivityAuthorityRead(bot)
   // Its server is down: the panel shows the last read with its actions off until it's back.
@@ -132,7 +139,7 @@ export function BotActivityTab({ bot }: { bot: Bot }): React.JSX.Element {
     walk.open(uid)
   }
   // A chat's item chip asks for an item: open it here when it is this bot's.
-  useBotItemOpenRequest(bot, openItem)
+  useBotItemOpenRequest(bot, openItem, surface)
   const back = (): void => {
     const left = walk.close()
     const listed = BOT_ITEM_GROUP_IDS.flatMap((id) => list.groups[id].map((item) => item.uid))
