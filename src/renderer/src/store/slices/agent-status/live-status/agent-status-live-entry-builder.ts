@@ -218,6 +218,7 @@ export function buildAgentStatusLiveEntry(
     toolName: payload.toolName,
     toolInput: payload.toolInput,
     interactivePrompt: payload.interactivePrompt,
+    ...(payload.sleptPrompt ? { sleptPrompt: payload.sleptPrompt } : {}),
     lastAssistantMessage: payload.lastAssistantMessage,
     lastAssistantMessageIsToolOutput: payload.lastAssistantMessageIsToolOutput,
     ...(lastCompletedAssistantMessage ? { lastCompletedAssistantMessage } : {}),

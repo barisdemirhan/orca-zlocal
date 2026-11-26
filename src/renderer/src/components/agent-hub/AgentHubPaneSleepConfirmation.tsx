@@ -10,8 +10,11 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { useAgentHubPaneSleep } from './agent-hub-pane-sleep'
+import { agentHubSleepPaneKey } from './agent-hub-pane-sleep-operations'
+import { askingKindOf } from './agent-hub-slept-answer'
 import { useAgentHubPaneSleepConfirmation } from './agent-hub-pane-sleep-confirmation'
 
 function SleepConfirmation({
@@ -24,6 +27,10 @@ function SleepConfirmation({
   origin: HTMLElement | null
 }): React.JSX.Element {
   const state = useAgentHubPaneSleep(target)
+  const asking = useAppStore((app) => {
+    const paneKey = agentHubSleepPaneKey(target, app)
+    return paneKey ? askingKindOf(app.agentStatusByPaneKey.get(paneKey)) : null
+  })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const busy = submitting || state.phase === 'sleeping-pending'
@@ -93,6 +100,19 @@ function SleepConfirmation({
           </DialogDescription>
         </DialogHeader>
         <p className="truncate text-sm font-medium">{target.title}</p>
+        {agent && asking ? (
+          <p className="text-sm text-muted-foreground">
+            {asking === 'question'
+              ? translate(
+                  'agentHub.sleep.askingQuestion',
+                  'This agent is waiting on your answer. The question is kept and your answer goes once it wakes.'
+                )
+              : translate(
+                  'agentHub.sleep.askingPermission',
+                  'This agent is waiting for permission. Waking it asks again.'
+                )}
+          </p>
+        ) : null}
         {state.reason ? <p className="text-sm text-muted-foreground">{state.reason}</p> : null}
         {error || state.error ? (
           <p role="alert" className="text-sm text-destructive">

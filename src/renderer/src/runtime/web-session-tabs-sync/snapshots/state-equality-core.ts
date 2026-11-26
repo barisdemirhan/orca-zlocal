@@ -63,6 +63,7 @@ export function agentStatusEntryEqual(
     a.toolName === b.toolName &&
     a.toolInput === b.toolInput &&
     a.interactivePrompt === b.interactivePrompt &&
+    a.sleptPrompt?.savedAt === b.sleptPrompt?.savedAt &&
     a.lastAssistantMessage === b.lastAssistantMessage &&
     a.lastAssistantMessageIsToolOutput === b.lastAssistantMessageIsToolOutput &&
     a.interrupted === b.interrupted &&

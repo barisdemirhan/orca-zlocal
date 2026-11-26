@@ -1,7 +1,11 @@
-import type { AgentStatusEntry } from '../../../../shared/agent-status/contracts/agent-status-types'
+import type {
+  AgentSleptPrompt,
+  AgentStatusEntry
+} from '../../../../shared/agent-status/contracts/agent-status-types'
 import { activityThreadStatusId } from '../activity/threads/activity-thread-presentation'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { readApprovalTool } from './agent-hub-approval'
+import { unsettledSleptDeliveryPrompt } from './agent-hub-slept-delivery-store'
 
 export type AgentHubSection = 'needsYou' | 'working' | 'finished'
 
@@ -27,6 +31,9 @@ export type AgentHubCounts = Record<AgentHubSection, number> & {
 
 /** Classify with the Agents sidebar's own state reading so both surfaces agree. */
 export function agentHubSection(thread: AgentPaneThread): AgentHubSection | null {
+  if (agentHubSleptPrompt(thread)) {
+    return 'needsYou'
+  }
   switch (activityThreadStatusId(thread)) {
     case 'waiting':
     case 'blocked':
@@ -48,6 +55,16 @@ export function agentHubSection(thread: AgentPaneThread): AgentHubSection | null
 
 function threadStatusEntry(thread: AgentPaneThread): AgentStatusEntry | null {
   return thread.currentAgentEntry ?? thread.paneEntry ?? thread.latestEvent?.entry ?? null
+}
+
+/** The question a sleeping agent was asking; the owner can still answer it by waking the agent. */
+export function agentHubSleptPrompt(thread: AgentPaneThread): AgentSleptPrompt | null {
+  const entry = threadStatusEntry(thread)
+  if (entry?.paneSleep && entry.sleptPrompt) {
+    return entry.sleptPrompt
+  }
+  // Waking clears the row's copy; the card stays until the answer lands or the agent moves on.
+  return entry?.state === 'working' ? null : unsettledSleptDeliveryPrompt(thread.paneKey)
 }
 
 /** When the thread entered its current state. */
@@ -153,6 +170,9 @@ export function agentHubCounts(
 export type AgentHubIndicatorKind = 'ask' | 'work' | 'done' | 'read' | 'idle'
 
 export function agentHubIndicatorKind(thread: AgentPaneThread): AgentHubIndicatorKind {
+  if (agentHubSleptPrompt(thread)) {
+    return 'ask'
+  }
   switch (activityThreadStatusId(thread)) {
     case 'waiting':
     case 'blocked':

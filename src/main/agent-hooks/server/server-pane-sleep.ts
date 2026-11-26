@@ -63,8 +63,10 @@ export abstract class AgentHookServerPaneSleep extends AgentHookServerAuthorityF
         paneSleep: _paneSleep,
         agentPresence: _presence,
         terminalHandle: _handle,
-        ...accepted
+        ...kept
       } = row
+      const { sleptPrompt: _answered, ...payload } = kept.payload
+      const accepted = { ...kept, payload }
       const rest = {
         ...accepted,
         evidenceObservedAt: Date.now(),
@@ -151,9 +153,10 @@ export abstract class AgentHookServerPaneSleep extends AgentHookServerAuthorityF
       ...accepted
     } = previous
     const {
-      toolName: _toolName,
-      toolInput: _toolInput,
-      interactivePrompt: _interactivePrompt,
+      toolName,
+      toolInput,
+      interactivePrompt,
+      sleptPrompt: _staleSleptPrompt,
       subagents: _subagents,
       claudeTaskWakeupPending: _wakeup,
       workingMode: _workingMode,
@@ -161,6 +164,11 @@ export abstract class AgentHookServerPaneSleep extends AgentHookServerAuthorityF
     } = previous.payload
     // Sleep cut an unfinished turn short; that reads Interrupted, never a completion.
     const now = Date.now()
+    // A question the pane was asking outlives the sleep so the owner can answer it after waking.
+    const asking =
+      previous.payload.state !== 'working' &&
+      previous.payload.state !== 'done' &&
+      (interactivePrompt !== undefined || toolName !== undefined)
     const midTurn = previous.payload.state !== 'done' && previous.providerSessionOnly !== true
     const row: EnrichedAgentHookEventPayload = {
       ...accepted,
@@ -168,6 +176,16 @@ export abstract class AgentHookServerPaneSleep extends AgentHookServerAuthorityF
       payload: agentPaneSleepStatus(
         {
           ...payload,
+          ...(asking
+            ? {
+                sleptPrompt: {
+                  ...(toolName !== undefined ? { toolName } : {}),
+                  ...(toolInput !== undefined ? { toolInput } : {}),
+                  ...(interactivePrompt !== undefined ? { interactivePrompt } : {}),
+                  savedAt: now
+                }
+              }
+            : {}),
           state: identity.status.state,
           ...(identity.status.sessionBoundary ? { sessionBoundary: true } : {})
         },

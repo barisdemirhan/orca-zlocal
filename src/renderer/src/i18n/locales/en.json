@@ -27138,7 +27138,21 @@
       "transitionDetail": "Waiting for the execution host to confirm the change…",
       "savedDetail": "The agent session is saved. Wake it here to resume.",
       "pausedDetail": "Processes are paused. CPU use has stopped; memory is retained.",
-      "empty": "No sleeping terminals"
+      "empty": "No sleeping terminals",
+      "askingQuestion": "This agent is waiting on your answer. The question is kept and your answer goes once it wakes.",
+      "askingPermission": "This agent is waiting for permission. Waking it asks again."
+    },
+    "slept": {
+      "needsPermission": "needs permission",
+      "permissionHint": "Asleep. Waking it asks again; the permission prompt then appears here.",
+      "questionHint": "Asleep. Your answer goes as a message once it wakes.",
+      "wakeAndRetry": "Wake and retry",
+      "wakeAndAnswer": "Wake and answer…",
+      "waking": "Waking the agent…",
+      "waitingReady": "Waiting until it is ready…",
+      "sent": "Sent",
+      "deliverFailed": "Couldn't deliver yet.",
+      "sendAgain": "Send again"
     },
     "botBubble": {
       "access": "{{value0}} asks to talk to me on {{value1}}.",

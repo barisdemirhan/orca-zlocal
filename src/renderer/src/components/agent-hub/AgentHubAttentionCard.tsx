@@ -28,7 +28,8 @@ import {
   type AgentHubAnswerOption
 } from './AgentHubAnswerBody'
 import { agentHubAlwaysAllowKey, readApprovalTool } from './agent-hub-approval'
-import { agentHubStateSince } from './agent-hub-lists'
+import { agentHubSleptPrompt, agentHubStateSince } from './agent-hub-lists'
+import { AgentHubSleptPromptCard } from './AgentHubSleptPromptCard'
 import { dismissAgentHubCard } from './agent-hub-answered-cards'
 import { resolveAgentHubPtyId, type AgentHubLocation } from './agent-hub-pane-target'
 import { quickAnswerTargetOf, useAgentHubQuickAnswer } from './use-agent-hub-quick-answer'
@@ -69,15 +70,7 @@ function CardAction({
  * chat surface sends (SSH included). Multi-question and multi-select prompts keep the full
  * native wizard.
  */
-export function AgentHubAttentionCard({
-  thread,
-  location,
-  now,
-  popoutKeys,
-  controlRef,
-  onJump,
-  onPopout
-}: {
+type AttentionCardProps = {
   thread: AgentPaneThread
   location: AgentHubLocation
   now: number
@@ -85,7 +78,49 @@ export function AgentHubAttentionCard({
   controlRef: Ref<AgentHubCardControl>
   onJump: () => void
   onPopout: () => void
-}): React.JSX.Element {
+}
+
+export function AgentHubAttentionCard(props: AttentionCardProps): React.JSX.Element {
+  const slept = agentHubSleptPrompt(props.thread)
+  if (!slept) {
+    return <AgentHubLiveAttentionCard {...props} />
+  }
+  return (
+    <AgentHubSleptPromptCard
+      thread={props.thread}
+      prompt={slept}
+      location={props.location}
+      now={props.now}
+      stateSince={slept.savedAt}
+    >
+      <div className="mt-2 -ml-1.5 flex gap-1">
+        <CardAction
+          icon={<ArrowUpRight className="size-3.5" />}
+          label={translate('agentHub.card.jump', 'Jump to terminal')}
+          keys={['↵']}
+          onClick={props.onJump}
+        />
+        <CardAction
+          icon={<PictureInPicture2 className="size-3.5" />}
+          label={translate('agentHub.row.popOut', 'Pop out')}
+          keys={props.popoutKeys}
+          actionId="agentHub.popOut"
+          onClick={props.onPopout}
+        />
+      </div>
+    </AgentHubSleptPromptCard>
+  )
+}
+
+function AgentHubLiveAttentionCard({
+  thread,
+  location,
+  now,
+  popoutKeys,
+  controlRef,
+  onJump,
+  onPopout
+}: AttentionCardProps): React.JSX.Element {
   const { paneKey } = thread
   const tabId = thread.tab.id
   const quick = useAgentHubQuickAnswer(quickAnswerTargetOf(thread))

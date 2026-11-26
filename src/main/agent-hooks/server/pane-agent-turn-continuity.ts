@@ -37,8 +37,11 @@ export function resumedAcceptedTurn(
     restoredUnconfirmed: _restored,
     paneSleep: _sleep,
     executionHost: previousHost,
+    payload: previousPayload,
     ...accepted
   } = previous
+  // The woken agent is past the question the sleep record kept.
+  const { sleptPrompt: _answered, ...payload } = previousPayload
   // The host follows the binding: a resuming hook's own binding brings its own host.
   const executionHost =
     incoming.executionHost ??
@@ -47,6 +50,7 @@ export function resumedAcceptedTurn(
       : undefined)
   return {
     ...accepted,
+    payload,
     connectionId: incoming.connectionId,
     ...(incoming.providerSession ? { providerSession: incoming.providerSession } : {}),
     ...(incoming.agentPresence ? { agentPresence: incoming.agentPresence } : {}),
