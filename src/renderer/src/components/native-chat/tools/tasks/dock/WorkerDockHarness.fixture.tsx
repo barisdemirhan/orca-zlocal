@@ -11,7 +11,8 @@ import { workerDockFixturePane } from './worker-dock-pane-fixture'
 import { NativeChatBackgroundTasksStatus } from '../NativeChatBackgroundTasksStatus'
 import type { WorkerDockRowView } from './WorkerDockRow'
 import { SOURCE, seed, worker, type Seed } from './worker-dock-seed-fixture'
-import { WorkerDockProviderDetailsDialog } from './WorkerDockProviderDetailsDialog'
+import { WorkerDockCommandSheet } from './WorkerDockCommandSheet'
+import { NativeChatSubagentSheetLayer } from '../../../subagents/NativeChatSubagentSheetLayer'
 import { openWorkerDockRow } from './worker-dock-open'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -176,7 +177,7 @@ function Harness({
   )
   const owner = useWorkerDockOwnerActions(LOCAL, `orca_session_id:${SOURCE}`, identities)
   return (
-    <>
+    <NativeChatSubagentSheetLayer paneKey="worker-dock-fixture" sessionKey={SOURCE}>
       <NativeChatBackgroundTasksStatus
         sessionId={SOURCE}
         tasks={tasks}
@@ -215,15 +216,16 @@ function Harness({
       />
       {realOpen ? <Toaster toastOptions={{ className: 'font-sans text-sm' }} /> : null}
       {shown ? (
-        <WorkerDockProviderDetailsDialog
+        <WorkerDockCommandSheet
           row={shown.row}
           opener={shown.opener}
+          paneKey="worker-dock-fixture"
           sessionId={SOURCE}
           target={LOCAL}
           onClose={() => setShown(null)}
         />
       ) : null}
-    </>
+    </NativeChatSubagentSheetLayer>
   )
 }
 

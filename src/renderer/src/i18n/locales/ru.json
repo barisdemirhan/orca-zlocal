@@ -23613,7 +23613,6 @@
         "staysDefault": "По умолчанию остаётся {{email}}"
       },
       "workerDock": {
-        "commandOutputPending": "Вывод команды пока недоступен.",
         "notNow": "Не сейчас",
         "retry": "Повторить",
         "dismiss": "Скрыть",

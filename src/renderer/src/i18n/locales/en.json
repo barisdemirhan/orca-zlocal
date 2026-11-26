@@ -23071,7 +23071,12 @@
         "staysDefault": "{{email}} stays the default"
       },
       "workerDock": {
-        "commandOutputPending": "Command output is not available yet.",
+        "commandText": "Command",
+        "commandOutput": "Output",
+        "commandOutputOmitted_one": "… {{count}} earlier line",
+        "commandOutputOmitted_other": "… {{count}} earlier lines",
+        "commandOutputWhenDone": "The output shows here when the command finishes.",
+        "commandOutputNone": "No output is recorded in this chat.",
         "notNow": "Not now",
         "retry": "Retry",
         "dismiss": "Dismiss",

@@ -21343,7 +21343,6 @@
         "staysDefault": "{{email}} が引き続き既定です"
       },
       "workerDock": {
-        "commandOutputPending": "コマンドの出力はまだありません。",
         "notNow": "後で",
         "retry": "再試行",
         "dismiss": "閉じる",

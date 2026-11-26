@@ -22100,7 +22100,6 @@
         "staysDefault": "{{email}} sigue como predeterminada"
       },
       "workerDock": {
-        "commandOutputPending": "La salida del comando aún no está disponible.",
         "notNow": "Ahora no",
         "retry": "Reintentar",
         "dismiss": "Descartar",
