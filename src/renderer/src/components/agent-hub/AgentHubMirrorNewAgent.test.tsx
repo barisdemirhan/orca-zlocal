@@ -41,7 +41,7 @@ vi.mock('@/lib/agent-session/launch/inventory/useAgentDetectionTarget', () => ({
 vi.mock('@/lib/agent-session/launch/inventory/useDetectedAgents', () => ({
   useDetectedAgents: (target: AgentDetectionTarget | undefined) => ({
     detectedIds:
-      target === undefined ? null : target.kind === 'runtime' ? ['codex', 'gemini'] : ['claude']
+      target === undefined ? null : target.kind === 'runtime' ? ['codex', 'opencode'] : ['claude']
   })
 }))
 
@@ -185,14 +185,14 @@ it.each([
     await waitFor(() => expect(screen.queryByRole('option')).toBeNull())
     const agent = agentTrigger('Codex')
     await user.click(agent)
-    expect(await screen.findByRole('option', { name: 'Gemini' })).toBeTruthy()
+    expect(await screen.findByRole('option', { name: 'OpenCode' })).toBeTruthy()
     expect(screen.queryByRole('option', { name: 'Claude' })).toBeNull()
-    await user.type(screen.getByPlaceholderText('Search agents...'), 'Gemini')
+    await user.type(screen.getByPlaceholderText('Search agents...'), 'OpenCode')
     await user.keyboard('{Enter}')
     await waitFor(() => expect(screen.queryByRole('option')).toBeNull())
     expect(screen.getByRole('button', { name: /Start agent/ }).textContent).toContain(hint)
     fireEvent.keyDown(dialog, { key: 'Enter', ...modifier })
-    expect(onStart).toHaveBeenCalledExactlyOnceWith(remote, 'gemini')
+    expect(onStart).toHaveBeenCalledExactlyOnceWith(remote, 'opencode')
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   }
 )
@@ -202,7 +202,7 @@ it('falls back when a chosen agent is unavailable on the next workspace host', a
   await openDialog()
   await chooseProject('Remote')
   await userEvent.setup().click(agentTrigger('Codex'))
-  fireEvent.click(await screen.findByRole('option', { name: 'Gemini' }))
+  fireEvent.click(await screen.findByRole('option', { name: 'OpenCode' }))
   await chooseProject('Repo')
   expect(agentTrigger('Claude')).toBeTruthy()
   await userEvent.setup().click(screen.getByRole('button', { name: /Start agent/ }))

@@ -338,7 +338,7 @@ it('opens New agent outside the picker and restores the mirror add button on Esc
     screen.getByRole('button', { name: 'Add terminal to this mirror' })
   )
   await openNewAgent()
-  expect(screen.queryByRole('option', { name: /Gemini/ })).toBeNull()
+  expect(screen.queryByRole('option', { name: /OpenCode/ })).toBeNull()
   await user.click(screen.getByRole('button', { name: 'Open agent settings' }))
   expect(fixture.openSettingsTarget).toHaveBeenCalledWith({ pane: 'agents', repoId: null })
   expect(fixture.openSettingsPage).toHaveBeenCalledOnce()
