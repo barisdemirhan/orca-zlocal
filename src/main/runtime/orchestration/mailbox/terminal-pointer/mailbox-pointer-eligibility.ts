@@ -38,8 +38,8 @@ export type OrchestrationPointerBatch = {
 }
 
 /**
- * A status row reports liveness, so it must not wake a reader blocked for the actionable types. It
- * stays unread and rides along with the next pointer or `check`. Unfiltered waiters never get here.
+ * A status row is the default type of an untyped send, so it must not wake a reader blocked for the
+ * actionable types. It stays unread and rides along with the next pointer or `check`.
  */
 function isQuietOrchestrationPointerBatch(
   messages: readonly { type: string }[],
@@ -107,15 +107,16 @@ export function selectOrchestrationPointerBatch(
       limit
     })
   const batch = unread(exclusions.excludeTypes, ORCHESTRATION_DELIVERY_BATCH_LIMIT)
-  // Why: quiet rows stay undelivered and pile up oldest-first, so a full page of them can hide an
-  // actionable row past the limit; that row must still point.
-  const silent =
-    isQuietOrchestrationPointerBatch(batch, input.waiters) &&
-    !(
-      batch.length >= ORCHESTRATION_DELIVERY_BATCH_LIMIT &&
-      unread([...exclusions.excludeTypes, 'status'], 1).length > 0
-    )
-  return { messages: silent ? [] : batch, heldDeliveryId: held?.id }
+  if (!isQuietOrchestrationPointerBatch(batch, input.waiters)) {
+    return { messages: batch, heldDeliveryId: held?.id }
+  }
+  // Why: quiet rows pile up oldest-first, so a full page of them can hide an actionable row past
+  // the limit; that row must still point, chosen with the status rows left out.
+  const actionable =
+    batch.length >= ORCHESTRATION_DELIVERY_BATCH_LIMIT
+      ? unread([...exclusions.excludeTypes, 'status'], ORCHESTRATION_DELIVERY_BATCH_LIMIT)
+      : []
+  return { messages: actionable, heldDeliveryId: held?.id }
 }
 
 export function shouldReleaseOrchestrationPointer(
