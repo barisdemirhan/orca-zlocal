@@ -21,6 +21,7 @@ import { BotAvatar } from './BotAvatar'
 import { FOLD_TOGGLE_CLASS } from './BotChatRowControls'
 import { botRowLineAge, BotRowLineView } from './BotRowActivityLine'
 import { BotSidebarRow } from './BotSidebarRow'
+import { AgentHubBotRowPopout } from '../agent-hub/AgentHubSidebarBotPopout'
 import { revealBotHome } from './BotHoverNeedsYou'
 import { BotHoverDetails, useBotRowDetails } from './BotHoverDetails'
 import { usageLimitStopTip } from './BotUsageLimitMark'
@@ -129,6 +130,7 @@ export function BotRow({
           />
         ) : null
       }
+      popOut={<AgentHubBotRowPopout bot={bot} offline={offline} />}
       trailing={
         fold ? (
           <BotRowFoldToggle
