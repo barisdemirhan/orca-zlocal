@@ -12,7 +12,6 @@ export const REQUEST_ACTIVE_TERMINAL_PANE_CLOSE_EVENT = 'orca-request-active-ter
 export const BACKGROUND_MOUNT_TERMINAL_WORKTREE_EVENT = 'orca-background-mount-terminal-worktree'
 
 // Mobile wake must fan out by worktree to mounted hidden panes, whose instance-owned bindings can resume without a desktop reveal.
-export const WAKE_HIBERNATED_AGENTS_WORKTREE_EVENT = 'orca-wake-hibernated-agents-worktree'
 
 // Fit synchronous sidebar toggles before paint to avoid a wrong-width frame; continuous drags use per-pane ResizeObserver instead.
 export const SYNC_FIT_PANES_EVENT = 'orca-sync-fit-panes'
@@ -79,21 +78,14 @@ export type SetTerminalPaneTitleDetail = {
 
 export type BackgroundMountTerminalWorktreeDetail = {
   worktreeId: string
-  /** When set, only these terminal tabs mount for the background worktree.
-   *  Why: a worktree-wide background mount instantiates a TerminalPane (and
-   *  its PTY connect work) for every saved tab; wake/resume flows know exactly
-   *  which tabs they need. Omitted → whole-worktree mount (legacy dispatch
-   *  sites); a real activation always lifts the restriction. */
+  wakePaneKey?: string
+  /** Target background mounts to exact tabs to avoid connecting every saved pane; omitted IDs preserve legacy whole-worktree mount, lifted by real activation. */
   tabIds?: readonly string[]
 }
 
 export type WakeHibernatedAgentsWorktreeDetail = {
   worktreeId: string
-  /** Omitted by a workspace wake; present when only one pane was selected. */
   paneKey?: string
-  /** Mutable collector: mounted panes that consume (or latch) the in-place
-   *  hibernation wake add their provider-session claim keys here so the
-   *  dispatcher's follow-up generic resume skips those sessions instead of
-   *  launching them a second time. */
+  /** Collect provider-session claims from panes consuming/latching wake so generic resume cannot launch those sessions twice. */
   wokenClaimKeys?: Set<string>
 }

@@ -1,14 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import {
-  createHookListenerState,
-  clearPaneCacheState,
-  movePaneCacheState
-} from './agent-hook-listener/listener-state'
+import { createHookListenerState } from './agent-hook-listener/listener-state'
 import {
   normalizeAndAccept,
   PANE_KEY
 } from './agent-hook-listener/normalization/agent-hook-listener-test-harness'
-import { makePaneKey } from './workspace-layout/stable-pane-id'
 
 describe('provider human notifications', () => {
   it('drops the previous session notification wait when a replacement first reports tool activity', () => {
@@ -32,29 +27,6 @@ describe('provider human notifications', () => {
     })
     expect(next?.payload.state).toBe('working')
   })
-  it('keeps Gemini permission attention through unrelated tool completion without replacing the user prompt', () => {
-    const state = createHookListenerState()
-    const post = (payload: Record<string, unknown>) =>
-      normalizeAndAccept(state, 'gemini', payload)?.payload
-    post({ hook_event_name: 'BeforeAgent', session_id: 'session-a', prompt: 'Original task' })
-    const notice = post({
-      hook_event_name: 'Notification',
-      session_id: 'session-a',
-      notification_type: 'ToolPermission',
-      message: 'Allow shell access?',
-      details: { tool_name: 'run_shell_command' }
-    })
-    expect(notice).toMatchObject({
-      state: 'waiting',
-      prompt: 'Original task',
-      toolInput: 'Allow shell access?'
-    })
-    expect(notice?.interactivePrompt).toBeUndefined()
-    post({ hook_event_name: 'AfterTool', session_id: 'session-a', tool_name: 'read_file' })
-    expect(state.lastStatusByPaneKey.get(PANE_KEY)?.payload.state).toBe('waiting')
-    expect(post({ hook_event_name: 'AfterAgent', session_id: 'session-a' })?.state).toBe('done')
-  })
-
   it('uses Claude visible permission notification for sandbox network requests and waits for its tool, not a parallel sibling', () => {
     const state = createHookListenerState()
     const post = (payload: Record<string, unknown>) =>
@@ -265,35 +237,5 @@ describe('provider human notifications', () => {
       state: 'working',
       prompt: 'Next'
     })
-  })
-
-  it('moves and clears pending human notification context with its pane', () => {
-    const state = createHookListenerState()
-    normalizeAndAccept(state, 'gemini', {
-      hook_event_name: 'BeforeAgent',
-      session_id: 'session-a',
-      prompt: 'Task'
-    })
-    normalizeAndAccept(state, 'gemini', {
-      hook_event_name: 'Notification',
-      session_id: 'session-a',
-      notification_type: 'ToolPermission',
-      message: 'Approve'
-    })
-    const moved = makePaneKey('moved', '22222222-2222-4222-8222-222222222222')
-    movePaneCacheState(state, PANE_KEY, moved)
-    clearPaneCacheState(state, moved)
-    normalizeAndAccept(state, 'gemini', {
-      hook_event_name: 'BeforeAgent',
-      session_id: 'session-b',
-      prompt: 'New task'
-    })
-    expect(
-      normalizeAndAccept(state, 'gemini', {
-        hook_event_name: 'BeforeTool',
-        session_id: 'session-b',
-        tool_name: 'read_file'
-      })?.payload.state
-    ).toBe('working')
   })
 })

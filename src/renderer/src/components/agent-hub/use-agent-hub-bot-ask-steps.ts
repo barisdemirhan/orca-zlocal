@@ -15,7 +15,7 @@ import type {
 } from '../../../../shared/bots/bot-item-ask'
 import type { Bot } from '../../../../shared/bot-types'
 import type { BotItem } from '../../../../shared/bots/bot-items'
-import type { BotItemQuestionStepsSend } from '../../../../shared/bots/use-bot-item-question-steps'
+import { botItemHeldAnswerIsReply } from '../../../../shared/bots/bot-item-held-answers'
 import { agentHubBotAskLine } from './use-agent-hub-bot-ask'
 import {
   keepAgentHubBotAskOpen,
@@ -68,9 +68,9 @@ function listedShape(item: BotItem): BotItemQuestionShape {
 export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskModel {
   const view = useBotItemView(bot, item.uid, item)
   const live = view.item ?? item
-  const pending = useBotItemPendingComments(bot, item.uid, view.events, view.retry)
+  const pending = useBotItemPendingComments(bot, item.uid, view.events)
   // As the panel's comment box sends: after the newest event read, naming the question it answers.
-  const send = useLatestHandler<Parameters<BotItemQuestionStepsSend>, void>(
+  const send = useLatestHandler<Parameters<Parameters<typeof useBotItemQuestionSteps>[3]>, void>(
     (text, paths = [], ...rest) =>
       pending.send(text, paths, view.events.at(-1)?.id ?? live.lastEventId, ...rest)
   )
@@ -139,12 +139,12 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
             reply && !steps.lines.includes(index) && !asked.byOrder[index]
               ? botItemAnswerWords(shape, index, reply.data)
               : null
-          const words = index === lineIndex ? null : (posted ?? steps.picks[index])
+          const words = index === lineIndex ? null : (posted ?? steps.picks[index]?.words)
           return words ? [{ index, question: line.question, words, reopens: !posted }] : []
         })
       : []
   const at = steps ? steps.lines.indexOf(lineIndex) : 0
-  const held = steps ? (steps.picks[lineIndex] ?? null) : null
+  const held = steps ? (steps.picks[lineIndex]?.words ?? null) : null
   const answeredCount = steps
     ? total - steps.lines.filter((line) => !steps.picks[line]).length
     : phase === 'answered'
@@ -179,7 +179,7 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
         quick(words)
         return
       }
-      const clears = steps.picks[lineIndex] === words
+      const clears = botItemHeldAnswerIsReply(steps.picks[lineIndex], words)
       steps.pick(lineIndex, words)
       // As a held answer did: the next line still unanswered opens.
       const next = steps.lines.find((line) => line !== lineIndex && !steps.picks[line])

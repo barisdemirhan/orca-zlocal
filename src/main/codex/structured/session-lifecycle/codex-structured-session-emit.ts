@@ -1,4 +1,5 @@
 import type { CodexStructuredVoiceAdapter } from '../../codex-structured-voice-adapter'
+import type { CodexComposerPredictions } from '../turns/codex-composer-predictions'
 import type { CodexJournalTranslationAdmission } from '../journal/codex-structured-journal-contracts'
 import { startCodexTerminalStopProbe } from '../background-work/codex-background-terminals'
 import * as requestEndWait from '../turns/codex-request-end-wait'
@@ -15,9 +16,10 @@ export function emitCodexStructuredSessionEvent(input: {
   event: CodexStructuredSessionEvent
   sessions: Map<string, CodexSession>
   voice: CodexStructuredVoiceAdapter
+  predictions: CodexComposerPredictions
   deps: CodexStructuredSessionAdapterDeps
 }): CodexJournalTranslationAdmission {
-  const { session, event, sessions, voice, deps } = input
+  const { session, event, sessions, voice, predictions, deps } = input
   if (voice.handles(event)) {
     return voice.notification(session, event)
   }
@@ -40,6 +42,7 @@ export function emitCodexStructuredSessionEvent(input: {
     // After the journal and the parent's republished row, never ahead of either.
     session.backgroundTasks.publishChildWork()
     startCodexTerminalStopProbe(sessions, event.sessionId, session, deps)
+    predictions.observe(session, event)
   }
   requestEndWait.settleCodexRequestEndWaiters(session)
   deps.onEvent?.(event)

@@ -10,6 +10,7 @@ import {
 } from './NativeChatQuestionCardHeader'
 import { NativeChatQuestionAnswerField } from './NativeChatQuestionAnswerField'
 import type { AskAnswerSelection } from '../../../../../shared/native-chat/input/questions/native-chat-ask-answer'
+import { usePromptCardColumn } from './NativeChatPromptCollapse'
 import { useNativeChatPromptCardFocus } from './use-native-chat-prompt-card-focus'
 import { useNativeChatQuestionAutoAdvance } from './use-native-chat-question-auto-advance'
 import { useNativeChatQuestionKeys } from './use-native-chat-question-keys'
@@ -61,6 +62,7 @@ export function NativeChatQuestionCard({
   controlRef
 }: NativeChatQuestionCardProps): React.JSX.Element {
   const t = useTranslate()
+  const column = usePromptCardColumn('px-3 pb-4 sm:px-4')
   const cardRef = useRef<HTMLDivElement>(null)
   const surfaceRef = useRef<HTMLDivElement>(null)
   const blocked = isSubmitting || isCancelling
@@ -315,7 +317,10 @@ export function NativeChatQuestionCard({
       }}
     >
       <div
-        className="mx-auto flex min-h-0 w-full max-w-(--chat-content-max-width) flex-col px-3 pt-2 pb-4 sm:px-4 data-[layout=embedded]:max-w-none data-[layout=embedded]:p-0 data-[layout=embedded]:sm:p-0"
+        className={cn(
+          column,
+          'flex min-h-0 flex-col data-[layout=embedded]:max-w-none data-[layout=embedded]:p-0 data-[layout=embedded]:sm:p-0'
+        )}
         data-layout={layout}
       >
         <div

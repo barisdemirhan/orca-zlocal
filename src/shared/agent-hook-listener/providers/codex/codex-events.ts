@@ -47,6 +47,7 @@ import {
   pendingCodexAsyncQuestion,
   trackCodexAsyncQuestions
 } from './codex-async-questions'
+import { retireCodexPaneTranscripts } from './codex-pane-transcript-retirement'
 
 export function buildCodexStatusPayload(
   state: HookListenerState,
@@ -196,8 +197,7 @@ export function normalizeCodexEvent(
   state.codexSubagentTranscriptByPaneKey.get(paneKey)?.pendingApprovalPathsByAgentId.delete(agentId)
   if (eventName === 'SessionStart' && !agentId) {
     // New processes must not retain children whose Stop hooks were lost.
-    state.codexSubagentRosterByPaneKey.delete(paneKey)
-    state.codexSubagentTranscriptByPaneKey.delete(paneKey)
+    retireCodexPaneTranscripts(state, paneKey)
   }
   if (agentId && transcriptPath && eventName === 'PermissionRequest') {
     const transcriptState = getOrCreateCodexSubagentTranscriptState(state, paneKey)

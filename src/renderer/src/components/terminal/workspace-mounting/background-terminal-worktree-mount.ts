@@ -3,6 +3,7 @@ import type { BackgroundMountTerminalWorktreeDetail } from '@/constants/terminal
 import { parseExecutionHostId } from '../../../../../shared/execution-host/execution-host'
 import { isStructuredTab } from '../../../../../shared/agent-session/view/structured-agent-session-tab'
 import { requestSleepingAgentWakeOnMount } from '@/lib/agent-session/resume/sleeping-agent-wake-requests'
+import { carryActivationAdmissionDrained } from './activation-deferred-tab-admission'
 
 const pendingMounts = new Map<string, BackgroundMountTerminalWorktreeDetail>()
 const requestListeners = new Set<() => void>()
@@ -36,7 +37,7 @@ export function requestBackgroundTerminalWorktreeMount(
   }
   // Only targeted wakes mark sleeping agents; whole-worktree mounts must not authorize every hidden remount.
   if (detail.tabIds) {
-    requestSleepingAgentWakeOnMount(detail.worktreeId, detail.tabIds)
+    requestSleepingAgentWakeOnMount(detail.worktreeId, detail.tabIds, detail.wakePaneKey)
   }
   mergePendingMount(detail)
   if (!hasRequestedMount) {
@@ -116,7 +117,12 @@ export function applyBackgroundMountTabRestriction(
   if (existing && tabIds.every((tabId) => existing.has(tabId))) {
     return
   }
-  restrictions.set(worktreeId, new Set([...(existing ?? []), ...tabIds]))
+  const next = new Set([...(existing ?? []), ...tabIds])
+  restrictions.set(worktreeId, next)
+  // Allowing more tabs adds nothing to warm, so a drained admission stays drained.
+  if (existing) {
+    carryActivationAdmissionDrained(existing, next)
+  }
 }
 
 export function shouldMountBackgroundWorktreeTab(
@@ -252,6 +258,7 @@ export function revealActivationDeferredTabs(opts: {
   }
   if (grew) {
     restrictions.set(worktreeId, next)
+    carryActivationAdmissionDrained(existing, next)
   }
   replaceActivationDeferredMountTabs(deferredMountTabIdsByWorktree, worktreeId, next, allTabIds)
 }
@@ -286,13 +293,11 @@ export function pruneClosedBackgroundMountTabs(
 ): boolean {
   let changed = false
   for (const [worktreeId, tabIds] of restrictions) {
-    const liveTabIds = new Set((tabsByWorktree[worktreeId] ?? []).map((tab) => tab.id))
     // A standalone chat is a mount target too, but tabsByWorktree only lists terminals.
-    for (const tab of unifiedTabsByWorktree[worktreeId] ?? []) {
-      if (isStructuredTab(tab)) {
-        liveTabIds.add(tab.id)
-      }
-    }
+    const chats = (unifiedTabsByWorktree[worktreeId] ?? []).filter((tab) => isStructuredTab(tab))
+    const liveTabIds = new Set(
+      [...(tabsByWorktree[worktreeId] ?? []), ...chats].map(({ id }) => id)
+    )
     const retained = new Set([...tabIds].filter((tabId) => liveTabIds.has(tabId)))
     const deferred = deferredMountTabIdsByWorktree?.get(worktreeId)
     const retainedDeferred = deferred
@@ -318,12 +323,14 @@ export function pruneClosedBackgroundMountTabs(
       // Keep an empty-allowed activation mounted while deferred tabs still exist.
       if (retainedDeferred && retainedDeferred.size > 0) {
         restrictions.set(worktreeId, retained)
+        carryActivationAdmissionDrained(tabIds, retained)
       } else {
         restrictions.delete(worktreeId)
         mountedWorktreeIds.delete(worktreeId)
       }
     } else {
       restrictions.set(worktreeId, retained)
+      carryActivationAdmissionDrained(tabIds, retained)
     }
   }
   return changed

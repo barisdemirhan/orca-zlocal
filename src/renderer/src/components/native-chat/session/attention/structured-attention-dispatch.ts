@@ -87,7 +87,8 @@ function dispatchStructuredAttention(
   if (promptWasRead()) {
     return
   }
-  if (isBotAttentionSilenced(readBots(), botHomeOfSession(sessionId) ?? tab.worktreeId, news)) {
+  const botHome = botHomeOfSession(sessionId)
+  if (isBotAttentionSilenced(readBots(), botHome ?? tab.worktreeId, news)) {
     return
   }
   const attentionKey = agentSessionAttentionKey(edge)
@@ -121,7 +122,11 @@ function dispatchStructuredAttention(
         return
       }
       // Per-worktree mute keeps the unread writes above but drops the interruption.
-      if (isWorktreeNotificationDeliveryMuted(useAppStore.getState(), request.workspaceId)) {
+      const deliveryState = useAppStore.getState()
+      if (
+        isWorktreeNotificationDeliveryMuted(deliveryState, request.workspaceId) ||
+        (botHome !== null && isWorktreeNotificationDeliveryMuted(deliveryState, botHome))
+      ) {
         return
       }
       // The receiving subscription identifies the paired source even when tab ownership is ambiguous.

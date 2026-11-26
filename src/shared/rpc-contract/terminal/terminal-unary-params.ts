@@ -3,7 +3,7 @@ import { TERMINAL_KITTY_FILE_MAX_BYTES } from '../../terminal/images/terminal-ki
 import { OptionalFiniteNumber, OptionalString, requiredString } from '../rpc-param-primitives'
 import { isTuiAgent } from '../../agent-launch/catalog/tui-agent-config'
 import { TerminalSurfaceCloseCapture } from './terminal-surface-close-capture'
-import { SpawnIntentParam } from './agent-session-params'
+import { SpawnIntentParam, TerminalColorQueryReplyColorsParam } from './agent-session-params'
 import {
   canonicalizeWindowsShellOverride,
   isSupportedWindowsShellOverride,
@@ -208,11 +208,6 @@ export const TerminalWait = TerminalHandle.extend({
     message: 'Invalid --for value. Supported: exit, tui-idle'
   }),
   timeoutMs: OptionalFiniteNumber
-})
-
-const TerminalColorQueryReplyColorsParam = z.object({
-  foreground: z.string().max(128).optional(),
-  background: z.string().max(128).optional()
 })
 
 export const TerminalSetViewerColors = z.object({

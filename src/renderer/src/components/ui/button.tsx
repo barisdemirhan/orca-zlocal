@@ -80,15 +80,14 @@ const buttonVariants = cva(
           'border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive',
         // The Orb header's usage-limit chip, for an account that is nearly or fully used up.
         'warning-chip':
-          'border border-status-warning-border bg-status-warning-background text-status-warning hover:border-status-warning hover:text-status-warning',
-        // An item's way to what is waiting on the owner: the open ask's amber, which means only that. The
-        // faint fill keeps its amber text at 4.5:1 in the light theme.
-        'needs-you':
-          'border border-agent-question/45 bg-agent-question/6 text-agent-question-text hover:bg-agent-question/20 hover:text-foreground'
+          'border border-status-warning-border bg-status-warning-background text-status-warning hover:border-status-warning hover:text-status-warning'
       },
       size: {
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+        // `xs` trimmed to its text, for an action inside a 32px status line.
+        'xs-compact':
+          "h-5 gap-1 rounded-md px-1.5 py-0.5 text-xs [&_svg:not([class*='size-'])]:size-3",
         // A `link` inside a sentence: no box of its own, so it wraps with the text and lines up with its edge.
         inlineText:
           "h-auto gap-1 rounded-sm p-0 align-baseline text-xs [&_svg:not([class*='size-'])]:size-3",

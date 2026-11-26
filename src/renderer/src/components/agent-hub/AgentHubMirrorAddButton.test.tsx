@@ -30,7 +30,7 @@ const fixture = vi.hoisted(() => ({
   groups: Array<AgentHubGroupNode>(),
   disappeared: new Set<string>(),
   launch: vi.fn<typeof launchAgentInNewTabWithOutcome>(),
-  detected: Array<TuiAgent>('claude', 'codex', 'gemini'),
+  detected: Array<TuiAgent>('claude', 'codex', 'grok'),
   openSettingsPage: vi.fn(),
   openSettingsTarget: vi.fn()
 }))
@@ -63,7 +63,7 @@ vi.mock('@/store', async () => {
       activeWorktreeId: 'typing-workspace',
       activeTabId: 'typing-tab',
       activeTabType: 'file',
-      settings: { defaultTuiAgent: 'codex', disabledTuiAgents: ['gemini'] }
+      settings: { defaultTuiAgent: 'codex', disabledTuiAgents: ['grok'] }
     }))
   }
 })
@@ -85,7 +85,7 @@ afterEach(() => {
 beforeEach(() => {
   vi.clearAllMocks()
   fixture.launch.mockReset()
-  fixture.detected = ['claude', 'codex', 'gemini']
+  fixture.detected = ['claude', 'codex', 'grok']
   useAppStore.setState({ tabsByWorktree: {} })
 })
 function setup() {
@@ -344,7 +344,7 @@ it('opens New agent outside the picker and restores the mirror add button on Esc
   expect(fixture.openSettingsPage).toHaveBeenCalledOnce()
 })
 
-it.each([{ detected: [] }, { detected: ['gemini'] }] as const)(
+it.each([{ detected: [] }, { detected: ['grok'] }] as const)(
   'keeps settings available with no available agent in $detected',
   async ({ detected }) => {
     fixture.detected = [...detected]

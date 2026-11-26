@@ -16,6 +16,8 @@ import { getTerminalParkingPolicyOverrides } from '../../terminal-pane/parking/i
 import '../../terminal-pane/parking/output-watchers/terminal-parked-tab-watchers'
 import { canWatcherCoverParkedTerminalTab } from '../../terminal-pane/parking/output-watchers/parked-terminal-tab-coverage'
 import { getHeldTerminalPrewarmWorktrees } from '../worktree-prewarm/terminal-worktree-prewarm'
+import { isTerminalActivationSpawnSettled } from '../../terminal-pane/parking/retention/settled-activation-spawn'
+import { useAppStore } from '../../../store/index'
 import type { TerminalParkingFoundation } from './use-terminal-parking-foundation'
 
 export type TerminalParkingPassCandidates = ReturnType<typeof collectTerminalParkingPassCandidates>
@@ -74,6 +76,9 @@ export function collectTerminalParkingPassCandidates(
     pairedRuntimeParkingEnvironmentIds
   }
   const parkingTimers = terminalWorktreeParkingTimersRef.current
+  const storeState = useAppStore.getState()
+  const isActivationSpawnSettled = (tabId: string) =>
+    isTerminalActivationSpawnSettled(storeState, tabId)
   const keepWarmWorktreeIds = getHeldTerminalPrewarmWorktrees()
   for (const worktreeId of dirty) {
     const timer = parkingTimers.get(worktreeId)
@@ -139,6 +144,7 @@ export function collectTerminalParkingPassCandidates(
         parkingEnabled: terminalParkingEnabled,
         nowMs,
         restorePolicy,
+        isActivationSpawnSettled,
         ...(overrides.coldParkDelayMs !== undefined
           ? { coldParkDelayMs: overrides.coldParkDelayMs }
           : {})

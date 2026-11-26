@@ -15,7 +15,7 @@ import {
   getPaneSpawnDeferral,
   subscribePaneSpawnDeferrals
 } from '@/components/terminal-pane/session-restore/spawn-deferral/pane-spawn-deferral-registry'
-import { WAKE_HIBERNATED_AGENTS_WORKTREE_EVENT } from '@/constants/terminal'
+import { dispatchHibernatedAgentWake } from '@/lib/agent-session/resume/hibernated-agent-wake-owners'
 import { resolveAgentHubPtyId, type AgentHubPaneTarget } from './agent-hub-pane-target'
 import {
   changeAgentHubTerminalSuspension,
@@ -166,14 +166,11 @@ export async function wakeAgentHubPane(target: AgentHubPaneTarget): Promise<void
     throw new Error('This pane no longer has a saved session.')
   }
   const claims = new Set<string>()
-  window.dispatchEvent(
-    new CustomEvent(WAKE_HIBERNATED_AGENTS_WORKTREE_EVENT, {
-      detail: { worktreeId: target.worktree.id, paneKey, wokenClaimKeys: claims }
-    })
-  )
+  dispatchHibernatedAgentWake({ worktreeId: target.worktree.id, paneKey, wokenClaimKeys: claims })
   requestBackgroundTerminalWorktreeMount({
     worktreeId: target.worktree.id,
-    tabIds: [target.tab.id]
+    tabIds: [target.tab.id],
+    wakePaneKey: paneKey
   })
   await new Promise<void>((resolve, reject) => {
     let requested = claims.size > 0

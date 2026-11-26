@@ -68,20 +68,41 @@ export function createTerminalPaneHibernationActions(
       ) {
         throw new Error('agent_hibernation_pane_binding_mismatch')
       }
+      // Main refuses Agent Sleep while orchestration work waits; ask before capturing anything.
+      const admission =
+        expectedRuntimePtyIds.length === 0
+          ? await window.api.pty.sleepAdmitted?.(opts.ptyId, opts.paneKey)
+          : undefined
+      if (admission?.admitted === false) {
+        throw new Error('orchestration_busy')
+      }
+      if (admission && opts.stillEligible && !(await opts.stillEligible())) {
+        throw new Error('agent_hibernation_candidate_changed')
+      }
       const sleepingAgentSessionRecords = collectSleepingAgentSessionRecordsForWorktree(
-        state,
+        admission ? get() : state,
         worktreeId,
         {
           paneKeys,
           captureMode: opts.manual ? 'manual-worktree-sleep' : 'completed-agent-hibernation'
         }
       )
-      if (!sleepingAgentSessionRecords[opts.paneKey]) {
+      const sleptRecord = sleepingAgentSessionRecords[opts.paneKey]
+      if (!sleptRecord) {
         // Killing without a persisted resume record would strand the pane.
         throw new Error('agent_hibernation_capture_missing')
       }
+      if (admission?.terminalHandle) {
+        sleepingAgentSessionRecords[opts.paneKey] = {
+          ...sleptRecord,
+          terminalHandle: admission.terminalHandle
+        }
+      }
       if (opts.manual) {
-        sleepingAgentSessionRecords[opts.paneKey].wakeOnRequestOnly = true
+        sleepingAgentSessionRecords[opts.paneKey] = {
+          ...sleepingAgentSessionRecords[opts.paneKey],
+          wakeOnRequestOnly: true
+        }
       }
       const capture = shutdownBufferCaptures.get(opts.tabId)
       if (capture) {

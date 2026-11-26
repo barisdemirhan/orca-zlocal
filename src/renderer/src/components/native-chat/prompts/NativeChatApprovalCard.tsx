@@ -23,7 +23,7 @@ import {
   useNativeChatPromptCardFocus
 } from './use-native-chat-prompt-card-focus'
 import { useNativeChatApprovalQuietDetail } from './use-native-chat-approval-quiet-detail'
-import { approvalCardFrameClasses, type ApprovalLayout } from './native-chat-approval-card-frame'
+import { useApprovalCardFrameClasses, type ApprovalLayout } from './native-chat-approval-card-frame'
 import { useNativeChatDockRefit } from '../pane/dock/use-native-chat-dock-fit'
 import { NativeChatUrlTarget, openUrlRequestPage } from './NativeChatUrlRequest'
 
@@ -132,7 +132,7 @@ export function NativeChatApprovalCard({
     approval.detail
   ])
   const escape = onCancel ?? (isSubmitting ? undefined : onCollapse)
-  const frame = approvalCardFrameClasses({ stacked, joined, quiet, layout })
+  const frame = useApprovalCardFrameClasses({ stacked, joined, quiet, layout })
 
   return (
     <SecuritySurface>

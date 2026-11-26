@@ -1,9 +1,12 @@
-import { useContext, type CSSProperties, type ReactNode } from 'react'
+import { useContext, type ComponentProps, type CSSProperties, type ReactNode } from 'react'
 import type { useStructuredAgentSession } from './session/structured/use-structured-agent-session'
 import { NativeChatPresentationContext } from './native-chat-presentation-context'
 import { NativeChatOrbPromptSlot } from './NativeChatOrbPromptSlot'
+import { NativeChatDock } from './pane/dock/NativeChatDock'
 import { AgentHubOrbComposerState } from '../agent-hub/AgentHubOrbComposerState'
 import { pendingPromptsAllUnanswerableHere } from '../../../../shared/agent-session/requests/prompts/agent-session-approval-subject'
+
+export { usePublishAgentHubMirrorChat as usePublishMirrorChat } from '../agent-hub/use-publish-agent-hub-mirror-chat'
 
 type Controller = ReturnType<typeof useStructuredAgentSession>
 
@@ -62,5 +65,22 @@ export function ComposerState({
     >
       {children}
     </AgentHubOrbComposerState>
+  )
+}
+
+/** The input dock, with the Orb's composer state around everything in it. */
+export function Dock({
+  orb,
+  children,
+  ...dock
+}: ComponentProps<typeof NativeChatDock> & {
+  orb: { sessionId: string; controller: Controller }
+}): React.JSX.Element {
+  return (
+    <NativeChatDock {...dock}>
+      <ComposerState sessionId={orb.sessionId} controller={orb.controller}>
+        {children}
+      </ComposerState>
+    </NativeChatDock>
   )
 }
