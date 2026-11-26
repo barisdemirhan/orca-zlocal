@@ -1,6 +1,10 @@
 /// <reference types="chrome" />
 import { redactKagiSessionToken } from '../../../../shared/browser/navigation/browser-url'
 import { webContents } from 'electron'
+import {
+  recentClientHostedPageIdForBrowserProfile,
+  recentWorktreeIdForBrowserProfile
+} from './browser-extension-session-pages'
 // oxlint-disable-next-line import/no-cycle -- browser subsystem singleton hub (browserManager); breaking it needs DI and test-mock updates, left for a human
 import { browserManager } from '../../guest-lifecycle/manager/browser-manager'
 import { createBrowserTabInRenderer } from '../../../runtime/browser/tabs/browser-tab-renderer-create'
@@ -14,10 +18,7 @@ import {
   type BrowserExtensionCaller
 } from '../api-runtime/browser-extension-namespace-registry'
 import { closeBrowserExtensionPopup } from '../actions/browser-extension-popup-host'
-import {
-  getBrowserExtensionProfile,
-  getBrowserExtensionSessionForProfile
-} from '../profile-sessions/browser-extension-session-loader'
+import { getBrowserExtensionProfile } from '../profile-sessions/browser-extension-session-loader'
 import { isBrowserExtensionSupportEnabled } from '../browser-extension-support'
 import { browserExtensionTabTarget } from './browser-extension-tab-target'
 import { whenBrowserMainWindowReady } from '../../guest-lifecycle/browser-main-window-readiness'
@@ -266,34 +267,11 @@ export function mergeNativeTab(
   return { ...orcaTabFields(entry), ...native }
 }
 
-/**
- * The workspace this profile's tabs were last used in: the active page's, else any open tab's.
- * Used only when no workspace is active, so an extension tab still has somewhere to go.
- */
-export function recentWorktreeIdForBrowserProfile(profileId: string): string | undefined {
-  const sess = getBrowserExtensionSessionForProfile(profileId)
-  if (!sess) {
-    return undefined
-  }
-  const pageIds = [
-    ...(activeBrowserPageId ? [activeBrowserPageId] : []),
-    ...browserManager.getWebContentsIdByTabId().keys()
-  ]
-  for (const pageId of pageIds) {
-    const contents = liveContents(browserManager.getGuestWebContentsId(pageId))
-    const worktreeId = browserManager.getWorktreeIdForTab(pageId)
-    if (contents?.session === sess && worktreeId) {
-      return worktreeId
-    }
-  }
-  return undefined
-}
-
 /** Opens a tab through Orca's renderer-owned tab path, in the caller's browser profile. */
 export async function openBrowserExtensionTab(
   browserProfileId: string,
   url: string,
-  placement: { active: boolean; worktreeId?: string }
+  placement: { active: boolean; worktreeId?: string; clientHostedSourcePageId?: string }
 ): Promise<number> {
   const profile = getBrowserExtensionProfile(browserProfileId)
   // Why wait: extensions open tabs as they load (onInstalled), before Orca's window can take them.
@@ -301,7 +279,12 @@ export async function openBrowserExtensionTab(
   if (!mainWindow || !profile) {
     throw new BrowserExtensionApiError('Orca has no window to open a tab in')
   }
-  const target = browserExtensionTabTarget(profile, placement, recentWorktreeIdForBrowserProfile)
+  const target = browserExtensionTabTarget(
+    profile,
+    placement,
+    (profileId) => recentWorktreeIdForBrowserProfile(profileId, activeBrowserPageId),
+    (profileId) => recentClientHostedPageIdForBrowserProfile(profileId, activeBrowserPageId)
+  )
   const { browserPageId } = await createBrowserTabInRenderer(
     { getAuthoritativeWindowId: () => mainWindow.id },
     url,
@@ -310,7 +293,9 @@ export async function openBrowserExtensionTab(
     target.partition,
     placement.active,
     undefined,
-    target.fallbackWorktreeId
+    target.fallbackWorktreeId,
+    undefined,
+    target.clientHostedSourcePageId
   )
   await waitForTabRegistration(browserPageId)
   const tabId = browserManager.getGuestWebContentsId(browserPageId)

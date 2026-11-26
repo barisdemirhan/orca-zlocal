@@ -15,7 +15,9 @@ export async function createBrowserTabInRenderer(
   requestedPageId?: string,
   /** Used only when `worktreeId` is unset and no workspace is active in the renderer. */
   fallbackWorktreeId?: string,
-  split?: { direction: BrowserTabSplitDirection; fromTabId?: string }
+  split?: { direction: BrowserTabSplitDirection; fromTabId?: string },
+  /** A This-device page the renderer opens the tab beside; main has no workspace for it. */
+  clientHostedSourcePageId?: string
 ): Promise<{ browserPageId: string }> {
   const windowId = host.getAuthoritativeWindowId()
   const desktop = getRuntimeDesktopSurface()
@@ -29,6 +31,7 @@ export async function createBrowserTabInRenderer(
     sessionPartition,
     activate,
     ...(fallbackWorktreeId ? { fallbackWorktreeId } : {}),
+    ...(clientHostedSourcePageId ? { clientHostedSourcePageId } : {}),
     ...(split ? { split: split.direction, splitFromTabId: split.fromTabId } : {})
   }
   const reply = await desktop.requestRenderer<{
@@ -39,7 +42,8 @@ export async function createBrowserTabInRenderer(
     channel: 'browser:requestTabCreate',
     replyChannel: 'browser:tabCreateReply',
     payload: request,
-    timeoutMs: 10_000,
+    // A This-device open waits on a paired-host round trip, not a local tab.
+    timeoutMs: clientHostedSourcePageId ? 40_000 : 10_000,
     timeoutMessage: 'Tab creation timed out'
   })
   if (reply.error) {
