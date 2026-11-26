@@ -233,7 +233,7 @@ export function useBotItemQuestionSteps(
       }
       const answer = botItemHeldAnswer(text, paths, skills)
       const line = shape.decisions.findIndex((_, index) => replyingTo === `${askId}:${index}`)
-      const answering = line !== -1 && eligible(line)
+      const answering = line !== -1 && lines.includes(line)
       // The held answers go as one comment: what one comment can't carry stays in the box.
       const over = botItemHeldAnswersOverLimit(
         answering ? picks.map((pick, at) => (at === line ? answer : pick)) : [...picks, answer]

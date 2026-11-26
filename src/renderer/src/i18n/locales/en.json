@@ -26131,10 +26131,10 @@
       "ask": {
         "answered": "Answered · {{n}} of {{total}}",
         "answeredCount": "{{n}} of {{total}} answered",
+        "heldFiles": "{{count}} attached",
         "later": "Later",
         "openItem": "Open #{{number}}",
         "ownWords": "Reply in your own words",
-        "sendNow": "Send now",
         "useThese": "Use these"
       },
       "mirror": "Open in mirror",

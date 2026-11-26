@@ -34,6 +34,8 @@ const ask: AgentHubBotAskModel = {
   nav: null,
   answeredCount: 0,
   heldCount: 0,
+  openCount: 0,
+  heldFiles: 0,
   step: no,
   reopen: no,
   pick: no,

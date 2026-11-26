@@ -3,12 +3,12 @@ import { botRefKey, type BotRef } from '@/lib/bot-hosts'
 import type { Bot } from '../../../../shared/bot-types'
 import type { BotItem } from '../../../../shared/bots/bot-items'
 
-/** An ask a "Send now" only partly answered: the item left Needs you, but lines are still open. */
+/** An ask a partial send answered: the item left Needs you, and the unanswered lines show until the read of what the host closed. */
 export type AgentHubPartialBotAsk = {
   bot: Bot
   item: BotItem
   askId: string
-  /** Question lines still waiting after the send. */
+  /** Question lines the send skipped. */
   remaining: number
 }
 

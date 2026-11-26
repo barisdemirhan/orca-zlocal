@@ -31,6 +31,8 @@ function model(patch: Partial<AgentHubBotAskModel>): AgentHubBotAskModel {
     nav: null,
     answeredCount: 0,
     heldCount: 0,
+    openCount: 0,
+    heldFiles: 0,
     step: no,
     reopen: no,
     pick: no,
@@ -64,7 +66,9 @@ const twoHeld = model({
     { index: 1, question: questions[1].question, words: 'Rotate now', reopens: true }
   ],
   answeredCount: 2,
-  heldCount: 2
+  heldCount: 2,
+  openCount: 5,
+  heldFiles: 1
 })
 const multiPick = model({
   total: 2,

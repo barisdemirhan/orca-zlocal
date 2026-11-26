@@ -48,7 +48,11 @@ export type AgentHubBotAskModel = {
   /** Where the open line is among several: null with one. */
   nav: { at: number; count: number } | null
   answeredCount: number
+  /** Lines with an answer held for the next send, out of `openCount` lines still open to one. */
   heldCount: number
+  openCount: number
+  /** Files and skills attached to the held answers. */
+  heldFiles: number
   step: (delta: -1 | 1) => void
   reopen: (index: number) => void
   /** Answers the open question with these replies' words (several joined as one answer). */
@@ -101,6 +105,12 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
   const firstOpen = steps?.lines.find((line) => !steps.picks[line]) ?? steps?.lines[0]
   const lineIndex = steps ? (steps.lines.includes(focused) ? focused : (firstOpen ?? 0)) : 0
   const heldCount = steps ? steps.picks.filter(Boolean).length : 0
+  const heldFiles = steps
+    ? steps.picks.reduce(
+        (sum, pick) => sum + (pick ? pick.images.length + pick.skills.length : 0),
+        0
+      )
+    : 0
   const decision: BotItemDecision | undefined = shape.decisions[lineIndex]
   const question = decision?.question ?? waitingLine?.line ?? agentHubBotAskLine(live)
 
@@ -166,6 +176,8 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
     nav: steps ? { at, count: steps.lines.length } : null,
     answeredCount,
     heldCount,
+    openCount: steps ? steps.lines.length : total,
+    heldFiles,
     step: (delta) => {
       const target = steps?.lines[at + delta]
       if (target !== undefined) {
@@ -187,12 +199,25 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
         setFocused(next)
       }
     },
-    reply: (text) => fromBox(text, [], waitingLine?.id ?? null),
+    reply: (text) => {
+      if (!steps) {
+        fromBox(text, [], waitingLine?.id ?? null)
+        return
+      }
+      // The line shown, not the first open one; a held answer's files and skills stay with its new words.
+      const own = steps.picks[lineIndex]
+      const over = fromBox(text, own?.images ?? [], `${steps.askId}:${lineIndex}`, own?.skills)
+      const next = steps.lines.find((line) => line !== lineIndex && !steps.picks[line])
+      if (!over && next !== undefined) {
+        setFocused(next)
+      }
+    },
     sendHeld: () => {
       if (!steps) {
         return
       }
-      // Lines without a held answer stay open: the Inbox keeps the ask, and counts it, until it is answered.
+      // Upstream posts the lines without a held answer as skipped and the host closes the ask; the Inbox
+      // keeps its row only until that read.
       if (heldCount < steps.lines.length) {
         keepAgentHubBotAskOpen(bot, live, steps.askId, steps.lines.length - heldCount)
       }

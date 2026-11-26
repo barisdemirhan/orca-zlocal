@@ -167,6 +167,20 @@ it("holds a typed answer as its line's pick, and names the next open line", () =
   expect(posted[0]?.skipped).toEqual([1])
 })
 
+it('replaces the held answer of a line with typed words, holding them and sending nothing', () => {
+  const { hook, posted } = steps('retype')
+  act(() => hook.result.current.steps!.pick(0, 'Yes'))
+  act(() => hook.result.current.steps!.pick(1, 'No'))
+  act(() =>
+    hook.result.current.fromBox('changed my mind', [], `${hook.result.current.steps!.askId}:0`)
+  )
+  expect(posted).toEqual([])
+  expect(hook.result.current.steps!.picks.map((pick) => pick?.words)).toEqual([
+    'changed my mind',
+    'No'
+  ])
+})
+
 it('holds an answer with images, files and skills like a pick; Send posts them all as one comment', () => {
   const { hook, posted } = steps('files')
   const skill = { name: 'review', path: '/skills/review/SKILL.md' }

@@ -1,6 +1,6 @@
 // A bot's waiting ask as one block for every Agent Hub surface: the answered and held lines folded as
 // "Question → answer", the open question with ‹ 2 of 5 › and its quick replies (the recommended one
-// filled and starred), a line to answer in your own words, and a footer with the count, "Send now" when
+// filled and starred), a line to answer in your own words, and a footer with the count, "Send 2/3" when
 // answers are held, and the caller's own actions (Open, Later). Keys 1-9 pick a reply and ←/→ step,
 // while focus is inside the block and not in the input.
 import { useState } from 'react'
@@ -215,13 +215,14 @@ export function AgentHubBotAskView({
 }: {
   ask: AgentHubBotAskModel
   variant?: AgentHubBotAskVariant
-  /** The caller's footer actions (Open #7, Later), after "Send now". */
+  /** The caller's footer actions (Open #7, Later), after Send. */
   actions?: React.ReactNode
   className?: string
 }): React.JSX.Element | null {
   const [draft, setDraft] = useState<{ key: string; labels: readonly string[] } | null>(null)
   const picked = draft?.key === ask.openKey ? draft.labels : splitHeld(ask.held)
-  // "Send now" would leave these picks behind; "Use these" comes first.
+  const partial = ask.heldCount < ask.openCount
+  // Send would leave these picks behind; "Use these" comes first.
   const unusedPicks = ask.multi && picked.length > 0 && picked.join(', ') !== ask.held
   if (ask.phase === 'closed') {
     return null
@@ -310,15 +311,37 @@ export function AgentHubBotAskView({
               : null}
           </span>
           <span className="flex items-center gap-3">
+            {ask.heldFiles > 0 ? (
+              <span>
+                {translate('agentHub.bots.ask.heldFiles', '{{count}} attached', {
+                  count: ask.heldFiles
+                })}
+              </span>
+            ) : null}
             {ask.heldCount > 0 && !unusedPicks ? (
               <Button
                 type="button"
-                variant="link-underlined"
-                size="inlineInherit"
-                className="text-xs"
+                size="xs"
+                aria-label={
+                  partial
+                    ? translate(
+                        'bots.items.ask.sendSomeLabel',
+                        'Send {{count}} of {{total}} answers',
+                        {
+                          count: ask.heldCount,
+                          total: ask.openCount
+                        }
+                      )
+                    : undefined
+                }
                 onClick={ask.sendHeld}
               >
-                {translate('agentHub.bots.ask.sendNow', 'Send now')}
+                {partial
+                  ? translate('bots.items.ask.sendSome', 'Send {{count}}/{{total}}', {
+                      count: ask.heldCount,
+                      total: ask.openCount
+                    })
+                  : translate('bots.items.ask.send', 'Send')}
               </Button>
             ) : null}
             {actions}
