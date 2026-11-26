@@ -10,6 +10,14 @@ import { AGENT_HUB_ORB_HOME_CHAT } from './agent-hub-orb-chat-strip'
 import { useAgentHubOrbChatStrip } from './agent-hub-orb-chat-strip-store'
 import { useAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAgentHubOrbBot } from './use-agent-hub-orb-bot'
+import { AgentHubMirrorBotFace } from './AgentHubMirrorBotFace'
+import { useAgentHubTargetTitle } from './AgentHubMirrorTitle'
+import {
+  agentHubMirrorBotChatName,
+  useAgentHubMirroredBotChatOfTab,
+  type AgentHubMirrorBotChat
+} from './agent-hub-mirror-bot-chat'
+import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 /** Under the composer in the Orb window: where this chat came from, the host only when there are several, and Live. */
 function AgentHubOrbComposerFooter({ tabId }: { tabId: string }): React.JSX.Element {
@@ -56,12 +64,62 @@ function AgentHubOrbComposerFooter({ tabId }: { tabId: string }): React.JSX.Elem
   )
 }
 
-/** The Orb window says which of the bot's chats this is; every other chat keeps its own footer. */
-export function AgentHubOrbOrWorkspaceFooter({
+function AgentHubMirroredBotFooterLine({
+  target,
+  botChat
+}: {
+  target: AgentHubPaneTarget
+  botChat: AgentHubMirrorBotChat
+}): React.JSX.Element {
+  const title = useAgentHubTargetTitle(target)
+  const hostCount = useAppStore(
+    (s) => getTerminalQuickCommandHostOptions(s.settings, s.runtimeEnvironments).length
+  )
+  const hostLabel = useAppStore((s) => selectExecutionHostDisplayLabel(s, botChat.bot.hostId))
+  return (
+    <div
+      data-agent-hub-mirror-bot-footer
+      className="mt-1 flex h-5.5 shrink-0 min-w-0 items-center gap-1.5 px-3 text-2xs text-chat-foreground-faint"
+    >
+      {hostCount > 1 && hostLabel ? (
+        <span className="flex min-w-0 max-w-40 shrink items-center gap-1">
+          <Server className="size-3 shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">{hostLabel}</span>
+        </span>
+      ) : null}
+      <AgentHubMirrorBotFace bot={botChat.bot} size={14} />
+      <span className="truncate">{agentHubMirrorBotChatName(botChat, title)}</span>
+    </div>
+  )
+}
+
+function AgentHubMirroredBotFooter({
+  tabId,
   children
 }: {
+  tabId: string
+  children: React.ReactNode
+}): React.JSX.Element {
+  const mirrored = useAgentHubMirroredBotChatOfTab(tabId)
+  return mirrored ? (
+    <AgentHubMirroredBotFooterLine target={mirrored.target} botChat={mirrored.botChat} />
+  ) : (
+    <>{children}</>
+  )
+}
+
+/** The Orb window says which of the bot's chats this is, a bot chat in a mirror says it too; every other chat keeps its own footer. */
+export function AgentHubOrbOrWorkspaceFooter({
+  tabId,
+  children
+}: {
+  tabId: string
   children: React.ReactNode
 }): React.JSX.Element {
   const orbTabId = useContext(AgentHubOrbComposerContext)
-  return orbTabId ? <AgentHubOrbComposerFooter tabId={orbTabId} /> : <>{children}</>
+  return orbTabId ? (
+    <AgentHubOrbComposerFooter tabId={orbTabId} />
+  ) : (
+    <AgentHubMirroredBotFooter tabId={tabId}>{children}</AgentHubMirroredBotFooter>
+  )
 }

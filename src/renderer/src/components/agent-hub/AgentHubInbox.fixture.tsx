@@ -257,6 +257,33 @@ export const busy = defineFixture({
   setup,
   render: () => render(BUSY, 'Mira')
 })
+export const resultsSelected = defineFixture({
+  width: 560,
+  store,
+  setup,
+  render: () => render(BUSY, 'codex')
+})
+const PLAIN_SIDE_ASK: AgentHubInboxItem = (() => {
+  const base = botAsk('Scotty', 'p1', 'Ship tonight, or clean the migration first?', 840, {
+    origin: 'side'
+  })
+  if (base.payload.type !== 'bot-item') {
+    return base
+  }
+  const item = {
+    ...base.payload.item,
+    number: 8,
+    question: null,
+    chat: { ...base.payload.item.chat, title: 'Release 1.4.278' }
+  }
+  return { ...base, payload: { ...base.payload, item } }
+})()
+export const plainSideChat = defineFixture({
+  width: 560,
+  store,
+  setup,
+  render: () => render([[group('Scotty', 'bots', { asks: [PLAIN_SIDE_ASK] })], []], 'Scotty')
+})
 export const busyNarrow = defineFixture({
   width: 400,
   store,

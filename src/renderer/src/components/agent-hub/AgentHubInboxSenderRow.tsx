@@ -152,6 +152,7 @@ export function AgentHubInboxSenderRow({
           <AgentHubInboxResultsLine
             entries={[...group.fails, ...group.results]}
             context={context}
+            selected={selected}
           />
           <AgentHubInboxSuggestionsLine entries={group.suggestions} />
         </fieldset>

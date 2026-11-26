@@ -43,6 +43,10 @@
       "sleepSkipped_one": "{{count}} agent could not sleep",
       "sleepSkipped_other": "{{count}} agents could not sleep"
     },
+    "inbox": {
+      "open": "Open",
+      "openChat": "Open chat"
+    },
     "mic": {
       "dictate": "Dictate",
       "dictateAndImprove": "Dictate and improve",

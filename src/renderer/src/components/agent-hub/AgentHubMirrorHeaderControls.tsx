@@ -11,6 +11,8 @@ import { requestAgentHubMirrorsDock } from './agent-hub-mirror-store'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 import { AgentHubMirrorMenu } from './AgentHubMirrorMenu'
 import { AgentHubMirrorCloseButton } from './AgentHubMirrorCloseButton'
+import { AgentHubMirrorBotSettingsButton } from './AgentHubMirrorBotSettingsButton'
+import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { AgentHubMirrorTerminalSwitchButton } from './AgentHubMirrorTerminalSwitchButton'
 
 export function AgentHubMirrorHeaderControls({
@@ -39,6 +41,7 @@ export function AgentHubMirrorHeaderControls({
   /** A chat has no PTY to sleep and dictates through its own composer. */
   isChat?: boolean
 }): React.JSX.Element {
+  const botChat = useAgentHubMirrorBotChat(target)
   const dockLabel = translate('agentHub.mirror.dockAll', 'Send all mirrors to the hub')
   const minimizeLabel = translate('agentHub.mirror.minimize', 'Minimize')
   return (
@@ -50,6 +53,7 @@ export function AgentHubMirrorHeaderControls({
       ) : (
         <AgentHubMirrorMicButton target={target} reachable={reachable} />
       )}
+      {botChat ? <AgentHubMirrorBotSettingsButton target={target} /> : null}
       {showJump ? <AgentHubMirrorJumpButton onReveal={onReveal} /> : null}
       <AgentHubActionTooltip label={dockLabel} actionId="agentHub.dockMirrors">
         <Button

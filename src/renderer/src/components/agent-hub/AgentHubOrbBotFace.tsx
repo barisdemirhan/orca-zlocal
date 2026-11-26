@@ -1,6 +1,5 @@
 import { BotAvatar } from '../bots/BotAvatar'
 import type { Bot } from '../../../../shared/bot-types'
-import { cn } from '@/lib/class-names'
 import { AgentHubOrbSphere, type AgentHubOrbSphereProps } from './AgentHubOrbSphere'
 
 /** The Orb's face in a window header: its sphere in its current state, or the picture the owner chose. */
@@ -11,13 +10,10 @@ export function AgentHubOrbBotFace({
 }: {
   bot: Bot | null
   sphere: AgentHubOrbSphereProps
-  size: 24 | 30
+  size: number
 }): React.JSX.Element {
   return bot?.avatar ? (
-    <BotAvatar
-      bot={bot}
-      className={cn('shrink-0 rounded-md', size === 30 ? 'size-[30px]' : 'size-6')}
-    />
+    <BotAvatar bot={bot} className="shrink-0 rounded-md" style={{ width: size, height: size }} />
   ) : (
     <span
       className="inline-flex shrink-0"

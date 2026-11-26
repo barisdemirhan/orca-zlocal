@@ -25888,6 +25888,22 @@
         "subagents_other": "하위 에이전트 {{count}}",
         "workers_other": "워커 {{count}}",
         "review": "PR #{{number}}"
+      },
+      "bot": {
+        "openPage": "봇 페이지 열기",
+        "settings": "봇 설정",
+        "settingsTitle": "{{name}} 설정",
+        "model": "모델",
+        "modelNote": "봇의 모든 채팅에 적용",
+        "connectors": "커넥터",
+        "automations": "자동화",
+        "manage": "관리",
+        "sleep": "절전 모드로 전환",
+        "thisChat": "이 채팅",
+        "runsOn": "실행 환경",
+        "host": "호스트",
+        "showInOrb": "Orb에서 보기",
+        "showInBots": "봇에서 보기"
       }
     },
     "title": "에이전트",
@@ -25966,7 +25982,10 @@
       },
       "waitingCount": "{{count}}개 대기 중",
       "workerChip": "워커 · {{agent}}",
-      "workerOf": "{{agent}}의 워커"
+      "workerOf": "{{agent}}의 워커",
+      "earlierResults": "이전 결과",
+      "replyTo": "{{name}}에게 답장…",
+      "replyFailed": "답장을 보내지 못했습니다. 다시 시도하세요."
     },
     "running": {
       "empty": "현재 작업 중인 에이전트가 없습니다",
@@ -28998,7 +29017,10 @@
         "sending": "보내는 중…",
         "sendSome": "{{count}}/{{total}} 보내기",
         "sendSomeLabel": "답변 {{total}}개 중 {{count}}개 보내기",
-        "changeAnswer": "{{question}}: {{answer}}. 답변 변경"
+        "changeAnswer": "{{question}}: {{answer}}. 답변 변경",
+        "previous": "이전 질문",
+        "next": "다음 질문",
+        "step": "{{n}} / {{total}}"
       },
       "readMoreClosedFailed": "닫힌 항목을 더 읽지 못했습니다",
       "wait": {

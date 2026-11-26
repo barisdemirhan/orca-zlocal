@@ -8,6 +8,9 @@ import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubStateWord } from './agent-hub-copy'
+import { AgentHubMirrorBotFace } from './AgentHubMirrorBotFace'
+import { AgentHubMirrorBotHoverCard } from './AgentHubMirrorBotHoverCard'
+import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { HubAvatar } from './AgentHubStateMarks'
 import { HubCrumb } from './AgentHubInlineLabels'
 import { AgentHubMirrorTitle, useAgentHubTargetTitle } from './AgentHubMirrorTitle'
@@ -59,7 +62,9 @@ export function AgentHubMirrorTab({
   onReveal: () => void
   onClose: () => void
 }): React.JSX.Element {
-  const title = useAgentHubTargetTitle(tab.target)
+  const shown = tab.viewing ?? tab.target
+  const botChat = useAgentHubMirrorBotChat(shown)
+  const title = useAgentHubTargetTitle(botChat ? shown : tab.target)
   const progress = useAgentHubProgress(tab.viewing ?? tab.target)
   const kind = thread ? agentHubIndicatorKind(thread) : 'idle'
   const sleeping = useAgentHubSleepingTargetTest()(tab.target)
@@ -135,17 +140,37 @@ export function AgentHubMirrorTab({
       className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none group-hover/tab:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
       {tab.isPinned ? <Pin aria-hidden className="size-3 shrink-0" /> : null}
-      <HubAvatar agentType={tab.target.agentType} kind={thread ? kind : null} sleeping={sleeping} />
+      {botChat ? (
+        <AgentHubMirrorBotFace bot={botChat.bot} size={26} />
+      ) : (
+        <HubAvatar
+          agentType={tab.target.agentType}
+          kind={thread ? kind : null}
+          sleeping={sleeping}
+        />
+      )}
       <div
         data-sleeping={sleeping}
         className="min-w-0 flex-1 text-[13px] leading-tight data-[sleeping=true]:opacity-60"
         onDoubleClick={() => onSelect(false)}
       >
-        <AgentHubMirrorTitle target={tab.target} editing={editing} onEditingChange={setEditing} />
+        {botChat ? (
+          <div className="flex min-w-0 items-baseline">
+            <span className="max-w-28 shrink-0 truncate font-semibold">{botChat.bot.name}</span>
+            <span aria-hidden className="shrink-0 px-1 text-muted-foreground">
+              ·
+            </span>
+            <div className="min-w-0 flex-1">
+              <AgentHubMirrorTitle target={shown} editing={editing} onEditingChange={setEditing} />
+            </div>
+          </div>
+        ) : (
+          <AgentHubMirrorTitle target={tab.target} editing={editing} onEditingChange={setEditing} />
+        )}
         <div className="flex min-w-0 items-center [&>span]:text-[11px]">
           {progress ? (
             <span className="truncate text-muted-foreground">{progress}</span>
-          ) : (
+          ) : botChat ? null : (
             <HubCrumb location={location} />
           )}
         </div>
@@ -216,15 +241,27 @@ export function AgentHubMirrorTab({
             />
           </button>
         ) : null}
-        <AgentHubThreadHoverCard
-          thread={thread}
-          target={{ title, agentType: tab.target.agentType }}
-          location={location}
-          actions={{ ...actions, showJumpShortcut: active }}
-          suppressed={drag.active !== null || editing}
-        >
-          {tabNode}
-        </AgentHubThreadHoverCard>
+        {botChat ? (
+          <AgentHubMirrorBotHoverCard
+            target={shown}
+            botChat={botChat}
+            title={title}
+            thread={thread}
+            suppressed={drag.active !== null || editing}
+          >
+            {tabNode}
+          </AgentHubMirrorBotHoverCard>
+        ) : (
+          <AgentHubThreadHoverCard
+            thread={thread}
+            target={{ title, agentType: tab.target.agentType }}
+            location={location}
+            actions={{ ...actions, showJumpShortcut: active }}
+            suppressed={drag.active !== null || editing}
+          >
+            {tabNode}
+          </AgentHubThreadHoverCard>
+        )}
         {closable && !tab.isPinned ? (
           // Why a wrapper: the button keeps its primitive look; only its visibility follows the tab.
           <span className="flex shrink-0 opacity-0 transition-opacity duration-100 group-hover/tab:opacity-100 group-data-[active=true]/tab:opacity-100 focus-within:opacity-100">

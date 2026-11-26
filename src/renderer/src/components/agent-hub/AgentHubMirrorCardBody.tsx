@@ -40,6 +40,9 @@ import { AgentHubMirrorWorkDrawer } from './AgentHubMirrorWorkDrawer'
 import { AgentHubMirrorChangesDrawer } from './AgentHubMirrorChangesDrawer'
 import { AgentHubMirrorReviewDrawer } from './AgentHubMirrorReviewDrawer'
 import { AgentHubMirrorInboundDrawer } from './AgentHubMirrorInboundDrawer'
+import { AgentHubMirrorBotSettings } from './AgentHubMirrorBotSettings'
+import { AgentHubMirrorBotStrip } from './AgentHubMirrorBotStrip'
+import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { AgentHubMirrorSettingsDrawer } from './AgentHubMirrorSettingsDrawer'
 
 // Below this the drawer goes under the terminal instead of beside it.
@@ -86,6 +89,7 @@ export function AgentHubMirrorCardBody({
   const rootRef = useRef<HTMLDivElement>(null)
   const sourceKey = agentHubMirrorSourceKey(target)
   const isChat = useAppStore((s) => isAgentHubChatTab(s, target.tab.id))
+  const botChat = useAgentHubMirrorBotChat(target)
   const isAgent = thread !== null || target.agentType !== null
   const now = useNow(5_000)
   const work = mirrorWork(thread, lineage, now)
@@ -128,7 +132,16 @@ export function AgentHubMirrorCardBody({
   }
   const drawerOff = asleep || offline
   const drawerBody =
-    shown === null ? null : shown === 'work' ? (
+    shown === null ? null : botChat ? (
+      shown === 'settings' ? (
+        <AgentHubMirrorBotSettings
+          tabId={target.tab.id}
+          bot={botChat.bot}
+          isOrb={botChat.isOrb}
+          disabled={drawerOff}
+        />
+      ) : null
+    ) : shown === 'work' ? (
       <AgentHubMirrorWorkDrawer
         work={work}
         tabId={target.tab.id}
@@ -198,14 +211,21 @@ export function AgentHubMirrorCardBody({
           if (shown) {
             closeAgentHubMirrorDrawer(sourceKey, 'user')
           } else {
-            openAgentHubMirrorDrawer(sourceKey, isAgent ? 'work' : 'changes', 'user')
+            openAgentHubMirrorDrawer(
+              sourceKey,
+              botChat ? 'settings' : isAgent ? 'work' : 'changes',
+              'user'
+            )
           }
         }
       }}
     >
       <div className="flex min-w-0 flex-1 flex-col">
+        {active && botChat ? (
+          <AgentHubMirrorBotStrip target={target} botChat={botChat} thread={thread} />
+        ) : null}
         {children}
-        {active && stripShown ? (
+        {active && stripShown && !botChat ? (
           <AgentHubMirrorWorkStrip
             work={work}
             queued={queue ? queue.cards.length : null}

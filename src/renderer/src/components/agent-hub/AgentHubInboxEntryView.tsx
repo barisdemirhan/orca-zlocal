@@ -3,6 +3,7 @@ import type { Bot } from '../../../../shared/bot-types'
 import { AgentHubAttentionCard, type AgentHubCardControl } from './AgentHubAttentionCard'
 import { AgentHubRequestCard } from './AgentHubRequestCard'
 import { AgentHubBotAskRow } from './AgentHubBotAskRow'
+import { AgentHubBotSideChatRow } from './AgentHubBotSideChatRow'
 import { BotNeedsBlock } from './AgentHubBotNeeds'
 import type { AgentHubThreadActions } from './AgentHubPanelSections'
 import type { AgentHubInboxItem } from './agent-hub-inbox-model'
@@ -57,7 +58,16 @@ export function AgentHubInboxEntryView({
         />
       )
     case 'bot-item':
-      return <AgentHubBotAskRow bot={payload.bot} item={payload.item} bare />
+      return payload.item.question ? (
+        <AgentHubBotAskRow bot={payload.bot} item={payload.item} bare />
+      ) : (
+        <AgentHubBotSideChatRow
+          bot={payload.bot}
+          item={payload.item}
+          entry={entry}
+          context={context}
+        />
+      )
     case 'connector':
     case 'access':
     case 'suggestion':

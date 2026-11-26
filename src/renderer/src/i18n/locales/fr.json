@@ -23765,6 +23765,22 @@
         "workers_other": "{{count}} workers",
         "workers_many": "{{count}} workers",
         "review": "PR #{{number}}"
+      },
+      "bot": {
+        "openPage": "Ouvrir la page du bot",
+        "settings": "Réglages du bot",
+        "settingsTitle": "Réglages de {{name}}",
+        "model": "Modèle",
+        "modelNote": "Pour toutes les conversations du bot",
+        "connectors": "Connecteurs",
+        "automations": "Automatisations",
+        "manage": "Gérer",
+        "sleep": "Mettre en veille",
+        "thisChat": "Cette conversation",
+        "runsOn": "Fonctionne sur",
+        "host": "Hôte",
+        "showInOrb": "Afficher dans Orb",
+        "showInBots": "Afficher dans Bots"
       }
     },
     "title": "Agents",
@@ -23843,7 +23859,10 @@
       },
       "waitingCount": "{{count}} en attente",
       "workerChip": "worker · {{agent}}",
-      "workerOf": "worker de {{agent}}"
+      "workerOf": "worker de {{agent}}",
+      "earlierResults": "Résultats précédents",
+      "replyTo": "Répondre à {{name}}…",
+      "replyFailed": "Impossible d'envoyer votre réponse. Réessayez."
     },
     "running": {
       "empty": "Aucun agent ne travaille pour le moment",
@@ -26219,7 +26238,10 @@
         "notSentYet": "pas encore envoyée",
         "replaced": "L’agent a posé une nouvelle question. Lisez-la, puis répondez.",
         "replacedByNewer": "Remplacée par une question plus récente",
-        "skipped": "Ignorées"
+        "skipped": "Ignorées",
+        "previous": "Question précédente",
+        "next": "Question suivante",
+        "step": "{{n}} sur {{total}}"
       },
       "readMoreClosedFailed": "Impossible de lire plus d’éléments fermés"
     },

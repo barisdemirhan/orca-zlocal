@@ -24298,6 +24298,22 @@
         "subagents_other": "サブ Agent {{count}}",
         "workers_other": "ワーカー {{count}}",
         "review": "PR #{{number}}"
+      },
+      "bot": {
+        "openPage": "ボットのページを開く",
+        "settings": "ボットの設定",
+        "settingsTitle": "{{name}} の設定",
+        "model": "モデル",
+        "modelNote": "ボットのすべてのチャットに適用",
+        "connectors": "コネクタ",
+        "automations": "オートメーション",
+        "manage": "管理",
+        "sleep": "スリープにする",
+        "thisChat": "このチャット",
+        "runsOn": "実行環境",
+        "host": "ホスト",
+        "showInOrb": "Orb で表示",
+        "showInBots": "ボットで表示"
       }
     },
     "title": "Agent",
@@ -24376,7 +24392,10 @@
       },
       "waitingCount": "{{count}} 件待機中",
       "workerChip": "ワーカー · {{agent}}",
-      "workerOf": "{{agent}} のワーカー"
+      "workerOf": "{{agent}} のワーカー",
+      "earlierResults": "以前の結果",
+      "replyTo": "{{name}} に返信…",
+      "replyFailed": "返信を送信できませんでした。もう一度お試しください。"
     },
     "running": {
       "empty": "現在作業中の Agent はいません",
@@ -26893,7 +26912,10 @@
         "notSentYet": "まだ送信されていません",
         "replaced": "Agent が新たな質問をしました。確認してから返信してください。",
         "replacedByNewer": "新しい質問に置き換えられました",
-        "skipped": "スキップ済み"
+        "skipped": "スキップ済み",
+        "previous": "前の質問",
+        "next": "次の質問",
+        "step": "{{n}} / {{total}}"
       },
       "readMoreClosedFailed": "クローズ済みの項目をさらに読み込めませんでした"
     },

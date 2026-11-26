@@ -360,7 +360,7 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
 
     const workspaceFooter =
       editSession || launchPrompt ? undefined : (
-        <AgentHubOrbOrWorkspaceFooter>
+        <AgentHubOrbOrWorkspaceFooter tabId={terminalTabId}>
           <NativeChatComposerWorkspace {...workspace} />
         </AgentHubOrbOrWorkspaceFooter>
       )

@@ -67,7 +67,13 @@ function Caption({
 }): React.JSX.Element {
   const { payload } = entry
   const number = payload.type === 'bot-item' ? payload.item.number : null
-  const origin = entry.origin ? originLabel(entry.origin as AgentHubBotOrigin) : null
+  const chatName = payload.type === 'bot-item' ? payload.item.chat.title : null
+  const origin =
+    entry.origin === 'side' && chatName
+      ? chatName
+      : entry.origin
+        ? originLabel(entry.origin as AgentHubBotOrigin)
+        : null
   return (
     <button
       type="button"
@@ -104,6 +110,7 @@ export function AgentHubInboxAskLine({
 }): React.JSX.Element {
   const { payload } = entry
   const remaining = payload.type === 'bot-item' ? payload.remaining : null
+  const plainBotAsk = payload.type === 'bot-item' && !payload.item.question
   const menu = agentHubInboxAskMenu(entry, context, () => onActivate(false))
   if (active) {
     return (
@@ -117,7 +124,7 @@ export function AgentHubInboxAskLine({
               : 'border-foreground/[0.08] bg-foreground/[0.035]'
           )}
         >
-          {remaining === null ? (
+          {remaining === null && !plainBotAsk ? (
             <Caption entry={entry} context={context} onFold={() => onActivate(true)} />
           ) : null}
           <AgentHubInboxEntryView entry={entry} context={context} controlRef={controlRef} />

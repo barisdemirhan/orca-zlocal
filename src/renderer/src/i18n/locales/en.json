@@ -26271,6 +26271,22 @@
         "workers_one": "{{count}} worker",
         "workers_other": "{{count}} workers",
         "review": "PR #{{number}}"
+      },
+      "bot": {
+        "openPage": "Open bot page",
+        "settings": "Bot settings",
+        "settingsTitle": "{{name}} settings",
+        "model": "Model",
+        "modelNote": "For all of the bot's chats",
+        "connectors": "Connectors",
+        "automations": "Automations",
+        "manage": "Manage",
+        "sleep": "Put to sleep",
+        "thisChat": "This chat",
+        "runsOn": "Runs on",
+        "host": "Host",
+        "showInOrb": "Show in Orb",
+        "showInBots": "Show in Bots"
       }
     },
     "title": "Agents",
@@ -26349,7 +26365,10 @@
       },
       "waitingCount": "{{count}} waiting",
       "workerChip": "worker · {{agent}}",
-      "workerOf": "worker of {{agent}}"
+      "workerOf": "worker of {{agent}}",
+      "earlierResults": "Earlier results",
+      "replyTo": "Reply to {{name}}…",
+      "replyFailed": "Could not send your reply. Try again."
     },
     "running": {
       "empty": "No agent is working right now",
@@ -31866,7 +31885,10 @@
         "sending": "Sending…",
         "sendSome": "Send {{count}}/{{total}}",
         "sendSomeLabel": "Send {{count}} of {{total}} answers",
-        "changeAnswer": "{{question}}: {{answer}}. Change answer"
+        "changeAnswer": "{{question}}: {{answer}}. Change answer",
+        "previous": "Previous question",
+        "next": "Next question",
+        "step": "{{n}} of {{total}}"
       },
       "readMoreClosedFailed": "Reading more Closed items failed",
       "wait": {

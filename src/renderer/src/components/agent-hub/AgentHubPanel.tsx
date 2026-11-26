@@ -261,7 +261,7 @@ export function AgentHubPanel({
       ref={rootRef}
       tabIndex={-1}
       onKeyDown={onKeyDown}
-      className="flex max-h-[calc(100vh-96px)] min-h-0 flex-col outline-none"
+      className="flex max-h-[50vh] min-h-[320px] flex-col outline-none"
     >
       <AgentHubPanelHeader
         tab={tab}

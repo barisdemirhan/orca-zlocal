@@ -16,6 +16,8 @@ import { useAppStore } from '@/store'
 import { openAgentHubCanvas, useAgentHubCanvasOpen } from './agent-hub-canvas-store'
 import { setAgentHubMirrorFocus } from './agent-hub-mirror-focus'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
+import { openBotHome } from '@/lib/bot-catalog'
+import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { agentHubMirrorSourceKey } from './agent-hub-mirror-membership'
 import { useAgentHubPaneSleep } from './agent-hub-pane-sleep'
 import { useAgentHubPaneSleepConfirmation } from './agent-hub-pane-sleep-confirmation'
@@ -60,6 +62,7 @@ export function AgentHubMirrorMenu({
   const stripShown = useAgentHubMirrorStripShown(sourceKey)
   const agentMay = useAgentHubMirrorAgentPref(sourceKey)
   const sleep = useAgentHubPaneSleep(target)
+  const botChat = useAgentHubMirrorBotChat(target)
   const label = translate('agentHub.mirror.menu', 'Mirror menu')
   const canvasOpen = useAgentHubCanvasOpen()
   const canvasEnabled = useAppStore((s) => s.settings?.agentHubCanvas !== false)
@@ -97,27 +100,42 @@ export function AgentHubMirrorMenu({
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuCheckboxItem
-          checked={stripShown}
-          onCheckedChange={(checked) => setAgentHubMirrorStripShown(sourceKey, checked)}
-        >
-          {translate('agentHub.mirror.menuStrip', 'Show work strip')}
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            {translate('agentHub.mirror.menuDrawer', 'Open drawer')}
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            {drawerLabels().map(([drawer, text]) => (
-              <DropdownMenuItem
-                key={drawer}
-                onSelect={() => openAgentHubMirrorDrawer(sourceKey, drawer, 'user')}
-              >
-                {text}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        {botChat ? (
+          <>
+            <DropdownMenuItem onSelect={() => openBotHome(botChat.bot)}>
+              {translate('agentHub.mirror.bot.openPage', 'Open bot page')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => openAgentHubMirrorDrawer(sourceKey, 'settings', 'user')}
+            >
+              {translate('agentHub.mirror.bot.settings', 'Bot settings')}
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <>
+            <DropdownMenuCheckboxItem
+              checked={stripShown}
+              onCheckedChange={(checked) => setAgentHubMirrorStripShown(sourceKey, checked)}
+            >
+              {translate('agentHub.mirror.menuStrip', 'Show work strip')}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                {translate('agentHub.mirror.menuDrawer', 'Open drawer')}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {drawerLabels().map(([drawer, text]) => (
+                  <DropdownMenuItem
+                    key={drawer}
+                    onSelect={() => openAgentHubMirrorDrawer(sourceKey, drawer, 'user')}
+                  >
+                    {text}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </>
+        )}
         {isAgent ? (
           <DropdownMenuCheckboxItem
             checked={agentMay}
