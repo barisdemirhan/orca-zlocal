@@ -204,7 +204,7 @@ export function WorkerDockCommandSheet({
             </pre>
           </section>
         ) : null}
-        {row.kind === 'command' ? (
+        {row.kind !== 'agent' && row.kind !== 'worker' ? (
           <section className="flex flex-col gap-1">
             <h3 className="text-xs font-medium text-chat-foreground-faint">
               {t('components.native-chat.workerDock.commandOutput', 'Output')}
