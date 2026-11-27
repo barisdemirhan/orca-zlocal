@@ -247,7 +247,7 @@ it('accepts authenticated desktop answers without terminal identity, retaining a
       { id: gate.id, resolution: 'Coordinator answer' },
       state.ctx
     )
-  ).rejects.toMatchObject({ code: 'already_resolved' })
+  ).rejects.toMatchObject({ code: 'answer_conflict' })
 })
 
 it('permits paired desktops, refusing CLI, phone, wrong-run and empty-answer requests without changing the gate', async () => {

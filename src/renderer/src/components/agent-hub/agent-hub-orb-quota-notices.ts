@@ -35,7 +35,6 @@ export function agentHubOrbQuotaProvider(
     claude: 'claude',
     'claude-agent-teams': 'claude',
     codex: 'codex',
-    antigravity: 'antigravity',
     cursor: 'cursor',
     kimi: 'kimi',
     grok: 'grok',

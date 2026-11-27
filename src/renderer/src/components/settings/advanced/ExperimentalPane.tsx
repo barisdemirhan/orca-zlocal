@@ -7,7 +7,8 @@ import { SettingsGroup } from '../section-layout/SettingsGroup'
 import { matchesSettingsSearch } from '../search/settings-search'
 import {
   getExperimentalSearchEntry,
-  sharedCodexServersSettingAvailable
+  sharedCodexServersSettingAvailable,
+  type OptInOnlyExperimentVisibility
 } from './experimental-search'
 import { HiddenExperimentalGroup } from './HiddenExperimentalGroup'
 import { NumberField, SettingsSegmentedControl } from '../form-controls/SettingsFormControls'
@@ -32,23 +33,26 @@ type ExperimentalPaneProps = {
   updateSettings: (updates: Partial<GlobalSettings>) => void | Promise<void>
   /** Unlocked by Option-clicking the Experimental title. */
   hiddenExperimentalUnlocked?: boolean
+  /** From useOptInOnlyExperimentRows, held by the Settings page for the whole visit. */
+  optInOnlyExperimentRows: OptInOnlyExperimentVisibility
 }
 
 export function ExperimentalPane({
   settings,
   updateSettings,
-  hiddenExperimentalUnlocked = false
+  hiddenExperimentalUnlocked = false,
+  optInOnlyExperimentRows
 }: ExperimentalPaneProps): React.JSX.Element {
   const t = useTranslate()
   const searchQuery = useAppStore((s) => s.settingsSearchQuery)
   const showPet = matchesSettingsSearch(searchQuery, [getExperimentalSearchEntry().pet])
-  const showAgentDashboard = matchesSettingsSearch(searchQuery, [
-    getExperimentalSearchEntry().agentDashboard
-  ])
+  const showAgentDashboard =
+    optInOnlyExperimentRows.agentDashboard &&
+    matchesSettingsSearch(searchQuery, [getExperimentalSearchEntry().agentDashboard])
   const showAgentHub = matchesSettingsSearch(searchQuery, [getExperimentalSearchEntry().agentHub])
-  const showTerminalAttention = matchesSettingsSearch(searchQuery, [
-    getExperimentalSearchEntry().terminalAttention
-  ])
+  const showTerminalAttention =
+    optInOnlyExperimentRows.terminalAttention &&
+    matchesSettingsSearch(searchQuery, [getExperimentalSearchEntry().terminalAttention])
   const showAgentHibernation = matchesSettingsSearch(searchQuery, [
     getExperimentalSearchEntry().agentHibernation
   ])

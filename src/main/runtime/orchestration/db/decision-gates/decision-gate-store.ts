@@ -110,36 +110,29 @@ export function resolveGate(
   resolution: string,
   resolvedBy: 'user' | 'coordinator' = 'coordinator'
 ): DecisionGateRow | undefined {
-  const gate = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
-    | DecisionGateRow
-    | undefined
-  if (!gate) {
-    return undefined
-  }
-
   this.db.exec('SAVEPOINT resolve_gate')
   try {
-    const updated = this.db
+    // First answer wins: only a pending gate is claimed, and replaying the stored answer is a no-op.
+    const claimed = this.db
       .prepare(
         "UPDATE decision_gates SET status = 'resolved', resolution = ?, resolved_by = ?, resolved_at = datetime('now') WHERE id = ? AND status = 'pending'"
       )
       .run(resolution, resolvedBy, gateId)
-    if (updated.changes === 0) {
+    const gate = this.getGate(gateId)
+    if (gate && claimed.changes === 1) {
+      this.updateTaskStatus(gate.task_id, 'ready')
+    } else if (gate && !(gate.status === 'resolved' && gate.resolution === resolution)) {
       throw new OrchestrationError(
-        'already_resolved',
-        'This decision gate was already answered or timed out.',
-        { gateId }
+        'answer_conflict',
+        `Gate ${gateId} is already ${gate.status}${gate.resolution ? ` with resolution: ${gate.resolution}` : ''}`,
+        { gateId, status: gate.status, resolution: gate.resolution }
       )
     }
-    this.updateTaskStatus(gate.task_id, 'ready')
-    const resolved = this.db.prepare('SELECT * FROM decision_gates WHERE id = ?').get(gateId) as
-      | DecisionGateRow
-      | undefined
     this.db.exec('RELEASE resolve_gate')
-    if (resolved) {
-      this.onDecisionGateChanged?.(resolved)
+    if (gate && claimed.changes === 1) {
+      this.onDecisionGateChanged?.(gate)
     }
-    return resolved
+    return gate
   } catch (error) {
     this.db.exec('ROLLBACK TO resolve_gate')
     this.db.exec('RELEASE resolve_gate')

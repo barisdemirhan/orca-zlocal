@@ -55,8 +55,11 @@ export function appendCodexRealtimeTranscript(
 
 export function translateCodexRealtimeJournalEvent(
   deps: CodexJournalTranslatorDeps,
-  event: Exclude<CodexStructuredSessionEvent, { type: 'voice' }>
+  event: CodexStructuredSessionEvent
 ): CodexJournalTranslationAdmission | undefined {
+  if (event.type === 'voice') {
+    return { accepted: true }
+  }
   if (event.type !== 'notification' || !event.method.startsWith('thread/realtime/')) {
     return undefined
   }

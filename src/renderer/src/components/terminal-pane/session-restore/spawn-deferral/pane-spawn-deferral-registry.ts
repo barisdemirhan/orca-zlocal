@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import type { SpawnDeferralReason } from '../../../../../../shared/terminal/pty/admission/spawn-admission-contract'
+import { parsePaneKey } from '../../../../../../shared/workspace-layout/stable-pane-id'
 
 export type PaneSpawnDeferral = {
   reason: SpawnDeferralReason
@@ -72,6 +73,18 @@ export function holdPaneResumeInPlace(paneKey: string, isLive: () => boolean): (
 
 export function isPaneResumingInPlace(paneKey: string): boolean {
   return [...(inPlaceResumesByPaneKey.get(paneKey) ?? [])].some((isLive) => isLive())
+}
+
+/** By tab, since the restart has already cleared the leaf binding that would name the pane. */
+export function getTabIdsResumingInPlace(): Set<string> {
+  const tabIds = new Set<string>()
+  for (const paneKey of inPlaceResumesByPaneKey.keys()) {
+    const tabId = parsePaneKey(paneKey)?.tabId
+    if (tabId && isPaneResumingInPlace(paneKey)) {
+      tabIds.add(tabId)
+    }
+  }
+  return tabIds
 }
 
 export function subscribePaneSpawnDeferrals(listener: () => void): () => void {

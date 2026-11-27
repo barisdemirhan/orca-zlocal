@@ -28,8 +28,7 @@ import {
   type AgentSessionProviderContextBoundary
 } from '../conversation-context/agent-session-provider-context'
 import { isStructuredAgentId } from './provider-handles/agent-session-provider-handle-encoding'
-import { isAgentSessionDeathEvidence } from './leases/agent-session-death-evidence-validation'
-import { isBoundedString, MAX_ID_LENGTH } from './records/agent-session-bounded-string'
+import { isNonNegativeSafeInteger } from '../../remote-runtime/ssh/ssh-retained-payload-limits'
 import {
   isAgentSessionAccountHome,
   isOptionalAgentSessionLaunchedAccount,
@@ -37,6 +36,8 @@ import {
   type AgentSessionAccountHome,
   type AgentSessionLaunchedAccount
 } from './accounts/agent-session-account-home'
+
+import type { AgentSessionRunPlacement } from './agent-session-run-placement'
 
 export const AGENT_SESSION_RECORD_SCHEMA_VERSION = 2 as const
 
@@ -118,6 +119,9 @@ export type AgentSessionRecord = {
   accountHome: AgentSessionAccountHome
   /** Where the latest proven runtime actually launched; absent before any or from older hosts. */
   launchedAccount?: AgentSessionLaunchedAccount
+  /** Where the last run started (in this app or under which daemon start); read through
+   *  `agentSessionRunPlacement`, which drops a malformed one. */
+  lastRunPlacement?: AgentSessionRunPlacement
   /** Optional host-written construction observation; checked independently of record readability. */
   acquiredAccount?: unknown
   /** Initial launch directory in host path syntax. Floating sessions resume here; worktree/folder IDs resolve their durable location. */
@@ -153,11 +157,15 @@ export type AgentSessionRecord = {
   updatedAt: number
 }
 
+const MAX_ID_LENGTH = 512
 /** A death evidence's `detail` past this fails a load, so whoever writes one cuts it here. */
 export const MAX_AGENT_SESSION_DEATH_DETAIL_CHARS = MAX_ID_LENGTH
 const MAX_LAUNCH_ENV_ENTRIES = 256
 const MAX_LAUNCH_ENV_VALUE_LENGTH = 65_536
 const SESSION_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/
+
+const isBoundedString = (value: unknown, max: number): value is string =>
+  typeof value === 'string' && value.length > 0 && value.length <= max
 
 export const isAgentSessionId = (value: unknown): value is string =>
   typeof value === 'string' && SESSION_ID_PATTERN.test(value)
@@ -240,6 +248,27 @@ export function isAgentSessionLaunchEnv(value: unknown): value is AgentSessionLa
         typeof entry === 'string' &&
         entry.length <= MAX_LAUNCH_ENV_VALUE_LENGTH
     )
+  )
+}
+
+function isAgentSessionDeathEvidence(value: unknown): value is AgentSessionDeathEvidence {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  const evidence = value as Partial<AgentSessionDeathEvidence>
+  const { observedAt, lastProvenAliveAt, ownerFence, runtimeEnd } = evidence
+  return (
+    (evidence.kind === 'exit-observed' ||
+      evidence.kind === 'kill-delivered' ||
+      evidence.kind === 'pid-absent' ||
+      evidence.kind === 'identity-mismatch') &&
+    isBoundedString(evidence.detail, MAX_AGENT_SESSION_DEATH_DETAIL_CHARS) &&
+    isNonNegativeSafeInteger(observedAt) &&
+    (ownerFence === undefined || isNonNegativeSafeInteger(ownerFence)) &&
+    (evidence.resumeByMail === undefined || evidence.resumeByMail === true) &&
+    (lastProvenAliveAt === undefined ||
+      (isNonNegativeSafeInteger(lastProvenAliveAt) && lastProvenAliveAt <= observedAt)) &&
+    (runtimeEnd === undefined || isBoundedString(runtimeEnd, MAX_ID_LENGTH))
   )
 }
 

@@ -1,7 +1,11 @@
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import { defineOrchestrationMethod } from '../access/orchestration-method-access'
 import { gateCreateAccess, gateResolveAccess, inspectedRunAccess } from '../access/run-access-rules'
-import type { GateStatus } from '../../../../orchestration/db/orchestration-records'
+import type {
+  DecisionGateRow,
+  GateStatus
+} from '../../../../orchestration/db/orchestration-records'
+import type { OrchestrationDb } from '../../../../orchestration/db/orchestration-db'
 import { Coordinator } from '../../../../orchestration/coordinator/coordinator'
 import {
   GateCreateParams,
@@ -11,6 +15,26 @@ import {
   RunParams,
   RunStopParams
 } from '../../../../../../shared/rpc-contract/orchestration/orchestration-gates-params'
+
+// A user who loses the race sees "answered elsewhere", as for every other hub request.
+function resolveGateForUser(
+  db: OrchestrationDb,
+  id: string,
+  resolution: string
+): DecisionGateRow | undefined {
+  try {
+    return db.resolveGate(id, resolution, 'user')
+  } catch (error) {
+    if (error instanceof OrchestrationError && error.code === 'answer_conflict') {
+      throw new OrchestrationError(
+        'already_resolved',
+        'This decision gate was already answered or timed out.',
+        { gateId: id }
+      )
+    }
+    throw error
+  }
+}
 
 // Keep one coordinator reference for runStop; the DB allows only one active run.
 let activeCoordinator: Coordinator | null = null
@@ -143,7 +167,7 @@ export const ORCHESTRATION_GATE_METHODS = [
       if (!existing || (params.run && existing.run_id !== params.run)) {
         throw new OrchestrationError('request_not_found', 'Decision gate not found.')
       }
-      const gate = db.resolveGate(params.id, params.resolution, 'user')
+      const gate = resolveGateForUser(db, params.id, params.resolution)
       if (!gate) {
         throw new OrchestrationError('request_not_found', 'Decision gate not found.')
       }

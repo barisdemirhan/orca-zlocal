@@ -1,7 +1,7 @@
 import { useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/class-names'
 import { useTranslate } from '@/i18n/use-translate'
-import { NativeChatQuestionHeading } from './NativeChatQuestionHeading'
+import { NativeChatQuestionText } from './NativeChatQuestionText'
 import { NativeChatQuestionOptionRow } from '../NativeChatQuestionOptionRow'
 import { CONFIRM_LABEL, NativeChatQuestionConfirmButton } from './NativeChatQuestionConfirmButton'
 import {
@@ -62,7 +62,8 @@ export function NativeChatQuestionCard({
   controlRef
 }: NativeChatQuestionCardProps): React.JSX.Element {
   const t = useTranslate()
-  const column = usePromptCardColumn('px-3 pb-4 sm:px-4')
+  const promptColumn = usePromptCardColumn('px-3 pb-4 sm:px-4')
+  const column = layout === 'embedded' ? cn(promptColumn, 'max-w-none p-0 sm:p-0') : promptColumn
   const cardRef = useRef<HTMLDivElement>(null)
   const surfaceRef = useRef<HTMLDivElement>(null)
   const blocked = isSubmitting || isCancelling
@@ -316,13 +317,7 @@ export function NativeChatQuestionCard({
         }
       }}
     >
-      <div
-        className={cn(
-          column,
-          'flex min-h-0 flex-col data-[layout=embedded]:max-w-none data-[layout=embedded]:p-0 data-[layout=embedded]:sm:p-0'
-        )}
-        data-layout={layout}
-      >
+      <div className={cn(column, 'flex min-h-0 flex-col')}>
         <div
           ref={surfaceRef}
           data-native-chat-dock-clip
@@ -332,13 +327,20 @@ export function NativeChatQuestionCard({
           )}
         >
           <NativeChatQuestionCardHeader
-            steps={prompt.questions.map((question, i) => ({
-              header:
-                question.header ||
-                t('components.native-chat.question.step', 'Step {{value0}}', { value0: i + 1 }),
+            steps={prompt.questions.map((_, i) => ({
               answered: answeredAt(i)
             }))}
             index={index}
+            question={
+              look?.renderQuestion ? (
+                look.renderQuestion(q.question)
+              ) : (
+                <NativeChatQuestionText
+                  content={q.question}
+                  className="break-words [overflow-wrap:anywhere] [&_p]:my-0 [&_p+p]:mt-2"
+                />
+              )
+            }
             disabled={isSubmitting}
             cancelDisabled={isCancelling}
             onGoTo={goTo}
@@ -348,11 +350,10 @@ export function NativeChatQuestionCard({
           {look?.header}
           <div
             data-native-chat-dock-unsqueezed
-            // Short of room (fit level card), the question, options and typed answer scroll as one body,
-            // still tall enough for the question's first line and option 1, and faded while more lies below.
-            className="native-chat-question-card-body scrollbar-sleek flex min-h-0 shrink flex-col [[data-native-chat-dock-fit~=card]_&]:min-h-[calc(var(--spacing)*26)] [[data-native-chat-dock-fit~=card]_&]:overflow-y-auto"
+            // Short of room (fit level card), options and typed answers scroll as one body, still tall
+            // enough for option 1 while the question keeps its own two-line floor in the pinned band.
+            className="native-chat-question-card-body scrollbar-sleek flex min-h-0 shrink flex-col [[data-native-chat-dock-fit~=card]_&]:min-h-[calc(var(--spacing)*14)] [[data-native-chat-dock-fit~=card]_&]:overflow-y-auto"
           >
-            <NativeChatQuestionHeading question={q.question} look={look} />
             {q.options.length > 0 ? (
               // Padded so each tile's outside focus outline clears the scroll clip.
               <div

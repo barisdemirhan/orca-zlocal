@@ -24,35 +24,44 @@ export function NativeChatSurface({
   /** Extra root classes, e.g. the size container a structured chat's worker dock measures. */
   className?: string
 } & Record<`data-${string}`, string | undefined>): React.JSX.Element {
-  const dockClearance = useAgentHubDockBottomClearance(surface.rootRef)
+  const {
+    rootRef,
+    rootProps,
+    appearance,
+    onLinkClick,
+    sessionHistory,
+    find,
+    menu,
+    linkActionRequest,
+    closeLinkActions
+  } = surface
+  const dockClearance = useAgentHubDockBottomClearance(rootRef)
   return (
     <div
-      ref={surface.rootRef}
+      ref={rootRef}
       data-native-chat-root="true"
       data-native-chat-working={working ? 'true' : 'false'}
       tabIndex={-1}
       {...dataAttributes}
-      {...surface.rootProps}
+      {...rootProps}
       className={cn(
         NATIVE_CHAT_APPEARANCE_ROOT_CLASS,
         'flex h-full min-h-0 w-full flex-col focus:outline-none',
         className
       )}
-      style={
-        dockClearance ? { ...surface.appearance, paddingBottom: dockClearance } : surface.appearance
-      }
-      data-native-chat-scheme={surface.appearance.colorScheme}
+      style={dockClearance ? { ...appearance, paddingBottom: dockClearance } : appearance}
+      data-native-chat-scheme={appearance.colorScheme}
     >
-      <NativeChatLinkClickContext value={surface.onLinkClick}>
-        <NativeChatSessionHistoryScopeContext.Provider value={surface.sessionHistory}>
-          <NativeChatFindQueryContext value={surface.find.isOpen ? surface.find.query : ''}>
+      <NativeChatLinkClickContext value={onLinkClick}>
+        <NativeChatSessionHistoryScopeContext.Provider value={sessionHistory}>
+          <NativeChatFindQueryContext value={find.isOpen ? find.query : ''}>
             {children}
           </NativeChatFindQueryContext>
         </NativeChatSessionHistoryScopeContext.Provider>
       </NativeChatLinkClickContext>
 
-      {surface.menu}
-      <LinkActionPopover request={surface.linkActionRequest} onClose={surface.closeLinkActions} />
+      {menu}
+      <LinkActionPopover request={linkActionRequest} onClose={closeLinkActions} />
     </div>
   )
 }

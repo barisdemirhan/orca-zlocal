@@ -153,7 +153,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
       return { ...(await this.sendTerminalAfterPluginHooks(target, action, options)), handle }
     }
     // Before resolving the target: a terminal closed or replaced during the wait is then refused, not written.
-    await this.waitForPtyEndpointReattach(this.handlePtyId(handle), options.signal)
+    await this.waitForPtyEndpointReattach(this.handlePtyId(handle), options)
     const guarded = protectOrbTerminalWriteOptions(this, handle, options)
     const pty = this.getLivePtyForHandle(handle)
     if (pty) {
@@ -260,10 +260,9 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
       const target = await starting
       return { ...(await this.sendAgentPromptAfterPluginHooks(target, prompt, options)), handle }
     }
-    await this.waitForPtyEndpointReattach(
-      this.handlePtyId(handle),
-      agentPromptObservationSignal(options)
-    )
+    await this.waitForPtyEndpointReattach(this.handlePtyId(handle), {
+      signal: agentPromptObservationSignal(options)
+    })
     const guarded = protectOrbTerminalWriteOptions(this, handle, options)
     const pty = this.getLivePtyForHandle(handle)
     if (pty) {
