@@ -25927,10 +25927,17 @@
         "search": "搜索项目…",
         "noMatch": "没有匹配的项目。",
         "clear": "清除筛选",
-        "empty": "这些项目中没有其他可添加的内容",
-        "showAllProjects": "显示所有项目",
+        "emptyFiltered": "这些筛选条件下没有可添加的内容",
         "outside": "筛选之外还有 {{value0}} 项",
         "showAll": "全部显示"
+      },
+      "botFilter": {
+        "label": "机器人",
+        "remove": "从筛选中移除 {{value0}}",
+        "add": "机器人",
+        "all": "所有机器人",
+        "search": "搜索机器人…",
+        "noMatch": "没有匹配的机器人。"
       },
       "closeOthers": "关闭其他",
       "drawer": {

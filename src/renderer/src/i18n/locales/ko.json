@@ -25932,10 +25932,17 @@
         "search": "프로젝트 검색…",
         "noMatch": "일치하는 프로젝트가 없습니다.",
         "clear": "필터 지우기",
-        "empty": "이 프로젝트에는 더 추가할 항목이 없습니다",
-        "showAllProjects": "모든 프로젝트 표시",
+        "emptyFiltered": "이 필터로는 더 추가할 항목이 없습니다",
         "outside": "필터 밖에 {{value0}}개 더",
         "showAll": "모두 표시"
+      },
+      "botFilter": {
+        "label": "봇",
+        "remove": "필터에서 {{value0}} 제거",
+        "add": "봇",
+        "all": "모든 봇",
+        "search": "봇 검색…",
+        "noMatch": "일치하는 봇이 없습니다."
       },
       "closeOthers": "다른 탭 닫기",
       "drawer": {

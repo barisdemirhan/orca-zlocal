@@ -6,19 +6,12 @@ import { translate } from '@/i18n/i18n'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubLineage } from './agent-hub-lineage'
 import { useAgentHubMirrors } from './agent-hub-mirror-store'
-import {
-  availableAgentHubPickerParents,
-  availableAgentHubPickerTree
-} from './agent-hub-picker-tree'
+import { availableAgentHubPickerParents } from './agent-hub-picker-tree'
 import { useAgentHubTerminalTree } from './use-agent-hub-terminal-tree'
 import { useAgentHubTreeOrder } from './use-agent-hub-tree-order'
 import { useHeldAgentHubTree } from './use-held-agent-hub-tree'
-import { agentOnlyAgentHubTree, type AgentHubTerminalRow } from './agent-hub-terminal-tree'
-import {
-  filterAgentHubTerminalTree,
-  isAgentHubTreeNarrowed,
-  visibleAgentHubTreeRows
-} from './agent-hub-terminal-tree-view'
+import type { AgentHubTerminalRow } from './agent-hub-terminal-tree'
+import { isAgentHubTreeNarrowed, visibleAgentHubTreeRows } from './agent-hub-terminal-tree-view'
 import { sortAgentHubTerminalTree } from './agent-hub-terminal-tree-sort'
 import { moveAgentHubSelection } from './agent-hub-keys'
 import { AgentHubTerminalTree } from './AgentHubTerminalTree'
@@ -32,20 +25,12 @@ import {
 } from './agent-hub-mirror-membership'
 import { AgentHubMirrorNewAgent } from './AgentHubMirrorNewAgent'
 import { Button } from '@/components/ui/button'
-import {
-  agentHubPickerProjectKeys,
-  agentHubPickerProjects,
-  filterAgentHubTreeByProjects
-} from './agent-hub-picker-project-filter'
-import { AgentHubPickerProjectFilter } from './AgentHubPickerProjectFilter'
+import { AgentHubPickerFilters } from './AgentHubPickerFilters'
+import { countAgentHubTreeRows, useAgentHubPickerFilters } from './use-agent-hub-picker-filters'
 import { useAgentHubHostLabels } from './use-agent-hub-host-labels'
 
 const PICKER_TAB_ID = 'agent-hub-picker'
 const PICKER_SECTIONS = ['agents', 'all'] as const
-
-function countRows(tree: readonly { rowCount: number }[]): number {
-  return tree.reduce((count, group) => count + group.rowCount, 0)
-}
 
 export function AgentHubMirrorPickerBody({
   windowId,
@@ -88,46 +73,24 @@ export function AgentHubMirrorPickerBody({
   )
   const tree = useAgentHubTerminalTree(threads, true, parentOf)
   const hostLabels = useAgentHubHostLabels()
-  // From the full tree, so the window's own projects stay listed even with nothing left to add.
-  const projects = useMemo(() => agentHubPickerProjects(tree, hostLabels), [tree, hostLabels])
-  // Seeded from this window's tabs once per open; the popover unmounts on close.
-  const [chosenProjects, setChosenProjects] = useState<ReadonlySet<string>>(() =>
-    agentHubPickerProjectKeys(mirror?.tabs.map((tab) => tab.target.worktree) ?? [])
-  )
-  const projectKeys = useMemo(
-    () => new Set(projects.filter((project) => chosenProjects.has(project.key)).map((p) => p.key)),
-    [projects, chosenProjects]
-  )
-  const changeProjects = (next: ReadonlySet<string>): void => {
-    setChosenProjects(next)
-    setSelectedKey(null)
-  }
-  const unfiltered = useMemo(() => availableAgentHubPickerTree(tree, mirrors), [tree, mirrors])
-  const available = useMemo(
-    () => filterAgentHubTreeByProjects(unfiltered, projectKeys),
-    [unfiltered, projectKeys]
-  )
-  const agentTree = useMemo(() => agentOnlyAgentHubTree(available), [available])
-  const sectionTree = section === 'agents' ? agentTree : available
+  const filters = useAgentHubPickerFilters({
+    tree,
+    mirrors,
+    hostLabels,
+    windowWorktrees: mirror?.tabs.map((tab) => tab.target.worktree) ?? [],
+    section,
+    query,
+    onSelectionChange: () => setSelectedKey(null)
+  })
+  const { available, agentTree, sectionTree, queried } = filters
   const order = useAgentHubTreeOrder(sectionTree, sortBy)
-  const queried = useMemo(
-    () => filterAgentHubTerminalTree(sectionTree, query),
-    [sectionTree, query]
-  )
   const sorted = useMemo(() => sortAgentHubTerminalTree(queried, order), [queried, order])
   const groups = useHeldAgentHubTree(
     sorted,
-    `${section}\u0000${sortBy}\u0000${query}\u0000${[...projectKeys].join('\u0001')}`
+    `${section}\u0000${sortBy}\u0000${query}\u0000${[...filters.projectKeys].join('\u0001')}\u0000${[...filters.botKeys].join('\u0001')}`
   )
-  const outsideCount = useMemo(() => {
-    if (projectKeys.size === 0) {
-      return 0
-    }
-    const all = section === 'agents' ? agentOnlyAgentHubTree(unfiltered) : unfiltered
-    return countRows(filterAgentHubTerminalTree(all, query)) - countRows(queried)
-  }, [projectKeys, section, unfiltered, query, queried])
-  const showAllProjects = (): void => {
-    changeProjects(new Set())
+  const showAllFilters = (): void => {
+    filters.clear()
     searchRef.current?.focus()
   }
   const rows = useMemo(
@@ -137,7 +100,7 @@ export function AgentHubMirrorPickerBody({
   const rowKeys = useMemo(() => rows.map((row) => row.key), [rows])
   useNearestAgentHubSelection(rowKeys, selectedKey, setSelectedKey)
   const now = useNow(30_000)
-  const totalCount = countRows(sectionTree)
+  const totalCount = countAgentHubTreeRows(sectionTree)
   useEffect(() => {
     rootRef.current
       ?.querySelector('[data-agent-hub-row][data-selected="true"]')
@@ -210,7 +173,10 @@ export function AgentHubMirrorPickerBody({
           value={section}
           ariaLabel={translate('agentHub.mirror.pickerSections', 'Terminal lists')}
           focusIdPrefix={PICKER_TAB_ID}
-          counts={{ agents: countRows(agentTree), all: countRows(available) }}
+          counts={{
+            agents: countAgentHubTreeRows(agentTree),
+            all: countAgentHubTreeRows(available)
+          }}
           onChange={(value) => {
             setSection(value)
             setSelectedKey(null)
@@ -249,23 +215,27 @@ export function AgentHubMirrorPickerBody({
           }
           emptyLabel={translate('agentHub.mirror.noneAvailable', 'No terminals available to add')}
           filterBar={
-            <AgentHubPickerProjectFilter
-              projects={projects}
-              selected={projectKeys}
-              onChange={changeProjects}
+            <AgentHubPickerFilters
+              projects={filters.projects}
+              bots={filters.bots}
+              selectedProjects={filters.projectKeys}
+              selectedBots={filters.botKeys}
+              onProjectsChange={filters.changeProjects}
+              onBotsChange={filters.changeBots}
+              onClear={filters.clear}
               onClosed={() => searchRef.current?.focus()}
             />
           }
           emptyState={
-            projectKeys.size > 0 ? (
+            filters.active ? (
               <div
                 data-agent-hub-project-empty
                 className="flex flex-col items-center gap-2.5 px-2.5 pt-5.5 pb-4.5 text-center text-xs text-muted-foreground"
               >
                 <b className="text-[13px] font-medium text-foreground/85">
                   {translate(
-                    'agentHub.mirror.projectFilter.empty',
-                    'Nothing else to add in these projects'
+                    'agentHub.mirror.projectFilter.emptyFiltered',
+                    'Nothing else to add with these filters'
                   )}
                 </b>
                 <div className="flex items-center gap-2">
@@ -277,11 +247,8 @@ export function AgentHubMirrorPickerBody({
                       onOpenDialog={onOpenNewAgent}
                     />
                   ) : null}
-                  <Button type="button" variant="outline" size="xs" onClick={showAllProjects}>
-                    {translate(
-                      'agentHub.mirror.projectFilter.showAllProjects',
-                      'Show all projects'
-                    )}
+                  <Button type="button" variant="outline" size="xs" onClick={showAllFilters}>
+                    {translate('agentHub.mirror.projectFilter.showAll', 'Show all')}
                   </Button>
                 </div>
               </div>
@@ -307,7 +274,7 @@ export function AgentHubMirrorPickerBody({
           onPopout={onAdd}
           onJump={onAdd}
         />
-        {outsideCount > 0 && groups.length > 0 ? (
+        {filters.outsideCount > 0 && groups.length > 0 ? (
           <div
             data-agent-hub-project-outside
             className="flex items-center justify-center gap-1 pt-2 text-xs text-muted-foreground"
@@ -316,11 +283,11 @@ export function AgentHubMirrorPickerBody({
               'agentHub.mirror.projectFilter.outside',
               '{{value0}} more outside the filter',
               {
-                value0: outsideCount
+                value0: filters.outsideCount
               }
             )}
             <span aria-hidden>·</span>
-            <Button type="button" variant="link" size="xs" onClick={showAllProjects}>
+            <Button type="button" variant="link" size="xs" onClick={showAllFilters}>
               {translate('agentHub.mirror.projectFilter.showAll', 'Show all')}
             </Button>
           </div>

@@ -25524,10 +25524,17 @@
         "search": "プロジェクトを検索…",
         "noMatch": "一致するプロジェクトはありません。",
         "clear": "フィルターをクリア",
-        "empty": "これらのプロジェクトに追加できるものはありません",
-        "showAllProjects": "すべてのプロジェクトを表示",
+        "emptyFiltered": "これらのフィルターでは追加できるものはありません",
         "outside": "フィルター外にあと {{value0}} 件",
         "showAll": "すべて表示"
+      },
+      "botFilter": {
+        "label": "ボット",
+        "remove": "{{value0}} をフィルターから外す",
+        "add": "ボット",
+        "all": "すべてのボット",
+        "search": "ボットを検索…",
+        "noMatch": "一致するボットはありません。"
       },
       "closeOthers": "他を閉じる",
       "drawer": {

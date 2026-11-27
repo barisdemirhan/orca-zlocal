@@ -580,8 +580,8 @@ it('starts filtered to the mirror window projects and counts what the filter hid
 
 it('keeps the filter on with a way out when the mirror projects have nothing left to add', async () => {
   setupTwoProjects(['home'])
-  expect(await screen.findByText('Nothing else to add in these projects')).toBeTruthy()
+  expect(await screen.findByText('Nothing else to add with these filters')).toBeTruthy()
   expect(screen.queryByRole('option', { name: /billing-agent/ })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Show all projects' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Show all' }))
   expect(screen.getByRole('option', { name: /billing-agent/ })).toBeTruthy()
 })

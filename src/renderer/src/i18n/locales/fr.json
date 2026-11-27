@@ -26361,10 +26361,17 @@
         "search": "Rechercher des projets…",
         "noMatch": "Aucun projet ne correspond.",
         "clear": "Effacer le filtre",
-        "empty": "Rien d’autre à ajouter dans ces projets",
-        "showAllProjects": "Afficher tous les projets",
+        "emptyFiltered": "Rien d’autre à ajouter avec ces filtres",
         "outside": "{{value0}} de plus hors du filtre",
         "showAll": "Tout afficher"
+      },
+      "botFilter": {
+        "label": "Bots",
+        "remove": "Retirer {{value0}} du filtre",
+        "add": "Bot",
+        "all": "Tous les bots",
+        "search": "Rechercher des bots…",
+        "noMatch": "Aucun bot ne correspond."
       },
       "closeOthers": "Fermer les autres",
       "drawer": {
