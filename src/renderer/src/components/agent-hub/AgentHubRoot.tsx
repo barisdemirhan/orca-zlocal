@@ -68,9 +68,6 @@ import { closeAgentHubOrbPanel } from './agent-hub-orb-panel-store'
 import { useAnchorTarget } from './use-anchor-binding'
 import { useAgentHubOrbPanelExclusion } from './agent-hub-orb-panel-exclusion'
 
-/** In the status bar a waiting bot bubble steps aside into its chip after this long without a hover. */
-const BOT_STATUS_BAR_PARK_MS = 8000
-
 export function AgentHubRoot(): React.JSX.Element {
   const preferences = useAgentHubPreferences()
   const [anchorRef, attachAnchor] = useAnchorTarget<HTMLElement>()
@@ -374,7 +371,6 @@ export function AgentHubRoot(): React.JSX.Element {
           onOpenMirror={openMirror}
           onJump={jump}
           onOpenInbox={() => openHub('inbox')}
-          parkAfterMs={docked ? null : BOT_STATUS_BAR_PARK_MS}
         />
       ) : null}
       {/* The canvas hides the workspace, so there is nothing behind the mirrors to dim. */}

@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { ArrowUpRight, PictureInPicture2, X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { HubAvatar } from './AgentHubStateMarks'
@@ -26,7 +25,7 @@ import type { AgentHubRequestPresentation } from './agent-hub-request-presentati
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { useAnchorBinding } from './use-anchor-binding'
 import { useAgentHubWorktreeCurrent } from './use-agent-hub-worktree-current'
-import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from '../status-bar/composition/status-bar-context-menu-policy'
+import { AgentHubAlertStackFrame } from './AgentHubAlertStackFrame'
 
 const ALERT_VISIBLE_MS = 7000
 const GAP = 10
@@ -237,8 +236,7 @@ export function AgentHubAlertStack({
   onDismiss,
   answerKeys = false,
   requestPresentationOf,
-  onOpenInbox,
-  parkAfterMs = null
+  onOpenInbox
 }: {
   alerts: readonly AgentHubAlert[]
   anchorRef: React.RefObject<HTMLElement | null>
@@ -255,10 +253,10 @@ export function AgentHubAlertStack({
   requestPresentationOf?: (alert: RequestAlert) => AgentHubRequestPresentation
   /** "Open in Inbox" on a bot's "N updates" bubble. */
   onOpenInbox?: () => void
-  /** In the status bar a waiting bot bubble steps aside into its chip after this long. */
-  parkAfterMs?: number | null
 }): React.JSX.Element | null {
   const stackRef = useRef<HTMLDivElement>(null)
+  // Why the newest timestamp: a dismissal lowers it never, so only a new alert restarts countdowns.
+  const arrival = alerts.reduce((latest, alert) => Math.max(latest, alert.bot?.at ?? 0), 0)
   // Why newest: a key answers the question that just arrived, the one the eye is on.
   const front =
     alerts.findLast((alert) => alert.kind === 'ask' || alert.kind === 'approval') ?? null
@@ -320,67 +318,66 @@ export function AgentHubAlertStack({
   if (ordered.length === 0 && chipEntries.length === 0) {
     return null
   }
-  return createPortal(
-    <div
-      ref={stackRef}
-      data-agent-hub-alert-stack
-      {...STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS}
-      className="fixed z-[48] flex max-h-[min(70vh,560px)] flex-col gap-2 overflow-y-auto p-0.5 scrollbar-sleek"
-    >
-      {side === 'bottom' ? chips : null}
-      {ordered.map((entry) =>
-        'lead' in entry ? (
-          <AgentHubBotAlertCard
-            key={entry.lead.bot.botKey}
-            lead={entry.lead}
-            updates={entry.updates}
-            ids={entry.ids}
-            onDismiss={onDismiss}
-            onOpenInbox={onOpenInbox}
-            reduceMotion={reduceMotion}
-            answerKeys={answerKeys && entry.lead.id === front?.id}
-            onOpenAlert={onOpen}
-            presentationOf={(request) =>
-              requestPresentationOf?.(request) ?? {
-                title: request.request.caller.title ?? request.request.caller.terminalHandle,
-                targetTitle: request.request.target.terminalHandle,
-                target: null,
-                location: locationOf(request)
-              }
-            }
-            parkAfterMs={parkAfterMs}
-          />
-        ) : entry.request ? (
-          <AgentHubRequestAlert
-            key={entry.id}
-            alert={entry}
-            presentation={
-              requestPresentationOf?.(entry) ?? {
-                title: entry.request.caller.title ?? entry.request.caller.terminalHandle,
-                targetTitle: entry.request.target.terminalHandle,
-                target: null,
-                location: locationOf(entry)
-              }
-            }
-            onOpen={() => onOpen(entry)}
-            onDismiss={onDismiss}
-            answerKeys={answerKeys && entry.id === front?.id}
-          />
-        ) : (
-          <AlertCard
-            key={entry.id}
-            alert={entry}
-            location={locationOf(entry)}
-            onOpen={onOpen}
-            onJump={onJump}
-            onPopout={onPopout}
-            onDismiss={onDismiss}
-            answerKeys={answerKeys && entry.id === front?.id}
-          />
-        )
+  return (
+    <AgentHubAlertStackFrame stackRef={stackRef}>
+      {(held) => (
+        <>
+          {side === 'bottom' ? chips : null}
+          {ordered.map((entry) =>
+            'lead' in entry ? (
+              <AgentHubBotAlertCard
+                key={entry.lead.bot.botKey}
+                lead={entry.lead}
+                updates={entry.updates}
+                ids={entry.ids}
+                onDismiss={onDismiss}
+                onOpenInbox={onOpenInbox}
+                reduceMotion={reduceMotion}
+                answerKeys={answerKeys && entry.lead.id === front?.id}
+                onOpenAlert={onOpen}
+                presentationOf={(request) =>
+                  requestPresentationOf?.(request) ?? {
+                    title: request.request.caller.title ?? request.request.caller.terminalHandle,
+                    targetTitle: request.request.target.terminalHandle,
+                    target: null,
+                    location: locationOf(request)
+                  }
+                }
+                held={held}
+                arrival={arrival}
+              />
+            ) : entry.request ? (
+              <AgentHubRequestAlert
+                key={entry.id}
+                alert={entry}
+                presentation={
+                  requestPresentationOf?.(entry) ?? {
+                    title: entry.request.caller.title ?? entry.request.caller.terminalHandle,
+                    targetTitle: entry.request.target.terminalHandle,
+                    target: null,
+                    location: locationOf(entry)
+                  }
+                }
+                onOpen={() => onOpen(entry)}
+                onDismiss={onDismiss}
+                answerKeys={answerKeys && entry.id === front?.id}
+              />
+            ) : (
+              <AlertCard
+                key={entry.id}
+                alert={entry}
+                location={locationOf(entry)}
+                onOpen={onOpen}
+                onJump={onJump}
+                onPopout={onPopout}
+                onDismiss={onDismiss}
+                answerKeys={answerKeys && entry.id === front?.id}
+              />
+            )
+          )}
+          {side === 'bottom' ? null : chips}
+        </>
       )}
-      {side === 'bottom' ? null : chips}
-    </div>,
-    document.body
+    </AgentHubAlertStackFrame>
   )
 }

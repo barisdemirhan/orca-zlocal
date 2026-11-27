@@ -62,7 +62,6 @@ export function AgentHubBotSpeechBubble({
   reduceMotion = false,
   alertKey,
   onDismiss,
-  hoverProps,
   children
 }: {
   bot: Bot
@@ -78,7 +77,6 @@ export function AgentHubBotSpeechBubble({
   reduceMotion?: boolean
   alertKey: string
   onDismiss: () => void
-  hoverProps?: React.HTMLAttributes<HTMLDivElement>
   children: React.ReactNode
 }): React.JSX.Element {
   return (
@@ -93,7 +91,6 @@ export function AgentHubBotSpeechBubble({
         !reduceMotion && 'animate-in fade-in-0 slide-in-from-left-2',
         offline && 'opacity-60'
       )}
-      {...hoverProps}
     >
       <AgentHubBotFace bot={bot} tone={tone} />
       <div className="relative min-w-0 flex-1">

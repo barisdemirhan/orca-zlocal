@@ -32,8 +32,7 @@ export function AgentHubRootAlerts({
   onOpenCard,
   onOpenMirror,
   onJump,
-  onOpenInbox,
-  parkAfterMs
+  onOpenInbox
 }: {
   alerts: readonly AgentHubAlert[]
   anchorRef: React.RefObject<HTMLElement | null>
@@ -44,7 +43,6 @@ export function AgentHubRootAlerts({
   onOpenMirror: (request: AgentHubOpenRequest) => void
   onJump: (request: AgentHubOpenRequest) => void
   onOpenInbox: () => void
-  parkAfterMs: number | null
 }): React.JSX.Element {
   const navigate = (alert: AgentHubAlert, action: (request: AgentHubOpenRequest) => void): void => {
     if (alert.thread) {
@@ -83,7 +81,6 @@ export function AgentHubRootAlerts({
       onJump={(alert) => navigate(alert, onJump)}
       onDismiss={dismissAgentHubAlert}
       onOpenInbox={onOpenInbox}
-      parkAfterMs={parkAfterMs}
       answerKeys
     />
   )

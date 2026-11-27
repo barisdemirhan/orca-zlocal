@@ -124,7 +124,8 @@ export function AgentHubBotAlertCard({
   answerKeys,
   onOpenAlert,
   presentationOf,
-  parkAfterMs
+  held,
+  arrival
 }: {
   lead: AgentHubBotAlert
   updates: number
@@ -136,8 +137,10 @@ export function AgentHubBotAlertCard({
   answerKeys: boolean
   onOpenAlert: (alert: AgentHubThreadAlert | AgentHubRequestAlert) => void
   presentationOf: (alert: AgentHubRequestAlert) => AgentHubRequestPresentation
-  /** In the status bar a question waiting without a hover steps aside into its chip after this long. */
-  parkAfterMs: number | null
+  /** Hover or focus anywhere on the stack pauses the countdown. */
+  held: boolean
+  /** The newest alert's time in the stack: a new arrival restarts the countdown. */
+  arrival: number
 }): React.JSX.Element {
   const { bot, botKey, at } = lead.bot
   const tone = toneOf(lead)
@@ -156,16 +159,11 @@ export function AgentHubBotAlertCard({
   const ms = settled
     ? BOT_ANSWERED_VISIBLE_MS
     : tone === 'ask'
-      ? parkAfterMs
+      ? null
       : tone === 'failure'
         ? BOT_FAILURE_VISIBLE_MS
         : BOT_RESULT_VISIBLE_MS
-  const hoverProps = useAgentHubBotBubbleLifetime(
-    lead.id,
-    ms,
-    !settled,
-    tone === 'ask' && !settled ? park : close
-  )
+  useAgentHubBotBubbleLifetime(`${lead.id}:${arrival}`, ms, held && !settled, close)
   const settle = useCallback(() => setSettledId(lead.id), [lead.id])
   return (
     <AgentHubBotSpeechBubble
@@ -179,7 +177,6 @@ export function AgentHubBotAlertCard({
       reduceMotion={reduceMotion}
       alertKey={botKey}
       onDismiss={close}
-      hoverProps={hoverProps}
     >
       <fieldset disabled={offline} className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
         <BubbleBody
