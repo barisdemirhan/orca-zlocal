@@ -7,8 +7,7 @@ import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { findAgentHubChatTab } from './agent-hub-chat-tabs'
 import { agentHubStateWord } from './agent-hub-copy'
 import { useAgentHubBotIdentity, type AgentHubBotOrigin } from './agent-hub-bot-identity'
-import { shownAgentHubMirrorTarget } from './agent-hub-mirror-membership'
-import { useAgentHubMirrors } from './agent-hub-mirror-store'
+import { useAgentHubMirroredTargetOfTab } from './agent-hub-mirror-tab-target'
 import type { AgentHubPaneTarget } from './agent-hub-pane-target'
 
 export type AgentHubMirrorBotChat = {
@@ -46,18 +45,7 @@ export function useAgentHubMirrorBotChat(
 export function useAgentHubMirroredBotChatOfTab(
   tabId: string
 ): { target: AgentHubPaneTarget; botChat: AgentHubMirrorBotChat } | null {
-  const mirrors = useAgentHubMirrors()
-  const target = useMemo(() => {
-    for (const window of mirrors.windows) {
-      for (const tab of window.tabs) {
-        const shown = shownAgentHubMirrorTarget(tab)
-        if (shown.tab.id === tabId) {
-          return shown
-        }
-      }
-    }
-    return null
-  }, [mirrors, tabId])
+  const target = useAgentHubMirroredTargetOfTab(tabId)
   const botChat = useAgentHubMirrorBotChat(target)
   return target && botChat ? { target, botChat } : null
 }

@@ -2,6 +2,7 @@ import { useIntlLocale, useTranslate } from '@/i18n/use-translate'
 import { workerDockKindLabel, workerDockStateLabel } from './worker-dock-labels'
 import { memo } from 'react'
 import { cn } from '@/lib/class-names'
+import { AgentHubWorkerOpenInMainButton } from '../../../../agent-hub/AgentHubWorkerOpenInMainButton'
 import { WorkerDockRowAction } from './WorkerDockRowAction'
 import { WorkerDockGlyph } from './WorkerDockGlyph'
 import { workerDockGlyph } from './worker-dock-card-order'
@@ -137,6 +138,7 @@ export const WorkerDockRow = memo(function WorkerDockRow({
             : 'opacity-0 group-hover/worker:opacity-100 group-hover/worker:[&>*:not(svg)]:pointer-events-auto group-focus-within/worker:opacity-100 [@media(pointer:coarse)]:opacity-100 [@media(pointer:coarse)]:[&>*:not(svg)]:pointer-events-auto'
         )}
       >
+        {row ? <AgentHubWorkerOpenInMainButton row={row} /> : null}
         {row ? <WorkerDockRowAction row={row} pending={pending} onAction={onAction} /> : null}
       </div>
     </div>
