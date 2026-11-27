@@ -41,7 +41,6 @@ import { AgentHubMirrorChangesDrawer } from './AgentHubMirrorChangesDrawer'
 import { AgentHubMirrorReviewDrawer } from './AgentHubMirrorReviewDrawer'
 import { AgentHubMirrorInboundDrawer } from './AgentHubMirrorInboundDrawer'
 import { AgentHubMirrorBotView } from './AgentHubMirrorBotView'
-import { AgentHubMirrorBotStrip } from './AgentHubMirrorBotStrip'
 import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { AgentHubMirrorSettingsDrawer } from './AgentHubMirrorSettingsDrawer'
 
@@ -224,9 +223,6 @@ export function AgentHubMirrorCardBody({
       }}
     >
       <div className="flex min-w-0 flex-1 flex-col">
-        {active && botChat ? (
-          <AgentHubMirrorBotStrip target={target} botChat={botChat} thread={thread} />
-        ) : null}
         {children}
         {active && stripShown && !botChat ? (
           <AgentHubMirrorWorkStrip

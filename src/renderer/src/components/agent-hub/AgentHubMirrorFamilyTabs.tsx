@@ -1,5 +1,7 @@
-import { Fragment } from 'react'
-import { ArrowUpRight, ChevronRight, CornerUpLeft, Workflow } from 'lucide-react'
+import { Fragment, useRef } from 'react'
+import { ArrowUpRight, ChevronLeft, ChevronRight, CornerUpLeft, Workflow } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/class-names'
 import { AgentHubActionTooltip } from './AgentHubShortcut'
 import { translate } from '@/i18n/i18n'
 import { AgentIcon } from '@/components/agent/icons/AgentIcon'
@@ -9,9 +11,14 @@ import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import { HubChip } from './AgentHubInlineLabels'
 import { HubStateIndicator } from './AgentHubStateMarks'
 import { agentHubIndicatorKind } from './agent-hub-lists'
-import { agentHubMirrorFamilyRows, type AgentHubMirrorFamily } from './agent-hub-mirror-family'
+import {
+  agentHubMirrorFamilyRows,
+  type AgentHubFamilyNode,
+  type AgentHubMirrorFamily
+} from './agent-hub-mirror-family'
 import type { AgentHubLocation } from './agent-hub-pane-target'
 import { AgentHubThreadHoverCard, type AgentHubThreadCardActions } from './AgentHubThreadHoverCard'
+import { useMirrorTabStripScroll } from './use-mirror-tab-strip-scroll'
 
 function windowRootOf(from: Element): ParentNode {
   return from.closest('[data-agent-hub-mirror]') ?? document
@@ -67,7 +74,7 @@ function FamilyButton({
       })
     : undefined
   return (
-    <span className="flex shrink-0 items-center">
+    <span className="group/member flex shrink-0 items-center">
       <AgentHubThreadHoverCard
         thread={thread}
         location={location}
@@ -108,13 +115,74 @@ function FamilyButton({
             'Jump to this terminal in its workspace'
           )}
           title={translate('agentHub.mirror.jumpHint', 'Jump to this terminal in its workspace')}
+          data-active={active}
           onClick={actions.onJump}
-          className="grid size-5 shrink-0 place-items-center rounded-md text-muted-foreground/70 hover:bg-foreground/[0.07] hover:text-foreground"
+          className="grid size-5 shrink-0 place-items-center rounded-md text-muted-foreground/70 opacity-0 transition-opacity duration-100 group-focus-within/member:opacity-100 group-hover/member:opacity-100 hover:bg-foreground/[0.07] hover:text-foreground data-[active=true]:opacity-100"
         >
           <ArrowUpRight className="size-3" />
         </button>
       ) : null}
     </span>
+  )
+}
+
+function countWorkers(nodes: readonly AgentHubFamilyNode[]): number {
+  return nodes.reduce((total, node) => total + 1 + countWorkers(node.children), 0)
+}
+
+/** One row of workers: scrollbar-free, with an edge fade and arrows when it overflows. */
+function FamilyRowStrip({
+  parentKey,
+  count,
+  children
+}: {
+  parentKey: string | null
+  count: number
+  children: React.ReactNode
+}): React.JSX.Element {
+  const ref = useRef<HTMLDivElement>(null)
+  const { canScroll, scroll, onScroll } = useMirrorTabStripScroll(ref, count)
+  const arrow = (direction: 'start' | 'end'): React.JSX.Element => {
+    const label =
+      direction === 'start'
+        ? translate('auto.components.tab.bar.TabBar.7a9b4af2af', 'Scroll tabs left')
+        : translate('auto.components.tab.bar.TabBar.232e075b07', 'Scroll tabs right')
+    return (
+      <Button
+        type="button"
+        variant="ghost-muted"
+        size="icon-xs"
+        className="shrink-0"
+        aria-label={label}
+        onClick={() => scroll(direction)}
+      >
+        {direction === 'start' ? (
+          <ChevronLeft className="size-3" />
+        ) : (
+          <ChevronRight className="size-3" />
+        )}
+      </Button>
+    )
+  }
+  return (
+    <>
+      {canScroll.start ? arrow('start') : null}
+      <div
+        ref={ref}
+        role="group"
+        data-family-row
+        data-family-parent={parentKey ?? undefined}
+        onScroll={onScroll}
+        className={cn(
+          'terminal-tab-strip flex min-w-0 flex-1 items-center gap-1 overflow-x-auto',
+          canScroll.start && 'terminal-tab-strip--fade-start',
+          canScroll.end && 'terminal-tab-strip--fade-end'
+        )}
+      >
+        {children}
+      </div>
+      {canScroll.end ? arrow('end') : null}
+    </>
   )
 }
 
@@ -140,6 +208,7 @@ export function AgentHubMirrorFamilyTabs({
 }): React.JSX.Element {
   const hasParentRow = family.ancestors.length > 0
   const rows = agentHubMirrorFamilyRows(family, activeKey)
+  const workerCount = countWorkers(family.tree)
   const shownNodes = rows.flatMap((row) => row.nodes)
   const stopKey = shownNodes.some((node) => node.thread.paneKey === activeKey)
     ? activeKey
@@ -233,12 +302,17 @@ export function AgentHubMirrorFamilyTabs({
                 className="-mt-3 mr-1 ml-1.5 h-4 w-2.5 shrink-0 self-start rounded-bl-sm border-b border-l border-muted-foreground/40"
               />
             ) : null}
-            <div
-              role="group"
-              data-family-row
-              data-family-parent={row.parentKey ?? undefined}
-              className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scrollbar-sleek"
-            >
+            {index === 0 ? (
+              <span
+                aria-hidden
+                className="mr-1 flex shrink-0 items-center gap-1 border-r border-border pr-2 text-xs text-muted-foreground"
+              >
+                <Workflow className="size-3" />
+                {translate('agentHub.mirror.workers', 'Workers')}
+                <span className="font-semibold text-foreground tabular-nums">{workerCount}</span>
+              </span>
+            ) : null}
+            <FamilyRowStrip parentKey={row.parentKey} count={row.nodes.length}>
               {index === 0 && home ? (
                 <AgentHubActionTooltip
                   label={translate('agentHub.mirror.backHome', 'Back to {{value0}}', {
@@ -275,7 +349,7 @@ export function AgentHubMirrorFamilyTabs({
                   returnTitle={node.thread.paneKey === activeKey ? home?.title : undefined}
                 />
               ))}
-            </div>
+            </FamilyRowStrip>
           </div>
         ))}
       </div>

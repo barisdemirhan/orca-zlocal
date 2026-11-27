@@ -45,6 +45,8 @@ export function useMirrorTabStripScroll(ref: RefObject<HTMLDivElement | null>, c
     return () => observer.disconnect()
   }, [count, ref, update])
   return {
+    canScroll,
+    scroll,
     onScroll: update,
     onPointerMove: (event: React.PointerEvent<HTMLDivElement>): void => {
       if (!handlers.isTabDragActive) {

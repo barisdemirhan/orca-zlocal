@@ -4,11 +4,13 @@ import { AudioLines, ChevronRight, Pin, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { cn } from '@/lib/class-names'
 import type { AgentPaneThread } from '../activity/threads/activity-thread-types'
 import type { AgentHubMirrorTab } from './agent-hub-mirror-membership'
 import { agentHubIndicatorKind } from './agent-hub-lists'
 import { agentHubStateWord } from './agent-hub-copy'
 import { AgentHubMirrorBotFace } from './AgentHubMirrorBotFace'
+import { AgentHubMirrorBotChatSwitcher } from './AgentHubMirrorBotChatSwitcher'
 import { AgentHubMirrorBotHoverCard } from './AgentHubMirrorBotHoverCard'
 import { useAgentHubMirrorBotChat } from './agent-hub-mirror-bot-chat'
 import { HubAvatar } from './AgentHubStateMarks'
@@ -96,6 +98,8 @@ export function AgentHubMirrorTab({
     // A window's only tab has Jump in the window header.
     onJump: closable ? onReveal : undefined
   }
+  // The active bot tab is only face and name; its chat title is a menu trigger beside the tab node.
+  const botSwitcher = botChat !== null && active
   const tabNode = (
     <div
       {...draggable.listeners}
@@ -137,7 +141,10 @@ export function AgentHubMirrorTab({
           onSelect(true)
         }
       }}
-      className="flex h-9 min-w-0 flex-1 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none group-hover/tab:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      className={cn(
+        'flex h-9 min-w-0 cursor-pointer items-center gap-2.5 rounded-md px-1 text-muted-foreground outline-none group-hover/tab:text-accent-foreground aria-selected:text-foreground focus-visible:ring-2 focus-visible:ring-ring',
+        botSwitcher ? 'shrink-0' : 'flex-1'
+      )}
     >
       {tab.isPinned ? <Pin aria-hidden className="size-3 shrink-0" /> : null}
       {botChat ? (
@@ -149,32 +156,51 @@ export function AgentHubMirrorTab({
           sleeping={sleeping}
         />
       )}
-      <div
-        data-sleeping={sleeping}
-        className="min-w-0 flex-1 text-[13px] leading-tight data-[sleeping=true]:opacity-60"
-        onDoubleClick={() => onSelect(false)}
-      >
-        {botChat ? (
-          <div className="flex min-w-0 items-baseline">
-            <span className="max-w-28 shrink-0 truncate font-semibold">{botChat.bot.name}</span>
-            <span aria-hidden className="shrink-0 px-1 text-muted-foreground">
-              ·
-            </span>
-            <div className="min-w-0 flex-1">
-              <AgentHubMirrorTitle target={shown} editing={editing} onEditingChange={setEditing} />
+      {botSwitcher ? (
+        <>
+          <span className="max-w-28 truncate text-[13px] leading-tight font-semibold">
+            {botChat.bot.name}
+          </span>
+          <span aria-hidden className="shrink-0 text-muted-foreground">
+            /
+          </span>
+        </>
+      ) : (
+        <div
+          data-sleeping={sleeping}
+          className="min-w-0 flex-1 text-[13px] leading-tight data-[sleeping=true]:opacity-60"
+          onDoubleClick={() => onSelect(false)}
+        >
+          {botChat ? (
+            <div className="flex min-w-0 items-baseline">
+              <span className="max-w-28 shrink-0 truncate font-semibold">{botChat.bot.name}</span>
+              <span aria-hidden className="shrink-0 px-1 text-muted-foreground">
+                ·
+              </span>
+              <div className="min-w-0 flex-1">
+                <AgentHubMirrorTitle
+                  target={shown}
+                  editing={editing}
+                  onEditingChange={setEditing}
+                />
+              </div>
             </div>
-          </div>
-        ) : (
-          <AgentHubMirrorTitle target={tab.target} editing={editing} onEditingChange={setEditing} />
-        )}
-        <div className="flex min-w-0 items-center [&>span]:text-[11px]">
-          {progress ? (
-            <span className="truncate text-muted-foreground">{progress}</span>
-          ) : botChat ? null : (
-            <HubCrumb location={location} />
+          ) : (
+            <AgentHubMirrorTitle
+              target={tab.target}
+              editing={editing}
+              onEditingChange={setEditing}
+            />
           )}
+          <div className="flex min-w-0 items-center [&>span]:text-[11px]">
+            {progress ? (
+              <span className="truncate text-muted-foreground">{progress}</span>
+            ) : botChat ? null : (
+              <HubCrumb location={location} />
+            )}
+          </div>
         </div>
-      </div>
+      )}
       {inputOwner ? (
         <AudioLines
           aria-label={translate('agentHub.mic.listeningTab', 'Dictation in this terminal')}
@@ -214,7 +240,11 @@ export function AgentHubMirrorTab({
         data-active={active}
         data-single={!closable}
         data-pinned={tab.isPinned === true}
-        className="group/tab relative flex min-w-60 max-w-80 basis-80 items-center gap-1 rounded-md border border-transparent px-1 hover:bg-accent data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background data-[single=true]:border-transparent data-[single=true]:bg-transparent data-[single=true]:hover:bg-accent"
+        className={cn(
+          'group/tab relative flex min-w-60 max-w-80 basis-80 items-center gap-1 rounded-md border border-transparent px-1 hover:bg-accent data-[dragging=true]:opacity-50 data-[active=true]:border-border data-[active=true]:bg-background data-[single=true]:border-transparent data-[single=true]:bg-transparent data-[single=true]:hover:bg-accent',
+          // A lone bot tab has the window's width to itself, so a chat title fits.
+          botChat && 'data-[single=true]:max-w-120 data-[single=true]:basis-120'
+        )}
       >
         {familyRoot ? (
           // Why a sibling of the tab: a button inside role="tab" is invalid nesting.
@@ -262,6 +292,25 @@ export function AgentHubMirrorTab({
             {tabNode}
           </AgentHubThreadHoverCard>
         )}
+        {botSwitcher ? (
+          // Why a sibling of the tab: a button inside role="tab" is invalid nesting.
+          editing ? (
+            <div
+              className="min-w-0 flex-1 text-[13px]"
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <AgentHubMirrorTitle target={shown} editing onEditingChange={setEditing} />
+            </div>
+          ) : (
+            <AgentHubMirrorBotChatSwitcher
+              target={shown}
+              botChat={botChat}
+              thread={thread}
+              title={title}
+              progress={progress}
+            />
+          )
+        ) : null}
         {closable && !tab.isPinned ? (
           // Why a wrapper: the button keeps its primitive look; only its visibility follows the tab.
           <span className="flex shrink-0 opacity-0 transition-opacity duration-100 group-hover/tab:opacity-100 group-data-[active=true]/tab:opacity-100 focus-within:opacity-100">
