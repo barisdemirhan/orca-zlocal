@@ -175,7 +175,8 @@ describe('floating terminal pop-out', () => {
     fireEvent.contextMenu(button)
     expect(screen.queryByRole('menu')).toBeNull()
     fireEvent.contextMenu(screen.getByTestId('sortable-tab'))
-    expect(screen.getByRole('menu')).toBeTruthy()
+    // The tab menu's content loads lazily.
+    expect(await screen.findByRole('menu')).toBeTruthy()
   })
 
   it('reacts to the Hub gate and never hides a panel for a removed terminal', () => {

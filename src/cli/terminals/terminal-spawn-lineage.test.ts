@@ -21,10 +21,8 @@ describe('CLI terminal creator identity', () => {
       ])
       vi.stubEnv('ORCA_TERMINAL_HANDLE', 'term-parent')
       await TERMINAL_HANDLERS[command]({ flags, client, cwd: '/folder', json: true })
-      expect(call).toHaveBeenLastCalledWith(
-        command.replace(' ', '.'),
-        expect.objectContaining({ callerTerminalHandle: 'term-parent' })
-      )
+      expect(call.mock.calls.at(-1)?.[0]).toBe(command.replace(' ', '.'))
+      expect(call.mock.calls.at(-1)?.[1]).toMatchObject({ callerTerminalHandle: 'term-parent' })
       vi.stubEnv('ORCA_TERMINAL_HANDLE', '')
       await TERMINAL_HANDLERS[command]({ flags, client, cwd: '/folder', json: true })
       expect(call.mock.calls.at(-1)?.[1]).not.toHaveProperty('callerTerminalHandle')
