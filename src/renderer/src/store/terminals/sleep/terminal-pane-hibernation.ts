@@ -84,7 +84,7 @@ export function createTerminalPaneHibernationActions(
         worktreeId,
         {
           paneKeys,
-          captureMode: 'completed-agent-hibernation'
+          captureMode: opts.manual ? 'manual-worktree-sleep' : 'completed-agent-hibernation'
         }
       )
       const sleptRecord = sleepingAgentSessionRecords[opts.paneKey]
@@ -96,6 +96,12 @@ export function createTerminalPaneHibernationActions(
         sleepingAgentSessionRecords[opts.paneKey] = {
           ...sleptRecord,
           terminalHandle: admission.terminalHandle
+        }
+      }
+      if (opts.manual) {
+        sleepingAgentSessionRecords[opts.paneKey] = {
+          ...sleepingAgentSessionRecords[opts.paneKey],
+          wakeOnRequestOnly: true
         }
       }
       const capture = shutdownBufferCaptures.get(opts.tabId)

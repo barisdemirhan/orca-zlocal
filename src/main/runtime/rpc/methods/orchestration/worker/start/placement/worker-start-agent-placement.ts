@@ -215,6 +215,13 @@ async function launchWorkerAgent(
     })
     throw error
   }
+  if (args.params.callerTerminalHandle) {
+    args.runtime.recordWorkerSpawnLineage(
+      launched.outcome.handle,
+      args.params.callerTerminalHandle,
+      launched.outcome.kind === 'structured' ? launched.outcome.sessionId : undefined
+    )
+  }
   return {
     mode: launched.receipt,
     launch: launchedWorkerReceipt(args, structuredSession),

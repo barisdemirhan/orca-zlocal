@@ -1,5 +1,5 @@
 // A bot page's Chats tab: search and New chat on top, then every chat as one folded row, its workers behind a chevron.
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { useTranslate } from '@/i18n/use-translate'
 import { activateAiVaultStructuredSession } from '@/lib/agent-session/open/activate-ai-vault-structured-session'
 import { startBotSession } from '@/lib/bot-catalog'
+import { BotChatOpenOverrideContext } from './bot-chat-open-override'
 import { useBotHostOffline } from '@/lib/bot-host-views'
 import { callBotRpc } from '@/lib/bot-hosts'
 import { useAppStore } from '@/store'
@@ -74,7 +75,7 @@ export default function BotChatsPanel(): React.JSX.Element | null {
   return bot ? <BotChatsTab key={bot.id} bot={bot} /> : null
 }
 
-function BotChatsTab({ bot }: { bot: Bot }): React.JSX.Element {
+export function BotChatsTab({ bot }: { bot: Bot }): React.JSX.Element {
   const t = useTranslate()
   const tree = useBotOwnChatTree(bot)
   // Its server is down: the last read shows with its actions off until it's back.
@@ -138,7 +139,11 @@ function BotChatsTab({ bot }: { bot: Bot }): React.JSX.Element {
           .map((worker) => ({ chat, worker }))
       : []
   )
+  const override = useContext(BotChatOpenOverrideContext)
   const newChat = (): void => {
+    if (override?.newChat?.(bot)) {
+      return
+    }
     void startBotSession(bot, { agent: bot.agent })
       .then((sessionId) =>
         activateAiVaultStructuredSession({

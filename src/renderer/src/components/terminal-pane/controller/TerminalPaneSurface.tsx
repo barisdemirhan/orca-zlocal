@@ -18,6 +18,8 @@ import { TerminalPaneMobileDriverPortals } from '../mobile-driver/TerminalPaneMo
 import { TerminalPaneProcessExitPortals } from '../process-exit/TerminalPaneProcessExitPortals'
 import { TerminalPaneSshReconnectPortals } from '../pty-transport/recovery/ssh/TerminalPaneSshReconnectPortals'
 import { TerminalPaneRecoveryPortals } from '../pty-transport/remote-runtime/recovery/TerminalPaneRecoveryPortals'
+import { AgentHubPaneQuickReplyPortals } from '../../agent-hub/AgentHubPaneQuickReply'
+import { TerminalPaneOrbOperationPortals } from './TerminalPaneOrbOperationPortals'
 import { TerminalPaneLazyOverlays } from './TerminalPaneLazyOverlays'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
 // oxfmt-ignore
@@ -95,6 +97,7 @@ export function TerminalPaneSurface({
     sessionRestoredBannerPaneIds,
     setContainerRef,
     setRenameValue,
+    hostedInMirror,
     showSplitButton,
     splitTerminalPaneFromHeader,
     tabId,
@@ -194,6 +197,7 @@ export function TerminalPaneSurface({
         hasOpenedSearch={hasOpenedSearch}
       />
       <SessionRestoredBannerPortals panes={managedPanes} paneIds={sessionRestoredBannerPaneIds} />
+      <AgentHubPaneQuickReplyPortals panes={managedPanes} tabId={tabId} worktreeId={worktreeId} />
       <TerminalPaneNativeChatPortal controller={controller} />
       {Boolean(terminalManager) && (contextMenu.open || (isActive && hasOpenedContextMenu)) ? (
         <Suspense fallback={null}>
@@ -263,6 +267,7 @@ export function TerminalPaneSurface({
           cwd={cwd ?? ''}
           showAlwaysOnHeaders={isActive && terminalContentVisible}
           showSplitButton={showSplitButton}
+          hostedInMirror={hostedInMirror}
           isTabPinned={isTabPinned}
           paneCount={paneCount}
           activePaneId={activePane?.id}
@@ -301,6 +306,7 @@ export function TerminalPaneSurface({
       <TerminalPaneRecoveryPortals controller={controller} />
       <TerminalPaneSleepingPortals controller={controller} />
       <TerminalPaneMobileDriverPortals controller={controller} />
+      <TerminalPaneOrbOperationPortals controller={controller} />
       <CloseTerminalDialog
         open={pendingCloseConfirmation !== null}
         copyKind={pendingCloseConfirmation?.copyKind}

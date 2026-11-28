@@ -1,4 +1,8 @@
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useAppStore } from '../../../store'
+import { RetainedPaneHost } from '../../tab-group/retained-pane/RetainedPaneHost'
+import { useTerminalMountRetentionLeases } from '../../terminal-pane/terminal-mount-retention-leases'
 import TerminalPane from '../../terminal-pane/TerminalPane'
 import { TerminalRestoringPlaceholder } from '../../terminal-pane/mounting/TerminalRestoringPlaceholder'
 import { findActivityTerminalPortal } from '../../activity/terminal-portal/activity-terminal-portal'
@@ -10,6 +14,13 @@ export function TerminalLegacyTerminalPanes({
 }: {
   controller: TerminalController
 }): React.JSX.Element {
+  // Why read once: switching host type remounts every pane and loses its TUI state, so a toggled
+  // setting reaches this surface the next time it mounts.
+  const [stableHosting] = useState(
+    () => useAppStore.getState().settings?.experimentalAgentHub === true
+  )
+  const pendingStartupByTabId = useAppStore((state) => state.pendingStartupByTabId)
+  const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activeTabId,
     activeTabType,
@@ -63,7 +74,11 @@ export function TerminalLegacyTerminalPanes({
               {(tabsByWorktree[workspace.id] ?? []).map((tab) => {
                 const isActiveTerminalTab =
                   isVisible && tab.id === activeTabId && activeTabType === 'terminal'
+                const retained = mountRetentionLeases.some(
+                  (lease) => lease.worktreeId === workspace.id && lease.tabId === tab.id
+                )
                 if (
+                  !retained &&
                   !shouldMountBackgroundWorktreeTab(
                     backgroundMountTabIdsByWorktreeRef.current.get(workspace.id) ?? null,
                     tab.id
@@ -80,6 +95,7 @@ export function TerminalLegacyTerminalPanes({
                 if (
                   shouldColdParkTerminalPanes &&
                   !isActivityPortalTab &&
+                  !retained &&
                   !evictionExemptTerminalTabIds.has(tab.id)
                 ) {
                   return null
@@ -90,7 +106,11 @@ export function TerminalLegacyTerminalPanes({
                     tabId={tab.id}
                     worktreeId={workspace.id}
                     cwd={tab.startupCwd ?? workspace.path}
-                    isActive={isActiveTerminalTab || activityTerminalPortal?.active === true}
+                    isActive={
+                      stableHosting && activityTerminalPortal
+                        ? activityTerminalPortal.active
+                        : isActiveTerminalTab || activityTerminalPortal?.active === true
+                    }
                     isVisible={isActiveTerminalTab || isActivityPortalTab}
                     isWorktreeActive={isVisible || isActivityPortalTab}
                     isolatedPaneKey={activityTerminalPortal?.paneKey ?? null}
@@ -98,14 +118,35 @@ export function TerminalLegacyTerminalPanes({
                     onCloseTab={(reason) => handleCloseTab(tab.id, reason)}
                   />
                 )
-                if (activityTerminalPortal) {
-                  return createPortal(
-                    terminalPane,
-                    activityTerminalPortal.target,
-                    `activity-terminal-${tab.id}`
-                  )
+                if (!stableHosting) {
+                  return activityTerminalPortal
+                    ? createPortal(
+                        terminalPane,
+                        activityTerminalPortal.target,
+                        `activity-terminal-${tab.id}`
+                      )
+                    : terminalPane
                 }
-                return terminalPane
+                return (
+                  <RetainedPaneHost
+                    key={tab.id}
+                    groupId={undefined}
+                    unanchored
+                    retainContent
+                    isVisible={isActiveTerminalTab}
+                    // Why: a background tab with a pending startup must still measure its grid.
+                    measureWhileHidden={
+                      shouldMeasureHiddenWorktree ||
+                      (!isActiveTerminalTab && pendingStartupByTabId[tab.id] !== undefined)
+                    }
+                    destination={activityTerminalPortal?.target}
+                    restoreFocusOnMove={
+                      activityTerminalPortal ? activityTerminalPortal.active : isActiveTerminalTab
+                    }
+                  >
+                    {terminalPane}
+                  </RetainedPaneHost>
+                )
               })}
             </div>
           )

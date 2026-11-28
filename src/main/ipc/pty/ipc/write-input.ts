@@ -1,5 +1,6 @@
 import { isTerminalInputPaused } from '../../../runtime/terminal/input/terminal-input-admission'
 import type { IpcMainEvent, IpcMainInvokeEvent } from 'electron'
+import { readOrbOperations } from '../../../runtime/agent-hub/agent-hub-orb-operations'
 import type { PtyRendererDelivery } from '../session'
 import type { OrcaRuntimeService } from '../../../runtime/orca-runtime'
 import type { IPtyProvider } from '../../../providers/pty/provider-contract'
@@ -248,6 +249,14 @@ export function createPtyWriteInput(deps: {
   }
 
   const writePtyInput = (args: PtyWritePayload): boolean | Promise<boolean> => {
+    const protection = runtime ? readOrbOperations(runtime) : undefined
+    if (
+      args.inputKind !== 'query-reply' &&
+      protection &&
+      !protection.canWrite({ kind: 'terminal', ptyId: args.id, terminalHandle: args.id })
+    ) {
+      return false
+    }
     const provider = ptyOwnership.has(args.id) ? tryGetProviderForPty(args.id) : undefined
     if (!provider) {
       return false
@@ -271,6 +280,14 @@ export function createPtyWriteInput(deps: {
   }
 
   const writePtyInputAccepted = (args: PtyWritePayload): boolean | Promise<boolean> => {
+    const protection = runtime ? readOrbOperations(runtime) : undefined
+    if (
+      args.inputKind !== 'query-reply' &&
+      protection &&
+      !protection.canWrite({ kind: 'terminal', ptyId: args.id, terminalHandle: args.id })
+    ) {
+      return false
+    }
     if (args.requireWriteSettlement === true) {
       return writePtyInputSettled(args)
     }

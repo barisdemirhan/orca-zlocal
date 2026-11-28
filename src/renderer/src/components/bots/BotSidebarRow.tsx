@@ -49,6 +49,8 @@ export type BotSidebarRowProps = {
   /** A column after both lines at the row's right edge, such as the fold toggle's strip. Given one,
    *  it shows the row's working state; otherwise the row's end shows it. */
   trailing?: React.ReactNode
+  /** A hover control before that column, such as the Agent Hub's Pop out. */
+  popOut?: React.ReactNode
   /** What the hover card shows, rendered only while it is open. */
   hoverDetails: (keyboardFocus: boolean) => React.ReactNode
   /** Rename and Mark Read/Unread lead the menu; these follow. */
@@ -76,6 +78,7 @@ export function BotSidebarRow({
   age,
   line,
   trailing = null,
+  popOut = null,
   hoverDetails,
   menuItems,
   menuFooter
@@ -174,6 +177,7 @@ export function BotSidebarRow({
                   </div>
                   {line}
                 </div>
+                {popOut}
                 {trailing ?? (status === 'working' ? <BotRowWorkingMark /> : null)}
               </div>
             }

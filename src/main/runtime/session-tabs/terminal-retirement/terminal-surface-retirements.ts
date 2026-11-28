@@ -16,9 +16,12 @@ import {
 import { retireTerminalSurfaceFromPersistence } from '../../terminal/surface/mobile-session-terminal-persistence-retirement'
 import { retireTerminalSurfacesFromSnapshot } from '../../terminal/surface/mobile-session-terminal-retirement'
 import { attachRetirementProofsToSnapshot } from '../../terminal/surface/mobile-session-terminal-retirement-proof'
+import type { TerminalSurfaceCloseTarget } from '../../../../shared/workspace-layout/terminal-surfaces/terminal-surface-close-target'
 import { getRepoIdFromWorktreeId } from '../../../../shared/worktree/id'
 
 export abstract class OrcaRuntimeWithPersistTerminalSurfaceRetirements extends OrcaRuntimeWithTouchMobileSessionTabsForWorktree {
+  protected abstract pruneTerminalSpawnLineage(target: TerminalSurfaceCloseTarget): void
+
   protected abstract findHandleForPtyRecord(
     ...args: Parameters<BindPtyIncarnationHandleMethods['findHandleForPtyRecord']>
   ): ReturnType<BindPtyIncarnationHandleMethods['findHandleForPtyRecord']>

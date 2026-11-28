@@ -10,6 +10,7 @@ import {
   sshWorkspaceBrowserRouteKey,
   verifiedPartitionByRoute
 } from './ssh-workspace-browser-verified-routes'
+import type { ExecutionHostId } from '../../../../../../shared/execution-host/execution-host'
 
 export type SshWorkspaceBrowserRouteErrorKind = 'forwarding-blocked' | 'ssh-unavailable' | 'unknown'
 
@@ -59,7 +60,8 @@ function verifiedRouteState(
 /** Mount only a proxy-verified partition; preparing/failed routes must never fall back to local egress. Unrouted access requires an explicit opt-out. */
 export function useSshWorkspaceBrowserRoute(
   worktreeId: string,
-  sessionProfileId: string | null
+  sessionProfileId: string | null,
+  sourceExecutionHostId?: ExecutionHostId
 ): {
   state: SshWorkspaceBrowserRouteState
   targetId: string | null
@@ -75,7 +77,7 @@ export function useSshWorkspaceBrowserRoute(
   )
   const updateSettings = useAppStore((s) => s.updateSettings)
   const routeEligibility = resolveSshWorkspaceBrowserRouteEligibility(
-    executionHostId,
+    sourceExecutionHostId ?? executionHostId,
     browserRoutingSettings,
     environments
   )

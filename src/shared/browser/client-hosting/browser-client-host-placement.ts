@@ -32,3 +32,8 @@ export const BrowserPageCreationPlacement = lazyZodSchema(() =>
 )
 
 export type BrowserPageCreationPlacement = z.infer<typeof BrowserPageCreationPlacement>
+
+/** Preparation's answer; `statusUnavailable` marks a server placement the user did not choose. */
+export type BrowserClientHostPlacementPreparation =
+  | BrowserPageCreationPlacement
+  | { kind: 'server'; statusUnavailable: true }

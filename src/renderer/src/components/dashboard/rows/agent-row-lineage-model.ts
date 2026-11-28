@@ -3,7 +3,7 @@ import type { AgentStatusEntry } from '../../../../../shared/agent-status/contra
 /** Minimal lineage input for real dashboard rows and synthetic thread-list rows. */
 export type AgentLineageSourceRow = {
   paneKey: string
-  entry: Pick<AgentStatusEntry, 'terminalHandle' | 'orchestration'>
+  entry: Pick<AgentStatusEntry, 'terminalHandle' | 'orchestration' | 'spawnedBy'>
 }
 
 export type AgentRowLineageTree<T extends AgentLineageSourceRow> = {
@@ -27,7 +27,8 @@ function buildPaneKeyByTerminalHandle<T extends AgentLineageSourceRow>(
 export function resolveAgentRowParentPaneKey<T extends AgentLineageSourceRow>(
   row: T,
   rowsByPaneKey: ReadonlyMap<string, T>,
-  paneKeyByTerminalHandle: ReadonlyMap<string, string>
+  paneKeyByTerminalHandle: ReadonlyMap<string, string>,
+  includeSpawnedBy = false
 ): string | undefined {
   const explicitParentPaneKey = row.entry.orchestration?.parentPaneKey
   if (
@@ -51,11 +52,18 @@ export function resolveAgentRowParentPaneKey<T extends AgentLineageSourceRow>(
     }
   }
 
-  return undefined
+  const hasOrchestrationParent =
+    Boolean(explicitParentPaneKey) || parentTerminalHandles.some(Boolean)
+  const spawnedParent =
+    includeSpawnedBy && !hasOrchestrationParent ? row.entry.spawnedBy?.paneKey : undefined
+  return spawnedParent && spawnedParent !== row.paneKey && rowsByPaneKey.has(spawnedParent)
+    ? spawnedParent
+    : undefined
 }
 
 export function buildAgentRowLineageTree<T extends AgentLineageSourceRow>(
-  rows: readonly T[]
+  rows: readonly T[],
+  includeSpawnedBy = false
 ): AgentRowLineageTree<T> {
   const rowsByPaneKey = new Map<string, T>()
   for (const row of rows) {
@@ -68,7 +76,12 @@ export function buildAgentRowLineageTree<T extends AgentLineageSourceRow>(
   const childPaneKeys = new Set<string>()
 
   for (const row of rows) {
-    const parentPaneKey = resolveAgentRowParentPaneKey(row, rowsByPaneKey, paneKeyByTerminalHandle)
+    const parentPaneKey = resolveAgentRowParentPaneKey(
+      row,
+      rowsByPaneKey,
+      paneKeyByTerminalHandle,
+      includeSpawnedBy
+    )
     if (!parentPaneKey) {
       continue
     }

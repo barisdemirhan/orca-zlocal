@@ -11,6 +11,7 @@ import { makePaneKey } from '../../../../../shared/workspace-layout/stable-pane-
 import { isTuiAgent } from '../../../../../shared/agent-launch/catalog/tui-agent-config'
 import type { TuiAgent } from '../../../../../shared/agent-launch/catalog/tui-agent'
 import { translate } from '@/i18n/i18n'
+import { agentHubMirrorWindowIdOf } from '@/components/agent-hub/agent-hub-mirror-element'
 
 type PrepareAgentSessionContinuationFromPaneArgs = {
   pane: ManagedPane
@@ -83,10 +84,13 @@ export function prepareAgentSessionContinuationFromPane({
     return null
   }
 
+  const mirrorWindowId = agentHubMirrorWindowIdOf(pane.container)
   return {
     source,
     worktreeId,
     groupId,
+    // Why: where the new session opens is a mirror question; the workspace keeps jumping to it.
+    ...(mirrorWindowId ? { mirrorSource: { windowId: mirrorWindowId, tabId } } : {}),
     workspacePath,
     initialCwd: initialCwd || workspacePath,
     launchSource: 'terminal_context_menu'

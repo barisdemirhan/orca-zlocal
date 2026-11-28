@@ -1,4 +1,11 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import {
+  RetainedPaneMoveContext,
+  moveRetainedPaneContent,
+  type RetainedPaneMoveParticipant
+} from '../retained-pane-move'
+import { registerRetainedPaneDestination } from '../retained-pane-destinations'
 import { SYNC_FIT_PANES_EVENT } from '@/constants/terminal'
 import { tabGroupBodyAnchorName } from './tab-group-body-anchor'
 import { subscribeTabGroupBodyRect, type TabGroupBodyRect } from './tab-group-body-geometry'
@@ -27,6 +34,10 @@ type RetainedPaneHostProps = {
   /** Unfocused side of a split: overlays sit outside the group's DOM, so they take its dim here. */
   dimmed?: boolean
   onFocusOwningGroup?: (groupId: string) => void
+  retainContent?: boolean
+  unanchored?: boolean
+  restoreFocusOnMove?: boolean
+  destination?: HTMLElement | null
   children: React.ReactNode
   'data-terminal-overlay-tab-id'?: string
   'data-structured-agent-session-overlay-tab-id'?: string
@@ -39,12 +50,59 @@ export function RetainedPaneHost({
   fitTerminal = false,
   dimmed = false,
   onFocusOwningGroup,
+  retainContent = false,
+  unanchored = false,
+  restoreFocusOnMove = false,
+  destination = null,
   children,
   ...identity
 }: RetainedPaneHostProps): React.JSX.Element {
   const anchorName = groupId !== undefined ? tabGroupBodyAnchorName(groupId) : undefined
   const overlayRef = useRef<HTMLDivElement | null>(null)
+  const [contentContainer] = useState(() => {
+    const container = document.createElement('div')
+    container.className = 'relative flex h-full w-full min-h-0 min-w-0'
+    return container
+  })
+  const [moveParticipants] = useState(() => new Set<RetainedPaneMoveParticipant>())
   const [measuredFallbackRect, setMeasuredFallbackRect] = useState<TabGroupBodyRect | null>(null)
+  useLayoutEffect(() => {
+    const home = overlayRef.current
+    if (!retainContent || !home) {
+      return
+    }
+    // Why: moving the DOM container keeps the React portal and terminal owner unchanged.
+    const target = destination ?? home
+    if (contentContainer.parentElement === target) {
+      return
+    }
+    const focused = document.activeElement
+    moveRetainedPaneContent(contentContainer, target, moveParticipants)
+    if (
+      restoreFocusOnMove &&
+      focused instanceof HTMLElement &&
+      contentContainer.contains(focused)
+    ) {
+      focused.focus({ preventScroll: true })
+    }
+  }, [contentContainer, destination, restoreFocusOnMove, retainContent, moveParticipants])
+  useLayoutEffect(() => {
+    const home = overlayRef.current
+    return () => {
+      if (retainContent && home) {
+        home.appendChild(contentContainer)
+      }
+    }
+  }, [contentContainer, retainContent])
+  useLayoutEffect(() => {
+    const home = overlayRef.current
+    if (!retainContent || !destination || !home) {
+      return
+    }
+    return registerRetainedPaneDestination(destination, () =>
+      moveRetainedPaneContent(contentContainer, home, moveParticipants)
+    )
+  }, [contentContainer, destination, retainContent, moveParticipants])
   // Why: a hidden host renders display:none, so it has no use for group geometry until shown.
   const measuresFallbackRect =
     groupId !== undefined && !shouldUseCssAnchorPositioning() && (isVisible || measureWhileHidden)
@@ -123,22 +181,30 @@ export function RetainedPaneHost({
               opacity: isVisible ? visibleOpacity : 0,
               pointerEvents: isVisible ? 'auto' : 'none'
             }
-          : {
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: 0,
-              height: 0,
-              display: 'none',
-              pointerEvents: 'none'
-            },
-    [anchorName, isVisible, measuredFallbackRect, measureWhileHidden, visibleOpacity]
+          : unanchored
+            ? {
+                position: 'absolute',
+                inset: 0,
+                display: isVisible || measureWhileHidden ? 'flex' : 'none',
+                opacity: isVisible ? visibleOpacity : 0,
+                pointerEvents: isVisible ? 'auto' : 'none'
+              }
+            : {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: 0,
+                height: 0,
+                display: 'none',
+                pointerEvents: 'none'
+              },
+    [anchorName, isVisible, measuredFallbackRect, measureWhileHidden, unanchored, visibleOpacity]
   )
   const focusGroup = useCallback(() => {
-    if (groupId !== undefined && onFocusOwningGroup) {
+    if (!destination && groupId !== undefined && onFocusOwningGroup) {
       onFocusOwningGroup(groupId)
     }
-  }, [groupId, onFocusOwningGroup])
+  }, [destination, groupId, onFocusOwningGroup])
 
   return (
     <div
@@ -153,7 +219,13 @@ export function RetainedPaneHost({
       onPointerDown={focusGroup}
       onFocusCapture={focusGroup}
     >
-      {awaitsFirstFallbackRect ? null : children}
+      {awaitsFirstFallbackRect ? null : retainContent ? (
+        <RetainedPaneMoveContext value={moveParticipants}>
+          {createPortal(children, contentContainer)}
+        </RetainedPaneMoveContext>
+      ) : (
+        children
+      )}
     </div>
   )
 }

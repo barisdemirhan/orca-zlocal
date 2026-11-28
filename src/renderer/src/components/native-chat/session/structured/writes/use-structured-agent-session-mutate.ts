@@ -3,7 +3,7 @@ import { useNativeChatPaneLifetimeEffect } from '../../../pane/ownership/native-
 
 import { AGENT_SESSION_GOAL_CONTROL_COPY as GOAL_COPY } from '../../../../../../../shared/agent-session/view/agent-session-goal-control-copy'
 import { agentSessionGoalControlWords } from '../../goals/agent-session-goal-control-words'
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import type { AgentSessionMutationResult } from '../../../../../../../shared/agent-session/agent-session-wire'
 import {
@@ -36,7 +36,17 @@ type ExecutionResult<T> = StructuredAgentSessionWriteOutcome<T> & {
   reportFailure?: (notice: string) => void
 }
 
-type WriteArgs = [method: string, fingerprintMethod: string, fields: Record<string, unknown>]
+export type StructuredAgentSessionVoiceStartObserver = {
+  issued: (fence: number) => void
+  confirmed: (fence: number) => void
+}
+
+type WriteArgs = [
+  method: string,
+  fingerprintMethod: string,
+  fields: Record<string, unknown>,
+  voiceStartObserver?: StructuredAgentSessionVoiceStartObserver
+]
 
 export type StructuredAgentSessionWrite = <T>(
   ...args: WriteArgs
@@ -73,6 +83,21 @@ function notDone(
   }
 }
 
+function confirmsVoiceStart(value: unknown, fields: Record<string, unknown>): boolean {
+  return (
+    typeof fields.voiceSessionId === 'string' &&
+    typeof fields.generation === 'number' &&
+    typeof value === 'object' &&
+    value !== null &&
+    'voiceSessionId' in value &&
+    value.voiceSessionId === fields.voiceSessionId &&
+    'generation' in value &&
+    value.generation === fields.generation &&
+    'state' in value &&
+    value.state === 'connecting'
+  )
+}
+
 export function useStructuredAgentSessionMutate(args: {
   sessionId: string
   target: RuntimeClientTarget
@@ -90,9 +115,25 @@ export function useStructuredAgentSessionMutate(args: {
   const inFlightStops = useRef(new Map<string, Promise<ExecutionResult<unknown>>>())
   const presentation = useRef<object | null>(null)
   const hostKey = structuredAgentSessionHostKey(target)
+  const environmentId = target.kind === 'environment' ? target.environmentId : null
+  const voiceOwner = useMemo(
+    () => ({ sessionId, kind: target.kind, environmentId }),
+    [sessionId, target.kind, environmentId]
+  )
+  const currentVoiceOwner = useRef<object | null>(voiceOwner)
+  const latestVoiceStart = useRef<object | null>(null)
+  useEffect(() => {
+    currentVoiceOwner.current = voiceOwner
+    latestVoiceStart.current = null
+    return () => {
+      currentVoiceOwner.current = null
+      latestVoiceStart.current = null
+    }
+  }, [voiceOwner])
   useNativeChatPaneLifetimeEffect(
     useCallback(() => {
       presentation.current = enabled ? {} : null
+      latestVoiceStart.current = null
       return () => {
         presentation.current = null
       }
@@ -109,8 +150,31 @@ export function useStructuredAgentSessionMutate(args: {
       fingerprintMethod: string,
       fields: Record<string, unknown>,
       /** The fence when the press happened, read before any await, so a write never retargets. */
-      pressedFence: number
+      pressedFence: number,
+      voiceStartObserver?: StructuredAgentSessionVoiceStartObserver
     ): Promise<ExecutionResult<T>> => {
+      const voiceStart = method === 'agentSession.startVoice' && fingerprintMethod === method
+      if (voiceStart && currentVoiceOwner.current !== voiceOwner) {
+        return { kind: 'dropped' }
+      }
+      const request = {}
+      if (voiceStart) {
+        latestVoiceStart.current = request
+        voiceStartObserver?.issued(pressedFence)
+      }
+      // Unlike other replies, a voice start answers only this owner's latest start at its fence.
+      const voiceSettlesHere = (confirmedFence?: number): boolean => {
+        const ownsStart =
+          currentVoiceOwner.current === voiceOwner && latestVoiceStart.current === request
+        if (latestVoiceStart.current === request) {
+          latestVoiceStart.current = null
+        }
+        return (
+          ownsStart &&
+          presentation.current !== null &&
+          stateRef.current.fence === (confirmedFence ?? pressedFence)
+        )
+      }
       let result: AgentSessionMutationResult<T>
       try {
         result = await callStructuredAgentSession<AgentSessionMutationResult<T>>(target, method, {
@@ -127,6 +191,9 @@ export function useStructuredAgentSessionMutate(args: {
           ...fields
         })
       } catch (error) {
+        if (voiceStart && !voiceSettlesHere()) {
+          return { kind: 'dropped' }
+        }
         return notDone(
           agentSessionThrownFailure(
             error,
@@ -138,6 +205,9 @@ export function useStructuredAgentSessionMutate(args: {
         )
       }
       if (!result.ok) {
+        if (voiceStart && !voiceSettlesHere()) {
+          return { kind: 'dropped' }
+        }
         const outcome = notDone(
           agentSessionRefusalFailure(result.refusal),
           fingerprintMethod,
@@ -155,9 +225,20 @@ export function useStructuredAgentSessionMutate(args: {
         }
         return outcome
       }
+      if (voiceStart) {
+        if (!Number.isSafeInteger(result.fence) || !confirmsVoiceStart(result.value, fields)) {
+          voiceSettlesHere()
+          return { kind: 'dropped' }
+        }
+        // Cleanup belongs to the issued voice even after its pane hides; its UI reply still drops.
+        voiceStartObserver?.confirmed(result.fence)
+        if (!voiceSettlesHere(result.fence)) {
+          return { kind: 'dropped' }
+        }
+      }
       return { kind: 'done', value: result.value }
     },
-    [agentName, sessionId, target]
+    [agentName, sessionId, stateRef, target, voiceOwner]
   )
 
   const admit = useCallback((): StructuredAgentSessionAction | null => {
@@ -169,13 +250,14 @@ export function useStructuredAgentSessionMutate(args: {
     const execute = async <T>(
       method: string,
       fingerprintMethod: string,
-      fields: Record<string, unknown>
+      fields: Record<string, unknown>,
+      voiceStartObserver?: StructuredAgentSessionVoiceStartObserver
     ): Promise<ExecutionResult<T>> => {
       if (
         !structuredAgentSessionStopIsJoinable(fingerprintMethod, fields) ||
         (await supportsStructuredAgentSessionQuietRepeatedStop(target))
       ) {
-        return send<T>(method, fingerprintMethod, fields, pressedFence)
+        return send<T>(method, fingerprintMethod, fields, pressedFence, voiceStartObserver)
       }
       // Older hosts lack quiet repeated Stops; retain joining until none remain supported.
       const key = `${hostKey}:${sessionId}:${method}:${JSON.stringify(fields)}`

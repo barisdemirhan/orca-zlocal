@@ -8,8 +8,10 @@ import { REPO_COMMAND_SPECS } from './repo'
 import { TERMINAL_SEND_COMMAND_SPEC } from './terminal-send'
 import { TERMINAL_CLOSE_COMMAND_SPEC } from './terminal-close'
 import { TERMINAL_SET_PANE_TITLE_COMMAND_SPEC } from './terminal-set-pane-title'
+import { AGENT_HUB_COMMAND_SPECS } from './agent-hub'
 
 export const CORE_COMMAND_SPECS: CommandSpec[] = [
+  ...AGENT_HUB_COMMAND_SPECS,
   {
     path: ['open'],
     summary: 'Launch Orca and wait for the runtime to be reachable',

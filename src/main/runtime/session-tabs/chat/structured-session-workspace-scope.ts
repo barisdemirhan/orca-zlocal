@@ -68,13 +68,14 @@ export abstract class StructuredSessionWorkspaceScope extends OrcaRuntimeWithStr
     return (await this.openAgentSessionRecordStore()).listWorkspaceSessions(location)
   }
 
-  protected async resolveStructuredAgentSessionLocation(worktreeSelector: string) {
+  protected async resolveStructuredAgentSessionLocation(worktreeSelector: string, cwd?: string) {
     const target = await this.resolveRuntimeFileTarget(worktreeSelector)
-    return this.structuredAgentSessionLocationForTarget(target)
+    return this.structuredAgentSessionLocationForTarget(target, cwd)
   }
 
   protected structuredAgentSessionLocationForTarget(
-    target: Awaited<ReturnType<RuntimeWorkspaceFileTargets['resolveRuntimeFileTarget']>>
+    target: Awaited<ReturnType<RuntimeWorkspaceFileTargets['resolveRuntimeFileTarget']>>,
+    cwd?: string
   ) {
     const routing = resolveWorktreeHostRouting(this.store?.getRepos() ?? [], target.worktree)
     if (routing.kind === 'ambiguous') {
@@ -89,7 +90,7 @@ export abstract class StructuredSessionWorkspaceScope extends OrcaRuntimeWithStr
       repo: routing.kind === 'resolved' ? routing.repo : null,
       executionHostId: target.executionHostId,
       workspaceId: target.worktree.id,
-      workspacePath: target.worktree.path,
+      workspacePath: cwd ?? target.worktree.path,
       folderWorkspace
     })
   }

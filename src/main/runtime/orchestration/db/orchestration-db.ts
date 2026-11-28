@@ -1,3 +1,4 @@
+import type { DecisionGateRow } from './orchestration-records'
 import { CrewChanges } from '../crew/crew-changes'
 import Database from '../../../sqlite/sync-database'
 import { attachOrchestrationDbMethods } from './attach-orchestration-db-methods'
@@ -17,6 +18,7 @@ import {
 import { createTables } from './schema/create-tables'
 import { createPeerRunQueueTriggers } from './peer-runs/peer-run-queue-sql'
 import { migrate } from './schema/migrate'
+import { ensureDecisionGateResolverColumn } from './schema/decision-gate-resolver-column'
 import { backfillStructuredWorkerOrcaSessionIds } from './schema/structured-worker-orca-session-backfill'
 import { reconcileSettledWorkerDispatches } from './worker-dispatch/worker-dispatch-settlement'
 import { installWorkerStatusNotice, type DispatchRowChange } from './worker-status-notice'
@@ -33,6 +35,7 @@ class OrchestrationDbCore {
   readonly crewChanges = new CrewChanges()
   db: Database.Database
   readonly workerDockSources: WorkerDockSourcePresence
+  onDecisionGateChanged?: (gate: DecisionGateRow) => void
 
   // Cache Dispatch emptiness to skip per-terminal queries on 16ms graph ticks for users without orchestration.
   hasAnyDispatchContextsCache: boolean | undefined
@@ -84,6 +87,7 @@ class OrchestrationDbCore {
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: attached schema methods are installed before any DB instance is constructed.
     installWorkerDockSchema.call(this as unknown as OrchestrationDb)
     this.workerDockSources = new WorkerDockSourcePresence(this.db)
+    ensureDecisionGateResolverColumn(this.db)
     refreshOutstandingDeliveryTrigger(this.db)
     installWorkerTerminalPriorOwnerIndex(this)
     for (const [table, columns] of [

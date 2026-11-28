@@ -16,6 +16,7 @@ import { TerminalOverlaySlot } from './TerminalOverlaySlot'
 import { captureWorkspaceEmptiedReaction } from '../../../lib/workspace/tabs/close/workspace-emptied-reaction'
 import { TerminalRestoringPlaceholder } from './TerminalRestoringPlaceholder'
 import { useTerminalTabColdParking } from '../parking/lifecycle/use-terminal-tab-cold-parking'
+import { useTerminalMountRetentionLeases } from '../terminal-mount-retention-leases'
 
 type TerminalOverlayAssignment = {
   unifiedTabId: string
@@ -55,9 +56,11 @@ const TerminalPaneOverlayLayer = memo(function TerminalPaneOverlayLayer({
   backgroundMountTabIds?: ReadonlySet<string> | null
   /** Cold-activation deferred tabs receive immediate parked watcher coverage. */
   activationDeferredMountTabIds?: ReadonlySet<string> | null
-  /** Grant global keyboard chords to one workspace even when another overlay workspace remains visible. */
+  /** False for overlay hosts whose workspace is visible while another owns global keyboard
+   *  chords — the toggle listener is gated to one live workspace at a time. */
   ownsNativeChatToggleShortcut?: boolean
 }): React.JSX.Element | null {
+  const mountRetentionLeases = useTerminalMountRetentionLeases()
   const { terminalTabs, unifiedTabs, groups, activeGroupId } = useAppStore(
     useShallow((state) => ({
       terminalTabs: state.tabsByWorktree[worktreeId] ?? EMPTY_TERMINAL_TABS,
@@ -139,8 +142,12 @@ const TerminalPaneOverlayLayer = memo(function TerminalPaneOverlayLayer({
       {terminalTabs.map((terminalTab) => {
         const assignment = assignments.get(terminalTab.id)
         const isVisible = Boolean(isWorktreeActive && assignment?.isActiveInGroup)
-        if (!shouldMountBackgroundWorktreeTab(backgroundMountTabIds, terminalTab.id)) {
-          // Only startup holds remain visible here; other visible deferred tabs are admitted in this render.
+        const retained = mountRetentionLeases.some(
+          (lease) => lease.worktreeId === worktreeId && lease.tabId === terminalTab.id
+        )
+        if (!retained && !shouldMountBackgroundWorktreeTab(backgroundMountTabIds, terminalTab.id)) {
+          // Why only the startup hold lands here visible: reveal admits every other visible
+          // deferred tab in the same render pass.
           return isVisible ? (
             <RetainedPaneHost
               key={terminalTab.id}

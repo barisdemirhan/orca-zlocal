@@ -24,6 +24,12 @@ import {
   type TerminalLinkActionContext
 } from '../terminal-link-action-request'
 
+import {
+  agentHubPeekUrlAction,
+  peekTerminalUrlFromMirror,
+  type AgentHubPeekLinkSource
+} from '@/components/agent-hub/agent-hub-peek-routing'
+
 type UrlLinkHitTestDeps = {
   worktreeId: string
   sourceTabId?: string | null
@@ -63,7 +69,24 @@ export function handleTerminalHttpLink(
   event: MouseEvent | undefined,
   deps: UrlLinkHitTestDeps
 ): boolean {
+  const peekSource: AgentHubPeekLinkSource = {
+    worktreeId: deps.worktreeId,
+    onPairedRuntime: deps.sourceOwner?.kind === 'runtime' || deps.sourceOwner?.kind === 'unknown',
+    sourceOwner: deps.sourceOwner,
+    event,
+    openInWorkspace: () =>
+      openRoutedHttpLink(url, {
+        ...deps,
+        modifierHeld: false,
+        forceDestination: deps.actionDestinations?.primary
+      }),
+    openExternally: () =>
+      openRoutedHttpLink(url, { ...deps, modifierHeld: false, forceDestination: 'system' })
+  }
   if (isTerminalHttpLinkActivation(event)) {
+    if (!event?.shiftKey && peekTerminalUrlFromMirror(url, peekSource)) {
+      return true
+    }
     const forceDestination =
       deps.actionDestinations &&
       httpLinkDirectClickDestination(deps.actionDestinations, Boolean(event?.shiftKey))
@@ -75,20 +98,27 @@ export function handleTerminalHttpLink(
     return true
   }
 
+  const peek = agentHubPeekUrlAction(url, peekSource)
+  const actions = buildHttpLinkActions(
+    deps.actionDestinations,
+    (destination) =>
+      openRoutedHttpLink(url, { ...deps, modifierHeld: false, forceDestination: destination }),
+    {
+      ...deps,
+      url,
+      openInSourceGroup: () =>
+        openRoutedHttpLink(url, { ...deps, forceDestination: 'orca', openInSourceGroup: true })
+    }
+  )
   return requestTerminalLinkAction(event, deps.linkActionContext, {
     destination: deps.actionDestination ?? url,
     kind: 'url',
-    ...buildHttpLinkActions(
-      deps.actionDestinations,
-      (destination) =>
-        openRoutedHttpLink(url, { ...deps, modifierHeld: false, forceDestination: destination }),
-      {
-        ...deps,
-        url,
-        openInSourceGroup: () =>
-          openRoutedHttpLink(url, { ...deps, forceDestination: 'orca', openInSourceGroup: true })
-      }
-    )
+    ...actions,
+    primary: {
+      ...actions.primary,
+      shortcut: peek?.shortcut === 'primary' ? (actions.alternate ? null : 'alternate') : 'primary'
+    },
+    ...(peek ? { secondaryActions: [peek, ...(actions.secondaryActions ?? [])] } : {})
   })
 }
 

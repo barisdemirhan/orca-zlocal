@@ -2,7 +2,10 @@ import type { HttpLinkAction } from '@/lib/browser/navigation/http-link-destinat
 
 export type LinkActionKind = 'url' | 'file' | 'workspace' | 'terminal' | 'task'
 
-export type LinkAction = HttpLinkAction
+export type LinkAction = HttpLinkAction & {
+  /** Overrides the row's default click hint; null hides it. */
+  shortcut?: 'primary' | 'alternate' | null
+}
 
 /** A pending destination choice for one clicked link, anchored at the pointer. */
 export type LinkActionRequest = {
@@ -14,7 +17,7 @@ export type LinkActionRequest = {
   kind: LinkActionKind
   primary: LinkAction
   alternate?: LinkAction
-  /** Rows after primary/alternate that have no click shortcut. */
+  /** Additional rows, without a click shortcut unless the action specifies one. */
   secondaryActions?: readonly LinkAction[]
   /** Hands focus back to the surface that owned the click (terminal, chat transcript). */
   restoreFocus: () => void

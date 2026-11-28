@@ -1,8 +1,8 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/class-names'
 import { useTranslate } from '@/i18n/use-translate'
 import { NativeChatQuestionText } from './NativeChatQuestionText'
-import { NativeChatQuestionOption } from './NativeChatQuestionOption'
+import { NativeChatQuestionOptionRow } from '../NativeChatQuestionOptionRow'
 import { CONFIRM_LABEL, NativeChatQuestionConfirmButton } from './NativeChatQuestionConfirmButton'
 import {
   NativeChatQuestionCardHeader,
@@ -19,8 +19,9 @@ import {
   useReportNativeChatQuestionDraft,
   foldNativeChatQuestionOnEscape,
   confirmNativeChatQuestionOnCardEnter,
-  type NativeChatQuestionCardProps
+  type NativeChatQuestionCardProps as NativeChatQuestionCardBaseProps
 } from './NativeChatQuestionCardParts'
+import type { NativeChatQuestionCardHostProps } from './native-chat-question-card-host'
 import { useNativeChatDockRefit } from '../pane/dock/use-native-chat-dock-fit'
 import {
   askAcceptsEmptyAnswer,
@@ -32,7 +33,10 @@ import {
   toggleAskOption
 } from '../../../../../shared/native-chat/input/questions/native-chat-ask-card-rules'
 
-export type { NativeChatQuestionCardProps } from './NativeChatQuestionCardParts'
+export type { NativeChatQuestionCardControl } from './native-chat-question-card-host'
+
+export type NativeChatQuestionCardProps = NativeChatQuestionCardBaseProps &
+  NativeChatQuestionCardHostProps
 
 // Reserve a non-option index so single-select holds either an option or typed text.
 const TYPED_ANSWER = -1
@@ -51,10 +55,15 @@ export function NativeChatQuestionCard({
   shouldFocus = false,
   answerInputRef,
   look,
-  draft
+  draft,
+  answerTextareaRef,
+  answerAccessory,
+  layout = 'composer',
+  controlRef
 }: NativeChatQuestionCardProps): React.JSX.Element {
   const t = useTranslate()
-  const column = usePromptCardColumn('px-3 pb-4 sm:px-4')
+  const promptColumn = usePromptCardColumn('px-3 pb-4 sm:px-4')
+  const column = layout === 'embedded' ? cn(promptColumn, 'max-w-none p-0 sm:p-0') : promptColumn
   const cardRef = useRef<HTMLDivElement>(null)
   const surfaceRef = useRef<HTMLDivElement>(null)
   const blocked = isSubmitting || isCancelling
@@ -222,6 +231,24 @@ export function NativeChatQuestionCard({
     }
   }
 
+  useImperativeHandle(controlRef, () => ({
+    chooseOption: (optionIndex: number): boolean => {
+      if (blocked || !q.options[optionIndex]) {
+        return false
+      }
+      if (q.multiSelect) {
+        pickOption(optionIndex)
+        return true
+      }
+      // A hub number key answers at once, without the click's beat to take it back.
+      autoAdvance.cancel()
+      const next = selections.map((choices, qi) => (qi === index ? [optionIndex] : choices))
+      setSelections(next)
+      advanceOrSubmit(next, otherText)
+      return true
+    }
+  }))
+
   const confirm = (fromKeyboard = false): void => {
     autoAdvance.cancel()
     if (blocked) {
@@ -278,7 +305,11 @@ export function NativeChatQuestionCard({
       aria-label={nativeChatQuestionCardLabel(t, q, index, total)}
       tabIndex={-1}
       // The card opens focused but must not look picked or ringed; options draw their own focus.
-      className={cn('flex min-h-0 shrink flex-col bg-chat-pane outline-none', look?.frameClassName)}
+      className={cn(
+        'flex min-h-0 shrink flex-col bg-chat-pane outline-none data-[layout=embedded]:bg-transparent',
+        look?.frameClassName
+      )}
+      data-layout={layout}
       aria-busy={isSubmitting}
       onKeyDown={(event) => {
         if (!confirmNativeChatQuestionOnCardEnter(event, currentAnswered, () => confirm(true))) {
@@ -335,7 +366,7 @@ export function NativeChatQuestionCard({
               >
                 <div data-native-chat-dock-content className="flex flex-col gap-1.5">
                   {q.options.map((opt, i) => (
-                    <NativeChatQuestionOption
+                    <NativeChatQuestionOptionRow
                       key={`${i}:${opt.label}`}
                       badge={String(i + 1)}
                       label={opt.label}
@@ -358,7 +389,10 @@ export function NativeChatQuestionCard({
                 disabled={isSubmitting}
                 takesFocus={q.options.length === 0}
                 placeholder={answerPlaceholder}
-                inputRef={answerInputRef}
+                inputRef={
+                  freeTextInput?.multiline ? (answerTextareaRef ?? answerInputRef) : answerInputRef
+                }
+                accessory={answerAccessory}
                 onChange={(value) => setOther(index, value)}
                 onPointerChoose={() => {
                   autoAdvance.cancel()

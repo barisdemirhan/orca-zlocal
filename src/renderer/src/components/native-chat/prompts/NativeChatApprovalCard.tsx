@@ -23,11 +23,11 @@ import {
   useNativeChatPromptCardFocus
 } from './use-native-chat-prompt-card-focus'
 import { useNativeChatApprovalQuietDetail } from './use-native-chat-approval-quiet-detail'
-import { useApprovalCardFrameClasses } from './native-chat-approval-card-frame'
+import { useApprovalCardFrameClasses, type ApprovalLayout } from './native-chat-approval-card-frame'
 import { useNativeChatDockRefit } from '../pane/dock/use-native-chat-dock-fit'
 import { NativeChatUrlTarget, openUrlRequestPage } from './NativeChatUrlRequest'
 
-export type NativeChatApprovalCardProps = {
+export type NativeChatApprovalCardProps = ApprovalLayout & {
   approval: ChatApproval
   /** Deliver the option's transport-specific response token. */
   onChoose: (option: string) => void
@@ -65,6 +65,7 @@ export function NativeChatApprovalCard({
   isSubmitting = false,
   submittingOption,
   shouldFocus = false,
+  layout = 'composer',
   onOpenTerminal,
   worker,
   countdown,
@@ -131,7 +132,7 @@ export function NativeChatApprovalCard({
     approval.detail
   ])
   const escape = onCancel ?? (isSubmitting ? undefined : onCollapse)
-  const frame = useApprovalCardFrameClasses({ stacked, joined, quiet })
+  const frame = useApprovalCardFrameClasses({ stacked, joined, quiet, layout })
 
   return (
     <SecuritySurface>

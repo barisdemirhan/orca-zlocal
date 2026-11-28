@@ -82,6 +82,7 @@ export function useTerminalPaneGlobalListeners(controller: TerminalPaneMountedCo
   useTerminalPaneGlobalEffects({
     terminalManager,
     tabId,
+    worktreeId,
     cwd,
     isActive,
     isVisible,

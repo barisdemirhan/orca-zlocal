@@ -10,6 +10,7 @@ import { renderFloatingTerminalOrchestrationCard } from './orchestration/Floatin
 import { FloatingTerminalOrchestrationDialog } from './orchestration/FloatingTerminalOrchestrationDialog'
 import { FloatingTerminalResizeHandles } from './geometry/FloatingTerminalResizeHandles'
 import { FloatingTerminalWindowControls } from './FloatingTerminalWindowControls'
+import { AgentHubFloatingPopoutProvider } from '../agent-hub/AgentHubTabPopout'
 import type { useFloatingTerminalPanelController } from './use-floating-terminal-panel-controller'
 import type { Translate } from '@/i18n/use-translate'
 
@@ -103,164 +104,180 @@ export function renderFloatingTerminalPanelSurface(
       }}
       onFocusCapture={(event) => reportFloatingFocusFromTarget(event.target)}
       onBlurCapture={(event) => {
-        // Preserve shortcut ownership across macOS IME’s synchronous blur until refocus/skip settles it.
+        // Why: keep terminal-first shortcut ownership latched during the
+        // synchronous macOS IME refresh blur; refocus or its skip callback settles it.
         if (!isTerminalImeInputContextRefreshing(event.target)) {
           reportFloatingFocusFromTarget(event.relatedTarget)
         }
       }}
       onKeyDownCapture={handleShortcutSurfaceKeyDown}
     >
-      {/* Share one drag context between the strip and body so tabs can reorder or split. */}
-      <WorkspaceTabDragLayer worktreeId={FLOATING_TERMINAL_WORKTREE_ID} enabled={open}>
-        {({ isTabDragActive, hoveredTabInsertion, setDragRootNode }) => (
-          <div
-            ref={setDragRootNode}
-            className="relative flex h-full w-full min-h-0 flex-col overflow-hidden rounded-lg border border-black/14 bg-card dark:border-white/14"
-          >
+      {/* Why one drag layer around titlebar AND body: the titlebar strip's sortables and the
+          body tree's split/pane-body drop targets must live in the same dnd-kit scope, so a
+          floating tab drag can reorder in the strip or split against the tree — exactly one
+          DndContext owns floating tab drag. */}
+      <AgentHubFloatingPopoutProvider onOpenChange={onOpenChange}>
+        <WorkspaceTabDragLayer worktreeId={FLOATING_TERMINAL_WORKTREE_ID} enabled={open}>
+          {({ isTabDragActive, hoveredTabInsertion, setDragRootNode }) => (
             <div
-              className="flex h-9 shrink-0 cursor-grab items-center border-b border-border bg-[var(--bg-titlebar,var(--tab-bar,var(--card)))] active:cursor-grabbing"
-              data-floating-terminal-shortcut-surface
-              onPointerDown={handleDragStart}
-              onPointerMove={handleDragMove}
-              onPointerUp={handleDragEnd}
-              onPointerCancel={handleDragEnd}
-              onDoubleClick={handleTitlebarDoubleClick}
+              ref={setDragRootNode}
+              className="relative flex h-full w-full min-h-0 flex-col overflow-hidden rounded-lg border border-black/14 bg-card dark:border-white/14"
             >
-              <div className="flex h-full min-w-0 flex-1">
-                <TabBar
-                  tabs={terminalItems}
-                  activeTabId={
-                    activeTab?.contentType === 'agent-session' ? activeTab.id : activeTerminalId
-                  }
-                  groupId={activeGroup?.id}
-                  worktreeId={FLOATING_TERMINAL_WORKTREE_ID}
-                  expandedPaneByTabId={expandedPaneByTabId}
-                  onActivate={model.commands.activateTerminal}
-                  onClose={closeFloatingItemConfirmed}
-                  onCloseOthers={closeOthers}
-                  onCloseToRight={closeToRight}
-                  onCloseToLeft={closeToLeft}
-                  onNewTerminalTab={() => createFloatingTerminalTab()}
-                  onNewTerminalWithShell={createFloatingTerminalTab}
-                  onNewBrowserTab={createFloatingBrowserTab}
-                  onNewFileTab={createFloatingMarkdownTab}
-                  onOpenFileTab={openFloatingMarkdownTab}
-                  newTabMenuSurface="floating-panel"
-                  onSetCustomTitle={setTabCustomTitle}
-                  onSetTabColor={setTabColor}
-                  onTogglePaneExpand={(tabId) =>
-                    setTabPaneExpanded(tabId, expandedPaneByTabId[tabId] !== true)
-                  }
-                  editorFiles={model.editorItems}
-                  browserTabs={model.browserItems}
-                  agentSessionTabs={model.agentSessionItems}
-                  groupActiveTabId={activeTab?.id ?? null}
-                  activeFileId={activeEditorUnifiedId}
-                  activeBrowserTabId={activeBrowserId}
-                  activeSimulatorTabId={
-                    activeTab?.contentType === 'simulator' ? activeTab.id : null
-                  }
-                  activeTabType={activeTabType}
-                  onActivateFile={model.commands.activateEditor}
-                  onCloseFile={closeFloatingItemConfirmed}
-                  onActivateBrowserTab={model.commands.activateBrowser}
-                  onActivateAgentSession={model.commands.activateAgentSession}
-                  onCloseBrowserTab={closeFloatingItemConfirmed}
-                  onDuplicateBrowserTab={(browserTabId, sourceUnifiedTabId) => {
-                    const source = model.browserItems.find((tab) => tab.id === browserTabId)
-                    if (!source) {
-                      return
-                    }
-                    createBrowserTab(FLOATING_TERMINAL_WORKTREE_ID, source.url, {
-                      ...buildDuplicatedBrowserTabOptions(source),
-                      afterTabId: sourceUnifiedTabId,
-                      browserRuntimeEnvironmentId: null
-                    })
-                  }}
-                  onCloseAllFiles={closeAllFiles}
-                  onMakePreviewFilePermanent={makePreviewFilePermanent}
-                  onPinFile={pinFile}
-                  tabBarOrder={model.tabBarOrder}
-                  hoveredTabInsertion={hoveredTabInsertion}
-                  tabStripChrome="floating-panel"
-                />
-              </div>
-              {/* Keep a grab area even when the tab strip overflows. */}
               <div
-                className="h-full w-16 shrink-0 select-none"
-                data-floating-terminal-drag-handle
-                aria-hidden
-              />
-              <FloatingTerminalWindowControls
-                maximized={maximized}
-                onToggleMaximized={toggleMaximized}
-                onMinimize={() => onOpenChange(false)}
-              />
-            </div>
-
-            <div
-              className="relative min-h-0 flex-1 overflow-hidden bg-background"
-              data-contextual-tour-target={
-                hasVisibleFloatingTabs ? 'floating-workspace-surface' : undefined
-              }
-            >
-              {/* Unresolvable stale tabs need the empty-state actions instead of a blank body. */}
-              {surface.kind === 'workspace' && hasVisibleFloatingTabs ? (
-                // The tree needs a flex host owning its rect; reserve a 4px east resize lane when unmaximized so xterm's scrollbar stays uncovered.
-                <div
-                  className={`absolute inset-y-0 left-0 flex ${maximized ? 'right-0' : 'right-1'}`}
-                  data-floating-workspace-surface-frame
-                >
-                  <TabGroupSplitNodeTree
-                    layout={surface.layout}
+                className="flex h-9 shrink-0 cursor-grab items-center border-b border-border bg-[var(--bg-titlebar,var(--tab-bar,var(--card)))] active:cursor-grabbing"
+                data-floating-terminal-shortcut-surface
+                onPointerDown={handleDragStart}
+                onPointerMove={handleDragMove}
+                onPointerUp={handleDragEnd}
+                onPointerCancel={handleDragEnd}
+                onDoubleClick={handleTitlebarDoubleClick}
+              >
+                <div className="flex h-full min-w-0 flex-1">
+                  <TabBar
+                    tabs={terminalItems}
+                    activeTabId={
+                      activeTab?.contentType === 'agent-session' ? activeTab.id : activeTerminalId
+                    }
+                    groupId={activeGroup?.id}
                     worktreeId={FLOATING_TERMINAL_WORKTREE_ID}
-                    focusedGroupId={surface.focusedGroupId}
-                    isWorktreeActive={open}
-                    isTabDragActive={isTabDragActive}
+                    expandedPaneByTabId={expandedPaneByTabId}
+                    onActivate={model.commands.activateTerminal}
+                    onClose={closeFloatingItemConfirmed}
+                    onCloseOthers={closeOthers}
+                    onCloseToRight={closeToRight}
+                    onCloseToLeft={closeToLeft}
+                    onNewTerminalTab={() => createFloatingTerminalTab()}
+                    onNewTerminalWithShell={createFloatingTerminalTab}
+                    onNewBrowserTab={createFloatingBrowserTab}
+                    onNewFileTab={createFloatingMarkdownTab}
+                    onOpenFileTab={openFloatingMarkdownTab}
+                    newTabMenuSurface="floating-panel"
+                    onSetCustomTitle={setTabCustomTitle}
+                    onSetTabColor={setTabColor}
+                    onTogglePaneExpand={(tabId) =>
+                      setTabPaneExpanded(tabId, expandedPaneByTabId[tabId] !== true)
+                    }
+                    editorFiles={model.editorItems}
+                    browserTabs={model.browserItems}
+                    agentSessionTabs={model.agentSessionItems}
+                    groupActiveTabId={activeTab?.id ?? null}
+                    activeFileId={activeEditorUnifiedId}
+                    activeBrowserTabId={activeBrowserId}
+                    activeSimulatorTabId={
+                      activeTab?.contentType === 'simulator' ? activeTab.id : null
+                    }
+                    activeTabType={activeTabType}
+                    onActivateFile={model.commands.activateEditor}
+                    onCloseFile={closeFloatingItemConfirmed}
+                    onActivateBrowserTab={model.commands.activateBrowser}
+                    onActivateAgentSession={model.commands.activateAgentSession}
+                    onCloseBrowserTab={closeFloatingItemConfirmed}
+                    onDuplicateBrowserTab={(browserTabId, sourceUnifiedTabId) => {
+                      const source = model.browserItems.find((tab) => tab.id === browserTabId)
+                      if (!source) {
+                        return
+                      }
+                      createBrowserTab(FLOATING_TERMINAL_WORKTREE_ID, source.url, {
+                        ...buildDuplicatedBrowserTabOptions(source),
+                        afterTabId: sourceUnifiedTabId,
+                        browserRuntimeEnvironmentId: null
+                      })
+                    }}
+                    onCloseAllFiles={closeAllFiles}
+                    onMakePreviewFilePermanent={makePreviewFilePermanent}
+                    onPinFile={pinFile}
+                    tabBarOrder={model.tabBarOrder}
                     hoveredTabInsertion={hoveredTabInsertion}
-                    // Why external: the titlebar strip above is the panel's one tab row.
-                    tabStrip="external"
-                    // Floating scratch Markdown is local context rather than a repository review surface.
-                    markdownAnnotationsEnabled={false}
-                    rootTouchesBottomEdge={true}
-                  />
-                  {/* Wait for viewport settling before fitting terminals; a post-maximize fit can damage live TUI scrollback. */}
-                  <WorkspacePaneOverlayLayers
-                    worktreeId={FLOATING_TERMINAL_WORKTREE_ID}
-                    worktreePath={cwd && panelViewportSettled ? cwd : ''}
-                    isVisible={open}
-                    shouldMeasureHiddenWorktree={false}
-                    shouldColdParkTerminalPanes={false}
-                    isForceParked={false}
-                    activityTerminalPortals={NO_ACTIVITY_TERMINAL_PORTALS}
-                    backgroundMountTabIds={null}
-                    activationDeferredMountTabIds={null}
-                    mountRetainedBrowserOverlay={true}
-                    mountEmulatorOverlay={true}
-                    // Why: the active workspace's listener owns the chord while the panel overlays it.
-                    ownsNativeChatToggleShortcut={false}
+                    tabStripChrome="floating-panel"
                   />
                 </div>
-              ) : (
-                <FloatingTerminalEmptyState
-                  onNewTerminal={() => createFloatingTerminalTab()}
-                  onNewMarkdown={createFloatingMarkdownTab}
-                  onOpenMarkdown={openFloatingMarkdownTab}
-                  onNewBrowser={createFloatingBrowserTab}
-                  showNewBrowser={managedBrowserCreationEnabled}
-                  onClose={() => onOpenChange(false)}
-                  onFocusPanel={focusPanelForShortcuts}
-                  newTerminalShortcut={newTerminalShortcut}
-                  newBrowserShortcut={newBrowserShortcut}
-                  newMarkdownShortcut={newMarkdownShortcut}
-                  openMarkdownShortcut={openMarkdownShortcut}
-                  closeShortcut={closeShortcut}
+                {/* Keep a grab area even when the tab strip overflows. */}
+                <div
+                  className="h-full w-16 shrink-0 select-none"
+                  data-floating-terminal-drag-handle
+                  aria-hidden
                 />
-              )}
+                <FloatingTerminalWindowControls
+                  open={open}
+                  maximized={maximized}
+                  onToggleMaximized={toggleMaximized}
+                  onMinimize={() => onOpenChange(false)}
+                />
+              </div>
+
+              <div
+                className="relative min-h-0 flex-1 overflow-hidden bg-background"
+                data-contextual-tour-target={
+                  hasVisibleFloatingTabs ? 'floating-workspace-surface' : undefined
+                }
+              >
+                {/* Why also gated on resolvable items: stale unified tabs whose entities are gone
+                  must show the empty state (with its CTAs), not a blank group body. */}
+                {surface.kind === 'workspace' && hasVisibleFloatingTabs ? (
+                  // Why the flex frame: the tree's nodes size themselves as flex items (flex-1), so
+                  // the host must own their rect with a flex container — same contract as
+                  // WorktreeSplitSurface. In a block parent every pane collapses to 0px.
+                  // Reserve a 4px east resize lane when unmaximized so xterm's scrollbar stays uncovered.
+                  <div
+                    className={`absolute inset-y-0 left-0 flex ${maximized ? 'right-0' : 'right-1'}`}
+                    data-floating-workspace-surface-frame
+                  >
+                    <TabGroupSplitNodeTree
+                      layout={surface.layout}
+                      worktreeId={FLOATING_TERMINAL_WORKTREE_ID}
+                      focusedGroupId={surface.focusedGroupId}
+                      isWorktreeActive={open}
+                      isTabDragActive={isTabDragActive}
+                      hoveredTabInsertion={hoveredTabInsertion}
+                      // Why external: the titlebar strip above is the panel's one tab row.
+                      tabStrip="external"
+                      // Why: floating workspace markdown is scratch/local context,
+                      // not a repo review surface that should expose agent notes.
+                      markdownAnnotationsEnabled={false}
+                      rootTouchesBottomEdge={true}
+                    />
+                    {/* Why also gated on a settled viewport: a restored-maximized panel derives its
+                      rect from the live viewport, so mounting terminals before the window finishes
+                      maximizing fits them to a grid it is about to leave, and the correcting fit
+                      reflows the buffer under a live TUI. An empty worktreePath mounts no
+                      terminal panes; browser/editor/chat panes are not viewport-fitted. */}
+                    <WorkspacePaneOverlayLayers
+                      worktreeId={FLOATING_TERMINAL_WORKTREE_ID}
+                      worktreePath={cwd && panelViewportSettled ? cwd : ''}
+                      isVisible={open}
+                      shouldMeasureHiddenWorktree={false}
+                      shouldColdParkTerminalPanes={false}
+                      isForceParked={false}
+                      activityTerminalPortals={NO_ACTIVITY_TERMINAL_PORTALS}
+                      backgroundMountTabIds={null}
+                      activationDeferredMountTabIds={null}
+                      mountRetainedBrowserOverlay={true}
+                      mountEmulatorOverlay={true}
+                      // Why: the active workspace's listener owns the chord while the panel overlays it.
+                      ownsNativeChatToggleShortcut={false}
+                    />
+                  </div>
+                ) : (
+                  <FloatingTerminalEmptyState
+                    onNewTerminal={() => createFloatingTerminalTab()}
+                    onNewMarkdown={createFloatingMarkdownTab}
+                    onOpenMarkdown={openFloatingMarkdownTab}
+                    onNewBrowser={createFloatingBrowserTab}
+                    showNewBrowser={managedBrowserCreationEnabled}
+                    onClose={() => onOpenChange(false)}
+                    onFocusPanel={focusPanelForShortcuts}
+                    newTerminalShortcut={newTerminalShortcut}
+                    newBrowserShortcut={newBrowserShortcut}
+                    newMarkdownShortcut={newMarkdownShortcut}
+                    openMarkdownShortcut={openMarkdownShortcut}
+                    closeShortcut={closeShortcut}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        )}
-      </WorkspaceTabDragLayer>
+          )}
+        </WorkspaceTabDragLayer>
+      </AgentHubFloatingPopoutProvider>
       {renderFloatingTerminalOrchestrationCard(
         {
           visible: showOrchestrationSetup && activeTabType === 'terminal',

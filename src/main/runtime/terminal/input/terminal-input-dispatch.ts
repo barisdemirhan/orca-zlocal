@@ -1,5 +1,6 @@
 import { agentPromptObservationSignal } from './agent-prompt-signals'
 import type { RuntimeTerminalWriteOptions } from './runtime-terminal-writer'
+import { protectOrbTerminalWriteOptions } from './orb-terminal-write-options'
 import type { WriteSettlement } from '../../../../shared/terminal/pty/lifecycle/pty-write-settlement'
 import type { RuntimeLeafRecord } from '../records/runtime-terminal-state-records'
 import type {
@@ -153,6 +154,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
     }
     // Before resolving the target: a terminal closed or replaced during the wait is then refused, not written.
     await this.waitForPtyEndpointReattach(this.handlePtyId(handle), options)
+    const guarded = protectOrbTerminalWriteOptions(this, handle, options)
     const pty = this.getLivePtyForHandle(handle)
     if (pty) {
       if (!pty.pty.connected) {
@@ -170,7 +172,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
         pty.pty.ptyId,
         action,
         payload,
-        options
+        guarded
       )
       return {
         handle,
@@ -200,7 +202,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
       return { handle, accepted: false, bytesWritten: 0 }
     }
 
-    const writeSettlement = await this.writeTerminalAction(leaf.ptyId, action, payload, options)
+    const writeSettlement = await this.writeTerminalAction(leaf.ptyId, action, payload, guarded)
 
     return {
       handle,
@@ -261,6 +263,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
     await this.waitForPtyEndpointReattach(this.handlePtyId(handle), {
       signal: agentPromptObservationSignal(options)
     })
+    const guarded = protectOrbTerminalWriteOptions(this, handle, options)
     const pty = this.getLivePtyForHandle(handle)
     if (pty) {
       if (!pty.pty.connected) {
@@ -280,7 +283,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
           this.assertLiveTerminalHandleTargetsPty(handle, pty.pty.ptyId)
           this.assertAgentPromptGeneration(pty.pty.ptyId, generation)
           return await this.writeTerminalAgentPrompt(handle, pty.pty.ptyId, generation, payload, {
-            ...options,
+            ...guarded,
             promptForSchedule: prompt
           })
         }
@@ -312,7 +315,7 @@ export abstract class OrcaRuntimeWithControllerKnowsPtyIsLive extends OrcaRuntim
       this.assertLiveTerminalHandleTargetsPty(handle, leaf.ptyId!)
       this.assertAgentPromptGeneration(leaf.ptyId!, generation)
       return await this.writeTerminalAgentPrompt(handle, leaf.ptyId!, generation, payload, {
-        ...options,
+        ...guarded,
         promptForSchedule: prompt
       })
     })

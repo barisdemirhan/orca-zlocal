@@ -1,3 +1,4 @@
+import type { TerminalSuspensionRequest } from '../daemon-terminal-suspension-protocol'
 import type { HostedProviderRequest } from './daemon-provider-process-protocol'
 import type { ProviderRelayRequest } from './daemon-provider-relay-protocol'
 import type { TerminalStartFailure } from '../../../shared/terminal/pty/lifecycle/terminal-start-failure'
@@ -254,6 +255,7 @@ export type DaemonRequest =
   | SetSessionBackgroundRequest
   | KillRequest
   | SignalRequest
+  | TerminalSuspensionRequest
   | ListSessionsRequest
   | ShutdownIfIdleRequest
   | DetachRequest

@@ -47,3 +47,12 @@ export function requireStoredBot(store: BotStore, botId: string): Bot {
   }
   return bot
 }
+
+/** A bot with a role (the Orb) belongs to its feature; nothing deletes it as one of the Bots. */
+export function requireDeletableBot(store: BotStore, botId: string): Bot {
+  const bot = requireStoredBot(store, botId)
+  if (bot.role) {
+    throw new Error('bot_reserved')
+  }
+  return bot
+}

@@ -85,10 +85,12 @@ function ContextMenuSubContent({
   animation,
   style,
   alignOffset = -5,
+  respectReducedMotion = false,
   density,
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.SubContent> &
   VariantProps<typeof contentAnimationVariants> & {
+    respectReducedMotion?: boolean
     /** Defaults to the parent menu's density. */
     density?: MenuDensity
   }) {
@@ -107,6 +109,7 @@ function ContextMenuSubContent({
               'z-[70] min-w-[11rem] origin-(--radix-context-menu-content-transform-origin) overflow-hidden',
               MENU_SURFACE_CLASS,
               contentAnimationVariants({ animation }),
+              respectReducedMotion && 'motion-reduce:animate-none!',
               className
             )}
             // Portal submenus outside the scrollable parent to prevent overflow clipping.
@@ -126,10 +129,12 @@ function ContextMenuContent({
   className,
   animation,
   style,
+  respectReducedMotion = false,
   density = 'default',
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Content> &
   VariantProps<typeof contentAnimationVariants> & {
+    respectReducedMotion?: boolean
     /** Row density for every row in this menu; a row's own `density` overrides it. */
     density?: MenuDensity
   }) {
@@ -145,6 +150,7 @@ function ContextMenuContent({
               'z-[70] max-h-(--radix-context-menu-content-available-height) min-w-[11rem] origin-(--radix-context-menu-content-transform-origin) overflow-x-hidden overflow-y-auto scrollbar-sleek',
               MENU_SURFACE_CLASS,
               contentAnimationVariants({ animation }),
+              respectReducedMotion && 'motion-reduce:animate-none!',
               className
             )}
             // Disable native dragging so overlapping titlebar regions cannot intercept menu clicks.

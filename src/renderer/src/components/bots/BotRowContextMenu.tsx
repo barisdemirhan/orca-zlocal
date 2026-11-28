@@ -107,9 +107,13 @@ export function BotRowMenuFooter({
 }: {
   bot: Bot
   offline: boolean
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   const t = useTranslate()
   const handleDelete = useDeleteBot(bot)
+  // The Orb is Orca's own bot: it stays.
+  if (bot.role) {
+    return null
+  }
   return (
     <>
       <ContextMenuSeparator />

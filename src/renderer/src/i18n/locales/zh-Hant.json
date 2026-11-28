@@ -320,6 +320,59 @@
       "unverified": "無法檢查「{{profile}}」的 Google Cookie，請再試一次。",
       "fe3f6e1721": "Google Cookie"
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "儲存密碼提示",
+        "updateTitle": "更新密碼？",
+        "saveTitle": "儲存密碼？",
+        "username": "使用者名稱",
+        "password": "密碼",
+        "never": "永不儲存此網站的密碼",
+        "notNow": "暫時不要",
+        "update": "更新",
+        "save": "儲存",
+        "saveChip": "儲存密碼",
+        "updateChip": "更新密碼"
+      },
+      "fill": {
+        "noUsername": "（沒有使用者名稱）",
+        "title": "已儲存的登入資料",
+        "otherLogins": "此網站的其他登入資料"
+      }
+    },
+    "toolbar": {
+      "annotate": "註解",
+      "grab": "擷取",
+      "draw": "繪製",
+      "copyAllNotes": "複製所有註解",
+      "clearNotes": "清除註解",
+      "resetZoom": "重設縮放比例",
+      "resetViewport": "重設檢視區大小",
+      "findOnPage": "在頁面中尋找",
+      "profile": "設定檔"
+    },
+    "loadStall": {
+      "waitingForHost": "正在等待 {{host}}…"
+    },
+    "profileCookieClear": {
+      "label": "Cookie",
+      "action": "清除 Cookie…",
+      "rowLocal": "會讓你登出這台電腦上「{{profile}}」中的所有網站。",
+      "rowServer": "會讓你登出 {{host}} 上「{{profile}}」中的所有網站，包括這台電腦上的頁面和串流頁面。",
+      "rowSsh": "會讓你登出 {{host}} 的「{{profile}}」中的所有網站。",
+      "unavailable": "無法用於所選主機上的此設定檔。",
+      "confirmTitle": "要清除 {{host}} 上「{{profile}}」中的 Cookie 嗎？",
+      "confirmTitleLocal": "要清除這台電腦上「{{profile}}」中的 Cookie 嗎？",
+      "confirmDescriptionServer": "這會讓你登出此設定檔中的所有網站，包括這台電腦上的頁面和串流頁面。其他設定檔和主機會保留各自的 Cookie。",
+      "confirmDescription": "這會讓你登出此設定檔中的所有網站。其他設定檔和主機會保留各自的 Cookie。",
+      "clear": "清除",
+      "cancel": "取消",
+      "cleared": "已清除 {{host}} 上「{{profile}}」中的 Cookie。",
+      "clearedLocal": "已清除這台電腦上「{{profile}}」中的 Cookie。",
+      "failed": "無法清除 {{host}} 上「{{profile}}」中的 Cookie。請再試一次。",
+      "failedLocal": "無法清除這台電腦上「{{profile}}」中的 Cookie。請再試一次。",
+      "sshHostOption": "{{host}} (SSH)"
+    },
     "loadFailure": {
       "connectionNotSecure": "連線不安全",
       "cantReachHost": "無法存取 {{value0}}",
@@ -572,59 +625,6 @@
         "noMatches": "沒有相符項目",
         "googleNote": "Google 登入資訊未匯入"
       }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "儲存密碼提示",
-        "updateTitle": "更新密碼？",
-        "saveTitle": "儲存密碼？",
-        "username": "使用者名稱",
-        "password": "密碼",
-        "never": "永不儲存此網站的密碼",
-        "notNow": "暫時不要",
-        "update": "更新",
-        "save": "儲存",
-        "saveChip": "儲存密碼",
-        "updateChip": "更新密碼"
-      },
-      "fill": {
-        "noUsername": "（沒有使用者名稱）",
-        "title": "已儲存的登入資料",
-        "otherLogins": "此網站的其他登入資料"
-      }
-    },
-    "toolbar": {
-      "annotate": "註解",
-      "grab": "擷取",
-      "draw": "繪製",
-      "copyAllNotes": "複製所有註解",
-      "clearNotes": "清除註解",
-      "resetZoom": "重設縮放比例",
-      "resetViewport": "重設檢視區大小",
-      "findOnPage": "在頁面中尋找",
-      "profile": "設定檔"
-    },
-    "loadStall": {
-      "waitingForHost": "正在等待 {{host}}…"
-    },
-    "profileCookieClear": {
-      "label": "Cookie",
-      "action": "清除 Cookie…",
-      "rowLocal": "會讓你登出這台電腦上「{{profile}}」中的所有網站。",
-      "rowServer": "會讓你登出 {{host}} 上「{{profile}}」中的所有網站，包括這台電腦上的頁面和串流頁面。",
-      "rowSsh": "會讓你登出 {{host}} 的「{{profile}}」中的所有網站。",
-      "unavailable": "無法用於所選主機上的此設定檔。",
-      "confirmTitle": "要清除 {{host}} 上「{{profile}}」中的 Cookie 嗎？",
-      "confirmTitleLocal": "要清除這台電腦上「{{profile}}」中的 Cookie 嗎？",
-      "confirmDescriptionServer": "這會讓你登出此設定檔中的所有網站，包括這台電腦上的頁面和串流頁面。其他設定檔和主機會保留各自的 Cookie。",
-      "confirmDescription": "這會讓你登出此設定檔中的所有網站。其他設定檔和主機會保留各自的 Cookie。",
-      "clear": "清除",
-      "cancel": "取消",
-      "cleared": "已清除 {{host}} 上「{{profile}}」中的 Cookie。",
-      "clearedLocal": "已清除這台電腦上「{{profile}}」中的 Cookie。",
-      "failed": "無法清除 {{host}} 上「{{profile}}」中的 Cookie。請再試一次。",
-      "failedLocal": "無法清除這台電腦上「{{profile}}」中的 Cookie。請再試一次。",
-      "sshHostOption": "{{host}} (SSH)"
     }
   },
   "editor": {
@@ -8474,21 +8474,6 @@
         }
       },
       "settings": {
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "保持本機 main 最新"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "無法儲存帳戶位置。請再試一次。",
           "dbb9626ed1": "取消",
@@ -8825,9 +8810,6 @@
           "79209b37b9": "如果 Cookie 匯入不合適，「電腦使用」可以控制本機應用程式，並可視情況使用瀏覽器現有的已登入工作階段。安裝 Orca Computer Use 技能；macOS 還需要隱私權限。",
           "333984cf90": "使用現有的瀏覽器工作階段",
           "9895ed44de": "開啟電腦使用"
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "啟用代理程式使用瀏覽器"
         },
         "BrowserUseExamples": {
           "1199258ace": "複製",
@@ -9873,9 +9855,6 @@
           "14f1eb99d0": "開啟「建立 PR」時產生詳細資訊",
           "d32b87e754": "可用時使用審查範本",
           "981eae7e14": "預設草稿"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "原始碼控制 AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "撤銷連結也會撤銷在它開啟的終端機中建立的連結。任何能在這台電腦上使用終端機的人（透過 SSH 或連結）仍可再次配對。",
@@ -14733,6 +14712,27 @@
           "shownPluginCount_one": "顯示 {{count}} 個符合的外掛，包括此外掛",
           "shownPluginCount_other": "顯示 {{count}} 個符合的外掛，包括此外掛",
           "samePublisher": "更多列為 {{value0}} 的外掛"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "原始碼控制 AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "保持本機 main 最新"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "啟用代理程式使用瀏覽器"
         }
       },
       "right": {
@@ -21556,6 +21556,7 @@
         "steerHint": "在代理程式工作時立即傳送",
         "sendHint": "立即傳送此訊息",
         "delete": "刪除",
+        "moreActions": "更多操作",
         "moveChanged": "佇列在移動前已變更。請重新拖曳訊息。",
         "reorderHint": "拖曳以重新排序，或使用上、下方向鍵。",
         "reorderMessage": "重新排序訊息",
@@ -21579,6 +21580,8 @@
         "editGonePrompt": "此訊息已傳送或移除。回答代理程式後，你編輯的內容會出現在聊天輸入框中。",
         "imageCount_one": "{{count}} 張圖片",
         "imageCount_other": "{{count}} 張圖片",
+        "collapse": "收合",
+        "expand": "展開",
         "queued": "已排隊",
         "clearAll": "全部清除",
         "editReturned": "你編輯的內容已放入聊天輸入框。",

@@ -1,9 +1,13 @@
+import type { ExecutionHostId } from '../../../../../shared/execution-host/execution-host'
+
 export const SCROLL_TO_CURRENT_WORKSPACE_REVEAL_REQUEST_EVENT =
   'orca-scroll-to-current-workspace-reveal-request'
 
 export type ScrollToCurrentWorkspaceRevealRequestDetail =
   | {
-      target?: { type: 'active-workspace' }
+      target?:
+        | { type: 'active-workspace' }
+        | { type: 'workspace'; worktreeId: string; executionHostId?: ExecutionHostId }
       beginRename?: boolean
       /** False: scroll to the row without its glow, as an activation's reveal does. */
       highlight?: boolean
@@ -36,5 +40,14 @@ export function requestScrollToCurrentWorkspaceRevealAndRename(): void {
   dispatchScrollToCurrentWorkspaceReveal({
     target: { type: 'active-workspace' },
     beginRename: true
+  })
+}
+
+export function requestWorkspaceSidebarReveal(
+  worktreeId: string,
+  executionHostId?: ExecutionHostId
+): void {
+  dispatchScrollToCurrentWorkspaceReveal({
+    target: { type: 'workspace', worktreeId, executionHostId }
   })
 }

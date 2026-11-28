@@ -19,6 +19,7 @@ import { useTerminalPaneMobileActions } from './use-terminal-pane-mobile-actions
 import { useTerminalPaneProjection } from './use-terminal-pane-projection'
 import { useLayoutOwnerPaneTree } from '../layout/ownership/use-layout-owner-pane-tree'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../shared/workspace-layout/layout-owner-switch'
+import { useTerminalRetainedHostScroll } from '../use-terminal-retained-host-scroll'
 
 // Switch point: the mounted tab follows main's pane tree. Chosen once per build, so hook order is fixed.
 const useLayoutOwnerPaneTreeWhenMain = ORCA_LAYOUT_OWNER_IS_MAIN
@@ -27,6 +28,7 @@ const useLayoutOwnerPaneTreeWhenMain = ORCA_LAYOUT_OWNER_IS_MAIN
 
 export function useTerminalPaneController(props: TerminalPaneProps) {
   const foundation = useTerminalPaneFoundation(props)
+  useTerminalRetainedHostScroll(foundation.managerRef)
   const title = Object.assign(foundation, useTerminalPaneTitleState(foundation))
   const chat = Object.assign(title, useTerminalPaneChatState(title))
   const store = Object.assign(chat, useTerminalPaneStoreBindings(chat))

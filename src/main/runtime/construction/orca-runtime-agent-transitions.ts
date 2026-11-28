@@ -24,10 +24,8 @@ import {
   parseWorkspaceKey
 } from '../../../shared/workspace/identity/workspace-scope'
 import { getRepoIdFromWorktreeId } from '../../../shared/worktree/id'
-import {
-  OrcaRuntimeWithTerminalWorkerRestartResume,
-  unrefTimer
-} from './orca-runtime-terminal-worker-restart-resume'
+import { OrcaRuntimeWithAgentHub } from '../orca-runtime-agent-hub'
+import { unrefTimer } from './orca-runtime-terminal-worker-restart-resume'
 import { getRuntimeDesktopSurface } from './runtime-desktop-surface'
 import type { AgentStatusStoreView } from '../sidebar-inputs/workspace-facts/workspace-activity-facts-producer'
 import { subscribeHookStatusTitles } from '../terminal/layout/hook-status-title-subscription'
@@ -52,7 +50,7 @@ import {
 } from '../push/notifications/terminal-agent-phone-push'
 
 /** All hosts/builds own transition detection and windowless phone pushes. */
-export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithTerminalWorkerRestartResume {
+export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithAgentHub {
   readonly agentTransitions = new AgentTransitionDetector({
     resolveTabWorktreeId: (tabId) => this.tabs.get(tabId)?.worktreeId,
     subscribeToPtyExit: (ptyId, listener) => this.subscribeToPtyExit(ptyId, listener),
@@ -207,7 +205,7 @@ export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithTer
     })
   }
 
-  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithTerminalWorkerRestartResume>) {
+  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithAgentHub>) {
     super(...args)
     this.servedOrcaProfileId = args[2]?.servedOrcaProfileId ?? null
     this.automation.botChat = (bot, id) => botChatTakingMail(this, bot, id)

@@ -68,6 +68,7 @@ function TooltipContent({
   className,
   sideOffset = 0,
   showArrow = true,
+  respectReducedMotion = false,
   portalContainer,
   variant,
   children,
@@ -75,6 +76,7 @@ function TooltipContent({
 }: React.ComponentProps<typeof TooltipPrimitive.Content> &
   VariantProps<typeof tooltipContentVariants> & {
     showArrow?: boolean
+    respectReducedMotion?: boolean
     onPlaced?: () => void
     portalContainer?: HTMLElement | null
   }) {
@@ -86,7 +88,11 @@ function TooltipContent({
           data-slot="tooltip-content"
           sideOffset={sideOffset}
           // Tooltip portals must layer above the menus/popovers that trigger them.
-          className={cn(tooltipContentVariants({ variant }), className)}
+          className={cn(
+            tooltipContentVariants({ variant }),
+            respectReducedMotion && 'motion-reduce:animate-none!',
+            className
+          )}
           {...props}
         >
           {children}

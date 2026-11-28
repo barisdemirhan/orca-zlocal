@@ -35,6 +35,7 @@ export type RuntimeMobileSessionProjectionHost = {
   getProviderSessionRows(paneKey: string): AgentStatusIpcPayload[] | undefined
   getProviderSessionSnapshot(): AgentStatusIpcPayload[]
   getStatusRows(paneKey: string, terminalHandle: string | null): AgentStatusIpcPayload[]
+  getSpawnedBy?(paneKey: string): AgentStatusEntry['spawnedBy']
   getLeafKey(tabId: string, leafId: string): string
   findPty(
     worktreeId: string,

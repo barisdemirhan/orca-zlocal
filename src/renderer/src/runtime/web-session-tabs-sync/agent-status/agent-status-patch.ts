@@ -134,6 +134,7 @@ export function buildMirroredAgentStatusPatch(
             ...(clientOwnsEntry && existing.state === 'working' && entry.state === 'working'
               ? { workingMode: entry.workingMode }
               : {}),
+            spawnedBy: entry.spawnedBy,
             paneKey: entry.paneKey,
             worktreeId: entry.worktreeId ?? existing.worktreeId,
             tabId: entry.tabId,
@@ -264,6 +265,7 @@ export function buildMirroredAgentStatusPatch(
       !isAgentStatusFresh(existing, now) ||
       entryFreshnessChanged ||
       entryAttributionChanged ||
+      existing.spawnedBy?.paneKey !== entry.spawnedBy?.paneKey ||
       doneAttentionChanged ||
       isMirroredCommandCodeTurnBump(existing, entry)
     aggregateRelevantChange =

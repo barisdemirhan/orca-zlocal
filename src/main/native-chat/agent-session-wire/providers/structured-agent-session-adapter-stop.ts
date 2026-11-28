@@ -1,5 +1,6 @@
 // Chat Stop ends the captured child for every provider; default prompt Cancel interrupts its turn.
 
+import type { StructuredAgentSessionVoiceAdapter } from '../structured-agent-session-voice-adapter'
 import type {
   AgentChildWorkStopAcknowledgement,
   AgentSessionBackgroundTaskStops
@@ -94,4 +95,9 @@ export type StructuredAgentSessionAdapterStop = {
     toolsOutdated: boolean,
     owesWork: () => Promise<boolean>
   ): KeptLaunchOutgrown
+}
+
+/** Stop plus the optional native voice channel a provider adapter may expose. */
+export type StructuredAgentSessionAdapterControls = StructuredAgentSessionAdapterStop & {
+  voice?: StructuredAgentSessionVoiceAdapter
 }

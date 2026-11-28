@@ -19,7 +19,8 @@ import {
   isOrcaCloudTeamFeatureBlocked,
   ORCA_CLOUD_TEAM_POLICY_FLAGS
 } from '../../../shared/orca-profiles/orca-cloud-team-policy'
-import { activateAndRevealFolderWorkspace } from './workspace/activation/worktree-activation'
+import { activateAndRevealFolderWorkspaceWithOutcome } from './workspace/activation/worktree-activation'
+import type { WorkspaceActivationOutcome } from './workspace/activation/worktree-activation-outcome'
 import {
   activateStructuredAgentSessionById,
   activateStructuredAgentSessionTabOnOwner
@@ -91,15 +92,17 @@ export function useBots(enabled = true): readonly Bot[] {
 }
 
 /** The bots' and groups' homes: the store's, and each away server's kept homes. Other folder
- * workspaces' writes (activity, unread) keep this identity. */
+ * workspaces' writes (activity, unread) keep this identity. `enabled: false` loads nothing, as in `useBots`. */
 export function useBotHomeWorkspaces(
   bots: readonly BotHomeOwner[],
-  groups: readonly BotHomeOwner[]
+  groups: readonly BotHomeOwner[],
+  enabled = true
 ): readonly FolderWorkspace[] {
   const selectHomes = useMemo(() => createBotHomesSelector([...bots, ...groups]), [bots, groups])
   const homes = useAppStore(useShallow(selectHomes))
   // The listed hosts change when a server is first listed from its kept read.
-  const hostIds = useSyncExternalStore(subscribe, readBotHostIds, readBotHostIds)
+  const subscribeHosts = enabled ? subscribe : subscribeToNothing
+  const hostIds = useSyncExternalStore(subscribeHosts, readBotHostIds, readBotHostIds)
   return useMemo(() => withKeptBotHomes(homes, hostIds), [homes, hostIds])
 }
 
@@ -142,11 +145,8 @@ export function useCardBot(botId: string): { bot: Bot | null; ref: BotRef } {
 
 /** `readHasBot`, or null while `enabled` is false. */
 export function useHasBot(enabled: boolean): boolean | null {
-  return useSyncExternalStore(
-    enabled ? subscribe : subscribeToNothing,
-    enabled ? readHasBot : readNoBot,
-    enabled ? readHasBot : readNoBot
-  )
+  const read = enabled ? readHasBot : readNoBot
+  return useSyncExternalStore(enabled ? subscribe : subscribeToNothing, read, read)
 }
 
 /** The bot's waits still waiting, from the last list read; none from an older host. */
@@ -313,14 +313,18 @@ export async function deleteBot(
   await refreshBotHost(bot.hostId)
 }
 
-/** False when the home is not in the catalog (or not reachable) yet. */
-export function openBotHome(bot: Bot): boolean {
-  const opened = activateAndRevealFolderWorkspace(bot.folderWorkspaceId, {
+/** Opens the bot's home, saying why when it couldn't. */
+export function openBotHomeWithOutcome(bot: Bot): WorkspaceActivationOutcome {
+  return activateAndRevealFolderWorkspaceWithOutcome(bot.folderWorkspaceId, {
     executionHostId: bot.hostId,
     // Bots are not rows of the workspace list, so there is nothing there to reveal.
     revealInSidebar: false
   })
-  return opened !== false
+}
+
+/** False when the home is not in the catalog (or not reachable) yet. */
+export function openBotHome(bot: Bot): boolean {
+  return 'opened' in openBotHomeWithOutcome(bot)
 }
 
 /**

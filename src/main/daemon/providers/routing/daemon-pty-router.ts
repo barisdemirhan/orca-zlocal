@@ -21,8 +21,7 @@ import type {
 import { DaemonSessionOwnerResolver } from './daemon-session-owner-resolution'
 import type { DaemonIdleRetirementResult } from '../adapter/daemon-pty-runtime-state'
 import { DaemonRouterRetirement } from './daemon-router-retirement'
-import { routeSpawnOrHold } from './daemon-router-newer-daemon-hold'
-import { findLegacySessionOwner } from './daemon-router-legacy-owner'
+import { routeDaemonSpawn } from './daemon-router-spawn'
 import { retireExitedLegacyAdapter, type ExitedLegacyVerdict } from './daemon-router-exited-legacy'
 import type { WriteSettlement } from '../../../../shared/terminal/pty/lifecycle/pty-write-settlement'
 import type { TerminalOscColorQueryReplyColors } from '../../../../shared/terminal/protocol/queries/terminal-osc-color-reply'
@@ -79,18 +78,14 @@ export class DaemonPtyRouter implements IPtyProvider {
     // Retirement census must account for spawns that have not published their sessions yet.
     this.retirement.spawnInFlight++
     try {
-      if (opts.attachOnly && opts.sessionId) {
-        return await this.ownerResolver.spawnAttachOnly({ ...opts, sessionId: opts.sessionId })
-      }
-      const adapter =
-        (opts.sessionId ? this.sessionAdapters.get(opts.sessionId) : undefined) ??
-        (await findLegacySessionOwner(opts, this.current, this.legacy, this.legacyExitProof))
-      const target = await routeSpawnOrHold(opts, adapter, this.current, this.ownerResolver)
-      const result = await target.spawn(opts)
-      if (!result.exitedBeforeSpawnReply) {
-        this.ownerResolver.recordRoute(result.id, target, result.incarnationId)
-      }
-      return result
+      return await routeDaemonSpawn({
+        opts,
+        current: this.current,
+        legacy: this.legacy,
+        sessionAdapters: this.sessionAdapters,
+        ownerResolver: this.ownerResolver,
+        legacyExitProof: this.legacyExitProof
+      })
     } finally {
       this.retirement.spawnInFlight--
     }
@@ -193,6 +188,9 @@ export class DaemonPtyRouter implements IPtyProvider {
   async sendSignal(id: string, signal: string): Promise<void> {
     await this.adapterFor(id).sendSignal(id, signal)
   }
+
+  terminalSuspension: NonNullable<IPtyProvider['terminalSuspension']> = (id, options) =>
+    this.adapterFor(id).terminalSuspension(id, options)
 
   async getCwd(id: string): Promise<string> {
     return this.adapterFor(id).getCwd(id)

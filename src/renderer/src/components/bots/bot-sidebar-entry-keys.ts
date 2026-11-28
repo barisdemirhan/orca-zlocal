@@ -5,19 +5,20 @@ import {
   type BotSidebarEntry
 } from '../../../../shared/bots/bot-sidebar-entries'
 import type { FolderWorkspace } from '../../../../shared/folder-workspaces/folder-workspace-types'
+import { withoutOtherComputersOrbs } from '@/lib/bot-hosts'
 
 /** A row's key across hosts: ids are random per host, so the same id on two hosts is two rows. */
 export function botSidebarEntryKey(owner: Pick<Bot | BotGroup, 'hostId' | 'id'>): string {
   return `${owner.hostId}/${owner.id}`
 }
 
-/** The Bots section's entries with `id` keyed by host and id, for ordering, drag and Cmd+J. */
+/** The Bots section's entries with `id` keyed by host and id, for ordering, drag and Cmd+J; no other computer's Orb. */
 export function getHostKeyedBotSidebarEntries(
   bots: readonly Bot[],
   groups: readonly BotGroup[],
   workspaces: readonly FolderWorkspace[]
 ): BotSidebarEntry<Bot, BotGroup, FolderWorkspace>[] {
-  return getBotSidebarEntries(bots, groups, workspaces).map((entry) => ({
+  return getBotSidebarEntries(withoutOtherComputersOrbs(bots), groups, workspaces).map((entry) => ({
     ...entry,
     id: botSidebarEntryKey(entry.kind === 'bot' ? entry.bot : entry.group)
   }))

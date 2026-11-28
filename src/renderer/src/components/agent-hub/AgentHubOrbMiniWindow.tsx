@@ -1,0 +1,255 @@
+import { useLayoutEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { ChevronLeft, PanelTop, Plus, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/class-names'
+import type { Bot } from '../../../../shared/bot-types'
+import { translate } from '@/i18n/i18n'
+import {
+  NATIVE_CHAT_PERMISSION_MODE_ICONS,
+  nativeChatPermissionModeLabel
+} from '../native-chat/session/options/controls/native-chat-permission-mode-labels'
+import {
+  AgentHubOrbMiniBotPane,
+  AgentHubOrbMiniTabRow,
+  type AgentHubOrbMiniTab
+} from './AgentHubOrbMiniTabs'
+import { AgentHubOrbHeaderAction } from './AgentHubOrbConversationHeader'
+import { AgentHubActionTooltip } from './AgentHubShortcut'
+import type { AgentHubOrbSphereProps } from './AgentHubOrbSphere'
+import { AgentHubOrbBotFace } from './AgentHubOrbBotFace'
+import { AgentHubOrbMoreMenu } from './AgentHubOrbMoreMenu'
+import { useAgentHubOrbHeaderActions } from './use-agent-hub-orb-header-actions'
+import { setAgentHubOrbRequestDestination } from './agent-hub-orb-panel-store'
+import { useAgentHubOrbMiniWindowDrag } from './use-agent-hub-orb-mini-window-drag'
+import { useAgentHubOrbMiniWindowResize } from './use-agent-hub-orb-mini-window-resize'
+import { useAgentHubOrbPermissionMode } from './use-agent-hub-orb-permission-mode'
+import { useAgentHubOrbBot } from './use-agent-hub-orb-bot'
+import { AgentHubOrbStripBar } from './AgentHubOrbStripBar'
+import { setAgentHubOrbWindowTab, useAgentHubOrbChatStrip } from './agent-hub-orb-chat-strip-store'
+import { useAgentHubOrbChatOpenOverride } from './use-agent-hub-orb-chat-open-override'
+import { useAgentHubOrbStripModel } from './use-agent-hub-orb-strip-model'
+import type { AgentHubOrbVoiceValue } from './use-agent-hub-orb-voice'
+import { useAgentHubOrbName } from './use-agent-hub-orb-identity'
+import './agent-hub-orb-stage.css'
+
+/** The narrow chat that opens where the sphere was: the retained chat under a draggable header. */
+export function AgentHubOrbMiniWindow({
+  sessionId,
+  voice,
+  onClearHome,
+  sphere,
+  agentLabel,
+  busy,
+  request,
+  requestVisible,
+  memory,
+  onShowChat,
+  onNew,
+  onHistory,
+  onMinimize,
+  onSleep,
+  onHide,
+  children
+}: {
+  sessionId: string
+  voice: AgentHubOrbVoiceValue
+  onClearHome: () => void
+  sphere: AgentHubOrbSphereProps
+  agentLabel: string | null
+  busy: boolean
+  request: ReactNode
+  requestVisible: boolean
+  memory?: ReactNode
+  onShowChat: () => void
+  onNew: () => void
+  onHistory: () => void
+  onMinimize: () => void
+  onSleep: () => void
+  onHide: () => void
+  children: ReactNode
+}): React.JSX.Element {
+  const [container] = useState(() => document.createElement('div'))
+  useLayoutEffect(() => {
+    document.body.appendChild(container)
+    return () => container.remove()
+  }, [container])
+  const { frame, ...drag } = useAgentHubOrbMiniWindowDrag()
+  const resize = useAgentHubOrbMiniWindowResize(frame)
+  const permission = useAgentHubOrbPermissionMode(sessionId)
+  const PermissionIcon = permission ? NATIVE_CHAT_PERMISSION_MODE_ICONS[permission] : null
+  const title = useAgentHubOrbName()
+  const bot = useAgentHubOrbBot()
+  const windowTab = useAgentHubOrbChatStrip((s) => s.windowTab)
+  const tab: AgentHubOrbMiniTab =
+    bot && (windowTab === 'home' || windowTab === 'chats') ? windowTab : 'chat'
+  const homeTitle = translate('agentHub.orb.strip.home', 'Home chat')
+  const override = useAgentHubOrbChatOpenOverride(onClearHome)
+  const backLabel = translate('agentHub.orb.backToOrb', 'Back to Orb')
+  const permissionLabel = permission ? nativeChatPermissionModeLabel(permission) : ''
+  const actions = useAgentHubOrbHeaderActions({
+    bot: bot ?? null,
+    clearHome: onClearHome,
+    fallbackNew: onNew
+  })
+  return createPortal(
+    <>
+      <section
+        aria-label={title}
+        data-agent-hub-orb-mini-window
+        className="agent-hub-orb-mini-window fixed z-[47] flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-floating"
+        style={{ left: frame.x, top: frame.y, width: frame.width, height: frame.height }}
+      >
+        <header
+          className="flex shrink-0 cursor-grab touch-none select-none items-center gap-1.5 border-b border-border py-1.5 pr-1.5 pl-2 active:cursor-grabbing"
+          {...drag}
+        >
+          <AgentHubActionTooltip label={backLabel} actionId="agentHub.orb.toggleConversation">
+            <button
+              type="button"
+              aria-label={backLabel}
+              className="-ml-1 inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md pr-1.5 pl-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              onClick={onMinimize}
+            >
+              <ChevronLeft aria-hidden className="size-3.5" />
+              <AgentHubOrbBotFace bot={bot ?? null} sphere={sphere} size={24} />
+              <span className="text-sm font-semibold text-foreground">{title}</span>
+            </button>
+          </AgentHubActionTooltip>
+          {agentLabel ? (
+            <span className="min-w-0 truncate text-xs text-muted-foreground">{agentLabel}</span>
+          ) : null}
+          {permission && PermissionIcon ? (
+            <AgentHubActionTooltip label={permissionLabel}>
+              <Badge variant="outline" aria-label={permissionLabel} className="shrink-0">
+                <PermissionIcon aria-hidden />
+              </Badge>
+            </AgentHubActionTooltip>
+          ) : null}
+          <span className="flex-1" />
+          <AgentHubOrbHeaderAction
+            label={translate('agentHub.orb.openFullChat', 'Open full chat')}
+            onClick={onShowChat}
+          >
+            <PanelTop />
+          </AgentHubOrbHeaderAction>
+          <AgentHubOrbHeaderAction
+            label={translate('auto.agentHub.orb.newConversation', 'New')}
+            disabled={busy}
+            onClick={actions.onNew}
+          >
+            <Plus />
+          </AgentHubOrbHeaderAction>
+          <AgentHubOrbMoreMenu
+            name={title}
+            busy={busy}
+            botPage={Boolean(bot)}
+            onNew={actions.onNew}
+            onClearHome={onClearHome}
+            onOpenPage={actions.onOpenPage}
+            onBotSettings={actions.onBotSettings}
+            onHistory={onHistory}
+            onSleep={onSleep}
+          />
+          <AgentHubOrbHeaderAction
+            label={translate('agentHub.orb.hideNamed', 'Hide {{name}}', { name: title })}
+            onClick={onHide}
+          >
+            <X />
+          </AgentHubOrbHeaderAction>
+        </header>
+        {bot ? (
+          <AgentHubOrbMiniTabRow
+            bot={bot}
+            tab={tab}
+            chatWaiting={requestVisible}
+            onSelect={setAgentHubOrbWindowTab}
+          />
+        ) : null}
+        {bot && tab === 'chat' ? (
+          <MiniStrip
+            bot={bot}
+            sessionId={sessionId}
+            homeTitle={homeTitle}
+            voice={voice}
+            onClearHome={onClearHome}
+          />
+        ) : null}
+        {/* Retained: hidden, not unmounted, so the chat and its request host survive other tabs. */}
+        <div className={cn('min-h-0 flex-1 flex-col', tab === 'chat' ? 'flex' : 'hidden')}>
+          <div
+            ref={setAgentHubOrbRequestDestination}
+            data-agent-hub-orb-request-host
+            className="agent-hub-orb-request-host scrollbar-sleek"
+            hidden={!requestVisible}
+          >
+            {request}
+          </div>
+          {memory}
+          {children}
+        </div>
+        {bot && tab !== 'chat' ? (
+          <AgentHubOrbMiniBotPane bot={bot} tab={tab} override={override} />
+        ) : null}
+      </section>
+      <div
+        aria-hidden
+        data-agent-hub-orb-mini-resize="right"
+        className="fixed z-[47] w-1.5 cursor-ew-resize touch-none"
+        style={{
+          left: frame.x + frame.width,
+          top: frame.y + 8,
+          height: Math.max(0, frame.height - 16)
+        }}
+        {...resize.handlers('right')}
+      />
+      <div
+        aria-hidden
+        data-agent-hub-orb-mini-resize="bottom"
+        className="fixed z-[47] h-1.5 cursor-ns-resize touch-none"
+        style={{
+          left: frame.x + 8,
+          top: frame.y + frame.height,
+          width: Math.max(0, frame.width - 16)
+        }}
+        {...resize.handlers('bottom')}
+      />
+      <div
+        aria-hidden
+        data-agent-hub-orb-mini-resize="corner"
+        className="fixed z-[48] size-4 cursor-nwse-resize touch-none text-muted-foreground/50"
+        style={{ left: frame.x + frame.width - 8, top: frame.y + frame.height - 8 }}
+        onDoubleClick={resize.reset}
+        {...resize.handlers('corner')}
+      >
+        <svg
+          viewBox="0 0 16 16"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1"
+        >
+          <path d="M13 6 6 13M13 10l-3 3" strokeLinecap="round" />
+        </svg>
+      </div>
+    </>,
+    container
+  )
+}
+
+function MiniStrip({
+  bot,
+  sessionId,
+  homeTitle,
+  voice,
+  onClearHome
+}: {
+  bot: Bot
+  sessionId: string
+  homeTitle: string
+  voice: AgentHubOrbVoiceValue
+  onClearHome: () => void
+}): React.JSX.Element {
+  const model = useAgentHubOrbStripModel({ bot, sessionId, homeTitle, voice, onClearHome })
+  return <AgentHubOrbStripBar model={model} voice={voice} onClearHome={onClearHome} />
+}

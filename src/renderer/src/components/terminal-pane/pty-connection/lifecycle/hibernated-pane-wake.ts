@@ -8,7 +8,7 @@ import type { ConnectPanePtySession } from '../connect-pane-pty-session'
 // Why live+done arms too: kept from #16308's wake-sweep widening; hibernation itself only writes worktree-sleep notes.
 export function noteArmsHibernatedPaneWake(record: SleepingAgentSessionRecord): boolean {
   return (
-    record.state === 'done' &&
+    (record.state === 'done' || record.wakeOnRequestOnly === true) &&
     record.origin !== 'quit' &&
     !(record.origin === 'live' && agentTurnEndedUncleanly(record))
   )
@@ -28,9 +28,15 @@ export function installHibernatedPaneWake(session: ConnectPanePtySession): void 
   // Claim the provider session throughout async replacement spawn so repeated mobile activation cannot duplicate resume.
   session.hibernatedWakeInFlightClaimKey = null
   // Share guarded wake consumption between reveal and arm-time visibility checks so a reveal racing kill resumes exactly once.
-  session.consumeHibernatedAgentWake = (claimedProviderSessions?: Set<string>): string | null => {
+  session.consumeHibernatedAgentWake = (
+    claimedProviderSessions?: Set<string>,
+    explicit = false
+  ): string | null => {
     const target = session.hibernatedWakeTarget
     if (!target || session.disposed) {
+      return null
+    }
+    if (target.record.wakeOnRequestOnly && !explicit) {
       return null
     }
     if (session.deps.paneTransportsRef.current.get(session.pane.id) !== session.transport) {
@@ -99,7 +105,7 @@ export function wakeHibernatedPaneIfArmed(
     claimedProviderSessions?.add(session.hibernatedWakeInFlightClaimKey)
     return session.hibernatedWakeInFlightClaimKey
   }
-  const consumedClaimKey = session.consumeHibernatedAgentWake(claimedProviderSessions)
+  const consumedClaimKey = session.consumeHibernatedAgentWake(claimedProviderSessions, true)
   if (consumedClaimKey) {
     return consumedClaimKey
   }
@@ -120,7 +126,7 @@ export function wakeHibernatedPaneIfArmed(
     session.deps.paneTransportsRef.current.get(session.pane.id) === session.transport
   ) {
     session.hibernatedWakeTarget = { ptyId: currentPtyId ?? '', record: recordEntry.record }
-    return session.consumeHibernatedAgentWake(claimedProviderSessions)
+    return session.consumeHibernatedAgentWake(claimedProviderSessions, true)
   }
   if (
     recordEntry &&

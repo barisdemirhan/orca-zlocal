@@ -35,6 +35,10 @@ import {
   type TerminalPanePasteExecution
 } from './terminal-pane-paste-execution'
 
+// Overlays inside a pane that take their own paste: the search bar, Agent Hub's quick-reply card.
+const PASTE_OWNING_OVERLAY_SELECTOR =
+  '[data-terminal-search-root], [data-agent-hub-pane-quick-reply]'
+
 export function registerTerminalPanePasteListeners({
   container,
   controller,
@@ -78,7 +82,7 @@ export function registerTerminalPanePasteListeners({
   const onKeyPaste = (event: KeyboardEvent): void => {
     const target = event.target
     if (
-      (target instanceof Element && target.closest('[data-terminal-search-root]')) ||
+      (target instanceof Element && target.closest(PASTE_OWNING_OVERLAY_SELECTOR)) ||
       isInsideNativeChatCover(target)
     ) {
       return
@@ -130,7 +134,7 @@ export function registerTerminalPanePasteListeners({
   const onPaste = (event: ClipboardEvent): void => {
     const target = event.target
     if (
-      (target instanceof Element && target.closest('[data-terminal-search-root]')) ||
+      (target instanceof Element && target.closest(PASTE_OWNING_OVERLAY_SELECTOR)) ||
       isInsideNativeChatCover(target)
     ) {
       return
@@ -186,7 +190,7 @@ export function registerTerminalPanePasteListeners({
     if (
       !(activeElementAtDispatch instanceof Element) ||
       !container.contains(activeElementAtDispatch) ||
-      activeElementAtDispatch.closest('[data-terminal-search-root]') ||
+      activeElementAtDispatch.closest(PASTE_OWNING_OVERLAY_SELECTOR) ||
       isInsideNativeChatCover(activeElementAtDispatch)
     ) {
       return
@@ -232,7 +236,7 @@ export function registerTerminalPanePasteListeners({
       !(activeElement instanceof Element) ||
       !container.contains(activeElement) ||
       isEditableTarget(activeElement) ||
-      activeElement.closest('[data-terminal-search-root]') ||
+      activeElement.closest(PASTE_OWNING_OVERLAY_SELECTOR) ||
       isInsideNativeChatCover(activeElement)
     ) {
       return

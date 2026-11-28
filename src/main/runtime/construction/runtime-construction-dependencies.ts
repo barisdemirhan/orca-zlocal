@@ -35,6 +35,7 @@ export type RuntimeConstructionDependencies = {
   getLocalProvider?: () => IPtyProvider
   prepareClaudeAuth?: PrepareClaudeAuth
   onPtyStopped?: (ptyId: string) => void
+  onPaneSpawnedByChanged?: (paneKey: string, spawnedBy: { paneKey: string } | undefined) => void
   onTerminalAgentStatus?: (event: RuntimeTerminalAgentStatusEvent) => void
   onTerminalProgramStatusFacet?: (event: RuntimeTerminalProgramStatusFacetEvent) => void
   onTerminalSideEffects?: (batch: TerminalSideEffectBatch) => void

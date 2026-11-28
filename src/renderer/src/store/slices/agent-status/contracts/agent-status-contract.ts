@@ -57,6 +57,7 @@ export type AgentStatusPayload = ParsedAgentStatusPayload & {
   /** The host's child views for a structured session; see `AgentStatusEntry.children`. */
   children?: AgentStatusEntry['children']
   orchestration?: AgentStatusOrchestrationContext
+  spawnedBy?: AgentStatusEntry['spawnedBy']
   promptInteractionKey?: string
   restoredUnconfirmed?: boolean
   /** Optional ingress provenance, currently unread; omission preserves existing output (STA-4293, agent-status-observation.ts). */

@@ -64,6 +64,7 @@ export function deriveAgentStatusLiveFacts(args: AgentStatusLiveFactsArgs): Agen
   const sortRelevantChange =
     isSmartSortRelevantAgentChange(existing, entry, updatedAt) ||
     commandCodeNewTurn ||
+    existing?.spawnedBy?.paneKey !== entry.spawnedBy?.paneKey ||
     existing?.firstStateStartedAt !== entry.firstStateStartedAt
   const doneRowFieldsChanged =
     existing?.state === 'done' &&
@@ -80,6 +81,7 @@ export function deriveAgentStatusLiveFacts(args: AgentStatusLiveFactsArgs): Agen
       entry.lastAssistantMessage !== existing.lastAssistantMessage ||
       entry.lastAssistantMessageIsToolOutput !== existing.lastAssistantMessageIsToolOutput ||
       entry.orchestration !== existing.orchestration ||
+      entry.spawnedBy?.paneKey !== existing.spawnedBy?.paneKey ||
       entry.subagents !== existing.subagents ||
       entry.children !== existing.children ||
       entry.providerSession !== existing.providerSession)

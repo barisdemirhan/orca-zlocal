@@ -254,6 +254,13 @@ export class AgentTransitionDetector {
     }
   }
 
+  /** Panes whose agent waits on the person, with the workspace each belongs to. */
+  panesNeedingYou(): { paneKey: string; workspace: AgentPaneWorkspace }[] {
+    return [...this.panes]
+      .filter(([, pane]) => pane.phase === 'needs-you')
+      .map(([paneKey, pane]) => ({ paneKey, workspace: pane.workspace }))
+  }
+
   phaseOf(paneKey: string): AgentPhase {
     return this.panes.get(paneKey)?.phase ?? 'rest'
   }

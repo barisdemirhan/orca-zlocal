@@ -7,6 +7,7 @@ import {
 } from '../operations/structured-agent-session-host-mutations'
 
 import type { StructuredAgentSessionMutationContext } from '../operations/structured-agent-session-mutation-context'
+import { StructuredAgentSessionVoice } from '../structured-agent-session-voice'
 import type {
   StructuredAgentSessionCaller,
   StructuredAgentSessionHostDeps,
@@ -131,4 +132,10 @@ export function structuredAgentSessionMutationDelegates(
     settleLateDispatch: (input: Parameters<typeof settleStructuredAgentSessionLateDispatch>[1]) =>
       settleStructuredAgentSessionLateDispatch(context(), input)
   }
+}
+
+export function createHostVoice(
+  context: () => StructuredAgentSessionMutationContext
+): StructuredAgentSessionVoice {
+  return new StructuredAgentSessionVoice(context)
 }

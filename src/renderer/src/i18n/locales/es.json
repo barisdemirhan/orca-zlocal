@@ -8110,21 +8110,6 @@
         }
       },
       "settings": {
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Mantener main local actualizado"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "No se pudo guardar la ubicación de las cuentas. Inténtalo de nuevo.",
           "dbb9626ed1": "Cancelar",
@@ -8462,9 +8447,6 @@
           "333984cf90": "Usar una sesión de navegador existente",
           "9895ed44de": "Abrir Computer Use"
         },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Activar Agent Browser Use"
-        },
         "BrowserUseExamples": {
           "1199258ace": "Copiar",
           "1188e56af4": "Copiar prompt de ejemplo",
@@ -8718,6 +8700,59 @@
             "description": "Los chats de Codex con la misma configuración comparten un proceso en segundo plano en lugar de iniciar uno por chat.",
             "copy": "Usa menos memoria e inicia los chats nuevos más rápido. Si un proceso compartido falla, todos sus chats se vuelven a conectar. Se aplica a los chats de este equipo iniciados después de cambiarlo; los hosts remotos y WSL mantienen un proceso por chat.",
             "toggleLabel": "Alternar servidores de Codex compartidos"
+          },
+          "agentHub": {
+            "title": "Agent Hub",
+            "description": "Un solo lugar para cada agente y terminal: responde preguntas, aprueba comandos y salta a cualquier panel.",
+            "copy": "Añade un dock (o un elemento en la barra de estado) con los agentes que te necesitan, están trabajando o acaban de terminar, además de todos los terminales abiertos. Responde, aprueba o abre un espejo en vivo sin salir de tu espacio de trabajo actual.",
+            "toggleLabel": "Alternar Agent Hub",
+            "clearNever": "Nunca",
+            "clearHour": "1 h",
+            "clearMinutes": "{{value0}} min",
+            "placement": "Mostrar el hub como",
+            "placementCopy": "Un dock que puedes arrastrar a la barra de estado o al borde de la ventana, o un elemento en la barra de estado.",
+            "dock": "Dock",
+            "statusBar": "Barra de estado",
+            "autoHide": "Ocultar el dock mientras ningún agente esté activo",
+            "autoHideCopy": "Vuelve en cuanto un agente empieza a trabajar, pregunta algo o termina.",
+            "alerts": "Alertas",
+            "alertsCopy": "Una burbuja junto al hub que abre la tarjeta del agente. No se muestra para el panel que estás viendo.",
+            "alertNeedsInput": "Cuando un agente pregunta o necesita aprobación",
+            "alertFinished": "Cuando un agente termina",
+            "sound": "Reproducir un sonido",
+            "soundCopy": "Usa el sonido y el volumen de Notificaciones (un tono breve para Sistema) y permanece en silencio cuando la notificación propia de Orca ya reproduce uno.",
+            "mutedUntil": "Alertas silenciadas hasta {{value0}}",
+            "unmute": "Volver a activar",
+            "popover": "Popover",
+            "defaultTab": "Abrir en",
+            "defaultTabCopy": "Cuando nadie espera; un agente en espera siempre abre la Bandeja de entrada.",
+            "showShells": "Mostrar shells simples en Todos los terminales",
+            "clearFinished": "Quitar agentes terminados de la Bandeja de entrada tras",
+            "clearFinishedCopy": "Siguen sin leer en la vista Agentes; Nunca los mantiene en el hub hasta que los leas.",
+            "shortcutTaken": "{{value0}} ya lo usa {{value1}}. Elige otras teclas en Atajos de teclado.",
+            "shortcuts": "Atajos",
+            "shortcutsUnset": "Sin asignar. Sugeridos: {{value0}} (abrir el hub, saltar al siguiente agente en espera, enviar los espejos al hub, organizar los espejos).",
+            "shortcutsSet": "Abrir el hub: {{value0}} · Siguiente agente en espera: {{value1}} · Espejos al hub: {{value2}} · Organizar los espejos: {{value3}}",
+            "useSuggested": "Usar estos",
+            "editShortcuts": "Editar",
+            "dockSize": "Tamaño del dock",
+            "shortcutNotSet": "sin asignar",
+            "trayPeek": "Desplegar espejos guardados ante novedades durante",
+            "trayPeekCopy": "Cuando un espejo guardado pregunta o termina, la pila junto al hub se abre este tiempo y luego se pliega de nuevo.",
+            "never": "Nunca",
+            "seconds": "{{value0}} s",
+            "tabAutoPopout": "Mostrar un botón para abrir aparte en las pestañas de terminal",
+            "tabAutoPopoutCopy": "Abre un terminal en un espejo directamente desde su pestaña.",
+            "mirrorCap": "Ventanas de espejo abiertas a la vez",
+            "mirrorCapCopy": "Al abrir más que esto, el más antiguo se guarda junto al hub.",
+            "canvas": "Activar el lienzo de espejos",
+            "canvasCopy": "Abre el lienzo con su botón o atajo para organizar tus espejos. Abrir aparte mantiene tu vista actual. Al salir del lienzo, sus espejos se guardan; al volver se restauran.",
+            "restoreOnLaunch": "Restaurar espejos y lienzo al iniciar",
+            "restoreOnLaunchCopy": "Los espejos, la bandeja y el lienzo vuelven como los dejaste cuando Orca se reinicia. Un espejo cuyo terminal se cerró se omite.",
+            "focusedPaneOutline": "Resaltar el terminal con foco",
+            "focusedPaneOutlineCopy": "Un marco azul fino en el panel que recibe el teclado, en el espacio de trabajo y en los espejos: dónde van lo que escribes y el dictado.",
+            "paneQuickReply": "Respuesta rápida en el terminal",
+            "paneQuickReplyCopy": "Cuando un agente de terminal pregunta o necesita aprobación, una tarjeta con sus opciones se abre sobre la esquina del panel. Esc la cierra; el terminal sigue aceptando la respuesta."
           }
         },
         "FloatingWorkspacePane": {
@@ -9466,9 +9501,6 @@
           "14f1eb99d0": "Generar detalles al abrir Crear PR",
           "d32b87e754": "Usar la plantilla de revisión cuando esté disponible",
           "981eae7e14": "Borrador de forma predeterminada"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "Source Control AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "Revocar un enlace también revoca los enlaces creados en los terminales que abrió. Cualquiera con un terminal en este equipo, por SSH o a través de un enlace, puede volver a emparejarse.",
@@ -10887,6 +10919,21 @@
               "description": "Los chats de Codex con la misma configuración comparten un proceso en segundo plano en lugar de iniciar uno por chat.",
               "codex": "codex",
               "memory": "memoria"
+            },
+            "agentHub": {
+              "title": "Agent Hub",
+              "description": "Un solo lugar para cada agente y terminal: responde preguntas, aprueba comandos y salta a cualquier panel.",
+              "agents": "agentes",
+              "inbox": "bandeja de entrada",
+              "statusBar": "barra de estado",
+              "terminals": "terminales",
+              "questions": "preguntas",
+              "alerts": "alertas",
+              "sound": "sonido",
+              "notifications": "notificaciones",
+              "dock": "dock",
+              "notch": "notch",
+              "mute": "silenciar"
             }
           }
         },
@@ -13271,23 +13318,23 @@
           "credentials": {
             "dialog": {
               "cancel": "Cancelar",
+              "connectFailed": "La conexión falló",
               "title": "Conectar Bitbucket",
               "authModeLabel": "Método de autenticación de Bitbucket",
               "modeBasic": "Token de correo electrónico y API",
               "modeToken": "token de acceso",
               "accessToken": "token de acceso",
+              "accessTokenPlaceholder": "Token de acceso al repositorio, proyecto o espacio de trabajo",
+              "emailPlaceholder": "tu@ejemplo.com",
               "apiToken": "token API",
+              "apiTokenPlaceholder": "Token API de Atlassian",
+              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0",
               "scopeUser": "Mostrar el nombre de su cuenta",
               "scopeRepository": "Leer estados de compilación",
               "scopeReadPullRequest": "Leer pull requests",
               "scopeWritePullRequest": "Crear pull requests",
               "scopesWriteNote": "Para uso de solo lectura, omita el alcance de escritura. La escritura no incluye la lectura; seleccione cada alcance por separado.",
-              "connect": "Conectar",
-              "accessTokenPlaceholder": "Token de acceso al repositorio, proyecto o espacio de trabajo",
-              "apiTokenPlaceholder": "Token API de Atlassian",
-              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0",
-              "connectFailed": "La conexión falló",
-              "emailPlaceholder": "tu@ejemplo.com"
+              "connect": "Conectar"
             }
           },
           "integration": {
@@ -14192,10 +14239,10 @@
           "manualDelete": "Elimina el archivo de bloqueo que aparece en Detalles cuando estés seguro de que ninguna otra máquina lo usa.",
           "action": "Recuperar servidor…",
           "written": "Escrito",
-          "close": "Cerrar",
-          "reclaimedNotStarted": "Se borró el bloqueo, pero el servidor de Orca no se inició.",
           "manualDeleteCommand": "Elimina el bloqueo manualmente en el host:",
-          "manualDeleteWarning": "Haz esto solo si ninguna otra máquina que comparta esta carpeta personal ejecuta Orca con este perfil."
+          "manualDeleteWarning": "Haz esto solo si ninguna otra máquina que comparta esta carpeta personal ejecuta Orca con este perfil.",
+          "close": "Cerrar",
+          "reclaimedNotStarted": "Se borró el bloqueo, pero el servidor de Orca no se inició."
         },
         "claudeSubagentNavigation": {
           "title": "Navegación de subagentes de Claude",
@@ -14385,6 +14432,27 @@
           "shownPluginCount_other": "{{count}} complementos coincidentes mostrados, incluido este",
           "samePublisher": "Más elementos incluidos como {{value0}}",
           "shownPluginCount_many": "{{count}} complementos coincidentes mostrados, incluido este"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "Source Control AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Mantener main local actualizado"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Activar Agent Browser Use"
         }
       },
       "right": {
@@ -15476,8 +15544,11 @@
                   "titlePublishBranchFirst": "Publica la rama primero para sincronizar commits",
                   "titleUseForcePush": "Usa Commit y Force Push — el remoto solo tiene copias antiguas de commits locales",
                   "titleCommitThenPullPush": "Haz commit y luego pull y push",
+                  "rebaseFromNamedBase": "Rebase desde {{baseRef}}",
                   "rebaseFromBase": "Rebase desde la base",
                   "rebaseChooseRemoteBase": "Elige una rama base remota desde la que hacer rebase",
+                  "rebaseDirtyHint": "Intenta hacer rebase; git puede requerir hacer commit o stash de los cambios locales primero",
+                  "statusStashFirst": "Haz stash primero",
                   "rebaseWithLatestFrom": "Hacer rebase de la rama actual con los commits más recientes de {{baseRef}}",
                   "blockedCommitFirst": "Haz commit de los cambios primero",
                   "blockedCheckOutBranchFirst": "Haz checkout de una rama primero",
@@ -15494,10 +15565,7 @@
                   "rebaseOntoNamedBase": "Hacer rebase sobre {{base}}",
                   "rebaseCommitOrStashFirst": "Haz commit o stash de los cambios primero",
                   "continueRebase": "Continuar rebase",
-                  "titleContinueRebase": "Continuar el rebase en pausa",
-                  "rebaseFromNamedBase": "Rebase desde {{baseRef}}",
-                  "rebaseDirtyHint": "Intenta hacer rebase; git puede requerir hacer commit o stash de los cambios locales primero",
-                  "statusStashFirst": "Haz stash primero"
+                  "titleContinueRebase": "Continuar el rebase en pausa"
                 }
               },
               "primary": {
@@ -18153,8 +18221,8 @@
             "uiErrorDescription": "Envía un informe de diagnóstico que protege tu privacidad para ayudarnos a entender la parte de la interfaz que falló.",
             "reportNotesPlaceholder": "Opcional: ¿qué pasó?",
             "uiErrorNotesPlaceholder": "Opcional: ¿qué estabas haciendo antes de este error de interfaz?",
-            "renderError": "Error de renderizado de React",
-            "renderErrorIn": "Error de renderizado de React en {{surface}}"
+            "renderErrorIn": "Error de renderizado de React en {{surface}}",
+            "renderError": "Error de renderizado de React"
           }
         }
       },
@@ -20355,6 +20423,129 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "Espejos y lienzo",
+        "voice": "Voz",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Preferencias del dock, alertas, espejos, voz y Orb.",
+        "open": "Abrir ajustes de Agent Hub"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Alternar Orb de Agent Hub",
+        "talkShortcut": "Atajo para hablar",
+        "notSet": "Sin asignar",
+        "agent": "Agente",
+        "model": "Modelo",
+        "agentDefault": "Predeterminado del agente",
+        "approvals": "Aprobaciones",
+        "placement": "Ubicación",
+        "freeWarning": "Orb ejecuta comandos sin preguntar. Úsalo con cuidado.",
+        "ask": "Preguntar",
+        "free": "Actuar libremente",
+        "workingFolder": "Carpeta de trabajo",
+        "hidden": "Oculto",
+        "speakReplies": "Leer respuestas",
+        "comingLater": "Disponible más adelante",
+        "pastConversations": "Conversaciones anteriores",
+        "backToConversation": "Volver a la conversación",
+        "newConversation": "Nueva",
+        "searchConversations": "Buscar conversaciones",
+        "allAgents": "Todos los agentes",
+        "today": "Hoy",
+        "yesterday": "Ayer",
+        "archivedBeforeBot": "Antes del bot Orb",
+        "noConversations": "No se encontraron conversaciones",
+        "historyFailed": "No se pudieron cargar las conversaciones. Inténtalo de nuevo.",
+        "disabled": "Activa el control de agentes para hablar con Orb",
+        "openFailed": "No se pudo abrir Orb. Inténtalo de nuevo.",
+        "working": "Trabajando",
+        "open": "Abrir",
+        "openDenyKeys": "Abrir ↵ / Denegar esc",
+        "toSend": "para enviar",
+        "approvalKeys": "Permitir ↵ / Denegar esc",
+        "piRequiresFree": "Pi requiere Actuar libremente. Elige otro agente para pedir permiso antes de ejecutar comandos.",
+        "settings": "Ajustes de Orb",
+        "size": "Tamaño de Orb",
+        "sizePixels": "{{value0}} píxeles",
+        "endLiveVoice": "Finalizar voz en vivo",
+        "startLiveVoice": "Iniciar voz en vivo",
+        "showConversation": "Mostrar conversación",
+        "unmuteMicrophone": "Activar micrófono",
+        "muteMicrophone": "Silenciar micrófono",
+        "finishDictation": "Terminar y enviar dictado",
+        "cancelDictation": "Cancelar dictado",
+        "stopSpeaking": "Dejar de hablar",
+        "expand": "Expandir Orb",
+        "minimize": "Minimizar Orb",
+        "voiceUnavailable": "La voz en vivo no está disponible en este host.",
+        "requestNoLongerAvailable": "Esta solicitud se respondió en otro lugar o ya no está disponible.",
+        "requestDenied": "Solicitud denegada",
+        "requestExpired": "Solicitud caducada",
+        "answerReceived": "Respuesta recibida",
+        "awayAnswerReceived": "Respondida por tus ajustes de ausencia",
+        "requestClosed": "Solicitud cerrada",
+        "dismissRequestOutcome": "Descartar resultado de la solicitud",
+        "speakingMuted": "Hablando. Micrófono silenciado; la voz en vivo sigue conectada.",
+        "speaking": "Hablando",
+        "needsAnswer": "Esperando tu respuesta",
+        "voiceFailed": "No se pudo conectar la voz en vivo.",
+        "codexVoiceUnsupported": "Esta versión de Codex no admite la voz en vivo.",
+        "codexVoiceUsageLimit": "La voz en vivo de Codex no está disponible porque se alcanzó el límite de uso de la cuenta.",
+        "codexVoiceAccessDenied": "Codex rechazó la voz en vivo. Revisa la cuenta actual y el acceso al espacio de trabajo.",
+        "codexVoiceConnectionFailed": "No se pudo conectar la voz en vivo de Codex. Inténtalo de nuevo cuando se cierre la conexión.",
+        "voiceConnectFailed": "No se pudo conectar la voz en vivo. Inténtalo de nuevo.",
+        "voiceStopping": "Finalizando voz en vivo…",
+        "voiceConnecting": "Conectando voz en vivo…",
+        "muted": "Micrófono silenciado; la voz en vivo sigue conectada.",
+        "listening": "Escuchando",
+        "done": "Completado",
+        "ready": "Listo",
+        "dismissReceipt": "Descartar",
+        "connectionWarning": "1 aviso de conexión",
+        "connectionWarnings": "{{value0}} avisos de conexión",
+        "floating": "Flotante",
+        "hideConnectionWarnings": "Ocultar",
+        "readyPrompt": "Listo. Escribe o pulsa la esfera para hablar.",
+        "showConnectionWarnings": "Mostrar"
+      },
+      "alerts": {
+        "info": "Cuando un agente comparte información",
+        "mute": "Silenciar alertas",
+        "duration": "Elegir duración…",
+        "muteHour": "1 h",
+        "muteTwoHours": "2 h",
+        "muteTomorrow": "Hasta mañana a las 09:00"
+      },
+      "voice": {
+        "dictateImprove": "Dictar y mejorar"
+      },
+      "search": {
+        "mirror": "espejo",
+        "canvas": "lienzo",
+        "dim": "atenuar",
+        "quickreply": "respuesta rápida",
+        "outline": "contorno",
+        "tray": "bandeja",
+        "popout": "abrir aparte",
+        "microphone": "micrófono",
+        "shortcut": "atajo",
+        "restore": "restaurar",
+        "shells": "shells",
+        "orb": "Orb",
+        "voice": "voz"
+      },
+      "mirror": {
+        "newAgentNotAdded": "No se pudo añadir a este espejo. Ábrelo desde las pestañas del espacio de trabajo.",
+        "newAgentStartedInWorkspace": "{{agent}} se inició en {{workspace}}."
+      }
+    },
+    "agentHubPeekOutsideWorkspace": "Los archivos de Agent Peek deben estar dentro del espacio de trabajo de destino.",
     "startup": {
       "webHostUnreachable": {
         "title": "No se pudo contactar con tu host de Orca",
@@ -20966,9 +21157,9 @@
         "next": "Siguiente",
         "skip": "Omitir",
         "sending": "Enviando…",
+        "recommended": "Recomendado",
         "terminalRequired": "Responda esta pregunta OMP en la terminal.",
         "openTerminal": "Responder en la terminal",
-        "recommended": "Recomendado",
         "stepOf": "{{value0}} de {{value1}}",
         "answered": "Respondida",
         "previous": "Pregunta anterior",
@@ -21123,6 +21314,7 @@
         "steerHint": "Enviar ahora, mientras el agente sigue trabajando",
         "sendHint": "Enviar este mensaje ahora",
         "delete": "Eliminar",
+        "moreActions": "Más acciones",
         "editMessage": "Editar mensaje",
         "showFullMessage": "Mostrar el mensaje completo",
         "showLess": "Mostrar menos",
@@ -21142,6 +21334,8 @@
         "imageCount_one": "{{count}} imagen",
         "imageCount_other": "{{count}} imágenes",
         "imageCount_many": "{{count}} imágenes",
+        "collapse": "Contraer",
+        "expand": "Expandir",
         "queued": "En cola",
         "clearAll": "Borrar todo",
         "editReturned": "Tu edición está en el cuadro de chat.",
@@ -21298,6 +21492,7 @@
         "orcaStopCrash": "Orca en {{machine}} se detuvo inesperadamente mientras esta respuesta estaba en curso.",
         "orcaStopRemote": "Orca en {{machine}} se detuvo mientras esta respuesta estaba en curso.",
         "orcaStopCanContinue": "Puedes continuar en esta conversación.",
+        "mcpStartupDetails": "Detalles de la conexión MCP",
         "orcaStopUnnamedServer": "el servidor remoto",
         "restartContinued": "Orca pidió a este agente que continuara tras un reinicio. Tu propio mensaje no se volvió a enviar.",
         "restartContinueRefused": "Orca no pudo continuar este chat después del reinicio. Envía un mensaje para continuarlo.",
@@ -21453,21 +21648,22 @@
         "unavailable": "Espera a que el chat termine de conectarse.",
         "pending": "Espera a que la conversación vuelva al mensaje anterior.",
         "title": "¿Rebobinar hasta aquí?",
+        "confirmation": "¿Descartar este mensaje y todo lo que viene después? El mensaje vuelve al compositor para que puedas editarlo y reenviarlo. Los cambios de archivos en disco se conservan.",
         "confirm": "Rebobinar",
         "cancel": "Cancelar",
-        "action": "Rebobinar hasta aquí",
-        "confirmation": "¿Descartar este mensaje y todo lo que viene después? El mensaje vuelve al compositor para que puedas editarlo y reenviarlo. Los cambios de archivos en disco se conservan."
+        "action": "Rebobinar hasta aquí"
       },
       "visualUnavailable": "Visualización no disponible",
       "visualLoading": "Cargando visualización",
+      "spokenMessage": "Mensaje hablado",
       "visualOpenInNewTab": "Abrir en una pestaña nueva",
       "resumeCommand": {
         "description": "Abrir el historial de sesiones de agentes",
         "argumentHint": "[búsqueda]",
         "workspaceUnavailable": "El espacio de trabajo de este chat aún no se ha cargado. Vuelve a probar /resume en un momento.",
-        "replace": "Reemplazar",
+        "replaceTitle": "¿Reemplazar este chat?",
         "replaceDescription": "Reanudar “{{title}}” aquí detendrá lo que {{agent}} está haciendo en este chat.",
-        "replaceTitle": "¿Reemplazar este chat?"
+        "replace": "Reemplazar"
       },
       "claudeSignIn": {
         "signingIn": "Iniciando sesión…"
@@ -22702,7 +22898,15 @@
       "modeLatestStatus": "Último estado (recomendado)",
       "modeFullTranscript": "Transcripción completa",
       "modeFullCost": "Más lento y consume más de tu plan o créditos de API.",
-      "startSessionSentence": "Iniciar sesión"
+      "startSessionSentence": "Iniciar sesión",
+      "openIn": "Abrir en",
+      "placementTab": "Nueva pestaña",
+      "placementPane": "Nuevo panel",
+      "placementJump": "Ir a ella",
+      "placementTabDescription": "La añade como pestaña de este espejo y te mantiene aquí.",
+      "placementPaneDescription": "Divide junto a este panel en su espacio de trabajo y añade una pestaña de espejo para el nuevo.",
+      "placementJumpDescription": "Abre una pestaña nueva y cambia el espacio de trabajo a ella.",
+      "mirrorNotAdded": "La nueva sesión se abrió en el espacio de trabajo; el espejo no pudo añadirla como pestaña."
     },
     "terminalPane": {
       "TerminalContextMenu": {
@@ -23955,6 +24159,59 @@
       "unverified": "No se pudieron comprobar las cookies de Google de {{profile}}. Inténtalo de nuevo.",
       "fe3f6e1721": "Cookies de Google"
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "Aviso para guardar contraseña",
+        "updateTitle": "¿Actualizar contraseña?",
+        "saveTitle": "¿Guardar contraseña?",
+        "username": "Nombre de usuario",
+        "password": "Contraseña",
+        "never": "Nunca para este sitio",
+        "notNow": "Ahora no",
+        "update": "Actualizar",
+        "save": "Guardar",
+        "saveChip": "Guardar contraseña",
+        "updateChip": "Actualizar contraseña"
+      },
+      "fill": {
+        "noUsername": "(sin nombre de usuario)",
+        "title": "Inicios de sesión guardados",
+        "otherLogins": "Otros inicios de sesión en este sitio"
+      }
+    },
+    "toolbar": {
+      "annotate": "Anotar",
+      "grab": "Capturar",
+      "draw": "Dibujar",
+      "copyAllNotes": "Copiar todas las notas",
+      "clearNotes": "Borrar notas",
+      "resetZoom": "Restablecer zoom",
+      "resetViewport": "Restablecer el tamaño de la ventana gráfica",
+      "findOnPage": "Buscar en la página",
+      "profile": "Perfil"
+    },
+    "loadStall": {
+      "waitingForHost": "Esperando a {{host}}…"
+    },
+    "profileCookieClear": {
+      "label": "Cookies",
+      "action": "Borrar cookies…",
+      "rowLocal": "Cierra tu sesión en todos los sitios de {{profile}} en este equipo.",
+      "rowServer": "Cierra tu sesión en todos los sitios de {{profile}} en {{host}}, tanto en las páginas de este equipo como en las páginas transmitidas.",
+      "rowSsh": "Cierra tu sesión en todos los sitios de {{profile}} para {{host}}.",
+      "unavailable": "No disponible para este perfil en el host seleccionado.",
+      "confirmTitle": "¿Borrar las cookies de {{profile}} en {{host}}?",
+      "confirmTitleLocal": "¿Borrar las cookies de {{profile}} en este equipo?",
+      "confirmDescriptionServer": "Se cerrará tu sesión en todos los sitios de este perfil, tanto en las páginas de este equipo como en las páginas transmitidas. Los demás perfiles y hosts conservan sus cookies.",
+      "confirmDescription": "Se cerrará tu sesión en todos los sitios de este perfil. Los demás perfiles y hosts conservan sus cookies.",
+      "clear": "Borrar",
+      "cancel": "Cancelar",
+      "cleared": "Se borraron las cookies de {{profile}} en {{host}}.",
+      "clearedLocal": "Se borraron las cookies de {{profile}} en este equipo.",
+      "failed": "No se pudieron borrar las cookies de {{profile}} en {{host}}. Vuelve a intentarlo.",
+      "failedLocal": "No se pudieron borrar las cookies de {{profile}} en este equipo. Vuelve a intentarlo.",
+      "sshHostOption": "{{host}} (SSH)"
+    },
     "newTab": {
       "emptyHint": "Busca o introduce una dirección arriba. Aquí aparecerán los sitios que visites, los servidores de desarrollo que se ejecuten en este espacio de trabajo, y su PR e incidencia.",
       "openServerFailed": "No se pudo abrir {{address}}",
@@ -24209,59 +24466,6 @@
         "noMatches": "Sin coincidencias",
         "googleNote": "No se importan sesiones de Google"
       }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "Aviso para guardar contraseña",
-        "updateTitle": "¿Actualizar contraseña?",
-        "saveTitle": "¿Guardar contraseña?",
-        "username": "Nombre de usuario",
-        "password": "Contraseña",
-        "never": "Nunca para este sitio",
-        "notNow": "Ahora no",
-        "update": "Actualizar",
-        "save": "Guardar",
-        "saveChip": "Guardar contraseña",
-        "updateChip": "Actualizar contraseña"
-      },
-      "fill": {
-        "noUsername": "(sin nombre de usuario)",
-        "title": "Inicios de sesión guardados",
-        "otherLogins": "Otros inicios de sesión en este sitio"
-      }
-    },
-    "toolbar": {
-      "annotate": "Anotar",
-      "grab": "Capturar",
-      "draw": "Dibujar",
-      "copyAllNotes": "Copiar todas las notas",
-      "clearNotes": "Borrar notas",
-      "resetZoom": "Restablecer zoom",
-      "resetViewport": "Restablecer el tamaño de la ventana gráfica",
-      "findOnPage": "Buscar en la página",
-      "profile": "Perfil"
-    },
-    "loadStall": {
-      "waitingForHost": "Esperando a {{host}}…"
-    },
-    "profileCookieClear": {
-      "label": "Cookies",
-      "action": "Borrar cookies…",
-      "rowLocal": "Cierra tu sesión en todos los sitios de {{profile}} en este equipo.",
-      "rowServer": "Cierra tu sesión en todos los sitios de {{profile}} en {{host}}, tanto en las páginas de este equipo como en las páginas transmitidas.",
-      "rowSsh": "Cierra tu sesión en todos los sitios de {{profile}} para {{host}}.",
-      "unavailable": "No disponible para este perfil en el host seleccionado.",
-      "confirmTitle": "¿Borrar las cookies de {{profile}} en {{host}}?",
-      "confirmTitleLocal": "¿Borrar las cookies de {{profile}} en este equipo?",
-      "confirmDescriptionServer": "Se cerrará tu sesión en todos los sitios de este perfil, tanto en las páginas de este equipo como en las páginas transmitidas. Los demás perfiles y hosts conservan sus cookies.",
-      "confirmDescription": "Se cerrará tu sesión en todos los sitios de este perfil. Los demás perfiles y hosts conservan sus cookies.",
-      "clear": "Borrar",
-      "cancel": "Cancelar",
-      "cleared": "Se borraron las cookies de {{profile}} en {{host}}.",
-      "clearedLocal": "Se borraron las cookies de {{profile}} en este equipo.",
-      "failed": "No se pudieron borrar las cookies de {{profile}} en {{host}}. Vuelve a intentarlo.",
-      "failedLocal": "No se pudieron borrar las cookies de {{profile}} en este equipo. Vuelve a intentarlo.",
-      "sshHostOption": "{{host}} (SSH)"
     }
   },
   "runtimeRpc": {
@@ -24319,6 +24523,10 @@
     "startupRegistration": {
       "title": "Orca está listo para enviarte notificaciones",
       "body": "Permite las notificaciones para que Orca te avise cuando los agentes terminen o los terminales necesiten atención."
+    },
+    "bot": {
+      "asksYou": "{{name}} te pregunta",
+      "finished": "{{name}} terminó"
     }
   },
   "featureTips": {
@@ -26015,6 +26223,894 @@
   },
   "projectField": {
     "updateFailed": "No se pudo actualizar el campo del proyecto"
+  },
+  "agentHub": {
+    "bots": {
+      "ask": {
+        "answered": "Respondido · {{n}} de {{total}}",
+        "answeredCount": "{{n}} de {{total}} respondidas",
+        "later": "Más tarde",
+        "openItem": "Abrir #{{number}}",
+        "ownWords": "Responde con tus propias palabras",
+        "useThese": "Usar estas",
+        "contextMore": "Mostrar más",
+        "contextLess": "Mostrar menos"
+      },
+      "tab": {
+        "alreadyRead": "Ya leído",
+        "asleep": "Dormido · despierta cuando se le pide",
+        "automationFailing": "Fallando",
+        "automationPaused": "En pausa",
+        "automationsFailing": "{{count}} fallando",
+        "chatFailed": "{{count}} fallidos",
+        "hostOffline": "{{host}} sin conexión",
+        "hostOfflineReason": "{{host}} está sin conexión",
+        "loading": "Cargando bots…",
+        "markRead": "Marcar como leído",
+        "more": "Más",
+        "mute": "Silenciar durante 1 hora",
+        "newChat": "Nuevo chat",
+        "noMatch": "Ningún bot ni chat coincide con «{{query}}»",
+        "notificationSettings": "Ajustes de notificaciones…",
+        "openAutomation": "Abrir automatización",
+        "openChat": "Abrir chat",
+        "openMain": "Abrir en la pestaña principal",
+        "openPage": "Abrir página",
+        "paused": "En pausa",
+        "renameChat": "Renombrar chat",
+        "searchChats": "Buscar bots y chats",
+        "searchLabel": "Buscar un bot",
+        "settings": "Ajustes del bot",
+        "showMore": "Mostrar {{count}} más",
+        "signedOut": "Sesión de Orca cerrada · Slack y los eventos están desactivados",
+        "sleep": "Dormir",
+        "sleepAlready": "Ya está dormido",
+        "sleepBusy": "Ocupado ahora",
+        "thisDevice": "Este dispositivo",
+        "toggleWorkers": "Mostrar los workers de {{title}}",
+        "unmute": "Dejar de silenciar",
+        "unread": "Sin leer",
+        "unreadChats": "{{count}} sin leer"
+      }
+    },
+    "attention": {
+      "answerInTerminal": "Responde en su terminal: abre una vista flotante o ábrelo en Orca."
+    },
+    "row": {
+      "jump": "Ir a este terminal",
+      "popOut": "Abrir en otra ventana",
+      "markRead": "Marcar como leído",
+      "currentWorkspace": "En el espacio de trabajo abierto",
+      "sendToHub": "Enviar a Agent Hub",
+      "bringBack": "Restaurar",
+      "showInMirror": "Mostrar en la vista espejo",
+      "closeAgent": "Cerrar agente",
+      "closeShell": "Cerrar terminal",
+      "workers_one": "{{count}} worker",
+      "workers_other": "{{count}} workers",
+      "workers_many": "{{count}} workers"
+    },
+    "mirror": {
+      "newAgent": "Nuevo agente",
+      "project": "Proyecto",
+      "workspace": "Espacio de trabajo",
+      "chooseProject": "Elegir proyecto",
+      "chooseWorkspace": "Elegir espacio de trabajo",
+      "newAgentDescription": "Elige un espacio de trabajo existente y un agente para iniciar.",
+      "agentLabel": "Agente",
+      "openAgentSettings": "Abrir ajustes de agentes",
+      "configureAgents": "Configurar agentes",
+      "noAgents": "No hay agentes disponibles",
+      "searchWorkspaces": "Buscar espacios de trabajo",
+      "noWorkspaces": "No hay espacios de trabajo que coincidan.",
+      "startAgent": "Iniciar agente",
+      "agent": "agente",
+      "addAgentInWorkspace": "Añadir agente en {{workspace}}",
+      "newAgentInWorkspace": "Nuevo agente {{agent}} en {{workspace}}",
+      "newAgentFailed": "No se pudo iniciar {{agent}}.",
+      "newAgentUnavailable": "El nuevo terminal no está disponible.",
+      "backHome": "Volver a {{value0}}",
+      "returnAgain": "Haz clic de nuevo para volver a {{value0}}",
+      "close": "Cerrar vista espejo",
+      "noTerminal": "Este panel no tiene un terminal activo ahora.",
+      "connecting": "Conectando al terminal…",
+      "restore": "Restaurar {{value0}}",
+      "minimize": "Minimizar",
+      "inWorkspace": "Este panel está visible en tu espacio de trabajo actual y permanece allí. Volverá a esta ventana cuando cambies de pestaña o de espacio de trabajo.",
+      "inWorkspaceTitle": "Estás en este espacio de trabajo",
+      "renameHint": "Doble clic para renombrar",
+      "rename": "Renombrar terminal",
+      "workerCount": "{{value0}} agentes de trabajo",
+      "family": "Coordinador y agentes de trabajo",
+      "workers": "Agentes de trabajo",
+      "trayLess": "Mostrar menos",
+      "trayMore": "+{{value0}}",
+      "dockAll": "Enviar todas las vistas espejo a Agent Hub",
+      "jumpHint": "Ir a este terminal en su espacio de trabajo",
+      "jump": "Ir",
+      "hideWorkers": "Ocultar barra de agentes de trabajo",
+      "showWorkers": "Mostrar barra de agentes de trabajo",
+      "cancelDictation": "Cancelar dictado",
+      "cancelDictationHint": "Cancelar dictado y descartar el texto aún no insertado",
+      "endFocus": "Devolver esta vista espejo a su lugar",
+      "focus": "Enfocar esta vista espejo",
+      "showInSidebar": "Mostrar en la barra lateral",
+      "returnToWorkspace": "Volver al espacio de trabajo",
+      "tabCount": "{{value0}} pestañas",
+      "tabCount_one": "{{value0}} pestaña",
+      "tabCount_other": "{{value0}} pestañas",
+      "tabCount_many": "{{value0}} pestañas",
+      "addHint": "Añadir terminal a esta vista espejo",
+      "pickerSections": "Listas de terminales",
+      "available": "Terminales disponibles",
+      "noneAvailable": "No hay terminales disponibles para añadir",
+      "closeTab": "Cerrar pestaña",
+      "closeTabNamed": "Cerrar pestaña espejo {{value0}}",
+      "terminals": "Terminales de la vista espejo",
+      "add": "Añadir terminal",
+      "tabLimit": "Una vista espejo admite hasta 10 terminales.",
+      "addUnavailable": "Este terminal ya no se puede añadir.",
+      "alreadyOwned": "Este terminal ya está en una ventana flotante.",
+      "trayFull": "Se cerró la vista espejo minimizada más antigua para hacer espacio. Sus terminales siguen en sus espacios de trabajo.",
+      "dropUnavailable": "No se puede soltar aquí",
+      "openInNew": "Abrir en una nueva vista espejo",
+      "moveToMirror": "Mover a la vista espejo",
+      "moveUnavailable": "Este terminal ya no se puede mover.",
+      "tabLabel": "{{value0}}, {{value1}}",
+      "dictationStopKey": "para detener",
+      "projectFilter": {
+        "label": "Proyectos",
+        "remove": "Quitar {{value0}} del filtro",
+        "add": "Proyecto",
+        "all": "Todos los proyectos",
+        "search": "Buscar proyectos…",
+        "noMatch": "Ningún proyecto coincide.",
+        "clear": "Borrar filtro",
+        "emptyFiltered": "No hay nada más que añadir con estos filtros",
+        "outside": "{{value0}} más fuera del filtro",
+        "showAll": "Mostrar todo"
+      },
+      "botFilter": {
+        "label": "Bots",
+        "remove": "Quitar {{value0}} del filtro",
+        "add": "Bot",
+        "all": "Todos los bots",
+        "search": "Buscar bots…",
+        "noMatch": "Ningún bot coincide."
+      },
+      "closeOthers": "Cerrar las demás",
+      "drawer": {
+        "changes": "Cambios",
+        "changesEmpty": "No hay cambios sin confirmar.",
+        "checkFailed": "fallido",
+        "checkLog": "Registro",
+        "checksPassed_one": "{{count}} comprobación superada",
+        "checksPassed_other": "{{count}} comprobaciones superadas",
+        "checksPassed_many": "{{count}} comprobaciones superadas",
+        "checksPending_one": "{{count}} comprobación en curso",
+        "checksPending_other": "{{count}} comprobaciones en curso",
+        "checksPending_many": "{{count}} comprobaciones en curso",
+        "commands": "Comandos",
+        "compact": "Compactar",
+        "compacting": "Compactando…",
+        "draftFailed": "Este agente no puede recibir un borrador ahora",
+        "drafted": "Añadido al borrador del agente",
+        "edit": "Editar",
+        "fromAgent": "Agente",
+        "fromAutomation": "Automatización",
+        "fromConnector": "Conector",
+        "fromPerson": "Alguien",
+        "inbound": "Entrantes",
+        "label": "Cajón",
+        "merge": "Fusionar…",
+        "openAll": "Abrir todo",
+        "openAsTab": "Abrir como pestaña",
+        "openDiff": "Abrir diff",
+        "openPr": "Abrir en el host",
+        "plan": "Plan",
+        "pr": "PR",
+        "prClosed": "Cerrada",
+        "prDraft": "Borrador",
+        "prMerged": "Fusionada",
+        "prOpen": "Abierta",
+        "queueClosed": "La cola se muestra aquí mientras el chat está abierto.",
+        "queueEmpty": "No hay nada en cola.",
+        "queueUnreported": "Este terminal no informa de su cola.",
+        "queued": "En cola",
+        "received": "Recibido",
+        "removeQueued": "Quitar de la cola",
+        "rerun": "Reejecutar",
+        "rerunRequested": "Reejecución solicitada",
+        "reviewComments": "Revisión",
+        "sendNow": "Enviar ahora",
+        "sendToAgent": "Enviar al agente",
+        "settings": "Ajustes",
+        "settingsClosed": "Los ajustes aparecen aquí mientras el chat está abierto.",
+        "settingsUnreported": "Este terminal no informa de sus ajustes.",
+        "stop": "Detener",
+        "stopping": "Deteniendo…",
+        "subagents": "Subagentes",
+        "work": "Trabajo",
+        "workEmpty": "No hay nada en ejecución.",
+        "workerAsking": "preguntando",
+        "workerDone": "terminado",
+        "workerIdle": "inactivo",
+        "workerWorking": "trabajando",
+        "workers": "Workers"
+      },
+      "menu": "Menú del espejo",
+      "menuAgentCard": "Dejar que este agente use su tarjeta",
+      "menuCanvas": "Mover al lienzo",
+      "menuDock": "Acoplar",
+      "menuDrawer": "Abrir cajón",
+      "menuJump": "Ir al terminal",
+      "menuStrip": "Mostrar la barra de trabajo",
+      "renameTab": "Cambiar nombre…",
+      "strip": {
+        "clean": "Sin cambios",
+        "commands_one": "{{count}} comando",
+        "commands_other": "{{count}} comandos",
+        "commands_many": "{{count}} comandos",
+        "context": "Contexto {{percent}}%",
+        "idle": "Inactivo",
+        "inbound": "Entrantes",
+        "label": "Barra de trabajo",
+        "queued": "{{count}} en cola",
+        "running": "{{count}} en ejecución",
+        "settings": "Ajustes",
+        "subagents_one": "{{count}} subagente",
+        "subagents_other": "{{count}} subagentes",
+        "subagents_many": "{{count}} subagentes",
+        "workers_one": "{{count}} worker",
+        "workers_other": "{{count}} workers",
+        "workers_many": "{{count}} workers",
+        "review": "PR #{{number}}"
+      },
+      "bot": {
+        "openPage": "Abrir página del bot",
+        "settings": "Ajustes del bot",
+        "settingsTitle": "Ajustes de {{name}}",
+        "model": "Modelo",
+        "modelNote": "Para todos los chats del bot",
+        "connectors": "Conectores",
+        "automations": "Automatizaciones",
+        "manage": "Gestionar",
+        "sleep": "Poner a dormir",
+        "thisChat": "Este chat",
+        "runsOn": "Se ejecuta en",
+        "host": "Host",
+        "showInOrb": "Mostrar en Orb",
+        "showInBots": "Mostrar en Bots"
+      }
+    },
+    "title": "Agentes",
+    "tab": {
+      "inbox": "Bandeja de entrada",
+      "running": "En curso",
+      "all": "Todos los terminales",
+      "agents": "Agentes",
+      "shownInMirror": "Visible en una vista espejo",
+      "shownInOrb": "Se muestra en la ventana del Orb",
+      "bringBack": "Restaurar"
+    },
+    "inbox": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "needsYou": "Necesita tu atención",
+      "emptyTitle": "Nadie espera tu respuesta",
+      "markAllRead": "Marcar todo como leído",
+      "finished": "Finalizado",
+      "emptyHint": "{{value0}} trabajando · recibirás un aviso cuando alguno pregunte",
+      "oneAgent": "1 agente",
+      "agents": "{{value0}} agentes",
+      "hidden": "{{value0}} ocultos · Mostrar",
+      "agentsFirst": "Agentes primero",
+      "agentsOnly": "Solo agentes",
+      "answerQueue": "Cola de respuestas",
+      "answeredBy": "Respondida · {{name}}",
+      "botsFirst": "Bots primero",
+      "botsOnly": "Solo bots",
+      "failedPrefix": "Falló · ",
+      "finishedCount": "{{count}} terminados",
+      "hostOffline": "{{host}} sin conexión",
+      "markRead": "Marcar como leído",
+      "menu": {
+        "answer": "Responder",
+        "copyQuestion": "Copiar pregunta",
+        "hideCard": "Ocultar tarjeta",
+        "jump": "Ir al terminal",
+        "later": "Más tarde",
+        "markAllRead": "Marcar todo como leído",
+        "notificationSettings": "Ajustes de notificaciones…",
+        "openBotPage": "Abrir la página del bot",
+        "openChat": "Abrir chat",
+        "openItem": "Abrir #{{number}}",
+        "openMirror": "Abrir en el espejo",
+        "openWorkspace": "Abrir espacio de trabajo",
+        "popOut": "Abrir en ventana"
+      },
+      "offline": "sin conexión",
+      "onlySuggestions": "Solo sugerencias, plegadas abajo",
+      "open": "Abrir",
+      "openChat": "Abrir chat",
+      "partialAnswer": "Responder",
+      "partialOpenMany": "{{count}} preguntas siguen abiertas",
+      "partialOpenOne": "1 pregunta sigue abierta",
+      "reply": "Responder",
+      "senderMenu": "Menú de {{name}}",
+      "showAll": "Mostrar todo",
+      "side": {
+        "agents": "Agentes",
+        "bots": "Bots",
+        "keyHint": "{{label}} (B)"
+      },
+      "sort": {
+        "label": "Ordenar",
+        "longest": "Esperando más tiempo",
+        "newest": "Más recientes",
+        "order": "Orden",
+        "within": "Dentro de cada uno"
+      },
+      "suggestionMany": "{{count}} sugerencias",
+      "suggestionOne": "1 sugerencia",
+      "tag": {
+        "approval": "aprobación",
+        "signIn": "iniciar sesión"
+      },
+      "waitingCount": "{{count}} esperando",
+      "workerChip": "worker · {{agent}}",
+      "workerOf": "worker de {{agent}}",
+      "earlierResults": "Resultados anteriores",
+      "replyTo": "Responder a {{name}}…",
+      "replyFailed": "No se pudo enviar tu respuesta. Inténtalo de nuevo."
+    },
+    "running": {
+      "empty": "Ningún agente está trabajando ahora",
+      "longestFirst": "los más antiguos primero",
+      "popOutAll": "Abrir todos en otras ventanas",
+      "automationRunLine": "Ejecución de automatización",
+      "bots": "Bots",
+      "replying": "Respondiendo…"
+    },
+    "footer": {
+      "move": "Mover",
+      "popOut": "Abrir en otra ventana",
+      "answer": "Responder",
+      "tabs": "Pestañas",
+      "jump": "Ir",
+      "close": "Cerrar"
+    },
+    "toast": {
+      "nobodyWaiting": "Nadie espera tu respuesta"
+    },
+    "trigger": {
+      "needsYouOne": "1 necesita tu atención",
+      "needsYouOther": "{{value0}} necesitan tu atención"
+    },
+    "terminals": {
+      "searchPlaceholder": "Filtrar por terminal, proyecto, grupo o agente",
+      "searchLabel": "Filtrar terminales",
+      "noMatch": "Ningún terminal coincide con «{{value0}}»",
+      "empty": "No hay terminales abiertos",
+      "shell": "Shell",
+      "ungrouped": "Sin grupo",
+      "unknownProject": "Desconocido",
+      "noMatchHint": "Prueba un nombre de proyecto, grupo, rama o agente",
+      "sortManualHint": "Espacios de trabajo en el orden de la barra lateral.",
+      "sortLabel": "Orden: {{value0}}",
+      "sortBy": "Ordenar por",
+      "botChatsCount_one": "{{count}} chat",
+      "botChatsCount_other": "{{count}} chats",
+      "botChatsCount_many": "{{count}} chats",
+      "botHit_one": "{{name}} · {{count}} chat en Bots",
+      "botHit_other": "{{name}} · {{count}} chats en Bots",
+      "botHit_many": "{{name}} · {{count}} chats en Bots",
+      "botsCount_one": "{{count}} bot",
+      "botsCount_other": "{{count}} bots",
+      "botsCount_many": "{{count}} bots",
+      "botsGroup": "Bots",
+      "botsLink": "Bots →",
+      "byBot": "por {{name}}",
+      "idleFold": "{{count}} inactivos",
+      "searchHub": "Buscar agentes, proyectos, bots",
+      "sortHost": "Host"
+    },
+    "card": {
+      "recommended": "Recomendado",
+      "dictate": "Dictar",
+      "send": "Enviar",
+      "wantsToRun": "quiere ejecutar",
+      "allowOnce": "Sí, ejecutar una vez",
+      "alwaysAllow": "Permitir siempre",
+      "denyInstead": "No, indicar a {{value0}} qué hacer",
+      "needsApproval": "necesita aprobación",
+      "asking": "preguntando",
+      "replyTo": "Responder a @{{value0}}…",
+      "instead": "Indicar qué hacer en su lugar…",
+      "jump": "Ir al terminal",
+      "insteadOrDeny": "Indica qué hacer en su lugar, o pulsa Enter para rechazar…",
+      "pastedImage": "Imagen {{value0}}",
+      "removeImage": "Quitar {{value0}}",
+      "hide": "Ocultar hasta que vuelva a preguntar"
+    },
+    "close": "Cerrar (esc)",
+    "state": {
+      "idle": "inactivo",
+      "working": "trabajando",
+      "done": "finalizado"
+    },
+    "alert": {
+      "asking": "está preguntando",
+      "needsApproval": "necesita aprobación",
+      "finished": "finalizado",
+      "more": "+{{value0}} más en Agent Hub",
+      "dismiss": "Descartar"
+    },
+    "dock": {
+      "nextWaiting": "Ir al siguiente agente en espera",
+      "edgeBottom": "Encima de la barra de estado",
+      "edgeLeft": "Borde izquierdo",
+      "edgeRight": "Borde derecho",
+      "more": "Más",
+      "unmute": "Reactivar avisos",
+      "mute": "Silenciar avisos durante 2 horas",
+      "position": "Posición",
+      "useStatusBar": "Mostrar en la barra de estado",
+      "settings": "Ajustes de Agent Hub…",
+      "edgeTop": "Debajo de la barra de título",
+      "waiting": "Esperando tu respuesta",
+      "finished": "Finalizado",
+      "sizeSmall": "Pequeño",
+      "sizeMedium": "Mediano",
+      "sizeLarge": "Grande",
+      "size": "Tamaño",
+      "dockMirrors": "Enviar las vistas espejo a Agent Hub",
+      "restoreMirrors": "Restaurar las vistas espejo",
+      "openCanvas": "Abrir el lienzo",
+      "arrange": "Organizar vistas espejo",
+      "muteBots": "Silenciar solo los bots (1 hora)",
+      "unmuteBots": "Reactivar las alertas de bots"
+    },
+    "children": {
+      "agentOne": "1 agente",
+      "agentMany": "{{value0}} agentes",
+      "subagentOne": "1 subagente",
+      "subagentMany": "{{value0}} subagentes"
+    },
+    "statusBarMenuItem": "Agent Hub",
+    "dim": {
+      "modeOff": "No atenuar",
+      "modeOn": "Atenuar detrás de las ventanas flotantes",
+      "modeUntilClick": "Atenuar hasta que haga clic detrás",
+      "modeMinimizeOnClick": "Atenuar y minimizar al hacer clic detrás",
+      "title": "Atenuar detrás de las ventanas flotantes"
+    },
+    "count": {
+      "nested": "{{value0}} más dentro de ellos"
+    },
+    "hover": {
+      "openTabHere": "Abrir aquí como pestaña",
+      "state": "Estado",
+      "where": "Ubicación",
+      "popout": "Ventana propia"
+    },
+    "arrange": {
+      "title": "Organizar ventanas flotantes",
+      "grid": "En cuadrícula",
+      "columns": "En paralelo",
+      "rows": "Apiladas"
+    },
+    "tabToggle": {
+      "on": "Se abre en otra ventana al salir de esta pestaña (clic para desactivar)",
+      "off": "Abrir este terminal en otra ventana al salir de la pestaña"
+    },
+    "canvas": {
+      "emptyTitle": "No hay vistas espejo en el lienzo",
+      "emptyHint": "Abre un terminal en otra ventana desde Agent Hub o restaura una vista espejo minimizada para verla aquí.",
+      "leave": "Salir del lienzo",
+      "showSidebar": "Mostrar la barra lateral"
+    },
+    "mic": {
+      "voiceOptions": "Clic derecho para opciones de voz.",
+      "start": "Dictar en este terminal",
+      "starting": "Iniciando el micrófono… Clic para detener.",
+      "stop": "Detener dictado",
+      "finishing": "Finalizando el dictado…",
+      "elsewhereNamed": "El dictado está activo en «{{name}}».",
+      "elsewhereTerminal": "El dictado está activo en otro terminal.",
+      "elsewhere": "El dictado está activo en otra parte de Orca.",
+      "onlyOne": "Solo puede haber un dictado activo.",
+      "disabled": "El dictado por voz está desactivado.",
+      "noModel": "No hay ningún modelo de voz seleccionado y descargado.",
+      "unsupported": "Desde esta ventana no se puede dictar en un terminal de espacio de trabajo flotante.",
+      "enable": "Dictado por voz",
+      "model": "Modelo de voz",
+      "noModels": "No hay modelos descargados",
+      "moreModels": "Más en ajustes…",
+      "settings": "Ajustes de voz…",
+      "startWithImproveHint": "Dictar en este terminal. Mayús-clic para dictar y mejorar.",
+      "dictateAndImprove": "Dictar y mejorar",
+      "dictate": "Dictar",
+      "mode": "Acción del micrófono",
+      "modeCopy": "Haz clic en el micrófono de una vista espejo para iniciar este modo. Mayús-clic inicia el otro modo si está disponible.",
+      "startImproveHint": "Dictar y mejorar en este terminal. Mayús-clic para solo dictar.",
+      "improve": "Dictar y mejorar",
+      "improveWithAgent": "Mejorar con un agente",
+      "improveSettings": "Ajustes de mejora de transcripciones",
+      "modeSwitchCopy": "Al activarlo, el micrófono de la vista espejo dicta y mejora; Mayús-clic hace lo contrario.",
+      "improveRequired": "Requiere la función de mejora de transcripciones.",
+      "listeningTab": "Dictado en este terminal",
+      "answering": "La tarjeta de pregunta está abierta: dicta tu respuesta con el micrófono de su campo."
+    },
+    "shortcut": {
+      "doubleTapHint": "También puedes registrar una doble pulsación de una tecla modificadora.",
+      "suggestions": "Sugerencias para atajos sin asignar: {{bindings}}",
+      "conflict": "{{binding}} entra en conflicto con {{owners}}.",
+      "parseError": "No se pudo interpretar el atajo.",
+      "saveError": "No se pudo guardar el atajo."
+    },
+    "shortcuts": {
+      "title": "Atajos de teclado",
+      "toggle": "Abrir o cerrar Agent Hub",
+      "nextWaiting": "Ir al siguiente agente en espera",
+      "dockMirrors": "Minimizar o restaurar vistas espejo",
+      "popOut": "Abrir el agente activo en otra ventana",
+      "jumpToMirror": "Ir al espacio de trabajo de la vista espejo activa",
+      "arrangeMirrors": "Organizar vistas espejo",
+      "toggleCanvas": "Abrir o salir del lienzo",
+      "focusMirror": "Enfocar o desenfocar la vista espejo activa del lienzo",
+      "hub": "Agent Hub",
+      "mirrors": "Vistas espejo",
+      "canvas": "Lienzo",
+      "dictation": "Dictado",
+      "notSet": "Sin asignar",
+      "setAction": "Asignar atajo para {{action}}",
+      "set": "Asignar atajo",
+      "edit": "Editar atajos",
+      "editDescription": "Cambia los atajos del Hub, Orb, espejos y dictado."
+    },
+    "windowFilter": {
+      "label": "Filtrar por ventana",
+      "labelActive": "Filtro: {{value0}}",
+      "title": "Mostrar",
+      "any": "Todos",
+      "open": "Abierto en una ventana",
+      "emptyOpen": "Ningún terminal está abierto en una ventana",
+      "minimized": "Minimizado",
+      "emptyMinimized": "Ningún terminal está minimizado",
+      "none": "Sin ventana",
+      "emptyNone": "Todos los terminales están en una ventana"
+    },
+    "dictation": {
+      "here": "Dictando aquí"
+    },
+    "quick": {
+      "answerWith": "Respuesta: {{value0}}",
+      "more": "↵ para las {{value0}} opciones",
+      "deny": "No",
+      "title": "Respuesta rápida",
+      "close": "Cerrar y responder en el terminal (esc)",
+      "recommended": "Recomendado",
+      "ownWords": "Tu propia respuesta…",
+      "escHint": "terminal",
+      "reopen": "Mostrar la tarjeta de respuesta rápida",
+      "send": "Enviar",
+      "sending": "Enviando…"
+    },
+    "settings": {
+      "agentControl": "Permitir que los agentes controlen Agent Hub",
+      "agentControlCopy": "Los agentes pueden mostrarte contenido, hacer preguntas y gestionar sus vistas espejo.",
+      "agentOwnCard": "Los agentes pueden usar su propia tarjeta",
+      "agentOwnCardCopy": "Un agente puede abrir los cajones de su tarjeta y leer su trabajo, nunca la tarjeta de otro agente.",
+      "agentsFirst": "Agentes primero",
+      "automationEachRun": "Cada ejecución",
+      "automationOff": "Desactivado",
+      "automationSummary": "Resumen",
+      "botAsks": "Preguntas",
+      "botAutomationResults": "Resultados de automatizaciones",
+      "botAutomationResultsCopy": "Resumen avisa una vez por un grupo de ejecuciones; Cada ejecución avisa por cada una.",
+      "botFailures": "Fallos",
+      "botNameInNotifications": "Nombre del bot en las notificaciones de escritorio",
+      "botNameInNotificationsCopy": "Desactívalo para que los nombres de los bots no aparezcan en la pantalla de bloqueo.",
+      "botNotifications": "Notificaciones de bots",
+      "botNotificationsCopy": "Lo que tus bots muestran junto al hub. Todo sigue llegando a la bandeja.",
+      "botResults": "Resultados",
+      "botSound": "Reproducir un sonido",
+      "botSuggestions": "Sugerencias",
+      "botSuggestionsCopy": "Si está desactivado, las sugerencias solo aparecen en la bandeja.",
+      "botsFirst": "Bots primero",
+      "countersAgents": "Solo agentes",
+      "countersAgentsAndBots": "Agentes y bots",
+      "dockCounters": "Contadores",
+      "drawerAuto": "Auto",
+      "drawerBottom": "Abajo",
+      "drawerPosition": "Posición del cajón",
+      "drawerPositionCopy": "Auto elige el lado o la parte inferior según el espejo.",
+      "drawerSide": "Lado",
+      "foldIdle": "Plegar agentes inactivos y en reposo",
+      "inboxOrder": "Orden de la bandeja",
+      "keepLiveOnSwitch": "Mantener Live al cambiar de chat",
+      "keepLiveOnSwitchCopy": "Una conversación en vivo se queda con su chat al mostrar otro chat.",
+      "openOnFailedCheck": "Abrir el cajón cuando falla una comprobación",
+      "orbClearHome": "Vaciar el chat principal",
+      "orbNewChat": "Nuevo chat",
+      "orbNewChatAction": "\"+\" abre",
+      "orbOpenChatsLimit": "Límite de chats abiertos",
+      "orbOpenChatsLimitCopy": "Al llegar al límite, el chat inactivo más antiguo sale de la tira. Sigue en Chats.",
+      "rememberListState": "Recordar pliegues y filtros",
+      "search": {
+        "automation": "automatización",
+        "botNotifications": "notificaciones de bots",
+        "bots": "bots",
+        "counters": "contadores",
+        "drawer": "cajón",
+        "inboxOrder": "orden de la bandeja",
+        "openChats": "chats abiertos",
+        "workStrip": "franja de trabajo"
+      },
+      "showBotChats": "Mostrar chats de bots en Agentes",
+      "showBotChatsCopy": "Si está desactivado, una línea al final de la lista abre Bots.",
+      "workStrip": "Franja de trabajo",
+      "workStripCopy": "Una línea fina en el espejo que muestra lo que hace el agente ahora."
+    },
+    "requests": {
+      "decisionGate": "Punto de decisión",
+      "gateUpdateRequired": "Actualiza este host para responder a los puntos de decisión.",
+      "pairedPeekUnavailable": "Peek aún no puede abrir URL ni archivos de este host vinculado.",
+      "peekUnavailable": "Peek no está disponible en la vista actual.",
+      "peekUnsupported": "Peek no puede abrir esta URL o archivo en su host.",
+      "peekUnsupportedFile": "Este tipo de archivo no se puede mostrar en Peek. Ábrelo en el espacio de trabajo o en la aplicación predeterminada.",
+      "targetUnavailable": "Este terminal ya no está disponible en su host.",
+      "mirrorAddFailed": "No se pudo añadir el terminal a la vista espejo del solicitante ({{reason}}).",
+      "mirrorOpenFailed": "No se pudo abrir la vista espejo ({{reason}}).",
+      "mirrorUnavailable": "Este terminal no tiene una vista espejo.",
+      "invalidLayout": "Elige cuadrícula, columnas o filas.",
+      "canvasDisabled": "Activa el lienzo de Agent Hub en Ajustes para abrirlo.",
+      "presenceUnavailable": "No se puede comprobar la presencia en el escritorio.",
+      "disconnected": "Este host está desconectado.",
+      "unavailable": "Esta solicitud ya no está disponible.",
+      "sendFailed": "No se pudo enviar tu respuesta. Inténtalo de nuevo.",
+      "sending": "Enviando…",
+      "answeredElsewhere": "Respondido en otro lugar",
+      "asks": "@{{agent}} pregunta",
+      "wantsTo": "@{{agent}} quiere {{action}}",
+      "allowOnce": "Permitir una vez",
+      "allowSession": "Permitir durante esta sesión",
+      "deny": "Rechazar",
+      "awayAnswer": "@{{agent}} eligió {{answer}} mientras no estabas",
+      "openMirror": "abrir la vista espejo de {{title}}",
+      "minimizeMirror": "minimizar la vista espejo de {{title}}",
+      "restoreMirror": "restaurar la vista espejo de {{title}}",
+      "closeMirror": "cerrar la vista espejo de {{title}}",
+      "peekLink": "ver {{link}} en Peek",
+      "arrangeMirrors": "organizar vistas espejo",
+      "openCanvas": "abrir el lienzo",
+      "closeCanvas": "cerrar el lienzo"
+    },
+    "answerQueue": {
+      "answeredElsewhere": "Respondida en otro lugar",
+      "automatically": "Automáticamente",
+      "caughtUp": "Todo al día",
+      "exit": "Salir",
+      "includeApprovals": "Incluir aprobaciones",
+      "isAsking": "pregunta",
+      "later": "Más tarde",
+      "laterHint": "más tarde",
+      "onlyShortcut": "Solo con el atajo",
+      "openShortcut": "Abrir la cola de respuestas de Agent Hub",
+      "openTerminal": "Abrir en la terminal",
+      "openWhen": "Abrir cuando llegue una pregunta",
+      "pick": "elegir",
+      "send": "enviar",
+      "title": "Cola de respuestas",
+      "unverifiable": "No se puede verificar la conexión con el host. Vuelve a conectarte para enviar tu respuesta.",
+      "waiting": "{{count}} en espera"
+    },
+    "peek": {
+      "kindWeb": "Web",
+      "kindImage": "Imagen",
+      "kindPdf": "PDF",
+      "kindMarkdown": "Markdown",
+      "kindCsv": "Tabla",
+      "kindMermaid": "Diagrama",
+      "kindNotebook": "Cuaderno",
+      "kindText": "Código / texto",
+      "kindMedia": "Multimedia",
+      "source": "De {{value0}}",
+      "openInTab": "Abrir en pestaña",
+      "openInEditor": "Abrir en el editor",
+      "openInBrowser": "Abrir en el navegador",
+      "openWithApp": "Abrir con la aplicación predeterminada",
+      "back": "Vista previa anterior",
+      "close": "Cerrar (esc)",
+      "chips": "Enlaces en este mensaje",
+      "chipLabel": "Ver {{value0}} en Peek",
+      "unreadable": "No se pudo mostrar este archivo aquí.",
+      "action": "Peek",
+      "exitFullScreen": "Salir de pantalla completa",
+      "fullScreen": "Pantalla completa",
+      "hostAddress": "Esta dirección solo está disponible en su host. Se abrirá en el navegador del espacio de trabajo.",
+      "workspaceFallback": "Esta vista previa no está disponible aquí. Se abrirá en el espacio de trabajo.",
+      "unavailable": "No se pudo abrir este enlace.",
+      "backToMirror": "Cerrar Peek y volver a esta vista espejo"
+    },
+    "orb": {
+      "mini": {
+        "tabChat": "Chat",
+        "tabChats": "Chats",
+        "tabHome": "Inicio"
+      },
+      "defaultAction": "Abrir Orb con",
+      "defaultActionHint": "Se usa con el botón de Orb y el atajo.",
+      "alternateAction": "Acción de {{modifier}}+clic",
+      "alternateActionHint": "Abre este modo sin cambiar la acción predeterminada.",
+      "liveAction": "En vivo",
+      "textAction": "Texto",
+      "microphoneBusy": "El micrófono ya está en uso por otra grabación.",
+      "modifierClickHint": "{{modifier}}+clic · {{action}}",
+      "modelsLoading": "Cargando modelos disponibles…",
+      "modelsUnavailable": "No se pudieron cargar los modelos disponibles. Abre el menú de modelos para reintentar.",
+      "modelUnavailable": "No disponible",
+      "settingsApply": "Los cambios de agente, modelo y aprobación inician una nueva conversación cuando Orb está inactivo. Las conversaciones anteriores conservan su agente y modelo.",
+      "liveHoldsInput": "La voz en directo está activa. Detenla para escribir.",
+      "bot": {
+        "greetingMorning": "Buenos días",
+        "greetingAfternoon": "Buenas tardes",
+        "greetingEvening": "Buenas noches",
+        "briefQuestions_one": "{{count}} pregunta esperando",
+        "briefQuestions_many": "{{count}} preguntas esperando",
+        "briefQuestions_other": "{{count}} preguntas esperando",
+        "briefFinished_one": "{{count}} automatización terminó durante la noche",
+        "briefFinished_many": "{{count}} automatizaciones terminaron durante la noche",
+        "briefFinished_other": "{{count}} automatizaciones terminaron durante la noche",
+        "briefNext": "la próxima a las {{time}}",
+        "failed": "{{name}} falló",
+        "finished": "{{name}} terminó · {{when}}",
+        "dismiss": "Descartar",
+        "answer": "Responder",
+        "later": "Más tarde",
+        "home": "Inicio",
+        "start": "Empezar",
+        "asks": "{{name}} pregunta",
+        "otherBots": "Preguntas de otros bots",
+        "otherBotsHint": "Las preguntas de tus otros bots también aparecen junto al Orb y cuentan en su insignia.",
+        "replyTo": "Re: {{subject}}"
+      },
+      "motion": {
+        "label": "Movimiento de Orb",
+        "hint": "Cuánto se mueve la esfera. El ajuste del sistema para reducir el movimiento no lo cambia.",
+        "full": "Completo",
+        "calm": "Sereno",
+        "off": "Desactivado"
+      },
+      "asleep": {
+        "note": "Dormido · los chats siguen legibles",
+        "state": "Dormido",
+        "wake": "Despertar"
+      },
+      "botMessage": {
+        "hideThread": "Ocultar hilo",
+        "open": "Abrir {{name}}",
+        "showThread": "Mostrar hilo"
+      },
+      "clearHome": {
+        "action": "Borrar el chat principal",
+        "description": "Los chats laterales siguen abiertos. El chat principal actual pasa a Anteriores.",
+        "title": "¿Borrar el chat principal?"
+      },
+      "footer": {
+        "automation": "De una automatización",
+        "home": "Chat principal",
+        "live": "Live está en este chat",
+        "side": "Chat lateral"
+      },
+      "menu": {
+        "botSettings": "Ajustes del bot",
+        "newChat": "Chat nuevo",
+        "openPage": "Abrir la página del bot"
+      },
+      "quickTarget": "Enviar a",
+      "sideAsk": {
+        "hint": "1 pregunta · abre ese chat"
+      },
+      "strip": {
+        "backToLive": "Volver a Live",
+        "bringHere": "Traer aquí",
+        "clearHome": "Borrar el chat principal",
+        "closeTab": "Cerrar chat",
+        "fullHint": "Todos los chats abiertos están ocupados. Cierra uno o espera a que termine.",
+        "home": "Chat principal",
+        "inMainTab": "\"{{name}}\" está abierto en una pestaña principal.",
+        "live": "En vivo",
+        "liveOn": "Live está en {{name}}",
+        "moveLive": "Mover Live aquí",
+        "new": "Chat nuevo",
+        "newChat": "Chat nuevo",
+        "openAsTab": "Abrir como pestaña",
+        "rename": "Renombrar",
+        "working": "Trabajando"
+      },
+      "window": {
+        "asking": "Preguntando",
+        "asleep": "Dormido",
+        "tabActivity": "Actividad",
+        "tabChat": "Chat",
+        "tabChats": "Chats",
+        "tabConnectors": "Conectores",
+        "tabHome": "Inicio",
+        "working": "Trabajando"
+      },
+      "worker": {
+        "footer": "Worker · solo lectura",
+        "openAsTab": "Abrir como pestaña",
+        "talkInTerminal": "Habla con este worker en su terminal.",
+        "transcriptNote": "Transcripción del worker, solo lectura"
+      }
+    },
+    "botBubble": {
+      "access": "{{value0}} pide hablar conmigo en {{value1}}.",
+      "accessReview": "Revisar",
+      "answered": "Respondida",
+      "asksYou": "te pregunta",
+      "chipMany": "{{value0}} preguntas",
+      "chipOne": "1 pregunta",
+      "couldNotFinish": "no pudo terminar",
+      "finished": "terminó",
+      "fromHomeChat": "Chat principal",
+      "fromSuggestion": "Sugerencia",
+      "fromWorker": "Trabajador · {{value0}}",
+      "later": "Más tarde",
+      "moreBots": "+{{value0}} bots",
+      "openChat": "Abrir chat",
+      "openInbox": "Abrir en la bandeja",
+      "openInboxChip": "Abrir bandeja",
+      "openItem": "Abrir #{{value0}}",
+      "reply": "Responder",
+      "runAgain": "Ejecutar de nuevo",
+      "runAgainFailed": "No se pudo iniciar",
+      "runDone": "{{value0}} ha terminado.",
+      "runFailed": "{{value0}} no terminó.",
+      "runsSummary": "{{value0}} ejecuciones terminaron, {{value1}} no.",
+      "signIn": "Inicia sesión en {{value0}} para que pueda seguir.",
+      "signInAction": "Iniciar sesión",
+      "suggestionDismiss": "Descartar",
+      "suggestionYes": "Sí",
+      "updates": "{{value0}} novedades"
+    },
+    "filter": {
+      "botStarted": "Iniciados por un bot",
+      "unreadOnly": "Solo no leídos"
+    },
+    "groupMenu": {
+      "collapseOthers": "Contraer los demás",
+      "newAgent": "Nuevo agente aquí",
+      "open": "Abrir proyecto",
+      "sleepIdle": "Suspender agentes inactivos",
+      "sleepSkipped_one": "No se pudo suspender {{count}} agente",
+      "sleepSkipped_other": "No se pudieron suspender {{count}} agentes",
+      "sleepSkipped_many": "No se pudieron suspender {{count}} agentes"
+    },
+    "rowMenu": {
+      "canvas": "Añadir al lienzo",
+      "close": "Cerrar",
+      "jump": "Ir a la terminal",
+      "markRead": "Marcar como leído",
+      "mirror": "Abrir en espejo",
+      "openLastChat": "Abrir el último chat",
+      "rename": "Cambiar nombre…",
+      "renameCancel": "Cancelar",
+      "renameSave": "Cambiar nombre",
+      "renameTitle": "Cambiar el nombre de la terminal"
+    },
+    "stateChips": {
+      "all": "Todos",
+      "ask": "Te necesitan",
+      "done": "Terminados",
+      "idle": "Inactivos",
+      "label": "Filtrar por estado",
+      "sleep": "Suspendidos",
+      "work": "Trabajando"
+    }
   },
   "workspaceDeletion": {
     "preferenceSaveFailed": "No se pudo guardar la preferencia de eliminación",
@@ -28097,6 +29193,7 @@
         "waitingOn": "En espera de"
       },
       "chat": {
+        "answer": "Responder",
         "moreItems": "+{{count}} más",
         "anotherAgent": "Otro agente"
       },
@@ -28149,7 +29246,10 @@
         "sendSomeLabel": "Enviar {{count}} de {{total}} respuestas",
         "changeAnswer": "{{question}}: {{answer}}. Cambiar respuesta",
         "heldImagesLimit": "Tus respuestas van en un solo comentario, que admite hasta {{max}} imágenes. Envía primero las respuestas guardadas hasta ahora o quita algunas.",
-        "heldSkillsLimit": "Tus respuestas van en un solo comentario, que admite hasta {{max}} habilidades. Envía primero las respuestas guardadas hasta ahora o quita algunas."
+        "heldSkillsLimit": "Tus respuestas van en un solo comentario, que admite hasta {{max}} habilidades. Envía primero las respuestas guardadas hasta ahora o quita algunas.",
+        "previous": "Pregunta anterior",
+        "next": "Siguiente pregunta",
+        "step": "{{n}} de {{total}}"
       },
       "readMoreClosedFailed": "No se pudieron leer más elementos cerrados",
       "wait": {

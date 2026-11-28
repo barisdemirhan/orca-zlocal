@@ -246,7 +246,9 @@ const SLEEPING = {
   launchConfig: resumeRecord('launchConfig'),
   origin: resumeRecord('origin'),
   restoreOnTabOpenOnly: resumeRecord('restoreOnTabOpenOnly'),
-  terminalHandle: resumeRecord('terminalHandle')
+  terminalHandle: resumeRecord('terminalHandle'),
+  // Manual sleep only; a quit capture never waits for a request.
+  wakeOnRequestOnly: resumeRecord('wakeOnRequestOnly')
 } as const satisfies Record<keyof SleepingAgentSessionRecord, DiskFieldWritten>
 
 const INCARNATION = {

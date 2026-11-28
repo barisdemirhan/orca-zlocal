@@ -9,6 +9,7 @@ import {
   FileText,
   LayoutGrid,
   Link2,
+  Orbit,
   MessagesSquare,
   Plus,
   Rocket,
@@ -52,7 +53,8 @@ const CATEGORY_ICONS = {
   support: MessagesSquare,
   planning: FileText,
   ops: Wrench,
-  personal: UserRoundCheck
+  personal: UserRoundCheck,
+  hub: Orbit
 }
 
 /** Mounted only while `activeModal` is 'bot-templates', so search, scroll and the in-place detail start fresh. */

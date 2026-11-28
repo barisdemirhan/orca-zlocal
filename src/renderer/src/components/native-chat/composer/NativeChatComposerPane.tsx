@@ -2,6 +2,8 @@ import { useNativeChatComposerEditSession } from '../queue/editing/use-native-ch
 import { useNativeChatComposerNotice } from './controls/use-native-chat-composer-notice'
 import { useNativeChatMobileHoldNotice } from '../host-access/use-native-chat-mobile-hold-notice'
 import { forwardRef, useCallback, useState, useRef } from 'react'
+import { usePublishAgentHubMirrorSettings } from '../../agent-hub/use-publish-agent-hub-mirror-chat'
+import { AgentHubOrbOrWorkspaceFooter } from '../../agent-hub/AgentHubOrbComposerFooter'
 import { useNativeChatComposerInterrupt } from './submit/use-native-chat-composer-interrupt'
 import { useNativeChatContextUsageSummary } from '../usage/use-native-chat-context-usage-summary'
 import { useNativeChatDraft } from '../drafts/use-native-chat-draft'
@@ -16,7 +18,7 @@ import { NativeChatComposerField } from './editor/NativeChatComposerField'
 import { useNativeChatComposerAttachments } from '../attachments/chips/use-native-chat-composer-attachments'
 import { nativeChatComposerSendState } from './submit/native-chat-composer-send-state'
 import { useNativeChatSteerChordPreview } from './controls/use-native-chat-steer-chord-preview'
-import { useNativeChatComposerHandle } from './editor/use-native-chat-composer-handle'
+import { useNativeChatComposerPasteIntake } from './editor/use-native-chat-composer-paste-intake'
 import { useNativeChatFileDrops } from '../attachments/intake/use-native-chat-file-drops'
 import { useNativeChatComposerKeyDown } from './editor/use-native-chat-composer-keydown'
 import { useNativeChatSendLifecycle } from '../session/terminal/send/use-native-chat-send-lifecycle'
@@ -31,6 +33,11 @@ import { useImeEnterGestureOwnership } from '@/lib/text-input/ime/ime-compositio
 import { useNativeChatComposerAppMenuSelection } from './focus/use-native-chat-composer-app-menu-selection'
 import { useNativeChatComposerSubmit } from './submit/use-native-chat-composer-submit'
 import { useNativeChatComposerCommandPicker } from './pickers/use-native-chat-composer-command-picker'
+import { useAgentHubOrbComposerBinding } from '../../agent-hub/agent-hub-orb-composer'
+import {
+  useNativeChatComposerVoiceGatedSend,
+  useNativeChatComposerVoiceHoldsInput
+} from '../use-native-chat-composer-orb-voice-gate'
 import type * as C from './native-chat-composer-types'
 
 type ComposerHandle = C.NativeChatComposerHandle
@@ -71,6 +78,7 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
     },
     ref
   ): React.JSX.Element {
+    const voiceHoldsInput = useNativeChatComposerVoiceHoldsInput()
     // Own drafts and attachments by pane/conversation so reconnect PTY replacement and UI mode changes cannot discard unsent input.
     const imeEnterGesture = useImeEnterGestureOwnership()
     const draftState = useNativeChatDraft(draftScopeKey, imeEnterGesture.isComposing)
@@ -105,7 +113,7 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
 
     // Why inputOwnedByCard: the hidden field can still hold keyboard focus for a frame.
     const [hasPty, disabled] = structuredTransport
-      ? [true, !canSend || unavailableHint !== undefined]
+      ? [true, !canSend || unavailableHint !== undefined || voiceHoldsInput]
       : [targetPtyId !== null, targetPtyId === null || !canSend || inputOwnedByCard]
     const attachDisabled =
       disabled ||
@@ -173,35 +181,23 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
 
     const localHandle = useRef<C.NativeChatComposerHandle>(null)
     const root = useRef<HTMLDivElement>(null)
-    const handlePasteEvent = useNativeChatComposerHandle(localHandle, {
+    const handlePasteEvent = useNativeChatComposerPasteIntake({
+      handleRef: localHandle,
       resend: (text, imagePaths) => !structuredTransport && sendPty({ text, imagePaths }),
-      attachmentScopeKey: draftScopeKey,
+      draftScopeKey,
+      paneKey,
+      targetPtyId,
+      structuredTransport,
       textareaRef,
       isComposing: imeEnterGesture.isComposing,
       caret,
       setDraft,
       setCaret,
       setActiveSuggestion,
-      targetKey: JSON.stringify([
-        paneKey,
-        targetPtyId,
-        structuredTransport?.sessionId,
-        structuredTransport?.worktreeId,
-        structuredTransport?.runtimeEnvironmentId
-      ]),
       agent,
       disabled,
-      resolveAttachmentOwner: fileDrops.resolveAttachmentOwner,
-      attachResolvedPaths,
-      attachCopiedFiles: fileDrops.attachExternalPaths,
-      captureCopiedFiles: fileDrops.captureCopiedFiles,
-      captureExternalPaths: fileDrops.captureExternalPaths,
-      beginPendingImageAttachment: attachments.beginPendingImageAttachment,
-      // Settles into the scope cache, which outlives a composer a prompt card unmounted.
-      resolvePendingImageAttachment: attachments.pendingChips.resolve,
-      revealPendingImageAttachment: attachments.revealPendingImageAttachment,
-      dropPendingImageAttachment: attachments.dropPendingImageAttachment,
-      pastedTextEditor: structuredTransport ? attachments.scopeEditor : null,
+      fileDrops,
+      attachments,
       setNotice
     })
 
@@ -224,6 +220,8 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
       structuredTransport
     })
     const contextUsageSummary = useNativeChatContextUsageSummary(structuredTransport)
+    const workspace = { terminalTabId, structuredTransport, isWorking }
+    usePublishAgentHubMirrorSettings(workspace, sessionOptions, contextUsageSummary)
 
     const sendStructured = useNativeChatRoomSend(
       useNativeChatStructuredComposerSend({
@@ -278,6 +276,7 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
       setDraft,
       setCaret
     })
+    const sendMessage = useNativeChatComposerVoiceGatedSend(submission.send)
 
     const { sendHeld, ...sendButton } = nativeChatComposerSendState({
       agent,
@@ -310,8 +309,9 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
         sendStructured,
         ptyCommandRouting: { ...ptyCommandRouting, setActiveSuggestion },
         setNotice,
-        sendMessage: submission.send
+        sendMessage
       })
+    useAgentHubOrbComposerBinding(textareaRef, send, !disabled)
 
     const interrupt = useNativeChatComposerInterrupt({
       inert: inputOwnedByCard,
@@ -358,9 +358,12 @@ export const NativeChatComposerPane = forwardRef<ComposerHandle, C.NativeChatCom
       flushPendingAttachments: attachments.flushPendingAttachments
     })
 
-    const workspace = { terminalTabId, structuredTransport, isWorking }
     const workspaceFooter =
-      editSession || launchPrompt ? undefined : <NativeChatComposerWorkspace {...workspace} />
+      editSession || launchPrompt ? undefined : (
+        <AgentHubOrbOrWorkspaceFooter tabId={terminalTabId}>
+          <NativeChatComposerWorkspace {...workspace} />
+        </AgentHubOrbOrWorkspaceFooter>
+      )
     return (
       <div ref={root} data-native-chat-composer-scope={draftScopeKey}>
         <NativeChatComposerRoomProvider mentions={mentions}>

@@ -1,5 +1,7 @@
 // One worker under its chat in the Chats tab, one line; or a search's worker hit, its chat on line 2.
+import { useContext } from 'react'
 import { CircleX } from 'lucide-react'
+import { BotChatOpenOverrideContext, type BotChatOpenOverride } from './bot-chat-open-override'
 import { AgentStateDot } from '@/components/agent/status/AgentStateDot'
 import StatusIndicator from '@/components/sidebar/workspace-card/surface/StatusIndicator'
 import { useAppStore } from '@/store'
@@ -121,7 +123,8 @@ export function botChatTreeWorkerRunning(worker: BotChatTreeWorker): boolean {
  *  workspace it left behind opens. */
 export function botChatTreeWorkerOpen(
   bot: Bot,
-  worker: BotChatTreeWorker
+  worker: BotChatTreeWorker,
+  override?: BotChatOpenOverride | null
 ): (() => void) | undefined {
   const { run, dispatchId, worktreeId } = worker
   if (run) {
@@ -129,6 +132,7 @@ export function botChatTreeWorkerOpen(
   }
   if (dispatchId && !worker.neverStarted) {
     return () =>
+      override?.worker?.(bot, worker) ||
       openOrchestrationWorker(
         {
           dispatchId,
@@ -181,7 +185,8 @@ export function BotChatTreeWorkerRow({
   // Stopped on its usage limit, it reads stopped, never running; a question for the owner still wins.
   const found = useBotUsageLimitStopIndex().byWorkspace.get(worktreeId ?? '')
   const stop = found && worker.state !== 'needs-you' ? found : null
-  const onOpen = botChatTreeWorkerOpen(bot, worker)
+  const override = useContext(BotChatOpenOverrideContext)
+  const onOpen = botChatTreeWorkerOpen(bot, worker, override)
   const running = botChatTreeWorkerRunning(worker)
   return (
     <WorkerActivityRow

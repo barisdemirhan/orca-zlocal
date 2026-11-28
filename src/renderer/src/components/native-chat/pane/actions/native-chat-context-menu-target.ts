@@ -56,7 +56,9 @@ export function readNativeChatContextMenuTarget(
       href && link
         ? nativeChatLinkActions(
             href,
-            typeof linkContext === 'function' ? linkContext(href, link) : linkContext
+            typeof linkContext === 'function' ? linkContext(href, link) : linkContext,
+            undefined,
+            { target }
           )
         : null,
     codeText:

@@ -1,5 +1,5 @@
 import { ImeTextarea } from '@/lib/text-input/ime/ime-text-field'
-import type { RefObject } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { Check, Pencil } from 'lucide-react'
 import { cn } from '@/lib/class-names'
 
@@ -20,6 +20,7 @@ export function NativeChatQuestionAnswerField({
   takesFocus,
   placeholder,
   inputRef,
+  accessory,
   onChange,
   onPointerChoose,
   onEnter
@@ -33,6 +34,8 @@ export function NativeChatQuestionAnswerField({
   takesFocus: boolean
   placeholder: string
   inputRef?: RefObject<HTMLTextAreaElement | null>
+  /** A control beside the field, e.g. the hub's dictation mic. */
+  accessory?: ReactNode
   onChange: (value: string) => void
   onPointerChoose: () => void
   onEnter: () => void
@@ -106,6 +109,7 @@ export function NativeChatQuestionAnswerField({
           )}
         />
       )}
+      {accessory}
     </div>
   )
 }

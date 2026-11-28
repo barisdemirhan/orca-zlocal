@@ -1,4 +1,5 @@
 import { Activity, GitCommitHorizontal, Plug, Server } from 'lucide-react'
+import { useAppStore } from '@/store'
 import React from 'react'
 import {
   DropdownMenu,
@@ -7,6 +8,8 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { AgentIcon } from '@/components/agent/icons/AgentIcon'
+import { isPairedWebClientWindow } from '@/app-shell/chrome/desktop-window-chrome'
+import { AgentHubStatusBarMenuItem } from '../../agent-hub/AgentHubStatusBarMenuItem'
 import { ClaudeIcon, MiniMaxIcon, OpenAIIcon, OpenCodeGoIcon } from '../accounts/provider-icons'
 import { useTranslate } from '@/i18n/use-translate'
 import { isStatusBarItemAvailable } from './status-bar-agent-gating'
@@ -18,6 +21,7 @@ export function StatusBarVisibilityMenu({
   controller: StatusBarController
 }): React.JSX.Element {
   const t = useTranslate()
+  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   const {
     detectedAgentIds,
     menuOpen,
@@ -178,6 +182,7 @@ export function StatusBarVisibilityMenu({
           <GitCommitHorizontal className="size-3.5" />
           {t('editor.gitBlame.statusBarItem', 'Git Blame')}
         </DropdownMenuCheckboxItem>
+        {agentHubEnabled && !isPairedWebClientWindow() ? <AgentHubStatusBarMenuItem /> : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )

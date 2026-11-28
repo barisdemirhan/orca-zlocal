@@ -82,7 +82,8 @@ export function toAgentStatusIpcPayload(
     ...(publishedOrcaSessionId(entry.agentIdentity) !== undefined
       ? { orcaSessionId: publishedOrcaSessionId(entry.agentIdentity) }
       : {}),
-    ...entry.payload
+    ...entry.payload,
+    ...(entry.spawnedBy ? { spawnedBy: entry.spawnedBy } : {})
   }
 }
 

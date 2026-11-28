@@ -27,8 +27,6 @@ import {
   getRendererSerializerGenerationFromRuntimeController,
   getSizeFromRuntimeController,
   hasChildProcessesFromRuntimeController,
-  hasPtyFromRuntimeController,
-  getPtyAvailabilityFromRuntimeController,
   hasRendererSerializerFromRuntimeController,
   supportsForegroundObservationFromRuntimeController,
   inspectProcessFromRuntimeController,
@@ -37,6 +35,10 @@ import {
   waitForRendererSerializerFromRuntimeController,
   writePtyFromRuntimeController
 } from './operations'
+import {
+  getPtyAvailabilityFromRuntimeController,
+  hasPtyFromRuntimeController
+} from './ready-provider-reads'
 import {
   canProvideAuthoritativeBufferSnapshotFromRuntimeController,
   serializeProviderBufferFromRuntimeController,
@@ -55,6 +57,9 @@ export function installPtyRuntimeController(deps: PtyRuntimeControllerDeps): voi
 
   observeInProcessWorkerExits(runtime)
   runtime?.setPtyController({
+    terminalSuspension: (id, options) =>
+      getProviderForPty(id).terminalSuspension?.(id, options) ??
+      Promise.resolve({ state: 'unsupported' }),
     claimStablePaneCreate: (args) => {
       const paneKey = makePaneKey(args.tabId, args.leafId)
       const ownerKey = makePaneSpawnReservationKey(args.worktreeId, args.connectionId, paneKey)

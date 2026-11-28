@@ -6,6 +6,7 @@ import type { BotMascotId } from '../bot-avatar'
 import { BOT_CREATED_KICKOFF } from '../bot-created-kickoff'
 import type { BotPackageConnector } from './bot-package'
 import { BOT_SHARED_SETUP_FILE } from './bot-shared-from'
+import { BOT_TEMPLATES_AGENT_HUB } from './bot-template-catalog/agent-hub'
 import { BOT_TEMPLATES_CODING } from './bot-template-catalog/coding'
 import { BOT_TEMPLATES_OPS, BOT_TEMPLATES_PERSONAL } from './bot-template-catalog/ops-personal'
 import { BOT_TEMPLATES_PLANNING } from './bot-template-catalog/planning'
@@ -21,7 +22,8 @@ export const BOT_TEMPLATE_CATEGORIES = [
   'support',
   'planning',
   'ops',
-  'personal'
+  'personal',
+  'hub'
 ] as const
 export type BotTemplateCategory = (typeof BOT_TEMPLATE_CATEGORIES)[number]
 
@@ -102,7 +104,8 @@ export const BOT_TEMPLATES: readonly BotTemplate[] = [
   ...BOT_TEMPLATES_SUPPORT,
   ...BOT_TEMPLATES_PLANNING,
   ...BOT_TEMPLATES_OPS,
-  ...BOT_TEMPLATES_PERSONAL
+  ...BOT_TEMPLATES_PERSONAL,
+  ...BOT_TEMPLATES_AGENT_HUB
 ]
 
 export function botTemplate(id: string | undefined): BotTemplate | null {

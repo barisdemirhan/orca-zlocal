@@ -11,6 +11,7 @@ import type {
   NotificationSoundResult,
   StructuredNotificationRead
 } from '../../../shared/notifications/notification-settings-types'
+import type { AgentHubPresence } from '../../../shared/agent-hub-requests'
 import type { AgentSessionExecutionLocation } from '../../../shared/agent-session/lifecycle/agent-session-record'
 import type { PreloadApi } from '../../api-types'
 
@@ -32,6 +33,8 @@ function disposeCachedNotificationSound(): void {
 export const notificationsApi = {
   getDesktopAwayState: (): Promise<boolean | undefined> =>
     ipcRenderer.invoke('notifications:getDesktopAwayState'),
+  getDesktopPresence: (): Promise<AgentHubPresence | undefined> =>
+    ipcRenderer.invoke('notifications:getDesktopPresence'),
   dispatch: (args: Record<string, unknown>): Promise<NotificationDispatchResult> =>
     ipcRenderer.invoke('notifications:dispatch', args),
   acknowledgeAttention: (

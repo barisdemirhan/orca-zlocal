@@ -6,6 +6,14 @@ import type {
   NotificationDispatchResult
 } from '../../../shared/notifications/notification-settings-types'
 
+// The latest native verdict, for a surface that would otherwise assume a banner (and its sound).
+let nativeBannerRefused = false
+
+/** True when the OS refused the last agent banner: notifications blocked or unsupported. */
+export function isNativeAgentBannerRefused(): boolean {
+  return nativeBannerRefused
+}
+
 export type AgentAttentionNotificationSound = {
   customSoundId: string
   customSoundVolume: number | null
@@ -20,6 +28,11 @@ export function deliverAgentAttentionNotification(
     .dispatch(request)
     .then((result) => {
       onResult?.(result)
+      if (result.delivered) {
+        nativeBannerRefused = false
+      } else if (result.reason === 'blocked-by-system' || result.reason === 'not-supported') {
+        nativeBannerRefused = true
+      }
       if (result.delivered) {
         void playDesktopNotificationSound(sound.customSoundId, sound.customSoundVolume)
         return

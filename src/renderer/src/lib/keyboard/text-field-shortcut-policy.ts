@@ -11,7 +11,7 @@ import {
   textInputOwnsComposition
 } from '../../../../shared/keybindings/text-input-shortcut-policy'
 
-type TextKeyEvent = {
+export type TextKeyEvent = {
   target: EventTarget | null
   key?: string
   code?: string

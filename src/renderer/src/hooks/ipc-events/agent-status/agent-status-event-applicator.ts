@@ -200,8 +200,8 @@ export function createAgentStatusEventApplicator(
     }
     const resolvedPayload = resolveHookPayloadAgentType(payload, identityTitle ?? title)
     const statusPayload = data.orchestration
-      ? { ...resolvedPayload, orchestration: data.orchestration }
-      : resolvedPayload
+      ? { ...resolvedPayload, spawnedBy: data.spawnedBy, orchestration: data.orchestration }
+      : { ...resolvedPayload, spawnedBy: data.spawnedBy }
     const statusPayloadWithTurnBoundary = data.promptInteractionKey
       ? { ...statusPayload, promptInteractionKey: data.promptInteractionKey }
       : statusPayload

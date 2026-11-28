@@ -10,6 +10,7 @@ export const TerminalSplit = lazyZodSchema(() =>
       // Required unless `pane` names the source; the refinement keeps the handle's message.
       terminal: OptionalString,
       expectedIncarnationId: TerminalHandle.shape.expectedIncarnationId,
+      callerTerminalHandle: OptionalString,
       direction: z
         .unknown()
         .transform((v) => (v === 'vertical' || v === 'horizontal' ? v : undefined))

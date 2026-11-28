@@ -11,7 +11,7 @@ import type { GlobalSettings } from '../../../../shared/settings/global-settings
 
 type BotHomeStore = {
   getSettings?: () => Partial<Pick<GlobalSettings, 'botsEnabled'>>
-  getBots?: () => readonly Pick<Bot, 'folderWorkspaceId' | 'chatSessionId'>[]
+  getBots?: () => readonly Pick<Bot, 'folderWorkspaceId' | 'chatSessionId' | 'role'>[]
 }
 
 /** The session the bot whose home `workspaceId` is names Home now; null off a bot's page or with bots off. */
@@ -19,8 +19,9 @@ export function botHomeSessionId(
   store: BotHomeStore | null | undefined,
   workspaceId: string
 ): string | null {
-  return areHostBotsEnabled(store?.getSettings?.())
-    ? (botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)?.chatSessionId ?? null)
+  const bot = botOfHomeWorkspace(store?.getBots?.() ?? [], workspaceId)
+  return bot && (bot.role === 'orb' || areHostBotsEnabled(store?.getSettings?.()))
+    ? (bot.chatSessionId ?? null)
     : null
 }
 

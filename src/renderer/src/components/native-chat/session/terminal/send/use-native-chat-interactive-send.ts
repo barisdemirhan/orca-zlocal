@@ -41,25 +41,57 @@ export type NativeChatInteractiveSend = {
   sendRawVerified: (raw: string, requireStartupDialog?: string) => Promise<boolean>
   /** Stop delayed writes without interrupting the agent. */
   cancelPending: () => void
-  /** Reject the question without interrupting the session; resolve true only for acknowledged Escape. */
+  /** Reject the active question without requesting session interruption; resolves to whether
+   *  the Escape was acknowledged. */
   cancelAsk: () => Promise<boolean>
+  /** Interrupt the active turn. */
   cancel: () => void
 }
 
-/** Reuse composer routing to the live local/remote PTY; selector agents receive keystrokes, other agents pasted messages, and controls raw bytes. */
+/**
+ * Reuse the desktop composer's exact send path for the interactive cards:
+ * resolve this tab's live ptyId + runtime owner settings, then write bytes via
+ * `sendRuntimePtyInput` (which branches local pty:write vs remote runtime RPC,
+ * so SSH panes work unchanged). Selector answers use their respective
+ * selector keystrokes via `sendNativeChatAskAnswer`; other agents still go through
+ * `sendNativeChatMessage`. Control strings (option digits, ESC) are written raw.
+ */
 export function useNativeChatInteractiveSend(
   paneKey: string,
   targetPtyId: string | null,
-  agent: AgentType
+  agent: AgentType,
+  options: {
+    /** Let a chosen answer finish its paced writes after a short-lived card unmounts. */
+    finishAnswerAfterUnmount?: boolean
+  } = {}
 ): NativeChatInteractiveSend {
-  // Cancel delayed writes on a new send, Stop or unmount so detached views cannot keep writing PTY bytes.
+  // The in-flight answer's cancel handle; cleared on a new send, on Stop, and on
+  // unmount so a detached setTimeout chain can't keep writing PTY bytes after
+  // the view is gone / the user switched away.
   const inFlightRef = useRef<NativeChatSendHandle | null>(null)
   const cancelInFlight = useCallback(() => {
     inFlightRef.current?.cancel()
     inFlightRef.current = null
   }, [])
-  // A split can rebind without unmounting; cancel during commit before delayed writes can target the replacement PTY.
-  useLayoutEffect(() => cancelInFlight, [agent, cancelInFlight, paneKey, targetPtyId])
+  // Why: a split can be rebound without unmounting this view. Cancel during
+  // commit so no delayed answer write can race the replacement PTY.
+  const bindingRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    const binding = JSON.stringify([agent, paneKey, targetPtyId])
+    if (bindingRef.current !== null && bindingRef.current !== binding) {
+      cancelInFlight()
+    }
+    bindingRef.current = binding
+  }, [agent, cancelInFlight, paneKey, targetPtyId])
+  const { finishAnswerAfterUnmount = false } = options
+  useLayoutEffect(
+    () => () => {
+      if (!finishAnswerAfterUnmount) {
+        cancelInFlight()
+      }
+    },
+    [cancelInFlight, finishAnswerAfterUnmount]
+  )
 
   const sendRaw = useCallback(
     (raw: string) => {

@@ -143,7 +143,6 @@ export abstract class OrcaRuntimeWithBuildHeadlessMobileSessionBrowserTabs exten
     let refusal: Error | undefined
     const closingLeafIds = this.terminalCloseLeafIds(worktreeId, target)
     const hostIds = () => this.getWorkspaceSessionHostIdsForTab(worktreeId, target.tabId)
-    const fenced = acknowledgeTabRetirement !== null
     try {
       refusal = await store.runDurableMutation(
         closeLeafOrTab({
@@ -155,7 +154,7 @@ export abstract class OrcaRuntimeWithBuildHeadlessMobileSessionBrowserTabs exten
             target,
             hostIds(),
             { getWorkspaceSession: (hostId) => store.getWorkspaceSession!(hostId) },
-            fenced
+            acknowledgeTabRetirement !== null
           ),
           ownerMatches: () => !acknowledgeTabRetirement || acknowledgeTabRetirement().matches,
           hostIds,
@@ -172,6 +171,7 @@ export abstract class OrcaRuntimeWithBuildHeadlessMobileSessionBrowserTabs exten
     if (refusal) {
       throw refusal
     }
+    this.pruneTerminalSpawnLineage(target)
     this.retireClosedCoordinatorPanes(worktreeId, target.tabId, closingLeafIds)
     return ptyIdsToKill
   }

@@ -47,6 +47,7 @@ export type AgentSessionAttachParams = {
   location: AgentSessionExecutionLocation
   provider: StructuredAgentId
   agent: StructuredAgentId
+  origin?: 'agent-hub-orb'
   accountHome: AgentSessionAccountHome
   /** Retain native in params because fingerprints include it. */
   runtimeKind: 'native'
@@ -92,6 +93,7 @@ export function attachFingerprintFields(params: AgentSessionAttachParams): Recor
     location: params.location,
     provider: params.provider,
     agent: params.agent,
+    origin: params.origin,
     accountHome: params.accountHome,
     runtimeKind: params.runtimeKind,
     providerHandle: params.providerHandle,
@@ -212,6 +214,7 @@ export function reserveRequestFor(input: {
     sessionId: input.sessionId,
     location: params.location,
     provider: params.provider,
+    ...(params.origin ? { origin: params.origin } : {}),
     accountHome: params.accountHome,
     ...(params.options ? { options: params.options, models: input.models } : {}),
     ...(params.envelope.expectedRuntimeFence === null && params.surfaceTabId

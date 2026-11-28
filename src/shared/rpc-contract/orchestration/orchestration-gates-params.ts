@@ -33,6 +33,14 @@ export const GateResolveParams = lazyZodSchema(() =>
   })
 )
 
+export const GateResolveByUserParams = lazyZodSchema(() =>
+  z.object({
+    id: requiredString('Missing gate id'),
+    resolution: z.string().trim().min(1).max(100_000),
+    run: OptionalString
+  })
+)
+
 export const GateListParams = lazyZodSchema(() =>
   z.object({
     task: OptionalString,

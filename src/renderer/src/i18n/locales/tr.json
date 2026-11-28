@@ -349,6 +349,108 @@
       "unverified": "{{profile}} profilinin Google çerezleri denetlenemedi. Yeniden deneyin.",
       "fe3f6e1721": "Google çerezleri"
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "Parola kaydetme önerisi",
+        "updateTitle": "Parola güncellensin mi?",
+        "saveTitle": "Parola kaydedilsin mi?",
+        "username": "Kullanıcı adı",
+        "password": "Parola",
+        "never": "Bu site için asla",
+        "notNow": "Şimdi değil",
+        "update": "Güncelle",
+        "save": "Kaydet",
+        "saveChip": "Parolayı kaydet",
+        "updateChip": "Parolayı güncelle"
+      },
+      "fill": {
+        "noUsername": "(kullanıcı adı yok)",
+        "title": "Kaydedilmiş girişler",
+        "otherLogins": "Bu sitedeki diğer girişler"
+      }
+    },
+    "toolbar": {
+      "annotate": "Not ekle",
+      "grab": "Yakala",
+      "draw": "Çiz",
+      "copyAllNotes": "Tüm notları kopyala",
+      "clearNotes": "Notları temizle",
+      "resetZoom": "Yakınlaştırmayı sıfırla",
+      "resetViewport": "Görüntü alanı boyutunu sıfırla",
+      "findOnPage": "Sayfada bul",
+      "profile": "Profil",
+      "annotateModeWithShortcut": "Not ekle, öğeyi yakala veya çiz ({{value0}})",
+      "annotateMode": "Not ekle, öğeyi yakala veya çiz"
+    },
+    "loadStall": {
+      "waitingForHost": "{{host}} bekleniyor…"
+    },
+    "annotatePalette": {
+      "annotateTooltip": "Not ekle: Bir öğeye yorum yaz (A)",
+      "grabTooltip": "Yakala: Öğenin bağlamını kopyala (G)",
+      "drawTooltip": "Çiz: Ekran görüntüsünü işaretle (D)",
+      "positionLeft": "Sol",
+      "positionRight": "Sağ",
+      "positionTop": "Üst",
+      "positionMiddle": "Orta",
+      "positionBottom": "Alt",
+      "label": "Not ekleme araçları",
+      "tools": "Araç",
+      "copy": "Kopyala",
+      "copyTitle": "Seçili öğeyi kopyala",
+      "copied": "Kopyalandı",
+      "screenshot": "Ekran görüntüsü",
+      "screenshotTitle": "Seçili öğenin ekran görüntüsünü kopyala",
+      "done": "Bitti",
+      "doneTitle": "Bitti (Esc)",
+      "move": "Araç çubuğunu taşı",
+      "positionValueBothAxes": "{{side}} %{{percent}}, {{vertical}} %{{verticalPercent}}",
+      "annotateTooltipNoKey": "Not ekle: Bir öğeye yorum yaz",
+      "grabTooltipNoKey": "Yakala: Öğenin bağlamını kopyala",
+      "drawTooltipNoKey": "Çiz: Ekran görüntüsünü işaretle",
+      "moveAnywhereTooltip": "Taşımak için sürükleyin veya ok tuşlarını kullanın · sıfırlamak için çift tıklayın · altını görmek için {{key}} tuşunu basılı tutun",
+      "copyMarkup": "İşaretleme kodunu kopyala",
+      "pickFirst": "Önce bir öğe seçin",
+      "moreDrawTools": "Diğer çizim araçları",
+      "showNotes": "Notları göster",
+      "noteCountOne": "1 not",
+      "noteCount": "{{count}} not",
+      "drawingDiscarded": "Çizim atıldı",
+      "undo": "Geri al",
+      "collapseNotes": "Notları daralt",
+      "expandNotes": "Notları genişlet",
+      "clearNotes": "Notları temizle",
+      "waitingForPage": "Sayfa bekleniyor…",
+      "pageDidNotLoad": "Sayfa yüklenmedi",
+      "discardDrawing": "Çizimi at",
+      "discardDrawingTitle": "Çizimi at (Esc)",
+      "positionCenter": "Orta"
+    },
+    "profileCookieClear": {
+      "label": "Çerezler",
+      "action": "Çerezleri temizle…",
+      "rowLocal": "Bu bilgisayarda {{profile}} içindeki tüm sitelerdeki oturumunuzu kapatır.",
+      "rowServer": "{{host}} üzerinde {{profile}} içindeki tüm sitelerdeki oturumunuzu kapatır; hem bu bilgisayardaki sayfalarda hem de akışla gelen sayfalarda geçerlidir.",
+      "rowSsh": "{{host}} için {{profile}} içindeki tüm sitelerdeki oturumunuzu kapatır.",
+      "unavailable": "Seçili sunucuda bu profil için çerez temizleme kullanılamıyor.",
+      "confirmTitle": "{{host}} üzerinde {{profile}} içindeki çerezler temizlensin mi?",
+      "confirmTitleLocal": "Bu bilgisayarda {{profile}} içindeki çerezler temizlensin mi?",
+      "confirmDescriptionServer": "Bu işlem, bu profildeki tüm sitelerdeki oturumunuzu kapatır; hem bu bilgisayardaki sayfalarda hem de akışla gelen sayfalarda geçerlidir. Diğer profiller ve sunucular çerezlerini korur.",
+      "confirmDescription": "Bu işlem, bu profildeki tüm sitelerdeki oturumunuzu kapatır. Diğer profiller ve sunucular çerezlerini korur.",
+      "clear": "Temizle",
+      "cancel": "İptal",
+      "cleared": "{{host}} üzerinde {{profile}} içindeki çerezler temizlendi.",
+      "clearedLocal": "Bu bilgisayarda {{profile}} içindeki çerezler temizlendi.",
+      "failed": "{{host}} üzerinde {{profile}} içindeki çerezler temizlenemedi. Yeniden deneyin.",
+      "failedLocal": "Bu bilgisayarda {{profile}} içindeki çerezler temizlenemedi. Yeniden deneyin.",
+      "sshHostOption": "{{host}} (SSH)"
+    },
+    "grabToast": {
+      "noScreenshot": "Ekran görüntüsü yok",
+      "hoverReadFailed": "İşaretçinin üzerindeki öğe okunamadı",
+      "noHover": "İşaretçinin altında öğe yok",
+      "copyFailed": "Kopyalanamadı"
+    },
     "loadFailure": {
       "connectionNotSecure": "Bağlantı güvenli değil",
       "cantReachHost": "{{value0}} adresine ulaşılamıyor",
@@ -605,108 +707,6 @@
         "noMatches": "Eşleşme yok",
         "googleNote": "Google oturumları içe aktarılmaz"
       }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "Parola kaydetme önerisi",
-        "updateTitle": "Parola güncellensin mi?",
-        "saveTitle": "Parola kaydedilsin mi?",
-        "username": "Kullanıcı adı",
-        "password": "Parola",
-        "never": "Bu site için asla",
-        "notNow": "Şimdi değil",
-        "update": "Güncelle",
-        "save": "Kaydet",
-        "saveChip": "Parolayı kaydet",
-        "updateChip": "Parolayı güncelle"
-      },
-      "fill": {
-        "noUsername": "(kullanıcı adı yok)",
-        "title": "Kaydedilmiş girişler",
-        "otherLogins": "Bu sitedeki diğer girişler"
-      }
-    },
-    "toolbar": {
-      "annotate": "Not ekle",
-      "grab": "Yakala",
-      "draw": "Çiz",
-      "copyAllNotes": "Tüm notları kopyala",
-      "clearNotes": "Notları temizle",
-      "resetZoom": "Yakınlaştırmayı sıfırla",
-      "resetViewport": "Görüntü alanı boyutunu sıfırla",
-      "findOnPage": "Sayfada bul",
-      "profile": "Profil",
-      "annotateModeWithShortcut": "Not ekle, öğeyi yakala veya çiz ({{value0}})",
-      "annotateMode": "Not ekle, öğeyi yakala veya çiz"
-    },
-    "loadStall": {
-      "waitingForHost": "{{host}} bekleniyor…"
-    },
-    "annotatePalette": {
-      "annotateTooltip": "Not ekle: Bir öğeye yorum yaz (A)",
-      "grabTooltip": "Yakala: Öğenin bağlamını kopyala (G)",
-      "drawTooltip": "Çiz: Ekran görüntüsünü işaretle (D)",
-      "positionLeft": "Sol",
-      "positionRight": "Sağ",
-      "positionTop": "Üst",
-      "positionMiddle": "Orta",
-      "positionBottom": "Alt",
-      "label": "Not ekleme araçları",
-      "tools": "Araç",
-      "copy": "Kopyala",
-      "copyTitle": "Seçili öğeyi kopyala",
-      "copied": "Kopyalandı",
-      "screenshot": "Ekran görüntüsü",
-      "screenshotTitle": "Seçili öğenin ekran görüntüsünü kopyala",
-      "done": "Bitti",
-      "doneTitle": "Bitti (Esc)",
-      "move": "Araç çubuğunu taşı",
-      "positionValueBothAxes": "{{side}} %{{percent}}, {{vertical}} %{{verticalPercent}}",
-      "annotateTooltipNoKey": "Not ekle: Bir öğeye yorum yaz",
-      "grabTooltipNoKey": "Yakala: Öğenin bağlamını kopyala",
-      "drawTooltipNoKey": "Çiz: Ekran görüntüsünü işaretle",
-      "moveAnywhereTooltip": "Taşımak için sürükleyin veya ok tuşlarını kullanın · sıfırlamak için çift tıklayın · altını görmek için {{key}} tuşunu basılı tutun",
-      "copyMarkup": "İşaretleme kodunu kopyala",
-      "pickFirst": "Önce bir öğe seçin",
-      "moreDrawTools": "Diğer çizim araçları",
-      "showNotes": "Notları göster",
-      "noteCountOne": "1 not",
-      "noteCount": "{{count}} not",
-      "drawingDiscarded": "Çizim atıldı",
-      "undo": "Geri al",
-      "collapseNotes": "Notları daralt",
-      "expandNotes": "Notları genişlet",
-      "clearNotes": "Notları temizle",
-      "waitingForPage": "Sayfa bekleniyor…",
-      "pageDidNotLoad": "Sayfa yüklenmedi",
-      "discardDrawing": "Çizimi at",
-      "discardDrawingTitle": "Çizimi at (Esc)",
-      "positionCenter": "Orta"
-    },
-    "profileCookieClear": {
-      "label": "Çerezler",
-      "action": "Çerezleri temizle…",
-      "rowLocal": "Bu bilgisayarda {{profile}} içindeki tüm sitelerdeki oturumunuzu kapatır.",
-      "rowServer": "{{host}} üzerinde {{profile}} içindeki tüm sitelerdeki oturumunuzu kapatır; hem bu bilgisayardaki sayfalarda hem de akışla gelen sayfalarda geçerlidir.",
-      "rowSsh": "{{host}} için {{profile}} içindeki tüm sitelerdeki oturumunuzu kapatır.",
-      "unavailable": "Seçili sunucuda bu profil için çerez temizleme kullanılamıyor.",
-      "confirmTitle": "{{host}} üzerinde {{profile}} içindeki çerezler temizlensin mi?",
-      "confirmTitleLocal": "Bu bilgisayarda {{profile}} içindeki çerezler temizlensin mi?",
-      "confirmDescriptionServer": "Bu işlem, bu profildeki tüm sitelerdeki oturumunuzu kapatır; hem bu bilgisayardaki sayfalarda hem de akışla gelen sayfalarda geçerlidir. Diğer profiller ve sunucular çerezlerini korur.",
-      "confirmDescription": "Bu işlem, bu profildeki tüm sitelerdeki oturumunuzu kapatır. Diğer profiller ve sunucular çerezlerini korur.",
-      "clear": "Temizle",
-      "cancel": "İptal",
-      "cleared": "{{host}} üzerinde {{profile}} içindeki çerezler temizlendi.",
-      "clearedLocal": "Bu bilgisayarda {{profile}} içindeki çerezler temizlendi.",
-      "failed": "{{host}} üzerinde {{profile}} içindeki çerezler temizlenemedi. Yeniden deneyin.",
-      "failedLocal": "Bu bilgisayarda {{profile}} içindeki çerezler temizlenemedi. Yeniden deneyin.",
-      "sshHostOption": "{{host}} (SSH)"
-    },
-    "grabToast": {
-      "noScreenshot": "Ekran görüntüsü yok",
-      "hoverReadFailed": "İşaretçinin üzerindeki öğe okunamadı",
-      "noHover": "İşaretçinin altında öğe yok",
-      "copyFailed": "Kopyalanamadı"
     }
   },
   "editor": {
@@ -8965,21 +8965,6 @@
         "FontAutocomplete": {
           "installedFontsUnavailable": "Yüklü yazı tipleri listelenemedi. Kullanmak için yüklü bir yazı tipinin adını yazın."
         },
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Yerel Main'i Güncel Tut"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "Hesap konumu kaydedilemedi. Tekrar deneyin.",
           "dbb9626ed1": "İptal",
@@ -9316,9 +9301,6 @@
           "79209b37b9": "Çerez içe aktarma uygun değilse Computer Use, yerel uygulamaları kontrol edebilir ve uygun olduğunda mevcut oturum açılmış tarayıcı oturumlarını kullanabilir. Orca Computer Use becerisini yükleyin; macOS ayrıca gizlilik izinleri gerektirir.",
           "333984cf90": "Mevcut bir tarayıcı oturumunu kullan",
           "9895ed44de": "Computer Use'u Aç"
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Ajan Tarayıcı Kullanımını Etkinleştir"
         },
         "BrowserUseExamples": {
           "1199258ace": "Kopyala",
@@ -10364,9 +10346,6 @@
           "14f1eb99d0": "PR Oluştur açıldığında ayrıntıları üret",
           "d32b87e754": "Mevcutsa inceleme şablonunu kullan",
           "981eae7e14": "Varsayılan olarak taslak"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "Kaynak Kontrolü AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "Bir bağlantıyı iptal etmek, açtığı terminallerde oluşturulan bağlantıları da iptal eder. Bu bilgisayarda SSH ya da bir bağlantı üzerinden terminali olan herkes yine yeniden eşleştirme yapabilir.",
@@ -15229,6 +15208,27 @@
             "optional": "içindeki yer tutuculardan biri boşsa bu bölüm gösterilmez",
             "namedUsagePools": "adlandırılmış kullanım havuzları, ör. Cursor abonelik planı havuzları"
           }
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "Kaynak Kontrolü AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Yerel Main'i Güncel Tut"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Ajan Tarayıcı Kullanımını Etkinleştir"
         }
       },
       "right": {
@@ -22194,6 +22194,7 @@
         "steerHint": "Ajan çalışmaya devam ederken şimdi gönder",
         "sendHint": "Bu mesajı şimdi gönder",
         "delete": "Sil",
+        "moreActions": "Diğer işlemler",
         "moveChanged": "Bu taşımadan önce kuyruk değişti. Mesajı yeniden sürüklemeyi deneyin.",
         "reorderHint": "Sırayı değiştirmek için sürükleyin veya Up ve Down ok tuşlarını kullanın.",
         "reorderMessage": "Mesajın sırasını değiştir",
@@ -22217,6 +22218,8 @@
         "editGonePrompt": "Bu mesaj zaten gönderildi veya kaldırıldı. Ajana yanıt verdikten sonra düzenlediğiniz metin sohbet kutusuna getirilecek.",
         "imageCount_one": "{{count}} görsel",
         "imageCount_other": "{{count}} görsel",
+        "collapse": "Daralt",
+        "expand": "Genişlet",
         "queued": "Sıraya alındı",
         "clearAll": "Tümünü temizle",
         "couldNotSend": "Gönderilemedi",
@@ -28611,6 +28614,7 @@
       "row": {
         "more": "Daha fazla",
         "done": "Tamam",
+        "openChat": "Sohbeti aç",
         "select": "{{title}} öğesini seç"
       },
       "snooze": {

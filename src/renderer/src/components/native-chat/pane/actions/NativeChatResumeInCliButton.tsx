@@ -58,11 +58,16 @@ function createExecutionHostSelector(
 export function NativeChatResumeInCliButton({
   tabId,
   worktreeId,
-  nativeChat
+  nativeChat,
+  fromMirror = false,
+  blockedReason
 }: {
   tabId: string
   worktreeId: string
   nativeChat: NativeChatTabSession
+  /** Drawn in a mirror's header, where the terminal also takes the chat's place. */
+  fromMirror?: boolean
+  blockedReason?: string
 }): React.JSX.Element | null {
   const t = useTranslate()
   const tab = { id: tabId, worktreeId }
@@ -86,29 +91,33 @@ export function NativeChatResumeInCliButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="pane-title"
-          size="icon-xs"
-          aria-label={label}
-          disabled={pending}
-          aria-busy={pending || undefined}
-          onClick={(event) => {
-            event.stopPropagation()
-            const subject = resolveTabSessionHistorySubject(useAppStore.getState(), {
-              tab,
-              nativeChat
-            })
-            if (subject?.kind === 'chat') {
-              void runNativeChatCliFork({ subject, tab, agent })
-            }
-          }}
-        >
-          <SquareTerminal className="size-3" />
-        </Button>
+        {/* A disabled button gets no pointer events, so the wrapper carries the hover. */}
+        <span className="inline-flex">
+          <Button
+            type="button"
+            variant={fromMirror ? 'ghost' : 'pane-title'}
+            size="icon-xs"
+            className={fromMirror ? 'text-muted-foreground hover:text-foreground' : undefined}
+            aria-label={blockedReason ?? label}
+            disabled={pending || blockedReason !== undefined}
+            aria-busy={pending || undefined}
+            onClick={(event) => {
+              event.stopPropagation()
+              const subject = resolveTabSessionHistorySubject(useAppStore.getState(), {
+                tab,
+                nativeChat
+              })
+              if (subject?.kind === 'chat') {
+                void runNativeChatCliFork({ subject, tab, agent, fromMirror })
+              }
+            }}
+          >
+            <SquareTerminal className={fromMirror ? 'size-3.5' : 'size-3'} />
+          </Button>
+        </span>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={4}>
-        {label}
+        {blockedReason ?? label}
       </TooltipContent>
     </Tooltip>
   )

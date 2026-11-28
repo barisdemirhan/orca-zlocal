@@ -38,6 +38,11 @@ const PortsStatusSegment = lazyWithRetry(() =>
     default: module.PortsStatusSegment
   }))
 )
+const AgentHubRoot = lazyWithRetry(() =>
+  import('../agent-hub/AgentHubRoot').then((module) => ({
+    default: module.AgentHubRoot
+  }))
+)
 const SshStatusSegment = lazyWithRetry(() =>
   import('./host-connections/SshStatusSegment').then((module) => ({
     default: module.SshStatusSegment
@@ -67,6 +72,7 @@ export function StatusBarSurface({
   // Memoized labels still need to follow language changes.
   useTranslation()
   const controller = useStatusBarController(floatingTerminalOpen)
+  const agentHubEnabled = useAppStore((s) => s.settings?.experimentalAgentHub === true)
   const showPluginsSegment = useAppStore((s) => shouldShowPluginsStatusSegment(s.settings))
   if (!controller) {
     return null
@@ -124,6 +130,7 @@ export function StatusBarSurface({
           <UpdateStatusSegment />
           {showGitBlame ? <GitBlameStatusSegment /> : null}
           <React.Suspense fallback={null}>
+            {agentHubEnabled && !isPairedWebClientWindow() ? <AgentHubRoot /> : null}
             {petEnabled ? <PetStatusSegment /> : null}
             {showResourceUsage ? <ResourceUsageStatusSegment /> : null}
             {showPorts ? <PortsStatusSegment /> : null}

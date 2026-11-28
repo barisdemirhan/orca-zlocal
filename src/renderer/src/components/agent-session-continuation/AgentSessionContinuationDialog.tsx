@@ -42,6 +42,11 @@ import { useAppStore } from '@/store'
 import { isTuiAgentEnabled } from '../../../../shared/agent-launch/catalog/tui-agent-selection'
 import type { TuiAgent } from '../../../../shared/agent-launch/catalog/tui-agent'
 import {
+  DEFAULT_AGENT_SESSION_CONTINUATION_PLACEMENT,
+  type AgentSessionContinuationPlacement
+} from '@/lib/agent-session-continuation-placement'
+import { AgentSessionContinuationPlacementField } from './AgentSessionContinuationPlacementField'
+import {
   chooseInitialContinuationAgent,
   isContinuationAgentAllowed
 } from './agent-session-continuation-selection'
@@ -80,6 +85,10 @@ export function AgentSessionContinuationDialog({
     request: AgentSessionContinuationRequest | null
     mode: AgentSessionContinuationContextMode
   } | null>(null)
+  const [placementPick, setPlacementPick] = useState<{
+    request: AgentSessionContinuationRequest | null
+    placement: AgentSessionContinuationPlacement
+  } | null>(null)
   // One start's own token: a closed or reopened dialog no longer waits on a start it left behind.
   const [startingFor, setStartingFor] = useState<{
     request: AgentSessionContinuationRequest
@@ -91,11 +100,18 @@ export function AgentSessionContinuationDialog({
     if (contextPick) {
       setContextPick(null)
     }
+    if (placementPick) {
+      setPlacementPick(null)
+    }
     if (startingFor) {
       setStartingFor(null)
     }
   }
   const contextMode = contextPick?.request === request ? contextPick.mode : 'focused'
+  const placement =
+    placementPick?.request === request
+      ? placementPick.placement
+      : DEFAULT_AGENT_SESSION_CONTINUATION_PLACEMENT
   const starting = open && startingFor?.request === request
   const [showStarting, setShowStarting] = useState(false)
   const disabledAgents = settings?.disabledTuiAgents ?? EMPTY_DISABLED_AGENTS
@@ -226,7 +242,9 @@ export function AgentSessionContinuationDialog({
           )
         : {}),
       launchSource: request.launchSource,
-      signal
+      signal,
+      // Why: only a request from a mirror pane offers a placement; everywhere else keeps jumping.
+      ...(request.mirrorSource ? { mirror: { ...request.mirrorSource, placement } } : {})
     })
     setStartingFor((current) => (current === start ? null : current))
     // A late finish is reported by the launch's own owners, never by a dialog it no longer holds.
@@ -366,6 +384,13 @@ export function AgentSessionContinuationDialog({
                 'Slower, and uses more of your plan or API credits.'
               )}
             </p>
+          ) : null}
+          {request?.mirrorSource ? (
+            <AgentSessionContinuationPlacementField
+              disabled={controlsDisabled}
+              placement={placement}
+              onPick={(next) => setPlacementPick({ request, placement: next })}
+            />
           ) : null}
         </div>
 

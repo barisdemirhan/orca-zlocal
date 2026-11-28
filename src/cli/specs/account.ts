@@ -34,7 +34,8 @@ export const ACCOUNT_COMMAND_SPECS: CommandSpec[] = [
     allowedFlags: [...LOCAL_COMMAND_FLAGS, 'agent'],
     notes: [
       "Lists the accounts on this machine with the ids `orca account select` and `orca account rm` accept. `system` is the provider's own sign-in outside Orca.",
-      '`--environment` / `--pairing-code` are rejected rather than ignored; run it on the host whose accounts you want to see.'
+      '`--environment` / `--pairing-code` are rejected rather than ignored; run it on the host whose accounts you want to see.',
+      '`--json` also includes `rateLimits`: the last known quota and rate-limit windows per provider (not force-refreshed). Use it to answer quota questions.'
     ],
     examples: ['orca account list', 'orca account list --agent claude']
   },

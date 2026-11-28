@@ -38,7 +38,7 @@ import type { AgentSessionThreadGoalChange } from '../../../../shared/agent-sess
 import type { SubmissionRejectionFact } from '../../../../shared/agent-session/failures/agent-session-failure'
 import type {
   AgentSessionCloseObserver,
-  StructuredAgentSessionAdapterStop
+  StructuredAgentSessionAdapterControls
 } from './structured-agent-session-adapter-stop'
 /** `unknown` (no timely, correlated answer) skips this idle stop and asks again later. */
 export type AgentSessionIdleConfirmation = 'idle' | 'busy' | 'unknown'
@@ -184,7 +184,8 @@ export type StructuredAgentSessionSetOptionInput = {
   signal?: AbortSignal
 }
 
-type AdapterControls = StructuredAgentSessionAdapterStop & StructuredAgentSessionAdapterPermission
+type AdapterControls = StructuredAgentSessionAdapterControls &
+  StructuredAgentSessionAdapterPermission
 
 export type StructuredAgentSessionAdapter = AdapterControls & {
   readAccountUsage?(record: AgentSessionRecord, signal: AbortSignal): Promise<CodexAccountUsageRead>

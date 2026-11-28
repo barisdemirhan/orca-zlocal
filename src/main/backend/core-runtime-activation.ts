@@ -197,6 +197,8 @@ export async function activateBackendRuntime(
   profileShutdown.paneGrids = runtime
   profileShutdown.paintLedger = runtime
   runtime.beginStructuredAgentSessionStartupOpen(chatJournal.maintenanceAfter, chatJournal.open)
+  // Hands the hook server the persisted "started by" links now that it is wired.
+  runtime.restorePaneSpawnLineage()
   // Agent detection answers RPC before release reclaim below, and must count Orca's copies then too.
   const { provideManagedAgentDetection } =
     await import('../runtime/rpc/methods/host-management/managed-copy-detection')

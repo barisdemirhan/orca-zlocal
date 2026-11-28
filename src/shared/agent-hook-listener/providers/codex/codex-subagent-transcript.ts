@@ -1,5 +1,5 @@
 import { readJsonlCursor, readTranscriptDirectory } from './codex-rollout-jsonl-cursor'
-import { record, type JsonlCursor, type JsonRecord } from './codex-rollout-jsonl-format'
+import type { JsonlCursor, JsonRecord } from './codex-rollout-jsonl-format'
 import {
   markParentReadDeferred,
   rolloutCursorReadDeferred,
@@ -13,18 +13,14 @@ import {
   reconcileCodexTranscriptTurn,
   type CodexTranscriptTurn
 } from './codex-turn-transcript'
-import {
-  normalizedTranscriptPath,
-  resolveChildTranscript,
-  SAFE_THREAD_ID
-} from './codex-rollout-paths'
+import { normalizedTranscriptPath, resolveChildTranscript } from './codex-rollout-paths'
 
 import { isCodexStatusTranscriptLine } from './codex-status-transcript-line'
 
-import { readApprovalsReviewer } from './codex-subagent-reviewer'
+import { resolveCodexApprovalsReviewer } from './codex-subagent-reviewer'
 import type { CodexApprovalsReviewer } from './codex-subagent-reviewer'
 
-import { codexSubagentPathLabel } from './codex-agent-path'
+import { readCodexSubagentActivity } from './codex-subagent-activity-record'
 import {
   keepCodexSubagentHidden,
   rememberInterruptedCodexSubagent,
@@ -66,55 +62,12 @@ export type CodexSubagentTranscriptState = {
   reviewerCursorsByPath: Map<string, JsonlCursor>
   /** Reviewer ownership discovered from child rollouts, keyed by their bounded cursor paths. */
   reviewersByPath: Map<string, CodexApprovalsReviewer>
+  /** Active approval rollout per owner; undefined identifies the root agent. */
+  pendingApprovalPathsByAgentId: Map<string | undefined, string>
   /** Who resolves this turn's approvals in the parent rollout. */
   approvalsReviewer?: CodexApprovalsReviewer
-}
-
-function readActivity(recordValue: JsonRecord):
-  | {
-      id: string
-      description?: string
-      kind: 'started' | 'interacted' | 'interrupted'
-      startedAt: number
-      fromItem: boolean
-    }
-  | undefined {
-  if (recordValue.type !== 'event_msg') {
-    return undefined
-  }
-  const payload = record(recordValue.payload)
-  // Paginated-history rollouts persist activity only as items.
-  const item = payload?.type === 'item_completed' ? record(payload.item) : undefined
-  const activity =
-    payload?.type === 'sub_agent_activity'
-      ? payload
-      : item?.type === 'SubAgentActivity'
-        ? item
-        : undefined
-  if (!activity) {
-    return undefined
-  }
-  const id = typeof activity.agent_thread_id === 'string' ? activity.agent_thread_id.trim() : ''
-  const rawKind = typeof activity.kind === 'string' ? activity.kind.toLowerCase() : ''
-  if (
-    !SAFE_THREAD_ID.test(id) ||
-    (rawKind !== 'started' && rawKind !== 'interacted' && rawKind !== 'interrupted')
-  ) {
-    return undefined
-  }
-  return {
-    id,
-    description:
-      codexSubagentPathLabel(
-        typeof activity.agent_path === 'string' ? activity.agent_path : null
-      ) ?? undefined,
-    kind: rawKind,
-    startedAt:
-      typeof activity.occurred_at_ms === 'number' && Number.isFinite(activity.occurred_at_ms)
-        ? activity.occurred_at_ms
-        : Date.now(),
-    fromItem: activity === item
-  }
+  /** Parent cursor offset after the last applied read; reviewer lookback measures skipped bytes from it. */
+  parentReviewerOffset?: number
 }
 
 export function createCodexSubagentTranscriptState(): CodexSubagentTranscriptState {
@@ -125,7 +78,8 @@ export function createCodexSubagentTranscriptState(): CodexSubagentTranscriptSta
     subagents: new Map(),
     interruptedSubagents: new Map(),
     reviewerCursorsByPath: new Map(),
-    reviewersByPath: new Map()
+    reviewersByPath: new Map(),
+    pendingApprovalPathsByAgentId: new Map()
   }
 }
 
@@ -171,6 +125,8 @@ function beginCodexTranscriptReconcile(
   state.interruptedSubagents.clear()
   state.reviewerCursorsByPath.clear()
   state.reviewersByPath.clear()
+  state.pendingApprovalPathsByAgentId.clear()
+  state.parentReviewerOffset = undefined
   // Why: a different rollout is a different session, so its predecessor's reviewer is void.
   state.approvalsReviewer = undefined
   return { path: normalizedPath, changed: true }
@@ -181,15 +137,21 @@ export function applyCodexParentTranscript(
   roster: CodexSubagentRoster,
   parentRecords: JsonRecord[] | undefined
 ): boolean {
-  const changed =
+  let changed =
     Boolean(parentRecords?.length) ||
     (parentRecords === undefined && state.approvalsReviewer !== undefined)
   reconcileCodexTranscriptTurn(state.rootTurn, parentRecords ?? [])
   // A stale reviewer must never turn an unreadable rollout into a hidden prompt.
-  state.approvalsReviewer =
-    parentRecords === undefined
-      ? undefined
-      : (readApprovalsReviewer(parentRecords) ?? state.approvalsReviewer)
+  const previousReviewer = state.approvalsReviewer
+  const previousOffset = state.parentReviewerOffset ?? 0
+  state.parentReviewerOffset = state.parent.offset
+  state.approvalsReviewer = resolveCodexApprovalsReviewer(
+    state.parent,
+    previousOffset,
+    parentRecords,
+    state.approvalsReviewer
+  )
+  changed ||= state.approvalsReviewer !== previousReviewer
   // Hook-only and restored children may predate the bounded parent transcript read.
   for (const [id, child] of roster) {
     if (!state.subagents.has(id)) {
@@ -207,7 +169,7 @@ export function applyCodexParentTranscript(
       }
       continue
     }
-    const activity = readActivity(recordValue)
+    const activity = readCodexSubagentActivity(recordValue)
     if (!activity) {
       continue
     }

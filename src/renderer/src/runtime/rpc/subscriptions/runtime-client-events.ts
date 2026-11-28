@@ -29,7 +29,10 @@ export async function subscribeRuntimeClientEvents(
       selector: environmentId,
       method: 'runtime.clientEvents.subscribe',
       // Older servers ignore params; newer ones ask only sockets advertising host requests.
-      ...(options.hostsBrowserPages ? { params: { browserHostRequests: true } } : {}),
+      params: {
+        agentHub: false,
+        ...(options.hostsBrowserPages ? { browserHostRequests: true } : {})
+      },
       timeoutMs: 15_000,
       expectedEnvironmentPairingRevision: getRuntimeEnvironmentRevision(environmentId)
     },

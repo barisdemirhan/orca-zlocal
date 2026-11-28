@@ -50,8 +50,8 @@ export const BOT_MEMORY_METHODS = [
     permission: 'workspace',
     params: BotMemoryForget,
     handler: async (params, context) => {
-      context.runtime.bots.assertEnabled()
       const { bot, caller } = namedOrCallerBot(params, context)
+      context.runtime.bots.assertEnabled(bot)
       return {
         forgot: await context.runtime.bots.memory.forget(
           bot.id,
@@ -67,8 +67,8 @@ export const BOT_MEMORY_METHODS = [
     permission: 'workspace',
     params: BotMemoryEdit,
     handler: async (params, context) => {
-      context.runtime.bots.assertEnabled()
       const { bot } = namedOrCallerBot(params, context)
+      context.runtime.bots.assertEnabled(bot)
       await context.runtime.bots.memory.change(
         bot.id,
         botHomeFolder(bot),
@@ -98,8 +98,8 @@ export const BOT_MEMORY_METHODS = [
     params: BotChat,
     handler: async (params, context) => {
       const { runtime } = context
-      runtime.bots.assertEnabled()
       const { bot } = namedOrCallerBot(params, context)
+      runtime.bots.assertEnabled(bot)
       const listed = runtime.bots.memory.history(bot.id)
       let view = historyViews.get(listed)
       if (!view) {
@@ -114,8 +114,8 @@ export const BOT_MEMORY_METHODS = [
     permission: 'workspace',
     params: BotMemoryUndo,
     handler: async (params, context) => {
-      context.runtime.bots.assertEnabled()
       const { bot } = namedOrCallerBot(params, context)
+      context.runtime.bots.assertEnabled(bot)
       return {
         undone: await context.runtime.bots.memory.undo(bot.id, botHomeFolder(bot), params.id)
       }

@@ -11,11 +11,15 @@ import { cn } from '@/lib/class-names'
 import { useAppStore } from '@/store'
 import { BotItemStatusIcon } from '@/components/bots/items/BotItemStatusIcon'
 import { botItemStatusName } from '@/components/bots/items/bot-item-status-name'
-import { openBotItem } from '@/components/bots/items/bot-item-open'
+import { openBotItem, openBotItemInHome } from '@/components/bots/items/bot-item-open'
 import { BotItemCommentImages } from '@/components/bots/items/BotItemCommentImages'
 import { findBotByWorkspace, useBotForWorkspace } from '@/components/bots/bot-workspace'
+import { useAgentHubChatDestination } from '@/components/agent-hub/agent-hub-chat-destinations'
+import { closeAgentHubCanvas } from '@/components/agent-hub/agent-hub-canvas-store'
+import { openBotItemInMirror } from '@/components/agent-hub/agent-hub-mirror-bot-item-open'
 import { openBotSession } from '@/components/bots/bot-session-open'
 import { readBots } from '@/lib/bot-catalog'
+import type { Bot } from '../../../../../shared/bot-types'
 import type { BotItemNoteItem, BotItemNoteView } from '../../../../../shared/bots/bot-item-note'
 import { stripSentImagePromptMarkers } from '../../../../../shared/native-chat/transcript/images/native-chat-sent-image-prompt-markers'
 import { NativeChatEventRow } from '../messages/events/NativeChatEventRow'
@@ -29,6 +33,7 @@ import {
   nativeChatTextHasUnkernedRun
 } from '../composer/editor/native-chat-unkerned-runs'
 import { useBotItemChipPreview } from './bot-item-chip-preview'
+import { showBotAskCard, useHiddenBotAsk } from './native-chat-bot-ask-later'
 import {
   botItemNoteLines,
   botItemNoteRunLine,
@@ -41,17 +46,46 @@ import { SenderChip } from '../messages/agent-senders/NativeChatAgentMessageSend
 import { useNativeChatVisualOwner } from '../media/visuals/native-chat-visual-owner'
 import { useNativeChatWorkers } from '../native-chat-workers-context'
 
-/** The chat's bot is the one whose home it is in. */
-function openChipItem(uid: string): void {
-  const bot = findBotByWorkspace(readBots(), useAppStore.getState().activeWorktreeId)
-  if (bot) {
-    openBotItem(bot, uid)
+/** The workspace the chat belongs to: a mirror shows chats of workspaces other than the active one. */
+function useChatWorktreeId(): string | null {
+  const ownerWorktreeId = useNativeChatVisualOwner()?.worktreeId
+  const activeWorktreeId = useAppStore((state) => state.activeWorktreeId)
+  return ownerWorktreeId ?? activeWorktreeId
+}
+
+/** The chat's bot is the one whose home its workspace is. Read when clicked. */
+function useChatBotResolver(): () => { bot: Bot; inActive: boolean } | null {
+  const ownerWorktreeId = useNativeChatVisualOwner()?.worktreeId
+  return () => {
+    const { activeWorktreeId } = useAppStore.getState()
+    const worktreeId = ownerWorktreeId ?? activeWorktreeId
+    const bot = findBotByWorkspace(readBots(), worktreeId)
+    return bot ? { bot, inActive: worktreeId === activeWorktreeId } : null
+  }
+}
+
+/** The item opens in the mirror's Activity tab when a mirror shows the chat, else in its Items tab;
+ *  from another workspace, the bot's Home opens first. */
+function useOpenChipItem(): (uid: string) => void {
+  const resolve = useChatBotResolver()
+  const mirror = useAgentHubChatDestination(useNativeChatVisualOwner()?.tabId ?? '')
+  return (uid) => {
+    const found = resolve()
+    if (found && mirror) {
+      openBotItemInMirror(mirror, found.bot, uid)
+    } else if (found?.inActive) {
+      // An open canvas snaps the right sidebar back, so the panel would never show.
+      closeAgentHubCanvas()
+      openBotItem(found.bot, uid)
+    } else if (found) {
+      void openBotItemInHome(found.bot, uid)
+    }
   }
 }
 
 function ChipPreview({ item }: { item: BotItemNoteItem }): React.JSX.Element {
   const t = useTranslate()
-  const bot = useBotForWorkspace(useAppStore((state) => state.activeWorktreeId))
+  const bot = useBotForWorkspace(useChatWorktreeId())
   const live = useBotItemChipPreview(bot, item.uid)
   return (
     <span className="flex flex-col gap-0.5">
@@ -69,6 +103,7 @@ export function ItemChip({
   className?: string
 }): React.JSX.Element {
   const t = useTranslate()
+  const openItem = useOpenChipItem()
   // The preview, and its live read, exist only while the tooltip is open.
   const [open, setOpen] = useState(false)
   return (
@@ -82,7 +117,7 @@ export function ItemChip({
             status: botItemStatusName(item.status, t)
           })}
           className={cn(NATIVE_CHAT_INLINE_CHIP, className)}
-          onClick={() => openChipItem(item.uid)}
+          onClick={() => openItem(item.uid)}
         >
           <BotItemStatusIcon status={item.status} />
           <span className="min-w-0 truncate">{item.title}</span>
@@ -98,13 +133,14 @@ export function ItemChip({
 /** The chat that made a change, opening that chat. */
 function ChatChip({ chat }: { chat: BotItemNoteLineChat }): React.JSX.Element {
   const t = useTranslate()
+  const resolve = useChatBotResolver()
   return (
     <button
       type="button"
       aria-label={t('bots.items.chat.openChat', 'Open {{chat}}', { chat: chat.name })}
       className={NATIVE_CHAT_INLINE_CHIP}
       onClick={() => {
-        const bot = findBotByWorkspace(readBots(), useAppStore.getState().activeWorktreeId)
+        const bot = resolve()?.bot
         if (bot) {
           // Home Chat by its live session, which a /clear moved past the chat id.
           openBotSession(bot, (chat.home && bot.chatSessionId) || chat.chatId)
@@ -218,6 +254,22 @@ function lineLabel(line: BotItemNoteLine & { kind: 'line' }): string {
     .concat(line.detail ? `: ${line.detail}` : '')
 }
 
+/** Brings back the chat's ask card for this item, once "Later" hid it. */
+function AnswerAction({ uid }: { uid: string }): React.JSX.Element | null {
+  const t = useTranslate()
+  const bot = useBotForWorkspace(useChatWorktreeId())
+  const hidden = useHiddenBotAsk(bot, uid)
+  return bot && hidden !== undefined ? (
+    <button
+      type="button"
+      className="shrink-0 text-xs text-chat-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      onClick={() => showBotAskCard(bot, uid)}
+    >
+      {t('bots.items.chat.answer', 'Answer')}
+    </button>
+  ) : null
+}
+
 /** One item change on the shared status row; a note cut short opens whole under it. */
 function QuietLine({
   line,
@@ -226,6 +278,7 @@ function QuietLine({
   line: BotItemNoteLine & { kind: 'line' }
   at?: number
 }): React.JSX.Element {
+  const openItem = useOpenChipItem()
   const [allChips, setAllChips] = useState(false)
   const [cut, setCut] = useState(false)
   const measuredCut = useRef(false)
@@ -255,7 +308,7 @@ function QuietLine({
         opens
           ? (event) => {
               if (!(event.target instanceof Element && event.target.closest('button'))) {
-                openChipItem(opens)
+                openItem(opens)
               }
             }
           : undefined
@@ -273,6 +326,9 @@ function QuietLine({
           onAllChips={() => setAllChips(true)}
           detailRef={detail}
         />
+        {line.items.length === 1 && line.items[0]!.status === 'needs_you' ? (
+          <AnswerAction uid={line.items[0]!.uid} />
+        ) : null}
       </NativeChatEventRow>
     </div>
   )

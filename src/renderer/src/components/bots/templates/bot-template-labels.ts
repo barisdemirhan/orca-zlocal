@@ -15,5 +15,7 @@ export function botTemplateCategoryLabel(category: BotTemplateCategory, t: Trans
       return t('bots.templates.category.ops', 'Ops')
     case 'personal':
       return t('bots.templates.category.personal', 'Personal assistant')
+    case 'hub':
+      return t('bots.templates.category.hub', 'Agent Hub')
   }
 }

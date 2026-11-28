@@ -58,6 +58,7 @@ const KEYED_BY = {
   defaultTerminalTabsAppliedByWorktreeId: 'none',
   sleepingAgentSessionsByPaneKey: 'pane',
   terminalPtyIncarnationsByPaneKey: 'pane',
+  terminalSpawnedByPaneKey: 'pane',
   terminalTopologyRevisionByRepoId: 'none',
   terminalSurfaceTombstonesByPaneKey: 'whole',
   closedTerminalTabTombstonesByTabId: 'closed-tab',

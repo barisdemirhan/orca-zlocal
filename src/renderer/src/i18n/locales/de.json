@@ -345,6 +345,59 @@
       "unverified": "Google-Cookies von {{profile}} konnten nicht geprüft werden. Erneut versuchen.",
       "fe3f6e1721": "Google-Cookies"
     },
+    "passwords": {
+      "savePrompt": {
+        "open": "Aufforderung zum Speichern des Passworts",
+        "updateTitle": "Passwort aktualisieren?",
+        "saveTitle": "Passwort speichern?",
+        "username": "Benutzername",
+        "password": "Passwort",
+        "never": "Nie für diese Website",
+        "notNow": "Jetzt nicht",
+        "update": "Aktualisieren",
+        "save": "Speichern",
+        "saveChip": "Passwort speichern",
+        "updateChip": "Passwort aktualisieren"
+      },
+      "fill": {
+        "noUsername": "(kein Benutzername)",
+        "title": "Gespeicherte Anmeldungen",
+        "otherLogins": "Weitere Anmeldungen auf dieser Website"
+      }
+    },
+    "toolbar": {
+      "annotate": "Anmerken",
+      "grab": "Erfassen",
+      "draw": "Zeichnen",
+      "copyAllNotes": "Alle Notizen kopieren",
+      "clearNotes": "Notizen löschen",
+      "resetZoom": "Zoom zurücksetzen",
+      "resetViewport": "Größe des Anzeigebereichs zurücksetzen",
+      "findOnPage": "Auf Seite suchen",
+      "profile": "Profil"
+    },
+    "loadStall": {
+      "waitingForHost": "Warte auf {{host}}…"
+    },
+    "profileCookieClear": {
+      "label": "Cookies",
+      "action": "Cookies löschen…",
+      "rowLocal": "Meldet dich auf diesem Computer von allen Websites in {{profile}} ab.",
+      "rowServer": "Meldet dich auf {{host}} von allen Websites in {{profile}} ab, sowohl in Seiten auf diesem Computer als auch in gestreamten Seiten.",
+      "rowSsh": "Meldet dich für {{host}} von allen Websites in {{profile}} ab.",
+      "unavailable": "Für dieses Profil auf dem ausgewählten Host nicht verfügbar.",
+      "confirmTitle": "Cookies in {{profile}} auf {{host}} löschen?",
+      "confirmTitleLocal": "Cookies in {{profile}} auf diesem Computer löschen?",
+      "confirmDescriptionServer": "Dadurch erfolgt eine Abmeldung von allen Websites in diesem Profil, sowohl in Seiten auf diesem Computer als auch in gestreamten Seiten. Andere Profile und Hosts behalten ihre Cookies.",
+      "confirmDescription": "Dadurch erfolgt eine Abmeldung von allen Websites in diesem Profil. Andere Profile und Hosts behalten ihre Cookies.",
+      "clear": "Löschen",
+      "cancel": "Abbrechen",
+      "cleared": "Cookies in {{profile}} auf {{host}} gelöscht.",
+      "clearedLocal": "Cookies in {{profile}} auf diesem Computer gelöscht.",
+      "failed": "Cookies in {{profile}} auf {{host}} konnten nicht gelöscht werden. Erneut versuchen.",
+      "failedLocal": "Cookies in {{profile}} auf diesem Computer konnten nicht gelöscht werden. Erneut versuchen.",
+      "sshHostOption": "{{host}} (SSH)"
+    },
     "loadFailure": {
       "connectionNotSecure": "Die Verbindung ist nicht sicher",
       "cantReachHost": "{{value0}} ist nicht erreichbar",
@@ -598,59 +651,6 @@
         "noMatches": "Keine Treffer",
         "googleNote": "Kein Import von Google-Logins"
       }
-    },
-    "passwords": {
-      "savePrompt": {
-        "open": "Aufforderung zum Speichern des Passworts",
-        "updateTitle": "Passwort aktualisieren?",
-        "saveTitle": "Passwort speichern?",
-        "username": "Benutzername",
-        "password": "Passwort",
-        "never": "Nie für diese Website",
-        "notNow": "Jetzt nicht",
-        "update": "Aktualisieren",
-        "save": "Speichern",
-        "saveChip": "Passwort speichern",
-        "updateChip": "Passwort aktualisieren"
-      },
-      "fill": {
-        "noUsername": "(kein Benutzername)",
-        "title": "Gespeicherte Anmeldungen",
-        "otherLogins": "Weitere Anmeldungen auf dieser Website"
-      }
-    },
-    "toolbar": {
-      "annotate": "Anmerken",
-      "grab": "Erfassen",
-      "draw": "Zeichnen",
-      "copyAllNotes": "Alle Notizen kopieren",
-      "clearNotes": "Notizen löschen",
-      "resetZoom": "Zoom zurücksetzen",
-      "resetViewport": "Größe des Anzeigebereichs zurücksetzen",
-      "findOnPage": "Auf Seite suchen",
-      "profile": "Profil"
-    },
-    "loadStall": {
-      "waitingForHost": "Warte auf {{host}}…"
-    },
-    "profileCookieClear": {
-      "label": "Cookies",
-      "action": "Cookies löschen…",
-      "rowLocal": "Meldet dich auf diesem Computer von allen Websites in {{profile}} ab.",
-      "rowServer": "Meldet dich auf {{host}} von allen Websites in {{profile}} ab, sowohl in Seiten auf diesem Computer als auch in gestreamten Seiten.",
-      "rowSsh": "Meldet dich für {{host}} von allen Websites in {{profile}} ab.",
-      "unavailable": "Für dieses Profil auf dem ausgewählten Host nicht verfügbar.",
-      "confirmTitle": "Cookies in {{profile}} auf {{host}} löschen?",
-      "confirmTitleLocal": "Cookies in {{profile}} auf diesem Computer löschen?",
-      "confirmDescriptionServer": "Dadurch erfolgt eine Abmeldung von allen Websites in diesem Profil, sowohl in Seiten auf diesem Computer als auch in gestreamten Seiten. Andere Profile und Hosts behalten ihre Cookies.",
-      "confirmDescription": "Dadurch erfolgt eine Abmeldung von allen Websites in diesem Profil. Andere Profile und Hosts behalten ihre Cookies.",
-      "clear": "Löschen",
-      "cancel": "Abbrechen",
-      "cleared": "Cookies in {{profile}} auf {{host}} gelöscht.",
-      "clearedLocal": "Cookies in {{profile}} auf diesem Computer gelöscht.",
-      "failed": "Cookies in {{profile}} auf {{host}} konnten nicht gelöscht werden. Erneut versuchen.",
-      "failedLocal": "Cookies in {{profile}} auf diesem Computer konnten nicht gelöscht werden. Erneut versuchen.",
-      "sshHostOption": "{{host}} (SSH)"
     }
   },
   "editor": {
@@ -8629,21 +8629,6 @@
         }
       },
       "settings": {
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Lokalen main-Branch aktuell halten"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "Der Speicherort der Konten konnte nicht gespeichert werden. Versuche es erneut.",
           "dbb9626ed1": "Abbrechen",
@@ -8980,9 +8965,6 @@
           "79209b37b9": "Falls der Cookie-Import nicht geeignet ist, kann Computer Use lokale Apps steuern und gegebenenfalls bestehende angemeldete Browser-Sitzungen nutzen. Den Orca Computer Use-Skill installieren; unter macOS sind zusätzlich Datenschutzberechtigungen erforderlich.",
           "333984cf90": "Bestehende Browser-Sitzung verwenden",
           "9895ed44de": "Computer Use öffnen"
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Browser-Nutzung durch Agenten aktivieren"
         },
         "BrowserUseExamples": {
           "1199258ace": "Kopieren",
@@ -10028,9 +10010,6 @@
           "14f1eb99d0": "Details beim Öffnen von „PR erstellen“ generieren",
           "d32b87e754": "Review-Vorlage verwenden, falls verfügbar",
           "981eae7e14": "Standardmäßig als Entwurf erstellen"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "KI für die Quellcodeverwaltung"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "Wenn du einen Link widerrufst, werden auch Links widerrufen, die in von ihm geöffneten Terminals erstellt wurden. Wer auf diesem Computer ein Terminal nutzen kann, per SSH oder über einen Link, kann sich weiterhin erneut koppeln.",
@@ -14889,6 +14868,27 @@
           "shownPluginCount_one": "{{count}} passendes Plugin angezeigt, einschließlich dieses Plugins",
           "shownPluginCount_other": "{{count}} passende Plugins angezeigt, einschließlich dieses Plugins",
           "samePublisher": "Weitere unter {{value0}} aufgeführte Plugins"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "KI für die Quellcodeverwaltung"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Lokalen main-Branch aktuell halten"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Browser-Nutzung durch Agenten aktivieren"
         }
       },
       "right": {
@@ -21850,6 +21850,7 @@
         "steerHint": "Jetzt senden, während der Agent weiterarbeitet",
         "sendHint": "Diese Nachricht jetzt senden",
         "delete": "Löschen",
+        "moreActions": "Weitere Aktionen",
         "moveChanged": "Die Warteschlange hat sich vor dem Verschieben geändert. Erneut versuchen, die Nachricht zu ziehen.",
         "reorderHint": "Zum Umsortieren ziehen oder die Pfeiltasten Up und Down verwenden.",
         "reorderMessage": "Nachricht umsortieren",
@@ -21873,6 +21874,8 @@
         "editGonePrompt": "Diese Nachricht wurde bereits gesendet oder entfernt. Die bearbeitete Fassung steht nach der Antwort an den Agenten im Chat-Eingabefeld.",
         "imageCount_one": "{{count}} Bild",
         "imageCount_other": "{{count}} Bilder",
+        "collapse": "Einklappen",
+        "expand": "Ausklappen",
         "queued": "In der Warteschlange",
         "clearAll": "Warteschlange leeren",
         "editReturned": "Die bearbeitete Nachricht ist im Chat-Eingabefeld.",

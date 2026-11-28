@@ -35,6 +35,7 @@ export type NativeChatSessionOptionPickersProps = {
   surface: SessionOptionsSurface | null
   snapshot: SessionOptionDescriptor[]
   isWorking: boolean
+  disabled?: boolean
   pickerRequest?: NativeChatOptionPickerRequest | null
   /** Where focus lands after a visit that changed something; see `useNativeChatPickerFocusReturn`. */
   focusComposer?: () => void
@@ -106,7 +107,7 @@ function PickerTrigger({
             size="xs"
             aria-label={props.accessibleName}
             aria-disabled={props.disabled || undefined}
-            className="max-w-64"
+            className="max-w-64 min-w-0 shrink"
             onClick={(event) => {
               if (props.disabled) {
                 event.preventDefault()
@@ -155,6 +156,7 @@ function SessionOptionPopover(props: {
   model: SessionOptionDescriptor
   options: readonly SessionOptionDescriptor[]
   isWorking: boolean
+  disabled: boolean
   /** Only the descriptor being saved holds its write controls. */
   pendingIds: ReadonlySet<string>
   request: NativeChatOptionPickerRequest | null
@@ -172,6 +174,11 @@ function SessionOptionPopover(props: {
   )
   // Why here: this unmounts with the pill, so a picker that went away comes back closed.
   const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (props.disabled) {
+      setOpen(false)
+    }
+  }, [props.disabled])
   const [seenRequest, setSeenRequest] = useState<NativeChatOptionPickerRequest | null>(null)
   // The option a slash command asked for, focused in place of the search by that opening only.
   const [requestedOptionId, setRequestedOptionId] = useState<string | null>(null)
@@ -245,7 +252,7 @@ function SessionOptionPopover(props: {
   }
 
   return (
-    <Popover open={open} onOpenChange={(next) => setOpen(next && canOpen)}>
+    <Popover open={open && !props.disabled} onOpenChange={(next) => setOpen(next && canOpen)}>
       <PickerTrigger
         modelLabel={modelLabel}
         optionsLabel={optionsLabel}
@@ -255,7 +262,7 @@ function SessionOptionPopover(props: {
             ? `${modelName}, ${pillAccessibleName(optionsTitle, optionsLabel, t)}`
             : modelName
         }
-        disabled={!canOpen}
+        disabled={!canOpen || props.disabled === true}
         disabledReason={modelReason ?? optionsReason}
         dispatched={
           sessionOptionDispatchUnconfirmed(model) || options.some(sessionOptionDispatchUnconfirmed)
@@ -352,6 +359,7 @@ function NativeChatSessionOptionPickersInner({
   surface,
   snapshot,
   isWorking,
+  disabled = false,
   pickerRequest,
   focusComposer
 }: NativeChatSessionOptionPickersProps): React.JSX.Element | null {
@@ -384,6 +392,7 @@ function NativeChatSessionOptionPickersInner({
     <div className="flex min-w-0 items-center text-chat-foreground-faint">
       <SessionOptionPopover
         demandModelCatalog={surface.demandModelCatalog}
+        disabled={disabled}
         cliUpdate={surface.cliUpdate}
         model={model}
         options={options}

@@ -1,0 +1,223 @@
+import type {
+  TerminalSuspensionOptions,
+  TerminalSuspensionResult
+} from '../../shared/terminal-suspension'
+import { projectAgentHubGate, agentHubGateEvent } from './agent-hub/agent-hub-decision-gates'
+import { createAgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager-factory'
+import type { AgentHubOrbSessionManager } from '../agent-hub/orb/agent-hub-orb-session-manager'
+import { runtimeAgentHubOrbBotChats } from '../agent-hub/orb/agent-hub-orb-runtime-bot-chats'
+import { agentHubOrbSettingsFromBotEdit } from '../agent-hub/orb/agent-hub-orb-bot-settings'
+import type { Bot } from '../../shared/bot-types'
+import type { BotHostUpdates } from '../../shared/rpc-contract/bots-params'
+import type { OrchestrationDb } from './orchestration/db/orchestration-db'
+import { OrcaRuntimeWithTerminalWorkerRestartResume } from './construction/orca-runtime-terminal-worker-restart-resume'
+import { AgentHubLedger } from './agent-hub/agent-hub-ledger'
+import { registerOrbOperations } from './agent-hub/agent-hub-orb-operations'
+import type { AgentHubCaller, AgentHubGate } from '../../shared/agent-hub-requests'
+import { RuntimePaneSpawnLineage } from './runtime-pane-spawn-lineage'
+import type { RuntimeMobileSessionProjectionHost } from './session-lifecycle/projection/runtime-mobile-session-projection-contract'
+import type { TerminalSurfaceCloseTarget } from '../../shared/workspace-layout/terminal-surfaces/terminal-surface-close-target'
+import { resolveStructuredWorkerAuthority } from './orchestration/terminal-authority/structured-sessions/structured-worker-authority'
+import {
+  structuredAgentSessionPaneKey,
+  structuredAgentSessionTabId
+} from '../../shared/agent-session/view/structured-agent-session-projection'
+
+/** Agent Hub ledger, Orb and pane spawn lineage, layered over the upstream runtime chain. */
+export abstract class OrcaRuntimeWithAgentHub extends OrcaRuntimeWithTerminalWorkerRestartResume {
+  private readonly paneSpawnLineage: RuntimePaneSpawnLineage
+  readonly agentHubOrb: AgentHubOrbSessionManager = createAgentHubOrbSessionManager(
+    this,
+    this.store,
+    undefined,
+    runtimeAgentHubOrbBotChats(this, () => this.store?.getSettings?.() ?? {})
+  )
+
+  async terminalSuspension(
+    terminal: string,
+    options: TerminalSuspensionOptions
+  ): Promise<TerminalSuspensionResult> {
+    const leaf = this.resolveLiveLeafForHandle(terminal)
+    if (!leaf?.ptyId) {
+      return { state: 'unverifiable' }
+    }
+    return this.ptyController?.terminalSuspension?.(leaf.ptyId, options) ?? { state: 'unsupported' }
+  }
+
+  readonly agentHub = new AgentHubLedger(
+    (event) => this.emitClientEvent({ type: 'agentHub', event }),
+    Date.now,
+    (paneKey) => this.getAgentHubParentPaneKey(paneKey)
+  )
+
+  override async createTerminal(
+    ...args: Parameters<OrcaRuntimeWithTerminalWorkerRestartResume['createTerminal']>
+  ) {
+    const terminal = await super.createTerminal(...args)
+    if (!terminal.isReattach) {
+      this.paneSpawnLineage.record(terminal.handle, args[1]?.callerTerminalHandle)
+    }
+    return terminal
+  }
+
+  override async splitTerminal(
+    ...args: Parameters<OrcaRuntimeWithTerminalWorkerRestartResume['splitTerminal']>
+  ) {
+    const split = await super.splitTerminal(...args)
+    this.paneSpawnLineage.record(split.handle, args[1]?.callerTerminalHandle)
+    return split
+  }
+
+  override async createManagedWorktree(
+    ...args: Parameters<OrcaRuntimeWithTerminalWorkerRestartResume['createManagedWorktree']>
+  ) {
+    const result = await super.createManagedWorktree(...args)
+    if (result.startupTerminal?.handle) {
+      this.paneSpawnLineage.record(
+        result.startupTerminal.handle,
+        args[0].lineage?.callerTerminalHandle
+      )
+    }
+    return result
+  }
+
+  pruneTerminalSpawnLineage(target: TerminalSurfaceCloseTarget): void {
+    this.paneSpawnLineage.close(target)
+  }
+
+  restorePaneSpawnLineage(): void {
+    this.paneSpawnLineage.restore()
+  }
+
+  getTerminalSpawnedBy(paneKey: string) {
+    return this.paneSpawnLineage.get(paneKey)
+  }
+
+  protected override getMobileSessionProjectionHost(): RuntimeMobileSessionProjectionHost {
+    const host = super.getMobileSessionProjectionHost()
+    return { ...host, getSpawnedBy: (paneKey) => this.getTerminalSpawnedBy(paneKey) }
+  }
+
+  recordWorkerSpawnLineage(
+    childHandle: string,
+    callerTerminalHandle: string | undefined,
+    structuredSessionId?: string
+  ): void {
+    if (structuredSessionId) {
+      this.paneSpawnLineage.recordPane(
+        structuredAgentSessionPaneKey(
+          structuredAgentSessionTabId(structuredSessionId),
+          structuredSessionId
+        ),
+        callerTerminalHandle
+      )
+    } else {
+      this.paneSpawnLineage.record(childHandle, callerTerminalHandle)
+    }
+  }
+
+  getAgentHubParentPaneKey(paneKey: string): string | undefined {
+    const orchestration = this.getAgentStatusOrchestrationContextForPaneKey(paneKey)
+    if (orchestration) {
+      if (orchestration.parentPaneKey) {
+        return orchestration.parentPaneKey
+      }
+      for (const handle of [orchestration.parentTerminalHandle, orchestration.coordinatorHandle]) {
+        const parent = handle ? this.getLiveTerminalPaneKey(handle) : null
+        if (parent && parent !== paneKey) {
+          return parent
+        }
+      }
+      return undefined
+    }
+    return this.paneSpawnLineage.get(paneKey)?.paneKey
+  }
+
+  override getOrchestrationDb(): OrchestrationDb {
+    const db = super.getOrchestrationDb()
+    db.onDecisionGateChanged = (gate) => {
+      try {
+        this.emitClientEvent({
+          type: 'agentHub',
+          event: agentHubGateEvent(
+            gate,
+            projectAgentHubGate(db, gate, (handle) => this.getAgentHubCaller(handle))
+          )
+        })
+      } catch (error) {
+        console.warn('Could not publish decision gate', error)
+      }
+    }
+    return db
+  }
+
+  getAgentHubGateSnapshot(): AgentHubGate[] {
+    const db = this.getExistingOrchestrationDb()
+    return db
+      ? db
+          .listGates({ status: 'pending' })
+          .map((gate) => projectAgentHubGate(db, gate, (handle) => this.getAgentHubCaller(handle)))
+      : []
+  }
+
+  isAgentHubEnabled(): boolean {
+    // Why: partial stores (tests, early boot) have no getSettings.
+    const settings = this.store?.getSettings?.()
+    return settings?.experimentalAgentHub === true && settings.agentHubAgentControl !== false
+  }
+
+  isAgentHubOwnCardEnabled(): boolean {
+    return this.store?.getSettings?.()?.agentHubAgentOwnCard !== false
+  }
+
+  isAgentHubOrbMemorySuggestionsEnabled(): boolean {
+    return this.store?.getSettings?.()?.agentHubOrbMemorySuggestions !== false
+  }
+
+  /** Writes an edit made on the Orb bot's page into the Orb settings, so the next Orb open keeps it. */
+  followAgentHubOrbBotEdit(bot: Bot, updates: BotHostUpdates): void {
+    const settings = agentHubOrbSettingsFromBotEdit(bot, updates)
+    if (Object.keys(settings).length) {
+      this.store?.updateSettings?.(settings, { notifyListeners: true })
+    }
+  }
+
+  getAgentHubCaller(handle: string): AgentHubCaller | null {
+    const paneKey = this.getTerminalPaneKey(handle)
+    if (!paneKey) {
+      return null
+    }
+    const pty = this.getPtyRecordForPaneKey(paneKey)
+    const agentType = pty?.foregroundAgent ?? pty?.launchAgent
+    const title = pty?.title ?? (pty?.tabId ? this.tabs.get(pty.tabId)?.title : undefined)
+    return {
+      paneKey,
+      terminalHandle: handle,
+      ...(agentType ? { agentType } : {}),
+      ...(title ? { title } : {})
+    }
+  }
+
+  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithTerminalWorkerRestartResume>) {
+    super(...args)
+    registerOrbOperations(this, this.agentHub.orbOperations)
+    this.paneSpawnLineage = new RuntimePaneSpawnLineage({
+      read: () => this.store?.getWorkspaceSession?.(),
+      write: (session) => this.store?.setWorkspaceSession?.(session),
+      resolveLivePane: (handle) => {
+        const livePane = this.getLiveTerminalPaneKey(handle)
+        const structured = livePane
+          ? resolveStructuredWorkerAuthority(handle, this.getOrchestrationDbIfAvailable?.())
+          : null
+        // Status readers use the public session pane, not the worker's private authority leaf.
+        return structured
+          ? structuredAgentSessionPaneKey(
+              structuredAgentSessionTabId(structured.running.sessionId),
+              structured.running.sessionId
+            )
+          : livePane
+      },
+      publish: (paneKey, spawnedBy) => args[2]?.onPaneSpawnedByChanged?.(paneKey, spawnedBy)
+    })
+  }
+}

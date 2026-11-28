@@ -81,6 +81,8 @@ export type SleepingAgentSessionRecord = {
   restoreOnTabOpenOnly?: boolean
   /** The handle main named this pane by when Agent Sleep stopped it; the pane answers to it again after a restart. */
   terminalHandle?: string
+  /** Explicit pane sleep stays parked until the user requests this pane's wake. */
+  wakeOnRequestOnly?: boolean
 }
 
 /** A record of a slept pane (worktree sleep, or a legacy record); 'quit'/'live' resume a running agent. */

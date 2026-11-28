@@ -12,10 +12,8 @@ import { listEnvironments } from '../../../shared/remote-runtime/host-store/runt
 import type { Store } from '../../persistence/loading-store/store'
 import { recordRemoteLayoutFrame } from '../../remote-layout-snapshot/remote-layout-snapshot-recorder'
 import { recordHostRepoCatalogAnswer } from '../../host-repo-catalog-snapshot/host-repo-catalog-snapshot-recorder'
-import {
-  registerRuntimeEnvironmentConnectivityHandlers,
-  registerRuntimeEnvironmentPassiveHandlers
-} from './connectivity/runtime-environment-connectivity-handlers'
+import { registerRuntimeEnvironmentConnectivityHandlers } from './connectivity/runtime-environment-connectivity-handlers'
+import { registerRuntimeEnvironmentPassiveHandlers } from './connectivity/runtime-environment-passive-handlers'
 import { isRuntimeEnvironmentManuallyDisconnected } from './connectivity/runtime-environment-manual-disconnect'
 import {
   closeRemoteRuntimeRequestConnection,

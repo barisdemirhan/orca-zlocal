@@ -16,12 +16,19 @@ import {
   TerminalFocus,
   TerminalHandle,
   TerminalReveal,
-  TerminalWait
+  TerminalWait,
+  TerminalSuspension
 } from '../../../../../shared/rpc-contract/terminal/terminal-unary-params'
 import { TerminalSplit } from '../../../../../shared/rpc-contract/terminal/terminal-split-params'
 import { TerminalResizeForClient } from '../../../../../shared/rpc-contract/terminal/terminal-stream-params'
 
 export const TERMINAL_LIFECYCLE_METHODS = [
+  defineMethod({
+    name: 'terminal.suspension',
+    permission: 'workspace',
+    params: TerminalSuspension,
+    handler: (params, { runtime }) => runtime.terminalSuspension(params.terminal, params)
+  }),
   defineMethod({
     name: 'terminal.wait',
     permission: 'workspace',
@@ -92,6 +99,7 @@ export const TERMINAL_LIFECYCLE_METHODS = [
             wslUserAct: true,
             command: params.command,
             terminalImageViewerSupported: terminalImageViewerSupported(context),
+            callerTerminalHandle: params.callerTerminalHandle,
             ...(params.shell ? { shellOverride: params.shell } : {}),
             startupCommandDelivery: params.startupCommandDelivery,
             env: params.env,
@@ -151,9 +159,7 @@ export const TERMINAL_LIFECYCLE_METHODS = [
     params: TerminalSplit,
     handler: async (params, context) => {
       const { runtime, caller } = context
-      const viewerSupported = terminalImageViewerSupported(context)
-      const viewer =
-        viewerSupported === undefined ? {} : { terminalImageViewerSupported: viewerSupported }
+      const viewer = { terminalImageViewerSupported: terminalImageViewerSupported(context) }
       if (params.pane && !params.terminal) {
         return {
           split: await runtime.splitTerminalPane(params.pane, {
@@ -173,6 +179,7 @@ export const TERMINAL_LIFECYCLE_METHODS = [
       // The schema requires a handle when no pane is named.
       const split = await runtime.splitTerminal(params.terminal ?? '', {
         direction: params.direction,
+        callerTerminalHandle: params.callerTerminalHandle,
         command: params.command,
         env: params.env,
         ...viewer,

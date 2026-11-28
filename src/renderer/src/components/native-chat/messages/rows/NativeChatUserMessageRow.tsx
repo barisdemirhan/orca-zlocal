@@ -19,6 +19,7 @@ import { NativeChatCopyButton } from '../actions/NativeChatCopyButton'
 import { NativeChatMessageTimestamp } from './NativeChatMessageTimestamp'
 import { useFoldedIntoBotRequest } from '../../bot-request-folded-mail'
 import { NativeChatAgentMessageCard } from './NativeChatAgentMessageCard'
+import { NativeChatSpokenLabel } from '../../NativeChatSpokenLabel'
 import { NativeChatConnectorAskerTag } from '../../NativeChatConnectorAskerTag'
 import { NativeChatTypedByTag } from '../../NativeChatTypedByTag'
 import {
@@ -177,6 +178,7 @@ export function NativeChatUserMessageRow({
           )}
         </NativeChatUserBubble>
       )}
+      <NativeChatSpokenLabel message={message} />
       {message.sentAs === 'goal' ? (
         <div className="flex items-center gap-1 text-xs text-chat-foreground-faint">
           <Goal className="size-3" aria-hidden />

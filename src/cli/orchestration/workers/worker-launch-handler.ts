@@ -26,6 +26,7 @@ import { explainOlderRuntimeRunRequired } from '../recovery/older-runtime-run-bi
 import { withResolvedNextCommands } from '../recovery/orchestration-mutation-recovery'
 import { readTextOrFileFlag } from '../../arguments/command-body-input'
 import { refuseAgentServerRoute } from '../identity/agent-server-route'
+import { getCallerTerminalHandle } from '../../caller-terminal-handle'
 import { readWorkerStartWakeNote } from './worker-start-wake-note'
 
 export const ORCHESTRATION_WORKER_LAUNCH_HANDLER: Record<string, CommandHandler> = {
@@ -83,6 +84,7 @@ export const ORCHESTRATION_WORKER_LAUNCH_HANDLER: Record<string, CommandHandler>
       timeoutMs: getOptionalPositiveIntegerValueFlag(flags, 'timeout-ms'),
       run: getOptionalStringFlag(flags, 'run'),
       from: await resolveCoordinatorTerminalHandle(flags, cwd, client),
+      callerTerminalHandle: getCallerTerminalHandle(),
       devMode: isDevCliInvocation()
     }
     // Once a start was sent, the note prints however it ends: started, recovered or thrown.

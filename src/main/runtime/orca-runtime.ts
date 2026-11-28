@@ -16,7 +16,7 @@ import {
 } from './client/settings/runtime-workspace-view-change-events'
 import { syncPRAutoRefreshCadence } from '../github/pull-requests/refresh/pr-auto-refresh-cadence-sync'
 import { sidebarFactsRuntime } from './sidebar-inputs/orca-runtime-sidebar-temporal'
-import { OrcaRuntimeWithRelayHostNotices } from './construction/orca-runtime-relay-host-notices'
+import { OrcaRuntimeWithAgentHubQuestions } from './orca-runtime-agent-hub-questions'
 import { ORCA_SIDEBAR_INPUTS_IS_MAIN } from '../../shared/sidebar-list/feed/sidebar-inputs-switch'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../shared/workspace-layout/layout-owner-switch'
 import type { RuntimeCommandSurfaceHost } from './construction/runtime-installed-command-surfaces'
@@ -69,7 +69,7 @@ import { structuredAgentSessionHostTabId } from '../../shared/agent-session/view
 import { runtimeBotChatTreeIndex } from '../bots/bot-chat-tree-host'
 
 // oxlint-disable-next-line typescript/no-unsafe-declaration-merging -- SAFETY: The existing Linear installer supplies the canonical prototype surface.
-class OrcaRuntimeService extends OrcaRuntimeWithRelayHostNotices {
+class OrcaRuntimeService extends OrcaRuntimeWithAgentHubQuestions {
   protected override assertStructuredQueuedMessageAllowed(sessionId: string, messageId: string) {
     botGroups.assertBotGroupQueuedMessageAllowed(this, sessionId, messageId)
   }
@@ -130,7 +130,7 @@ class OrcaRuntimeService extends OrcaRuntimeWithRelayHostNotices {
   get sidebarFacts() {
     return sidebarFactsRuntime(this)
   }
-  // Idle without relay hosts; refresh only while a window or phone consumes sidebar state.
+  // Switch point. Idle until relay hosts attach; the fallback refresh runs while a window shows the sidebar or a phone reads the feed.
   readonly pairedServerRows = ORCA_SIDEBAR_INPUTS_IS_MAIN
     ? new PairedServerRowsProducer({
         hasDemand: () =>
@@ -194,9 +194,11 @@ class OrcaRuntimeService extends OrcaRuntimeWithRelayHostNotices {
     return this.references.find(params)
   }
 
-  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithRelayHostNotices>) {
+  constructor(...args: ConstructorParameters<typeof OrcaRuntimeWithAgentHubQuestions>) {
     super(...args)
-    // Headless hosts must register both invalidators themselves; they never load desktop IPC.
+    // Why: the runtime listing re-runs a scan the worktree-change generation overtook and re-lists
+    // through this runtime's scan cache, so a worktree change must reach both. The desktop IPC
+    // module registers the generation bump at load; a headless host never loads it.
     registerDetectedWorktreeScanInvalidation()
     registerWorktreeChangeInvalidator((repoId) => this.invalidateWorktreeCatalog(repoId))
     registerWorktreeCatalogRoutes(this.store)

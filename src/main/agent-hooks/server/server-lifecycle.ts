@@ -19,15 +19,17 @@ import { HOOK_REQUEST_SLOWLORIS_MS } from '../../../shared/agent-hook-listener/l
 import { isHookRequestTruncatedError } from '../../../shared/agent-hook-listener/transport/agent-hook-transport-interference'
 import { clearAllListenerCaches } from '../../../shared/agent-hook-listener/listener-state'
 import { trackEmptyPaneKeyHook } from './server-transport-rules'
-import { AgentHookServerClaudeStatusLineModel } from './server-claude-statusline-model'
+import { AgentHookServerRuntimeStateReset } from './server-runtime-state-reset'
 import { OPENCODE_STARTUP_PROMPT_CLAIM_PATH } from '../../../shared/agent-launch/startup/opencode-startup-prompt'
 import { CLAUDE_AGENT_VIEW_PATH } from '../../../shared/agent-hook-listener/providers/claude/view/claude-agent-view'
+import { ClaudeAttachHookRouter } from '../claude-attach-hook-routing'
 
 import type { HookServerStartOptions, NormalizedLocalHook } from './server-types'
 import { withPrefetchedRolloutReads } from '../../../shared/agent-hook-listener/providers/codex/codex-rollout-prefetch-scope'
 
-export abstract class AgentHookServerLifecycle extends AgentHookServerClaudeStatusLineModel {
+export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeStateReset {
   private readonly startup = new AgentHookStartup()
+  protected claudeAttachHookRouter = new ClaudeAttachHookRouter()
 
   start(options?: HookServerStartOptions): Promise<void> {
     return this.startup.start((isCurrent) => this.startListener(options, isCurrent))
@@ -149,7 +151,10 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerClaudeStat
         }
         const hookBody = mergeAgentHookRequestHeaders(body, req.headers)
         trackEmptyPaneKeyHook(hookBody, this.attributionDiagnostics)
-        const aliasedBody = this.normalizeHookBodyPaneKeyAlias(hookBody)
+        const aliasedBody = await this.claudeAttachHookRouter.route(
+          source,
+          this.normalizeHookBodyPaneKeyAlias(hookBody)
+        )
         if (await this.ingestTmuxHook(source, aliasedBody)) {
           res.writeHead(204)
           res.end()
@@ -255,38 +260,8 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerClaudeStat
     this.onPaneStatusCleared = null
     this.onTransportInterference = null
     this.transportInterference.reset()
-    this.clearAllAssistantMessageRetries()
-    this.hookSilenceRechecks.clear()
+    this.resetHookRuntimeState()
     this.clearModelWaits()
-    this.programStatusFacetRepublishes.clear()
-    this.clearAllTranscriptPolls()
-    this.claudeOwedNotificationExpiry.clearAll()
-    this.endpointDir = null
-    this.endpointFilePathCache = null
-    this.endpointFileWritten = false
-    this.setStatusFilePath(null)
-    this.closeStatusSnapshotWriter()
-    this.agentIdentities.close()
-    this.clearRuntimeStatusQueries()
-    this.hydratedAuthorityCommitments = Object.freeze([])
-    this.hydratedLaunchTokenHashByPaneKey.clear()
-    this.persistedAuthorityCommitmentsByPaneKey.clear()
-    this.revokedHydratedAuthorityCommitments = new WeakSet()
-    this.currentAuthorityObservations.clear()
-    this.promptSentDedupeByPaneKey.clear()
-    this.closedAgentStatusTabIds.clear()
-    this.closedAgentStatusPaneKeys.clear()
-    this.restartedStatusLaunchTokenHashByPaneKey.clear()
-    this.retiredPaneFencesByKey.clear()
-    this.connectionTimestampWatermarkById.clear()
-    this.evidenceObservedAtByPaneKey.clear()
-    this.programStatusFacets.clear()
-    this.activeHookTurnCompletedAtByPaneKey.clear()
-    this.legacyPaneKeyAliases.clear()
-    this.paneKeyAliasPersistenceListener = null
-    this.ownerStateInitialized = false
-    // Leave the endpoint: stale files fail open, and unlinking can race another Orca instance.
-    this.providerRowsByTab = null
     clearAllListenerCaches(this.state)
     if (!options?.keepStatus) {
       this.resetCanonicalStatus()

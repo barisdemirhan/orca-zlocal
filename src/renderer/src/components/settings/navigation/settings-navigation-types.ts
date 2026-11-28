@@ -41,6 +41,7 @@ const SETTINGS_NAV_TARGETS = [
   'shortcuts',
   'stats',
   'ssh',
+  'agentHub',
   'experimental',
   'plugins',
   'agents',

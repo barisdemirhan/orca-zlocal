@@ -14,6 +14,7 @@ import { HiddenExperimentalGroup } from './HiddenExperimentalGroup'
 import { NumberField, SettingsSegmentedControl } from '../form-controls/SettingsFormControls'
 import { useTranslate } from '@/i18n/use-translate'
 import { AgentDashboardExperimentalSetting } from '../../dashboard/settings/AgentDashboardExperimentalSetting'
+import { AgentHubExperimentalSetting } from '../../agent-hub/AgentHubExperimentalSetting'
 import { EphemeralVmsExperimentalSetting } from '../virtual-machines/recipes/EphemeralVmsExperimentalSetting'
 import { AppRailExperimentalSetting } from '../../app-rail/AppRailExperimentalSetting'
 import { WslHostsExperimentalSetting } from '../wsl/hosts/WslHostsExperimentalSetting'
@@ -48,6 +49,7 @@ export function ExperimentalPane({
   const showAgentDashboard =
     optInOnlyExperimentRows.agentDashboard &&
     matchesSettingsSearch(searchQuery, [getExperimentalSearchEntry().agentDashboard])
+  const showAgentHub = matchesSettingsSearch(searchQuery, [getExperimentalSearchEntry().agentHub])
   const showTerminalAttention =
     optInOnlyExperimentRows.terminalAttention &&
     matchesSettingsSearch(searchQuery, [getExperimentalSearchEntry().terminalAttention])
@@ -73,6 +75,10 @@ export function ExperimentalPane({
       <SettingsGroup>
         {showAgentDashboard ? (
           <AgentDashboardExperimentalSetting settings={settings} updateSettings={updateSettings} />
+        ) : null}
+
+        {showAgentHub ? (
+          <AgentHubExperimentalSetting settings={settings} updateSettings={updateSettings} />
         ) : null}
 
         {showPet ? (

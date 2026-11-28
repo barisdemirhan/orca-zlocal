@@ -1,8 +1,12 @@
 import { MountedTerminalWorktrees } from '../workspace-mounting/split-group-mount'
 import { useEffect, useRef } from 'react'
+import {
+  hasTerminalMountRetentionLease,
+  useTerminalMountRetentionLeases
+} from '../../terminal-pane/terminal-mount-retention-leases'
 import { useTerminalStartupActivation } from '../workspace-mounting/use-terminal-startup-activation'
 import { useTerminalParkingWorkspaceChanges } from '../../terminal-pane/parking/use-terminal-parking-workspace-changes'
-import { getTerminalTabOwnerWorktreeId } from '@/store/terminals/ownership/terminal-tab-owner-index'
+import { addParkedStateChangedWorktreesToDirty } from './terminal-watcher-parked-state-changes'
 import { findActivityTerminalPortal } from '../../activity/terminal-portal/activity-terminal-portal'
 import {
   syncParkedTerminalTabWatchersForWorkspaces,
@@ -15,7 +19,6 @@ import {
   terminalWatcherLiveWorkspaceIds
 } from '../../terminal-pane/parking/output-watchers/terminal-parked-watcher-registry'
 
-import { useAppStore } from '@/store'
 import type { TerminalColdActivationController } from '../workspace-mounting/terminal-cold-activation'
 import { selectParkedEquivalentMountTabIds } from '../workspace-mounting/startup-terminal-tab-hold'
 
@@ -57,6 +60,7 @@ type TerminalWatcherController = Pick<
 >
 
 export function useTerminalWatcherEffects(controller: TerminalWatcherController): void {
+  const mountRetentionLeases = useTerminalMountRetentionLeases()
   const {
     activationDeferredMountTabIdsByWorktreeRef,
     activeTabId,
@@ -88,6 +92,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
   const { revision, takeChangedWorkspaces } =
     useTerminalParkingWorkspaceChanges(workspaceSurfaceIds)
   const previousWatcherInputs = useRef<TerminalWatcherController | null>(null)
+  const previousLeases = useRef(mountRetentionLeases)
   useEffect(() => {
     const previous = previousWatcherInputs.current
     previousWatcherInputs.current = controller
@@ -96,6 +101,12 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
       for (const id of mountedWorktreeIdsRef.current.takeCommittedChanges('watcher')) {
         dirty.add(id)
       }
+    }
+    if (previousLeases.current !== mountRetentionLeases) {
+      for (const lease of [...previousLeases.current, ...mountRetentionLeases]) {
+        dirty.add(lease.worktreeId)
+      }
+      previousLeases.current = mountRetentionLeases
     }
     if (!previous || previous.workspaceSurfaceIds !== workspaceSurfaceIds) {
       const previousIds = new Set(previous?.workspaceSurfaceIds)
@@ -139,36 +150,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
           dirty.add(portal.worktreeId)
         }
       }
-      if (previous.effectiveParkedTerminalWorktreeIds !== effectiveParkedTerminalWorktreeIds) {
-        for (const id of previous.effectiveParkedTerminalWorktreeIds) {
-          if (!effectiveParkedTerminalWorktreeIds.has(id)) {
-            dirty.add(id)
-          }
-        }
-        for (const id of effectiveParkedTerminalWorktreeIds) {
-          if (!previous.effectiveParkedTerminalWorktreeIds.has(id)) {
-            dirty.add(id)
-          }
-        }
-      }
-      if (previous.evictionExemptTerminalTabIds !== evictionExemptTerminalTabIds) {
-        const state = useAppStore.getState()
-        for (const tabId of new Set([
-          ...previous.evictionExemptTerminalTabIds,
-          ...evictionExemptTerminalTabIds
-        ])) {
-          if (
-            previous.evictionExemptTerminalTabIds.has(tabId) ===
-            evictionExemptTerminalTabIds.has(tabId)
-          ) {
-            continue
-          }
-          const id = getTerminalTabOwnerWorktreeId(state.tabsByWorktree, tabId)
-          if (id) {
-            dirty.add(id)
-          }
-        }
-      }
+      addParkedStateChangedWorktreesToDirty(dirty, previous, controller)
       if (previous.anyMountedWorktreeHasLayout !== anyMountedWorktreeHasLayout) {
         for (const id of mountedWorktreeIdsRef.current) {
           dirty.add(id)
@@ -209,7 +191,11 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
               worktreeId: workspaceId,
               tabId: tab.id
             })
-            if (!activityTerminalPortal && !evictionExemptTerminalTabIds.has(tab.id)) {
+            if (
+              !activityTerminalPortal &&
+              !hasTerminalMountRetentionLease(workspaceId, tab.id) &&
+              !evictionExemptTerminalTabIds.has(tab.id)
+            ) {
               mountedParkedTabIds.add(tab.id)
             }
           }
@@ -224,6 +210,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
             deferredTabIds?.has(tab.id) &&
             !mountedParkedTabIds.has(tab.id) &&
             canWatcherCoverParkedTerminalTab(workspaceId, tab) &&
+            !hasTerminalMountRetentionLease(workspaceId, tab.id) &&
             !findActivityTerminalPortal(activityTerminalPortals, {
               worktreeId: workspaceId,
               tabId: tab.id
@@ -238,6 +225,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
           .filter(
             (tab) =>
               canWatcherCoverParkedTerminalTab(workspaceId, tab) &&
+              !hasTerminalMountRetentionLease(workspaceId, tab.id) &&
               !findActivityTerminalPortal(activityTerminalPortals, {
                 worktreeId: workspaceId,
                 tabId: tab.id
@@ -265,6 +253,7 @@ export function useTerminalWatcherEffects(controller: TerminalWatcherController)
     activeTabId,
     activeView,
     activityTerminalPortals,
+    mountRetentionLeases,
     activeTabIdByWorktree,
     anyMountedWorktreeHasLayout,
     backgroundMountRevision,

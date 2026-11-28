@@ -22,6 +22,7 @@ import { activePaneIsCoveredByNativeChat } from '../../chat/native-chat-covered-
 
 type UseTerminalPaneGlobalEffectsArgs = {
   tabId: string
+  worktreeId: string
   cwd?: string
   isActive: boolean
   isVisible: boolean
@@ -43,6 +44,7 @@ type UseTerminalPaneGlobalEffectsArgs = {
 
 export function useTerminalPaneGlobalEffects({
   tabId,
+  worktreeId,
   isActive,
   isVisible,
   isChatViewMode = false,
@@ -59,6 +61,8 @@ export function useTerminalPaneGlobalEffects({
   isVisibleRef,
   toggleExpandPane
 }: UseTerminalPaneGlobalEffectsArgs): void {
+  const worktreeIdRef = useRef(worktreeId)
+  worktreeIdRef.current = worktreeId
   // Start true so initially hidden panes suspend the WebGL context openTerminal creates instead of exhausting Chromium’s context budget.
   const previousManagerRef = useRef<PaneManager | null>(null)
   const wasVisibleRef = useRef(true)
@@ -68,7 +72,12 @@ export function useTerminalPaneGlobalEffects({
   const hiddenReasonRef = useRef<TerminalHiddenReason | null>(null)
   const warmedWhileHiddenRef = useRef(false)
   const rendererVisible = isVisible && isWorktreeActive
-  // Watch leaf → PTY rebinds even without activity/visibility changes so main grants the live PTY its interactive reserve.
+  // Why: the active pane can rebind to a new PTY (deferred reattach / eager
+  // adopt) or switch active leaf without isActive/isVisible/isWorktreeActive
+  // flipping. Derive the active leaf's live PTY reactively from the same
+  // leaf→PTY binding the reattach path writes, so the active-renderer-pty report
+  // below re-fires on rebind — otherwise main keeps the stale id and the live
+  // PTY loses its interactive reserve.
   const activeLeafPtyId = useAppStore((state) => {
     const layout = state.terminalLayoutsByTabId[tabId]
     const activeLeafId = layout?.activeLeafId
@@ -214,5 +223,11 @@ export function useTerminalPaneGlobalEffects({
 
   useTerminalProgrammaticPasteEvent({ tabId, managerRef, paneTransportsRef })
 
-  useTerminalDictationInsertEvent({ isActiveRef, managerRef, paneTransportsRef, tabId })
+  useTerminalDictationInsertEvent({
+    isActiveRef,
+    managerRef,
+    paneTransportsRef,
+    tabId,
+    worktreeIdRef
+  })
 }

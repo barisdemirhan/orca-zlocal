@@ -29,6 +29,103 @@
     "toastUpdating_one": "Updating {{current}} of {{count}} CLI",
     "toastUpdating_other": "Updating {{current}} of {{count}} CLIs"
   },
+  "agentHub": {
+    "alert": {
+      "more": "+{{value0}} more in the hub"
+    },
+    "bots": {
+      "openItem": "Open"
+    },
+    "dock": {
+      "mute": "Mute alerts for 2 hours"
+    },
+    "groupMenu": {
+      "sleepSkipped_one": "{{count}} agent could not sleep",
+      "sleepSkipped_other": "{{count}} agents could not sleep"
+    },
+    "inbox": {
+      "open": "Open",
+      "openChat": "Open chat"
+    },
+    "mic": {
+      "dictate": "Dictate",
+      "dictateAndImprove": "Dictate and improve",
+      "improve": "Dictate and improve",
+      "mode": "Microphone action",
+      "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available."
+    },
+    "mirror": {
+      "drawer": {
+        "checksPassed_one": "{{count}} check passed",
+        "checksPassed_other": "{{count}} checks passed",
+        "checksPending_one": "{{count}} check running",
+        "checksPending_other": "{{count}} checks running"
+      },
+      "newAgentInWorkspace": "New {{agent}} agent in {{workspace}}",
+      "strip": {
+        "commands_one": "{{count}} command",
+        "commands_other": "{{count}} commands",
+        "subagents_one": "{{count}} subagent",
+        "subagents_other": "{{count}} subagents",
+        "workers_one": "{{count}} worker",
+        "workers_other": "{{count}} workers"
+      },
+      "tabCount": "{{value0}} tabs",
+      "tabCount_one": "{{value0}} tab",
+      "tabCount_other": "{{value0}} tabs",
+      "workerCount": "{{value0}} workers"
+    },
+    "orb": {
+      "bot": {
+        "briefFinished_one": "{{count}} automation finished overnight",
+        "briefFinished_other": "{{count}} automations finished overnight",
+        "briefQuestions_one": "{{count}} question waiting",
+        "briefQuestions_other": "{{count}} questions waiting"
+      }
+    },
+    "quick": {
+      "answerWith": "Answer: {{value0}}",
+      "escHint": "terminal",
+      "recommended": "Recommended"
+    },
+    "requests": {
+      "pairedPeekUnavailable": "Peek cannot open URLs or files from this paired host yet."
+    },
+    "row": {
+      "sendToHub": "Send to the hub",
+      "workers_one": "{{count}} worker",
+      "workers_other": "{{count}} workers"
+    },
+    "shortcuts": {
+      "arrangeMirrors": "Arrange mirrors",
+      "canvas": "Canvas",
+      "dictation": "Dictation",
+      "dockMirrors": "Park or restore mirrors",
+      "focusMirror": "Focus or unfocus the active canvas mirror",
+      "hub": "Hub",
+      "jumpToMirror": "Jump to the active mirror’s workspace",
+      "mirrors": "Mirrors",
+      "nextWaiting": "Jump to the next waiting agent",
+      "notSet": "Not set",
+      "popOut": "Pop out the active agent",
+      "set": "Set shortcut",
+      "setAction": "Set shortcut for {{action}}",
+      "toggle": "Open or close the hub",
+      "toggleCanvas": "Open or leave the canvas"
+    },
+    "tabToggle": {
+      "off": "Pop this terminal out when you leave the tab",
+      "on": "Pops out when you leave this tab (click to stop)"
+    },
+    "terminals": {
+      "botChatsCount_one": "{{count}} chat",
+      "botChatsCount_other": "{{count}} chats",
+      "botHit_one": "{{name}} · {{count}} chat in Bots",
+      "botHit_other": "{{name}} · {{count}} chats in Bots",
+      "botsCount_one": "{{count}} bot",
+      "botsCount_other": "{{count}} bots"
+    }
+  },
   "agentLaunch": {
     "opencode": {
       "invalidConfig": "OpenCode could not apply this model choice to the launch configuration. Check the OpenCode launch configuration and try again, or omit the model choice.",
@@ -67,6 +164,24 @@
     }
   },
   "auto": {
+    "agentHub": {
+      "orb": {
+        "answerReceived": "Answer received",
+        "ask": "Ask",
+        "awayAnswerReceived": "Answered by your away settings",
+        "comingLater": "Coming later",
+        "dismissReceipt": "Dismiss",
+        "dismissRequestOutcome": "Dismiss request outcome",
+        "free": "Act freely",
+        "requestClosed": "Request closed",
+        "requestDenied": "Request denied",
+        "requestExpired": "Request expired",
+        "requestNoLongerAvailable": "This request was answered elsewhere or is no longer available.",
+        "speakReplies": "Speak replies",
+        "stopSpeaking": "Stop speaking",
+        "talkShortcut": "Talk shortcut"
+      }
+    },
     "components": {
       "GitHubItemDialog": {
         "filesViewed_one": "{{viewed}} / {{count}} file viewed",
@@ -668,6 +783,15 @@
           "0c9a33f468": "Capture app windows so agents can inspect visual state.",
           "4d03dec2d0": "Read app interface trees and perform requested actions.",
           "6b5a2cd3a5": "Accessibility"
+        },
+        "ExperimentalPane": {
+          "agentHub": {
+            "editShortcuts": "Edit",
+            "shortcutNotSet": "not set",
+            "shortcutTaken": "{{value0}} is already used by {{value1}}. Pick other keys in Keyboard Shortcuts.",
+            "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}} · Arrange the mirrors: {{value3}}",
+            "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub, arrange the mirrors)."
+          }
         },
         "McpConfigSection": {
           "detectedServers_one": "{{detected}} detected · {{count}} server",
@@ -2083,6 +2207,32 @@
         },
         "watches": "Slack threads and Linear comments"
       },
+      "hub-orb": {
+        "does": "Answers waiting questions by your standing rules and leaves the rest for you.",
+        "example1": "Answered 2 “continue?” prompts by your rule. 1 waits on you: delete the old migration?",
+        "example2": "No agent is blocked.",
+        "firstChat": "Asks for your standing rules (what it may answer on its own, what always comes to you), then looks at the Agent Hub with `orca hub status` and `orca hub questions --all-hosts`. It answers only what your rules cover and says so in one line.",
+        "line": "Runs your Agent Hub: sees who is waiting and answers by your standing rules.",
+        "name": "Orb",
+        "reports": "Here, one line per round",
+        "watches": "Agents and workers waiting on you, on every host"
+      },
+      "hub-secretary": {
+        "does": "Groups what is waiting by agent and host and puts what needs you first.",
+        "example1": "3 need you: a deploy approval (api), a naming question (docs), a failing test (app).",
+        "example2": "5 agents are working; none are stuck.",
+        "firstChat": "Reads what is waiting in the Agent Hub with `orca hub questions --all-hosts`, groups it by agent and host, and tells you what needs you first. It answers nothing.",
+        "line": "Reads the Inbox every hour and sends you one summary of what needs you.",
+        "name": "Hub Secretary",
+        "reports": "Here, every hour",
+        "schedules": {
+          "hourly-inbox": {
+            "what": "What needs you",
+            "when": "Every hour"
+          }
+        },
+        "watches": "The Agent Hub Inbox: questions, approvals and finished work"
+      },
       "incident-notes": {
         "does": "Keeps a timestamped timeline, then drafts a blameless write-up.",
         "events": {
@@ -2115,6 +2265,22 @@
         "reports": "Here, when an issue is opened",
         "watches": "New issues in the repos you pick"
       },
+      "machine-hygiene": {
+        "does": "Finds sleeping workers and stale workspaces, and removes the ones you pick.",
+        "example1": "mac: 4 sleeping workers, 2 stale workspaces. pd: 1 worker, 6 workspaces merged.",
+        "example2": "Remove the 6 merged ones on pd?",
+        "firstChat": "Lists workers with `orca orchestration worker-list` and workspaces with `orca worktree list` on each host, and tells you which are asleep or stale. It removes nothing until you pick.",
+        "line": "Finds sleeping workers and stale worktrees on each host and offers to clean up.",
+        "name": "Machine Hygiene",
+        "reports": "Here, Mondays at 9 AM",
+        "schedules": {
+          "weekly-hygiene": {
+            "what": "Cleanup list",
+            "when": "Mondays at 9 AM"
+          }
+        },
+        "watches": "Workers and workspaces on every host"
+      },
       "meeting-prep": {
         "does": "Before each meeting, lists the issues, pull requests and docs it is about.",
         "events": {
@@ -2130,6 +2296,22 @@
         "name": "Meeting prep",
         "reports": "Here, before each meeting",
         "watches": "Your calendar"
+      },
+      "night-watch": {
+        "does": "Keeps what can wait for the morning and notifies you only about blockers.",
+        "example1": "2 agents finished, 1 asked a style question. All of it waits for the morning.",
+        "example2": "Blocked at 02:10: the release agent needs a signing password.",
+        "firstChat": "Asks when your night starts and ends, then checks the Agent Hub through the night. What can wait goes into a morning list; only a blocked agent gets a notification, with `orca hub notify`.",
+        "line": "Watches agents overnight and wakes you only for blockers.",
+        "name": "Night Watch",
+        "reports": "Here, nightly, and a notification for a blocker",
+        "schedules": {
+          "nightly-watch": {
+            "what": "Night watch",
+            "when": "Nightly at 11 PM"
+          }
+        },
+        "watches": "Running agents and workers overnight"
       },
       "oncall-handoff": {
         "does": "Summarizes the week’s alerts and incidents, and lists open follow-ups.",
@@ -2189,6 +2371,22 @@
           }
         },
         "watches": "Pull requests, checks and workspaces"
+      },
+      "review-sentry": {
+        "does": "Answers reviewers with what the agent changed, and asks you before a force-push.",
+        "events": {
+          "review-comment": {
+            "action": "Draft an answer",
+            "trigger": "When a reviewer comments on your pull request"
+          }
+        },
+        "example1": "#212: the reviewer asked why the retry is capped at 3. Draft answer below.",
+        "example2": "The fix needs a force-push after a rebase. Go ahead?",
+        "firstChat": "Asks which repos to follow, then reads the review comments on your open pull requests and drafts an answer to each. It asks you before it answers for you, and always before a force-push.",
+        "line": "Follows review threads, answers reviewers and asks before a force-push.",
+        "name": "Review Sentry",
+        "reports": "Here, when a reviewer writes",
+        "watches": "Review comments on your pull requests, and the agents working on them"
       },
       "security-check": {
         "does": "Checks them for leaked secrets, injection, missing auth and unsafe defaults.",
@@ -2270,6 +2468,22 @@
         },
         "watches": "Your Orca workspaces"
       },
+      "upstream-watch": {
+        "does": "Drafts the update notes: what came, and which of your features it touches.",
+        "example1": "v1.4.272 is out: 14 changes. 2 touch the Agent Hub tabs.",
+        "example2": "Notes drafted. Start the update on the feature branch?",
+        "firstChat": "Asks which upstream repo you follow, then waits for its new releases. When one lands it compares it with your branches and drafts what came and what it touches.",
+        "line": "Waits for new upstream releases and drafts the update notes.",
+        "name": "Upstream Watch",
+        "reports": "Here, when a release lands",
+        "schedules": {
+          "daily-upstream": {
+            "what": "New upstream releases",
+            "when": "Weekdays at 8 AM"
+          }
+        },
+        "watches": "New releases of the upstream repo you pick"
+      },
       "workspace-cleanup": {
         "does": "Lists workspaces that are done or abandoned, with uncommitted changes; removes only the ones you pick.",
         "example1": "6 workspaces are done: their pull requests merged this week.",
@@ -2321,6 +2535,10 @@
     }
   },
   "browser": {
+    "clientHosted": {
+      "statusUnavailable": "This page streams from {{value0}}",
+      "statusUnavailableDetail": "Orca couldn't confirm {{value0}} can lend its network to this device. Use the address bar icon to reopen the page here."
+    },
     "cookieImport": {
       "errors": {
         "allCookiesExpired": "All {{browser}} cookies are expired.",
@@ -2456,6 +2674,9 @@
       "remoteRefMissing": "Remote ref {{ref}} does not exist after fetch.",
       "repoNotFound": "Repo not found"
     }
+  },
+  "common": {
+    "open": "Open"
   },
   "components": {
     "RepositoryBrowserProfileSection": {
@@ -2935,15 +3156,18 @@
         "byteCount_other": "{{count}} bytes"
       },
       "queuedMessages": {
+        "collapse": "Collapse",
         "editChanged": "This message changed while you were editing. Your edit is in the chat box.",
         "editChangedNotSaved": "This message changed while you were editing. Your edit wasn't saved.",
         "editChangedPrompt": "This message changed while you were editing. Your edit will be in the chat box after you answer the agent.",
         "editFailed": "This message can't be edited.",
         "editGone": "This message was already sent or removed. Your edit is in the chat box.",
         "editGonePrompt": "This message was already sent or removed. Your edit will be in the chat box after you answer the agent.",
+        "expand": "Expand",
         "imageCount": "{{count}} images",
         "imageCount_one": "{{count}} image",
         "imageCount_other": "{{count}} images",
+        "moreActions": "More actions",
         "queuedCount_one": "{{count}} queued",
         "queuedCount_other": "{{count}} queued"
       },
@@ -3185,6 +3409,7 @@
         "notDoneStop": "The agent wasn't stopped.",
         "notDoneStopTask": "The background task wasn't stopped.",
         "notDoneStopTasks": "The background tasks weren't stopped.",
+        "notDoneVoice": "Live voice could not start.",
         "openCurrentConversation": "Open the current conversation to continue.",
         "optionRejected": "The agent didn't accept this setting.",
         "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",

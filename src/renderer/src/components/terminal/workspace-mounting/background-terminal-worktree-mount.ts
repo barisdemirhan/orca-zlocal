@@ -1,6 +1,7 @@
 import { BACKGROUND_MOUNT_TERMINAL_WORKTREE_EVENT } from '@/constants/terminal'
 import type { BackgroundMountTerminalWorktreeDetail } from '@/constants/terminal'
 import { parseExecutionHostId } from '../../../../../shared/execution-host/execution-host'
+import { isStructuredTab } from '../../../../../shared/agent-session/view/structured-agent-session-tab'
 import { requestSleepingAgentWakeOnMount } from '@/lib/agent-session/resume/sleeping-agent-wake-requests'
 import { carryActivationAdmissionDrained } from './activation-deferred-tab-admission'
 
@@ -284,11 +285,19 @@ export function pruneClosedBackgroundMountTabs(
   restrictions: Map<string, ReadonlySet<string>>,
   mountedWorktreeIds: Set<string>,
   tabsByWorktree: Record<string, readonly { id: string }[]>,
-  deferredMountTabIdsByWorktree?: Map<string, ReadonlySet<string>>
+  deferredMountTabIdsByWorktree?: Map<string, ReadonlySet<string>>,
+  unifiedTabsByWorktree: Record<
+    string,
+    readonly { id: string; contentType?: string; agentSessionAgent?: unknown }[]
+  > = {}
 ): boolean {
   let changed = false
   for (const [worktreeId, tabIds] of restrictions) {
-    const liveTabIds = new Set((tabsByWorktree[worktreeId] ?? []).map((tab) => tab.id))
+    // A standalone chat is a mount target too, but tabsByWorktree only lists terminals.
+    const chats = (unifiedTabsByWorktree[worktreeId] ?? []).filter((tab) => isStructuredTab(tab))
+    const liveTabIds = new Set(
+      [...(tabsByWorktree[worktreeId] ?? []), ...chats].map(({ id }) => id)
+    )
     const retained = new Set([...tabIds].filter((tabId) => liveTabIds.has(tabId)))
     const deferred = deferredMountTabIdsByWorktree?.get(worktreeId)
     const retainedDeferred = deferred

@@ -28,6 +28,9 @@ import {
 import './active-agent-note-send-result'
 
 const ACTIVE_AGENT_SEND_TIMEOUT_MS = 8000
+const WAKING_AGENT_POLL_MS = 1000
+
+const pause = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
 export async function sendNotesToActiveAgentSession(args: {
   worktreeId: string
@@ -36,6 +39,8 @@ export async function sendNotesToActiveAgentSession(args: {
   timeoutMs?: number
   /** False pastes the prompt into the agent's input and leaves it there unsent. */
   submit?: boolean
+  /** An explicit target normally sends at once; true waits, within timeoutMs, for the agent to run and go tui-idle. */
+  waitForIdle?: boolean
 }): Promise<ActiveAgentNotesSendResult> {
   try {
     return await sendNotesToActiveAgentSessionInternal(args)
@@ -51,13 +56,15 @@ async function sendNotesToActiveAgentSessionInternal({
   prompt,
   noteTarget: explicitNoteTarget,
   timeoutMs,
-  submit = true
+  submit = true,
+  waitForIdle = false
 }: {
   worktreeId: string
   prompt: string
   noteTarget?: ActiveTerminalNoteTarget
   timeoutMs?: number
   submit?: boolean
+  waitForIdle?: boolean
 }): Promise<ActiveAgentNotesSendResult> {
   const trimmedPrompt = prompt.trim()
   if (!trimmedPrompt) {
@@ -81,28 +88,47 @@ async function sendNotesToActiveAgentSessionInternal({
   const runtimeTarget = runtimeTargetForOwnerEnvironment(
     runtimeEnvironmentIdOrLocalUnlessTwin(state, worktreeId)
   )
-  const terminal = await findActiveRuntimeTerminal(
-    runtimeTarget,
-    worktreeId,
-    noteTarget,
-    ACTIVE_AGENT_SEND_RPC_TIMEOUT_MS
-  )
+  const effectiveTimeoutMs = timeoutMs ?? ACTIVE_AGENT_SEND_TIMEOUT_MS
+  // A just-woken pane re-creates its terminal and restarts its agent; keep looking until the budget ends.
+  const retryUntil = waitForIdle ? Date.now() + effectiveTimeoutMs : 0
+  const findTerminal = () =>
+    findActiveRuntimeTerminal(
+      runtimeTarget,
+      worktreeId,
+      noteTarget,
+      ACTIVE_AGENT_SEND_RPC_TIMEOUT_MS
+    )
+  let terminal = await findTerminal()
+  while (!terminal && Date.now() < retryUntil) {
+    await pause(WAKING_AGENT_POLL_MS)
+    terminal = await findTerminal()
+  }
   if (!terminal) {
     return reportNoteSendFailure(
       { status: 'no-active-terminal', code: 'no-inventory-match' },
       noteTarget
     )
   }
-  if (explicitNoteTarget) {
+  if (explicitNoteTarget && !waitForIdle) {
     return reportNoteSendFailure(
       await sendPromptToExplicitAgentTarget(runtimeTarget, terminal.handle, trimmedPrompt, submit),
       noteTarget
     )
   }
-  const effectiveTimeoutMs = timeoutMs ?? ACTIVE_AGENT_SEND_TIMEOUT_MS
-  const initialAgentStatus = await getTerminalAgentSendReadiness(runtimeTarget, terminal.handle, {
+  let initialAgentStatus = await getTerminalAgentSendReadiness(runtimeTarget, terminal.handle, {
     allowLegacyFallback: true
   })
+  while (
+    (initialAgentStatus.status === 'no-agent' ||
+      initialAgentStatus.status === 'no-active-terminal') &&
+    Date.now() < retryUntil
+  ) {
+    await pause(WAKING_AGENT_POLL_MS)
+    terminal = (await findTerminal()) ?? terminal
+    initialAgentStatus = await getTerminalAgentSendReadiness(runtimeTarget, terminal.handle, {
+      allowLegacyFallback: true
+    })
+  }
   if (initialAgentStatus.status !== 'sendable') {
     return reportNoteSendFailure(
       {
@@ -112,12 +138,15 @@ async function sendNotesToActiveAgentSessionInternal({
       noteTarget
     )
   }
+  const waitMs = waitForIdle
+    ? Math.max(WAKING_AGENT_POLL_MS, retryUntil - Date.now())
+    : effectiveTimeoutMs
   try {
     const { wait } = await callRuntimeRpc<{ wait: RuntimeTerminalWait }>(
       runtimeTarget,
       'terminal.wait',
-      { terminal: terminal.handle, for: 'tui-idle', timeoutMs: effectiveTimeoutMs },
-      { timeoutMs: effectiveTimeoutMs + 5000 }
+      { terminal: terminal.handle, for: 'tui-idle', timeoutMs: waitMs },
+      { timeoutMs: waitMs + 5000 }
     )
     if (wait.status !== 'running') {
       return reportNoteSendFailure(

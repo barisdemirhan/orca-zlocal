@@ -1,5 +1,6 @@
 import { useAppStore } from '@/store'
-import { openBotHome, readBots } from '@/lib/bot-catalog'
+import { readBots } from '@/lib/bot-catalog'
+import { showBotHome } from '../agent-hub/agent-hub-bot-page-open'
 import { botConnectorRowKey, openBotConnectorPage } from './bot-connector-page'
 import type { Bot } from '../../../../shared/bot-types'
 import {
@@ -29,7 +30,7 @@ export function openBotSettingsPage(botId: string, place?: BotSettingsPlace): vo
 
 /** The bot's page with its panel's Activity tab showing its settings; false when its page can't open. */
 function openBotSettingsPanel(bot: Bot, place: BotSettingsPlace | undefined): boolean {
-  if (!openBotHome(bot)) {
+  if (!showBotHome(bot)) {
     return false
   }
   setBotSettingsPlace('panel', viewPlace(bot.id, place))
@@ -57,7 +58,7 @@ export function openBotSettings(botId: string, place?: BotSettingsPlace): void {
 
 /** The bot's page with its Connectors tab showing; false when its page can't open. */
 export function openBotConnectorsTab(bot: Bot, entryKey?: string): boolean {
-  if (!openBotHome(bot)) {
+  if (!showBotHome(bot)) {
     return false
   }
   openBotConnectorPage(entryKey === undefined ? null : botConnectorRowKey(bot, entryKey))

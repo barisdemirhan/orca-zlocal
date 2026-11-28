@@ -3,7 +3,6 @@ import { BotTidyUpLine } from '@/components/bots/BotTidyUpLine'
 import { nativeChatBotCard } from '../../native-chat-bot-cards'
 import * as Fallback from '../../../../../../shared/native-chat/transcript/notices/claude-model-fallback'
 import { NativeChatUsageLimitRow } from '../../usage/NativeChatUsageLimitRow'
-import { agentSessionGoalControlWords } from '../../session/goals/agent-session-goal-control-words'
 import { AlertCircle, AlertTriangle, Info, Notebook } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NativeChatForkedFromRow } from './NativeChatForkedFromRow'
@@ -37,7 +36,6 @@ import {
   type BotContextChange
 } from '../../../../../../shared/bots/bot-context-note'
 import { NativeChatDividerRow } from '../../NativeChatDividerRow'
-import { agentSessionRestartNoteText } from './agent-session-restart-note-text'
 import * as Details from '../diagnostics/NativeChatProviderDetails'
 import { NativeChatSetupButton } from '../../host-access/NativeChatSetupButton'
 import {
@@ -54,6 +52,7 @@ import {
 } from '../../../../../../shared/agent-session/failures/agent-session-failure-copy'
 import { structuredAgentSessionHostPlace } from '../../pane/ownership/use-structured-agent-session-host-label'
 import { sayAgentSessionFailureTranslated } from './agent-session-failure-words-text'
+import { useNativeChatOrbNotice } from './native-chat-orb-notice'
 import { NativeChatTranscriptSignInNotice } from '../../host-access/NativeChatSignInRow'
 import { nativeChatSignInHostWords } from '../../host-access/native-chat-sign-in-notice'
 import { NativeChatNoticeAuthRecovery } from '../../antigravity-auth/NativeChatAntigravityAuthRecovery'
@@ -109,6 +108,7 @@ export function NativeChatNoticeRow({
 }): React.JSX.Element {
   const t = useTranslate()
   useTranslation()
+  const orb = useNativeChatOrbNotice(block)
   const orcaStopView = useNativeChatOrcaStopView()
 
   if (block.presentation === NATIVE_CHAT_GOAL_CHECK_SUMMARY) {
@@ -139,7 +139,7 @@ export function NativeChatNoticeRow({
       </pre>
     )
   }
-  const botCard = nativeChatBotCard(block, messageId ?? '', timestamp)
+  const botCard = orb.row ?? nativeChatBotCard(block, messageId ?? '', timestamp)
   if (botCard) {
     return botCard
   }
@@ -317,7 +317,7 @@ export function NativeChatNoticeRow({
               { agentName, hostName: structuredAgentSessionHostPlace(remoteHost, hostLabel, t) },
               sayAgentSessionFailureTranslated
             )
-          : (agentSessionRestartNoteText(block.text, t) ?? agentSessionGoalControlWords(block.text))
+          : orb.noteText(block.text, t)
   const failureDetail = agentSessionFailureDetailText(failure)
   if (block.orcaStop === undefined && failure?.kind === 'usageLimitReached') {
     return (

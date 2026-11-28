@@ -29,19 +29,17 @@ import type { StructuredAgentId } from '../../../../shared/agent-session/lifecyc
 import type { StructuredAgentCreateSupportReply } from '../../../../shared/agent-session/lifecycle/operations/structured-agent-create-support-reply'
 import type { AgentCliInstallationProblem } from '../../../../shared/agent-launch/catalog/agent-cli-installation-problem'
 
-type CreateSupportOptions = { requireInstalledChatProgram?: boolean }
+type RestoreTabsOnce =
+  RestoreStructuredAgentSessionTabsOnceMethods['restoreStructuredAgentSessionTabsOnce']
+type CreateSupportOptions = { requireInstalledChatProgram?: boolean; cwd?: string }
 type CreateSupport = StructuredAgentCreateSupportReply & {
   installation?: AgentCliInstallationProblem
 }
 
 export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport extends OrcaRuntimeWithStructuredResumeFolderCheck {
   protected abstract restoreStructuredAgentSessionTabsOnce(
-    ...args: Parameters<
-      RestoreStructuredAgentSessionTabsOnceMethods['restoreStructuredAgentSessionTabsOnce']
-    >
-  ): ReturnType<
-    RestoreStructuredAgentSessionTabsOnceMethods['restoreStructuredAgentSessionTabsOnce']
-  >
+    ...args: Parameters<RestoreTabsOnce>
+  ): ReturnType<RestoreTabsOnce>
 
   /** A workspace, or a repo a workspace is about to be created in, which runs where the repo does.
    *  `requireInstalledChatProgram` is for launches with no chat tab to offer Orca's install. */
@@ -50,14 +48,15 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
     agent: StructuredAgentId,
     options?: CreateSupportOptions
   ): Promise<CreateSupport> {
-    const at = { ...options, agent, runtime: this }
+    const { cwd, ...supportOptions } = options ?? {}
+    const at = { ...supportOptions, agent, runtime: this }
     if (typeof place === 'string') {
       const target = () => this.resolveRuntimeFileTarget(place)
-      const location = await this.resolveStructuredAgentSessionLocation(place)
+      const location = await this.resolveStructuredAgentSessionLocation(place, cwd)
       return structuredAgentCreateSupportAt({
         ...at,
         location,
-        workspacePath: async () => (await target()).worktree.path
+        workspacePath: async () => cwd ?? (await target()).worktree.path
       })
     }
     const repo = await this.resolveRepoSelector(place.repo)
@@ -111,7 +110,8 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
           )
         : undefined)
     const hostLaunchDirectory = isFloatingWorkspaceSelector(input.worktree)
-      ? (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path
+      ? (input.hostLaunchDirectory ??
+        (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path)
       : undefined
     // A fork runs where its source runs, and an adopted conversation where it was saved.
     const resolved = input.forkFrom
@@ -169,7 +169,8 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
         ) => AgentSessionAccountHome | Promise<AgentSessionAccountHome>)
       | null
   ): Promise<AgentSessionAttachParams & { hostLaunchDirectory?: string }> {
-    const support = await this.getStructuredAgentSessionCreateSupport(input.worktree, input.agent)
+    const { worktree, agent, hostLaunchDirectory: cwd } = input
+    const support = await this.getStructuredAgentSessionCreateSupport(worktree, agent, { cwd })
     // Adopting a conversation reads the agent's own transcript, so only an agent registered with an
     // importer adopts.
     const transcriptImport = structuredAgentRuntimeMetadata(input.agent)?.transcriptImport
@@ -189,7 +190,7 @@ export abstract class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport exte
       },
       input.agent
     )
-    const location = await this.resolveStructuredAgentSessionLocation(input.worktree)
+    const location = await this.resolveStructuredAgentSessionLocation(input.worktree, cwd)
     const definition = this.requireRegisteredStructuredAgent(input.agent)
     const host = getStructuredAgentSessionHost()
     const committedReplay = resolveCommittedStructuredAgentSessionAdoptionIntent({

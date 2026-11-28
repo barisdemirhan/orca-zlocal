@@ -33,6 +33,7 @@ import {
 import { registerLazyWorkspacePortHandlers } from '../ports/lazy-workspace-ports-handlers'
 import { registerLazyAutomationHandlers } from '../lazy-automations-handlers'
 import { registerLazyKeybindingHandlers } from '../lazy-keybindings-handlers'
+import { registerHostNameLookupHandlers } from '../host-name-lookup'
 import { registerTelemetryHandlers } from '../telemetry'
 import { registerPluginHandlers } from '../plugins/plugins'
 import { registerUIHandlers, setTrustedUIRendererWebContentsId } from '../ui'
@@ -100,6 +101,7 @@ export async function registerCoreHandlers(
   }
   return (registration ??= (async () => {
     registerAppHandlers(store, {
+      bots: runtime.bots,
       rendererCheckpoint,
       onBeforeRelaunch: lifecycleOptions.onBeforeRelaunch,
       onQuit: lifecycleOptions.onQuit,
@@ -151,6 +153,7 @@ export async function registerCoreHandlers(
     registerUIHandlers(store, { isDashboardPopoutRenderer })
     registerLazyEmulatorHandlers((id) => runtime.getEmulatorBridge()?.getIosVideoStreamUrl(id))
     registerLazyWorkspacePortHandlers(store)
+    registerHostNameLookupHandlers()
     registerFilesystemHandlers(store, commitMessageAgentEnv)
     registerFilesystemWatcherHandlers()
     registerRuntimeHandlers(runtime)

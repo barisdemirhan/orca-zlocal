@@ -79,7 +79,8 @@ function openAgentInNewTab(
     onPromptDeliveryUnconfirmed,
     pendingActivationSpawn,
     beforeSurfaceOpen,
-    activate
+    activate,
+    keepTabType
   } = args
   const store = agentTabLaunchStore(useAppStore.getState(), args)
   const trimmedPrompt = prompt?.trim() ?? ''
@@ -298,12 +299,13 @@ function openAgentInNewTab(
     onPromptDelivered?.()
   }
 
-  // Reveal Terminal within the launch workspace; otherwise an editor can hide it, while floating launches must leave main selection alone.
-  if (activate !== false) {
+  // Why: without setActiveTabType('terminal') an activated launch can stay hidden behind an editor.
+  // Scoped to the launch's worktree so a floating or background launch leaves the main window's tab alone.
+  if (activate !== false && !keepTabType) {
     store.setActiveTabType('terminal', worktreeId)
   }
 
-  // Persist tab order or terminals-first reconciliation would jump the new tab to index 0.
+  // Why: persist tab-bar order so reconcileTabOrder doesn't fall back to terminals-first and jump the new tab to index 0.
   persistAgentLaunchTabOrder(worktreeId, tab.id)
 
   return {

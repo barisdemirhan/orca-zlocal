@@ -114,7 +114,8 @@ export const sleepingAgentSessionRecordSchema = lazyZodSchema(() =>
       connectionId: z.string().nullable().optional(),
       launchConfig: sleepingAgentLaunchConfigSchema.optional(),
       origin: z.enum(['worktree-sleep', 'quit', 'live']).optional(),
-      restoreOnTabOpenOnly: z.boolean().optional()
+      restoreOnTabOpenOnly: z.boolean().optional(),
+      wakeOnRequestOnly: z.boolean().optional()
     })
     .refine(
       (record) => getAgentResumeArgv(record.agent, record.providerSession) !== null,

@@ -45,6 +45,8 @@ const SENTENCES: Record<AgentSessionWriteNoticeSentence, () => string> = {
     ),
   notDoneQueuedEdit: () =>
     translate('components.native-chat.writeNotice.notDoneQueuedEdit', COPY.notDoneQueuedEdit),
+  notDoneVoice: () =>
+    translate('components.native-chat.writeNotice.notDoneVoice', COPY.notDoneVoice),
   restartFailed: () =>
     translate('components.native-chat.writeNotice.restartFailed', COPY.restartFailed),
   capacity: () => translate('components.native-chat.writeNotice.capacity', COPY.capacity),

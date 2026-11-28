@@ -58,6 +58,9 @@ export function useStructuredNativeChatSubagents({
   )
   const party = nativeChatWorkerApprovalParty({ sessionId })
   return {
+    /** The session's background-work Stop, offered to the Agent Hub card's Work drawer. */
+    stop,
+    supportsStop: background.supportsStop,
     layer: {
       paneKey,
       // A rewind or a /clear replaces the conversation, which closes the sheet like a new session.

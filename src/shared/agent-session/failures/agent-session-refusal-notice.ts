@@ -41,7 +41,8 @@ const NOT_DONE: Record<AgentSessionWriteKind, AgentSessionWriteNoticeSentence> =
   'queued-edit': 'notDoneQueuedEdit',
   clear: 'notDoneCommand',
   compact: 'notDoneCommand',
-  goal: 'notDoneGoalChangeIncomplete'
+  goal: 'notDoneGoalChangeIncomplete',
+  voice: 'notDoneVoice'
 }
 
 /** Share actionable wording for /clear and /compact blocked by running work. */
@@ -227,6 +228,15 @@ export function agentSessionWriteNoticeParts(
   }
   if (failure.kind === 'unconfirmed') {
     return ['outcomeUnknown']
+  }
+  // Why: a start Codex turned down is only "Live could not start"; "the agent turned this down"
+  // reads as if a command was refused.
+  if (
+    write === 'voice' &&
+    failure.code === 'agent_session_operation_invalid' &&
+    failure.details?.reason === 'providerRejected'
+  ) {
+    return [notDone]
   }
   const byReason = reasonParts(failure, write, context)
   if (byReason) {

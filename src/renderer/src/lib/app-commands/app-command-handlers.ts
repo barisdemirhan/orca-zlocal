@@ -17,6 +17,7 @@ import {
 } from '../../components/sidebar/workspace-card/identity/child-workspaces-toggle-target'
 import { requestTerminalTabRename } from '../../components/tab-bar/terminal-tabs/terminal-tab-rename-request'
 import { useAppStore } from '../../store/index'
+import { agentHubCommandHandlers } from '@/components/agent-hub/agent-hub-command-handlers'
 import { showWorkspaceListThen } from '../../components/app-rail/app-rail-navigation'
 import { readRuntimeStatuses } from '@/store/slices/runtime-status/views/runtime-status-owner'
 import type { usePluginCommands } from '@/store/plugins/catalog/plugin-contribution-catalog'
@@ -200,6 +201,7 @@ export function createAppCommandHandlers(
         })
       }
     ],
+    ...agentHubCommandHandlers(claim),
     [
       'floatingWorkspace.maximize',
       () => {

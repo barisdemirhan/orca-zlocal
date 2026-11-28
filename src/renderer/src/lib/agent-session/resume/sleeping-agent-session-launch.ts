@@ -22,6 +22,7 @@ import type { SleepingAgentSessionRecord } from '../../../../../shared/agent-ses
 
 export type ResumeSleepingAgentSessionsOptions = {
   suppressNavigation?: boolean
+  paneKeys?: ReadonlySet<string>
   // Mounted in-place wakes own these claim keys until spawn succeeds; generic resume must neither launch nor clear their records.
   skipClaimKeys?: ReadonlySet<string>
   /** Called with the tab id of each freshly launched resume tab, so

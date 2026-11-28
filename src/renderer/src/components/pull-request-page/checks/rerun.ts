@@ -1,9 +1,9 @@
 import { toast } from 'sonner'
-import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
+import type { GitHubRuntimeHost } from '@/lib/work-items/github/github-source-runtime-context'
 import {
-  getGitHubRuntimeRepoId,
-  type GitHubRuntimeHost
-} from '@/lib/work-items/github/github-source-runtime-context'
+  rerunPullRequestChecksRequest,
+  rerunTargetForRuntimeHost
+} from '@/lib/source-control/checks/rerun-pull-request-checks'
 import { translate } from '@/i18n/i18n'
 import type { GitHubRepositoryIdentity as GitHubOwnerRepo } from '../../../../../shared/github/repositories/repository-identity'
 import type { GitHubWorkItem } from '../../../../../shared/github/work-items/work-item-types'
@@ -42,28 +42,20 @@ export async function rerunPullRequestChecks(args: {
   const rerunContextOwner = args.committedChecksContextOwnerRef.current
   args.setRerunningOwner(rerunContextOwner)
   try {
-    const result = args.runtimeHost
-      ? await callRuntimeRpc<Awaited<ReturnType<typeof window.api.gh.rerunPRChecks>>>(
-          { kind: 'environment', environmentId: args.runtimeHost.environmentId },
-          'github.rerunPRChecks',
-          {
-            repo: getGitHubRuntimeRepoId(args.sourceContext, args.repoId ?? args.item.repoId),
-            prNumber: args.item.number,
-            headSha: args.headSha,
-            failedOnly: args.failedOnly,
-            prRepo: args.prRepo
-          },
-          { timeoutMs: 30_000 }
-        )
-      : await window.api.gh.rerunPRChecks({
-          repoPath: args.repoPath ?? '',
-          repoId: args.repoId ?? undefined,
-          sourceContext: args.sourceContext,
-          prNumber: args.item.number,
-          headSha: args.headSha,
-          failedOnly: args.failedOnly,
-          prRepo: args.prRepo
-        })
+    const result = await rerunPullRequestChecksRequest({
+      target: rerunTargetForRuntimeHost(
+        args.runtimeHost,
+        args.sourceContext,
+        args.repoId ?? args.item.repoId
+      ),
+      sourceContext: args.sourceContext,
+      repoId: args.repoId,
+      repoPath: args.repoPath,
+      prNumber: args.item.number,
+      headSha: args.headSha,
+      failedOnly: args.failedOnly,
+      prRepo: args.prRepo
+    })
     if (
       !args.mountedRef.current ||
       args.committedChecksContextOwnerRef.current !== rerunContextOwner

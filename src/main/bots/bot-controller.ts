@@ -2,6 +2,7 @@ import {
   type BotStore,
   persistBotStore,
   requireBotStore,
+  requireDeletableBot,
   requireStoredBot
 } from './bot-controller-store'
 // The bots on this computer, each homed in a folder workspace of the hidden Bots project group.
@@ -84,13 +85,16 @@ export class BotController {
     this.slackIcons = botSlackIconsOf(this, deps, (work) => this.serialize(work))
   }
 
-  /** Off, bots take no conversations or runs, and nothing creates or opens one; their homes stay. */
-  enabled(): boolean {
-    return areHostBotsEnabled(this.deps.getStore()?.getSettings())
+  /** Off, bots take no conversations or runs, and nothing creates or opens one; their homes stay.
+   *  The Orb bot keeps working for its own calls: it is the Orb, not one of the Bots. */
+  enabled(bot?: Pick<Bot, 'role'> | null): boolean {
+    return bot?.role === 'orb' || areHostBotsEnabled(this.deps.getStore()?.getSettings())
   }
 
-  assertEnabled(): void {
-    assertHostBotsEnabled(this.deps.getStore()?.getSettings())
+  assertEnabled(bot?: Pick<Bot, 'role'> | null): void {
+    if (bot?.role !== 'orb') {
+      assertHostBotsEnabled(this.deps.getStore()?.getSettings())
+    }
   }
 
   list(): Bot[] {
@@ -324,7 +328,7 @@ export class BotController {
   delete({ botId, deleteFolder }: BotDeleteParams): Promise<{ deleted: boolean }> {
     return this.serialize(async () => {
       const store = requireBotStore(this.deps.getStore())
-      const bot = requireStoredBot(store, botId)
+      const bot = requireDeletableBot(store, botId)
       const folderPath = botHomeFolder(bot, this.deps.botsRoot())
       if (deleteFolder) {
         await assertBotOwnsHome(this.deps.filesystem, folderPath, botId)

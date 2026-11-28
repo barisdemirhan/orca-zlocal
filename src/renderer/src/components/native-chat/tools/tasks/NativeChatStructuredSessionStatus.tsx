@@ -5,6 +5,9 @@ import { useWorkerDockFeed } from './dock/worker-dock-feed'
 import type { WorkerDockRowView } from './dock/WorkerDockRow'
 import type { WorkerDockSnapshot } from '../../../../../../shared/orchestration/dock/worker-dock'
 import { openWorkerDockRow } from './dock/worker-dock-open'
+import { AgentHubWorkerOpenInMainContext } from '../../../agent-hub/AgentHubWorkerOpenInMainButton'
+import { useAgentHubMirrorWorkerOpen } from '../../../agent-hub/agent-hub-mirror-worker-open'
+import { parsePaneKey } from '../../../../../../shared/workspace-layout/stable-pane-id'
 import { useWorkerDockOwnerActions } from './dock/use-worker-dock-owner-actions'
 import { WorkerDockFeedLossesContext, workerDockStopBlock } from './dock/worker-dock-stop-check'
 import {
@@ -162,9 +165,18 @@ export function NativeChatStructuredSessionStatus(props: {
     row: WorkerDockRowView
     opener: HTMLElement
   } | null>(null)
-  const workerOpen = useCallback(
+  const workerOpenInMain = useCallback(
     (row: WorkerDockRowView) => openWorkerDockRow(row, target),
     [target]
+  )
+  const showInMirror = useAgentHubMirrorWorkerOpen(parsePaneKey(props.paneKey)?.tabId)
+  const workerOpen = useCallback(
+    (row: WorkerDockRowView) => {
+      if (!showInMirror?.(row.dispatchId)) {
+        workerOpenInMain(row)
+      }
+    },
+    [showInMirror, workerOpenInMain]
   )
   // Read live when a Stop or its Retry is sent, never from rows a held press kept on screen.
   const stopBlock = useLatestHandler((row: WorkerDockRowView, party: string) =>
@@ -215,36 +227,38 @@ export function NativeChatStructuredSessionStatus(props: {
   }
   return (
     <WorkerDockFeedLossesContext.Provider value={feed.readLosses}>
-      <NativeChatBackgroundTasksStatus
-        isVisible={props.isVisible}
-        sessionId={props.sessionId}
-        workerRows={controlledWorkerRows}
-        workerIdentities={controlledWorkerIdentities}
-        onOpenWorker={workerOpen}
-        onWorkerAction={owner.action}
-        onClearAll={owner.clearAll}
-        loadWindow={feed.loadWindow}
-        incomplete={backgroundTasks.incomplete}
-        unavailable={!feed.available}
-        tasks={backgroundTasks.tasks}
-        settledTasks={backgroundTasks.settledTasks}
-        {...(backgroundTasks.children
-          ? { childViews: backgroundTasks.children, childRowContext }
-          : {})}
-        indicatorActive={backgroundTasks.isMonitoring}
-        supportsTaskStop={backgroundTasks.supportsStop}
-        offersStopAll={backgroundTasks.offersStopAll}
-        stoppingTaskIds={new Set([...stop.stoppingTaskIds, ...owner.pending])}
-        stoppingAll={stop.stoppingAll}
-        expanded={expandedHere}
-        onExpandedChange={(value) => {
-          setExpanded({ sessionId: props.sessionId, expanded: value })
-        }}
-        onStop={stop.onStop}
-        currentAgentId={props.currentAgentId ?? null}
-        onShowAgent={(providerId) => openNativeChatSubagent(props.paneKey, providerId)}
-        onShowProviderDetails={(row, opener) => setProviderDetails({ row, opener })}
-      />
+      <AgentHubWorkerOpenInMainContext.Provider value={showInMirror ? workerOpenInMain : null}>
+        <NativeChatBackgroundTasksStatus
+          isVisible={props.isVisible}
+          sessionId={props.sessionId}
+          workerRows={controlledWorkerRows}
+          workerIdentities={controlledWorkerIdentities}
+          onOpenWorker={workerOpen}
+          onWorkerAction={owner.action}
+          onClearAll={owner.clearAll}
+          loadWindow={feed.loadWindow}
+          incomplete={backgroundTasks.incomplete}
+          unavailable={!feed.available}
+          tasks={backgroundTasks.tasks}
+          settledTasks={backgroundTasks.settledTasks}
+          {...(backgroundTasks.children
+            ? { childViews: backgroundTasks.children, childRowContext }
+            : {})}
+          indicatorActive={backgroundTasks.isMonitoring}
+          supportsTaskStop={backgroundTasks.supportsStop}
+          offersStopAll={backgroundTasks.offersStopAll}
+          stoppingTaskIds={new Set([...stop.stoppingTaskIds, ...owner.pending])}
+          stoppingAll={stop.stoppingAll}
+          expanded={expandedHere}
+          onExpandedChange={(value) => {
+            setExpanded({ sessionId: props.sessionId, expanded: value })
+          }}
+          onStop={stop.onStop}
+          currentAgentId={props.currentAgentId ?? null}
+          onShowAgent={(providerId) => openNativeChatSubagent(props.paneKey, providerId)}
+          onShowProviderDetails={(row, opener) => setProviderDetails({ row, opener })}
+        />
+      </AgentHubWorkerOpenInMainContext.Provider>
       {providerDetails ? (
         <Suspense fallback={null}>
           <WorkerDockProviderDetailsDialog

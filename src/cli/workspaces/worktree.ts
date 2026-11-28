@@ -1,3 +1,4 @@
+import { getCallerTerminalHandle } from '../caller-terminal-handle'
 import { withFolderSetupSupportWarning } from './folder-setup-support-warning'
 import { withWorktreeSelectorRecovery } from './worktree-selector-recovery'
 import { cliCaller } from '../automations/automation-caller-chat'
@@ -111,7 +112,7 @@ export const WORKTREE_HANDLERS: Record<string, CommandHandler> = {
     assertWorkspaceTargetFlagsCompatible(flags)
     const branchNameOverride = getPresentStringFlag(flags, 'branch')
     const reviewLinks = getReviewTargetLinkFlags(flags)
-    const callerTerminalHandle = process.env.ORCA_TERMINAL_HANDLE || undefined
+    const callerTerminalHandle = getCallerTerminalHandle()
     const explicitParent = await resolveCreateParentSelector(flags, cwd, client)
     const explicitParentWorktree = explicitParent.parentWorktree
     const explicitParentWorkspace = explicitParent.parentWorkspace

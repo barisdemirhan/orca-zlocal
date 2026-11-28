@@ -128,6 +128,8 @@ function PopoverContent({
   align = 'center',
   sideOffset = 4,
   wheelScroll = false,
+  respectReducedMotion = false,
+  surface = 'menu',
   portalContainer,
   style,
   onWheel,
@@ -138,6 +140,9 @@ function PopoverContent({
 }: React.ComponentProps<typeof PopoverPrimitive.Content> & {
   portalContainer?: HTMLElement | null
   wheelScroll?: boolean
+  respectReducedMotion?: boolean
+  /** 'panel' is an opaque, card-radius surface for multi-section popovers that pair with PopoverArrow. */
+  surface?: 'menu' | 'panel'
   /** `inverted` styles callouts. `menu` matches dropdown menus for search pickers. */
   tone?: PopoverTone
 }) {
@@ -191,6 +196,8 @@ function PopoverContent({
               'z-[60] outline-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in motion-reduce:data-[state=open]:animate-none motion-reduce:data-[state=closed]:animate-none data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
               popoverToneVariants({ tone }),
               wheelScroll && 'popover-wheel-scroll',
+              respectReducedMotion && 'motion-reduce:animate-none!',
+              surface === 'panel' && 'rounded-2xl bg-popover backdrop-blur-none dark:bg-popover',
               className
             )}
             ref={focusScopeRef}

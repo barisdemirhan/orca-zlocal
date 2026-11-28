@@ -24,7 +24,11 @@ export function assertTrustedCaller(context: RpcContext): void {
 
 function authorizedBot(context: RpcContext, botId: string): Bot {
   assertTrustedCaller(context)
-  return botOf(context.runtime, botId)
+  const bot = botOf(context.runtime, botId)
+  if (bot.role) {
+    throw new InvalidArgumentError('The Orb stays on this computer and cannot be shared.')
+  }
+  return bot
 }
 
 function botOf(runtime: OrcaRuntimeService, botId: string): Bot {

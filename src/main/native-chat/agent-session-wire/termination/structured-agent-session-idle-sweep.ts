@@ -32,6 +32,7 @@ export type StructuredAgentSessionIdleSweepDeps = {
   /** Provider-declared background work, asked fresh before a running child's idle stop. */
   confirmIdle: (sessionId: string) => Promise<AgentSessionIdleConfirmation> | undefined
   store: StructuredAgentSessionCurrentWorkHost['store']
+  providerHoldsVoice?: (sessionId: string) => boolean
   /** Already inside nonreentrant session serialization. */
   stopAgent: (sessionId: string) => Promise<void>
   stopStartingAgent: (sessionId: string) => Promise<void>
@@ -53,6 +54,7 @@ export type StructuredAgentSessionChildWorkReads = {
   childWorkOpen: () => boolean
   hasOpenDispatch: () => boolean
   providerHoldsDispatch: () => boolean
+  providerHoldsVoice?: () => boolean
 }
 
 /** Check turn, child, dispatch, held-send and prompt work without building a snapshot. */
@@ -65,7 +67,8 @@ export function structuredAgentSessionChildHasOpenWork(
     reads.childWorkOpen() ||
     reads.hasOpenDispatch() ||
     reads.providerHoldsDispatch() ||
-    work?.actionablePrompt === true
+    work?.actionablePrompt === true ||
+    reads.providerHoldsVoice?.() === true
   )
 }
 
@@ -233,7 +236,8 @@ export class StructuredAgentSessionIdleSweep {
         {
           childWorkOpen: () => this.deps.childWorkOpen(sessionId),
           hasOpenDispatch: () => this.deps.hasOpenDispatch(sessionId),
-          providerHoldsDispatch: () => this.deps.providerHoldsDispatch(sessionId)
+          providerHoldsDispatch: () => this.deps.providerHoldsDispatch(sessionId),
+          providerHoldsVoice: () => this.deps.providerHoldsVoice?.(sessionId) === true
         },
         await readHostStructuredAgentSessionWork(this.deps, sessionId, { kind: 'child-work' })
       )

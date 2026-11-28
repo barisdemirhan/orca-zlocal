@@ -1,6 +1,6 @@
 // @protected-copy scope=file
 // The pill names the policy the agent runs under: a language pack must not reword what it says.
-import { memo } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { ChevronDown, PencilRuler, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -121,6 +121,12 @@ function NativeChatPermissionModePickerInner({
   const t = useTranslate()
   useUiLanguageRevision()
   const title = nativeChatPermissionPickerTitle(t)
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false)
+    }
+  }, [disabled])
   // Own shows the mode the agent reports when it has a translated name; until then it names the agent's settings.
   const own = current === 'own'
   const shown = own && isAgentChatPermissionMode(reported) ? reported : current
@@ -187,7 +193,7 @@ function NativeChatPermissionModePickerInner({
     ? NATIVE_CHAT_PERMISSION_MODE_ICONS[shown]
     : Icon
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open && !disabled} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild disabled={disabled}>
@@ -291,11 +297,13 @@ const NO_PENDING_MARK = (): void => {}
 export function NativeChatComposerPermissionPicker({
   surface,
   snapshot,
-  agent
+  agent,
+  disabled = false
 }: {
   surface: SessionOptionsSurface | null
   snapshot: readonly SessionOptionDescriptor[]
   agent?: string
+  disabled?: boolean
 }): React.JSX.Element | null {
   const descriptor = snapshot.find((entry) => entry.id === AGENT_CHAT_PERMISSION_MODE_OPTION_ID)
   const current = descriptor?.kind.type === 'select' ? descriptor.kind.currentValue : undefined
@@ -316,7 +324,7 @@ export function NativeChatComposerPermissionPicker({
       modes={modes}
       activeValue={descriptor.valueSource === 'dispatched' ? descriptor.activeValue : undefined}
       agent={agent ?? descriptor.kind.settingsAgent ?? null}
-      disabled={!descriptor.settable}
+      disabled={disabled || !descriptor.settable}
       onSelect={(mode) => {
         // The report can match a new explicit pick while the chat still follows agent settings.
         runSessionOptionSurfaceCall(mode, NO_PENDING_MARK, () =>

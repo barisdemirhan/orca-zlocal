@@ -14,7 +14,6 @@ import { createWebRuntimeSessionBrowserTab } from '@/runtime/browser/creation/we
 import type { WebRuntimeBrowserCreationFailureInfo } from '@/runtime/browser/creation/web-runtime-browser-creation-context'
 import { resolveWebRuntimeBrowserClientTargetGroup } from '@/runtime/browser/creation/web-runtime-browser-client-target-group'
 import { useAppStore } from '@/store/index'
-import { resolveNewBrowserTabProfile } from '@/store/slices/browser/profiles/browser-new-tab-profile'
 import {
   LOCAL_EXECUTION_HOST_ID,
   parseExecutionHostId
@@ -37,6 +36,7 @@ import {
   validateTarget,
   WorkspaceBrowserOpenError
 } from './workspace-browser-tab-presentation'
+import { createWorkspaceClientBrowserTab } from '../../workspace-client-browser-tab'
 import type {
   BrowserLinkOpenContext,
   BrowserOpenOutcome
@@ -88,17 +88,12 @@ async function createClientBrowserTab(
     return outcome.status === 'opened' ? outcome.result.browserPageId : null
   }
   try {
-    const created = state.createBrowserTab(request.workspaceId, request.url, {
-      activate: request.focusOnCreate !== false,
-      browserRuntimeEnvironmentId: null,
-      focusAddressBar: false,
-      executionHostId: ownerHostId,
-      ...resolveNewBrowserTabProfile(state, request.workspaceId, hostId),
-      targetGroupId: request.targetGroupId,
-      ...(request.split ? { split: request.split } : {}),
-      ...(request.afterTabId ? { afterTabId: request.afterTabId } : {}),
-      title: presentation.title
-    })
+    const created = createWorkspaceClientBrowserTab(
+      state,
+      { ...request, title: presentation.title },
+      hostId,
+      ownerHostId
+    )
     return created.activePageId ?? null
   } catch (error) {
     throw clientCreateFailure(presentation.error, error)

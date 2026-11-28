@@ -22,7 +22,9 @@ export function resolveSignalAgentForLaunchOwner(
     return null
   }
   return agentTypeToIconAgent(
-    resolveCompatibleAgentTypeForOwner(signalAgent, ownerAgent, { ownerIsLaunch }) ?? signalAgent
+    resolveCompatibleAgentTypeForOwner(signalAgent, ownerAgent, {
+      ownerIsLaunch
+    }) ?? signalAgent
   )
 }
 
@@ -177,8 +179,10 @@ export function hasObservedTabAgentSignal(args: {
 export function resolveTabAgentFromSignalSnapshot(
   args: Omit<
     Parameters<typeof resolveTabAgentFromSignals>[0],
-    'hasObservedAgentSignal' | 'isRemote' | 'processShellForeground'
-  >
+    'hasObservedAgentSignal' | 'isRemote'
+  > & {
+    isRemote?: boolean
+  }
 ): TerminalAgent | null {
   return resolveTabAgentFromSignals({
     ...args,
@@ -186,6 +190,6 @@ export function resolveTabAgentFromSignalSnapshot(
       ...args,
       hasCompletedHook: Boolean(args.focusedCompletedHookAgent)
     }),
-    isRemote: true
+    isRemote: args.isRemote ?? true
   })
 }

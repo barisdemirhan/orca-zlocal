@@ -1,5 +1,8 @@
 import { STATUS_METHODS } from './host-management/status'
 import { DESKTOP_WINDOW_METHODS } from './host-management/desktop-window'
+import { AGENT_HUB_METHODS } from './agent-hub'
+import { AGENT_HUB_ORB_METHODS } from './agent-hub-orb'
+import { AGENT_HUB_ORB_MEMORY_METHODS } from './agent-hub-orb-memory'
 import { SIDEBAR_INPUT_METHODS } from './sidebar-inputs/sidebar-inputs'
 import { SIDEBAR_REPO_ICON_METHODS } from './sidebar-inputs/sidebar-repo-icons'
 import { REPO_METHODS } from './projects/repo'
@@ -25,6 +28,9 @@ import { DEFAULT_LAZY_RPC_METHOD_GROUPS } from './lazy-rpc-method-groups'
 export { DEFAULT_LAZY_RPC_METHOD_GROUPS }
 
 export const EAGER_CORE_RPC_METHODS = [
+  ...AGENT_HUB_METHODS,
+  ...AGENT_HUB_ORB_METHODS,
+  ...AGENT_HUB_ORB_MEMORY_METHODS,
   ...STATUS_METHODS,
   ...DESKTOP_WINDOW_METHODS,
   ...AGENT_HOOK_METHODS,

@@ -54,6 +54,9 @@ async function updateBot(params: BotUpdateParams, context: RpcContext) {
     ownerOnly(context, 'Only your owner changes your Who can ask or permissions, in Orca.')
   }
   const bot = await context.runtime.bots.update(params.botId, params.updates)
+  if (bot.role === 'orb') {
+    context.runtime.followAgentHubOrbBotEdit(bot, params.updates)
+  }
   if (params.updates.skillProjects !== undefined) {
     // Replies after the links and caches change, so a `/` menu opened next lists them.
     await relinkBotSkills(bot, context.runtime.listRepos())
@@ -90,8 +93,8 @@ async function updateBot(params: BotUpdateParams, context: RpcContext) {
 /** New Home Chat: from Orca, a script, or the bot's own Home Chat, whatever started its turn. */
 async function newHomeChat(params: BotChatResetParams, context: RpcContext) {
   const { runtime } = context
-  runtime.bots.assertEnabled()
   const { bot, caller, callerBot } = namedOrCallerBot(params, context)
+  runtime.bots.assertEnabled(bot)
   // Another chat ending this one's Home Chat would cut off a conversation it isn't part of.
   if (caller && callerBot && (callerBot.id !== bot.id || caller !== bot.chatSessionId)) {
     throw new InvalidArgumentError('Only the bot’s own Home Chat can start a new Home Chat.')
@@ -261,6 +264,9 @@ export const BOT_METHODS = [
     params: BotDelete,
     handler: async (params, { runtime }) => {
       const bot = runtime.bots.list().find((entry) => entry.id === params.botId)
+      if (bot?.role) {
+        throw new Error('bot_reserved')
+      }
       if (bot) {
         // Before anything goes: its home's purge would drop unsaved editor text, as on the desktop.
         refuseUnsavedFolderDrafts(runtime.requireStore(), bot.folderWorkspaceId)

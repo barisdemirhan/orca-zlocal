@@ -44,7 +44,15 @@ function QuickLaunchAgentMenuItemsInner(props: QuickLaunchAgentMenuItemsProps): 
   const detectionTarget = useAgentDetectionTargetForWorktree(props.worktreeId)
   const model = useNewTabAgentMenuRows(props.worktreeId, true, detectionTarget)
   const runLaunch = useTabAgentMenuLaunch(props)
-  return <ProjectedAgentMenuItems {...props} model={model} runLaunch={runLaunch} />
+  return (
+    <ProjectedAgentMenuItems
+      disabled={props.disabled}
+      model={model}
+      runLaunch={runLaunch}
+      // Why: a caller-owned launch shows its pending state in the open menu.
+      keepOpenOnSelect={props.onLaunch !== undefined}
+    />
+  )
 }
 
 export function ProjectedAgentMenuItems({
@@ -53,7 +61,8 @@ export function ProjectedAgentMenuItems({
   runLaunch,
   pickerInventory,
   onSelectPickerAgent,
-  hidePickerSearch
+  hidePickerSearch,
+  keepOpenOnSelect = false
 }: {
   disabled?: boolean
   model: NewTabAgentMenuModel
@@ -61,6 +70,7 @@ export function ProjectedAgentMenuItems({
   pickerInventory?: AgentPickerInventorySource
   onSelectPickerAgent?: (agent: AgentPickerEntry['agent']) => void
   hidePickerSearch?: boolean
+  keepOpenOnSelect?: boolean
 }): React.JSX.Element {
   const t = useTranslate()
   const desktopDefaultAgent = useAppStateValue((s) => s.settings?.defaultTuiAgent)
@@ -172,6 +182,7 @@ export function ProjectedAgentMenuItems({
                   terminalPending={model.terminalPending}
                   disabled={disabled}
                   runLaunch={runLaunch}
+                  keepOpenOnSelect={keepOpenOnSelect}
                 >
                   {rowContent}
                 </TabAgentSurfaceChoiceRow>
@@ -181,7 +192,8 @@ export function ProjectedAgentMenuItems({
                   disabled={disabled || !!pendingReason}
                   aria-description={pendingReason}
                   onSelect={(event) => {
-                    if (runLaunch(row) === false) {
+                    const launched = runLaunch(row)
+                    if (keepOpenOnSelect || launched === false) {
                       event.preventDefault()
                     }
                   }}

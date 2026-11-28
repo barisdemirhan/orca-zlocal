@@ -2,7 +2,7 @@ import { ipcMain } from 'electron'
 import type { IpcHandleRegistrar } from '../../lazy-ipc-handle-group'
 import {
   BrowserClientHostPlacementPreparationRequest,
-  type BrowserPageCreationPlacement
+  type BrowserClientHostPlacementPreparation
 } from '../../../../shared/browser/client-hosting/browser-client-host-placement'
 import type { GlobalSettings } from '../../../../shared/settings/global-settings-types'
 import { prepareRuntimeEnvironmentBrowserPlacement } from './runtime-environment-browser-placement'
@@ -16,7 +16,7 @@ export function registerRuntimeEnvironmentBrowserClientHostHandler(
 ): void {
   ipc.handle(
     'runtimeEnvironments:prepareBrowserClientHostPlacement',
-    async (_event, input: unknown): Promise<BrowserPageCreationPlacement> => {
+    async (_event, input: unknown): Promise<BrowserClientHostPlacementPreparation> => {
       const args = BrowserClientHostPlacementPreparationRequest.parse(input)
       const userDataPath = options.getUserDataPath()
       return prepareRuntimeEnvironmentBrowserPlacement(userDataPath, {

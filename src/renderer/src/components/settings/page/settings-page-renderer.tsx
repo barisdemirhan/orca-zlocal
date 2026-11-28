@@ -55,6 +55,7 @@ import {
   renderSshSettingsSection
 } from './settings-remote-security-section-renderers'
 import {
+  renderAgentHubSettingsSection,
   renderAdvancedSettingsSection,
   renderDevSettingsSection,
   renderExperimentalSettingsSection,
@@ -212,6 +213,7 @@ export function renderSettingsPage(
                   {renderPrivacySettingsSection(context, t)}
                   {renderAdvancedSettingsSection(context, t)}
                   {renderDevSettingsSection(context, t)}
+                  {renderAgentHubSettingsSection(context)}
                   {renderExperimentalSettingsSection(context, t)}
                   {renderPluginsSettingsSection(context)}
                   {renderProjectSettingsSections(context, t)}

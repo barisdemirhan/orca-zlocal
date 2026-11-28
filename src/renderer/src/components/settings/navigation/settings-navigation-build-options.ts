@@ -14,6 +14,7 @@ export type SettingsNavigationBuildOptions = {
   botsEnabled: boolean
   hostQueuesMessages: boolean
   typedChatPermissions?: boolean
+  agentHubEnabled?: boolean
   managedBrowserCreationEnabled: boolean
   mobileEmulatorCreationEnabled: boolean
   showWorkspaceCardLayout: boolean

@@ -10,6 +10,9 @@ import { getSavedTerminalSessionName } from '@/lib/agent-session/history/session
 import { setWebRuntimeTabProps } from '@/runtime/hosted-terminals/actions/web-runtime-tab-properties'
 import { createWebRuntimeSessionTerminal } from '@/runtime/hosted-terminals/creation/web-runtime-terminal-creation'
 import { isWebRuntimeSessionActive } from '@/runtime/web-session-tabs-sync/identity/web-runtime-session-environment'
+import { createWebRuntimeSessionTerminalResult } from '@/runtime/hosted-terminals/creation/web-runtime-terminal-create-operation'
+import { webTerminalPlacementParentTabId } from '@/runtime/hosted-terminals/placement/web-session-terminal-placement'
+import { toWebTerminalSurfaceTabId } from '../../../../../../shared/workspace-layout/terminal-surface-id'
 import type { AiVaultAgent } from '../../../../../../shared/ai-vault/contracts/ai-vault-types'
 import type {
   AgentProviderSessionMetadata,
@@ -20,7 +23,12 @@ import type { WebRuntimeTerminalCreateOutcome } from '@/runtime/hosted-terminals
 
 export type LaunchAiVaultSessionInNewTabResult =
   | { tabId: string }
-  | { tabId: null; runtimeLaunch: Promise<WebRuntimeTerminalCreateOutcome> }
+  | {
+      tabId: null
+      runtimeLaunch: Promise<WebRuntimeTerminalCreateOutcome>
+      /** Only for an inactive launch, whose caller shows the tab itself. */
+      runtimeTabId?: Promise<string | null>
+    }
 
 export function launchAiVaultSessionInNewTab(args: {
   agent: AiVaultAgent
@@ -33,6 +41,8 @@ export function launchAiVaultSessionInNewTab(args: {
   providerSession?: AgentProviderSessionMetadata
   targetGroupId?: string
   splitDirection?: TabSplitDirection
+  /** false leaves the workspace showing what it shows; the caller places the new tab. */
+  activate?: false
 }): LaunchAiVaultSessionInNewTabResult {
   const store = useAppStore.getState()
   const savedName = savedNameForResume(store, args)
@@ -48,34 +58,58 @@ export function launchAiVaultSessionInNewTab(args: {
       ? store.createEmptySplitGroup(args.worktreeId, split.sourceGroupId, split.splitDirection)
       : null
     const targetGroupId = splitGroupId ?? args.targetGroupId
+    const terminal = {
+      worktreeId: args.worktreeId,
+      environmentId: runtimeEnvironmentId,
+      ...(targetGroupId ? { targetGroupId } : {}),
+      agentSessionKind: 'resume' as const,
+      launchAgent: args.agent,
+      command: args.command,
+      ...(args.cwd ? { cwd: args.cwd } : {}),
+      ...(args.env ? { env: args.env } : {}),
+      ...(args.envToDelete ? { envToDelete: args.envToDelete } : {}),
+      ...(args.launchConfig ? { launchConfig: args.launchConfig } : {}),
+      ...(args.providerSession ? { providerSession: args.providerSession } : {}),
+      ...(args.launchConfig ? { agentArgs: args.launchConfig.agentArgs } : {})
+    }
+    // The mirrored tab may not be here yet; name it on its host, which republishes the name.
+    const nameMirroredTab = (mirroredTabId: string | null | undefined): void => {
+      if (savedName && mirroredTabId) {
+        setWebRuntimeTabProps({
+          worktreeId: args.worktreeId,
+          tabId: mirroredTabId,
+          customTitle: savedName
+        })
+      }
+    }
+    if (args.activate === false) {
+      const created = createWebRuntimeSessionTerminalResult({
+        ...terminal,
+        activate: false,
+        selectWorktree: false
+      }).then((result) => {
+        if (result.outcome.status === 'created') {
+          nameMirroredTab(result.outcome.mirroredTabId)
+        }
+        return result
+      })
+      return {
+        tabId: null,
+        runtimeLaunch: created.then((result) => result.outcome),
+        runtimeTabId: created.then((result) =>
+          result.hostTabId
+            ? toWebTerminalSurfaceTabId(webTerminalPlacementParentTabId(result.hostTabId))
+            : null
+        )
+      }
+    }
     const runtimeLaunch = createWebRuntimeSessionTerminal(
-      {
-        worktreeId: args.worktreeId,
-        environmentId: runtimeEnvironmentId,
-        ...(targetGroupId ? { targetGroupId } : {}),
-        agentSessionKind: 'resume',
-        launchAgent: args.agent,
-        command: args.command,
-        ...(args.cwd ? { cwd: args.cwd } : {}),
-        ...(args.env ? { env: args.env } : {}),
-        ...(args.envToDelete ? { envToDelete: args.envToDelete } : {}),
-        ...(args.launchConfig ? { launchConfig: args.launchConfig } : {}),
-        ...(args.providerSession ? { providerSession: args.providerSession } : {}),
-        ...(args.launchConfig ? { agentArgs: args.launchConfig.agentArgs } : {}),
-        activate: true
-      },
+      { ...terminal, activate: true },
       { notifyFailure: false }
     )
     const observedRuntimeLaunch = runtimeLaunch.then((outcome) => {
       if (outcome.status === 'created') {
-        if (savedName && outcome.mirroredTabId) {
-          // The mirrored tab may not be here yet; name it on its host, which republishes the name.
-          setWebRuntimeTabProps({
-            worktreeId: args.worktreeId,
-            tabId: outcome.mirroredTabId,
-            customTitle: savedName
-          })
-        }
+        nameMirroredTab(outcome.mirroredTabId)
         useAppStore.getState().setActiveTabType('terminal', args.worktreeId)
       } else if (splitGroupId) {
         // A refused or failed drop must not leave a blank pane behind.
@@ -89,6 +123,7 @@ export function launchAiVaultSessionInNewTab(args: {
   const tab = store.createTab(args.worktreeId, args.targetGroupId, undefined, {
     ...(split ? { split } : {}),
     ...(args.cwd ? { startupCwd: args.cwd } : {}),
+    ...(args.activate === false ? { activate: false } : {}),
     pendingStartup: {
       command: args.command,
       ...(args.env ? { env: args.env } : {}),
@@ -105,7 +140,9 @@ export function launchAiVaultSessionInNewTab(args: {
   if (savedName) {
     store.setTabCustomTitle(tab.id, savedName, { recordInteraction: false })
   }
-  store.setActiveTabType('terminal', args.worktreeId)
+  if (args.activate !== false) {
+    store.setActiveTabType('terminal', args.worktreeId)
+  }
 
   persistAgentLaunchTabOrder(args.worktreeId, tab.id)
 

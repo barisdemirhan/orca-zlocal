@@ -41,6 +41,7 @@ export const ResumeProviderSessionParam = lazyZodSchema(() =>
 
 export const TerminalCreateParams = lazyZodSchema(() =>
   z.object({
+    callerTerminalHandle: OptionalString,
     worktree: OptionalString,
     // Not closed with the worker that created it; older hosts drop it and close none.
     keepOpen: z.literal(true).optional(),
@@ -122,4 +123,14 @@ export const AgentTeamsPrepareLaunch = lazyZodSchema(() =>
     env: z.record(z.string(), z.string()).optional(),
     prepareAuth: z.boolean().optional()
   })
+)
+
+export const TerminalSuspension = lazyZodSchema(() =>
+  z
+    .object({
+      terminal: z.string().min(1),
+      suspended: z.boolean().optional(),
+      expectedIncarnationId: z.string().min(1).optional()
+    })
+    .strict()
 )

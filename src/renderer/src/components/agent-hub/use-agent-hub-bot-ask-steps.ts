@@ -1,0 +1,232 @@
+// A bot item's waiting ask as one model for every Agent Hub surface (rows, bubble, chat card, Orb): the
+// item's own read, pending comments and question steps (the ones the Items panel uses), so held answers
+// show the same everywhere and a reply posts through the bot's own host.
+import { useEffect, useState } from 'react'
+import { useLatestHandler } from '@/lib/use-latest-handler'
+import { useBotItemPendingComments } from '../bots/items/use-bot-item-pending-comments'
+import { useBotItemQuestionSteps } from '../bots/items/use-bot-item-question-steps'
+import { useBotItemView } from '../bots/items/use-bot-item-view'
+import { botItemAnswerWords } from '../../../../shared/bots/bot-item-answer-lines'
+import { botItemWaitingAsk } from '../../../../shared/bots/bot-item-question-answers'
+import type {
+  BotItemDecision,
+  BotItemQuestionShape,
+  BotItemQuickReply
+} from '../../../../shared/bots/bot-item-ask'
+import type { Bot } from '../../../../shared/bot-types'
+import type { BotItem } from '../../../../shared/bots/bot-items'
+import { botItemHeldAnswerIsReply } from '../../../../shared/bots/bot-item-held-answers'
+import { agentHubBotAskLine } from './use-agent-hub-bot-ask'
+import {
+  keepAgentHubBotAskOpen,
+  releaseAgentHubBotAskOpen
+} from './agent-hub-bot-ask-partial-store'
+
+const NO_REPLIES: readonly BotItemQuickReply[] = []
+
+/** `closed`: nothing waits on the owner here (and nothing was answered in this view). */
+export type AgentHubBotAskPhase = 'reading' | 'failed' | 'open' | 'answered' | 'closed'
+
+export type AgentHubBotAskModel = {
+  phase: AgentHubBotAskPhase
+  /** The item itself still waits on the owner; some lines can stay open after it moves on. */
+  waiting: boolean
+  number: number
+  title: string
+  /** The ask's question lines (at least one). */
+  total: number
+  /** What led to the question: the ask's own context (`--comment`), else the item's description. */
+  context: string
+  /** The other lines that are answered or held, as "Question → answer". */
+  folded: readonly { index: number; question: string; words: string; reopens: boolean }[]
+  /** Names the open question: a view keeps its typed words and picks per key. */
+  openKey: string
+  question: string
+  replies: readonly BotItemQuickReply[]
+  /** Several replies can be picked before they answer together. */
+  multi: boolean
+  /** The words held for the open question, not sent yet. */
+  held: string | null
+  /** Where the open line is among several: null with one. */
+  nav: { at: number; count: number } | null
+  answeredCount: number
+  /** Lines with an answer held for the next send, out of `openCount` lines still open to one. */
+  heldCount: number
+  openCount: number
+  /** Files and skills attached to the held answers. */
+  heldFiles: number
+  step: (delta: -1 | 1) => void
+  reopen: (index: number) => void
+  /** Answers the open question with these replies' words (several joined as one answer). */
+  pick: (labels: readonly string[]) => void
+  /** The owner's own words for the open question. */
+  reply: (text: string) => void
+  sendHeld: () => void
+  retry: () => void
+}
+
+/** What the list's row knows of the ask until its events are read. */
+function listedShape(item: BotItem): BotItemQuestionShape {
+  const question = item.question
+  return { body: question?.gist ?? '', decisions: question?.decisions ?? [] }
+}
+
+export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskModel {
+  const view = useBotItemView(bot, item.uid, item)
+  const live = view.item ?? item
+  const pending = useBotItemPendingComments(bot, item.uid, view.events)
+  // As the panel's comment box sends: after the newest event read, naming the question it answers.
+  const send = useLatestHandler<Parameters<Parameters<typeof useBotItemQuestionSteps>[3]>, void>(
+    (text, paths = [], ...rest) =>
+      pending.send(text, paths, view.events.at(-1)?.id ?? live.lastEventId, ...rest)
+  )
+  const { steps, sent, quick, fromBox, waitingLine } = useBotItemQuestionSteps(
+    bot,
+    live,
+    view.events,
+    send,
+    pending.shown
+  )
+  const asked = botItemWaitingAsk(live, view.events)
+  // The waiting ask can be older than the loaded page: earlier pages load until its comment shows.
+  const askId = live.waitingAsk ?? live.question?.eventId
+  const askUnread =
+    view.eventsRead && askId !== undefined && !view.events.some((event) => event.id === askId)
+  const { hasEarlier, loadEarlier } = view
+  const earliest = view.events[0]?.id
+  useEffect(() => {
+    if (askUnread && hasEarlier) {
+      loadEarlier()
+    }
+  }, [askUnread, hasEarlier, earliest, loadEarlier])
+
+  const shape = steps?.shape ?? asked?.shape ?? listedShape(live)
+  const total = Math.max(1, shape.decisions.length)
+  // Upstream shows every line at once; the hub steps through them one at a time.
+  const [focused, setFocused] = useState(0)
+  const firstOpen = steps?.lines.find((line) => !steps.picks[line]) ?? steps?.lines[0]
+  const lineIndex = steps ? (steps.lines.includes(focused) ? focused : (firstOpen ?? 0)) : 0
+  const heldCount = steps ? steps.picks.filter(Boolean).length : 0
+  const heldFiles = steps
+    ? steps.picks.reduce(
+        (sum, pick) => sum + (pick ? pick.images.length + pick.skills.length : 0),
+        0
+      )
+    : 0
+  const decision: BotItemDecision | undefined = shape.decisions[lineIndex]
+  const question = decision?.question ?? waitingLine?.line ?? agentHubBotAskLine(live)
+
+  const sentAnswers = sent.get(steps?.askId ?? asked?.askId ?? '')
+  const sentAll = sentAnswers
+    ? sentAnswers.filter(Boolean).length >= (steps ? steps.lines.length : total)
+    : false
+  const postingOne = !steps && pending.shown.some(({ failed }) => !failed)
+  const open = asked !== null && !sentAll && !postingOne
+  const [seenOpen, setSeenOpen] = useState(false)
+  if (open && !seenOpen) {
+    setSeenOpen(true)
+  }
+  const phase: AgentHubBotAskPhase = open
+    ? 'open'
+    : asked !== null || seenOpen
+      ? 'answered'
+      : view.eventsRead
+        ? 'closed'
+        : view.failed
+          ? 'failed'
+          : 'reading'
+
+  const settled = phase === 'answered' || phase === 'closed'
+  useEffect(() => {
+    if (settled) {
+      releaseAgentHubBotAskOpen(bot, item.uid)
+    }
+  }, [settled, bot, item.uid])
+
+  const folded =
+    steps && asked
+      ? shape.decisions.flatMap((line, index) => {
+          const reply = asked.answers[index]
+          const posted =
+            reply && !steps.lines.includes(index) && !asked.byOrder[index]
+              ? botItemAnswerWords(shape, index, reply.data)
+              : null
+          const words = index === lineIndex ? null : (posted ?? steps.picks[index]?.words)
+          return words ? [{ index, question: line.question, words, reopens: !posted }] : []
+        })
+      : []
+  const at = steps ? steps.lines.indexOf(lineIndex) : 0
+  const held = steps ? (steps.picks[lineIndex]?.words ?? null) : null
+  const answeredCount = steps
+    ? total - steps.lines.filter((line) => !steps.picks[line]).length
+    : phase === 'answered'
+      ? total
+      : 0
+
+  return {
+    phase,
+    waiting: live.status === 'needs_you',
+    number: live.number,
+    title: live.title,
+    total,
+    // A comment-only ask is its own question line, so nothing more leads to it.
+    context: decision ? shape.body.trim() || (live.description?.trim() ?? '') : '',
+    folded,
+    openKey: `${steps?.askId ?? askId ?? ''}:${lineIndex}`,
+    question,
+    replies: decision?.replies ?? NO_REPLIES,
+    multi: decision?.multi === true,
+    held,
+    nav: steps ? { at, count: steps.lines.length } : null,
+    answeredCount,
+    heldCount,
+    openCount: steps ? steps.lines.length : total,
+    heldFiles,
+    step: (delta) => {
+      const target = steps?.lines[at + delta]
+      if (target !== undefined) {
+        setFocused(target)
+      }
+    },
+    reopen: setFocused,
+    pick: (labels) => {
+      const words = labels.join(', ')
+      if (!steps) {
+        quick(words)
+        return
+      }
+      const clears = botItemHeldAnswerIsReply(steps.picks[lineIndex], words)
+      steps.pick(lineIndex, words)
+      // As a held answer did: the next line still unanswered opens.
+      const next = steps.lines.find((line) => line !== lineIndex && !steps.picks[line])
+      if (!clears && next !== undefined) {
+        setFocused(next)
+      }
+    },
+    reply: (text) => {
+      if (!steps) {
+        fromBox(text, [], waitingLine?.id ?? null)
+        return
+      }
+      // The line shown, not the first open one; a held answer's files and skills stay with its new words.
+      const own = steps.picks[lineIndex]
+      const over = fromBox(text, own?.images ?? [], `${steps.askId}:${lineIndex}`, own?.skills)
+      const next = steps.lines.find((line) => line !== lineIndex && !steps.picks[line])
+      if (!over && next !== undefined) {
+        setFocused(next)
+      }
+    },
+    sendHeld: () => {
+      if (!steps) {
+        return
+      }
+      // Upstream posts the lines without a held answer as skipped and the host closes the ask; the Inbox
+      // keeps its row only until that read.
+      if (heldCount < steps.lines.length) {
+        keepAgentHubBotAskOpen(bot, live, steps.askId, steps.lines.length - heldCount)
+      }
+      steps.send()
+    },
+    retry: view.retry
+  }
+}

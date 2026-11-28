@@ -9,6 +9,10 @@ import { closeWebRuntimeTerminal } from '@/runtime/hosted-terminals/actions/web-
 import { resolveLeafCloseCopyKind } from '../../../terminal/tab-lifecycle/terminal-close-copy-kind'
 import { RUNNING_CLOSE_PROBE_TIMEOUT_MS } from '../../../terminal/tab-lifecycle/running-terminal-close-guard'
 import { probePtyRunningWork } from '../../../terminal/tab-lifecycle/pty-running-work-probe'
+import {
+  closeTerminalPaneForRequest,
+  type TerminalPaneCloseRequest
+} from './terminal-pane-close-request'
 import { clearPaneTerminalError } from '../../errors/terminal-error-accumulation'
 import type { TerminalPaneBindingController } from '../ownership/use-terminal-pane-layout-bindings'
 import { retireUnboundIpcTerminalPane } from './retire-unbound-ipc-terminal-pane'
@@ -219,13 +223,14 @@ export function useTerminalPaneCloseActions(controller: TerminalPaneBindingContr
     [executeClosePane, getCloseDialogCopyKind]
   )
 
-  const closeActivePane = useCallback((): void => {
-    const manager = managerRef.current
-    const pane = manager?.getActivePane() ?? manager?.getPanes()[0]
-    if (pane) {
-      handleRequestClosePane(pane.id)
-    }
-  }, [handleRequestClosePane, managerRef])
+  const closeActivePane = useCallback(
+    (request?: TerminalPaneCloseRequest): boolean =>
+      closeTerminalPaneForRequest(managerRef.current, request, {
+        executeClosePane: (paneId) => executeClosePane(paneId, 'user'),
+        requestClosePane: handleRequestClosePane
+      }),
+    [executeClosePane, handleRequestClosePane, managerRef]
+  )
   useEffect(
     () => onActiveTerminalPaneCloseRequest(tabId, closeActivePane),
     [closeActivePane, tabId]

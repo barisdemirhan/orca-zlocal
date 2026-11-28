@@ -413,6 +413,8 @@
       "details": "Details",
       "noBrowserTitle": "Can’t open this tab here",
       "noBrowserBody": "This server has no browser.",
+      "statusUnavailable": "This page streams from {{value0}}",
+      "statusUnavailableDetail": "Orca couldn't confirm {{value0}} can lend its network to this device. Use the address bar icon to reopen the page here.",
       "download": {
         "started": "Downloading {{filename}}…",
         "completed": "Downloaded {{filename}}",
@@ -472,7 +474,11 @@
       "clientHostedTooltip": "Browsing through {{value0}}",
       "streamedTooltip": "Browsing on {{value0}}",
       "clientHostedDetail": "The page renders on this device. Network traffic and DNS go through the remote host.",
-      "streamedDetail": "The page runs on the remote host and streams to this device."
+      "streamedDetail": "The page runs on the remote host and streams to this device.",
+      "channelLabel": "Open new pages on",
+      "moveHere": "Reopen this page here",
+      "moveToHost": "Reopen this page on {{value0}}",
+      "moveCaveat": "Opens a new page at this page’s last address and closes this one. Signed-in and other transient page state may differ."
     },
     "remote": {
       "findUnavailable": "Find in page is not available while this page streams from the remote host.",
@@ -8974,21 +8980,6 @@
         }
       },
       "settings": {
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Keep local main up to date"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         "AccountsPane": {
           "locationSaveFailed": "Account location could not be saved. Try again.",
           "dbb9626ed1": "Cancel",
@@ -9326,9 +9317,6 @@
           "333984cf90": "Use an existing browser session",
           "9895ed44de": "Open computer use"
         },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Enable agent browser use"
-        },
         "BrowserUseExamples": {
           "1199258ace": "Copy",
           "1188e56af4": "Copy example prompt",
@@ -9582,6 +9570,59 @@
             "description": "Codex chats with the same setup share one background process instead of starting one per chat.",
             "copy": "Uses less memory and starts new chats faster. If a shared process crashes, all of its chats reconnect. Applies to chats on this computer started after you change it; remote and WSL hosts keep one process per chat.",
             "toggleLabel": "Toggle shared Codex servers"
+          },
+          "agentHub": {
+            "title": "Agent Hub",
+            "description": "One place for every agent and terminal: answer questions, approve commands, and jump to any pane.",
+            "copy": "Adds a dock (or a status-bar item) listing agents that need you, are working, or just finished, plus every open terminal. Answer, approve, or open a live mirror without leaving your current workspace.",
+            "toggleLabel": "Toggle Agent Hub",
+            "clearNever": "Never",
+            "clearHour": "1 h",
+            "clearMinutes": "{{value0}} min",
+            "placement": "Show the hub as",
+            "placementCopy": "A dock you can drag onto the status bar or a window edge, or an item in the status bar.",
+            "dock": "Dock",
+            "statusBar": "Status bar",
+            "autoHide": "Hide the dock while no agent is active",
+            "autoHideCopy": "It comes back as soon as an agent starts working, asks something, or finishes.",
+            "alerts": "Alerts",
+            "alertsCopy": "A bubble next to the hub that opens the agent's card. Skipped for the pane you are looking at.",
+            "alertNeedsInput": "When an agent asks or needs approval",
+            "alertFinished": "When an agent finishes",
+            "sound": "Play a sound",
+            "soundCopy": "Uses the sound and volume from Notifications (a short chime for System), and stays quiet when Orca's own notification already plays one.",
+            "mutedUntil": "Alerts are muted until {{value0}}",
+            "unmute": "Turn back on",
+            "popover": "Popover",
+            "defaultTab": "Open on",
+            "defaultTabCopy": "When nobody is waiting; a waiting agent always opens the Inbox.",
+            "showShells": "List plain shells in All terminals",
+            "clearFinished": "Clear finished agents from the Inbox after",
+            "clearFinishedCopy": "They stay unread in the Agents view; Never keeps them in the hub until you read them.",
+            "shortcutTaken": "{{value0}} is already used by {{value1}}. Pick other keys in Keyboard Shortcuts.",
+            "shortcuts": "Shortcuts",
+            "shortcutsUnset": "Not set. Suggested: {{value0}} (open the hub, jump to the next agent waiting, send the mirrors to the hub, arrange the mirrors).",
+            "shortcutsSet": "Open the hub: {{value0}} · Next agent waiting: {{value1}} · Mirrors to the hub: {{value2}} · Arrange the mirrors: {{value3}}",
+            "useSuggested": "Use these",
+            "editShortcuts": "Edit",
+            "dockSize": "Dock size",
+            "shortcutNotSet": "not set",
+            "trayPeek": "Fan out parked mirrors on news for",
+            "trayPeekCopy": "When a parked mirror asks or finishes, the pile beside the hub opens this long, then folds again.",
+            "never": "Never",
+            "seconds": "{{value0}} s",
+            "tabAutoPopout": "Show a pop-out button on terminal tabs",
+            "tabAutoPopoutCopy": "Open a terminal in a mirror directly from its tab.",
+            "mirrorCap": "Mirror windows open at once",
+            "mirrorCapCopy": "Opening more than this parks the oldest one beside the hub.",
+            "canvas": "Enable the mirrors canvas",
+            "canvasCopy": "Open the canvas with its button or shortcut to lay out your mirrors. Pop out keeps your current view. Leaving the canvas parks its mirrors; coming back restores them.",
+            "restoreOnLaunch": "Restore mirrors and the canvas on launch",
+            "restoreOnLaunchCopy": "Mirrors, the tray and the canvas come back as you left them when Orca restarts. A mirror whose terminal was closed is left out.",
+            "focusedPaneOutline": "Outline the focused terminal",
+            "focusedPaneOutlineCopy": "A thin blue frame on the pane that has the keyboard, in the workspace and in mirrors: where typing and dictation go.",
+            "paneQuickReply": "Quick reply in the terminal",
+            "paneQuickReplyCopy": "When a terminal agent asks or needs approval, a card with its options opens over the pane's corner. Esc closes it; the terminal still takes the answer."
           }
         },
         "FloatingWorkspacePane": {
@@ -10373,9 +10414,6 @@
           "14f1eb99d0": "Generate details when opening Create PR",
           "d32b87e754": "Use review template when available",
           "981eae7e14": "Draft by default"
-        },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "Source control AI"
         },
         "RuntimeAccessGrantList": {
           "sshAccessCaveat": "Revoking a link also revokes links made in terminals it opened. Anyone with a terminal on this computer, over SSH or through a link, can still pair again.",
@@ -11799,6 +11837,21 @@
               "description": "Codex chats with the same setup share one background process instead of starting one per chat.",
               "codex": "codex",
               "memory": "memory"
+            },
+            "agentHub": {
+              "title": "Agent Hub",
+              "description": "One place for every agent and terminal: answer questions, approve commands, and jump to any pane.",
+              "agents": "agents",
+              "inbox": "inbox",
+              "statusBar": "status bar",
+              "terminals": "terminals",
+              "questions": "questions",
+              "alerts": "alerts",
+              "sound": "sound",
+              "notifications": "notifications",
+              "dock": "dock",
+              "notch": "notch",
+              "mute": "mute"
             }
           }
         },
@@ -14096,24 +14149,24 @@
         "bitbucket": {
           "credentials": {
             "dialog": {
+              "connectFailed": "Connection failed",
               "title": "Connect Bitbucket",
               "authModeLabel": "Bitbucket authentication method",
               "modeBasic": "Email & API token",
               "modeToken": "Access token",
               "accessToken": "Access token",
+              "accessTokenPlaceholder": "Repository, project, or workspace access token",
+              "emailPlaceholder": "you@example.com",
               "apiToken": "API token",
+              "apiTokenPlaceholder": "Atlassian API token",
+              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0",
               "scopeUser": "Show your account name",
               "scopeRepository": "Read build statuses",
               "scopeReadPullRequest": "Read pull requests",
               "scopeWritePullRequest": "Create pull requests",
               "scopesWriteNote": "For read-only use, omit the write scope. Write does not include read; select each scope separately.",
               "cancel": "Cancel",
-              "connect": "Connect",
-              "connectFailed": "Connection failed",
-              "accessTokenPlaceholder": "Repository, project, or workspace access token",
-              "emailPlaceholder": "you@example.com",
-              "apiTokenPlaceholder": "Atlassian API token",
-              "baseUrlPlaceholder": "https://api.bitbucket.org/2.0"
+              "connect": "Connect"
             }
           },
           "integration": {
@@ -14725,10 +14778,10 @@
           "manualDelete": "Delete the lock file shown in Details once you are sure no other machine uses it.",
           "action": "Recover server…",
           "written": "Written",
-          "close": "Close",
-          "reclaimedNotStarted": "The lock was cleared, but Orca’s server did not start.",
           "manualDeleteCommand": "Delete the lock on the host by hand:",
-          "manualDeleteWarning": "Only do this if no other machine sharing this home runs Orca for this profile."
+          "manualDeleteWarning": "Only do this if no other machine sharing this home runs Orca for this profile.",
+          "close": "Close",
+          "reclaimedNotStarted": "The lock was cleared, but Orca’s server did not start."
         },
         "claudeSubagentNavigation": {
           "title": "Claude subagent navigation",
@@ -15241,6 +15294,27 @@
           "cancel": "Cancel",
           "confirm": "Remove",
           "unknownHost": "Unknown host"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "Source control AI"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Keep local main up to date"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Enable agent browser use"
         }
       },
       "right": {
@@ -16205,8 +16279,10 @@
                   "titlePublishBranchFirst": "Publish the branch first to sync commits",
                   "titleUseForcePush": "Use Commit & Force Push — remote only has older copies of local commits",
                   "titleCommitThenPullPush": "Commit, then pull and push",
+                  "rebaseFromNamedBase": "Rebase from {{baseRef}}",
                   "rebaseFromBase": "Rebase from Base",
                   "rebaseChooseRemoteBase": "Choose a remote base branch to rebase from",
+                  "rebaseDirtyHint": "Try rebasing; git may require committing or stashing local changes first",
                   "rebaseWithLatestFrom": "Rebase current branch with latest commits from {{baseRef}}",
                   "blockedCommitFirst": "Commit changes first",
                   "blockedCheckOutBranchFirst": "Check out a branch first",
@@ -16288,6 +16364,7 @@
                   "statusSetsUpstream": "Sets upstream",
                   "statusMayFail": "May fail",
                   "statusPublished": "Published",
+                  "statusStashFirst": "Stash first",
                   "statusReplaces": "Replaces ↓{{behind}}",
                   "statusCommitFirst": "Commit first",
                   "statusReviewOpen": "{{shortLabel}} open",
@@ -16302,10 +16379,7 @@
                   "rebaseOntoNamedBase": "Rebase onto {{base}}",
                   "rebaseCommitOrStashFirst": "Commit or stash changes first",
                   "continueRebase": "Continue rebase",
-                  "titleContinueRebase": "Continue the paused rebase",
-                  "rebaseFromNamedBase": "Rebase from {{baseRef}}",
-                  "rebaseDirtyHint": "Try rebasing; git may require committing or stashing local changes first",
-                  "statusStashFirst": "Stash first"
+                  "titleContinueRebase": "Continue the paused rebase"
                 }
               },
               "primary": {
@@ -18177,7 +18251,8 @@
           "ownerUnresolved": "Orca can't tell which computer this notebook is on yet, so its cells can't run.",
           "invalidNotebook": "Invalid notebook",
           "cellCount_one": "{{count}} cell",
-          "cellCount_other": "{{count}} cells"
+          "cellCount_other": "{{count}} cells",
+          "07e7d96612": "cells"
         },
         "MarkdownPreview": {
           "e4683f70c4": "Cancel",
@@ -18873,7 +18948,12 @@
           "finish": "Finish",
           "oneMinuteLeft": "One minute left.",
           "sendsWhenLanded": "Sends when the text lands",
-          "entersWhenLanded": "Presses Enter when the text lands"
+          "entersWhenLanded": "Presses Enter when the text lands",
+          "7f3660a7ba": "Starting mic…",
+          "f082d0cb9d": "Processing…",
+          "3de5a129e7": "Listening",
+          "25f2b7a6a5": "Speaking",
+          "335e1bc6cb": "Stop dictation"
         },
         "DictationPillFailure": {
           "discard": "Discard recording",
@@ -18941,8 +19021,8 @@
             "uiErrorDescription": "Send a privacy-safe diagnostic report to help us understand the failed UI surface.",
             "reportNotesPlaceholder": "Optional: what happened?",
             "uiErrorNotesPlaceholder": "Optional: what were you doing before this UI error?",
-            "renderError": "React render error",
-            "renderErrorIn": "React render error in {{surface}}"
+            "renderErrorIn": "React render error in {{surface}}",
+            "renderError": "React render error"
           }
         }
       },
@@ -21100,6 +21180,130 @@
         }
       }
     },
+    "agentHub": {
+      "settings": {
+        "dock": "Dock",
+        "mirrors": "Mirrors & canvas",
+        "voice": "Voice",
+        "orb": "Orb",
+        "title": "Agent Hub",
+        "description": "Dock, alerts, mirrors, voice and Orb preferences.",
+        "open": "Open Agent Hub settings"
+      },
+      "shortcuts": {
+        "group": "Agent Hub"
+      },
+      "orb": {
+        "toggle": "Toggle Agent Hub Orb",
+        "talkShortcut": "Talk shortcut",
+        "notSet": "Not set",
+        "agent": "Agent",
+        "model": "Model",
+        "agentDefault": "Agent default",
+        "approvals": "Approvals",
+        "placement": "Placement",
+        "freeWarning": "The Orb runs commands without asking. Use with care.",
+        "ask": "Ask",
+        "free": "Act freely",
+        "workingFolder": "Working folder",
+        "hidden": "Hidden",
+        "speakReplies": "Speak replies",
+        "comingLater": "Coming later",
+        "pastConversations": "Past conversations",
+        "settings": "Orb settings",
+        "backToConversation": "Back to conversation",
+        "newConversation": "New",
+        "searchConversations": "Search conversations",
+        "allAgents": "All agents",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "archivedBeforeBot": "Before the Orb bot",
+        "noConversations": "No conversations found",
+        "historyFailed": "Could not load conversations. Try again.",
+        "disabled": "Enable Agent control to talk to Orb",
+        "openFailed": "Could not open Orb. Try again.",
+        "working": "Working",
+        "open": "Open",
+        "openDenyKeys": "Open ↵ / Deny esc",
+        "toSend": "to send",
+        "approvalKeys": "Allow ↵ / Deny esc",
+        "piRequiresFree": "Pi requires Full access. Choose another agent to ask before running commands.",
+        "size": "Orb size",
+        "sizePixels": "{{value0}} pixels",
+        "endLiveVoice": "End live voice",
+        "startLiveVoice": "Start live voice",
+        "showConversation": "Show conversation",
+        "unmuteMicrophone": "Unmute microphone",
+        "muteMicrophone": "Mute microphone",
+        "finishDictation": "Finish and send dictation",
+        "botPaused": "Paused · holds the message",
+        "cancelDictation": "Cancel dictation",
+        "stopSpeaking": "Stop speaking",
+        "expand": "Expand Orb",
+        "minimize": "Minimize Orb",
+        "voiceUnavailable": "Live voice is unavailable on this host.",
+        "requestNoLongerAvailable": "This request was answered elsewhere or is no longer available.",
+        "requestDenied": "Request denied",
+        "requestExpired": "Request expired",
+        "answerReceived": "Answer received",
+        "awayAnswerReceived": "Answered by your away settings",
+        "requestClosed": "Request closed",
+        "dismissRequestOutcome": "Dismiss request outcome",
+        "speakingMuted": "Speaking. Microphone muted; live voice remains connected.",
+        "speaking": "Speaking",
+        "needsAnswer": "Waiting for your answer",
+        "voiceFailed": "Live voice could not connect.",
+        "codexVoiceUnsupported": "This Codex version does not support Live voice.",
+        "codexVoiceUsageLimit": "Codex Live voice is unavailable because an account usage limit was reached.",
+        "codexVoiceAccessDenied": "Codex refused Live voice. Check the current account and workspace access.",
+        "codexVoiceConnectionFailed": "Codex Live voice could not connect. Try again after the connection has closed.",
+        "voiceConnectFailed": "Live voice could not connect. Try again.",
+        "voiceStopping": "Ending live voice…",
+        "voiceConnecting": "Connecting live voice…",
+        "muted": "Microphone muted; live voice remains connected.",
+        "listening": "Listening",
+        "done": "Completed",
+        "ready": "Ready",
+        "dismissReceipt": "Dismiss",
+        "floating": "Floating",
+        "readyPrompt": "Ready. Type, or press the sphere to talk.",
+        "connectionWarning": "1 connection warning",
+        "connectionWarnings": "{{value0}} connection warnings",
+        "hideConnectionWarnings": "Hide",
+        "showConnectionWarnings": "Show"
+      },
+      "alerts": {
+        "info": "When an agent shares information",
+        "mute": "Mute alerts",
+        "duration": "Choose duration…",
+        "muteHour": "1 h",
+        "muteTwoHours": "2 h",
+        "muteTomorrow": "Until tomorrow at 09:00"
+      },
+      "voice": {
+        "dictateImprove": "Dictate and improve"
+      },
+      "search": {
+        "mirror": "mirror",
+        "canvas": "canvas",
+        "dim": "dim",
+        "quickreply": "quick reply",
+        "outline": "outline",
+        "tray": "tray",
+        "popout": "pop out",
+        "microphone": "microphone",
+        "shortcut": "shortcut",
+        "restore": "restore",
+        "shells": "shells",
+        "orb": "orb",
+        "voice": "voice"
+      },
+      "mirror": {
+        "newAgentStartedInWorkspace": "{{agent}} started in {{workspace}}.",
+        "newAgentNotAdded": "It could not be added to this mirror. Open it from the workspace tabs."
+      }
+    },
+    "agentHubPeekOutsideWorkspace": "Agent Peek files must be inside the target workspace.",
     "startup": {
       "webHostUnreachable": {
         "title": "Couldn't reach your Orca host",
@@ -21399,6 +21603,7 @@
         "notDoneCommand": "The command didn't run.",
         "notDoneGoalChangeIncomplete": "Couldn't finish changing the goal. Check the chat.",
         "notDoneQueuedEdit": "Your edit wasn't saved.",
+        "notDoneVoice": "Live voice could not start.",
         "restartFailed": "The agent couldn't restart.",
         "capacity": "Orca on the computer running this chat has hit a request limit. Update Orca there, then try again.",
         "outcomeUnknown": "Orca couldn't confirm what happened. Check the chat.",
@@ -21511,6 +21716,7 @@
         "details": "Details",
         "plan": "Plan",
         "historyRepaired": "Part of this chat's history couldn't be loaded.",
+        "mcpStartupDetails": "MCP connection details",
         "historyItemTooLarge": "This part of the chat was too large to show.",
         "continuedOutside": "Continued outside this chat.",
         "continuedOutsideRewound": "Continued outside this chat. Earlier replies above are no longer in this conversation's history.",
@@ -21952,8 +22158,6 @@
         "next": "Next",
         "skip": "Skip",
         "sending": "Sending…",
-        "terminalRequired": "Answer this OMP question in the terminal.",
-        "openTerminal": "Answer in terminal",
         "recommended": "Recommended",
         "stepOf": "{{value0}} of {{value1}}",
         "answered": "Answered",
@@ -21961,7 +22165,9 @@
         "nextQuestion": "Next question",
         "back": "Back",
         "skipAndSubmit": "Skip and submit",
-        "questionStepLabel": "{{value0}}, {{value1}} of {{value2}}"
+        "questionStepLabel": "{{value0}}, {{value1}} of {{value2}}",
+        "terminalRequired": "Answer this OMP question in the terminal.",
+        "openTerminal": "Answer in terminal"
       },
       "ask": {
         "awaiting": "Awaiting user input:",
@@ -22059,6 +22265,7 @@
         "ran_one": "Ran {{count}} subagent",
         "ran_other": "Ran {{count}} subagents",
         "mainAgent": "Main agent",
+        "backTo": "Back to {{value0}}",
         "path": "Subagent path",
         "stateHeading": {
           "completed": "Completed",
@@ -22078,8 +22285,7 @@
         "needsYou": "Needs you",
         "agentNeedsYou": "{{name}} needs you",
         "mainNeedsYou": "Main agent needs you",
-        "show": "Show",
-        "backTo": "Back to {{value0}}"
+        "show": "Show"
       },
       "rewind": {
         "unsupported": "This chat can't go back to an earlier message.",
@@ -22213,6 +22419,7 @@
         "steerHint": "Send now, while the agent keeps working",
         "sendHint": "Send this message now",
         "delete": "Delete",
+        "moreActions": "More actions",
         "moveChanged": "The queue changed before this move. Try dragging the message again.",
         "reorderHint": "Drag to reorder, or use the Up and Down arrow keys.",
         "reorderMessage": "Reorder message",
@@ -22236,17 +22443,19 @@
         "editGonePrompt": "This message was already sent or removed. Your edit will be in the chat box after you answer the agent.",
         "imageCount_one": "{{count}} image",
         "imageCount_other": "{{count}} images",
+        "collapse": "Collapse",
+        "expand": "Expand",
         "queued": "Queued",
         "clearAll": "Clear all",
         "editReturned": "Your edit is in the chat box.",
         "commandsUnsupported": "Commands can't be saved in a queued message.",
         "imageCount": "{{count}} images",
-        "queuedCount_one": "{{count}} queued",
-        "queuedCount_other": "{{count}} queued",
         "couldNotSend": "Couldn't send",
         "retry": "Retry",
         "showLessRows": "Show less",
-        "moreRows": "+{{value0}} more"
+        "moreRows": "+{{value0}} more",
+        "queuedCount_one": "{{count}} queued",
+        "queuedCount_other": "{{count}} queued"
       },
       "thought": "Thought",
       "thoughtForDuration": "Thought for {{duration}}",
@@ -22283,6 +22492,7 @@
       "signIn": {
         "title": "Sign in to {{agent}} to start chatting"
       },
+      "spokenMessage": "Spoken message",
       "claudeSignIn": {
         "signingIn": "Signing in…"
       },
@@ -23544,6 +23754,14 @@
       "noAgents": "No enabled agents were detected on this workspace host.",
       "onlySourceFamilyDetected": "Only Agents sharing the usage limit with {{agent}} are available on this workspace host. Enable or install a different Agent.",
       "context": "Context",
+      "openIn": "Open in",
+      "placementTab": "New tab",
+      "placementPane": "New pane",
+      "placementJump": "Jump to it",
+      "placementTabDescription": "Adds it as a tab of this mirror and keeps you here.",
+      "placementPaneDescription": "Splits beside this pane in its workspace and adds a mirror tab for the new one.",
+      "placementJumpDescription": "Opens a new tab and switches the workspace to it.",
+      "mirrorNotAdded": "The new session opened in the workspace; the mirror could not add it as a tab.",
       "starting": "Starting…",
       "noContext": "No session context is available to continue in a new session.",
       "agentDisabled": "{{agent}} is disabled in Agent settings.",
@@ -23734,6 +23952,45 @@
         "language": {
           "title": "Language"
         },
+        "cleanup": {
+          "consent": {
+            "goesToKnown": "{{company}}, through {{agent}} on this computer. Counts toward your {{plan}} plan.",
+            "goesToAgent": "Wherever {{agent}} on this computer is set up to send prompts.",
+            "sentLabel": "Sent",
+            "sent": "The dictated text, your vocabulary and your instructions.",
+            "notSentLabel": "Not sent",
+            "notSent": "Audio, files, or what’s on screen.",
+            "goesToLabel": "Goes to",
+            "waitLabel": "Wait",
+            "wait": "Text lands a few seconds later.",
+            "title": "Turn on AI cleanup?",
+            "description": "After each dictation, Orca sends the text to {{agent}} to tidy it before it lands.",
+            "cancel": "Cancel",
+            "confirm": "Turn on"
+          },
+          "instructions": {
+            "label": "Instructions",
+            "custom": "Your own instructions.",
+            "builtIn": "Built-in: fix punctuation, numbers and corrections. Keep my wording.",
+            "edit": "Edit",
+            "emptyHint": "Leave empty for the built-in ones.",
+            "reset": "Reset",
+            "cancel": "Cancel",
+            "save": "Save"
+          },
+          "saveFailed": "Could not save AI cleanup.",
+          "noAgent": "No agent can run AI cleanup. Pick one below.",
+          "title": "Cleanup",
+          "label": "AI cleanup",
+          "description": "Fixes punctuation, numbers and spoken corrections before text lands. Sends the text to {{agent}}, never audio.",
+          "anAgent": "an AI agent",
+          "agent": "Agent and model",
+          "agentDescription": "Runs on this computer. A small, fast model keeps the wait short.",
+          "correctionWord": "Correction word",
+          "correctionWordDescription": "Say it to take back what you just said: “at four, {{word}}, at five”.",
+          "correctionWordOff": "None"
+        },
+        "localOnlyNotice": "Talk instead of typing in any pane. These settings apply to this computer only; {{host}} keeps its own.",
         "advanced": {
           "title": "Advanced"
         },
@@ -23848,46 +24105,7 @@
         },
         "gpu": {
           "description": "Turn off if dictation freezes your computer."
-        },
-        "cleanup": {
-          "consent": {
-            "goesToKnown": "{{company}}, through {{agent}} on this computer. Counts toward your {{plan}} plan.",
-            "goesToAgent": "Wherever {{agent}} on this computer is set up to send prompts.",
-            "sentLabel": "Sent",
-            "sent": "The dictated text, your vocabulary and your instructions.",
-            "notSentLabel": "Not sent",
-            "notSent": "Audio, files, or what’s on screen.",
-            "goesToLabel": "Goes to",
-            "waitLabel": "Wait",
-            "wait": "Text lands a few seconds later.",
-            "title": "Turn on AI cleanup?",
-            "description": "After each dictation, Orca sends the text to {{agent}} to tidy it before it lands.",
-            "cancel": "Cancel",
-            "confirm": "Turn on"
-          },
-          "instructions": {
-            "label": "Instructions",
-            "custom": "Your own instructions.",
-            "builtIn": "Built-in: fix punctuation, numbers and corrections. Keep my wording.",
-            "edit": "Edit",
-            "emptyHint": "Leave empty for the built-in ones.",
-            "reset": "Reset",
-            "cancel": "Cancel",
-            "save": "Save"
-          },
-          "saveFailed": "Could not save AI cleanup.",
-          "noAgent": "No agent can run AI cleanup. Pick one below.",
-          "title": "Cleanup",
-          "label": "AI cleanup",
-          "description": "Fixes punctuation, numbers and spoken corrections before text lands. Sends the text to {{agent}}, never audio.",
-          "anAgent": "an AI agent",
-          "agent": "Agent and model",
-          "agentDescription": "Runs on this computer. A small, fast model keeps the wait short.",
-          "correctionWord": "Correction word",
-          "correctionWordDescription": "Say it to take back what you just said: “at four, {{word}}, at five”.",
-          "correctionWordOff": "None"
-        },
-        "localOnlyNotice": "Talk instead of typing in any pane. These settings apply to this computer only; {{host}} keeps its own."
+        }
       },
       "repositoryHooks": {
         "availableEnvVars": "Available environment variables"
@@ -25230,6 +25448,10 @@
     "startupRegistration": {
       "title": "Orca is ready to notify you",
       "body": "Allow notifications so Orca can alert you when agents finish or terminals need attention."
+    },
+    "bot": {
+      "asksYou": "{{name}} asks you",
+      "finished": "{{name}} finished"
     }
   },
   "sessionSearch": {
@@ -25375,7 +25597,8 @@
     "cancel": "Cancel",
     "unassigned": "Unassigned",
     "copy": "Copy",
-    "delete": "Delete"
+    "delete": "Delete",
+    "open": "Open"
   },
   "terminal": {
     "recentImages": {
@@ -25965,6 +26188,1111 @@
   },
   "mediaPreview": {
     "unavailable": "Unable to play this media file. The file may be unavailable or use an unsupported codec."
+  },
+  "agentHub": {
+    "bots": {
+      "dock": "Bots",
+      "needsYou": "Bots",
+      "openItem": "Open",
+      "ask": {
+        "answered": "Answered · {{n}} of {{total}}",
+        "answeredCount": "{{n}} of {{total}} answered",
+        "heldFiles": "{{count}} attached",
+        "later": "Later",
+        "openItem": "Open #{{number}}",
+        "ownWords": "Reply in your own words",
+        "useThese": "Use these",
+        "contextMore": "Show more",
+        "contextLess": "Show less"
+      },
+      "mirror": "Open in mirror",
+      "connector": "{{name}} needs you",
+      "connectorHint": "Sign in again to keep it working",
+      "fixConnector": "Open {{name}}",
+      "access": "{{person}} asked for access",
+      "accessReview": "Review and approve",
+      "accessDeny": "Deny",
+      "suggestionStart": "Start",
+      "suggestionDismiss": "Dismiss",
+      "origin": {
+        "home": "Home chat",
+        "github": "From GitHub",
+        "slack": "From Slack",
+        "linear": "From Linear",
+        "automation": "From an automation",
+        "side": "Side chat",
+        "worker": "Worker"
+      },
+      "family": {
+        "chatOne": "1 chat",
+        "chatMany": "{{value0}} chats",
+        "workerOne": "1 worker",
+        "workerMany": "{{value0}} workers",
+        "chats": "Chats",
+        "workers": "Workers",
+        "asks": "Asks",
+        "toggle": "{{name}}'s parked chats",
+        "close": "Close all of {{name}}"
+      },
+      "tab": {
+        "title": "Bots",
+        "newBot": "New bot",
+        "empty": "No bots yet. Make one to hand work to.",
+        "groups": "Groups",
+        "automations": "Automations",
+        "treeEmpty": "Nothing here yet",
+        "toggleTree": "Show {{name}}'s chats",
+        "runsOn": "Runs on {{host}}",
+        "needsYou": "{{count}} need you",
+        "alreadyRead": "Already read",
+        "asleep": "Asleep · wakes when asked",
+        "automationFailing": "Failing",
+        "automationPaused": "Paused",
+        "automationsFailing": "{{count}} failing",
+        "chatFailed": "{{count}} failed",
+        "hostOffline": "{{host}} offline",
+        "hostOfflineReason": "{{host}} is offline",
+        "loading": "Loading bots…",
+        "markRead": "Mark read",
+        "more": "More",
+        "mute": "Mute for 1 hour",
+        "newChat": "New chat",
+        "noMatch": "No bots or chats match “{{query}}”",
+        "notificationSettings": "Notification settings…",
+        "openAutomation": "Open automation",
+        "openChat": "Open chat",
+        "openMain": "Open in main tab",
+        "openPage": "Open page",
+        "paused": "Paused",
+        "renameChat": "Rename chat",
+        "searchChats": "Search bots and chats",
+        "searchLabel": "Find a bot",
+        "settings": "Bot settings",
+        "showMore": "Show {{count}} more",
+        "signedOut": "Signed out of Orca · Slack and events are off",
+        "sleep": "Sleep",
+        "sleepAlready": "Already asleep",
+        "sleepBusy": "Busy right now",
+        "thisDevice": "This device",
+        "toggleWorkers": "Show workers of {{title}}",
+        "unmute": "Unmute",
+        "unread": "Unread",
+        "unreadChats": "{{count}} unread"
+      },
+      "page": {
+        "tabHome": "Home",
+        "tabConnectors": "Connectors",
+        "tabChats": "Chats",
+        "tabFiles": "Files",
+        "needsYou": "Needs you",
+        "nothingNeeded": "Nothing needs you",
+        "suggestions": "Suggestions",
+        "openTab": "Open {{name}}’s page",
+        "settings": "Bot settings",
+        "disconnected": "Disconnected",
+        "paused": "Paused",
+        "idle": "Idle",
+        "ask": "Ask {{name}}…",
+        "askLabel": "Message {{name}}",
+        "sent": "Sent",
+        "sendFailed": "Couldn’t send",
+        "filesFailed": "Couldn’t read the folder",
+        "filesLoading": "Reading the folder…",
+        "filesEmpty": "No files in this folder"
+      }
+    },
+    "attention": {
+      "answerInTerminal": "Answer this one in its terminal: pop it out or open it in Orca."
+    },
+    "row": {
+      "jump": "Jump to this terminal",
+      "popOut": "Pop out",
+      "markRead": "Mark read",
+      "currentWorkspace": "In the workspace you have open",
+      "sendToHub": "Send to the hub",
+      "bringBack": "Bring back",
+      "showInMirror": "Show in mirror",
+      "mirrorOpen": "Mirror is open",
+      "mirrorInDock": "Mirror is in the dock",
+      "closeAgent": "Close agent",
+      "closeShell": "Close terminal",
+      "workers_one": "{{count}} worker",
+      "workers_other": "{{count}} workers"
+    },
+    "mirror": {
+      "newAgent": "New agent",
+      "project": "Project",
+      "workspace": "Workspace",
+      "chooseProject": "Choose project",
+      "chooseWorkspace": "Choose workspace",
+      "newAgentDescription": "Choose an existing workspace and an agent to start.",
+      "agentLabel": "Agent",
+      "openAgentSettings": "Open agent settings",
+      "configureAgents": "Configure agents",
+      "noAgents": "No available agents",
+      "searchWorkspaces": "Search workspaces",
+      "noWorkspaces": "No matching workspaces.",
+      "startAgent": "Start agent",
+      "agent": "agent",
+      "addAgentInWorkspace": "Add agent in {{workspace}}",
+      "newAgentInWorkspace": "New {{agent}} agent in {{workspace}}",
+      "newAgentFailed": "Could not start {{agent}}.",
+      "newAgentUnavailable": "The new terminal is not available.",
+      "backHome": "Back to {{value0}}",
+      "returnAgain": "Click again to return to {{value0}}",
+      "close": "Close mirror",
+      "noTerminal": "This pane has no live terminal right now.",
+      "connecting": "Connecting to the terminal…",
+      "restore": "Restore {{value0}}",
+      "minimize": "Minimize",
+      "inWorkspace": "This pane is on screen in your current workspace, so it stays there. It moves back into this window when you switch to another tab or workspace.",
+      "inWorkspaceTitle": "You're in this workspace",
+      "renameHint": "Double-click to rename",
+      "rename": "Rename terminal",
+      "workerCount": "{{value0}} workers",
+      "family": "Dispatcher and workers",
+      "workers": "Workers",
+      "trayLess": "Show fewer",
+      "trayMore": "+{{value0}}",
+      "dockAll": "Send all mirrors to the hub",
+      "jumpHint": "Jump to this terminal in its workspace",
+      "terminalSwitchWhileWorking": "You can continue in the terminal when this reply finishes.",
+      "jump": "Jump",
+      "hideWorkers": "Hide the workers bar",
+      "showWorkers": "Show the workers bar",
+      "cancelDictation": "Cancel dictation",
+      "cancelDictationHint": "Cancel dictation and discard what is not inserted yet",
+      "endFocus": "Return this mirror to its place",
+      "focus": "Focus this mirror",
+      "showInSidebar": "Show in sidebar",
+      "returnToWorkspace": "Return to workspace",
+      "tabCount": "{{value0}} tabs",
+      "tabCount_one": "{{value0}} tab",
+      "tabCount_other": "{{value0}} tabs",
+      "addHint": "Add terminal to this mirror",
+      "pickerSections": "Terminal lists",
+      "available": "Available terminals",
+      "noneAvailable": "No terminals available to add",
+      "closeTab": "Close tab",
+      "closeTabNamed": "Close mirror tab {{value0}}",
+      "terminals": "Mirror terminals",
+      "add": "Add terminal",
+      "tabLimit": "A mirror can hold up to 10 terminals.",
+      "addUnavailable": "This terminal is no longer available to add.",
+      "alreadyOwned": "This terminal is already popped out.",
+      "trayFull": "The oldest minimized mirror was closed to make room. Its terminals are still in their workspaces.",
+      "dropUnavailable": "Cannot drop here",
+      "openInNew": "Open in new mirror",
+      "moveToMirror": "Move to mirror",
+      "moveUnavailable": "This terminal is no longer available to move.",
+      "tabLabel": "{{value0}}, {{value1}}",
+      "dictationStopKey": "to stop",
+      "projectFilter": {
+        "label": "Projects",
+        "remove": "Remove {{value0}} from the filter",
+        "add": "Project",
+        "all": "All projects",
+        "search": "Search projects…",
+        "noMatch": "No projects match.",
+        "clear": "Clear filter",
+        "emptyFiltered": "Nothing else to add with these filters",
+        "outside": "{{value0}} more outside the filter",
+        "showAll": "Show all"
+      },
+      "botFilter": {
+        "label": "Bots",
+        "remove": "Remove {{value0}} from the filter",
+        "add": "Bot",
+        "all": "All bots",
+        "search": "Search bots…",
+        "noMatch": "No bots match."
+      },
+      "closeOthers": "Close others",
+      "drawer": {
+        "changes": "Changes",
+        "changesEmpty": "No uncommitted changes.",
+        "checkFailed": "failed",
+        "checkLog": "Log",
+        "checksPassed_one": "{{count}} check passed",
+        "checksPassed_other": "{{count}} checks passed",
+        "checksPending_one": "{{count}} check running",
+        "checksPending_other": "{{count}} checks running",
+        "commands": "Commands",
+        "compact": "Compact",
+        "compacting": "Compacting…",
+        "draftFailed": "This agent cannot take a draft right now",
+        "drafted": "Added to the agent draft",
+        "edit": "Edit",
+        "fromAgent": "Agent",
+        "fromAutomation": "Automation",
+        "fromConnector": "Connector",
+        "fromPerson": "Someone",
+        "inbound": "Inbound",
+        "label": "Drawer",
+        "merge": "Merge…",
+        "openAll": "Open all",
+        "openAsTab": "Open as tab",
+        "openDiff": "Open diff",
+        "openPr": "Open on the host",
+        "plan": "Plan",
+        "pr": "PR",
+        "prClosed": "Closed",
+        "prDraft": "Draft",
+        "prMerged": "Merged",
+        "prOpen": "Open",
+        "queueClosed": "The queue shows here while the chat is open.",
+        "queueEmpty": "Nothing is queued.",
+        "queueUnreported": "This terminal does not report its queue.",
+        "queued": "Queued",
+        "received": "Received",
+        "removeQueued": "Remove from queue",
+        "rerun": "Rerun",
+        "rerunRequested": "Rerun requested",
+        "reviewComments": "Review",
+        "sendNow": "Send now",
+        "sendToAgent": "Send to agent",
+        "settings": "Settings",
+        "settingsClosed": "Settings show here while the chat is open.",
+        "settingsUnreported": "This terminal does not report its settings.",
+        "stop": "Stop",
+        "stopping": "Stopping…",
+        "subagents": "Subagents",
+        "work": "Work",
+        "workEmpty": "Nothing is running.",
+        "workerAsking": "asking",
+        "workerDone": "done",
+        "workerIdle": "idle",
+        "workerWorking": "working",
+        "workers": "Workers"
+      },
+      "menu": "Mirror menu",
+      "menuAgentCard": "Let this agent use its card",
+      "menuCanvas": "Move to canvas",
+      "menuDock": "Dock",
+      "menuDrawer": "Open drawer",
+      "menuJump": "Jump to terminal",
+      "menuStrip": "Show work strip",
+      "renameTab": "Rename…",
+      "strip": {
+        "clean": "No changes",
+        "commands_one": "{{count}} command",
+        "commands_other": "{{count}} commands",
+        "context": "Context {{percent}}%",
+        "idle": "Idle",
+        "inbound": "Inbound",
+        "label": "Work strip",
+        "queued": "{{count}} queued",
+        "running": "{{count}} running",
+        "settings": "Settings",
+        "subagents_one": "{{count}} subagent",
+        "subagents_other": "{{count}} subagents",
+        "workers_one": "{{count}} worker",
+        "workers_other": "{{count}} workers",
+        "review": "PR #{{number}}"
+      },
+      "bot": {
+        "openPage": "Open bot page",
+        "chatsWaiting": "Chats waiting for you: {{value0}}",
+        "pageUnavailable": "{{name}}’s home isn’t available here now, so its page can’t open.",
+        "pageUnavailableOnHost": "{{name}}’s home on {{host}} isn’t available now, so its page can’t open. Reconnect {{host}}, then try again.",
+        "settings": "Bot settings",
+        "backToActivity": "Back to activity",
+        "workerNoPane": "This worker has no open pane, so it opens in the main window.",
+        "settingsTitle": "{{name}} settings",
+        "model": "Model",
+        "modelNote": "For all of the bot's chats",
+        "connectors": "Connectors",
+        "automations": "Automations",
+        "manage": "Manage",
+        "sleep": "Put to sleep",
+        "thisChat": "This chat",
+        "runsOn": "Runs on",
+        "host": "Host",
+        "showInOrb": "Show in Orb",
+        "showInBots": "Show in Bots"
+      }
+    },
+    "title": "Agents",
+    "tab": {
+      "inbox": "Inbox",
+      "running": "Running",
+      "all": "All terminals",
+      "agents": "Agents",
+      "shownInMirror": "Shown in a mirror",
+      "shownInOrb": "Shown in the Orb window",
+      "bringBack": "Bring back"
+    },
+    "inbox": {
+      "previous": "Previous",
+      "next": "Next",
+      "needsYou": "Needs you",
+      "emptyTitle": "Nobody is waiting on you",
+      "markAllRead": "Mark all read",
+      "finished": "Finished",
+      "emptyHint": "{{value0}} working · you'll get a ping when one asks",
+      "oneAgent": "1 agent",
+      "agents": "{{value0}} agents",
+      "hidden": "{{value0}} hidden · Show",
+      "agentsFirst": "Agents first",
+      "agentsOnly": "Agents only",
+      "answerQueue": "Answer queue",
+      "answeredBy": "Answered · {{name}}",
+      "botsFirst": "Bots first",
+      "botsOnly": "Bots only",
+      "failedPrefix": "Failed · ",
+      "finishedCount": "{{count}} finished",
+      "hostOffline": "{{host}} offline",
+      "markRead": "Mark read",
+      "menu": {
+        "answer": "Answer",
+        "copyQuestion": "Copy question",
+        "hideCard": "Hide card",
+        "jump": "Jump to terminal",
+        "later": "Later",
+        "markAllRead": "Mark all read",
+        "notificationSettings": "Notification settings…",
+        "openBotPage": "Open bot page",
+        "openChat": "Open chat",
+        "openItem": "Open #{{number}}",
+        "openMirror": "Open in mirror",
+        "openWorkspace": "Open workspace",
+        "popOut": "Pop out"
+      },
+      "offline": "offline",
+      "onlySuggestions": "Only suggestions, folded below",
+      "open": "Open",
+      "openChat": "Open chat",
+      "partialAnswer": "Answer",
+      "partialOpenMany": "{{count}} questions still open",
+      "partialOpenOne": "1 question still open",
+      "reply": "Reply",
+      "senderMenu": "{{name}} menu",
+      "showAll": "Show all",
+      "side": {
+        "agents": "Agents",
+        "bots": "Bots",
+        "keyHint": "{{label}} (B)"
+      },
+      "sort": {
+        "label": "Sort",
+        "longest": "Waiting longest",
+        "newest": "Newest",
+        "order": "Order",
+        "within": "Within"
+      },
+      "suggestionMany": "{{count}} suggestions",
+      "suggestionOne": "1 suggestion",
+      "tag": {
+        "approval": "approval",
+        "signIn": "sign in"
+      },
+      "waitingCount": "{{count}} waiting",
+      "workerChip": "worker · {{agent}}",
+      "workerOf": "worker of {{agent}}",
+      "earlierResults": "Earlier results",
+      "replyTo": "Reply to {{name}}…",
+      "replyFailed": "Could not send your reply. Try again."
+    },
+    "running": {
+      "empty": "No agent is working right now",
+      "longestFirst": "longest first",
+      "popOutAll": "Pop out all",
+      "automationRunLine": "Automation run",
+      "bots": "Bots",
+      "replying": "Replying…"
+    },
+    "footer": {
+      "move": "Move",
+      "popOut": "Pop out",
+      "answer": "Answer",
+      "tabs": "Tabs",
+      "jump": "Jump",
+      "close": "Close"
+    },
+    "toast": {
+      "nobodyWaiting": "Nobody is waiting on you"
+    },
+    "trigger": {
+      "needsYouOne": "1 needs you",
+      "needsYouOther": "{{value0}} need you"
+    },
+    "terminals": {
+      "searchPlaceholder": "Filter by terminal, project, group, or agent",
+      "searchLabel": "Filter terminals",
+      "noMatch": "No terminal matches “{{value0}}”",
+      "empty": "No open terminals",
+      "shell": "Shell",
+      "ungrouped": "Ungrouped",
+      "unknownProject": "Unknown",
+      "noMatchHint": "Try a project, group, branch or agent name",
+      "sortManualHint": "Workspaces in the order you arranged them in the sidebar.",
+      "sortLabel": "Sort: {{value0}}",
+      "sortBy": "Sort by",
+      "botChatsCount_one": "{{count}} chat",
+      "botChatsCount_other": "{{count}} chats",
+      "botHit_one": "{{name}} · {{count}} chat in Bots",
+      "botHit_other": "{{name}} · {{count}} chats in Bots",
+      "botsCount_one": "{{count}} bot",
+      "botsCount_other": "{{count}} bots",
+      "botsGroup": "Bots",
+      "botsLink": "Bots →",
+      "byBot": "by {{name}}",
+      "idleFold": "{{count}} idle",
+      "searchHub": "Search agents, projects, bots",
+      "sortHost": "Host"
+    },
+    "card": {
+      "recommended": "Recommended",
+      "dictate": "Dictate",
+      "send": "Send",
+      "wantsToRun": "wants to run",
+      "allowOnce": "Yes, run it once",
+      "alwaysAllow": "Always allow",
+      "denyInstead": "No, tell {{value0}} what to do instead",
+      "needsApproval": "needs approval",
+      "asking": "asking",
+      "replyTo": "Reply to @{{value0}}…",
+      "instead": "Tell it what to do instead…",
+      "jump": "Jump to terminal",
+      "insteadOrDeny": "Tell it what to do instead, or press Enter to just deny…",
+      "pastedImage": "Image {{value0}}",
+      "removeImage": "Remove {{value0}}",
+      "hide": "Hide until it asks again"
+    },
+    "close": "Close (esc)",
+    "state": {
+      "idle": "idle",
+      "working": "working",
+      "done": "done"
+    },
+    "alert": {
+      "asking": "is asking",
+      "needsApproval": "needs approval",
+      "finished": "finished",
+      "more": "+{{value0}} more in the hub",
+      "dismiss": "Dismiss"
+    },
+    "dock": {
+      "nextWaiting": "Jump to the next agent waiting",
+      "edgeBottom": "Above the status bar",
+      "edgeLeft": "Left edge",
+      "edgeRight": "Right edge",
+      "more": "More",
+      "unmute": "Turn alerts back on",
+      "mute": "Mute alerts for 2 hours",
+      "position": "Position",
+      "useStatusBar": "Show in the status bar instead",
+      "settings": "Agent Hub settings…",
+      "edgeTop": "Below the title bar",
+      "waiting": "Waiting on you",
+      "finished": "Finished",
+      "sizeSmall": "Small",
+      "sizeMedium": "Medium",
+      "sizeLarge": "Large",
+      "size": "Size",
+      "dockMirrors": "Send the mirrors to the hub",
+      "restoreMirrors": "Bring the mirrors back",
+      "openCanvas": "Open the canvas",
+      "arrange": "Arrange mirrors",
+      "muteBots": "Mute bots only (1 hour)",
+      "unmuteBots": "Turn bot alerts back on"
+    },
+    "children": {
+      "agentOne": "1 agent",
+      "agentMany": "{{value0}} agents",
+      "subagentOne": "1 subagent",
+      "subagentMany": "{{value0}} subagents"
+    },
+    "statusBarMenuItem": "Agent Hub",
+    "dim": {
+      "modeOff": "Don't dim",
+      "modeOn": "Dim behind floating windows",
+      "modeUntilClick": "Dim until I click behind them",
+      "modeMinimizeOnClick": "Dim, and a click behind tucks them away",
+      "title": "Dim behind floating windows"
+    },
+    "count": {
+      "nested": "{{value0}} more under them"
+    },
+    "hover": {
+      "openTabHere": "Open as a tab here",
+      "state": "State",
+      "where": "Where",
+      "popout": "Own window"
+    },
+    "arrange": {
+      "title": "Arrange floating windows",
+      "grid": "In a grid",
+      "columns": "Side by side",
+      "rows": "Stacked"
+    },
+    "tabToggle": {
+      "on": "Pops out when you leave this tab (click to stop)",
+      "off": "Pop this terminal out when you leave the tab"
+    },
+    "canvas": {
+      "emptyTitle": "No mirrors on the canvas",
+      "emptyHint": "Pop out a terminal from the hub, or bring a parked mirror back, and it opens here.",
+      "leave": "Leave the canvas",
+      "showSidebar": "Show the sidebar"
+    },
+    "mic": {
+      "voiceOptions": "Right-click for voice options.",
+      "start": "Dictate into this terminal",
+      "starting": "Starting the microphone… Click to stop.",
+      "stop": "Stop dictation",
+      "finishing": "Finishing the dictation…",
+      "elsewhereNamed": "Dictation is running in “{{name}}”.",
+      "elsewhereTerminal": "Dictation is running in another terminal.",
+      "elsewhere": "Dictation is running elsewhere in Orca.",
+      "onlyOne": "Only one can run at a time.",
+      "disabled": "Voice dictation is off.",
+      "noModel": "No speech model is selected and downloaded.",
+      "answering": "The question card is open: dictate your answer with the mic in its field.",
+      "unsupported": "Dictation cannot type into a floating workspace terminal from this window.",
+      "enable": "Voice dictation",
+      "model": "Speech model",
+      "noModels": "No downloaded models",
+      "moreModels": "More in settings…",
+      "settings": "Voice settings…",
+      "startWithImproveHint": "Dictate into this terminal. Shift-click to dictate and improve.",
+      "dictateAndImprove": "Dictate and improve",
+      "dictate": "Dictate",
+      "mode": "Microphone action",
+      "modeCopy": "Click a mirror’s microphone to start this mode. Shift-click starts the other mode when available.",
+      "startImproveHint": "Dictate and improve in this terminal. Shift-click to dictate.",
+      "improve": "Dictate and improve",
+      "improveWithAgent": "Improve with an agent",
+      "improveSettings": "Improve transcription settings",
+      "modeSwitchCopy": "When on, the mirror microphone dictates and improves; Shift-click does the opposite.",
+      "improveRequired": "Requires the Improve transcriptions feature.",
+      "listeningTab": "Dictation in this terminal"
+    },
+    "shortcut": {
+      "doubleTapHint": "You can also record a double tap of a modifier key.",
+      "suggestions": "Suggested for missing bindings: {{bindings}}",
+      "conflict": "{{binding}} conflicts with {{owners}}.",
+      "parseError": "Unable to parse shortcut.",
+      "saveError": "Failed to save shortcut."
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "toggle": "Open or close the hub",
+      "nextWaiting": "Jump to the next waiting agent",
+      "dockMirrors": "Park or restore mirrors",
+      "popOut": "Pop out the active agent",
+      "jumpToMirror": "Jump to the active mirror’s workspace",
+      "arrangeMirrors": "Arrange mirrors",
+      "toggleCanvas": "Open or leave the canvas",
+      "focusMirror": "Focus or unfocus the active canvas mirror",
+      "hub": "Hub",
+      "mirrors": "Mirrors",
+      "canvas": "Canvas",
+      "dictation": "Dictation",
+      "notSet": "Not set",
+      "setAction": "Set shortcut for {{action}}",
+      "set": "Set shortcut",
+      "edit": "Edit shortcuts",
+      "editDescription": "Change shortcuts for the Hub, Orb, mirrors and dictation."
+    },
+    "windowFilter": {
+      "label": "Filter by window",
+      "labelActive": "Filter: {{value0}}",
+      "title": "Show",
+      "any": "All",
+      "open": "Open in a window",
+      "emptyOpen": "No terminal is open in a window",
+      "minimized": "Minimized",
+      "emptyMinimized": "No terminal is minimized",
+      "none": "Not in a window",
+      "emptyNone": "Every terminal is in a window"
+    },
+    "hostFilter": {
+      "title": "Host",
+      "any": "All hosts"
+    },
+    "peek": {
+      "kindWeb": "Web",
+      "kindImage": "Image",
+      "kindPdf": "PDF",
+      "kindMarkdown": "Markdown",
+      "kindCsv": "Table",
+      "kindMermaid": "Diagram",
+      "kindNotebook": "Notebook",
+      "kindText": "Code / text",
+      "kindMedia": "Media",
+      "source": "From {{value0}}",
+      "openInTab": "Open in tab",
+      "openInEditor": "Open in editor",
+      "openInBrowser": "Open in browser",
+      "openWithApp": "Open with default app",
+      "back": "Previous peek",
+      "close": "Close (esc)",
+      "chips": "Links in this message",
+      "chipLabel": "Peek at {{value0}}",
+      "unreadable": "This file could not be shown here.",
+      "action": "Peek",
+      "exitFullScreen": "Exit full screen",
+      "fullScreen": "Full screen",
+      "hostAddress": "This address is only available on its host. Opening in the workspace browser.",
+      "workspaceFallback": "This preview is unavailable here. Opening in the workspace.",
+      "unavailable": "This link could not be opened.",
+      "backToMirror": "Close Peek and go back to this mirror"
+    },
+    "dictation": {
+      "here": "Dictating here"
+    },
+    "quick": {
+      "answerWith": "Answer: {{value0}}",
+      "more": "↵ for all {{value0}}",
+      "deny": "No",
+      "title": "Quick reply",
+      "close": "Close and answer in the terminal (esc)",
+      "recommended": "Recommended",
+      "ownWords": "Your own answer…",
+      "escHint": "terminal",
+      "reopen": "Show the quick reply card",
+      "send": "Send",
+      "sending": "Sending…"
+    },
+    "settings": {
+      "agentControl": "Let agents control Agent Hub",
+      "agentControlCopy": "Agents can show you things, ask questions and manage their mirrors.",
+      "agentOwnCard": "Agents can use their own card",
+      "agentOwnCardCopy": "An agent can open its card's drawers and read its work, never another agent's card.",
+      "agentsFirst": "Agents first",
+      "automationEachRun": "Each run",
+      "automationOff": "Off",
+      "automationSummary": "Summary",
+      "botAsks": "Asks",
+      "botAutomationResults": "Automation results",
+      "botAutomationResultsCopy": "Summary gives one alert for a batch of runs; Each run alerts for every run.",
+      "botFailures": "Failures",
+      "botNameInNotifications": "Bot's name in desktop notifications",
+      "botNameInNotificationsCopy": "Turn off to keep bot names off your lock screen.",
+      "botNotifications": "Bot notifications",
+      "botNotificationsCopy": "What your bots raise next to the hub. Everything still reaches the Inbox.",
+      "botResults": "Results",
+      "botSound": "Play a sound",
+      "botSuggestions": "Suggestions",
+      "botSuggestionsCopy": "When off, suggestions only appear in the Inbox.",
+      "botsFirst": "Bots first",
+      "countersAgents": "Agents only",
+      "countersAgentsAndBots": "Agents and bots",
+      "dockCounters": "Counters",
+      "drawerAuto": "Auto",
+      "drawerBottom": "Bottom",
+      "drawerPosition": "Drawer position",
+      "drawerPositionCopy": "Auto picks the side or the bottom to fit the mirror.",
+      "drawerSide": "Side",
+      "foldIdle": "Fold idle and sleeping agents",
+      "inboxOrder": "Inbox order",
+      "keepLiveOnSwitch": "Keep Live on chat switch",
+      "keepLiveOnSwitchCopy": "A live conversation stays with its chat when you show another chat.",
+      "openOnFailedCheck": "Open drawer when a check fails",
+      "orbClearHome": "Clear home chat",
+      "orbNewChat": "New chat",
+      "orbNewChatAction": "\"+\" opens",
+      "orbOpenChatsLimit": "Open chats limit",
+      "orbOpenChatsLimitCopy": "At the limit, the longest idle chat leaves the strip. It stays in Chats.",
+      "rememberListState": "Remember folds and filters",
+      "search": {
+        "automation": "automation",
+        "botNotifications": "bot notifications",
+        "bots": "bots",
+        "counters": "counters",
+        "drawer": "drawer",
+        "inboxOrder": "inbox order",
+        "openChats": "open chats",
+        "workStrip": "work strip"
+      },
+      "showBotChats": "Show bot chats in Agents",
+      "showBotChatsCopy": "When off, one line at the end of the list opens Bots instead.",
+      "workStrip": "Work strip",
+      "workStripCopy": "A thin line on a mirror showing what the agent is doing right now."
+    },
+    "requests": {
+      "decisionGate": "Decision gate",
+      "gateUpdateRequired": "Update this host to answer decision gates.",
+      "pairedPeekUnavailable": "Peek cannot open URLs or files from this paired host yet.",
+      "peekUnavailable": "Peek is unavailable in the current view.",
+      "peekUnsupported": "This URL or file cannot be opened in Peek on its host.",
+      "peekUnsupportedFile": "This file type cannot be shown in Peek. Open it in the workspace or default app.",
+      "targetUnavailable": "This terminal is no longer available on its host.",
+      "mirrorAddFailed": "The terminal could not be added to the card ({{reason}}).",
+      "mirrorIntoMissing": "The --into terminal is not in an Agent Hub card. Run hub status to see the cards.",
+      "mirrorInOtherCard": "This terminal is already a tab in another card. Close that tab first.",
+      "mirrorOpenFailed": "The mirror could not be opened ({{reason}}).",
+      "mirrorUnavailable": "This terminal has no mirror.",
+      "invalidLayout": "Choose the grid, columns or rows layout.",
+      "canvasDisabled": "Enable the Agent Hub canvas in Settings to open it.",
+      "presenceUnavailable": "Desktop presence is unavailable.",
+      "disconnected": "This host is disconnected.",
+      "unavailable": "This request is no longer available.",
+      "sendFailed": "Could not send your answer. Try again.",
+      "sending": "Sending…",
+      "answeredElsewhere": "Answered elsewhere",
+      "asks": "@{{agent}} asks",
+      "wantsTo": "@{{agent}} wants to {{action}}",
+      "allowOnce": "Allow once",
+      "allowSession": "Allow for this session",
+      "deny": "Deny",
+      "awayAnswer": "@{{agent}} chose {{answer}} while you were away",
+      "openMirror": "open the mirror of {{title}}",
+      "minimizeMirror": "minimize the mirror of {{title}}",
+      "restoreMirror": "restore the mirror of {{title}}",
+      "closeMirror": "close the mirror of {{title}}",
+      "peekLink": "peek at {{link}}",
+      "closePeek": "close Peek",
+      "goBackInPeek": "go back in Peek",
+      "arrangeMirrors": "arrange mirrors",
+      "openCanvas": "open the canvas",
+      "closeCanvas": "close the canvas",
+      "regardingAgent": "Regarding {{agent}}"
+    },
+    "answerQueue": {
+      "answeredElsewhere": "Answered elsewhere",
+      "automatically": "Automatically",
+      "caughtUp": "All caught up",
+      "exit": "Exit",
+      "includeApprovals": "Include approvals",
+      "isAsking": "is asking",
+      "later": "Later",
+      "laterHint": "later",
+      "onlyShortcut": "Only on shortcut",
+      "openShortcut": "Open the Agent Hub Answer Queue",
+      "openTerminal": "Open in terminal",
+      "openWhen": "Open when a question arrives",
+      "pick": "pick",
+      "send": "send",
+      "title": "Answer queue",
+      "unverifiable": "Host connection is unverifiable. Reconnect to send your answer.",
+      "waiting": "{{count}} waiting"
+    },
+    "orb": {
+      "mini": {
+        "tabChat": "Chat",
+        "tabChats": "Chats",
+        "tabHome": "Home"
+      },
+      "memoryProposal": {
+        "added": "Added to memory · Settings › Orb › Memory",
+        "declined": "Won't remember this.",
+        "edit": "Memory text",
+        "editAction": "Edit",
+        "hint": "Memory suggestion",
+        "label": "Memory suggestion",
+        "no": "No",
+        "openConversation": "Open conversation",
+        "remember": "Remember",
+        "wants": "{{name}} wants to remember this"
+      },
+      "quickInputNamed": "Message {{name}}",
+      "quickPlaceholderNamed": "Ask {{name}}…",
+      "sleepNamed": "Put {{name}} to sleep",
+      "hideNamed": "Hide {{name}}",
+      "callBackNamed": "Call {{name}} back",
+      "talkNamed": "Talk to {{name}}",
+      "disabledNamed": "Enable Agent control to talk to {{name}}",
+      "asleepNamed": "{{name}} is asleep. The conversation is in History.",
+      "identity": {
+        "name": "Name",
+        "nameHint": "What it calls itself and how it appears in the Orb.",
+        "tone": "Tone",
+        "toneCalm": "Calm",
+        "toneBrief": "Brief",
+        "toneWarm": "Warm",
+        "toneMentor": "Mentor",
+        "toneCustom": "Custom",
+        "tint": "Colour",
+        "tintSilver": "Silver",
+        "tintTeal": "Teal",
+        "tintEmerald": "Emerald",
+        "tintViolet": "Violet",
+        "tintRose": "Rose",
+        "soul": "Personality",
+        "user": "About me",
+        "userPlaceholder": "Your role, preferences, how you like to work.",
+        "changedNotice": "Identity changed. The open conversation keeps the old one; a new conversation reads the new one.",
+        "startNew": "Start new conversation",
+        "saveFailed": "Could not save. Try again."
+      },
+      "memory": {
+        "title": "Memory",
+        "suggest": "Suggest memories",
+        "suggestHint": "Orb may propose lasting facts about you or your work. Nothing is saved until you accept it.",
+        "empty": "Nothing remembered yet. Accepted proposals appear here.",
+        "truncated": "Memory is too long to send in full. The oldest entries are left out.",
+        "forget": "Forget",
+        "forgetAll": "Forget all…",
+        "confirmAll": "Forget every memory?",
+        "confirmForgetAll": "Forget all",
+        "cancel": "Cancel"
+      },
+      "defaultAction": "Open Orb with",
+      "defaultActionHint": "Used by the Orb button and shortcut.",
+      "alternateAction": "{{modifier}}-click action",
+      "alternateActionHint": "Opens this mode without changing the default action.",
+      "liveAction": "Live",
+      "textAction": "Text",
+      "microphoneBusy": "The microphone is already in use by another recording.",
+      "modifierClickHint": "{{modifier}}-click · {{action}}",
+      "modelsLoading": "Loading available models…",
+      "modelsUnavailable": "Could not load available models. Open the model menu to retry.",
+      "modelUnavailable": "Unavailable",
+      "settingsApply": "Agent, model and approval changes start a new conversation when Orb is idle. Past conversations keep their agent and model.",
+      "ownFolder": "Orb works in its own folder. Its instructions are written there as CLAUDE.md and AGENTS.md.",
+      "openFolder": "Open folder",
+      "unmuteSpeaker": "Unmute Orb",
+      "muteSpeaker": "Mute Orb",
+      "showCaptions": "Show captions",
+      "closeCaption": "Close",
+      "requestTitle": "Orb is waiting for you",
+      "answerLater": "Answer later",
+      "miniWindow": "Floating window",
+      "pinToDock": "Pin beside the dock",
+      "unpinFromDock": "Release from the dock",
+      "openFullChat": "Open full chat",
+      "backToOrb": "Back to Orb",
+      "quickListening": "Listening… release to send",
+      "quickStarting": "Starting mic… wait to speak",
+      "quickNoSpeech": "No speech heard. Try again.",
+      "openChat": "Open chat",
+      "captionYou": "You",
+      "captionThinking": "Thinking…",
+      "captionRunning": "Running",
+      "captionNoReply": "No reply came back.",
+      "requestDescription": "Your answer will return to this Orb conversation.",
+      "needsApproval": "Waiting for your approval",
+      "taskFailed": "The task could not complete.",
+      "transcribing": "Preparing dictated text…",
+      "operation": {
+        "working": "Orb is working here",
+        "takeControl": "Take control",
+        "unverifiable": "Control could not be verified. Reconnect and try again."
+      },
+      "attention": "An agent sent an update",
+      "liveHoldsInput": "Live voice is on. Stop it to type.",
+      "deliveryUnverifiable": "Orb may not have the latest agent states",
+      "newConversationTitle": "New conversation",
+      "quota": {
+        "low": "{{provider}} {{percent}}%",
+        "limitUntil": "Limit · {{time}}",
+        "limit": "Limit",
+        "show": "Show usage limits",
+        "thisComputer": "This computer",
+        "agentsOne": "1 agent uses this account",
+        "agentsMany": "{{count}} agents use this account"
+      },
+      "notices": {
+        "approval": "Waiting for approval",
+        "question": "Asks: {{question}}",
+        "questionOneOption": "Asks: {{question}} · 1 option",
+        "questionOptions": "Asks: {{question}} · {{count}} options",
+        "attention": "Needs attention",
+        "done": "Finished",
+        "needsYouOne": "1 agent needs you",
+        "needsYouMany": "{{count}} agents need you",
+        "updateOne": "1 update",
+        "updateMany": "{{count}} updates",
+        "finishedOne": "1 finished",
+        "finishedMany": "{{count}} finished",
+        "updates": "Updates",
+        "finished": "Finished",
+        "answer": "Answer",
+        "goToAgent": "Go to agent"
+      },
+      "sleepFailed": "Could not put Orb to sleep. Try again.",
+      "menuNamed": "{{name}} menu",
+      "moreActions": "More actions",
+      "bot": {
+        "greetingMorning": "Good morning",
+        "greetingAfternoon": "Good afternoon",
+        "greetingEvening": "Good evening",
+        "briefQuestions_one": "{{count}} question waiting",
+        "briefQuestions_other": "{{count}} questions waiting",
+        "briefFinished_one": "{{count}} automation finished overnight",
+        "briefFinished_other": "{{count}} automations finished overnight",
+        "briefNext": "next at {{time}}",
+        "failed": "{{name}} failed",
+        "finished": "{{name}} finished · {{when}}",
+        "dismiss": "Dismiss",
+        "answer": "Answer",
+        "later": "Later",
+        "home": "Home",
+        "start": "Start",
+        "asks": "{{name}} asks",
+        "otherBots": "Other bots' questions",
+        "otherBotsHint": "Questions from your other bots also appear beside the Orb and count on its badge.",
+        "replyTo": "Re: {{subject}}"
+      },
+      "motion": {
+        "label": "Orb motion",
+        "hint": "How much the sphere moves. The system Reduce Motion setting does not change it.",
+        "full": "Full",
+        "calm": "Calm",
+        "off": "Off"
+      },
+      "asleep": {
+        "note": "Asleep · chats stay readable",
+        "state": "Asleep",
+        "wake": "Wake"
+      },
+      "botMessage": {
+        "hideThread": "Hide thread",
+        "open": "Open {{name}}",
+        "showThread": "Show thread"
+      },
+      "clearHome": {
+        "action": "Clear home chat",
+        "description": "Side chats stay open. The current home chat moves to Earlier.",
+        "title": "Clear the home chat?"
+      },
+      "footer": {
+        "automation": "From an automation",
+        "home": "Home chat",
+        "live": "Live is on this chat",
+        "side": "Side chat"
+      },
+      "menu": {
+        "botSettings": "Bot settings",
+        "newChat": "New chat",
+        "openPage": "Open bot page"
+      },
+      "quickTarget": "Send to",
+      "sideAsk": {
+        "hint": "1 question · opens that chat"
+      },
+      "strip": {
+        "backToLive": "Back to Live",
+        "bringHere": "Bring here",
+        "clearHome": "Clear home chat",
+        "closeTab": "Close chat",
+        "fullHint": "Every open chat is busy. Close one or wait for it to finish.",
+        "home": "Home chat",
+        "inMainTab": "\"{{name}}\" is open in a main tab.",
+        "live": "Live",
+        "liveOn": "Live is on {{name}}",
+        "moveLive": "Move Live here",
+        "new": "New chat",
+        "newChat": "New chat",
+        "openAsTab": "Open as tab",
+        "rename": "Rename",
+        "working": "Working"
+      },
+      "window": {
+        "asking": "Asking",
+        "asleep": "Asleep",
+        "tabActivity": "Activity",
+        "tabChat": "Chat",
+        "tabChats": "Chats",
+        "tabConnectors": "Connectors",
+        "tabHome": "Home",
+        "working": "Working"
+      },
+      "worker": {
+        "footer": "Worker · read only",
+        "openAsTab": "Open as tab",
+        "talkInTerminal": "Talk to this worker in its terminal.",
+        "transcriptNote": "Worker transcript, read only"
+      }
+    },
+    "sleep": {
+      "waking": "Waking…",
+      "pending": "Putting to sleep…",
+      "unverifiable": "Host unavailable",
+      "wake": "Wake",
+      "action": "Sleep",
+      "wakeFailed": "Could not wake this pane. Try again.",
+      "failed": "Could not put this pane to sleep. Try again.",
+      "agentTitle": "Put this agent to sleep?",
+      "terminalTitle": "Pause this terminal?",
+      "agentDetail": "The session is saved and the agent stops. Wake it here to resume the saved session. Work in progress will be interrupted.",
+      "terminalDetail": "Processes pause and stop using CPU. Memory stays allocated. Wake this terminal to continue the same processes.",
+      "group": "Sleeping",
+      "verifyDetail": "Reconnect to the execution host to verify this pane’s state.",
+      "transitionDetail": "Waiting for the execution host to confirm the change…",
+      "savedDetail": "The agent session is saved. Wake it here to resume.",
+      "pausedDetail": "Processes are paused. CPU use has stopped; memory is retained.",
+      "empty": "No sleeping terminals",
+      "askingQuestion": "This agent is waiting on your answer. The question is kept and your answer goes once it wakes.",
+      "askingPermission": "This agent is waiting for permission. Waking it asks again."
+    },
+    "slept": {
+      "needsPermission": "needs permission",
+      "permissionHint": "Asleep. Waking it asks again; the permission prompt then appears here.",
+      "questionHint": "Asleep. Your answer goes as a message once it wakes.",
+      "wakeAndRetry": "Wake and retry",
+      "wakeAndAnswer": "Wake and answer…",
+      "waking": "Waking the agent…",
+      "waitingReady": "Waiting until it is ready…",
+      "sent": "Sent",
+      "deliverFailed": "Couldn't deliver yet.",
+      "sendAgain": "Send again"
+    },
+    "botBubble": {
+      "access": "{{value0}} asks to talk to me on {{value1}}.",
+      "accessReview": "Review",
+      "answered": "Answered",
+      "asksYou": "asks you",
+      "chipMany": "{{value0}} questions",
+      "chipOne": "1 question",
+      "couldNotFinish": "could not finish",
+      "finished": "finished",
+      "fromHomeChat": "Home chat",
+      "fromSuggestion": "Suggestion",
+      "fromWorker": "Worker · {{value0}}",
+      "later": "Later",
+      "moreBots": "+{{value0}} bots",
+      "openChat": "Open chat",
+      "openInbox": "Open in Inbox",
+      "openInboxChip": "Open Inbox",
+      "openItem": "Open #{{value0}}",
+      "reply": "Reply",
+      "runAgain": "Run again",
+      "runAgainFailed": "Could not start",
+      "runDone": "{{value0}} is done.",
+      "runFailed": "{{value0}} did not finish.",
+      "runsSummary": "{{value0}} runs finished, {{value1}} did not.",
+      "signIn": "Sign in to {{value0}} so I can keep going.",
+      "signInAction": "Sign in",
+      "suggestionDismiss": "Dismiss",
+      "suggestionYes": "Yes",
+      "updates": "{{value0}} updates"
+    },
+    "filter": {
+      "botStarted": "Started by a bot",
+      "unreadOnly": "Unread only"
+    },
+    "groupMenu": {
+      "collapseOthers": "Collapse others",
+      "newAgent": "New agent here",
+      "open": "Open project",
+      "sleepIdle": "Sleep idle agents",
+      "sleepSkipped_one": "{{count}} agent could not sleep",
+      "sleepSkipped_other": "{{count}} agents could not sleep"
+    },
+    "rowMenu": {
+      "canvas": "Add to canvas",
+      "close": "Close",
+      "jump": "Jump to terminal",
+      "markRead": "Mark read",
+      "mirror": "Open in mirror",
+      "openLastChat": "Open last chat",
+      "rename": "Rename…",
+      "renameCancel": "Cancel",
+      "renameSave": "Rename",
+      "renameTitle": "Rename terminal"
+    },
+    "stateChips": {
+      "all": "All",
+      "ask": "Needs you",
+      "done": "Done",
+      "idle": "Idle",
+      "label": "Filter by state",
+      "sleep": "Sleeping",
+      "work": "Working"
+    }
   },
   "workspace": {
     "branchChoice": {
@@ -26763,6 +28091,20 @@
       "terminalSplitDown": "Split terminal down",
       "terminalSwitchInputSource": "Switch input source / language (native)",
       "newAgentTab": "New {{agent}} tab",
+      "agentHubOrbToggleLive": "Toggle Orb Live voice",
+      "agentHubOrbToggleMicrophone": "Mute or unmute Orb microphone",
+      "agentHubOrbToggleSpeaker": "Mute or unmute Orb speaker",
+      "agentHubOrbToggleConversation": "Show Orb conversation or minimize Orb",
+      "agentHubToggle": "Toggle Agent Hub",
+      "agentHubNextWaiting": "Jump to Next Agent Waiting for You",
+      "agentHubDockMirrors": "Send Agent Hub Mirrors to the Hub or Bring Them Back",
+      "agentHubToggleCanvas": "Open or Leave the Agent Hub Canvas",
+      "agentHubArrangeMirrors": "Arrange Agent Hub Mirrors in the Default Layout",
+      "agentHubFocusMirror": "Focus or Unfocus the Active Agent Hub Canvas Mirror",
+      "agentHubPopOut": "Pop Out the Active Agent Hub Terminal",
+      "agentHubJumpToMirror": "Jump to the Active Agent Hub Mirror in Its Workspace",
+      "agentHubNextMirrorTab": "Next Agent Hub Mirror Tab",
+      "agentHubPreviousMirrorTab": "Previous Agent Hub Mirror Tab",
       "tabNewBrowserSplitRight": "New browser tab in right split",
       "eca3c9fdd7": "Select tab 1–9",
       "53ae577e44": "Go forward in browser",
@@ -29023,6 +30365,28 @@
         "promotes": "{{email}} becomes the default.",
         "removeOneNote": "Bots stop using this account here."
       },
+      "account": "Google · {{email}}",
+      "signInRun": {
+        "cancelled": "The Google sign-in was cancelled.",
+        "failed": "The Google sign-in failed. Try again.",
+        "noAccount": "Google signed in, but the host sent no account.",
+        "alreadyRunning": "A Google sign-in is already running. Finish or cancel it first.",
+        "notWaiting": "No Google sign-in is waiting. Start again."
+      },
+      "accessBlocked": "Seeing ‘Access blocked’?",
+      "setUpNewApp": "Set up a new Google app",
+      "useAnother": "Use another account",
+      "useAnotherSignIn": "Sign in with Google",
+      "useAnotherSignInDetail": "Uses your current Google app",
+      "setUpNewAppDetail": "If your current app doesn’t work for this account or organization",
+      "updateToSetUpNewApp": "Update Orca on {{host}} to set up a new Google app.",
+      "updateToChooseAccounts": "Update Orca on {{host}} to choose accounts.",
+      "picker": {
+        "label": "Google accounts",
+        "addAccount": "Add another account",
+        "caption": "Accounts {{bot}} can use",
+        "save": "Save"
+      },
       "reconnect": "Reconnect",
       "thisComputer": "this computer",
       "thisServer": "this server",
@@ -29149,29 +30513,7 @@
       "setDefault": "Set as default",
       "accountActions": "{{email}} actions",
       "addServiceMenu": "Add a service…",
-      "updateToAdd": "Update Orca on {{host}} to add another Google account.",
-      "account": "Google · {{email}}",
-      "signInRun": {
-        "cancelled": "The Google sign-in was cancelled.",
-        "failed": "The Google sign-in failed. Try again.",
-        "noAccount": "Google signed in, but the host sent no account.",
-        "alreadyRunning": "A Google sign-in is already running. Finish or cancel it first.",
-        "notWaiting": "No Google sign-in is waiting. Start again."
-      },
-      "accessBlocked": "Seeing ‘Access blocked’?",
-      "setUpNewApp": "Set up a new Google app",
-      "useAnother": "Use another account",
-      "useAnotherSignIn": "Sign in with Google",
-      "useAnotherSignInDetail": "Uses your current Google app",
-      "setUpNewAppDetail": "If your current app doesn’t work for this account or organization",
-      "updateToSetUpNewApp": "Update Orca on {{host}} to set up a new Google app.",
-      "updateToChooseAccounts": "Update Orca on {{host}} to choose accounts.",
-      "picker": {
-        "label": "Google accounts",
-        "addAccount": "Add another account",
-        "caption": "Accounts {{bot}} can use",
-        "save": "Save"
-      }
+      "updateToAdd": "Update Orca on {{host}} to add another Google account."
     },
     "googleSetup": {
       "receipt": {
@@ -29289,6 +30631,7 @@
       "description": "Your new bot reads the old one and sets itself up.",
       "exportDescription": "Ask your old bot for a copy of itself, then give the copy to your new bot.",
       "importedBefore": "{{bot}} came from this bot",
+      "back": "Back",
       "update": "Update {{bot}}",
       "copyMessage": "Copy message",
       "dropHint": "Drop it here, or",
@@ -29312,8 +30655,7 @@
       "titleFrom": "Import from {{source}}",
       "import": "Import",
       "importing": "Importing…",
-      "fromExport": "From export",
-      "back": "Back"
+      "fromExport": "From export"
     },
     "composio": {
       "connectedAs": "Connected as {{label}}",
@@ -29482,7 +30824,8 @@
         "support": "Support & triage",
         "planning": "Planning & docs",
         "ops": "Ops",
-        "personal": "Personal assistant"
+        "personal": "Personal assistant",
+        "hub": "Agent Hub"
       },
       "paletteLine": "Bot template",
       "pr-review": {
@@ -29873,6 +31216,96 @@
           "meeting-soon": {
             "trigger": "15 minutes before a meeting",
             "action": "Prep note"
+          }
+        }
+      },
+      "hub-orb": {
+        "name": "Orb",
+        "line": "Runs your Agent Hub: sees who is waiting and answers by your standing rules.",
+        "firstChat": "Asks for your standing rules (what it may answer on its own, what always comes to you), then looks at the Agent Hub with `orca hub status` and `orca hub questions --all-hosts`. It answers only what your rules cover and says so in one line.",
+        "watches": "Agents and workers waiting on you, on every host",
+        "does": "Answers waiting questions by your standing rules and leaves the rest for you.",
+        "reports": "Here, one line per round",
+        "example1": "Answered 2 “continue?” prompts by your rule. 1 waits on you: delete the old migration?",
+        "example2": "No agent is blocked."
+      },
+      "hub-secretary": {
+        "name": "Hub Secretary",
+        "line": "Reads the Inbox every hour and sends you one summary of what needs you.",
+        "firstChat": "Reads what is waiting in the Agent Hub with `orca hub questions --all-hosts`, groups it by agent and host, and tells you what needs you first. It answers nothing.",
+        "watches": "The Agent Hub Inbox: questions, approvals and finished work",
+        "does": "Groups what is waiting by agent and host and puts what needs you first.",
+        "reports": "Here, every hour",
+        "example1": "3 need you: a deploy approval (api), a naming question (docs), a failing test (app).",
+        "example2": "5 agents are working; none are stuck.",
+        "schedules": {
+          "hourly-inbox": {
+            "when": "Every hour",
+            "what": "What needs you"
+          }
+        }
+      },
+      "night-watch": {
+        "name": "Night Watch",
+        "line": "Watches agents overnight and wakes you only for blockers.",
+        "firstChat": "Asks when your night starts and ends, then checks the Agent Hub through the night. What can wait goes into a morning list; only a blocked agent gets a notification, with `orca hub notify`.",
+        "watches": "Running agents and workers overnight",
+        "does": "Keeps what can wait for the morning and notifies you only about blockers.",
+        "reports": "Here, nightly, and a notification for a blocker",
+        "example1": "2 agents finished, 1 asked a style question. All of it waits for the morning.",
+        "example2": "Blocked at 02:10: the release agent needs a signing password.",
+        "schedules": {
+          "nightly-watch": {
+            "when": "Nightly at 11 PM",
+            "what": "Night watch"
+          }
+        }
+      },
+      "review-sentry": {
+        "name": "Review Sentry",
+        "line": "Follows review threads, answers reviewers and asks before a force-push.",
+        "firstChat": "Asks which repos to follow, then reads the review comments on your open pull requests and drafts an answer to each. It asks you before it answers for you, and always before a force-push.",
+        "watches": "Review comments on your pull requests, and the agents working on them",
+        "does": "Answers reviewers with what the agent changed, and asks you before a force-push.",
+        "reports": "Here, when a reviewer writes",
+        "example1": "#212: the reviewer asked why the retry is capped at 3. Draft answer below.",
+        "example2": "The fix needs a force-push after a rebase. Go ahead?",
+        "events": {
+          "review-comment": {
+            "trigger": "When a reviewer comments on your pull request",
+            "action": "Draft an answer"
+          }
+        }
+      },
+      "upstream-watch": {
+        "name": "Upstream Watch",
+        "line": "Waits for new upstream releases and drafts the update notes.",
+        "firstChat": "Asks which upstream repo you follow, then waits for its new releases. When one lands it compares it with your branches and drafts what came and what it touches.",
+        "watches": "New releases of the upstream repo you pick",
+        "does": "Drafts the update notes: what came, and which of your features it touches.",
+        "reports": "Here, when a release lands",
+        "example1": "v1.4.272 is out: 14 changes. 2 touch the Agent Hub tabs.",
+        "example2": "Notes drafted. Start the update on the feature branch?",
+        "schedules": {
+          "daily-upstream": {
+            "when": "Weekdays at 8 AM",
+            "what": "New upstream releases"
+          }
+        }
+      },
+      "machine-hygiene": {
+        "name": "Machine Hygiene",
+        "line": "Finds sleeping workers and stale worktrees on each host and offers to clean up.",
+        "firstChat": "Lists workers with `orca orchestration worker-list` and workspaces with `orca worktree list` on each host, and tells you which are asleep or stale. It removes nothing until you pick.",
+        "watches": "Workers and workspaces on every host",
+        "does": "Finds sleeping workers and stale workspaces, and removes the ones you pick.",
+        "reports": "Here, Mondays at 9 AM",
+        "example1": "mac: 4 sleeping workers, 2 stale workspaces. pd: 1 worker, 6 workspaces merged.",
+        "example2": "Remove the 6 merged ones on pd?",
+        "schedules": {
+          "weekly-hygiene": {
+            "when": "Mondays at 9 AM",
+            "what": "Cleanup list"
           }
         }
       }
@@ -30563,6 +31996,7 @@
         "keep": "Keep"
       },
       "chat": {
+        "answer": "Answer",
         "added": "Added {{items}}",
         "canceled": "Canceled {{items}}",
         "changes": "{{from}} → {{to}} · {{count}} changes",
@@ -30672,6 +32106,7 @@
       "row": {
         "done": "Done",
         "more": "More",
+        "openChat": "Open chat",
         "select": "Select {{title}}"
       },
       "selected": "{{count}} selected",
@@ -30748,7 +32183,10 @@
         "sendSomeLabel": "Send {{count}} of {{total}} answers",
         "changeAnswer": "{{question}}: {{answer}}. Change answer",
         "heldImagesLimit": "Your answers go as one comment, which takes up to {{max}} images. Send the answers held so far first, or remove some.",
-        "heldSkillsLimit": "Your answers go as one comment, which takes up to {{max}} skills. Send the answers held so far first, or remove some."
+        "heldSkillsLimit": "Your answers go as one comment, which takes up to {{max}} skills. Send the answers held so far first, or remove some.",
+        "previous": "Previous question",
+        "next": "Next question",
+        "step": "{{n}} of {{total}}"
       },
       "readMoreClosedFailed": "Reading more Closed items failed",
       "wait": {
@@ -31199,7 +32637,8 @@
       "customize": "Customize",
       "featureOff": "Off",
       "turnOn": "Turned off. Show it to turn it back on.",
-      "moreOptions": "More options"
+      "moreOptions": "More options",
+      "hint": "Drag to reorder, or {{modifier}}↑/↓. Space shows or hides. Hidden items still open from search and their shortcuts."
     }
   },
   "emulatorPane": {

@@ -1,7 +1,7 @@
 import type { BrowserClientHostLeaseAuthority } from '../../../../shared/browser/client-hosting/browser-client-host-protocol'
 import type {
   BrowserClientHostPlacementPreference,
-  BrowserPageCreationPlacement
+  BrowserClientHostPlacementPreparation
 } from '../../../../shared/browser/client-hosting/browser-client-host-placement'
 import { expectsBrowserClientHosting } from '../../../../shared/browser/client-hosting/browser-client-hosting-eligibility'
 import type { KnownRuntimeEnvironment } from '../../../../shared/remote-runtime/host-catalog/runtime-environments'
@@ -9,6 +9,10 @@ import type { RuntimeRpcResponse } from '../../../../shared/remote-runtime/rpc/r
 import type { RuntimeStatus } from '../../../../shared/remote-runtime/session-graph/runtime-session-contracts'
 
 const SERVER_PLACEMENT = Object.freeze({ kind: 'server' as const })
+const STATUS_UNAVAILABLE_SERVER_PLACEMENT = Object.freeze({
+  kind: 'server' as const,
+  statusUnavailable: true as const
+})
 
 type BrowserClientHostPlacementPreparationOptions = {
   selector: string
@@ -28,7 +32,7 @@ type BrowserClientHostPlacementPreparationOptions = {
 
 export async function prepareBrowserClientHostPlacement(
   options: BrowserClientHostPlacementPreparationOptions
-): Promise<BrowserPageCreationPlacement> {
+): Promise<BrowserClientHostPlacementPreparation> {
   // Avoid a status round trip for an explicit server request; the setting alone defers to the server's ability to stream.
   if (options.preference === 'server') {
     return SERVER_PLACEMENT
@@ -36,10 +40,14 @@ export async function prepareBrowserClientHostPlacement(
 
   const initialEnvironment = await options.resolveEnvironment(options.selector)
   const pairingRevision = requireCurrentPairing(initialEnvironment, options.expectedPairingRevision)
-  const response = await options.getStatus(initialEnvironment.id)
+  let response = await options.getStatus(initialEnvironment.id)
+  if (!response.ok && response.error.code !== 'timeout') {
+    // Why once more: a probe racing a reconnect fails while the host is fine.
+    response = await options.getStatus(initialEnvironment.id)
+  }
   if (!response.ok) {
     // A failed capability probe allows server placement; tab creation will report link failures.
-    return SERVER_PLACEMENT
+    return STATUS_UNAVAILABLE_SERVER_PLACEMENT
   }
   const status = response.result
   if (status.runtimeId !== response._meta.runtimeId) {

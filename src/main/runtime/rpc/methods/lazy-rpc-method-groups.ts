@@ -251,7 +251,8 @@ export const DEFAULT_LAZY_RPC_METHOD_GROUPS: readonly LazyRpcMethodGroup[] = [
       streamingNames: [
         'agentSession.subscribe',
         'agentSession.subscribeStatus',
-        'agentSession.subscribeTurnCompletions'
+        'agentSession.subscribeTurnCompletions',
+        'agentSession.subscribeVoice'
       ]
     }
   )

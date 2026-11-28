@@ -24,9 +24,6 @@ import { readAgentMenuTerminalPending } from './agent-menu-launch-facts'
 
 export type QuickLaunchAgentMenuItemsProps = {
   worktreeId: string
-  groupId: string
-  /** Reuse the tab bar’s focus handoff after creating a terminal tab. */
-  onFocusTerminal: (tabId: string) => void
   /** Forward the initial prompt; delivery policy determines submission versus a user-confirmed draft. */
   prompt?: string
   /** Use non-default modes for generated context that must not become shell syntax. */
@@ -40,7 +37,15 @@ export type QuickLaunchAgentMenuItemsProps = {
   onPromptHandedOff?: (delivered: Promise<unknown>) => void
   /** Nothing to send: e.g. every note is already on its way, so no agent is started. */
   disabled?: boolean
-}
+} & (
+  | { onLaunch: (agent: TuiAgent) => void; groupId?: never; onFocusTerminal?: never }
+  | {
+      onLaunch?: never
+      groupId: string
+      /** Reuse the tab bar’s focus handoff after creating a terminal tab. */
+      onFocusTerminal: (tabId: string) => void
+    }
+)
 
 export function getCatalogEntry(agent: TuiAgent): { id: TuiAgent; label: string } | null {
   return getAgentCatalog().find((a) => a.id === agent) ?? null
@@ -56,6 +61,7 @@ export function useTabAgentMenuLaunch({
   canSendPrompt,
   onPromptDelivered,
   onPromptHandedOff,
+  onLaunch,
   disabled,
   onFocusHostTerminal,
   onFocusChat
@@ -80,6 +86,10 @@ export function useTabAgentMenuLaunch({
         return false
       }
       const { agent } = row
+      if (onLaunch) {
+        onLaunch(agent)
+        return true
+      }
       const entry = getCatalogEntry(agent)
       const label = entry?.label ?? agent
       const result = launchAgentInNewTabWithOutcome({
@@ -140,7 +150,7 @@ export function useTabAgentMenuLaunch({
       } else if (result.surface.kind !== 'local-terminal') {
         onFocusHostTerminal?.()
       } else {
-        onFocusTerminal(result.surface.tabId)
+        onFocusTerminal?.(result.surface.tabId)
       }
       // A setup submission waits for actual prompt ownership, not just surface dispatch.
       return !draft?.prompt || agentLaunchPromptOwnership(result.promptDeliveryResult)
@@ -155,6 +165,7 @@ export function useTabAgentMenuLaunch({
       canSendPrompt,
       onPromptDelivered,
       onPromptHandedOff,
+      onLaunch,
       disabled,
       onFocusHostTerminal,
       onFocusChat

@@ -236,7 +236,8 @@ export function installFilePathLinkClickFallback(
         pathExistsCache: deps.pathExistsCache,
         openWithSystemDefault: Boolean(event.shiftKey),
         sourceTabId: deps.sourceTabId,
-        onOpenFailure: showFileLinkOpenFailureToast
+        onOpenFailure: showFileLinkOpenFailureToast,
+        event
       }
     )
     if (opened) {

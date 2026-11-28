@@ -103,6 +103,8 @@ export type AgentStatusEntry = {
   toolInput?: string
   /** Keep full AskUserQuestion JSON for cards, not toolInput previews; clear when the agent moves on. */
   interactivePrompt?: string
+  /** The question a sleeping agent was asking; the sleep record keeps it, and any later status drops it. */
+  sleptPrompt?: AgentSleptPrompt
   /** Most recent assistant message preview, when the hook carried one. */
   lastAssistantMessage?: string
   /** Dashboard may show tool output, but native-chat streaming must not present tool stdout as assistant prose. */
@@ -116,6 +118,8 @@ export type AgentStatusEntry = {
   sessionBoundary?: boolean
   /** Dispatch hierarchy belongs to panes, not worktrees: workers can share the coordinator's worktree. */
   orchestration?: AgentStatusOrchestrationContext
+  /** Host-owned pane creator, independent of orchestration dispatch membership. */
+  spawnedBy?: { paneKey: string }
   /** Live in-process subagents/teammates of this pane's session. Absent when
    *  none are tracked; the sidebar derives indented child rows from it. */
   subagents?: AgentSubagentSnapshot[]
@@ -162,6 +166,8 @@ export type AgentStatusPayload = {
   /** JSON string of the AskUserQuestion tool input, captured live. See the
    *  AgentStatusEntry field for semantics. Not truncated like toolInput. */
   interactivePrompt?: string
+  /** See the AgentStatusEntry field for semantics. */
+  sleptPrompt?: AgentSleptPrompt
   lastAssistantMessage?: string
   /** See the AgentStatusEntry field for semantics. */
   lastAssistantMessageIsToolOutput?: boolean
@@ -200,6 +206,7 @@ export function pickParsedAgentStatusPayload(
     ...(row.toolName !== undefined ? { toolName: row.toolName } : {}),
     ...(row.toolInput !== undefined ? { toolInput: row.toolInput } : {}),
     ...(row.interactivePrompt !== undefined ? { interactivePrompt: row.interactivePrompt } : {}),
+    ...(row.sleptPrompt !== undefined ? { sleptPrompt: row.sleptPrompt } : {}),
     ...(row.lastAssistantMessage !== undefined
       ? { lastAssistantMessage: row.lastAssistantMessage }
       : {}),
@@ -225,6 +232,39 @@ export const AGENT_STATUS_TOOL_NAME_MAX_LENGTH = 60
 export const AGENT_STATUS_ASSISTANT_MESSAGE_MAX_LENGTH = 8000
 /** Keep full question JSON/options, with a cap to bound cache; preview cuts would corrupt it. */
 export const AGENT_STATUS_INTERACTIVE_PROMPT_MAX_LENGTH = 16000
+
+/** The question or permission prompt a pane was showing when it was put to sleep. */
+export type AgentSleptPrompt = {
+  toolName?: string
+  toolInput?: string
+  interactivePrompt?: string
+  savedAt: number
+}
+
+function normalizeSleptPromptField(value: unknown): AgentSleptPrompt | undefined {
+  if (typeof value !== 'object' || value === null) {
+    return undefined
+  }
+  const obj = value as Record<string, unknown>
+  if (typeof obj.savedAt !== 'number' || !Number.isFinite(obj.savedAt) || obj.savedAt <= 0) {
+    return undefined
+  }
+  const toolName = normalizeOptionalField(obj.toolName, AGENT_STATUS_TOOL_NAME_MAX_LENGTH)
+  const toolInput = normalizeOptionalField(obj.toolInput, AGENT_STATUS_TOOL_INPUT_MAX_LENGTH)
+  const interactivePrompt = normalizeInteractivePromptField(
+    obj.interactivePrompt,
+    AGENT_STATUS_INTERACTIVE_PROMPT_MAX_LENGTH
+  )
+  if (!toolName && !toolInput && !interactivePrompt) {
+    return undefined
+  }
+  return {
+    ...(toolName ? { toolName } : {}),
+    ...(toolInput ? { toolInput } : {}),
+    ...(interactivePrompt ? { interactivePrompt } : {}),
+    savedAt: obj.savedAt
+  }
+}
 // Re-exported here because every consumer reaches for the entry type and its freshness gate
 // together; the clock rules themselves live in agent-status-freshness.ts.
 
@@ -327,6 +367,7 @@ function normalizeAgentStatusObject(parsed: unknown): ParsedAgentStatusPayload |
       obj.interactivePrompt,
       AGENT_STATUS_INTERACTIVE_PROMPT_MAX_LENGTH
     ),
+    sleptPrompt: normalizeSleptPromptField(obj.sleptPrompt),
     lastAssistantMessage: normalizeOptionalMultilineField(
       obj.lastAssistantMessage,
       AGENT_STATUS_ASSISTANT_MESSAGE_MAX_LENGTH

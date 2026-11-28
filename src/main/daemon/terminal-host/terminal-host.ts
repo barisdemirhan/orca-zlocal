@@ -3,6 +3,8 @@ import { terminalSessionExitCode } from './terminal-host-returned-process'
 import { runTerminalCreation, type PendingTerminalCreation } from './terminal-creation-work'
 import { beginTerminalHostFencedTermination } from './terminal-host-fenced-termination'
 import type { PtyFencedTerminationRequest } from '../../../shared/terminal/pty/lifecycle/pty-fenced-termination'
+import type { TerminalSuspensionOptions } from '../../../shared/terminal-suspension'
+import { changeTerminalHostSuspension } from '../terminal-host-suspension'
 import type { Session } from '../sessions/session'
 import type { PtyProcessInspectionOptions } from '../../providers/pty/process-inspection'
 import type { SessionInfo } from '../protocol/daemon-session-info'
@@ -202,6 +204,9 @@ export class TerminalHost {
   signal(sessionId: string, sig: string): void {
     getAliveTerminalHostSession(this.sessions, sessionId).signal(sig)
   }
+
+  terminalSuspension = (sessionId: string, options: TerminalSuspensionOptions) =>
+    changeTerminalHostSuspension(this.sessions, sessionId, options)
 
   detach(sessionId: string, token: symbol): void {
     this.detachClients([{ sessionId, token }])

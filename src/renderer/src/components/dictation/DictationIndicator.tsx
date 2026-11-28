@@ -14,6 +14,7 @@ import { CLOUD_DICTATION_MAX_SECONDS } from '../../../../shared/rpc-contract/spe
 import { dispatchDictationControl } from './dictation-control-events'
 import { DictationGrapes } from './DictationGrapes'
 import { useDictationMeter } from './dictation-meter-store'
+import { useDictationShownInMirror } from '../agent-hub/agent-hub-mirror-dictation-display'
 import type { DictationPillAnchor } from './dictation-pill-anchor'
 import { DictationPillCloseButton, DictationPillFailure } from './DictationPillFailure'
 import { DictationPillShell } from './DictationPillShell'
@@ -58,6 +59,11 @@ export function DictationIndicator({
   ...props
 }: DictationIndicatorProps & DictationSetupProps) {
   const dictationState = useAppStore((state) => state.dictationState)
+  const shownInMirror = useDictationShownInMirror()
+  // Why: an Agent Hub mirror that is being dictated into shows this indicator inside itself.
+  if (shownInMirror) {
+    return null
+  }
   if (isDictationPillShown(dictationState)) {
     return <DictationPill {...props} />
   }

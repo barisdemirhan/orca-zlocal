@@ -2,10 +2,37 @@ import { useContext } from 'react'
 import { cn } from '@/lib/class-names'
 import { NativeChatInSubagentSheet } from '../subagents/native-chat-subagent-sheet-context'
 
+type ApprovalCardFrame = { outer: string; gutter: string; column: string; card: string }
+
+export type ApprovalLayout = {
+  /** 'embedded' drops the composer-docking chrome for hosts that frame the card themselves. */
+  layout?: 'composer' | 'embedded'
+}
+
 /** The approval card's wrapper classes for where it sits: the chat's own slot, a stacked card,
- *  joined inside the worker dock, which draws the frame and scrolls, or a subagent sheet's prompt
- *  slot, whose own gutter already matches its rows. */
+ *  joined inside the worker dock, which draws the frame and scrolls, a subagent sheet's prompt
+ *  slot, whose own gutter already matches its rows, or embedded in a host that frames the card itself. */
 export function approvalCardFrameClasses({
+  layout = 'composer',
+  ...place
+}: {
+  stacked: boolean
+  joined: boolean
+  quiet: boolean
+  inSheet?: boolean
+} & ApprovalLayout): ApprovalCardFrame {
+  const frame = composerFrameClasses(place)
+  return layout === 'embedded'
+    ? {
+        ...frame,
+        outer: cn(frame.outer, 'bg-transparent'),
+        gutter: cn(frame.gutter, 'max-w-none p-0 sm:p-0 [scrollbar-gutter:auto]'),
+        column: cn(frame.column, 'max-w-none px-0')
+      }
+    : frame
+}
+
+function composerFrameClasses({
   stacked,
   joined,
   quiet,
@@ -15,7 +42,7 @@ export function approvalCardFrameClasses({
   joined: boolean
   quiet: boolean
   inSheet?: boolean
-}): { outer: string; gutter: string; column: string; card: string } {
+}): ApprovalCardFrame {
   const fill = !stacked && 'h-full min-h-0 max-h-full'
   return {
     outer: joined ? '' : stacked ? 'bg-chat-pane' : 'min-h-0 shrink overflow-hidden bg-chat-pane',

@@ -58,7 +58,7 @@ let lastFolderAncestors: {
 } | null = null
 
 // One index over the sidebar's parents, shared by every card.
-function selectFolderAncestorsByIdentity(
+export function selectFolderAncestorsByIdentity(
   state: AppState,
   statuses: RuntimeStatuses
 ): ReadonlyMap<string, readonly FolderWorkspace[]> {

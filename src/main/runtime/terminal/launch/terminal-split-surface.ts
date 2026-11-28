@@ -20,6 +20,7 @@ import type { TerminalCreateOptions } from './terminal-create-options'
 const REJECTED_SPLIT_PTY_STOP_TIMEOUT_MS = 2_000
 
 export type TerminalSplitOptions = Pick<TerminalCreateOptions, 'terminalImageViewerSupported'> & {
+  callerTerminalHandle?: string
   direction?: 'horizontal' | 'vertical'
   command?: string
   env?: Record<string, string>

@@ -57,7 +57,14 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
       ? runScopedSessionCaller(flags)
       : await resolveCoordinatorTerminalHandle(flags, cwd, client)
     const result = await client.call<{
-      gates: { id: string; task_id: string; question: string; options?: string; status: string }[]
+      gates: {
+        id: string
+        task_id: string
+        question: string
+        options?: string
+        status: string
+        resolved_by?: string | null
+      }[]
       count: number
       runId?: string
     }>('orchestration.gateList', {
@@ -75,7 +82,8 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
             taskId: gate.task_id,
             status: gate.status,
             question: gate.question,
-            options: gate.options && gate.options !== '[]' ? gate.options : undefined
+            options: gate.options && gate.options !== '[]' ? gate.options : undefined,
+            resolvedBy: gate.resolved_by ?? undefined
           })),
           runId: value.runId
         })
@@ -87,7 +95,10 @@ export const ORCHESTRATION_GATE_HANDLERS: Record<string, CommandHandler> = {
         return 'No gates found.'
       }
       return value.gates
-        .map((gate) => `${gate.id} task=${gate.task_id} [${gate.status}] "${gate.question}"`)
+        .map(
+          (gate) =>
+            `${gate.id} task=${gate.task_id} [${gate.status}] "${gate.question}"${gate.resolved_by ? ` resolved_by=${gate.resolved_by}` : ''}`
+        )
         .join('\n')
     })
   }

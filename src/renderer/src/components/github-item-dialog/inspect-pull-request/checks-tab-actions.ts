@@ -3,6 +3,10 @@ import type React from 'react'
 import { toast } from 'sonner'
 import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
 import {
+  rerunPullRequestChecksRequest,
+  rerunTargetForRuntimeHost
+} from '@/lib/source-control/checks/rerun-pull-request-checks'
+import {
   resetGitHubChecksTabForSource,
   updateGitHubChecksTabLocalChecks,
   type GitHubChecksContextOwner,
@@ -161,28 +165,20 @@ export async function rerunGitHubChecksTab(
   const rerunContextOwner = ctx.committedChecksContextOwnerRef.current
   ctx.setRerunningOwner(rerunContextOwner)
   try {
-    const result = ctx.runtimeHost
-      ? await callRuntimeRpc<Awaited<ReturnType<typeof window.api.gh.rerunPRChecks>>>(
-          { kind: 'environment', environmentId: ctx.runtimeHost.environmentId },
-          'github.rerunPRChecks',
-          {
-            repo: getGitHubRuntimeRepoId(ctx.sourceContext, ctx.repoId ?? ctx.itemRepoId),
-            prNumber: ctx.itemNumber,
-            headSha: ctx.headSha,
-            failedOnly,
-            prRepo: ctx.prRepo
-          },
-          { timeoutMs: 30_000 }
-        )
-      : await window.api.gh.rerunPRChecks({
-          repoPath: ctx.repoPath ?? '',
-          repoId: ctx.repoId ?? undefined,
-          sourceContext: ctx.sourceContext,
-          prNumber: ctx.itemNumber,
-          headSha: ctx.headSha,
-          failedOnly,
-          prRepo: ctx.prRepo
-        })
+    const result = await rerunPullRequestChecksRequest({
+      target: rerunTargetForRuntimeHost(
+        ctx.runtimeHost,
+        ctx.sourceContext,
+        ctx.repoId ?? ctx.itemRepoId
+      ),
+      sourceContext: ctx.sourceContext,
+      repoId: ctx.repoId,
+      repoPath: ctx.repoPath,
+      prNumber: ctx.itemNumber,
+      headSha: ctx.headSha,
+      failedOnly,
+      prRepo: ctx.prRepo
+    })
     if (
       !ctx.mountedRef.current ||
       ctx.committedChecksContextOwnerRef.current !== rerunContextOwner

@@ -7,6 +7,7 @@ import { getNewWorktreeCardStyleSearchEntry } from './new-worktree-card-style-se
 import { getAppRailSearchEntry } from '../../app-rail/app-rail-search-entry'
 import { getEphemeralVmsSearchEntry } from '../virtual-machines/recipes/ephemeral-vms-search'
 import { getWslHostsExperimentalSearchEntry } from '../wsl/hosts/wsl-hosts-experimental-search'
+import { getAgentHubSearchEntry } from '../../agent-hub/agent-hub-search-entry'
 import { isWebClientLocation } from '@/app-shell/platform/web-client-location'
 
 /** Only a desktop's own chats read the switch: a web client's chats run on a host the switch
@@ -217,7 +218,8 @@ export const getExperimentalSearchEntry = createLocalizedCatalog(
       },
       newWorktreeCardStyle: getNewWorktreeCardStyleSearchEntry(),
       appRail: getAppRailSearchEntry(),
-      ephemeralVms: getEphemeralVmsSearchEntry()
+      ephemeralVms: getEphemeralVmsSearchEntry(),
+      agentHub: getAgentHubSearchEntry()
     }) satisfies Record<string, SettingsSearchEntry>
 )
 

@@ -11,7 +11,10 @@ import type {
   RuntimeSyncWindowGraphResult,
   RuntimeTerminalDriverState
 } from '../../../shared/remote-runtime/session-graph/runtime-session-contracts'
-import type { RuntimeRpcResponse } from '../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
+import type {
+  RuntimeOrchestrationEnvelope,
+  RuntimeRpcResponse
+} from '../../../shared/remote-runtime/rpc/runtime-rpc-envelope'
 import type { RuntimeEnvironmentSubscriptionHandle } from '../../runtime/runtime-environment-subscriptions'
 import type { PreloadApi } from '../../api-types'
 
@@ -24,6 +27,7 @@ export const runtimeApi = {
   call: (args: {
     method: string
     params?: unknown
+    envelope?: RuntimeOrchestrationEnvelope
     orchestration?: { contractVersion: number; requestId: string }
   }): Promise<RuntimeRpcResponse<unknown>> => ipcRenderer.invoke('runtime:call', args),
   subscribe: async (

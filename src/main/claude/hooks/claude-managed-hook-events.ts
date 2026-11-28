@@ -73,14 +73,18 @@ const CLAUDE_SESSION_END_EVENT = {
   definition: { hooks: [{ type: 'command', command: '' }] }
 } as const
 
-// MCP elicitation dialogs block on the person (#25020); matcher is the MCP server name.
-const CLAUDE_ELICITATION_EVENTS = [
+const CLAUDE_HUMAN_NOTIFICATION_EVENTS = [
+  { eventName: 'Notification', definition: { hooks: [{ type: 'command', command: '' }] } },
+  // The packed enum predates the public feature; install at its documented feature floor.
+  // The matcher is the MCP server name (#25020).
   {
     eventName: 'Elicitation',
+    installFrom: '2.1.76',
     definition: { matcher: '*', hooks: [{ type: 'command', command: '' }] }
   },
   {
     eventName: 'ElicitationResult',
+    installFrom: '2.1.76',
     definition: { matcher: '*', hooks: [{ type: 'command', command: '' }] }
   }
 ] as const
@@ -93,8 +97,8 @@ const CLAUDE_POST_TOOL_BATCH_EVENT = {
 
 export const CLAUDE_MANAGED_EVENTS = [
   ...CLAUDE_EVENTS,
-  ...CLAUDE_ELICITATION_EVENTS,
   CLAUDE_SESSION_END_EVENT,
+  ...CLAUDE_HUMAN_NOTIFICATION_EVENTS,
   CLAUDE_POST_TOOL_BATCH_EVENT
 ] as const
 
@@ -116,10 +120,10 @@ export type ClaudeManagedHookPlan = {
 export function getClaudeManagedHookPlan(
   claudeVersion: string | null | undefined
 ): ClaudeManagedHookPlan {
-  const install = CLAUDE_MANAGED_EVENTS.filter(
-    (event) =>
-      claudeKnowsHookEvent(claudeVersion, event.eventName) &&
-      (!('installFrom' in event) || claudeVersionReaches(claudeVersion, event.installFrom))
+  const install = CLAUDE_MANAGED_EVENTS.filter((event) =>
+    'installFrom' in event
+      ? claudeVersionReaches(claudeVersion, event.installFrom)
+      : claudeKnowsHookEvent(claudeVersion, event.eventName)
   )
   // A failed version probe must not retire entries installed using a known version.
   const retire =

@@ -10030,9 +10030,6 @@
           "77410e0566": "Política de privacidade",
           "8bfdd23a88": "Ajude-nos a descobrir o que construir a seguir. O Orca envia contagens anônimas de quais recursos você usa e onde as coisas quebram."
         },
-        "RepositorySourceControlAiSection": {
-          "112f3b934f": "IA de Controle de Versão"
-        },
         "ephemeralVms": {
           "search": {
             "description": "Saiba como receitas pertencentes ao repositório dão a cada espaço de trabalho seu próprio ambiente descartável sob demanda.",
@@ -10327,24 +10324,6 @@
         "TerminalRenderingSection": {
           "fffab5890b": "Exibe imagens diretamente no terminal usando os protocolos gráficos SIXEL, iTerm2 (IIP) e Kitty.",
           "08db7947d8": "Imagens Inline"
-        },
-        "keep": {
-          "local": {
-            "main": {
-              "up": {
-                "to": {
-                  "date": {
-                    "setting": {
-                      "f4c23aee76": "Manter a Main Local Atualizada"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "BrowserUseEnableSwitch": {
-          "ce4d6f80d8": "Ativar Uso do Navegador por Agente"
         },
         "YamlThemeImportButton": {
           "label": "Importar de YAML"
@@ -11493,6 +11472,27 @@
           "cancel": "Cancelar",
           "confirm": "Remover",
           "unknownHost": "Host desconhecido"
+        },
+        "RepositorySourceControlAiSection": {
+          "112f3b934f": "IA de Controle de Versão"
+        },
+        "keep": {
+          "local": {
+            "main": {
+              "up": {
+                "to": {
+                  "date": {
+                    "setting": {
+                      "f4c23aee76": "Manter a Main Local Atualizada"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BrowserUseEnableSwitch": {
+          "ce4d6f80d8": "Ativar Uso do Navegador por Agente"
         }
       },
       "right": {
@@ -12192,8 +12192,11 @@
                   "titlePublishBranchFirst": "Publique a branch primeiro para sincronizar commits",
                   "titleUseForcePush": "Use Commit e Force Push — o remoto só tem cópias antigas de commits locais",
                   "titleCommitThenPullPush": "Faça commit e depois pull e push",
+                  "rebaseFromNamedBase": "Rebase a partir de {{baseRef}}",
                   "rebaseFromBase": "Rebase a partir da base",
                   "rebaseChooseRemoteBase": "Escolha uma branch base remota para fazer rebase",
+                  "rebaseDirtyHint": "Tente fazer rebase; o git pode exigir commit ou stash das alterações locais primeiro",
+                  "statusStashFirst": "Faça stash antes",
                   "rebaseWithLatestFrom": "Fazer rebase da branch atual com os commits mais recentes de {{baseRef}}",
                   "blockedCommitFirst": "Faça commit das alterações primeiro",
                   "blockedCheckOutBranchFirst": "Faça checkout de uma branch primeiro",
@@ -12210,10 +12213,7 @@
                   "rebaseOntoNamedBase": "Fazer rebase em {{base}}",
                   "rebaseCommitOrStashFirst": "Faça commit ou stash das alterações primeiro",
                   "continueRebase": "Continuar rebase",
-                  "titleContinueRebase": "Continuar o rebase pausado",
-                  "rebaseFromNamedBase": "Rebase a partir de {{baseRef}}",
-                  "rebaseDirtyHint": "Tente fazer rebase; o git pode exigir commit ou stash das alterações locais primeiro",
-                  "statusStashFirst": "Faça stash antes"
+                  "titleContinueRebase": "Continuar o rebase pausado"
                 }
               },
               "primary": {
@@ -23226,6 +23226,7 @@
         "steerHint": "Enviar agora, enquanto o agente continua trabalhando",
         "sendHint": "Enviar esta mensagem agora",
         "delete": "Excluir",
+        "moreActions": "Mais ações",
         "editMessage": "Editar mensagem",
         "showFullMessage": "Mostrar mensagem completa",
         "showLess": "Mostrar menos",
@@ -23247,6 +23248,8 @@
         "imageCount_one": "{{count}} imagem",
         "imageCount_other": "{{count}} imagens",
         "imageCount_many": "{{count}} imagens",
+        "collapse": "Recolher",
+        "expand": "Expandir",
         "queued": "Na fila",
         "clearAll": "Limpar tudo",
         "moveChanged": "A fila mudou antes desta movimentação. Tente arrastar a mensagem novamente.",
@@ -29391,6 +29394,7 @@
       "row": {
         "more": "Mais",
         "done": "Concluído",
+        "openChat": "Abrir chat",
         "select": "Selecionar {{title}}"
       },
       "snooze": {

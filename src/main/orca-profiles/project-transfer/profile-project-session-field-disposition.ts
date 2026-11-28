@@ -36,9 +36,25 @@ type SessionFieldDisposition = {
   onWorkspaceRemoval: SessionFieldWorkspaceRemovalDisposition
 }
 
-/** Classify every persisted field so owner-keyed pruning/transfer cannot omit additions.
- * Transferable additions still require manual updates to mergeWorkspaceSessions. */
+/**
+ * Every persisted session field, and what the repo-removal and project-transfer paths owe it.
+ *
+ * Why this exists: `clientHostedBrowserPagesByWorktree` was added to the session type and then
+ * missed by three separate prune paths, because nothing made handling it mandatory. Classification
+ * is now a compile error to skip, and the two owner-keyed lists below are what those paths
+ * actually iterate -- so a field marked `prunedByOwnerKey` is pruned by construction.
+ *
+ * Not covered: `mergeWorkspaceSessions`, the apply side of a transfer, is still a hand-written
+ * field list. It is safe for this field only because `extractSessionForTransfer` never emits it --
+ * classify a new field as transferable and that merge has to be edited by hand.
+ */
 export const WORKSPACE_SESSION_FIELD_DISPOSITION = {
+  // Child pane keys go with their tab; a link whose parent died reads as none in the renderer.
+  terminalSpawnedByPaneKey: {
+    onRepoRemoval: 'prunedByBespokeRule',
+    onTransfer: 'notTransferred',
+    onWorkspaceRemoval: 'ownerPaneKey'
+  },
   // Residue: renderer reads validate this ID against live repos, so dead IDs resolve to none.
   activeRepoId: {
     onRepoRemoval: 'notRepoScoped',
@@ -77,6 +93,7 @@ export const WORKSPACE_SESSION_FIELD_DISPOSITION = {
     onTransfer: 'copiedByBespokeRule',
     onWorkspaceRemoval: 'ownerTabKey'
   },
+  // Same tab-id keying as the layouts it shadows, so park scrollback follows the same tab ids.
   localOnlyScrollbackByTabId: {
     onRepoRemoval: 'prunedByBespokeRule',
     onTransfer: 'copiedByBespokeRule',

@@ -46,6 +46,8 @@ export type PersistedOpenFile = {
 export type PersistedBrowserPage = BrowserPage & { annotations?: BrowserPageAnnotation[] }
 
 export type WorkspaceSessionState = {
+  /** Runtime-owned creator links; pane identities survive handle reminting. */
+  terminalSpawnedByPaneKey?: Record<string, { paneKey: string }>
   activeRepoId: string | null
   /** Scope-aware active owner for folder workspaces. Legacy worktree UI still reads activeWorktreeId. */
   activeWorkspaceKey?: WorkspaceKey | null

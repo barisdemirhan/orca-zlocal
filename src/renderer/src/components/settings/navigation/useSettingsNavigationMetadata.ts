@@ -68,6 +68,7 @@ export function buildSettingsNavigationMetadata(
     botsEnabled = true,
     hostQueuesMessages = false,
     typedChatPermissions = false,
+    agentHubEnabled = false,
     managedBrowserCreationEnabled = !isWebClient,
     mobileEmulatorCreationEnabled = !isWebClient,
     showWorkspaceCardLayout = true,
@@ -89,6 +90,7 @@ export function buildSettingsNavigationMetadata(
     botsEnabled?: boolean
     hostQueuesMessages?: boolean
     typedChatPermissions?: boolean
+    agentHubEnabled?: boolean
     managedBrowserCreationEnabled?: boolean
     mobileEmulatorCreationEnabled?: boolean
     showWorkspaceCardLayout?: boolean
@@ -130,6 +132,7 @@ export function buildSettingsNavigationMetadata(
     botsEnabled,
     hostQueuesMessages,
     typedChatPermissions,
+    agentHubEnabled,
     managedBrowserCreationEnabled,
     mobileEmulatorCreationEnabled,
     showWorkspaceCardLayout,
@@ -190,6 +193,7 @@ export function useSettingsNavigationMetadata(
   const showWorkspaceCardLayout = !useAppStore(selectDrawsNewWorktreeCards)
   const typedChatPermissions = useChatSettingsOwnPermissions()
   const hostQueuesMessages = useStructuredAgentSessionHostQueuesMessages({ kind: 'local' })
+  const agentHubEnabled = settings?.experimentalAgentHub === true
   const isMac = isMacUserAgent()
   const isWindows = isWindowsUserAgent()
   const isWebClient = isWebClientLocation()
@@ -239,6 +243,7 @@ export function useSettingsNavigationMetadata(
               botsEnabled,
               hostQueuesMessages,
               typedChatPermissions,
+              agentHubEnabled,
               managedBrowserCreationEnabled,
               mobileEmulatorCreationEnabled,
               showWorkspaceCardLayout,
@@ -268,6 +273,7 @@ export function useSettingsNavigationMetadata(
       botsEnabled,
       hostQueuesMessages,
       typedChatPermissions,
+      agentHubEnabled,
       managedBrowserCreationEnabled,
       mobileEmulatorCreationEnabled,
       showWorkspaceCardLayout,

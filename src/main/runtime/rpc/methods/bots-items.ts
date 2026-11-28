@@ -9,6 +9,7 @@ import {
 } from '../../../../shared/bots/bot-items'
 import { BotItemsList, BotItemsShow } from '../../../../shared/rpc-contract/bots-items-params'
 import { BotItemError } from '../../../bots/bot-item-error'
+import { botOfCaller } from '../../../bots/bot-of-caller'
 import { defineMethod } from '../core'
 import { itemsReader, itemsWriter } from './bots-items-caller'
 import { BOT_ITEMS_OWNER_METHODS } from './bots-items-owner-methods'
@@ -27,8 +28,8 @@ const LIST = defineMethod({
   params: BotItemsList,
   handler: async (params, context) => {
     const { runtime } = context
-    runtime.bots.assertEnabled()
     const bot = itemsReader(params, context)
+    runtime.bots.assertEnabled(bot)
     const statuses: readonly BotItemStatus[] = params.statuses?.length
       ? botItemStatusesForClient(params.statuses, context)
       : params.all
@@ -68,9 +69,10 @@ const SHOW = defineMethod({
   params: BotItemsShow,
   handler: async (params, context) => {
     const { runtime } = context
-    runtime.bots.assertEnabled()
+    runtime.bots.assertEnabled(botOfCaller(runtime, params.callerSessionId, context.pairedDeviceId))
     const store = runtime.botItems.store()
     const record = await resolveItem(store, params.item)
+    runtime.bots.assertEnabled(runtime.bots.list().find((entry) => entry.id === record.ownerBotId))
     const after = params.after !== undefined ? parseBotItemEventId(params.after) : 0
     if (after === null) {
       throw new BotItemError('invalid_argument', '--after takes an event id such as e41.')

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/class-names'
 import { LinkActionPopover } from '@/components/link-actions/LinkActionPopover'
+import { useAgentHubDockBottomClearance } from '@/components/agent-hub/agent-hub-dock-footprint'
 import { NATIVE_CHAT_APPEARANCE_ROOT_CLASS } from './appearance/native-chat-appearance-style'
 import { NativeChatFindBar } from './viewport/find/NativeChatFindBar'
 import { NativeChatFindQueryContext } from './viewport/find/native-chat-find-query'
@@ -34,6 +35,7 @@ export function NativeChatSurface({
     linkActionRequest,
     closeLinkActions
   } = surface
+  const dockClearance = useAgentHubDockBottomClearance(rootRef)
   return (
     <div
       ref={rootRef}
@@ -47,7 +49,7 @@ export function NativeChatSurface({
         'flex h-full min-h-0 w-full flex-col focus:outline-none',
         className
       )}
-      style={appearance}
+      style={dockClearance ? { ...appearance, paddingBottom: dockClearance } : appearance}
       data-native-chat-scheme={appearance.colorScheme}
     >
       <NativeChatLinkClickContext value={onLinkClick}>

@@ -12,7 +12,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import { nativeChatShowsTurnDiffSummary } from '../../../../shared/native-chat/settings/native-chat-appearance-settings'
 import type { NativeChatLiveSession } from './session/terminal/read/native-chat-live-session-contract'
-import { useNativeChatTranscriptProjection } from './conversation/projection/use-native-chat-transcript-projection'
+import { useNativeChatOrbPresentation } from './NativeChatOrbPresentation'
 import { useNativeChatQuestionReceipts } from './conversation/projection/use-native-chat-question-receipts'
 import { useNativeChatTaskListPredecessors } from './tools/use-native-chat-task-list-predecessors'
 import { NativeChatDockedTaskList } from './tools/tasks/NativeChatDockedTaskList'
@@ -151,12 +151,12 @@ export function NativeChatMessageList({
     sourceKey: `${session.agent}:${session.sessionId}`
   })
 
-  const { messages: conversation, subagentRows } = useNativeChatTranscriptProjection(
-    session,
-    journalItems,
-    journalSubmissions,
-    latestTurn
-  )
+  const {
+    messages: conversation,
+    subagentRows,
+    introduction,
+    presentTurnStatuses
+  } = useNativeChatOrbPresentation(isWorking, session, journalItems, journalSubmissions, latestTurn)
   const scope = useNativeChatSubagentScope({
     view: subagentView,
     conversation,
@@ -207,7 +207,6 @@ export function NativeChatMessageList({
   })
   // Only unshown prompts need a waiting tail row; prompt cards explain their own wait.
   const tailRow = transcriptTailRow(turnWorking, awaitingInput)
-  const lifecycleWorking = subagentId === null && session.transcriptLifecycle?.state === 'working'
   const { measureContent, typography } = useNativeChatRowTypography(contentRef)
   const forkOffer = useNativeChatSideChatForkOffer(latestTurnKey)
   const transcript = useNativeChatTranscriptSlots({
@@ -218,12 +217,12 @@ export function NativeChatMessageList({
     turnKeys,
     liveTurnKey,
     receipts,
-    turnStatuses,
+    turnStatuses: presentTurnStatuses(turnStatuses),
     turnDiffs,
     openedPullRequests: openedPullRequests.byTurn,
     expandedTurnKeys: expandedTurnIds,
     isWorking: working,
-    lifecycleWorking,
+    lifecycleWorking: subagentId === null && session.transcriptLifecycle?.state === 'working',
     subagentHeads: scope.heads,
     forkOffer,
     line: {
@@ -392,14 +391,15 @@ export function NativeChatMessageList({
               </>
             }
           >
-            {showOlderHistory ? (
+            {showOlderHistory && (
               <NativeChatOlderHistoryRow
                 olderHistory={olderHistory}
                 loadingEarlier={loadingEarlier}
               />
-            ) : null}
+            )}
             <div className={nativeChatTranscriptOuterClass(rail.visible, scope.inSheet)}>
               <NativeChatTranscriptColumn ref={measureContent}>
+                {introduction}
                 {scope.lead}
                 <NativeChatTranscriptItems
                   slots={slots}

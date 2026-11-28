@@ -2,6 +2,11 @@
 // run `pnpm run generate:rpc-params-catalog`.
 import type { z } from 'zod'
 import { AntigravityChatAuthConfigSchema } from '../agent-accounts/antigravity/antigravity-chat-auth-config'
+import {
+  AgentHubOrbListParamsSchema,
+  AgentHubOrbOpenParamsSchema,
+  AgentHubOrbReleaseOperationParamsSchema
+} from '../agent-hub-orb-params'
 import { HostAccountLaunchEnvParams } from '../agent-launch/startup/host-account-launch-env'
 import {
   AiVaultSearchRequestSchema,
@@ -119,6 +124,22 @@ import {
   AgentActivitySetReadParams
 } from './agent-activity/agent-activity-params'
 import { AgentListParams, AgentReadParams, AgentShowParams } from './agent-conversation-params'
+import {
+  AgentHubAnswerParams,
+  AgentHubArrangeParams,
+  AgentHubAskParams,
+  AgentHubCanvasParams,
+  AgentHubCardParams,
+  AgentHubMirrorParams,
+  AgentHubNotifyParams,
+  AgentHubOrbRememberParams,
+  AgentHubPeekControlParams,
+  AgentHubPeekParams,
+  AgentHubPresenceParams,
+  AgentHubProgressParams,
+  AgentHubQuestionsParams,
+  AgentHubRespondParams
+} from './agent-hub-params'
 import { AgentLaunch, AgentLaunchReplay } from './agent-launch/agent-launch-params'
 import { AgentLaunchSettingsMutation } from './agent-launch/agent-launch-settings-params'
 import {
@@ -719,6 +740,7 @@ import { FederationAttachStartParams } from './orchestration/orchestration-feder
 import {
   GateCreateParams,
   GateListParams,
+  GateResolveByUserParams,
   GateResolveParams,
   RunParams,
   RunStopParams
@@ -944,6 +966,13 @@ import {
   SshTargetUpdate
 } from './ssh/ssh-params'
 import {
+  AppendVoiceTextParams,
+  StartVoiceParams,
+  StopVoiceParams,
+  SubscribeVoiceParams,
+  VoiceCapabilityParams
+} from './structured-agent-session-voice-params'
+import {
   AttachmentReadParams,
   AttachmentTextReadParams,
   AttachmentUploadAppendParams,
@@ -1041,7 +1070,8 @@ import {
   TerminalCloseAll,
   TerminalCreateParams,
   TerminalSetViewerColors,
-  TerminalStopExact
+  TerminalStopExact,
+  TerminalSuspension
 } from './terminal/terminal-unary-params'
 import { TerminalGetAutoRestoreFitParams } from './terminal/terminal-viewport-methods-params'
 import {
@@ -1202,9 +1232,30 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentCliUpdate.run': AgentCliUpdateRunParams,
   'agentCliUpdate.subscribe': null,
   'agentHooks.prepareCodexForWslPane': PrepareCodexForWslPaneParams,
+  'agentHub.answer': AgentHubAnswerParams,
+  'agentHub.arrange': AgentHubArrangeParams,
+  'agentHub.ask': AgentHubAskParams,
+  'agentHub.canvas': AgentHubCanvasParams,
+  'agentHub.card': AgentHubCardParams,
+  'agentHub.mirror': AgentHubMirrorParams,
+  'agentHub.notify': AgentHubNotifyParams,
+  'agentHub.orb.close': null,
+  'agentHub.orb.current': null,
+  'agentHub.orb.list': AgentHubOrbListParamsSchema,
+  'agentHub.orb.open': AgentHubOrbOpenParamsSchema,
+  'agentHub.orb.releaseOperation': AgentHubOrbReleaseOperationParamsSchema,
+  'agentHub.orb.remember': AgentHubOrbRememberParams,
+  'agentHub.peek': AgentHubPeekParams,
+  'agentHub.peekControl': AgentHubPeekControlParams,
+  'agentHub.presence': AgentHubPresenceParams,
+  'agentHub.progress': AgentHubProgressParams,
+  'agentHub.questions': AgentHubQuestionsParams,
+  'agentHub.respond': AgentHubRespondParams,
+  'agentHub.status': AgentHubPresenceParams,
   'agentSession.accountUsage': OptionsParams,
   'agentSession.acknowledgeAttention': AcknowledgeAttentionParams,
   'agentSession.agents': AgentsParams,
+  'agentSession.appendVoiceText': AppendVoiceTextParams,
   'agentSession.approveAutoReviewDenial': AutoReviewApprovalParams,
   'agentSession.cancel': CancelParams,
   'agentSession.cancelUsageLimitContinue': CancelUsageLimitContinueParams,
@@ -1251,13 +1302,17 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentSession.setOption': SetOptionParams,
   'agentSession.skipAsyncQuestions': SkipAsyncQuestionsParams,
   'agentSession.sleepWorkspace': SleepWorkspaceParams,
+  'agentSession.startVoice': StartVoiceParams,
+  'agentSession.stopVoice': StopVoiceParams,
   'agentSession.subscribe': SubscribeParams,
   'agentSession.subscribeAvailability': AvailabilityParams,
   'agentSession.subscribeStatus': null,
   'agentSession.subscribeTurnCompletions': SubscribeTurnCompletionsParams,
+  'agentSession.subscribeVoice': SubscribeVoiceParams,
   'agentSession.threadGoal': ThreadGoalParams,
   'agentSession.toolCaller': ToolCallerParams,
   'agentSession.unsubscribe': UnsubscribeParams,
+  'agentSession.voiceCapability': VoiceCapabilityParams,
   'agentSessionAttachment.read': AttachmentReadParams,
   'agentSessionAttachment.readTextChunk': AttachmentTextReadParams,
   'agentSessionAttachment.uploadAbort': AttachmentUploadIdParams,
@@ -2024,6 +2079,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'orchestration.gateCreate': GateCreateParams,
   'orchestration.gateList': GateListParams,
   'orchestration.gateResolve': GateResolveParams,
+  'orchestration.gateResolveByUser': GateResolveByUserParams,
   'orchestration.inbox': InboxParams,
   'orchestration.partyLocation': PartyLocationParams,
   'orchestration.partyOpen': PartyLocationParams,
@@ -2281,6 +2337,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'terminal.stopExact': TerminalStopExact,
   'terminal.subscribe': TerminalSubscribe,
   'terminal.subscribeClaudeAgentViews': null,
+  'terminal.suspension': TerminalSuspension,
   'terminal.unsubscribe': TerminalUnsubscribe,
   'terminal.updateViewport': TerminalUpdateViewport,
   'terminal.viewClaudeAgent': TerminalViewClaudeAgent,

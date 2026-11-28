@@ -31,6 +31,7 @@ import { openBotSession } from './bot-session-open'
 import { botSidebarEntryKey } from './bot-sidebar-entry-keys'
 import { useBotsRevealRequest } from './bots-sidebar-reveal-context'
 import { BotSidebarOlderToggle } from './BotSidebarOlderChats'
+import { useAgentHubBotChatPopout } from '../agent-hub/AgentHubSidebarBotPopout'
 import {
   useBotHomeFrontTab,
   useBotSidebarOlderChats,
@@ -303,6 +304,7 @@ function BotSidebarChat({
   const title = chatTitle(t, chat)
   const label = useBotChatLabel(chat, title)
   const trailing = trailingText(t, view.trailing)
+  const popOut = useAgentHubBotChatPopout(bot, chat, foldable)
   // A press only switches to the chat; only the chevron shows or hides its workers. Pressed while
   // its chat is already in front, it flashes that chat's pane so the press visibly lands.
   const pressRow = (event: { detail: number; repeat?: boolean }): void => {
@@ -361,11 +363,17 @@ function BotSidebarChat({
             text={trailing}
             fold={foldable ? { open, name: title, onToggle: () => toggle(open) } : null}
             menu={
-              botChatHasMenu(chat) ? (
-                <BotChatMoreButton bot={bot} chat={chat} onOpen={() => pressRow({ detail: 1 })} />
-              ) : null
+              botChatHasMenu(chat)
+                ? popOut.withMenu(
+                    <BotChatMoreButton
+                      bot={bot}
+                      chat={chat}
+                      onOpen={() => pressRow({ detail: 1 })}
+                    />
+                  )
+                : null
             }
-            className="max-w-[60%]"
+            className={cn('max-w-[60%]', popOut.endClassName)}
           />
         </div>
       </BotChatContextMenu>

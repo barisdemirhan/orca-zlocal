@@ -113,6 +113,7 @@ export type AgentSessionRecord = {
   location: AgentSessionExecutionLocation
   /** The agent this session names, whether this build can run it or not. */
   provider: string
+  origin?: 'agent-hub-orb'
   providerHandleChain: AgentSessionProviderHandleLink[]
   providerContextBoundary?: AgentSessionProviderContextBoundary
   accountHome: AgentSessionAccountHome

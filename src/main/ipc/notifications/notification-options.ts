@@ -86,9 +86,34 @@ function buildAgentTaskCompleteNotificationOptions(
   const statusText = formatAgentNotificationStatusText(args, translate)
 
   return {
-    title: `${worktreeContext} - ${agentLabel} ${statusText}`,
+    title:
+      botNotificationTitle(args, translate) ?? `${worktreeContext} - ${agentLabel} ${statusText}`,
     body: buildAgentTaskCompleteRichBody(args, translate) ?? `${agentLabel} ${statusText}.`
   }
+}
+
+// A bot's question or result is titled with its name; every other outcome keeps the usual title.
+function botNotificationTitle(
+  args: NotificationDispatchRequest,
+  translate: NotificationTranslator
+): string | null {
+  const name = normalizeNotificationText(args.botName, NOTIFICATION_AGENT_LABEL_MAX_LENGTH)
+  if (!name) {
+    return null
+  }
+  if (args.agentState === 'blocked' || args.agentState === 'waiting') {
+    return fillNotificationPlaceholders(
+      translate('notifications.bot.asksYou', '{{name}} asks you'),
+      { name }
+    )
+  }
+  if (args.agentState === 'done' && (args.agentTurnOutcome ?? 'success') === 'success') {
+    return fillNotificationPlaceholders(
+      translate('notifications.bot.finished', '{{name}} finished'),
+      { name }
+    )
+  }
+  return null
 }
 
 // Announce finished only for proved terminal state or an expired snapshot's completion signal (#4375).

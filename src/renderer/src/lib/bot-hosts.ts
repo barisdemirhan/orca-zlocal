@@ -8,6 +8,7 @@ import {
 import type { RuntimeClientTarget } from '../../../shared/remote-runtime/host-catalog/runtime-client-target'
 import { callRuntimeRpc } from '@/runtime/rpc/calls/runtime-rpc-call'
 import { readBotHostIds, readLiveBotHostIds } from './bot-catalog-snapshot'
+import { isPairedWebClientWindow } from '@/app-shell/chrome/desktop-window-chrome'
 
 /** A bot as listed, stamped with the host that listed it. Ids are random per host, so never a bare id. */
 export type BotOnHost = { readonly hostId: ExecutionHostId }
@@ -32,6 +33,18 @@ export function isSameBot(bot: BotRef, ref: BotRef): boolean {
 export function useStableBotRef(bot: BotRef): BotRef {
   const { hostId, id } = bot
   return useMemo(() => ({ hostId, id }), [hostId, id])
+}
+
+/** Another computer's Orb is that computer's own, so nothing here lists it; a paired web window's computer is its server. */
+function isOtherComputersOrb(bot: BotOnHost & { role?: string }): boolean {
+  return bot.role === 'orb' && bot.hostId !== LOCAL_EXECUTION_HOST_ID && !isPairedWebClientWindow()
+}
+
+/** `bots` without other computers' Orbs; the same list when it has none. */
+export function withoutOtherComputersOrbs<B extends BotOnHost & { role?: string }>(
+  bots: readonly B[]
+): readonly B[] {
+  return bots.some(isOtherComputersOrb) ? bots.filter((bot) => !isOtherComputersOrb(bot)) : bots
 }
 
 export type BotHost = { hostId: ExecutionHostId; target: RuntimeClientTarget }

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useContext, useMemo } from 'react'
 import type { AgentDotState } from '@/components/agent/status/AgentStateDot'
 import { AgentTypeIcon } from '@/components/agent/icons/agent-type-icon'
 import { useTranslate, type Translate } from '@/i18n/use-translate'
@@ -46,6 +46,8 @@ import {
   agentMessageRowFallback,
   agentMessageRowRecipientName
 } from './agent-message-row-lead'
+import { AgentHubOrbComposerContext } from '../../../agent-hub/agent-hub-orb-composer'
+import { AgentHubOrbBotMessage } from '../../../agent-hub/AgentHubOrbBotMessage'
 import { NativeChatWaitingAgentMailActions } from '../../queue/NativeChatWaitingAgentMailActions'
 
 /** The one word drawn before the name for a start, a hand-off or a task; a plain message draws none. */
@@ -119,6 +121,22 @@ export function NativeChatAgentMessageCard({
   // Not taken by the agent yet: dimmed, with no time, until its delivered row replaces it in place.
   const waiting = message.queued === true
   const waitingId = agentMessageWaitingQueuedId(message)
+  const inOrb = useContext(AgentHubOrbComposerContext) !== null
+  const senderBot = useAgentMessageSenderBot(sender, worktreeId, target, dispatchId)
+  if (inOrb && (senderBot || (sender?.bot && sender.host))) {
+    return (
+      <AgentHubOrbBotMessage
+        messageId={message.id}
+        name={label}
+        bot={senderBot}
+        carried={senderBot ? null : { avatar: sender?.botAvatar ?? null }}
+        subject={items[0]?.title ?? null}
+        host={sender?.host ?? null}
+        timestamp={message.timestamp}
+        text={text}
+      />
+    )
+  }
   return (
     <NativeChatAgentMessageRow
       className={waiting ? 'w-full opacity-70' : 'w-full'}

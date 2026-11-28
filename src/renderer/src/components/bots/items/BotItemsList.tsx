@@ -21,6 +21,7 @@ import {
   type BotItemGroups
 } from '../../../../../shared/bots/bot-item-groups'
 import { botErrorMessage } from '../bot-presentation'
+import { openBotSession } from '../bot-session-open'
 import { BotPanelSectionHeader } from '../BotPanelSection'
 import { useBotPanelFold, type BotPanelFoldId } from '../use-bot-panel-fold'
 import { BotNeedsYouSection, type BotNeedsYouAsks } from '../BotNeedsYouSection'
@@ -147,6 +148,8 @@ export function BotItemsList(props: BotItemsListProps): React.JSX.Element {
   const act = useLatestHandler((item: BotItem, action: BotItemRowAction): void => {
     if (action.kind === 'open') {
       onOpen(item)
+    } else if (action.kind === 'chat') {
+      openBotSession(botOf(item), item.chat.id)
     } else if (action.kind === 'done') {
       void move([item], 'done')
     } else {
