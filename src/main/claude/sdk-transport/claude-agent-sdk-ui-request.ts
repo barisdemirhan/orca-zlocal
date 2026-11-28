@@ -1,5 +1,4 @@
-import type { Query } from '@anthropic-ai/claude-agent-sdk'
-import type { ClaudeControlOptions } from './claude-agent-sdk-control-requests'
+import type { ClaudeControlOptions, ClaudeControlQuery } from './claude-agent-sdk-control-requests'
 
 const UI_REQUEST_TIMEOUT_MS = 5000
 
@@ -10,7 +9,7 @@ type ClaudeQueryRawRequester = {
 }
 
 function claudeQueryRawRequester(
-  query: Query
+  query: ClaudeControlQuery
 ): ((body: Record<string, unknown>) => Promise<unknown>) | null {
   const request = (query as unknown as ClaudeQueryRawRequester).request
   return typeof request === 'function' ? (body) => request.call(query, body) : null
@@ -24,7 +23,7 @@ type RunControl = <T>(
 
 /** One internal mod-UI control request answering the reply's payload; rejects when this SDK has no raw request. */
 export function createClaudeUiRequest(
-  query: Query,
+  query: ClaudeControlQuery,
   runControl: RunControl
 ): (body: Record<string, unknown>, options?: ClaudeControlOptions) => Promise<unknown> {
   return (body, options) => {
@@ -56,7 +55,9 @@ export type ClaudeUiHost = {
 type ClaudeQueryUiHostSetter = { setUiHost?: (host: ClaudeUiHost) => void }
 
 /** Registers `host` on the SDK query; undefined when this SDK has no `setUiHost`. */
-export function createClaudeUiHostSetter(query: Query): ((host: ClaudeUiHost) => void) | undefined {
+export function createClaudeUiHostSetter(
+  query: ClaudeControlQuery
+): ((host: ClaudeUiHost) => void) | undefined {
   const setUiHost = (query as unknown as ClaudeQueryUiHostSetter).setUiHost
   return typeof setUiHost === 'function' ? (host) => setUiHost.call(query, host) : undefined
 }
