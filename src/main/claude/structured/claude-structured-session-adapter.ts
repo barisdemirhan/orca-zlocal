@@ -123,15 +123,16 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
   }
 
   promptSuggestionInterestChanged(sessionId: string, wanted: boolean): void {
-    if (wanted) {
-      this.suggestionReaders.add(sessionId)
-    } else {
-      this.suggestionReaders.delete(sessionId)
-    }
+    this.suggestionReaders[wanted ? 'add' : 'delete'](sessionId)
     const session = this.sessions.get(sessionId)
     if (session) {
       syncClaudePromptSuggestionPause(session, wanted)
     }
+  }
+
+  readonly pluginUi: StructuredAgentSessionAdapter['pluginUi'] = {
+    act: (id, action) => this.sessions.get(id)?.pluginUi.act(action) ?? Promise.resolve(),
+    callClient: async (id, call) => (await this.sessions.get(id)?.pluginUi.callClient(call)) ?? null
   }
 
   /** Await exit publication after cleanup/cursor writes; unproven exits stay indexed for retry. */

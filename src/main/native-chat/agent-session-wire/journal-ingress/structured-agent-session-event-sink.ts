@@ -11,6 +11,7 @@ import type {
   AgentSessionPromptSuggestion,
   AgentSessionTurnActivity
 } from '../../../../shared/agent-session/agent-session-wire'
+import type { AgentSessionPluginSurfaceUpdate } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type { StructuredAgentSessionPublishOptions } from './structured-agent-session-dispatch'
 export type { StructuredAgentSessionPublishOptions } from './structured-agent-session-dispatch'
 import type { SqlAgentSessionJournal } from '../../agent-session-journal/journal-sql-store'
@@ -116,6 +117,8 @@ export type StructuredAgentSessionEventSink = StructuredAgentSessionTransitionSi
   setActivity?(activity: AgentSessionTurnActivity | null): void
   /** Never journaled; null clears the session's suggestion. */
   setPromptSuggestion?(suggestion: AgentSessionPromptSuggestion | null): void
+  /** Never journaled. A status list replaces the last (empty clears); a toast reaches only readers attached now. */
+  setPluginSurfaces?(update: AgentSessionPluginSurfaceUpdate): void
   tryAppendItem?(
     identity: AgentJournalItemIdentity,
     body: AgentJournalItemBody,
@@ -183,6 +186,7 @@ export type StructuredAgentSessionEventTarget = {
   /** Who is subscribed; `read` runs only when one of them can take what it reads. Null for nobody. */
   liveTextReaders?: () => LiveTextReaders | null
   publishLiveText?: (read: LiveTextRead) => void
+  publishPluginSurfaces?: (update: AgentSessionPluginSurfaceUpdate) => void
   /** Turn rows any writer's commit left terminal on this journal. */
   observeSettledTurns?: (listener: (turnItemIds: readonly string[]) => void) => () => void
 }

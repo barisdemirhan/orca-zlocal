@@ -15,6 +15,8 @@ it('settles a follow-up cancelled by the automatic dead-login Stop as not run', 
     childWork: { observe: () => {} },
     backgroundTasks: { observe: () => {} },
     commands: { observe: () => false },
+    pluginSurfaces: { observe: () => null },
+    pluginUi: { observe: () => {} },
     dispatchSequence: 0,
     dispatchWaiters: [],
     retiredDispatchWaiters: []

@@ -52,6 +52,7 @@ import type {
 } from '../startup/structured-agent-session-startup-attempt-contract'
 import type { AgentSessionCreatePhaseRecorder } from '../../../observability/agent-session-instrumentation'
 import type { AgentSessionStartFailure } from '../startup/structured-agent-session-start-failure'
+import type { StructuredAgentSessionPluginUiAdapter } from './structured-agent-session-plugin-ui-adapter'
 import type {
   StructuredAgentSessionProviderOpen,
   StructuredAgentSessionProviderOpenResult
@@ -369,6 +370,7 @@ export type StructuredAgentSessionAdapter = AdapterControls & {
   stopProviderNaming?(): void
   /** The session gained its first, or lost its last, reader that shows prompt suggestions. */
   promptSuggestionInterestChanged?(sessionId: string, wanted: boolean): void
+  pluginUi?: StructuredAgentSessionPluginUiAdapter
   /** True proves child exit; root/processless verdicts throw only after finalization (stopAgentSessionProviderRoot). */
   closeSession?(
     sessionId: string,

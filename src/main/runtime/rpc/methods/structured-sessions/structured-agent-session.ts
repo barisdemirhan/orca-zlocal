@@ -3,6 +3,8 @@ import { STRUCTURED_AGENT_SESSION_MCP_METHODS } from './catalog/structured-agent
 import { STRUCTURED_AGENT_SESSION_AUTO_REVIEW_METHODS } from './conversation/structured-agent-session-auto-review-approval'
 import { STRUCTURED_AGENT_SESSION_ACCOUNT_USAGE_METHODS } from './catalog/structured-agent-session-account-usage'
 import { STRUCTURED_AGENT_SESSION_USAGE_LIMIT_CONTINUE_METHODS } from './catalog/structured-agent-session-usage-limit-continue'
+import { STRUCTURED_AGENT_SESSION_PLUGIN_UI_ACTION_METHODS } from './conversation/structured-agent-session-plugin-ui-action'
+import { STRUCTURED_AGENT_SESSION_PLUGIN_UI_CLIENT_METHODS } from './conversation/structured-agent-session-plugin-ui-client'
 import { STRUCTURED_AGENT_SESSION_SKIP_ASYNC_QUESTIONS_METHODS } from './conversation/structured-agent-session-skip-async-questions'
 import { STRUCTURED_AGENT_SESSION_CLOSE_METHOD } from './conversation/structured-agent-session-close-method'
 import { STRUCTURED_AGENT_SESSION_DELETE_METHOD } from './conversation/structured-agent-session-delete-method'
@@ -219,6 +221,8 @@ export const STRUCTURED_AGENT_SESSION_METHODS = [
   ...STRUCTURED_AGENT_SESSION_RESTART_RESUME_METHODS,
   ...STRUCTURED_AGENT_SESSION_USAGE_LIMIT_CONTINUE_METHODS,
   ...STRUCTURED_AGENT_SESSION_SKIP_ASYNC_QUESTIONS_METHODS,
+  ...STRUCTURED_AGENT_SESSION_PLUGIN_UI_ACTION_METHODS,
+  ...STRUCTURED_AGENT_SESSION_PLUGIN_UI_CLIENT_METHODS,
   ...STRUCTURED_AGENT_SESSION_STATUS_METHODS,
   ...STRUCTURED_AGENT_SESSION_TURN_COMPLETION_METHODS,
   ...STRUCTURED_AGENT_SESSION_THREAD_GOAL_METHODS,

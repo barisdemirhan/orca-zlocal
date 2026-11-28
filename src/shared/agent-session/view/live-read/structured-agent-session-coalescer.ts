@@ -13,6 +13,9 @@ function bypassCoalescing(event: AgentSessionSubscribeEvent): boolean {
     // Deliver queue lists immediately or the queued response removes Sending before its replacement card arrives.
     event.queuedMessages !== undefined ||
     event.currentRequests !== undefined ||
+    // A toast or prompt fill fires once, so it must not wait behind or merge with another frame.
+    event.pluginToasts !== undefined ||
+    event.pluginPromptFills !== undefined ||
     event.batch.removedItemIds.length > 0 ||
     // Replies and reasoning are what stream; every other row applies at once.
     event.batch.items.some(
@@ -112,6 +115,21 @@ function mergeBatchHeader(left: Batch, right: Batch): Batch {
               ? right.promptSuggestion
               : (left.promptSuggestion ?? null)
         }
+      : {}),
+    ...(right.pluginStatuses !== undefined || left.pluginStatuses !== undefined
+      ? { pluginStatuses: right.pluginStatuses ?? left.pluginStatuses }
+      : {}),
+    ...(right.pluginPromptHint !== undefined || left.pluginPromptHint !== undefined
+      ? {
+          pluginPromptHint:
+            right.pluginPromptHint !== undefined ? right.pluginPromptHint : left.pluginPromptHint
+        }
+      : {}),
+    ...(right.pluginPane !== undefined || left.pluginPane !== undefined
+      ? { pluginPane: right.pluginPane !== undefined ? right.pluginPane : left.pluginPane }
+      : {}),
+    ...(right.pluginBand !== undefined || left.pluginBand !== undefined
+      ? { pluginBand: right.pluginBand !== undefined ? right.pluginBand : left.pluginBand }
       : {}),
     ...(latestTurn !== undefined ? { latestTurn } : {}),
     ...(actionablePromptIds !== undefined ? { actionablePromptIds } : {}),

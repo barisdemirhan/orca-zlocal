@@ -8,6 +8,11 @@ import {
   providerDiagnostic,
   withProviderDiagnostic
 } from '../../../shared/agent-session/failures/agent-session-failure'
+import {
+  createClaudeUiHostSetter,
+  createClaudeUiRequest,
+  type ClaudeUiHost
+} from './claude-agent-sdk-ui-request'
 
 export class ClaudeControlRequestError extends Error {
   constructor(
@@ -230,6 +235,10 @@ export type ClaudeControlSurface = {
   getContextUsage: (options?: ClaudeControlOptions) => Promise<unknown>
   /** Names `sessionId` as the user's rename; refused once the CLI has moved to another session. */
   renameSession: (title: string, sessionId: string, options?: ClaudeControlOptions) => Promise<void>
+  /** One internal mod-UI control request (`ui_attach`, `ui_render`, `ui_press`) answering the reply's payload; rejects when this SDK has no raw request. */
+  uiRequest?: (body: Record<string, unknown>, options?: ClaudeControlOptions) => Promise<unknown>
+  /** Registers the handler for engine-initiated mod-UI requests (`ui_prompt_fill`); absent when this SDK has none. */
+  setUiHost?: (host: ClaudeUiHost) => void
   /** The `/mcp` panel's requests; test connections leave it out. */
   mcp?: ClaudeMcpControls
   /** Stops or restarts the CLI generating prompt suggestions; a new process starts unpaused. */
@@ -329,6 +338,8 @@ export function createClaudeControlSurface(query: ClaudeControlQuery): ClaudeCon
             )
           )
     },
+    uiRequest: createClaudeUiRequest(query, runClaudeControl),
+    setUiHost: createClaudeUiHostSetter(query),
     getSettings: (options) => {
       const read = claudeQuerySettingsReader(query)
       return read

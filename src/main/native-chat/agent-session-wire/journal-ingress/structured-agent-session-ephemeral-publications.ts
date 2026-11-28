@@ -2,6 +2,7 @@ import type {
   AgentSessionPromptSuggestion,
   AgentSessionTurnActivity
 } from '../../../../shared/agent-session/agent-session-wire'
+import type { AgentSessionPluginSurfaceUpdate } from '../../../../shared/agent-session/plugin-surfaces/agent-session-plugin-surface-wire'
 import type { StructuredAgentSessionSinkQueue } from './structured-agent-session-event-sink-queue'
 
 /** State readers see but the journal never keeps; a newer value replaces one still buffered. */
@@ -10,6 +11,7 @@ export function structuredAgentSessionEphemeralPublications(
 ): {
   setActivity: (activity: AgentSessionTurnActivity | null) => void
   setPromptSuggestion: (suggestion: AgentSessionPromptSuggestion | null) => void
+  setPluginSurfaces: (update: AgentSessionPluginSurfaceUpdate) => void
 } {
   return {
     setActivity: (activity) => {
@@ -24,6 +26,25 @@ export function structuredAgentSessionEphemeralPublications(
         bytes: Buffer.byteLength(JSON.stringify(suggestion), 'utf8') + 64,
         publicationKey: 'prompt-suggestion',
         run: (bound) => bound.publishPromptSuggestion?.(suggestion)
+      })
+    },
+    setPluginSurfaces: (update) => {
+      queue.submit({
+        bytes: Buffer.byteLength(JSON.stringify(update), 'utf8') + 64,
+        // A key per toast: coalescing by one shared key would drop all but the newest.
+        // Each other update carries one field, so its key keeps that field's newest value only.
+        publicationKey: update.toast
+          ? `plugin-toast:${update.toast.id}`
+          : update.promptFill
+            ? `plugin-prompt-fill:${update.promptFill.id}`
+            : update.promptHint !== undefined
+              ? 'plugin-prompt-hint'
+              : update.pane !== undefined
+                ? 'plugin-pane'
+                : update.band !== undefined
+                  ? 'plugin-band'
+                  : 'plugin-statuses',
+        run: (bound) => bound.publishPluginSurfaces?.(update)
       })
     }
   }

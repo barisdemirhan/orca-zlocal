@@ -266,6 +266,7 @@ async function runAttachUnderAbort(
           publish: (activity) => context.subscribers.publish(sessionId, attached.journal, activity),
           publishPromptSuggestion: (suggestion) =>
             context.subscribers.promptSuggestions.publish(sessionId, suggestion),
+          ...context.subscribers.pluginSurfaces.sinkPublisher(sessionId, owner === 'acquired'),
           liveTextReaders: () => context.subscribers.liveTextReaders(sessionId),
           publishLiveText: (read) => {
             if (context.sessions.get(sessionId)?.journal === attached.journal) {

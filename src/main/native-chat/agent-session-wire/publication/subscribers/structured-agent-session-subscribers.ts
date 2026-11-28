@@ -11,17 +11,14 @@ import type {
   AgentSessionSubscribeEvent,
   AgentSessionTurnActivity
 } from '../../../../../shared/agent-session/agent-session-wire'
-import {
-  emitSubscriberFrame,
-  subscriberCommandsChanged
-} from './agent-session-subscriber-frame-fields'
+import { emitSubscriberFrame } from './agent-session-subscriber-frame-fields'
 import {
   publishSubscriberSnapshot,
   type SubscriberDeliveryPort
 } from './agent-session-subscriber-catch-up'
 import type { SqlAgentSessionJournal as AgentSessionJournal } from '../../../agent-session-journal/journal-sql-store'
 import * as liveText from './agent-session-subscriber-live-text'
-import { emptyAgentSessionBatch } from './agent-session-empty-batch'
+import { republishSubscriberCommands } from './agent-session-commands-republish'
 import { rememberLatestPerSession } from './structured-agent-session-activity-retention'
 import { resumeSubscriber } from './agent-session-stop-note-refresh'
 import { SubscriberFrameSuperseded } from './agent-session-subscriber-frame-capture'
@@ -29,6 +26,7 @@ import type { SubscriberDeliveryRetention } from './agent-session-subscriber-del
 import { SubscriberLanes } from './agent-session-subscriber-lane-runners'
 import { trackSubscriberRetention } from './agent-session-subscriber-retention'
 import { AgentSessionPromptSuggestionDelivery } from './agent-session-prompt-suggestion-delivery'
+import { AgentSessionPluginSurfaceDelivery } from './agent-session-plugin-surface-delivery'
 
 // Advance subscriber cursors independently, sending resets or reducer-projected batches as needed.
 
@@ -58,12 +56,17 @@ export class AgentSessionSubscribers {
     sendTail: (subscriber, journal) => this.sendLiveTail(subscriber, journal, subscriber.fence),
     session: (sessionId) => this.bySession.get(sessionId)
   })
+  private readonly ephemeralPort = {
+    subscribers: (sessionId: string) => this.subscribers(sessionId),
+    send: (subscriber: Subscriber, event: () => AgentSessionSubscribeEvent) =>
+      this.enqueue(subscriber, () => this.emit(subscriber, event())),
+    now: () => this.now()
+  }
   readonly promptSuggestions = new AgentSessionPromptSuggestionDelivery({
-    subscribers: (sessionId) => this.subscribers(sessionId),
-    send: (subscriber, event) => this.enqueue(subscriber, () => this.emit(subscriber, event())),
-    now: () => this.now(),
+    ...this.ephemeralPort,
     onInterestChanged: (id, wanted) => this.hooks.onPromptSuggestionInterest?.(id, wanted)
   })
+  readonly pluginSurfaces = new AgentSessionPluginSurfaceDelivery(this.ephemeralPort)
 
   constructor(private readonly hooks: AgentSessionSubscribersHooks = {}) {
     trackSubscriberRetention(this)
@@ -117,6 +120,7 @@ export class AgentSessionSubscribers {
       await this.sendLiveTail(subscriber, journal, input.fence)
     })
     this.promptSuggestions.opened(subscriber)
+    this.pluginSurfaces.opened(subscriber)
     const { sessionId, id } = subscriber
     return () => this.close(sessionId, id)
   }
@@ -216,24 +220,14 @@ export class AgentSessionSubscribers {
   }
 
   republishCommands(retired?: (sessionId: string) => boolean): void {
-    const hostNow = this.now()
-    for (const sessionId of this.bySession.keys()) {
-      for (const subscriber of this.subscribers(sessionId)) {
-        const invalidated = subscriber.commandsOnRequest && retired?.(sessionId)
-        if (invalidated || subscriberCommandsChanged(this.hooks, subscriber)) {
-          this.enqueue(subscriber, () =>
-            this.emit(subscriber, {
-              type: 'batch',
-              sessionId,
-              batch: emptyAgentSessionBatch(subscriber.cursor),
-              fence: subscriber.fence,
-              hostNow,
-              ...(invalidated ? { commandsChanged: true as const } : {})
-            })
-          )
-        }
-      }
-    }
+    republishSubscriberCommands({
+      hooks: this.hooks,
+      sessionIds: this.bySession.keys(),
+      subscribers: this.subscribers,
+      retired,
+      hostNow: this.now(),
+      send: (subscriber, event) => this.enqueue(subscriber, () => this.emit(subscriber, event))
+    })
   }
 
   refreshForkSources(

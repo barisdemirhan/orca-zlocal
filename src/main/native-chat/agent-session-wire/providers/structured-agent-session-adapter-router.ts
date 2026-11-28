@@ -4,6 +4,7 @@ import type { AgentSessionJournalIdentity } from '../../../../shared/agent-sessi
 import type { AgentSessionExecutionLocation } from '../../../../shared/agent-session/lifecycle/agent-session-record'
 import type { StructuredAgentSessionAdapter as Adapter } from './structured-agent-session-adapter'
 import { routeStructuredAgentSessionVoice } from '../structured-agent-session-voice-adapter'
+import { routeStructuredAgentSessionPluginUi } from './structured-agent-session-plugin-ui-adapter'
 import type { StructuredAgentSessionAcquisitionReceipt } from '../startup/structured-agent-session-startup-attempt-contract'
 import type {
   StructuredAgentRegistration,
@@ -110,6 +111,8 @@ export class StructuredAgentSessionAdapterRouter implements Adapter {
       adapter.promptSuggestionInterestChanged?.(sessionId, wanted)
     }
   }
+
+  readonly pluginUi = routeStructuredAgentSessionPluginUi((id) => this.liveOwnerOrNull(id))
 
   renameProviderSession: NonNullable<Adapter['renameProviderSession']> = (input) =>
     this.capabilityOwner(
