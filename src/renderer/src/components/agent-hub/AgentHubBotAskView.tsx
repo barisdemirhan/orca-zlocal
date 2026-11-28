@@ -67,6 +67,33 @@ function StepNav({
   )
 }
 
+/** What led to the question, folded to three lines. */
+function AskContext({ text }: { text: string }): React.JSX.Element {
+  const [unfolded, setUnfolded] = useState(false)
+  const long = text.split('\n').length > 3 || text.length > 280
+  return (
+    <div className="flex min-w-0 flex-col items-start gap-1">
+      <div className={cn('min-w-0 self-stretch', long && !unfolded && 'line-clamp-3')}>
+        <BotItemMarkdown text={text} className="text-xs leading-[17px] text-muted-foreground" />
+      </div>
+      {long ? (
+        <Button
+          type="button"
+          variant="link-muted"
+          size="inlineInherit"
+          className="text-xs"
+          aria-expanded={unfolded}
+          onClick={() => setUnfolded(!unfolded)}
+        >
+          {unfolded
+            ? translate('agentHub.bots.ask.contextLess', 'Show less')
+            : translate('agentHub.bots.ask.contextMore', 'Show more')}
+        </Button>
+      ) : null}
+    </div>
+  )
+}
+
 function splitHeld(held: string | null): readonly string[] {
   return held ? held.split(', ') : []
 }
@@ -279,6 +306,7 @@ export function AgentHubBotAskView({
           <StepNav {...ask.nav} onStep={ask.step} />
         </div>
       ) : null}
+      {ask.context ? <AskContext text={ask.context} /> : null}
       {ask.folded.length > 0 ? (
         <div className="flex flex-col gap-1">
           {ask.folded.map(({ index, question, words, reopens }) => (

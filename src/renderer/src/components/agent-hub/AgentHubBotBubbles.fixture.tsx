@@ -22,6 +22,7 @@ const ask: AgentHubBotAskModel = {
   number: 7,
   title: 'Migration needs your call',
   total: 1,
+  context: 'Staging holds last week’s data; production locks `orders` for about four minutes.',
   folded: [],
   openKey: 'q0',
   question: 'Which environment should the migration run on first?',

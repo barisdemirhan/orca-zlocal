@@ -25801,7 +25801,9 @@
         "later": "稍后",
         "openItem": "打开 #{{number}}",
         "ownWords": "用你自己的话回复",
-        "useThese": "使用这些"
+        "useThese": "使用这些",
+        "contextMore": "展开",
+        "contextLess": "收起"
       },
       "tab": {
         "alreadyRead": "已读",

@@ -26232,7 +26232,9 @@
         "later": "Más tarde",
         "openItem": "Abrir #{{number}}",
         "ownWords": "Responde con tus propias palabras",
-        "useThese": "Usar estas"
+        "useThese": "Usar estas",
+        "contextMore": "Mostrar más",
+        "contextLess": "Mostrar menos"
       },
       "tab": {
         "alreadyRead": "Ya leído",

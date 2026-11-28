@@ -35,6 +35,8 @@ export type AgentHubBotAskModel = {
   title: string
   /** The ask's question lines (at least one). */
   total: number
+  /** What led to the question: the ask's own context (`--comment`), else the item's description. */
+  context: string
   /** The other lines that are answered or held, as "Question → answer". */
   folded: readonly { index: number; question: string; words: string; reopens: boolean }[]
   /** Names the open question: a view keeps its typed words and picks per key. */
@@ -167,6 +169,8 @@ export function useAgentHubBotAskSteps(bot: Bot, item: BotItem): AgentHubBotAskM
     number: live.number,
     title: live.title,
     total,
+    // A comment-only ask is its own question line, so nothing more leads to it.
+    context: decision ? shape.body.trim() || (live.description?.trim() ?? '') : '',
     folded,
     openKey: `${steps?.askId ?? askId ?? ''}:${lineIndex}`,
     question,

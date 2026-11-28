@@ -26201,7 +26201,9 @@
         "later": "Later",
         "openItem": "Open #{{number}}",
         "ownWords": "Reply in your own words",
-        "useThese": "Use these"
+        "useThese": "Use these",
+        "contextMore": "Show more",
+        "contextLess": "Show less"
       },
       "mirror": "Open in mirror",
       "connector": "{{name}} needs you",

@@ -25390,7 +25390,9 @@
         "later": "あとで",
         "openItem": "#{{number}} を開く",
         "ownWords": "自分の言葉で返信",
-        "useThese": "これらを使う"
+        "useThese": "これらを使う",
+        "contextMore": "もっと見る",
+        "contextLess": "表示を少なくする"
       },
       "tab": {
         "alreadyRead": "既読です",

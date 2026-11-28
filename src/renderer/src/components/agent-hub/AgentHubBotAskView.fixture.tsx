@@ -22,6 +22,8 @@ function model(patch: Partial<AgentHubBotAskModel>): AgentHubBotAskModel {
     number: 7,
     title: 'Migration needs your call',
     total: 1,
+    context:
+      'The `orders` migration adds a required column. CI is green and the rollback script is ready.',
     folded: [],
     openKey: 'q0',
     question: questions[0].question,
@@ -77,8 +79,20 @@ const multiPick = model({
   question: 'Which regions should get the rollout?',
   replies: ['eu-west', 'us-east', 'ap-south'].map((label, i) => ({ label, recommended: i === 0 }))
 })
-const freeText = model({ question: 'What should the release be called?', replies: [] })
+const freeText = model({
+  question: 'What should the release be called?',
+  replies: [],
+  context: ''
+})
 const single = model({})
+const longContext = model({
+  context: [
+    'The `orders` migration adds a required column and backfills it from the invoices table.',
+    'On production that locks the table for about four minutes; staging holds a copy of last week’s data, so a dry run there is safe.',
+    'CI is green on the branch, the rollback script is ready, and Olcay asked to hear before anything touches production.',
+    'The backfill can also run in batches overnight instead.'
+  ].join('\n\n')
+})
 const sent = model({ phase: 'answered', total: 5, answeredCount: 5 })
 
 const render = (ask: AgentHubBotAskModel) => (
@@ -105,6 +119,10 @@ export const multiPickQuestion = defineFixture({
 export const freeTextQuestion = defineFixture({
   width: both.narrow,
   render: () => render(freeText)
+})
+export const longContextFolded = defineFixture({
+  width: both.narrow,
+  render: () => render(longContext)
 })
 export const singleQuestion = defineFixture({ width: both.narrow, render: () => render(single) })
 export const singleQuestionWide = defineFixture({ width: both.wide, render: () => render(single) })
