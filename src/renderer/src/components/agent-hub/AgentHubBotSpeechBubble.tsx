@@ -68,7 +68,7 @@ export function AgentHubBotSpeechBubble({
   tone: AgentHubBotBubbleTone
   /** "asks you", "finished", "could not finish", "3 updates". */
   headline: string
-  /** Where it came from, as "Home chat · #7". */
+  /** Where the lead came from, as "Home Chat · #7 Fix the login": its own line under the header. */
   from: string | null
   /** Set only when the owner has bots on several computers. */
   hostLabel: string | null
@@ -117,7 +117,6 @@ export function AgentHubBotSpeechBubble({
                 {' · '}
                 {headline}
               </span>
-              {from ? <span className="text-muted-foreground">{` · ${from}`}</span> : null}
             </span>
             {hostLabel ? (
               <span className="shrink-0 rounded-full bg-foreground/[0.07] px-1.5 py-px text-[10px] text-muted-foreground">
@@ -128,6 +127,11 @@ export function AgentHubBotSpeechBubble({
               {formatWorkspaceCleanupRelativeTime(at)}
             </span>
           </div>
+          {from ? (
+            <p title={from} className="-mt-1 truncate text-2xs text-muted-foreground">
+              {from}
+            </p>
+          ) : null}
           {children}
           <Button
             type="button"

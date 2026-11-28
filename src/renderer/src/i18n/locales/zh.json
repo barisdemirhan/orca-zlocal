@@ -26597,7 +26597,6 @@
       "chipOne": "1 个问题",
       "couldNotFinish": "未能完成",
       "finished": "已完成",
-      "fromHome": "主聊天 · #{{value0}}",
       "fromHomeChat": "主聊天",
       "fromSuggestion": "建议",
       "fromWorker": "Worker · {{value0}}",

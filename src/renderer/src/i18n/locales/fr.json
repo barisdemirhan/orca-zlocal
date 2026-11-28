@@ -27051,7 +27051,6 @@
       "chipOne": "1 question",
       "couldNotFinish": "n'a pas pu terminer",
       "finished": "a terminé",
-      "fromHome": "Chat principal · #{{value0}}",
       "fromHomeChat": "Chat principal",
       "fromSuggestion": "Suggestion",
       "fromWorker": "Worker · {{value0}}",

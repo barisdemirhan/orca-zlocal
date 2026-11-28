@@ -69,7 +69,12 @@ export const all = defineFixture({
   width: 460,
   render: () => (
     <Stage>
-      <AgentHubBotSpeechBubble {...frame} tone="ask" headline="asks you" from="Home chat · #7">
+      <AgentHubBotSpeechBubble
+        {...frame}
+        tone="ask"
+        headline="asks you"
+        from="Release prep · #7 Ship the login fix"
+      >
         <AgentHubBotAskView
           ask={ask}
           variant="plain"
@@ -96,7 +101,12 @@ export const all = defineFixture({
       >
         <AgentHubBotRunsBody bot={bot} subject={{ type: 'runs', runs: [run(true)] }} />
       </AgentHubBotSpeechBubble>
-      <AgentHubBotSpeechBubble {...frame} tone="ask" headline="3 updates" from={null}>
+      <AgentHubBotSpeechBubble
+        {...frame}
+        tone="ask"
+        headline="3 updates"
+        from="Home Chat · #59 Maintenance mode for #876"
+      >
         <AgentHubBotAskView ask={ask} variant="plain" />
         <Button size="xs" variant="outline" className="self-start" onClick={no}>
           Open in Inbox

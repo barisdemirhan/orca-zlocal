@@ -170,7 +170,7 @@ export function AgentHubBotAlertCard({
       bot={bot}
       tone={tone}
       headline={headlineOf(tone, updates)}
-      from={updates > 1 ? null : botAlertFrom(lead)}
+      from={botAlertFrom(lead)}
       hostLabel={shownHostLabel}
       at={at}
       offline={offline}

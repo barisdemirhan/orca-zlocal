@@ -26602,7 +26602,6 @@
       "chipOne": "질문 1개",
       "couldNotFinish": "끝내지 못했습니다",
       "finished": "완료",
-      "fromHome": "홈 채팅 · #{{value0}}",
       "fromHomeChat": "홈 채팅",
       "fromSuggestion": "제안",
       "fromWorker": "워커 · {{value0}}",

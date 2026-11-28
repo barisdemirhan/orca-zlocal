@@ -27061,7 +27061,6 @@
       "chipOne": "1 pregunta",
       "couldNotFinish": "no pudo terminar",
       "finished": "terminó",
-      "fromHome": "Chat principal · #{{value0}}",
       "fromHomeChat": "Chat principal",
       "fromSuggestion": "Sugerencia",
       "fromWorker": "Trabajador · {{value0}}",

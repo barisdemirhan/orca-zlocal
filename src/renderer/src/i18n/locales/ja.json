@@ -26194,7 +26194,6 @@
       "chipOne": "質問 1 件",
       "couldNotFinish": "完了できませんでした",
       "finished": "完了",
-      "fromHome": "ホームチャット · #{{value0}}",
       "fromHomeChat": "ホームチャット",
       "fromSuggestion": "提案",
       "fromWorker": "ワーカー · {{value0}}",

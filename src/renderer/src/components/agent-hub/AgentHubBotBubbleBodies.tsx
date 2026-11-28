@@ -10,6 +10,7 @@ import { manageConnectors } from '../bots/AddConnectorDialog'
 import { botConnectorTitleText } from '../bots/bot-connector-titles'
 import { openBotSession } from '../bots/bot-session-open'
 import { openBotItemInHome } from '../bots/items/bot-item-open'
+import { botItemChatName } from '../bots/items/BotItemsFilter'
 import { dismissSuggestion, startSuggestion } from '../bots/bot-up-next-actions'
 import { AgentHubAlertQuickOptions } from './AgentHubAlertQuickOptions'
 import { AgentHubBotAskView } from './AgentHubBotAskView'
@@ -19,6 +20,7 @@ import type { AgentHubRequestPresentation } from './agent-hub-request-presentati
 import { useAgentHubBotAskSteps } from './use-agent-hub-bot-ask-steps'
 import type { AgentHubBotAlert, AgentHubBotAlertSubject } from './agent-hub-alerts'
 import type { Bot } from '../../../../shared/bot-types'
+import { formatBotItemNumber } from '../../../../shared/bots/bot-items'
 
 type Subject<T extends AgentHubBotAlertSubject['type']> = Extract<
   AgentHubBotAlertSubject,
@@ -320,9 +322,7 @@ export function botAlertFrom(alert: AgentHubBotAlert): string | null {
   const { subject } = alert.bot
   switch (subject.type) {
     case 'item':
-      return translate('agentHub.botBubble.fromHome', 'Home chat · #{{value0}}', {
-        value0: subject.item.number
-      })
+      return `${botItemChatName(subject.item.chat, translate)} · ${formatBotItemNumber(subject.item.number)} ${subject.item.title}`
     case 'signin':
       return botConnectorTitleText(subject.connector.title)
     case 'access':
