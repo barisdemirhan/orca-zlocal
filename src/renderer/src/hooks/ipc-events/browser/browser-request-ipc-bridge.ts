@@ -1,3 +1,4 @@
+import { openExtensionTabBesideClientHostedPage } from './browser-extension-client-hosted-tab-create'
 import { translate } from '@/i18n/i18n'
 import { closeBrowserTabWithReply } from './browser-tab-close-with-reply'
 import { useAppStore } from '../../../store/index'
@@ -55,6 +56,10 @@ export function registerBrowserRequestIpcBridge(unsubs: (() => void)[]): void {
     window.api.ui.onRequestTabCreate((data) => {
       try {
         const store = useAppStore.getState()
+        if (data.clientHostedSourcePageId) {
+          openExtensionTabBesideClientHostedPage(store, data)
+          return
+        }
         // Why the fallback last: an extension's tab goes where its profile was last used only when
         // nothing is active, and only to a workspace this window still knows.
         const fallbackWorktreeId =

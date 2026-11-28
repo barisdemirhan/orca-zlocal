@@ -18,6 +18,8 @@ export function openClientHostedUrlBesideBrowserPage(args: {
   url: string
   activate: boolean
   onOpened?: (pageId: string) => void
+  /** Replaces the failure toast for callers that report the failure themselves. */
+  onFailed?: (error: unknown) => void
 }): void {
   const store = useAppStore.getState()
   const sourcePage = findPage(store.browserPagesByWorkspace, args.sourcePageId)
@@ -26,6 +28,10 @@ export function openClientHostedUrlBesideBrowserPage(args: {
     handle?.environmentId?.trim() || sourcePage?.browserRuntimeEnvironmentId?.trim() || null
   // A client-hosted row with no named runtime cannot ask the paired host, so keep the local opener.
   if (!environmentId) {
+    if (args.onFailed) {
+      args.onFailed(new Error('The page has no paired runtime to open a tab on'))
+      return
+    }
     openUrlInTabBesideBrowserPage(args)
     return
   }
@@ -51,7 +57,13 @@ export function openClientHostedUrlBesideBrowserPage(args: {
       failureLogMode: 'operation-only'
     },
     environmentId
-  ).catch(showClientCreationActionError)
+  )
+    .then((created) => {
+      if (!created) {
+        args.onFailed?.(new Error('The paired host could not open the tab'))
+      }
+    })
+    .catch(args.onFailed ?? showClientCreationActionError)
 }
 
 /** Local pages keep createBrowserTab. Client-hosted pages on a paired server follow the new-tab route. */

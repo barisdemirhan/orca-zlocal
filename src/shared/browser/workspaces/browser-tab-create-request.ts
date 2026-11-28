@@ -10,6 +10,7 @@ export type BrowserTabCreateRequest = {
   sessionPartition?: string
   activate?: boolean
   fallbackWorktreeId?: string
+  clientHostedSourcePageId?: string
   split?: BrowserTabSplitDirection
   splitFromTabId?: string
 }

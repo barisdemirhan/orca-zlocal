@@ -136,7 +136,13 @@ function openPopupForPage(
     openTab: (rawUrl) => {
       const resolved = resolveBrowserExtensionRequestedUrl(rawUrl, extension.id)
       if (resolved && (resolved.kind !== 'extension' || resolved.extensionId === extension.id)) {
-        void openBrowserExtensionTab(page.profileId, resolved.url, { active: true }).catch(() => {})
+        const clientHostedSourcePageId = browserManager.getTabIdForWebContentsId(page.contents.id)
+        void openBrowserExtensionTab(page.profileId, resolved.url, {
+          active: true,
+          ...(clientHostedSourcePageId ? { clientHostedSourcePageId } : {})
+        }).catch((error) => {
+          console.warn('[browser-extensions] popup could not open a tab:', error)
+        })
       }
     }
   })
