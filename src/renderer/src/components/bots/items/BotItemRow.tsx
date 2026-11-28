@@ -1,6 +1,14 @@
-// Hover or keyboard focus swaps the age for Done, Snooze, and More on open items.
+// Hover or keyboard focus swaps the age for Open chat, Done, Snooze, and More on open items.
 import { memo, useId } from 'react'
-import { Check, CircleCheck, CircleSlash, Clock, MoreHorizontal } from 'lucide-react'
+import {
+  Check,
+  CircleCheck,
+  CircleSlash,
+  Clock,
+  House,
+  MessageSquare,
+  MoreHorizontal
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -131,7 +139,11 @@ function sameRowProps(prev: BotItemRowProps, next: BotItemRowProps): boolean {
   )
 }
 
-export type BotItemRowAction = { kind: 'open' } | { kind: 'done' } | { kind: 'cancel' }
+export type BotItemRowAction =
+  | { kind: 'open' }
+  | { kind: 'chat' }
+  | { kind: 'done' }
+  | { kind: 'cancel' }
 
 function BotItemRowView({
   item,
@@ -153,6 +165,9 @@ function BotItemRowView({
   const closed = item.status === 'done' || item.status === 'canceled'
   const doneLabel = t('bots.items.row.done', 'Done')
   const snoozeLabel = t('bots.items.snooze.menu', 'Snooze')
+  const chatLabel = t('bots.items.row.openChat', 'Open chat')
+  // A deleted chat can't be opened.
+  const ChatIcon = item.chat.gone ? null : item.chat.kind === 'home' ? House : MessageSquare
   // Needs you's question, or what Waiting waits on, shows in the row's hover card; the row stays one
   // line like the others.
   const question = !stale && !snoozed && item.status === 'needs_you' ? item.question : null
@@ -269,6 +284,24 @@ function BotItemRowView({
             'pointer-events-none flex gap-0.5 opacity-0 group-has-[:focus-visible]/item:pointer-events-auto group-has-[:focus-visible]/item:opacity-100 group-hover/item:pointer-events-auto group-hover/item:opacity-100 has-[[aria-expanded=true]]:pointer-events-auto has-[[aria-expanded=true]]:opacity-100'
           )}
         >
+          {ChatIcon ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost-on-accent"
+                  size="icon-xs"
+                  aria-label={chatLabel}
+                  tabIndex={tabbable ? undefined : -1}
+                  onClick={() => onAction(item, { kind: 'chat' })}
+                >
+                  <ChatIcon className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={4}>
+                {chatLabel}
+              </TooltipContent>
+            </Tooltip>
+          ) : null}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -319,6 +352,12 @@ function BotItemRowView({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" {...menu.contentProps}>
+              {ChatIcon ? (
+                <DropdownMenuItem onSelect={() => onAction(item, { kind: 'chat' })}>
+                  <ChatIcon />
+                  {chatLabel}
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onSelect={() => onAction(item, { kind: 'done' })}>
                 <CircleCheck />
                 {t('bots.items.menu.done', 'Done')}

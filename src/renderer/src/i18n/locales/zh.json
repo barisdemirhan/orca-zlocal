@@ -29678,6 +29678,7 @@
       "row": {
         "done": "完成",
         "more": "更多",
+        "openChat": "打开聊天",
         "select": "选择“{{title}}”"
       },
       "selected": "已选择 {{count}} 项",

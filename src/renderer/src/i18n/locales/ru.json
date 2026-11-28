@@ -29204,6 +29204,7 @@
       "row": {
         "done": "Готово",
         "more": "Ещё",
+        "openChat": "Открыть чат",
         "select": "Выбрать {{title}}"
       },
       "selected": "Выбрано: {{count}}",

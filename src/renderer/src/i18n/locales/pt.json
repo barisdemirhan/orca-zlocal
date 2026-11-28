@@ -29394,6 +29394,7 @@
       "row": {
         "more": "Mais",
         "done": "Concluído",
+        "openChat": "Abrir chat",
         "select": "Selecionar {{title}}"
       },
       "snooze": {
