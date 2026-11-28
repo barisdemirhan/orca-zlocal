@@ -9,6 +9,7 @@ import type { VirtualItem } from '@tanstack/react-virtual'
 import { cn } from '@/lib/class-names'
 import { RepoIconGlyph } from '@/components/repo/repo-icon'
 import { RepoMark } from '@/components/repo/RepoMark'
+import { CrossHostProjectGroupHostMarks } from './CrossHostProjectGroupHostMarks'
 import { RepoForkIndicator } from '@/components/repo/repo-fork-indicator'
 
 import '@/store/project-groups/project-group-owner-routing'
@@ -48,6 +49,7 @@ import {
   shouldIgnoreRepoHeaderToggle,
   toggleSectionHeaderCollapse
 } from './header-event-guards'
+import { getProjectHeaderDragFlags } from '../drag/project-group-header-drop-target'
 import { getWorktreeOptionId } from './option-dom'
 import type { SectionHeaderRowContext } from './section-header-row-context'
 import type { Translate } from '@/i18n/use-translate'
@@ -107,14 +109,13 @@ export function renderWorktreeSectionHeaderRow(
         getRootProjectHeaderOccurrenceKey(rootProjectHeaderKey)
       ))
     : undefined
-  const isDraggableRepoHeader = Boolean(
-    headerDrag.canReorderRepoHeaders &&
-    projectIdForHeader &&
-    repoHeaderBucketKey &&
-    (rootProjectHeaderCount !== undefined
-      ? rootProjectHeaderCount > 1
-      : (headerDrag.sidebarRepoHeaderIdsByBucket.get(repoHeaderBucketKey)?.length ?? 0) > 1)
-  )
+  const { isDraggableRepoHeader, isDraggingThis, isProjectGroupDropTarget } =
+    getProjectHeaderDragFlags(headerDrag, {
+      projectId: projectIdForHeader,
+      bucketKey: repoHeaderBucketKey,
+      projectGroupId: projectGroupIdForHeader,
+      siblingCount: rootProjectHeaderCount
+    })
   const isDraggableProjectGroupHeader = Boolean(
     headerDrag.canReorderProjectGroupHeaders &&
     projectGroupDragIdForHeader &&
@@ -124,9 +125,6 @@ export function renderWorktreeSectionHeaderRow(
       : (headerDrag.sidebarProjectGroupHeaderIdsByBucket.get(projectGroupHeaderBucketKey)?.length ??
           0) > 1)
   )
-  const isDraggingThis =
-    headerDrag.canReorderRepoHeaders &&
-    headerDrag.repoDrag.state.draggingRepoId === projectIdForHeader
   const isDraggingThisProjectGroup =
     headerDrag.canReorderProjectGroupHeaders &&
     headerDrag.projectGroupDrag.state.draggingGroupId === projectGroupDragIdForHeader
@@ -220,6 +218,7 @@ export function renderWorktreeSectionHeaderRow(
           }
           // Padding remains a drag handle; only the title shows grab so action buttons never inherit it.
           data-repo-header-drag-handle={isDraggableRepoHeader ? '' : undefined}
+          data-project-group-drop-id={projectGroupIdForHeader}
           data-project-group-header-id={projectGroupDragIdForHeader}
           data-project-group-header-index={projectGroupHeaderIndex}
           data-project-group-header-bucket={projectGroupHeaderBucketKey}
@@ -239,6 +238,8 @@ export function renderWorktreeSectionHeaderRow(
               'rounded-md bg-worktree-sidebar-accent ring-1 ring-worktree-sidebar-ring/50',
             (isDraggingThis || isDraggingThisProjectGroup) &&
               'bg-accent/80 ring-1 ring-ring/40 shadow-md rounded-md scale-[1.01]',
+            isProjectGroupDropTarget &&
+              'rounded-md bg-worktree-sidebar-accent ring-1 ring-worktree-sidebar-ring/40',
             headerWorkspaceStatus &&
               ctx.dragOverStatus === headerWorkspaceStatus &&
               'rounded-md bg-worktree-sidebar-accent ring-1 ring-worktree-sidebar-ring/40',
@@ -334,6 +335,10 @@ export function renderWorktreeSectionHeaderRow(
               <div className="flex min-w-0 items-center gap-1.5">
                 <div className="min-w-0 truncate text-[13px] font-semibold leading-4">{label}</div>
                 {hostContext ? <ProjectHeaderHostLabel context={hostContext} /> : null}
+                <CrossHostProjectGroupHostMarks
+                  groupId={projectGroupIdForHeader}
+                  projectGroups={ctx.projectGroups}
+                />
                 <RepoForkIndicator upstream={row.repo?.upstream} />
                 <FolderPathStatusIndicator status={projectGroupPathStatus} />
                 {isRepoHeader ? <RepoScanUnavailableIndicator repo={row.repo!} /> : null}

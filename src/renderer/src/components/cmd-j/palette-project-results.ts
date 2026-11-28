@@ -12,8 +12,8 @@ import type { Project, ProjectHostSetup } from '../../../../shared/project/proje
 import type { Repo } from '../../../../shared/repository/repo-types'
 import { translate } from '@/i18n/i18n'
 import type { Translate } from '@/i18n/use-translate'
+import { getCrossHostProjectGroupMerge } from '../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
 import { getProjectGroupHeaderKey } from '../../../../shared/sidebar-list/sections/group-keys'
-import { getDistinctProjectGroups } from '../../../../shared/project/groups/project-groups'
 import { getProjectHeaderRevealTarget } from '../../../../shared/sidebar-list/sections/project-section-grouping'
 import type { ProjectGroupingModel } from '../../../../shared/sidebar-list/sections/project-section-grouping'
 
@@ -82,7 +82,8 @@ function buildCmdJProjectSearchCandidates(
   const repoMap = new Map(repos.map((repo) => [repo.id, repo]))
   const candidates: CmdJProjectSearchResult[] = []
 
-  getDistinctProjectGroups(projectGroups).forEach((group, order) => {
+  // Each entry must name a header that exists, so merged groups list once.
+  getCrossHostProjectGroupMerge(projectGroups).displayGroups.forEach((group, order) => {
     candidates.push({
       id: `project-group:${group.id}`,
       kind: 'project-group',

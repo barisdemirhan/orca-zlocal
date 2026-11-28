@@ -1,3 +1,7 @@
+import {
+  getCrossHostProjectGroupMerge,
+  resolveDisplayProjectGroupId
+} from '../../../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
 import type { FolderWorkspace } from '../../../../../../shared/folder-workspaces/folder-workspace-types'
 import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
 import type { WorkspaceStatusDefinition, Worktree } from '../../../../../../shared/worktree/types'
@@ -112,11 +116,13 @@ export function getFolderWorkspaceRevealGroupKeys(
       .map((group) => [group.id, group])
   )
   // Resolve parents from the unfiltered last same-ID group copy, matching the hostless headers the sidebar renders.
-  const renderedGroupsById = new Map(projectGroups.map((group) => [group.id, group]))
+  const renderedGroupsById = new Map(
+    getCrossHostProjectGroupMerge(projectGroups).displayGroups.map((group) => [group.id, group])
+  )
   const keys: string[] = []
   const seen = new Set<string>()
   let groupId: string | null = groupsById.has(folderWorkspace.projectGroupId)
-    ? folderWorkspace.projectGroupId
+    ? resolveDisplayProjectGroupId(projectGroups, folderWorkspace.projectGroupId)
     : null
   while (groupId && !seen.has(groupId)) {
     seen.add(groupId)

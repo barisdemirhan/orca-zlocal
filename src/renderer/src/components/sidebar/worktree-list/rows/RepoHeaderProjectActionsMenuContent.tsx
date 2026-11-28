@@ -1,4 +1,5 @@
 import React from 'react'
+import { ProjectGroupMoveMenuItems } from './project-group-move-menu-items'
 import {
   CircleX,
   Eye,
@@ -114,15 +115,11 @@ export function RepoHeaderProjectActionsMenuContent({
             {t('auto.components.sidebar.WorktreeList.4a08fb55f2', 'Move to group')}
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            {projectGroups.map((group) => (
-              <DropdownMenuItem
-                key={group.id}
-                disabled={repo.projectGroupId === group.id}
-                onSelect={() => actions.onMoveProjectToGroup(repo, group.id)}
-              >
-                <span className="max-w-48 truncate">{group.name}</span>
-              </DropdownMenuItem>
-            ))}
+            <ProjectGroupMoveMenuItems
+              projectGroups={projectGroups}
+              currentGroupId={repo.projectGroupId}
+              onSelect={(groupId) => actions.onMoveProjectToGroup(repo, groupId)}
+            />
           </DropdownMenuSubContent>
         </DropdownMenuSub>
       ) : null}

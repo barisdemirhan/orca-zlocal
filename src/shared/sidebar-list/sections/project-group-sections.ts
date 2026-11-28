@@ -2,7 +2,10 @@ import type { OccurrenceSectionPath } from '../lineage/worktree-occurrence-plan'
 import type { RenderableFolderWorkspace } from '../folders/folder-workspace-lanes'
 import type { ProjectGroup } from '../../project/groups/project-group-types'
 import type { ProjectOrderBy } from '../../ui-chrome/ui-chrome-types'
-import { getDistinctProjectGroups } from '../../project/groups/project-groups'
+import {
+  getCrossHostProjectGroupMerge,
+  resolveDisplayProjectGroupId
+} from './cross-host-project-group-merge'
 import { getProjectGroupHeaderKey } from './group-keys'
 import { appendOrderedGroups } from './group-sections'
 import type { SectionAppendContext } from './group-sections'
@@ -25,7 +28,10 @@ export function appendProjectGroupSections(
   // Folder membership is already resolved above grouping; only count here (#15362).
   const folderCountByGroupId = new Map<string, number>()
   for (const pair of args.folderWorkspaces) {
-    const groupId = pair.folderWorkspace.projectGroupId
+    const groupId = resolveDisplayProjectGroupId(
+      args.projectGroups,
+      pair.folderWorkspace.projectGroupId
+    )
     folderCountByGroupId.set(groupId, (folderCountByGroupId.get(groupId) ?? 0) + 1)
   }
   walkProjectGroupTree(
@@ -34,7 +40,8 @@ export function appendProjectGroupSections(
       projectGroups: args.projectGroups,
       folderCountByGroupId,
       projectOrderBy: args.projectOrderBy,
-      repoOrder: args.repoOrder
+      repoOrder: args.repoOrder,
+      mergeCrossHostGroups: true
     },
     {
       group: (projectGroup, depth, count) => {
@@ -68,9 +75,10 @@ export function appendProjectGroupSections(
 
 /** The same group parents used by section emission, including missing-parent roots. */
 export function getProjectGroupOccurrencePaths(projectGroups: readonly ProjectGroup[]) {
-  const groupsById = new Map(projectGroups.map((group) => [group.id, group]))
+  const { displayGroups, displayGroupIdById } = getCrossHostProjectGroupMerge(projectGroups)
+  const groupsById = new Map(displayGroups.map((group) => [group.id, group]))
   const paths = new Map<string, OccurrenceSectionPath>()
-  for (const group of getDistinctProjectGroups(projectGroups)) {
+  for (const group of displayGroups) {
     const pending: ProjectGroup[] = []
     const seen = new Set<string>()
     let current: ProjectGroup | undefined = group
@@ -86,6 +94,9 @@ export function getProjectGroupOccurrencePaths(projectGroups: readonly ProjectGr
       paths.set(entry.id, path)
       parent = path
     }
+  }
+  for (const [memberId, displayId] of displayGroupIdById) {
+    paths.set(memberId, paths.get(displayId)!)
   }
   return paths
 }

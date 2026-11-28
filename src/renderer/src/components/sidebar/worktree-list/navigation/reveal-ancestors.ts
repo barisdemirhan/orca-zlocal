@@ -1,6 +1,10 @@
 import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
 import type { Repo } from '../../../../../../shared/repository/repo-types'
 import {
+  getCrossHostProjectGroupMerge,
+  resolveDisplayProjectGroupId
+} from '../../../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
+import {
   getProjectGroupHeaderKey,
   PROJECTS_SECTION_GROUP_KEY
 } from '../../../../../../shared/sidebar-list/sections/group-keys'
@@ -51,10 +55,13 @@ function getProjectGroupAncestorKeys(
   projectGroupId: string | null | undefined,
   projectGroups: readonly ProjectGroup[]
 ): string[] {
-  const groupsById = new Map(projectGroups.map((group) => [group.id, group]))
+  const { displayGroups } = getCrossHostProjectGroupMerge(projectGroups)
+  const groupsById = new Map(displayGroups.map((group) => [group.id, group]))
   const keys: string[] = []
   const seen = new Set<string>()
-  let currentGroupId = projectGroupId ?? null
+  let currentGroupId = projectGroupId
+    ? resolveDisplayProjectGroupId(projectGroups, projectGroupId)
+    : null
   while (currentGroupId && !seen.has(currentGroupId)) {
     const group = groupsById.get(currentGroupId)
     if (!group) {

@@ -77,7 +77,7 @@ export function createVirtualizedScrollAnchorModuleMock(): Record<string, unknow
 export function createProjectHeaderDragModuleMock(): Record<string, unknown> {
   return {
     useRepoHeaderDrag: () => ({
-      state: { draggingRepoId: null, dropIndicatorY: null },
+      state: { draggingRepoId: null, dropIndicatorY: null, dropProjectGroupId: null },
       onHandlePointerDown: vi.fn()
     })
   }

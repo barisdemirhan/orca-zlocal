@@ -6,6 +6,8 @@ import {
 } from './worktree-sidebar-header-drop-preview'
 import { getHeaderDragRepo, type Row } from '../../../../../../shared/sidebar-list/row-types'
 import type { Repo } from '../../../../../../shared/repository/repo-types'
+import type { ProjectGroup } from '../../../../../../shared/project/groups/project-group-types'
+import { resolveDisplayProjectGroupId } from '../../../../../../shared/sidebar-list/sections/cross-host-project-group-merge'
 
 export type ProjectHeaderDragBucketKey = string
 
@@ -22,13 +24,18 @@ export type ProjectHeaderDragRect = {
 export type ProjectHeaderDropPreview = WorktreeSidebarHeaderDropPreview
 
 export function getProjectHeaderDragBucketKey(
-  repo: Pick<Repo, 'projectGroupId'>
+  repo: Pick<Repo, 'projectGroupId'>,
+  // Why: projects from different hosts under one header are siblings, whichever group each joined.
+  projectGroups: readonly ProjectGroup[] = []
 ): ProjectHeaderDragBucketKey {
-  return repo.projectGroupId ? `group:${repo.projectGroupId}` : 'ungrouped'
+  return repo.projectGroupId
+    ? `group:${resolveDisplayProjectGroupId(projectGroups, repo.projectGroupId)}`
+    : 'ungrouped'
 }
 
 export function getSidebarOrderedRepoHeaderIdsByBucket(
-  rows: readonly Row[]
+  rows: readonly Row[],
+  projectGroups?: readonly ProjectGroup[]
 ): Map<ProjectHeaderDragBucketKey, string[]> {
   const buckets = new Map<ProjectHeaderDragBucketKey, string[]>()
   for (const row of rows) {
@@ -36,7 +43,7 @@ export function getSidebarOrderedRepoHeaderIdsByBucket(
     if (!repo) {
       continue
     }
-    const bucketKey = getProjectHeaderDragBucketKey(repo)
+    const bucketKey = getProjectHeaderDragBucketKey(repo, projectGroups)
     const list = buckets.get(bucketKey) ?? []
     list.push(repo.id)
     buckets.set(bucketKey, list)
