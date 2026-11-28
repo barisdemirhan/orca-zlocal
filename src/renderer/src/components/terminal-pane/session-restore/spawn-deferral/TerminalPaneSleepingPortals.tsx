@@ -1,11 +1,18 @@
+import { Suspense } from 'react'
 import { AgentHubPaneSleepOverlay } from '../../../agent-hub/AgentHubPaneSleepOverlay'
 import { useAgentHubPaneTarget } from '../../../agent-hub/agent-hub-pane-sleep'
 import { createPortal } from 'react-dom'
+import { lazyWithRetry as lazy } from '@/app-shell/startup/lazy-with-retry'
 import { makePaneKey } from '../../../../../../shared/workspace-layout/stable-pane-id'
 import type { ManagedPane } from '@/lib/pane-manager/pane-manager-types'
 import { usePaneSpawnDeferral } from '@/components/terminal-pane/session-restore/spawn-deferral/pane-spawn-deferral-registry'
-import { TerminalSleepingPaneOverlay } from './TerminalSleepingPaneOverlay'
 import type { TerminalPaneController } from '../../controller/use-terminal-pane-controller'
+
+const TerminalSleepingPaneOverlay = lazy(() =>
+  import('./TerminalSleepingPaneOverlay').then((module) => ({
+    default: module.TerminalSleepingPaneOverlay
+  }))
+)
 
 function SleepingPanePortal({
   pane,
@@ -30,11 +37,13 @@ function SleepingPanePortal({
     return null
   }
   return createPortal(
-    <TerminalSleepingPaneOverlay
-      reason={deferral.reason}
-      onResume={deferral.resume}
-      onResumeAutomaticRestores={deferral.resumeAutomaticRestores}
-    />,
+    <Suspense fallback={null}>
+      <TerminalSleepingPaneOverlay
+        reason={deferral.reason}
+        onResume={deferral.resume}
+        onResumeAutomaticRestores={deferral.resumeAutomaticRestores}
+      />
+    </Suspense>,
     pane.container,
     `sleeping-pane-${pane.id}`
   )
