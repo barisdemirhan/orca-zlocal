@@ -22939,7 +22939,6 @@
         "staysDefault": "{{email}} varsayılan hesap olarak kalacak"
       },
       "workerDock": {
-        "commandOutputPending": "Komut çıktısı henüz kullanılamıyor.",
         "notNow": "Şimdi değil",
         "retry": "Yeniden dene",
         "dismiss": "Kapat",

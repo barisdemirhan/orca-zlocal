@@ -32,9 +32,9 @@ import {
   useNativeChatCrew
 } from '../../../orchestration-crew/use-native-chat-crew'
 
-const WorkerDockProviderDetailsDialog = lazy(() =>
-  import('./dock/WorkerDockProviderDetailsDialog').then((module) => ({
-    default: module.WorkerDockProviderDetailsDialog
+const WorkerDockCommandSheet = lazy(() =>
+  import('./dock/WorkerDockCommandSheet').then((module) => ({
+    default: module.WorkerDockCommandSheet
   }))
 )
 
@@ -50,6 +50,8 @@ function workerDockRowSettled(row: { state: string; settlement: string | null })
 export function NativeChatStructuredSessionStatus(props: {
   sessionId: string
   target?: RuntimeClientTarget
+  /** The chat's workspace, through which a command's output file is read. */
+  worktreeId?: string | null
   /** The session's own status row, whose verdict the strip's children read; also names the pane a picked agent opens in. */
   paneKey: string
   isVisible: boolean
@@ -165,6 +167,8 @@ export function NativeChatStructuredSessionStatus(props: {
     row: WorkerDockRowView
     opener: HTMLElement
   } | null>(null)
+  // The sheet belongs to its session's pane; the layer closes subagent sheets the same way.
+  useEffect(() => setProviderDetails(null), [props.sessionId])
   const workerOpenInMain = useCallback(
     (row: WorkerDockRowView) => openWorkerDockRow(row, target),
     [target]
@@ -261,11 +265,14 @@ export function NativeChatStructuredSessionStatus(props: {
       </AgentHubWorkerOpenInMainContext.Provider>
       {providerDetails ? (
         <Suspense fallback={null}>
-          <WorkerDockProviderDetailsDialog
-            row={providerDetails.row}
+          <WorkerDockCommandSheet
+            // The row as the feed holds it now, so a command that ends shows its end.
+            row={controlledWorkerRows.get(providerDetails.row.id) ?? providerDetails.row}
             opener={providerDetails.opener}
+            paneKey={props.paneKey}
             sessionId={props.sessionId}
             target={target}
+            worktreeId={props.worktreeId}
             onClose={() => setProviderDetails(null)}
           />
         </Suspense>

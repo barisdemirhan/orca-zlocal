@@ -22531,7 +22531,6 @@
         "staysDefault": "{{email}} bleibt der Standard"
       },
       "workerDock": {
-        "commandOutputPending": "Die Befehlsausgabe ist noch nicht verfügbar.",
         "notNow": "Nicht jetzt",
         "retry": "Erneut versuchen",
         "dismiss": "Ausblenden",

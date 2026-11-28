@@ -7,6 +7,7 @@ import { NativeChatStructuredSessionStatus } from '../tools/tasks/NativeChatStru
 import { useStructuredSessionTaskStop } from '../tools/tasks/use-structured-session-task-stop'
 import { useWorkerDockColdSeed } from '../tools/tasks/dock/worker-dock-feed'
 import { NativeChatStructuredDock } from './NativeChatStructuredDock'
+import { useNativeChatTabOwnerWorktreeId } from '../pane/ownership/use-native-chat-tab-owner'
 import { useNativeChatOpenSubagent } from './native-chat-open-subagent'
 import { NativeChatStructuredSubagentStop } from './NativeChatStructuredSubagentStop'
 import { NativeChatSubagentSheetPromptSlot } from './NativeChatSubagentSheetLayer'
@@ -17,12 +18,14 @@ import { NativeChatPairedServerAskStack } from '../paired-server-asks/NativeChat
 export function useStructuredNativeChatSubagents({
   sessionId,
   target,
+  tabId,
   paneKey,
   isVisible,
   controller
 }: {
   sessionId: string
   target: RuntimeClientTarget
+  tabId: string
   paneKey: string
   isVisible: boolean
   controller: {
@@ -34,6 +37,7 @@ export function useStructuredNativeChatSubagents({
     contextClear: { clears: number }
   }
 }) {
+  const worktreeId = useNativeChatTabOwnerWorktreeId(tabId)
   const openId = useNativeChatOpenSubagent(paneKey)?.agentId ?? null
   const stop = useStructuredSessionTaskStop(sessionId, controller)
   const prompt = controller.prompts[0]
@@ -49,6 +53,7 @@ export function useStructuredNativeChatSubagents({
     <NativeChatStructuredSessionStatus
       sessionId={sessionId}
       target={target}
+      worktreeId={worktreeId}
       paneKey={paneKey}
       isVisible={isVisible}
       backgroundTasks={controller.backgroundTasks}
